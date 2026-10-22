@@ -1,5 +1,9 @@
 'use strict';
 /**
+ * OWNS      the map of route file to mount path read from server.js (serverMounts: first mount; serverMountsAll: every mount).
+ * CALLED BY tools/endpoint-usage.cjs · tests/round-trips-all.test.cjs · tools/api-register.cjs
+ * CARD      28-platform-and-operations/api-standard
+ *
  * tools/server-mounts.cjs — WHERE server.js MOUNTS EACH ROUTE FILE: { 'actors.js': '/api/actors', … }.
  *
  * EFF-TRIPS (2026-10-15): tools/endpoint-usage.cjs and tests/round-trips-all.test.cjs each held the same regex, and it only knew ONE
@@ -33,3 +37,24 @@ function serverMounts(src) {
   return mounts;
 }
 module.exports = { serverMounts };
+
+/**
+ * serverMountsAll(serverSource) → { 'ctp.js': ['/api/ctp', ''], … } — EVERY prefix a route file is mounted at (API-1: the register lists a route once per mount; a router mounted
+ * twice, or at '/', is two sets of endpoints). serverMounts above keeps only the first, which is all its two callers need.
+ */
+function serverMountsAll(serverSource) {
+  const text = String(serverSource || '');
+  const vars = {};
+  for (const m of text.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) vars[m[1]] = m[2] + '.js';
+  const all = {};
+  for (const m of text.matchAll(/app\.use\(\s*(?:['"]([^'"]*)['"]\s*,)?([^;]{0,200}?)\)\s*;/g)) {
+    const direct = /require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/.exec(m[2]);
+    const last = m[2].split(',').map((x) => x.trim()).filter(Boolean).pop();
+    const file = direct ? direct[1] + '.js' : vars[last];
+    if (!file) continue;
+    const prefix = m[1] === undefined || m[1] === '/' ? '' : m[1];
+    (all[file] = all[file] || []).includes(prefix) || all[file].push(prefix);
+  }
+  return all;
+}
+module.exports.serverMountsAll = serverMountsAll;

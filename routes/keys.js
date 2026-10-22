@@ -21,7 +21,8 @@
  * Scopes today: 'offers' (the offer engine as a service). A route asks for one with auth.requireScope('offers').
  */
 const express = require('express');
-const { safeErr } = require('../lib/respond');
+const { SAFE_SENTENCE } = require('../lib/respond');
+const { problem, fromError, problemResponse } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const logger = require('../lib/logger');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
@@ -35,8 +36,13 @@ const policy = require('../lib/policy'); // T2-POLICY: the one writer of policy_
    from the guard stayed on offer here. The map that enforces them is the only place they are named.
    services = every service · connector = products up, orders down, the bell · till = a counter · screen = a sign that only reads */
 const SCOPES = auth.SCOPE_NAMES;
+/* the body every 500 on these routes answered before the standard: frozen (S2) — the sentence is the one safeErr returns, never the error's own text (S8) */
+const FAILED_LEGACY = { error: 'Failed', message: SAFE_SENTENCE };
 const sessionOnly = (req, res, next) => {
-  if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'A key cannot manage keys — sign in.' });
+  if (req.api_key) {
+    const sentence = 'A key cannot manage keys — sign in.';
+    return problem(req, res, { status: 403, code: 'KEY_CANNOT_MANAGE_KEYS', detail: sentence, legacy: { error: 'Forbidden', message: sentence } });
+  }
   next();
 };
 
@@ -90,7 +96,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
   try {
     res.json({ keys: await listOf(auth.entityOf(req)), scopes: scopesFor(req), may: { revoke: owner.may(req, REVOKE_SAYS) } });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 
@@ -646,11 +652,13 @@ router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'),
   try {
     const b = req.body || {};
     const refusal = platformScopeRefusal(req, b.scopes);
-    if (refusal) return res.status(403).json(refusal);
+    if (refusal) return problem(req, res, { status: 403, code: 'NOT_PLATFORM', detail: refusal.message, legacy: refusal });
     const r = await mint(auth.entityOf(req), req.identity, { name: b.name, scopes: Array.isArray(b.scopes) ? b.scopes : undefined, days: b.days });
     res.status(201).json(Object.assign({ note: 'Shown once. Send it as Authorization: Bearer <key> or X-Api-Key: <key>.' }, r));
   } catch (e) {
-    res.status(e && e.status ? e.status : 500).json({ error: e && e.status === 400 ? 'validation' : 'Failed', message: String(e && e.message) });
+    /* mint() throws status 400 with a sentence of its own (a bad scope, twenty keys); anything else is a fault of ours and says nothing of its cause (S8) */
+    if (e && e.status === 400) return problem(req, res, { status: 400, code: 'INVALID_KEY_REQUEST', detail: String(e.message), legacy: { error: 'validation', message: String(e.message) } });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 
@@ -673,14 +681,16 @@ router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), async (req, r
       keys.filter((item) => String(item.parent || '') === gone).forEach((item) => auth.forgetKey(item.jti));
       if (found) await policy.patchKey(db, entity_id, [], { api_keys: left }, { op: 'merge' });
     });
-    if (!found) return res.status(404).json({ error: 'Not found' });
+    if (!found) return problem(req, res, { status: 404, code: 'KEY_NOT_FOUND', detail: 'No key with that id.', legacy: { error: 'Not found' } });
     auth.forgetKey(req.params.jti);
     res.json({ message: 'Key revoked', jti: req.params.jti });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 
+/* each refusal this route can answer, declared as the Problem body (S9) — the register checks the list against the statuses the handlers write */
+const refused = problemResponse;
 router.openapi = {
   paths: {
     '/api/keys': {
@@ -698,9 +708,14 @@ router.openapi = {
             }
           }
         },
-        responses: { 201: { description: 'the key, shown once' } }
+        responses: { 201: { description: 'the key, shown once' }, 400: refused('the request cannot be made into a key'), 401: refused('no or bad credentials'), 403: refused('a key, a co-assist or a shop asking for a platform kind'), 500: refused('a fault of ours') }
       },
-      get: { summary: 'List keys (session only)', tags: ['keys'], security: [{ bearer: [] }], responses: { 200: { description: 'keys' } } }
+      get: {
+        summary: 'List keys (session only)',
+        tags: ['keys'],
+        security: [{ bearer: [] }],
+        responses: { 200: { description: 'keys' }, 401: refused('no or bad credentials'), 403: refused('a key cannot list keys'), 500: refused('a fault of ours') }
+      }
     },
     '/api/keys/{jti}': {
       delete: {
@@ -708,7 +723,7 @@ router.openapi = {
         tags: ['keys'],
         security: [{ bearer: [] }],
         parameters: [{ name: 'jti', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'revoked' } }
+        responses: { 200: { description: 'revoked' }, 401: refused('no or bad credentials'), 403: refused('a key or a co-assist cannot revoke'), 404: refused('no such key in this shop'), 500: refused('a fault of ours') }
       }
     }
   },

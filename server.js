@@ -8,6 +8,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const log = require('./lib/logger');
+const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -505,8 +506,10 @@ app.get('/health', async (req, res) => {
 });
 
 // ── 404 handler ──────────────────────────────────────────────
+/* API-STANDARD S3: the one writer (lib/problem.js); the legacy keys are frozen exactly as this route answered before (docs/contracts/api-legacy.json) */
 app.use((req, res) => {
-  res.status(404).json({ error: 'Not found', message: `${req.method} ${req.path} does not exist` });
+  const sentence = `${req.method} ${req.path} does not exist`;
+  problem(req, res, { status: 404, code: 'NOT_FOUND', detail: sentence, legacy: { error: 'Not found', message: sentence } });
 });
 
 // ── Error handler ─────────────────────────────────────────────
@@ -526,11 +529,6 @@ app.use((err, req, res, next) => {
    */
   /* ⭐ the translation now lives in lib/knownerr.js, so the routes that CATCH their own errors — which is all of
      them; none calls next(err) — give the same answer (external review §23) */
-  const _known = require('./lib/knownerr').known(err);
-  if (_known) {
-    res.locals.code = _known.body.code || null;
-    return res.status(_known.status).json(_known.body);
-  } /* E01: the code reaches the request log */
   /**
    * ⭐ A DECISION THIS API MADE ANSWERS AS A DECISION. Only an error that declares this code reaches this
    * branch — an ordinary throw still gets the generic 500 below, so nothing new leaks. The origin is echoed
@@ -543,13 +541,12 @@ app.use((err, req, res, next) => {
       origin: req.headers.origin || null,
       reason: 'not in ALLOWED_ORIGINS — add it on the host to permit this caller'
     });
-    return res
-      .status(403)
-      .json({ error: 'Origin not allowed', message: `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.` });
+    const sentence = `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.`;
+    return problem(req, res, { status: 403, code: 'ORIGIN_NOT_ALLOWED', detail: sentence, legacy: { error: 'Origin not allowed', message: sentence } });
   }
-  // Full detail stays in server logs (with the request id for traceability); client gets a generic message.
-  log.error('unhandled', { id: req.id, path: req.path, err: err.message, stack: err.stack });
-  res.status(500).json({ error: 'Server error', message: 'Something went wrong' });
+  /* S3: fromError answers a refusal the database makes on purpose (lib/knownerr.js) in its own words, and anything else as a generic 500 with
+     the request id (S8) — the full detail stays in the server log. */
+  fromError(req, res, err, { error: 'Server error', message: 'Something went wrong' });
 });
 
 // ── Start ─────────────────────────────────────────────────────

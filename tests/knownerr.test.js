@@ -38,6 +38,11 @@ it('⭐⭐ every route that writes a chit asks it BEFORE its generic 500 — and
     assert.ok(k > 0 && g - k < 600, 'routes/catalogue.js line ' + cat.slice(0, g).split('\n').length + ' answers "Order failed" without asking lib/knownerr first');
     from = g + 10; }
   assert.ok(n >= 2, 'expected both storefront order routes, found ' + n);
-  at('server.js', "res.status(500).json({ error: 'Server error'");
+  /* API-1 slice 1a: the global handler answers through lib/problem.js fromError, which asks known() BEFORE it falls to the generic 500 */
+  const handler = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
+  assert.ok(handler.includes("fromError(req, res, err, { error: 'Server error'"), 'server.js: the handler no longer answers through fromError');
+  const problemSrc = fs.readFileSync(path.join(API, 'lib', 'problem.js'), 'utf8');
+  const fromErrorAt = problemSrc.indexOf('function fromError');
+  assert.ok(problemSrc.indexOf('known(err)', fromErrorAt) > 0 && problemSrc.indexOf('known(err)', fromErrorAt) < problemSrc.indexOf("code: 'INTERNAL'", fromErrorAt), 'lib/problem.js: fromError must ask knownerr before INTERNAL');
 });
 console.log(pass + ' checks');
