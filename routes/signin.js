@@ -192,7 +192,7 @@ router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
  *   'actor-login'  /api/actors/login        — the key@Display Name door, its own lookup and its own refusal words
  *   'signin'       /api/signin/*            — never registers; { username } selects the actor-login words
  * ⭐ ONE PIN ENGINE: lib/identity-auth.js verifyCredential() decides PIN-or-code, counts, locks. The actor door's own bcrypt
- *   +  * lock copy is deleted; the door says one sentence for every secret refusal (SEC-81, `refused` below), the engine's `reason` goes to the log.
+ *   + lock copy is deleted; the door says one sentence for every secret refusal (SEC-81, `refused` below), the engine's `reason` goes to the log.
  * ⭐ signin_events (b282): every attempt that names a known person writes ONE row (lib/signin-events.js — fire-and-forget,
  *   never blocks, never silent; a missing table logs an error once per window).
  * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
@@ -768,6 +768,46 @@ async function verify(req, res) {
 }
 
 /**
+ * actorSecretRefused — the secret step of the key@Display Name door: first sign-in takes the code (pin_hash NULL), a returning actor the PIN,
+ * both through the ONE engine. Returns true when it has already answered (SEC-81: a wrong or locked secret gets the one safe sentence).
+ */
+async function actorSecretRefused(req, res, actor) {
+  const otp = (req.body.otp || '').trim();
+  const nestedPin = req.body.pin;
+  if (actor.pin_hash) {
+    if (!nestedPin) {
+      note(req, actor, 'fail', 'pin', 'PIN_REQUIRED');
+      res.status(400).json({ error: 'PIN required', message: 'Enter your 4 digit PIN to login', use_pin: true });
+      return true;
+    }
+    const check = await identityAuth.verifyCredential(query, actor, { pin: nestedPin });
+    if (!check.ok) {
+      note(req, actor, actionOf(check.reason), 'pin', check.reason);
+      refused(req, res, check.reason);
+      return true;
+    }
+  } else {
+    if (!otp) {
+      note(req, actor, 'fail', 'otp', 'OTP_REQUIRED');
+      res.status(400).json({ error: 'OTP required', message: 'Enter the OTP your admin shared with you', use_otp: true });
+      return true;
+    }
+    // F5: lib/otp.js's per-account attempt cap; authLimiter still sits in front of this door
+    const check = await identityAuth.verifyCredential(query, actor, { otp, name: req.body.username });
+    if (!check.ok) {
+      note(req, actor, actionOf(check.reason), 'otp', check.reason);
+      if (isSecretRefusal(check.reason)) refused(req, res, check.reason);
+      else {
+        res.locals.code = check.reason;
+        res.status(check.status).json({ error: 'Login failed', message: check.message });
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * actorLogin — the key@Display Name door (was routes/actors.js POST /login). OTP the first time, PIN after.
  * ⭐ user_id FIRST after the @, display_name SECOND — accepting only user_id would lock out everyone who types the name.
  * ⚠️ and the display_name path REFUSES AMBIGUITY (findEntityByNameOrHandle — the same rule entity sign-in uses).
@@ -818,33 +858,7 @@ async function actorLogin(req, res) {
       return refused(req, res, a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED'); // SEC-81: before the secret, so no state is told
     }
 
-    // First sign-in: the code (pin_hash NULL). Returning: the PIN. Both through the ONE engine.
-    const otp = (req.body.otp || '').trim();
-    const nestedPin = req.body.pin;
-    if (a.pin_hash) {
-      if (!nestedPin) {
-        note(req, a, 'fail', 'pin', 'PIN_REQUIRED');
-        return res.status(400).json({ error: 'PIN required', message: 'Enter your 4 digit PIN to login', use_pin: true });
-      }
-      const check = await identityAuth.verifyCredential(query, a, { pin: nestedPin });
-      if (!check.ok) {
-        note(req, a, actionOf(check.reason), 'pin', check.reason);
-        return refused(req, res, check.reason);
-      }
-    } else {
-      if (!otp) {
-        note(req, a, 'fail', 'otp', 'OTP_REQUIRED');
-        return res.status(400).json({ error: 'OTP required', message: 'Enter the OTP your admin shared with you', use_otp: true });
-      }
-      // F5: lib/otp.js's per-account attempt cap; authLimiter still sits in front of this door
-      const check = await identityAuth.verifyCredential(query, a, { otp, name: req.body.username });
-      if (!check.ok) {
-        note(req, a, actionOf(check.reason), 'otp', check.reason);
-        if (isSecretRefusal(check.reason)) return refused(req, res, check.reason);
-        res.locals.code = check.reason;
-        return res.status(check.status).json({ error: 'Login failed', message: check.message });
-      }
-    }
+    if (await actorSecretRefused(req, res, a)) return;
 
     const token = await identityAuth.issueToken(query, a, sessions.deviceOfSignin(req));
     note(req, a, 'in', a.pin_hash ? 'pin' : 'otp', null, jtiOf(token));
