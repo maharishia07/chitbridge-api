@@ -900,26 +900,6 @@
   "warnings": 0,
   "prettierOk": false
  },
- "public/chit.html": {
-  "warnings": 0,
-  "prettierOk": null
- },
- "public/connections.html": {
-  "warnings": 5,
-  "prettierOk": null
- },
- "public/inbox.html": {
-  "warnings": 1,
-  "prettierOk": null
- },
- "public/register.html": {
-  "warnings": 0,
-  "prettierOk": null
- },
- "public/send.html": {
-  "warnings": 0,
-  "prettierOk": null
- },
  "routes/actors.js": {
   "warnings": 0,
   "prettierOk": false

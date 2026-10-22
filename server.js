@@ -5,7 +5,6 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const log = require('./lib/logger');
@@ -170,23 +169,18 @@ app.use(
   })
 );
 /**
- * ⭐ K-SEC PR A (SEC-68, critic C11): A STRICT CSP ON EVERYTHING THIS API ANSWERS EXCEPT THE 5 OLD PAGES. JSON, /.well-known
- * and media need no script, style or frame, so they get `default-src 'none'; frame-ancestors 'none'` — a response that is
- * ever rendered as a page can run nothing and cannot be framed. The legacy pages in public/ (chit · connections · inbox ·
- * register · send .html) carry inline script, so they are left exactly as they were (Athi decides whether they stay).
- * tests/api-csp.test.cjs proves both halves and that /.well-known/ctp.json is still served as JSON.
+ * ⭐ K-SEC PR A (SEC-68, critic C11): A STRICT CSP ON EVERYTHING THIS API ANSWERS. JSON, /.well-known and media need no
+ * script, style or frame, so they get `default-src 'none'; frame-ancestors 'none'` — a response that is ever rendered as a
+ * page can run nothing and cannot be framed. The 5 old pages in public/ (chit · connections · inbox · register · send .html)
+ * carried inline script and were the only exception; they were RETIRED (SEC-77, 22 Oct, Athi) and public/ is gone, so
+ * there is no exception left. tests/api-csp.test.cjs proves /chit.html now 404s under the strict policy and that
+ * /.well-known/ctp.json is still served as JSON.
  */
-const LEGACY_PAGES = new Set(
-  require('fs')
-    .readdirSync(path.join(__dirname, 'public'))
-    .filter((name) => /.html$/.test(name))
-    .map((name) => '/' + name)
-);
 const apiCsp = helmet.contentSecurityPolicy({
   useDefaults: false,
   directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'none'"], formAction: ["'none'"] }
 });
-app.use((req, res, next) => (LEGACY_PAGES.has(req.path) ? next() : apiCsp(req, res, next)));
+app.use(apiCsp);
 
 /**
  * ⚠️ THE PROVIDER WEBHOOKS NEED THE RAW BODY, AND MUST CLAIM IT BEFORE express.json DOES.
@@ -475,7 +469,6 @@ app.use('/api/supplies', require('./routes/supplies'));
 app.use('/api/adopt', require('./routes/adopt'));
 
 // ── Static HTML pages (legacy — React replaces these) ────────
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Health check ─────────────────────────────────────────────
 app.get('/health', async (req, res) => {
