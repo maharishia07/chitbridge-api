@@ -69,12 +69,13 @@ const reply = (text, from) => ({ sender_ref: from || '919840012345', text, captu
   console.log('\n-- CON-2 · a STOP reply withdraws marketing consent (offline) --');
 
   await t('the matcher takes the WHOLE message only', async () => {
-    ['STOP', 'stop.', ' Stop! ', 'Unsubscribe', 'opt out', 'STOP ALL', 'cancel'].forEach((word) => assert.ok(privacy.isStopWord(word, 'AU'), word));
+    ['STOP', 'stop.', ' Stop! ', 'Unsubscribe', 'opt out', 'STOP ALL'].forEach((word) => assert.ok(privacy.isStopWord(word, 'AU'), word));
     ['stop by at 5 for 2kg rice', "don't stop", 'please stop the offers', '', '   ', 'two kg rice', null].forEach((word) => assert.ok(!privacy.isStopWord(word, 'AU'), String(word)));
   });
   await t('a local word counts for its own country only; no country = the English words alone, never India\'s', async () => {
-    assert.ok(privacy.isStopWord('बंद', 'IN') && privacy.isStopWord('إيقاف', 'AE'));
-    assert.ok(!privacy.isStopWord('बंद', 'AU') && !privacy.isStopWord('बंद', null) && !privacy.isStopWord('إيقاف', 'IN') && !privacy.isStopWord('बंद', 'ZZ'));
+    assert.ok(privacy.isStopWord('إيقاف', 'AE') && privacy.isStopWord('الغاء الاشتراك', 'AE') && privacy.isStopWord('إلغاء الاشتراك', 'AE'));
+    assert.ok(!privacy.isStopWord('إيقاف', 'IN') && !privacy.isStopWord('إيقاف', 'AU') && !privacy.isStopWord('إيقاف', null) && !privacy.isStopWord('بند', 'AE'));
+    assert.ok(!privacy.isStopWord('बंद', 'IN') && !privacy.isStopWord('நிறுத்து', 'IN'), 'IN is English-only until Athi has the native words checked');
     assert.ok(privacy.isStopWord('STOP', null) && privacy.isStopWord('STOP', 'ZZ'));
     assert.ok(['IN', 'AU', 'AE', null].every((country) => privacy.lawOf(country).optout.line && privacy.lawOf(country).optout.done.includes('{shop}')), 'every pack and the fallback carries the line and the sentence');
   });
@@ -150,6 +151,15 @@ const reply = (text, from) => ({ sender_ref: from || '919840012345', text, captu
     const out = await optout.fromReply(SHOP, reply('STOP'));
     world.broken = false;
     assert.deepStrictEqual([out.stop, out.failed, world.dismissed.length], [true, true, 0]);
+  });
+  await t('CANCEL, END, QUIT and "cancel my order" are orders, never a stop: not a stop word in IN, AU, AE or no country, and the capture is not dismissed', async () => {
+    for (const country of ['IN', 'AU', 'AE', null]) {
+      for (const text of ['CANCEL', 'cancel', 'END', 'QUIT', 'cancel my order', 'إلغاء']) {
+        reset(); world.country = country;
+        const out = await optout.fromReply(SHOP, reply(text));
+        assert.deepStrictEqual([out.stop, world.writes.length, world.dismissed.length], [false, 0, 0], country + ' ' + text);
+      }
+    }
   });
   await t('a shop with no country uses the English words; its AE-only word is not a stop', async () => {
     reset(); world.country = null;
