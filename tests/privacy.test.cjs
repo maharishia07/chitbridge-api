@@ -33,7 +33,7 @@ D.extra = async (sql, p) => {
     const r = { pref_id: uid(), owner: p[0], party_id: p[1], channel: p[2], purpose: p[3], allowed: p[4], basis: p[5], notice_version: p[6], noted_by: p[7], noted_at: new Date(clock).toISOString(), withdrawn_at: /now\(\)\)\s*RETURNING/.test(sql) ? new Date(clock).toISOString() : null };
     T.prefs.push(r); return { rows: [r] };
   }
-  if (/^SELECT country FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: D.shopCountry || 'IN' }] };
+  if (/^SELECT country(, display_name)? FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: D.shopCountry || 'IN', display_name: 'Mayur Bhavan' }] };
   /* T3-P3-CONSENT: the shopper route's two identity rows at once, and the shopper's own name line */
   if (/^SELECT identity_id, display_name, phone, email, otp_contact, country FROM identities WHERE identity_id = ANY/.test(sql)) {
     return { rows: p[0].map((id) => (id === 'E1' ? { identity_id: 'E1', display_name: 'Mayur Bhavan', phone: null, email: 'shop@x.in', otp_contact: null, country: D.shopCountry || 'IN' }
@@ -53,10 +53,10 @@ D.extra = async (sql, p) => {
   }
   /* the send gate (G2 · CO1-GATE): the newest row for one (channel, purpose), by party id or by the phone's digits */
   const newest = (xs) => xs.slice().sort((a, b) => Date.parse(b.noted_at) - Date.parse(a.noted_at)).slice(0, 1);
-  if (/^SELECT channel, purpose, allowed, basis, withdrawn_at(, pref_id, noted_at)? FROM party_contact_pref WHERE owner_entity_id = \$1 AND party_id = \$2 AND channel = \$3 AND purpose = \$4/.test(sql)) {
+  if (/^SELECT channel, purpose, allowed, basis, withdrawn_at(, pref_id, noted_at)?(, to_jsonb.* AS source_ref)? FROM party_contact_pref WHERE owner_entity_id = \$1 AND party_id = \$2 AND channel = \$3 AND purpose = \$4/.test(sql)) {
     return { rows: newest(T.prefs.filter((r) => r.owner === p[0] && r.party_id === p[1] && r.channel === p[2] && r.purpose === p[3])) };
   }
-  if (/^SELECT p\.channel, p\.purpose, p\.allowed, p\.basis, p.withdrawn_at(, p.pref_id, p.noted_at)? FROM party_contact_pref p JOIN identities i/.test(sql)) {
+  if (/^SELECT p\.channel, p\.purpose, p\.allowed, p\.basis, p.withdrawn_at(, p.pref_id, p.noted_at)?(, to_jsonb.* AS source_ref)? FROM party_contact_pref p JOIN identities i/.test(sql)) {
     const ids = D.cust.filter((c) => [c.phone, c.otp_contact].some((x) => x && String(x).replace(/[^0-9]/g, '').slice(-9) === p[1])).map((c) => c.party_id);
     return { rows: newest(T.prefs.filter((r) => r.owner === p[0] && ids.indexOf(r.party_id) >= 0 && r.channel === p[2] && r.purpose === p[3])) };
   }

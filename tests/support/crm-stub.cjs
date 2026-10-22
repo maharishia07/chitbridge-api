@@ -41,6 +41,7 @@ function make() {
     if (/FROM supplier_list sl JOIN identities i/.test(sql)) return { rows: data.sup.filter((r) => r.owner === p[0] && (!p[1] || r.party_id === p[1])).map((r) => Object.assign({}, r)) };
     if (/FROM reward_ledger/.test(sql)) return { rows: data.walk.filter((r) => r.owner === p[0]) };
     if (/to_regclass\('party_interaction'\)/.test(sql)) return { rows: [{ i: data.migrated, f: data.migrated }] };
+    if (/^SELECT country, display_name FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: data.shopCountry || 'IN', display_name: 'Test shop' }] };   /* privacy.shopFacts (CON-2): the shop's law and name */
     if (/FROM books_setting/.test(sql)) return { rows: data.country ? [{ country: data.country, enabled: true }] : [] };
     /* the Ledger-side reads of the timeline */
     if (/FROM party_item/.test(sql)) return { rows: data.ledger.filter((r) => r.entity === p[0] && r.party_id === p[1] && r.created_at < p[2]).slice(0, p[3]) };

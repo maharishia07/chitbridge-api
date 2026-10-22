@@ -422,6 +422,7 @@ const INFRA_LIBS = [
   'transcribe.js',         // audio → text; an outside service behind one function
   'whatsapp-media.js',     // provider media fetch
   'whatsapp-out.js',       // provider send
+  'optout.js',             // CON-2: a WhatsApp STOP reply -> privacy.notePref rows + the opt-out line; SQL and the one sender, no money or tax
   'whatsapp-templates.js', // provider template shapes
 ];
 const ENGINE_OTHER = [

@@ -6,6 +6,7 @@
  * from real sales after a send · the advisor's thresholds are inputs, not constants.
  * MK-01 a party with no consent is refused with a sentence and gets no outbound row · MK-02 consent withdrawn before the send runs → not sent ·
  * MK-03 a party who agreed DOES reach the one sender (the gate lets the right one through) · MK-04 "who came back" counts from real bills after a SENT offer ·
+ * MK-14 a STOP reply on WhatsApp withdraws marketing consent for every party on that number (CON-2, through the signed webhook) ·
  * MK-06 the Groups numbers = the CRM page's party count · MK-07 the win-back threshold is an input, not a literal · MK-08 the send log keeps the consent basis ·
  * MK-10 a group send of 10 logs 10 rows, the 3 not messaged with their reason · MK-11 the came-back days are a shop setting (14 → 20 moves 3 to 4).
  * Not here: MK-05 the group's send button (W15, a screen) · MK-09 owner/viewer/visitor consent screens (✓ walk-consent.cjs).
@@ -105,6 +106,65 @@ async function groupOfTen() {
   });
 }
 
+/**
+ * MK-14 (CON-2, 22 Oct 2026) · A STOP REPLY WITHDRAWS MARKETING CONSENT. Through the REAL signed webhook (HMAC with WHATSAPP_APP_SECRET - the api under test must be
+ * started with the same value, and this shell must hold it). ARMED in SQL (said here): a verified channel_binding for the shop's number, because Settings -> Channels
+ * needs a provider. Two customers share one phone (written two ways), a third has her own; all three agreed to offers. Then "STOP" arrives from the shared number.
+ */
+async function stopByReply() {
+  const secret = process.env.WHATSAPP_APP_SECRET;
+  if (!secret) throw new Error('MK-14 needs WHATSAPP_APP_SECRET in this shell and the SAME value on the api under test (start it with it set); the webhook is HMAC-signed');
+  const S = await freshShop(RUN + 's', 'Marketing stop');
+  const r = ok(await j('/api/products', { method: 'POST', token: S.token, body: { item_data: { name: 'Rice', unit: 'piece', price: 60 } } }), 'product').b;
+  const P = { id: r.item.item_id, name: 'Rice', unit: 'piece', price: 60 };
+  const people = [];
+  for (const [tag, phone] of [['a', '9876541111'], ['b', '9876543333'], ['c', '9876542222']]) {
+    const l = ok(await j('/api/crm/leads', { method: 'POST', token: S.token, body: { name: 'Stop ' + tag, phone } }), 'lead').b.party, b = bill(RUN + 'st' + tag, [[P, 1]]);
+    b.business_json.customer = { name: l.display_name, party_id: l.party_id, identity_id: l.party_id };
+    ok(await j('/api/chits/send', { method: 'POST', token: S.token, body: b }), 'bill');
+    people.push({ id: l.party_id, name: l.display_name, phone });
+  }
+  await pause(1500);
+  /* ARM (SQL): the CRM refuses a second lead on one number (409 EXISTS), so the family phone is made here - b's number is written the other way round */
+  await pg.query('UPDATE identities SET phone = $2 WHERE identity_id = $1', [people[1].id, '+91 98765 41111']);
+  ok(await j('/api/crm/groups', { method: 'POST', token: S.token, body: { name: 'stop3', add: people.map((x) => x.id) } }), 'group');
+  for (const x of people) await pref(S, x.id, true);
+  const ours = '+9199' + String(Date.now() % 1e8).padStart(8, '0');   /* a binding's address is stored as +digits (channels.normalise) */
+  await pg.query("INSERT INTO channel_binding (entity_id, channel, address, status, verified_at, provider_ref) VALUES ($1, 'whatsapp', $2, 'verified', now(), 'LOCAL-PHONE-ID')", [S.entity, ours]);
+  const deliver = async () => {
+    const body = JSON.stringify({ entry: [{ changes: [{ value: { metadata: { display_phone_number: ours }, messages: [{ id: 'wamid.' + RUN, from: '919876541111', type: 'text', text: { body: 'STOP' } }] } }] }] });
+    const signature = 'sha256=' + require('crypto').createHmac('sha256', secret).update(body).digest('hex');
+    return fetch(H.API + '/api/capture/webhook/whatsapp', { method: 'POST', headers: { 'x-hub-signature-256': signature }, body });
+  };
+  const hasSource = (await pg.query("SELECT 1 FROM information_schema.columns WHERE table_name = 'party_contact_pref' AND column_name = 'source'")).rows.length > 0;
+  const stopRows = async () => (await pg.query("SELECT party_id, channel, allowed, withdrawn_at" + (hasSource ? ', source, source_ref' : '') + " FROM party_contact_pref WHERE owner_entity_id = $1 AND purpose = 'marketing' AND allowed = false", [S.entity])).rows;
+  const first = await deliver();
+  await pause(1500);
+  const afterStop = await stopRows();
+  const dry = ok(await j('/api/crm/segments/group:stop3/send', { method: 'POST', token: S.token, body: { text: 'Diwali 10% off', dry: true } }), 'dry').b;
+  const real = ok(await j('/api/crm/segments/group:stop3/send', { method: 'POST', token: S.token, body: { text: 'Diwali 10% off' } }), 'send').b;
+  const second = await deliver();
+  await pause(1000);
+  const afterRedelivery = await stopRows();
+  const cap = (await pg.query("SELECT id, status FROM capture WHERE entity_id = $1 AND raw_text = 'STOP'", [S.entity])).rows;
+  const service = (await pg.query("SELECT status, reason, body, capture_id FROM channel_outbound WHERE entity_id = $1 AND purpose = 'service'", [S.entity])).rows;
+  const offerRows = (await pg.query("SELECT party_id, status, reason, body, basis FROM channel_outbound WHERE entity_id = $1 AND send_ref = $2", [S.entity, real.send_ref])).rows;
+
+  await kase('MK-14', 'a STOP reply: both parties on the shared number are withdrawn (whatsapp + sms), the next send refuses them (CONSENT_WITHDRAWN, "replied STOP"), one service confirmation receipt is written, a redelivery adds nothing, the STOP is dismissed, and the offer carries the opt-out line', async () => {
+    const shared = people.slice(0, 2).map((x) => x.id), refusedIds = (list) => list.filter((x) => x.code === 'CONSENT_WITHDRAWN').map((x) => x.party_id).sort();
+    const sayings = offerRows.filter((x) => shared.includes(x.party_id)).map((x) => x.reason);
+    const hers = offerRows.find((x) => x.party_id === people[2].id);
+    expect(first.status === 200 && second.status === 200, 'the signed webhook answered ' + first.status + ' / ' + second.status);
+    expect(afterStop.length === 4 && shared.every((id) => afterStop.some((x) => x.party_id === id && x.channel === 'whatsapp' && x.withdrawn_at) && afterStop.some((x) => x.party_id === id && x.channel === 'sms')), 'withdrawal rows (whatsapp = a WITHDRAWAL of the yes; sms = a standing no) ' + JSON.stringify(afterStop));
+    expect(!hasSource || afterStop.every((x) => x.source === 'reply' && x.source_ref === cap[0].id), 'b777 is in: every row is source reply with the capture id ' + JSON.stringify(afterStop[0]));
+    expect(refusedIds(dry.refused).join() === shared.slice().sort().join() && refusedIds(real.refused).join() === shared.slice().sort().join() && dry.may === 1, 'dry refused ' + JSON.stringify(dry.refused) + ' · may ' + dry.may);
+    expect(sayings.length === 2 && sayings.every((s) => (hasSource ? /replied STOP/ : /withdrew/).test(s)), 'receipts say ' + JSON.stringify(sayings));
+    expect(service.length === 1 && service[0].capture_id === cap[0].id && /no more offers from/.test(service[0].body), 'service receipts ' + JSON.stringify(service));
+    expect(afterRedelivery.length === 4 && cap.length === 1 && cap[0].status === 'dismissed', 'after the redelivery: rows ' + afterRedelivery.length + ' · captures ' + JSON.stringify(cap));
+    expect(hers && /Reply STOP to stop offers\.$/.test(hers.body), 'her offer body ' + JSON.stringify(hers && hers.body));
+  });
+}
+
 (async () => {
   console.log('\n── marketing truth on ' + H.API + ' · run ' + RUN + ' ──');
   ok(await j('/health'), 'health');
@@ -151,6 +211,7 @@ async function groupOfTen() {
     }, 'VB9: no vertical.advisor and no setting for the inactive days; only high_value pct / min bills are tunable');
     refusedShop = A;
     await groupOfTen();
+    await stopByReply();
   } finally { await pg.end(); }
   finish('marketing-truth', process.env.MARKETING_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('marketing truth could not run:', e && e.message); process.exit(2); });

@@ -33,6 +33,7 @@ async function dbq(sql, p) {
   }
   if (/FROM party_contact_pref WHERE owner_entity_id = \$1 AND party_id = \$2 AND channel/.test(sql)) return { rows: world.prefs.filter((r) => r.party_id === p[1] && r.channel === p[2] && r.purpose === p[3]) };
   if (/MAX\(created_at\) AS last_in FROM capture/.test(sql)) { const keyed = /right\(/.test(sql), c = world.captures.filter((x) => (keyed ? last9(x.sender_ref) === p[1] : x.sender_ref === p[1])); return { rows: [{ last_in: c.length ? c[0].created_at : null }] }; }
+  if (/^SELECT country, display_name FROM identities/.test(sql)) return { rows: [{ country: 'IN', display_name: 'Test shop' }] };   /* CON-2: an offer reads the shop's opt-out line */
   if (/FROM channel_binding/.test(sql)) return { rows: [world.binding] };
   if (/FROM capture c LEFT JOIN channel_binding/.test(sql)) return { rows: world.captures.filter((c) => c.chit_id === p[1]) };
   if (/INSERT INTO channel_outbound/.test(sql)) { world.logged.push({ status: p[6], reason: p[7] }); return { rows: [{ id: 'o1', status: p[6], reason: p[7] }] }; }
