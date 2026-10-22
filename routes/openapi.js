@@ -1,9 +1,14 @@
 /**
  * /api/openapi.json — ONE CONTRACT FOR THE SERVICES: offers · pricing · tax · invoice · keys. Each service route carries
  * its own fragment (router.openapi = { paths, schemas }) beside the code it describes, and this assembles them.
+ * OWNS      the assembled /api/openapi.json (fragments + the Problem schema).
+ * CALLED BY server.js (mounted at /api) · tools/api-register.cjs (assemble).
+ * FLOW      each route file's router.openapi → assemble() → paths + schemas → JSON
+ * CARD      28-platform-and-operations/api-standard
  */
 const express = require('express');
 const router = express.Router();
+const { PROBLEM_SCHEMA } = require('../lib/problem');
 
 function assemble(req) {
   const base = process.env.PUBLIC_API_BASE || req.protocol + '://' + req.get('host');
@@ -11,7 +16,7 @@ function assemble(req) {
     (item) => item.openapi || { paths: {}, schemas: {} }
   );
   const paths = Object.assign({}, ...parts.map((item) => item.paths || {}));
-  const schemas = Object.assign({}, ...parts.map((item) => item.schemas || {}));
+  const schemas = Object.assign({ Problem: PROBLEM_SCHEMA }, ...parts.map((item) => item.schemas || {})); /* S1: every fragment's refusals $ref this one body */
   return {
     openapi: '3.0.3',
     info: {

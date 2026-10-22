@@ -19,15 +19,9 @@ const API = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-limiter-paths';
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 
-/* ── database: nothing answers ─────────────────────────────────────────────────────────────────────────────── */
-const q = async () => ({ rows: [], rowCount: 0 });
-const tx = { query: q };
-const dbPath = require.resolve(path.join(API, 'db'));
-require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
-  query: q, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) },
-  withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx),
-  readBatch: async () => ({}), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
-} };
+/* ── database: nothing answers (the one stub, tools/load-app.cjs) ────────────────────────────────────────────── */
+const { stubDatabase, loadApp, leavesOf } = require(path.join(API, 'tools', 'load-app.cjs'));
+stubDatabase();
 
 /* ── tag every limiter the code builds, so the walk can tell a limiter from any other middleware ─────────────── */
 const rlPath = require.resolve('express-rate-limit', { paths: [API] });
@@ -38,48 +32,15 @@ Object.assign(tagged, realRL);
 tagged.rateLimit = tagged; tagged.default = tagged;
 require.cache[rlPath].exports = tagged;
 
-/* ── server.js, without listening ──────────────────────────────────────────────────────────────────────────── */
-const express = require('express');
-express.application.listen = function () { return { close() {} }; };
-const warn = console.log; console.log = () => {};
-let app;
-try { app = require(path.join(API, 'server.js')); } finally { console.log = warn; }
+/* ── server.js, without listening (tools/load-app.cjs) ───────────────────────────────────────────────────────── */
+const app = loadApp();
 
 const isGlobal = (fn) => !!fn.__limiter && /Please try again in 15 minutes/.test(JSON.stringify(fn.__limiter.message || ""));   // the blanket /api one
 const GUARD_NAME = /^(auth|customerAuth|requireScope|admin|requireAdmin|authenticate|verifyToken|requireAuth|authed|requireRole)$/;
 const guardish = (fn) => fn.__guard || GUARD_NAME.test(fn.name || '');
 
-/* mount path of a router layer, from its regexp (express 4) */
-const BS = String.fromCharCode(92);
-function mountOf(layer) {
-  if (layer.regexp && layer.regexp.fast_slash) return '';
-  let s = layer.regexp.source; if (s[0] === '^') s = s.slice(1);
-  const tail = BS + '/?(?=' + BS + '/|$)'; const k = s.indexOf(tail); if (k >= 0) s = s.slice(0, k);
-  s = s.split(BS + '/').join('/').split(BS).join('');
-  return s;
-}
-
-/** every leaf route, with the ordered middleware in front of it: [{method, path, chain:[fn...]}] */
-const leaves = [];
-(function walk(stack, prefix, chain) {
-  let running = chain.slice();
-  for (const layer of stack) {
-    if (layer.route) {
-      const rp = layer.route.path;
-      if (typeof rp !== 'string') continue;   // regex / array paths: none are public doors here (asserted below)
-      const fns = layer.route.stack.map((l) => l.handle);
-      const methods = Object.keys(layer.route.methods).filter((m) => layer.route.methods[m]);
-      methods.forEach((m) => leaves.push({ method: m.toUpperCase(), path: (prefix + (rp === '/' ? '' : rp)) || '/', chain: running.concat(fns.slice(0, -1)),
-                                         handler: fns[fns.length - 1], scoped: layer.route.stack.length }));
-    } else if (layer.name === 'router' && layer.handle.stack) {
-      walk(layer.handle.stack, prefix + mountOf(layer), running.slice());
-    } else {
-      // a plain middleware: applies to later routes only if its mount covers them — record with its mount
-      const fn = layer.handle; const mt = mountOf(layer);
-      running = running.concat([{ fn, mount: mt, layer, prefix }]);
-    }
-  }
-})(app._router.stack, '', []);
+/** every leaf route, with the ordered middleware in front of it: [{method, path, chain:[fn...]}] (the walk is tools/load-app.cjs leavesOf) */
+const leaves = leavesOf(app);
 
 /* a chain entry is either a bare fn (route-level) or a {fn, mount} wrapper (use-level) */
 const norm = (e) => (typeof e === 'function' ? { fn: e, always: true } : e);

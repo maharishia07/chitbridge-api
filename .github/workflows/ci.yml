@@ -134,6 +134,38 @@ jobs:
       - name: docs/SEAMS.md has not drifted (node .side/chitbridge-web/tools/seams.cjs --check --repo api)
         run: node .side/chitbridge-web/tools/seams.cjs --check --repo api
 
+  api-standard:
+    # API-1 (API-STANDARD S15/S16, 22 Oct 2026): the API REGISTER equals what the code says, a route this PR adds or changes meets the standard, and the count of
+    # routes not meeting it only goes down. No database: server.js is loaded offline (tools/load-app.cjs). Needs the full history to unpack the base ref.
+    name: api-standard (register + ratchet — no DB)
+    runs-on: ubuntu-latest
+    needs: guards
+    timeout-minutes: 10
+    env:
+      CB_ENGINES_ABSENT_OK: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: register equals the code (docs/API-REGISTER.md, api-register.json, ERROR-CODES.md)
+        run: node tools/api-register.cjs --check
+      - name: ratchet (a PR labelled hotfix records dated debt instead)
+        env:
+          HOTFIX: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') }}
+        run: |
+          git fetch origin main --depth=1000 || true
+          if [ "$HOTFIX" = "true" ]; then node tools/api-ratchet.cjs --base origin/main --hotfix; else node tools/api-ratchet.cjs --base origin/main; fi
+      - name: the register as an artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-register
+          path: docs/api-register.json
+
   pr-checklist:
     # ⭐ READ-GUARD (DISCIPLINES §6): a PR's body carries the §6 checklist WITH NUMBERS (.github/pull_request_template.md), filled from
     # `node ../chitbridge-web/tools/readability.cjs --changed --repo api --root . --ratchet --md`. ONE reader for both repos: the web's

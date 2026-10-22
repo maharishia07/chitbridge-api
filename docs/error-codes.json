@@ -1,0 +1,1427 @@
+{
+ "generated_from": "docs/ERROR-CODES.md",
+ "columns": [
+  "code",
+  "status",
+  "title",
+  "shopkeeper",
+  "hint",
+  "owner_area",
+  "since"
+ ],
+ "codes": [
+  {
+   "code": "ADVICE_EXISTS",
+   "status": "404/409",
+   "title": "Advice exists",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ALL_REFUSED",
+   "status": "varies",
+   "title": "All refused",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "marketing-results",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ALL_SENT",
+   "status": "varies",
+   "title": "All sent",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ALREADY_PAID",
+   "status": "409",
+   "title": "Already paid",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ALREADY_REVERSED",
+   "status": "409",
+   "title": "Already reversed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "AMBIGUOUS_NAME",
+   "status": "409",
+   "title": "Ambiguous name",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "signin",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ASSIST_GATED",
+   "status": "varies",
+   "title": "Assist gated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ASSIST_SIGN_IN",
+   "status": "503",
+   "title": "Assist sign in",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "AUTO_TOKEN",
+   "status": "varies",
+   "title": "Auto token",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "auth",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "BAD_PERIOD",
+   "status": "400",
+   "title": "Bad period",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "till-summary",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "BAD_PHONE",
+   "status": "400",
+   "title": "Bad phone",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "counters",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "BILL_NOT_RECORDED",
+   "status": "varies",
+   "title": "Bill not recorded",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "till",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "BODY_TOO_LARGE",
+   "status": "413",
+   "title": "Too large",
+   "shopkeeper": "What you sent is too big to accept.",
+   "hint": "Send less at a time.",
+   "owner_area": "api",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "BOOKS_BAD_REQUEST",
+   "status": "varies",
+   "title": "Books bad request",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "BOOKS_NOT_MIGRATED",
+   "status": "404/503",
+   "title": "Books not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CAPABILITY_OFF",
+   "status": "varies",
+   "title": "Capability off",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "connectors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CATALOGUE_STORE_MISSING",
+   "status": "503",
+   "title": "Catalogue store missing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CHIT_NOT_DELIVERED",
+   "status": "503",
+   "title": "Chit not delivered",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "connectors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CHOOSE_IDENTITY",
+   "status": "409",
+   "title": "Choose identity",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "signin",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CLAIM_RECORDED",
+   "status": "409",
+   "title": "Claim recorded",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "reward-store",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CONFIRM_REMOVE",
+   "status": "400",
+   "title": "Confirm remove",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "actors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CONSENT_UNREADABLE",
+   "status": "varies",
+   "title": "Consent unreadable",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "whatsapp-out",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CONTAINER_STORE_MISSING",
+   "status": "403/503",
+   "title": "Container store missing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "COST_BLIND",
+   "status": "varies",
+   "title": "Cost blind",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "cost",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "COUNTER_CLOSED",
+   "status": "401",
+   "title": "Counter closed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "auth",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "COUNTER_HELD",
+   "status": "varies",
+   "title": "Counter held",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "counters",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "COUNTRY_SETUP_PENDING",
+   "status": "varies",
+   "title": "Country setup pending",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "country-setup",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "COVER_CONFLICT",
+   "status": "varies",
+   "title": "Cover conflict",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "actors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CRM_NOT_MIGRATED",
+   "status": "503",
+   "title": "Crm not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "crm",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CURRENCY_ENTITY_ONLY",
+   "status": "403",
+   "title": "Currency entity only",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "entities",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CURRENCY_MALFORMED",
+   "status": "varies",
+   "title": "Currency malformed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "govresolve",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "CURRENCY_NOT_ALLOWED",
+   "status": "varies",
+   "title": "Currency not allowed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "govresolve",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "DEVICE_MISMATCH",
+   "status": "401",
+   "title": "Device mismatch",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "auth",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "DEVICE_REVOKED",
+   "status": "401/403",
+   "title": "Device revoked",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "person-session",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "DEVICE_TO_REFUSED",
+   "status": "varies",
+   "title": "Device to refused",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "connectors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "DISPUTES_NOT_SET_UP",
+   "status": "varies",
+   "title": "Disputes not set up",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "chits",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "DISPUTE_TARGET_NOT_PARTY",
+   "status": "400",
+   "title": "Dispute target not party",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "chits",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "DSP",
+   "status": "varies",
+   "title": "Dsp",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "folder-inventory",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "DUPLICATE_PARTY",
+   "status": "409",
+   "title": "Duplicate party",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "relationships",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+   "status": "varies",
+   "title": "Email delivery not configured",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "employee-code",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "EMAIL_TAKEN",
+   "status": "varies",
+   "title": "Email taken",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "actors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "EMPLOYEE_EMAIL_REQUIRED",
+   "status": "varies",
+   "title": "Employee email required",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "employee-code",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "FOLDER_IS_VIEW",
+   "status": "400",
+   "title": "Folder is view",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "folders",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "FOLDER_WRONG_SIDE",
+   "status": "varies",
+   "title": "Folder wrong side",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "folders",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "FX_RATE_MISSING",
+   "status": "varies",
+   "title": "Fx rate missing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "forms",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "FX_RATE_OF_DAY",
+   "status": "varies",
+   "title": "Fx rate of day",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "forms",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "HANDOFF_STORE_MISSING",
+   "status": "503",
+   "title": "Handoff store missing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDEMPOTENCY_CONFLICT",
+   "status": "422",
+   "title": "Idempotency conflict",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "idempotency",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDEMPOTENCY_IN_PROGRESS",
+   "status": "409",
+   "title": "Idempotency in progress",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "idempotency",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDOC_CONSENT_REQUIRED",
+   "status": "400",
+   "title": "Idoc consent required",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "identity-docs",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDOC_EMPLOYER_ONLY",
+   "status": "403",
+   "title": "Idoc employer only",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "identity-docs",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDOC_NOT_CODE_VERIFIED",
+   "status": "varies",
+   "title": "Idoc not code verified",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "iddoc-verify",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDOC_NOT_FOUND",
+   "status": "404",
+   "title": "Idoc not found",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "identity-docs",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDOC_NOT_MIGRATED",
+   "status": "503",
+   "title": "Idoc not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "identity-docs",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDOC_NO_CODE",
+   "status": "400",
+   "title": "Idoc no code",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "iddoc-verify",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IDOC_VALUE_UNAVAILABLE",
+   "status": "varies",
+   "title": "Idoc value unavailable",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "iddoc-verify",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "INR",
+   "status": "varies",
+   "title": "Inr",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "locale.browser",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "INTERNAL",
+   "status": "500",
+   "title": "Something went wrong",
+   "shopkeeper": "Something went wrong on our side. Try again in a moment.",
+   "hint": "If it keeps happening, tell us the request id.",
+   "owner_area": "api",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "INVALID_KEY_REQUEST",
+   "status": "400",
+   "title": "Key request not valid",
+   "shopkeeper": "That key cannot be made as asked.",
+   "hint": "Pick a listed kind, and revoke a key if you have twenty.",
+   "owner_area": "keys",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "IN_USE",
+   "status": "409",
+   "title": "In use",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "schemas",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "KEY_CANNOT_MANAGE_KEYS",
+   "status": "403",
+   "title": "A key cannot manage keys",
+   "shopkeeper": "A key cannot make or remove keys. Sign in as a person.",
+   "hint": "Sign in to the shop and do it there.",
+   "owner_area": "keys",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "KEY_CANNOT_SIGN_IN",
+   "status": "403",
+   "title": "Key cannot sign in",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "signin",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "KEY_NOT_FOUND",
+   "status": "404",
+   "title": "Key not found",
+   "shopkeeper": "There is no key with that id in this shop.",
+   "hint": "Refresh the list of keys.",
+   "owner_area": "keys",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "KEY_UNKNOWN",
+   "status": "401",
+   "title": "Key unknown",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "connectors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "LAB_CHIT_LIVE_SHOP",
+   "status": "409",
+   "title": "Lab chit live shop",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "chits",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "LEADS_NOT_MIGRATED",
+   "status": "503",
+   "title": "Leads not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "crm",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "LOCKED",
+   "status": "409",
+   "title": "Locked",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "schemas",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "MAX_TASKS_OVER_ENTITY",
+   "status": "varies",
+   "title": "Max tasks over entity",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "actors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "MIGRATION",
+   "status": "409",
+   "title": "Migration",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "schemas",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "MKT_NOT_MIGRATED",
+   "status": "varies",
+   "title": "Mkt not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "channels",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "MSG_ABOVE_CEILING",
+   "status": "409",
+   "title": "Msg above ceiling",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "folders",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "MSG_FIXED",
+   "status": "409",
+   "title": "Msg fixed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "folders",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NAME_THE_PERSON",
+   "status": "400",
+   "title": "Name the person",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "actors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NETWORK_ORDERS_OFF",
+   "status": "403",
+   "title": "Network orders off",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "catalogue",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOTIF_DISMISS_NOT_MIGRATED",
+   "status": "503",
+   "title": "Notif dismiss not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "notifications",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_BOARD_WRITER",
+   "status": "403",
+   "title": "Not board writer",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "testing",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_FOR_COUNTRY",
+   "status": "varies",
+   "title": "Not for country",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "integrations",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_FOUND",
+   "status": "404",
+   "title": "Not found",
+   "shopkeeper": "We could not find that.",
+   "hint": "Check the address or the name and try again.",
+   "owner_area": "api",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_PAIRED",
+   "status": "varies",
+   "title": "Not paired",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_PLATFORM",
+   "status": "403",
+   "title": "Platform only",
+   "shopkeeper": "That kind of key is made by the platform, not by a shop.",
+   "hint": "Pick one of the kinds listed.",
+   "owner_area": "keys",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_PLATFORM_ROOT",
+   "status": "403",
+   "title": "Not platform root",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "platformroot",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_THIS_NETWORK",
+   "status": "403",
+   "title": "Not this network",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "catalogue",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_WRITTEN",
+   "status": "varies",
+   "title": "Not written",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "signin-events",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_YET",
+   "status": "varies",
+   "title": "Not yet",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "integrations",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_YET_FOR_COUNTRY",
+   "status": "varies",
+   "title": "Not yet for country",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "integrations",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_ACCOUNT",
+   "status": "varies",
+   "title": "No account",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "signin",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_BUYERS",
+   "status": "varies",
+   "title": "No buyers",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "marketing-results",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_CONSENT",
+   "status": "varies",
+   "title": "No consent",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "marketing-results",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_COUNTRY",
+   "status": "400/422",
+   "title": "No country",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_COUNTRY_PACK",
+   "status": "varies",
+   "title": "No country pack",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "country-setup",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_DEVICE",
+   "status": "400",
+   "title": "No device",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "person-session",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_KEY",
+   "status": "401",
+   "title": "No key",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "connectors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_MONEY",
+   "status": "422",
+   "title": "No money",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "catalogue-view",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_PHONE",
+   "status": "varies",
+   "title": "No phone",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "crm-groups",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_PLATFORM_ROOT",
+   "status": "404",
+   "title": "No platform root",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "platformroot",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_SENDS",
+   "status": "varies",
+   "title": "No sends",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "marketing-results",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_SHOP_COPY",
+   "status": "varies",
+   "title": "No shop copy",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_SUCH_NETWORK",
+   "status": "400/404",
+   "title": "No such network",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "catalogue",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_TEMPLATE",
+   "status": "varies",
+   "title": "No template",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "marketing-results",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "NO_TOKEN",
+   "status": "varies",
+   "title": "No token",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "marketing-results",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "OFFER_CLASH",
+   "status": "409",
+   "title": "Offer clash",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "offer-clash",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "OFFLINE",
+   "status": "varies",
+   "title": "Offline",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "OK",
+   "status": "varies",
+   "title": "Ok",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "crm-groups",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ORIGIN_NOT_ALLOWED",
+   "status": "403",
+   "title": "Origin not allowed",
+   "shopkeeper": "This address is not allowed to call the service.",
+   "hint": "Use the shop app, or ask us to allow your address.",
+   "owner_area": "platform",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "OTP_EXPIRED",
+   "status": "400/429",
+   "title": "Otp expired",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "iddoc-verify",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "OTP_LOCKED",
+   "status": "400/429",
+   "title": "Otp locked",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "iddoc-verify",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "OVER_LIMIT",
+   "status": "409",
+   "title": "Over limit",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "chits",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "OWNER_ONLY",
+   "status": "403",
+   "title": "Owner only",
+   "shopkeeper": "Only the owner can do this.",
+   "hint": "Ask the owner of the shop to do it.",
+   "owner_area": "people",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "PACK_NO_FILE",
+   "status": "404/409",
+   "title": "Pack no file",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "PAGE_UNKNOWN",
+   "status": "varies",
+   "title": "Page unknown",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "mint",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "PENETRATION_STORE_MISSING",
+   "status": "503",
+   "title": "Penetration store missing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "PERIOD_LOCKED",
+   "status": "409",
+   "title": "Period locked",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "PHONE_DELIVERY_NOT_CONFIGURED",
+   "status": "varies",
+   "title": "Phone delivery not configured",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "iddoc-verify",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "PIN",
+   "status": "varies",
+   "title": "Pin",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "country",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "PLATFORM_BOUND",
+   "status": "varies",
+   "title": "Platform bound",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "entities",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "POPULATION_BOUNDARY",
+   "status": "409",
+   "title": "Test and live cannot mix",
+   "shopkeeper": "A test business cannot trade with a real one.",
+   "hint": "Use a test counterparty.",
+   "owner_area": "rail",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "QTY_OK",
+   "status": "varies",
+   "title": "Qty ok",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "line-guard",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "REGION_STORE_MISSING",
+   "status": "403/404/503",
+   "title": "Region store missing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "REPEAT_NOT_MIGRATED",
+   "status": "varies",
+   "title": "Repeat not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "REQUEST_TIMEOUT",
+   "status": "503",
+   "title": "Request timeout",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "limits",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "REQUIRED",
+   "status": "409",
+   "title": "Required",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "schemas",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ROOT_HANDLE_NEEDED",
+   "status": "varies",
+   "title": "Root handle needed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "network-build-run",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ROOT_HANDLE_TAKEN",
+   "status": "varies",
+   "title": "Root handle taken",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "network-build-run",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "ROOT_HANDLE_UNUSABLE",
+   "status": "varies",
+   "title": "Root handle unusable",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "network-build-run",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SENDING",
+   "status": "varies",
+   "title": "Sending",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SESSION_EXPIRED",
+   "status": "401",
+   "title": "Session expired",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "person-session",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SESSION_NOT_LISTED",
+   "status": "503",
+   "title": "Session not listed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "identity-auth",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SESSION_UPGRADE",
+   "status": "varies",
+   "title": "Session upgrade",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "auth",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SHOP_REFUSING",
+   "status": "varies",
+   "title": "Shop refusing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SIGN_IN",
+   "status": "403",
+   "title": "Sign in",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "crm",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SIGN_IN_FIRST",
+   "status": "401/409",
+   "title": "Sign in first",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "catalogue",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SOURCE_STORE_MISSING",
+   "status": "503",
+   "title": "Source store missing",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "assist",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SRA_NOT_MIGRATED",
+   "status": "503",
+   "title": "Sra not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "governance",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "STATEMENT_TIMEOUT",
+   "status": "503",
+   "title": "Took too long",
+   "shopkeeper": "This took too long and was stopped.",
+   "hint": "Try again; if it keeps happening, tell us.",
+   "owner_area": "platform",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "STORAGE_FULL",
+   "status": "varies",
+   "title": "Storage full",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SUSPENSE_NOT_NIL",
+   "status": "409",
+   "title": "Suspense not nil",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "SWITCHED_OFF",
+   "status": "400/404",
+   "title": "Switched off",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "actors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TASKS_TO_ROUTE",
+   "status": "400",
+   "title": "Tasks to route",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "actors",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TAX_FAILED",
+   "status": "500",
+   "title": "Tax failed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "tax",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TAX_ID_BAD",
+   "status": "varies",
+   "title": "Tax id bad",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "profile",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TERMS_NOT_MIGRATED",
+   "status": "503",
+   "title": "Terms not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TILL_CLAIM_MISMATCH",
+   "status": "varies",
+   "title": "Till claim mismatch",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "holder",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TILL_SEND_REFUSED",
+   "status": "403",
+   "title": "Till send refused",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "chits",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TILL_SERIES_COLLISION",
+   "status": "varies",
+   "title": "Till series collision",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "chits",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "TOKEN_INVALID",
+   "status": "401",
+   "title": "Token invalid",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "auth",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "USER_ID_ENTITY_ONLY",
+   "status": "403",
+   "title": "User id entity only",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "entities",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "USER_ID_IMMUTABLE",
+   "status": "409",
+   "title": "User id immutable",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "entities",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "USER_ID_INVALID",
+   "status": "400",
+   "title": "User id invalid",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "entities",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "USER_ID_TAKEN",
+   "status": "409",
+   "title": "User id taken",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "entities",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "VAULT_ENC_UNCONFIGURED",
+   "status": "503",
+   "title": "Vault enc unconfigured",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "identity-docs",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "VAULT_VERSION_REQUIRED",
+   "status": "varies",
+   "title": "Vault version required",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "governance",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "VIEW_ONLY",
+   "status": "varies",
+   "title": "View only",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "crm-groups",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "VISIBILITY_NOT_MIGRATED",
+   "status": "409",
+   "title": "Visibility not migrated",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "entities",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "WORKBOOK_CUT",
+   "status": "varies",
+   "title": "Workbook cut",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "products",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "WRITER_THREW",
+   "status": "varies",
+   "title": "Writer threw",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "signin-events",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "WRONG_SCOPE",
+   "status": "varies",
+   "title": "Wrong scope",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "YEAR_CLOSED",
+   "status": "409",
+   "title": "Year closed",
+   "shopkeeper": "PENDING",
+   "hint": "-",
+   "owner_area": "books",
+   "since": "2026-10-22"
+  }
+ ]
+}

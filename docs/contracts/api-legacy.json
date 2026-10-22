@@ -1,0 +1,189 @@
+{
+ "_about": "API-STANDARD S2/S14 (slice 1a): the legacy keys each route answered BEFORE the standard, frozen. A Problem body adds fields beside these and never changes them. Recorded from the code before the change (tests/api-problem.test.cjs --capture); tests/api-problem.test.cjs replays every answer and compares status and keys. The generator copies a route entry into its OpenAPI operation as x-legacy-keys. A route drops its entry only when the web repo no longer reads any of its keys and cb-api has signed backward_compatible.",
+ "routes": {
+  "GET /api/keys": {
+   "answers": [
+    {
+     "scenario": "get-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "A key cannot manage keys — sign in."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "A key cannot manage keys — sign in."
+     }
+    },
+    {
+     "scenario": "get-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/keys": {
+   "answers": [
+    {
+     "scenario": "post-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "A key cannot manage keys — sign in."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "A key cannot manage keys — sign in."
+     }
+    },
+    {
+     "scenario": "post-not-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "why": "Only the owner can make a key.",
+      "message": "Only the owner can make a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can make a key.",
+      "message": "Only the owner can make a key."
+     }
+    },
+    {
+     "scenario": "post-platform-kind",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "why": "NOT_PLATFORM",
+      "message": "A testing key is the platform's to make, not a shop's."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "A testing key is the platform's to make, not a shop's."
+     }
+    },
+    {
+     "scenario": "post-bad-scope",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scopes must include one of: services, offers, pricing, tax, invoice, till, connector, testing"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scopes must include one of: services, offers, pricing, tax, invoice, till, connector, testing"
+     }
+    },
+    {
+     "scenario": "post-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "note": "S8: this answer used to echo err.message (the database error text); the frozen message is now the generic sentence every other 500 on the route already used"
+    }
+   ]
+  },
+  "DELETE /api/keys/:jti": {
+   "answers": [
+    {
+     "scenario": "delete-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "A key cannot manage keys — sign in."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "A key cannot manage keys — sign in."
+     }
+    },
+    {
+     "scenario": "delete-not-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "why": "Only the owner can revoke a key.",
+      "message": "Only the owner can revoke a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can revoke a key.",
+      "message": "Only the owner can revoke a key."
+     }
+    },
+    {
+     "scenario": "delete-no-such-key",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "delete-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  }
+ },
+ "global": {
+  "server-404": {
+   "handler": "ANY (404 handler)",
+   "status": 404,
+   "body_keys": {
+    "error": "Not found",
+    "message": "GET /nothing-here does not exist"
+   },
+   "fixture": {
+    "error": "Not found",
+    "message": "GET /nothing-here does not exist"
+   }
+  },
+  "server-error-handler": {
+   "handler": "ANY (error handler)",
+   "status": 500,
+   "body_keys": {
+    "error": "Server error",
+    "message": "Something went wrong"
+   },
+   "fixture": {
+    "error": "Server error",
+    "message": "Something went wrong"
+   }
+  }
+ }
+}
