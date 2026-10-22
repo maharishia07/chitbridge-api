@@ -57,7 +57,7 @@ async function captured(fn) {
   row = rowOf();
   const wrong = await otp.verifyOtp(fakeRun(row), row, SECRET + 'x');
   t('a wrong code is refused (400 OTP_WRONG) and counted', wrong.ok === false && wrong.status === 400 && wrong.reason === 'OTP_WRONG' && row.otp_attempts === 1);
-  t('a locked account stays locked even for the tester code', (await otp.verifyOtp(fakeRun(row), rowOf({ otp_attempts: 5 }), SECRET)).status === 429);
+  t('a locked account stays locked even for the tester code', (await otp.verifyOtp(fakeRun(row), rowOf({ otp_attempts: 5 }), SECRET)).status === 400); // SEC-81: a locked account answers like a wrong code (no 429, no 'locked')
   env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, DEV_OTP: '1' }); ({ dev, otp } = load());
   t('TESTER_CODE unset → no tester code works', dev.testerCodeOk(SECRET) === false && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET)).ok === false);
   env({ TESTER_CODE: '1234567' }); ({ dev } = load());
