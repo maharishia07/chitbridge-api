@@ -311,6 +311,15 @@ const firstDiff = (a, b) => {
       t(sc.id.padEnd(28) + ' ' + sc.old.join(' ').slice(0, 44), !!g && same(strip(OLD[sc.id]), g), g ? firstDiff(strip(OLD[sc.id]), g) : 'no golden');
     }
 
+    say('\n-- 1b - SEC-81: an unknown account, a wrong secret and a locked account get ONE answer (same status, same body, no count, no "locked") --');
+    const REFUSED_IDS = ['ask.unknown.email', 'ask.unknown.name', 'verify.unknown', 'verify.entity.wrong', 'verify.entity.wrong.x6', 'verify.actor.pin.wrong.x5',
+      'verify.actor.locked', 'login.noentity', 'login.noactor', 'login.pin.wrong.x6', 'login.otp.wrong', 'login.locked', 'login.removed'];
+    const last = (id) => OLD[id].responses[OLD[id].responses.length - 1];
+    const safeAnswer = JSON.stringify(last('verify.unknown'));
+    REFUSED_IDS.forEach((id) => t(id.padEnd(28) + ' answers the one safe sentence', JSON.stringify(last(id)) === safeAnswer, JSON.stringify(last(id))));
+    t('  ...400, code SIGNIN_REFUSED, and the sentence has no digit, no "lock", no "remaining", no "not found"',
+      last('verify.unknown').status === 400 && last('verify.unknown').body.code === 'SIGNIN_REFUSED' && !/\d|lock|remain|left|not found|no account/i.test(last('verify.unknown').body.message));
+
     say('\n── 2 · alias parity: the same request through the new door gives the same answer and the same rows ──');
     for (const sc of S.filter((x) => x.neu)) {
       const n = withoutAdded(await run(sc, 'neu'), OLD[sc.id]);
@@ -331,7 +340,7 @@ const firstDiff = (a, b) => {
     say('\n── 3 · what the new door adds, and what it never does ──');
     reset();
     let r = await call('POST', '/api/signin/ask', { body: { email: 'nobody@x.test' } });
-    t('ask never creates: an unknown e-mail with no mode → 400 NO_ACCOUNT, no INSERT', r.status === 400 && r.body.code === 'NO_ACCOUNT' && INSERTS.length === 0);
+    t('ask never creates: an unknown e-mail with no mode → 400 SIGNIN_REFUSED, no INSERT', r.status === 400 && r.body.code === 'SIGNIN_REFUSED' && INSERTS.length === 0);
     r = await call('POST', '/api/signin/ask', { body: { id: 'shopone' } });
     t('ask takes a user id as { id }: entity → need code', r.status === 200 && r.body.need === 'code' && r.body.kind === 'entity');
     r = await call('POST', '/api/signin/ask', { body: { id: 'ravi@shopone.br' } });

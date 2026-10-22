@@ -147,7 +147,7 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     v = await verify('9000000001', { pin: '4826' });
     t('   ⭐ the PIN signs him in BY MOBILE (no .br typed) and does not ask again', v.status === 200 && claims(v.body.token).identity_id === 'bala' && !v.body.requires_pin_setup, v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     a = await ask('bala@mail.test');
-    t('⚠️ an UNVERIFIED e-mail document opens nothing (M18): no account', a.status === 400 && a.body.code === 'NO_ACCOUNT', a.status + ' ' + JSON.stringify(a.body));
+    t('⚠️ an UNVERIFIED e-mail document opens nothing (M18): no account', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
     DOCS.find((d) => d.scheme === 'EMAIL').status = 'verified'; DOCS.find((d) => d.scheme === 'EMAIL').verified_at = 'NOW';
     a = await ask('Bala@Mail.test');
     t('   verified, the same e-mail finds him (case-insensitively)', a.status === 200 && a.body.id === 'bala@mayuri123.br' && a.body.need === 'pin', JSON.stringify(a.body));
@@ -186,23 +186,23 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     a = await call('POST', '/api/entities/register', { display_name: 'athi@mayur.test', email: 'athi@mayur.test', mode: 'login' });
     t('the old door by e-mail: 200, and no kind/need/id leak onto it', a.status === 200 && !('kind' in a.body) && !('id' in a.body), JSON.stringify(a.body));
     a = await ask('nobody@nowhere.test');
-    t('an unknown e-mail: NO_ACCOUNT, nothing created', a.status === 400 && a.body.code === 'NO_ACCOUNT' && Object.keys(DB).length === 5, a.status + ' ' + JSON.stringify(a.body));
+    t('an unknown e-mail: SIGNIN_REFUSED, nothing created', a.status === 400 && a.body.code === 'SIGNIN_REFUSED' && Object.keys(DB).length === 5, a.status + ' ' + JSON.stringify(a.body));
     a = await ask('9999999999');
-    t('an unknown mobile: NO_ACCOUNT', a.status === 400 && a.body.code === 'NO_ACCOUNT', a.status + ' ' + JSON.stringify(a.body));
+    t('an unknown mobile: SIGNIN_REFUSED', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
     reset(); DOCS_TABLE = false;
     a = await ask('athi@mayur.test');
     t('⚠️ identity_documents not migrated yet: the owner still signs in by e-mail (the document lookup is skipped, not a 500)', a.status === 200 && a.body.id === 'mayuri123', a.status + ' ' + JSON.stringify(a.body));
     a = await ask('9000000001');
-    t('   …and a mobile is simply not found yet (no crash)', a.status === 400 && a.body.code === 'NO_ACCOUNT', a.status + ' ' + JSON.stringify(a.body));
+    t('   …and a mobile is simply not found yet (no crash)', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
 
     say('\n── M202 · a shop-named door adds the @shop behind the scenes ──');
     reset();
     a = await call('POST', '/api/signin/ask', { id: 'bala', shop: 'mayuri123' });
     t('a bare short id + the shop the counter names → found (need code, first day)', a.status === 200 && a.body.kind === 'actor' && a.body.need === 'code' && a.body.id === 'bala@mayuri123.br', a.status + ' ' + JSON.stringify(a.body));
     a = await ask('bala');
-    t('the same short id with NO shop context → not found (never guessed across shops)', a.status === 400 && a.body.code === 'NO_ACCOUNT', a.status + ' ' + JSON.stringify(a.body));
+    t('the same short id with NO shop context → not found (never guessed across shops)', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
     a = await call('POST', '/api/signin/ask', { id: 'bala', shop: 'alpha-timers' });
-    t('…and named at ANOTHER shop → not found there', a.status === 400 && a.body.code === 'NO_ACCOUNT', a.status + ' ' + JSON.stringify(a.body));
+    t('…and named at ANOTHER shop → not found there', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
     a = await call('POST', '/api/signin/ask', { id: '9876543210', shop: 'alpha-timers' });
     t('a mobile still goes by its contact with a shop named (asked which, as before)', a.status === 409 && a.body.code === 'CHOOSE_IDENTITY', a.status + ' ' + JSON.stringify(a.body));
     a = await call('POST', '/api/signin/ask', { id: 'athi@mayur.test', shop: 'alpha-timers' });
