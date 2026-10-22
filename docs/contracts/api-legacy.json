@@ -302,6 +302,19 @@
      }
     },
     {
+     "scenario": "norder-no-currency",
+     "status": 422,
+     "body_keys": {
+      "error": "No money",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     },
+     "fixture": {
+      "error": "No money",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     },
+     "note": "ORD-65 (2026-10-23): new answer. Before, deliverEdge called NO_CURRENCY_SAYS() on a string and the operator with no currency got a 500."
+    },
+    {
      "scenario": "norder-fails",
      "status": 500,
      "body_keys": {

@@ -653,9 +653,11 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
   // the denomination of the same order is exactly the dispute the rail exists to prevent.
   /* N1: a currency nobody stated is REFUSED in words (NO_MONEY), never defaulted by name - the callers resolve it once with regional.currencyFor */
   if (!currency) {
-    const refusal = new Error(regional.NO_CURRENCY_SAYS());
+    /* ORD-65: NO_CURRENCY_SAYS is the sentence itself (a string), not a function - calling it threw a TypeError, a 500 instead of these words */
+    const refusal = new Error(regional.NO_CURRENCY_SAYS);
     refusal.status = 422;
     refusal.code = 'NO_MONEY';
+    refusal.title = 'No money';
     refusal.refused = true;
     throw refusal;
   }

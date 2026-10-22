@@ -88,6 +88,7 @@ const FRESH = {
   treeFails: false,
   items: [],
   operator: true,
+  noCurrency: false,
   view: { available: true, shop: { name: 'Shop S' } },
   orderInput: { pipeline: 'commerce' },
   notifyFails: false,
@@ -135,7 +136,7 @@ function rowsFor(sql) {
   /* the code is spent once, on the order's own transaction (lib/otp spendShopperOtp: one row back = spent now) */
   if (/AND otp_code = \$2 RETURNING identity_id/.test(s)) return [{ identity_id: BUYER_ID }];
   /* the operator's governed money (lib/regional currencyFor) */
-  if (/SELECT currency_code, country FROM identities WHERE identity_id = \$1/.test(s)) return [{ currency_code: 'INR', country: 'IN' }];
+  if (/SELECT currency_code, country FROM identities WHERE identity_id = \$1/.test(s)) return world.noCurrency ? [{ currency_code: null, country: null }] : [{ currency_code: 'INR', country: 'IN' }];
   if (/FROM catalogue_adoption/.test(s) && world.adoptionFails) throw new Error(SECRET_SQL);
   if (/FROM catalogue_items/.test(s)) {
     if (world.itemsFail) throw new Error(SECRET_SQL);
@@ -318,6 +319,16 @@ const SCENARIOS = [
     url: C + '/network-store/shop-s/order',
     status: 409,
     setup: Object.assign({ operator: false, items: [{ item_id: ITEM_ID, entity_id: MEMBER_ID, item_data: { name: 'Rice', price: 10 } }] }, NETWORK_ON),
+    headers: IN_NETWORK,
+    body: { items: [{ product_id: ITEM_ID }] }
+  },
+  {
+    /* ORD-65: an operator whose money nobody stated is refused in words (422 NO_MONEY), never a 500 */
+    id: 'norder-no-currency',
+    route: 'POST /api/catalogue/network-store/:networkId/order',
+    url: C + '/network-store/shop-s/order',
+    status: 422,
+    setup: Object.assign({ noCurrency: true, items: [{ item_id: ITEM_ID, entity_id: MEMBER_ID, item_data: { name: 'Rice', price: 10 } }] }, NETWORK_ON),
     headers: IN_NETWORK,
     body: { items: [{ product_id: ITEM_ID }] }
   },
