@@ -118,24 +118,26 @@ async function stopByReply() {
   const r = ok(await j('/api/products', { method: 'POST', token: S.token, body: { item_data: { name: 'Rice', unit: 'piece', price: 60 } } }), 'product').b;
   const P = { id: r.item.item_id, name: 'Rice', unit: 'piece', price: 60 };
   const people = [];
-  for (const [tag, phone] of [['a', '9876541111'], ['b', '+91 98765 41111'], ['c', '9876542222']]) {
+  for (const [tag, phone] of [['a', '9876541111'], ['b', '9876543333'], ['c', '9876542222']]) {
     const l = ok(await j('/api/crm/leads', { method: 'POST', token: S.token, body: { name: 'Stop ' + tag, phone } }), 'lead').b.party, b = bill(RUN + 'st' + tag, [[P, 1]]);
     b.business_json.customer = { name: l.display_name, party_id: l.party_id, identity_id: l.party_id };
     ok(await j('/api/chits/send', { method: 'POST', token: S.token, body: b }), 'bill');
     people.push({ id: l.party_id, name: l.display_name, phone });
   }
   await pause(1500);
+  /* ARM (SQL): the CRM refuses a second lead on one number (409 EXISTS), so the family phone is made here - b's number is written the other way round */
+  await pg.query('UPDATE identities SET phone = $2 WHERE identity_id = $1', [people[1].id, '+91 98765 41111']);
   ok(await j('/api/crm/groups', { method: 'POST', token: S.token, body: { name: 'stop3', add: people.map((x) => x.id) } }), 'group');
   for (const x of people) await pref(S, x.id, true);
-  const ours = '9199' + String(Date.now() % 1e8).padStart(8, '0');
+  const ours = '+9199' + String(Date.now() % 1e8).padStart(8, '0');   /* a binding's address is stored as +digits (channels.normalise) */
   await pg.query("INSERT INTO channel_binding (entity_id, channel, address, status, verified_at, provider_ref) VALUES ($1, 'whatsapp', $2, 'verified', now(), 'LOCAL-PHONE-ID')", [S.entity, ours]);
   const deliver = async () => {
     const body = JSON.stringify({ entry: [{ changes: [{ value: { metadata: { display_phone_number: ours }, messages: [{ id: 'wamid.' + RUN, from: '919876541111', type: 'text', text: { body: 'STOP' } }] } }] }] });
     const signature = 'sha256=' + require('crypto').createHmac('sha256', secret).update(body).digest('hex');
     return fetch(H.API + '/api/capture/webhook/whatsapp', { method: 'POST', headers: { 'x-hub-signature-256': signature }, body });
   };
-  const stopRows = async () => (await pg.query("SELECT party_id, channel, allowed, withdrawn_at, source, source_ref FROM party_contact_pref WHERE owner_entity_id = $1 AND purpose = 'marketing' AND allowed = false", [S.entity]).catch(() => ({ rows: [] }))).rows;
   const hasSource = (await pg.query("SELECT 1 FROM information_schema.columns WHERE table_name = 'party_contact_pref' AND column_name = 'source'")).rows.length > 0;
+  const stopRows = async () => (await pg.query("SELECT party_id, channel, allowed, withdrawn_at" + (hasSource ? ', source, source_ref' : '') + " FROM party_contact_pref WHERE owner_entity_id = $1 AND purpose = 'marketing' AND allowed = false", [S.entity])).rows;
   const first = await deliver();
   await pause(1500);
   const afterStop = await stopRows();
@@ -153,7 +155,7 @@ async function stopByReply() {
     const sayings = offerRows.filter((x) => shared.includes(x.party_id)).map((x) => x.reason);
     const hers = offerRows.find((x) => x.party_id === people[2].id);
     expect(first.status === 200 && second.status === 200, 'the signed webhook answered ' + first.status + ' / ' + second.status);
-    expect(afterStop.length === 4 && shared.every((id) => ['whatsapp', 'sms'].every((c) => afterStop.some((x) => x.party_id === id && x.channel === c && x.withdrawn_at))), 'withdrawal rows ' + JSON.stringify(afterStop));
+    expect(afterStop.length === 4 && shared.every((id) => afterStop.some((x) => x.party_id === id && x.channel === 'whatsapp' && x.withdrawn_at) && afterStop.some((x) => x.party_id === id && x.channel === 'sms')), 'withdrawal rows (whatsapp = a WITHDRAWAL of the yes; sms = a standing no) ' + JSON.stringify(afterStop));
     expect(!hasSource || afterStop.every((x) => x.source === 'reply' && x.source_ref === cap[0].id), 'b777 is in: every row is source reply with the capture id ' + JSON.stringify(afterStop[0]));
     expect(refusedIds(dry.refused).join() === shared.slice().sort().join() && refusedIds(real.refused).join() === shared.slice().sort().join() && dry.may === 1, 'dry refused ' + JSON.stringify(dry.refused) + ' · may ' + dry.may);
     expect(sayings.length === 2 && sayings.every((s) => (hasSource ? /replied STOP/ : /withdrew/).test(s)), 'receipts say ' + JSON.stringify(sayings));

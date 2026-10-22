@@ -26,7 +26,7 @@ const handle = { query: async (sql, p) => {
 } };
 stub('db', { query: handle.query, withEntity: async (o, fn) => fn(handle), readBatch: async () => [] });
 stub('lib/schema', { hasColumn: async () => world.migrated, hasTable: async () => true });
-stub('lib/privacy', { gate: async () => world.gate });
+stub('lib/privacy', { gate: async () => world.gate, shopFacts: async () => ({ country: 'IN', name: 'Shop' }), lawOf: () => ({ optout: { line: 'Reply STOP to stop offers.' } }), OPTOUT_LINE: 'Reply STOP to stop offers.' });   /* CON-2: an offer reads the shop's opt-out line */
 const WA = require('../lib/whatsapp-out.js'), CH = require('../lib/channels.js');
 const inserts = () => world.calls.filter((c) => /^INSERT INTO channel_outbound/.test(c.sql));
 

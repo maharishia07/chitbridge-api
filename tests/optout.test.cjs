@@ -97,6 +97,9 @@ const reply = (text, from) => ({ sender_ref: from || '919840012345', text, captu
     assert.strictEqual(verdict.may, false); assert.strictEqual(verdict.code, 'CONSENT_WITHDRAWN'); assert.ok(/replied STOP on 2026-10-22/.test(verdict.why), verdict.why);
     assert.ok(privacy.mayMessage(rowsOf(ANNA, 'whatsapp').slice().reverse(), 'whatsapp', 'service').may, 'service is untouched');
   });
+  await t('the group send reads the same label: the list statement reads `source` whether or not b777 has run (to_jsonb: NULL before it, no extra query)', async () => {
+    assert.ok(/to_jsonb\(party_contact_pref\)->>'source' AS source/.test(privacy.LATEST_SQL(false)) && /AS source_ref/.test(privacy.LATEST_SQL(true)));
+  });
   await t('a party found only through an earlier offer sent to that number is withdrawn too', async () => {
     reset(); const seen = []; const query = handle.query;
     handle.query = async (sql, p) => { const text = String(sql).replace(/\s+/g, ' '); if (/^SELECT cl\.customer_identity_id/.test(text)) { seen.push(text); return { rows: [{ party_id: ANNA }, { party_id: LONE }] }; } return query(sql, p); };
