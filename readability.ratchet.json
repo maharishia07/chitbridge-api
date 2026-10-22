@@ -90,7 +90,7 @@
   "lib/groupsum.js": {"score":15,"long40":1,"long80":1,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":10,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/handle.js": {"score":22,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":18,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "lib/holder.js": {"score":8,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "lib/home-facts.js": {"score":100,"long40":4,"long80":0,"complex10":8,"complex15":5,"deep3":0,"deep4":0,"cryptic":80,"noWhatLine":3,"emptyCatch":0,"noHeader":0},
+  "lib/home-facts.js": {"score":99,"long40":4,"long80":0,"complex10":8,"complex15":5,"deep3":0,"deep4":0,"cryptic":79,"noWhatLine":3,"emptyCatch":0,"noHeader":0},
   "lib/iddoc-verify.js": {"score":17,"long40":1,"long80":0,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/identity-auth.js": {"score":37,"long40":2,"long80":0,"complex10":4,"complex15":3,"deep3":1,"deep4":1,"cryptic":23,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
   "lib/identity.js": {"score":13,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":10,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
