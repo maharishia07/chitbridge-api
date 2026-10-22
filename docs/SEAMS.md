@@ -23,16 +23,16 @@ of file each thing is; this says what already does the job.
 | 60 | `here` | `screen-id.js` |  |
 | 56 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 56 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
+| 55 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 54 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 54 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
 | 47 | `again` | `signin-ui.js` |  |
 | 45 | `entry` | `books-store.js` |  |
+| 45 | `next` | `dayopen.js` | the next thing to do — |
 | 45 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 44 | `next` | `dayopen.js` | the next thing to do — |
 | 43 | `read` | `cap-print.js` |  |
 | 43 | `pack` | `books-store.js` |  |
 | 40 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
