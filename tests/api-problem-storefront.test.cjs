@@ -114,7 +114,7 @@ function keyStatement(s, params) {
     return [{ idem_key: params[1] }];
   }
   if (/^UPDATE/.test(s)) Object.assign(keyRows.get(slot(params[1])) || {}, { state: 'done', status: params[2], response: JSON.parse(params[3]) });
-  if (/^DELETE/.test(s)) keyRows.delete(slot(params[1]));
+  if (/^DELETE/.test(s) && !/idem_key <>/.test(s)) keyRows.delete(slot(params[1])); /* a sweep never takes the row being recorded */
   return [];
 }
 

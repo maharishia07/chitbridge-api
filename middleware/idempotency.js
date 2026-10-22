@@ -31,6 +31,9 @@ const DEFAULT_WINDOW_HOURS = 48;
 /* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
    after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
 const IN_PROGRESS_STALE_MINUTES = Number(process.env.IDEMPOTENCY_STALE_MINUTES || 10);
+/* SEC (laptop1, 23 Oct): a recorded answer that carries a token (order/confirm signs the shopper in) is a session if it is kept.
+   It replays for this many minutes, long enough for a retry after a lost answer; recording a new one sweeps the shop's older ones. */
+const TOKEN_REPLAY_MINUTES = Number(process.env.IDEMPOTENCY_TOKEN_MINUTES || 15);
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
@@ -75,6 +78,14 @@ function fingerprint(req) {
   }
 }
 
+/** carriesToken(body) → true when a recorded answer holds a token, a signed-in session */
+function carriesToken(body) {
+  return Boolean(body && typeof body === 'object' && body.token);
+}
+/* the shop's other token answers past their replay minutes: deleted, so no session is kept in the store */
+const SWEEP_OLD_TOKENS = `DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key <> $2 AND response ? 'token'
+   AND created_at < now() - ($3 || ' minutes')::interval`;
+
 /* ── the durable store: idempotency_key (b109), one row per (entity, key), inside the entity's RLS ── */
 const dbStore = {
   async begin(entity, key, req, hash, windowHrs) {
@@ -82,9 +93,10 @@ const dbStore = {
       const found = await db.query(
         `SELECT idem_key, req_hash, state, status, response,
                 (created_at < now() - ($2 || ' hours')::interval
-                 OR (state = 'in_progress' AND created_at < now() - ($4 || ' minutes')::interval)) AS expired
+                 OR (state = 'in_progress' AND created_at < now() - ($4 || ' minutes')::interval)
+                 OR (response ? 'token' AND created_at < now() - ($5 || ' minutes')::interval)) AS expired
            FROM idempotency_key WHERE entity_id = $1 AND idem_key = $3`,
-        [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES)]
+        [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES), String(TOKEN_REPLAY_MINUTES)]
       );
       if (found.rows[0] && !found.rows[0].expired) return { existing: found.rows[0] };
       if (found.rows[0]) await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [entity, key]); // expired → reclaim
@@ -114,10 +126,20 @@ const dbStore = {
           status,
           JSON.stringify(body == null ? null : body)
         ]);
+        if (carriesToken(body)) await db.query(SWEEP_OLD_TOKENS, [entity, key, String(TOKEN_REPLAY_MINUTES)]);
       }
     });
   }
 };
+
+/** may a key held in memory still answer? Not once its window is over, a crashed request has gone stale, or a token answer is past its minutes */
+function stillAnswers(held, windowHrs) {
+  if (!held) return false;
+  const heldFor = Date.now() - held.at;
+  if (held.state === 'in_progress' && heldFor > IN_PROGRESS_STALE_MINUTES * MINUTE_MS) return false;
+  if (carriesToken(held.response) && heldFor > TOKEN_REPLAY_MINUTES * MINUTE_MS) return false;
+  return heldFor <= windowHrs * HOUR_MS;
+}
 
 /* ── the store-off memory: the same contract, per process, bounded, forgotten after the window ── */
 const unverified = new Map(); /* (entity + '\n' + key) → { at, req_hash, state, status, response } */
@@ -125,8 +147,7 @@ const memoryStore = {
   async begin(entity, key, req, hash, windowHrs) {
     const memoryKey = entity + '\n' + key,
       held = unverified.get(memoryKey);
-    const staleInProgress = held && held.state === 'in_progress' && Date.now() - held.at > IN_PROGRESS_STALE_MINUTES * MINUTE_MS;
-    if (held && !staleInProgress && Date.now() - held.at <= windowHrs * HOUR_MS) return { existing: held };
+    if (stillAnswers(held, windowHrs)) return { existing: held };
     if (held) unverified.delete(memoryKey); // expired → reclaim
     if (unverified.size >= UNVERIFIED_MEMORY_MAX) unverified.delete(unverified.keys().next().value); // the oldest is forgotten
     unverified.set(memoryKey, { at: Date.now(), req_hash: hash, state: 'in_progress', status: null, response: null });
@@ -253,4 +274,5 @@ module.exports._stable = stable;
 module.exports._scope = scope;
 module.exports._memory = memoryStore;
 module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
+module.exports.TOKEN_REPLAY_MINUTES = TOKEN_REPLAY_MINUTES;
 module.exports.UNVERIFIED_MEMORY_MAX = UNVERIFIED_MEMORY_MAX;

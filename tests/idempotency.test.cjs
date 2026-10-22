@@ -29,7 +29,7 @@ const dbStub = {
       if (/^\s*SELECT/.test(sql)) return { rows: storeRows[slot] ? [Object.assign({ expired: false }, storeRows[slot])] : [] };
       if (/INSERT/.test(sql)) { if (storeRows[slot]) return { rows: [] }; storeRows[slot] = { idem_key: params[1], req_hash: params[4], state: 'in_progress', status: null, response: null }; return { rows: [{ idem_key: params[1] }] }; }
       if (/UPDATE/.test(sql)) { Object.assign(storeRows[slot], { state: 'done', status: params[2], response: JSON.parse(params[3]) }); return { rows: [] }; }
-      if (/DELETE/.test(sql)) { delete storeRows[slot]; return { rows: [] }; }
+      if (/DELETE/.test(sql) && !/idem_key <>/.test(sql)) { delete storeRows[slot]; return { rows: [] }; }
       return { rows: [] };
     } });
   },
@@ -210,6 +210,31 @@ const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.lengt
     assert.ok(other.ran); assert.strictEqual(conflict.status, 422);
     assert.deepStrictEqual([conflict.body.code, conflict.body.error, conflict.body.status], ['IDEMPOTENCY_CONFLICT', 'Idempotency conflict', 422]);
     assert.ok(conflict.body.message && conflict.body.detail === conflict.body.message);
+  });
+  /* ── SEC (laptop1, 23 Oct): an answer that carries a token replays for TOKEN_REPLAY_MINUTES, then is no longer kept ── */
+  await ita('SEC · a token answer replays within 15 minutes and not after (memory store); a tokenless one keeps the full window', async () => {
+    reset(); storeError = new Error('boom');
+    assert.strictEqual(idempotency.TOKEN_REPLAY_MINUTES, 15);
+    await send({ key: 'tok', answer: { status: 200, body: { token: 't', chit_id: 'c' } } });
+    await send({ key: 'plain', answer: { status: 200, body: { chit_id: 'c' } } });
+    assert.strictEqual((await send({ key: 'tok' })).ran, false, 'within the minutes: the retry is the recorded answer');
+    const realNow = Date.now; Date.now = () => realNow() + (idempotency.TOKEN_REPLAY_MINUTES + 1) * 60000;
+    try {
+      assert.strictEqual((await send({ key: 'tok' })).ran, true, 'past them: the token is not replayed, the request runs as new');
+      assert.strictEqual((await send({ key: 'plain' })).ran, false, 'an answer without a token still replays');
+    } finally { Date.now = realNow; }
+  });
+  await ita('SEC · the durable store: the expiry carries the token term, and recording a token answer sweeps the shop\'s older ones', async () => {
+    reset();
+    await send({ key: 'tok-db', answer: { status: 200, body: { token: 't' } } });
+    const select = stmts.find((q) => /^\s*SELECT/.test(q) && /expired/.test(q));
+    assert.ok(/response \? 'token' AND created_at < now\(\) - \(\$5 \|\| ' minutes'\)/.test(select), 'a token answer expires on the minutes');
+    const sweep = stmts.find((q) => /DELETE FROM idempotency_key/.test(q) && /idem_key <> \$2/.test(q));
+    assert.ok(sweep && /response \? 'token'/.test(sweep), 'older token answers of this shop are deleted');
+    assert.ok(storeRows['shop-1\ntok-db'], 'the answer just recorded stays for its retry');
+    reset();
+    await send({ key: 'plain-db', answer: { status: 200, body: { chit_id: 'c' } } });
+    assert.ok(!stmts.some((q) => /idem_key <>/.test(q)), 'no sweep when the answer carries no token');
   });
   await ita('no empty catch in middleware/idempotency.js and no console.* — the logger says what the person sees instead', async () => {
     const src = fs.readFileSync(path.join(API, 'middleware', 'idempotency.js'), 'utf8');
