@@ -68,6 +68,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | IDOC_VALUE_UNAVAILABLE | varies | Idoc value unavailable | PENDING | - | iddoc-verify | 2026-10-22 |
 | INR | varies | Inr | PENDING | - | locale.browser | 2026-10-22 |
 | INTERNAL | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | api | 2026-10-22 |
+| INVALID_INPUT | 422 | Input not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send it again. | validate | 2026-10-22 |
 | INVALID_KEY_REQUEST | 400 | Key request not valid | That key cannot be made as asked. | Pick a listed kind, and revoke a key if you have twenty. | keys | 2026-10-22 |
 | IN_USE | 409 | In use | PENDING | - | schemas | 2026-10-22 |
 | KEY_CANNOT_MANAGE_KEYS | 403 | A key cannot manage keys | A key cannot make or remove keys. Sign in as a person. | Sign in to the shop and do it there. | keys | 2026-10-22 |
@@ -79,6 +80,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LOCKED | 409 | Locked | PENDING | - | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | varies | Max tasks over entity | PENDING | - | actors | 2026-10-22 |
 | MIGRATION | 409 | Migration | PENDING | - | schemas | 2026-10-22 |
+| MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
 | MKT_NOT_MIGRATED | varies | Mkt not migrated | PENDING | - | channels | 2026-10-22 |
 | MSG_ABOVE_CEILING | 409 | Msg above ceiling | PENDING | - | folders | 2026-10-22 |
 | MSG_FIXED | 409 | Msg fixed | PENDING | - | folders | 2026-10-22 |
@@ -166,5 +168,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | WORKBOOK_CUT | varies | Workbook cut | PENDING | - | products | 2026-10-22 |
 | WRITER_THREW | varies | Writer threw | PENDING | - | signin-events | 2026-10-22 |
 | WRONG_SCOPE | varies | Wrong scope | PENDING | - | verdict | 2026-10-22 |
+| WRONG_VALUE | 422 | Field not valid | A field has a value of the wrong kind. | Use the kind of value the field asks for. | validate | 2026-10-22 |
 | YEAR_CLOSED | 409 | Year closed | PENDING | - | books | 2026-10-22 |
 <!-- codes:end -->

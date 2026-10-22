@@ -30,6 +30,7 @@ const { ownerOnly } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const policy = require('../lib/policy'); // T2-POLICY: the one writer of policy_flags (patchKey)
 
 /* ⚠️ ASKED, NOT REMEMBERED. This was its own array, so a scope added to the guard was mintable by nobody and a scope removed
@@ -90,6 +91,61 @@ function scopesFor(req) {
    counter mid-sale by revoking its key, while changing the counters themselves was already owner-only. The list says it as `may`. */
 const owner = require('../lib/owner');
 const REVOKE_SAYS = 'Only the owner can revoke a key.';
+/* ── the contract: each route's OpenAPI operation, the ONE source the register, the contract tests, schemaValidate and /api/openapi.json share (S9) ── */
+const refused = problemResponse;
+const KEY_RECORD = {
+  type: 'object',
+  required: ['jti', 'name', 'scopes', 'created_at', 'expires_at', 'last4'],
+  properties: { jti: { type: 'string' }, name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string' } }, created_at: { type: 'string' }, expires_at: { type: 'string' }, last4: { type: 'string' } }
+};
+const json = (schema) => ({ 'application/json': { schema } });
+const MINT_OPERATION = {
+  summary: 'Mint an API key (session only)',
+  tags: ['keys'],
+  security: [{ bearer: [] }],
+  requestBody: {
+    content: json({
+      type: 'object',
+      description: 'scopes are some of: ' + [].concat(SCOPES || []).join(', ') + ' (a kind the shop may not make is refused with 403)',
+      properties: { name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string' } }, days: { type: 'integer' } }
+    })
+  },
+  responses: {
+    201: { description: 'the key, shown once', content: json({ type: 'object', required: ['key', 'note'].concat(KEY_RECORD.required), properties: Object.assign({ key: { type: 'string' }, note: { type: 'string' } }, KEY_RECORD.properties) }) },
+    400: refused('the request cannot be made into a key'),
+    401: refused('no or bad credentials'),
+    403: refused('a key, a co-assist or a shop asking for a platform kind'),
+    500: refused('a fault of ours')
+  }
+};
+const LIST_OPERATION = {
+  summary: 'List keys (session only)',
+  tags: ['keys'],
+  security: [{ bearer: [] }],
+  responses: {
+    200: { description: 'keys', content: json({ type: 'object', required: ['keys', 'scopes', 'may'], properties: { keys: { type: 'array', items: { type: 'object' } }, scopes: { type: 'array', items: { type: 'string' } }, may: { type: 'object', required: ['revoke'], properties: { revoke: { type: 'boolean' } } } } }) },
+    401: refused('no or bad credentials'),
+    403: refused('a key cannot list keys'),
+    500: refused('a fault of ours')
+  }
+};
+const REVOKE_OPERATION = {
+  summary: 'Revoke a key (session only)',
+  tags: ['keys'],
+  security: [{ bearer: [] }],
+  parameters: [{ name: 'jti', in: 'path', required: true, schema: { type: 'string', minLength: 1 } }],
+  responses: {
+    200: { description: 'revoked', content: json({ type: 'object', required: ['message', 'jti'], properties: { message: { type: 'string' }, jti: { type: 'string' } } }) },
+    401: refused('no or bad credentials'),
+    403: refused('a key or a co-assist cannot revoke'),
+    404: refused('no such key in this shop'),
+    422: refused('the key id is missing'),
+    500: refused('a fault of ours')
+  }
+};
+/* an outward route keeps its old refusal (400 and its frozen body) until its next major (S2, S13): the schema answers it, never a silent 422 */
+const MINT_REFUSAL = { status: 400, code: 'INVALID_KEY_REQUEST', legacy: (failures) => ({ error: 'validation', message: failures[0].detail }) };
+
 router.get('/', auth, sessionOnly, async (req, res) => {
   /* ⭐ SET-WALK1 · W15: `scopes` = the kinds THIS login may mint — 'testing' (a build posts test results to the board) is the platform role's
      only (lib/platformroot.isPlatform); a shop owner never sees it. The web offers exactly this list (cap-settings.js keyKinds); mint() refuses the rest. */
@@ -648,7 +704,7 @@ function platformScopeRefusal(req, askedScopes) {
   };
 }
 /* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
-router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), async (req, res) => {
+router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), schemaValidate(MINT_OPERATION, MINT_REFUSAL), async (req, res) => {
   try {
     const b = req.body || {};
     const refusal = platformScopeRefusal(req, b.scopes);
@@ -664,7 +720,7 @@ router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'),
 
 /* ⚠️ FOR UPDATE, same reason as mint() and setEnrol() — a revoke racing a mint on the same list must not have
    whichever save() lands second resurrect the key the other request just removed, or drop the one it just added. */
-router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), async (req, res) => {
+router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), schemaValidate(REVOKE_OPERATION), async (req, res) => {
   /* L1: the owner gate, see GET / above */
   try {
     const entity_id = auth.entityOf(req);
@@ -689,46 +745,7 @@ router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), async (req, r
   }
 });
 
-/* each refusal this route can answer, declared as the Problem body (S9) — the register checks the list against the statuses the handlers write */
-const refused = problemResponse;
-router.openapi = {
-  paths: {
-    '/api/keys': {
-      post: {
-        summary: 'Mint an API key (session only)',
-        tags: ['keys'],
-        security: [{ bearer: [] }],
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: { name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string', enum: SCOPES } }, days: { type: 'integer' } }
-              }
-            }
-          }
-        },
-        responses: { 201: { description: 'the key, shown once' }, 400: refused('the request cannot be made into a key'), 401: refused('no or bad credentials'), 403: refused('a key, a co-assist or a shop asking for a platform kind'), 500: refused('a fault of ours') }
-      },
-      get: {
-        summary: 'List keys (session only)',
-        tags: ['keys'],
-        security: [{ bearer: [] }],
-        responses: { 200: { description: 'keys' }, 401: refused('no or bad credentials'), 403: refused('a key cannot list keys'), 500: refused('a fault of ours') }
-      }
-    },
-    '/api/keys/{jti}': {
-      delete: {
-        summary: 'Revoke a key (session only)',
-        tags: ['keys'],
-        security: [{ bearer: [] }],
-        parameters: [{ name: 'jti', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'revoked' }, 401: refused('no or bad credentials'), 403: refused('a key or a co-assist cannot revoke'), 404: refused('no such key in this shop'), 500: refused('a fault of ours') }
-      }
-    }
-  },
-  schemas: {}
-};
+router.openapi = { paths: { '/api/keys': { post: MINT_OPERATION, get: LIST_OPERATION }, '/api/keys/{jti}': { delete: REVOKE_OPERATION } }, schemas: {} };
 module.exports = router;
 /* ⚠️ ONE MINT, REACHED BY NAME. Pairing (routes/till.js) hands out a screen key, and it must be the SAME mint the keys screen
    uses — expiry, listing on the entity, the jti bookkeeping. A second mint would be a second set of rules about what a key is. */

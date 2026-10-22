@@ -83,7 +83,7 @@ of file each thing is; this says what already does the job.
 | 24 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 24 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 24 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
-| 24 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
+| 25 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 24 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 24 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 23 | `call` | `cap-assist.js` |  |
@@ -171,7 +171,7 @@ of file each thing is; this says what already does the job.
 | 13 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 13 | `orders` | `home-facts.js` | the till said 2 — |
 | 13 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
-| 13 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 14 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 13 | `report` | `raida.js` | register at the one moment it must not. |
 | 12 | `units` | `cart.js` |  |
 | 12 | `group` | `cart.js` | A heading's control adds ONE of each — |
@@ -180,7 +180,7 @@ of file each thing is; this says what already does the job.
 | 12 | `stored` | `one-person.js` |  |
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `update` | `folder-rules.js` |  |
-| 12 | `where` | `istest.js` | READING is_test is fine and stays — |
+| 13 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 12 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
 | 11 | `close` | `avatar.js` |  |

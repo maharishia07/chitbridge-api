@@ -1,6 +1,12 @@
 // middleware/validate.js — Input validation helpers
 // CALLED BY routes/actors.js, routes/catalogue.js, routes/chits.js, routes/connections.js, routes/connectors.js (+4 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+// FLOW      route's OpenAPI operation → schemaValidate(operation) → ajv over its body and url schemas → next() | 422 Problem listing every field at fault
+// CARD      28-platform-and-operations/api-standard
+// API-1 slice 1b (API-STANDARD S9, S4): schemaValidate(operation) checks a request against the route's OWN OpenAPI schema (ajv) and answers a refusal that lists EVERY field at fault.
+// express-validator chains and validate() keep working for the routes that have not moved yet.
 const { validationResult } = require('express-validator');
+const Ajv2020 = require('ajv/dist/2020');
+const { problem } = require('../lib/problem');
 
 // Check validation results and return errors if any
 const validate = (req, res, next) => {
@@ -26,4 +32,83 @@ const sanitise = (str) => {
     .substring(0, 1000); // max length
 };
 
-module.exports = { validate, sanitise };
+/* one engine for the body (exact types: a number is not a string) and one for the URL (a query value is always text, so "5" may be the integer 5) */
+const AJV_OPTIONS = { allErrors: true, strict: false, allowUnionTypes: true };
+const bodyEngine = new Ajv2020(AJV_OPTIONS);
+const urlEngine = new Ajv2020(Object.assign({ coerceTypes: true }, AJV_OPTIONS));
+const DEFAULT_REFUSAL = { status: 422, code: 'INVALID_INPUT' };
+const BODY_SENTENCE = 'Some of what was sent is missing or not valid.';
+
+/** the JSON body schema of an OpenAPI operation, or null when it takes none */
+const bodySchemaOf = (operation) => {
+  const content = operation && operation.requestBody && operation.requestBody.content;
+  return (content && content['application/json'] && content['application/json'].schema) || null;
+};
+
+/** the path and query parameters of an OpenAPI operation as one object schema, or null when it has none */
+const urlSchemaOf = (operation) => {
+  const given = ((operation && operation.parameters) || []).filter((item) => item.in === 'path' || item.in === 'query');
+  if (!given.length) return null;
+  const properties = {};
+  given.forEach((item) => { properties[item.name] = item.schema || {}; });
+  return { type: 'object', properties, required: given.filter((item) => item.required).map((item) => item.name) };
+};
+
+/** the field an ajv error is about: the missing property for "required", else the path to the bad value (a.b.0 style) */
+const fieldOf = (failure) => {
+  const where = failure.instancePath.split('/').filter(Boolean);
+  if (failure.keyword === 'required') where.push(failure.params.missingProperty);
+  return where.join('.') || '(body)';
+};
+
+/** the plain sentence for one failure: what is wrong with which field */
+const sentenceOf = (failure, field) => {
+  if (failure.keyword === 'required') return field + ' is needed.';
+  if (failure.keyword === 'type') return field + ' must be ' + (Array.isArray(failure.params.type) ? failure.params.type.join(' or ') : 'a ' + failure.params.type) + '.';
+  if (failure.keyword === 'enum') return field + ' must be one of: ' + failure.params.allowedValues.join(', ') + '.';
+  return field + ' ' + failure.message + '.';
+};
+
+/** errorsOf(validator, value) → [] when the value fits the schema, else one {field, code, detail} per field at fault (every one, not the first) */
+function errorsOf(validator, value) {
+  if (validator(value)) return [];
+  const seen = new Set();
+  return validator.errors
+    .map((failure) => {
+      const field = fieldOf(failure);
+      const kind = failure.keyword === 'required' ? { code: 'MISSING_FIELD' } : { code: 'WRONG_VALUE' };
+      return { field, code: kind.code, detail: sentenceOf(failure, field) };
+    })
+    .filter((item) => !seen.has(item.field + item.code) && seen.add(item.field + item.code));
+}
+
+/**
+ * schemaValidate(operation, options?) — express middleware. operation = the route's OpenAPI operation (requestBody + parameters).
+ * options.status/code/legacy keep an outward route on its old refusal (S2: 400 and its frozen body) until its next major; default is S4's 422 INVALID_INPUT.
+ * options.legacy(errors) → the frozen body for the first failure.
+ */
+function schemaValidate(operation, options) {
+  const choice = options || {};
+  const bodyCheck = bodySchemaOf(operation) && bodyEngine.compile(bodySchemaOf(operation));
+  const urlCheck = urlSchemaOf(operation) && urlEngine.compile(urlSchemaOf(operation));
+  /* the middleware itself: reads req.body and the url facts, lets a fitting request on, refuses the rest with every field named */
+  const schemaValidated = function schemaValidated(req, res, next) {
+    const urlFacts = Object.assign({}, req.query, req.params);
+    const failures = (urlCheck ? errorsOf(urlCheck, urlFacts) : []).concat(bodyCheck ? errorsOf(bodyCheck, req.body === undefined ? {} : req.body) : []);
+    if (!failures.length) return next();
+    return problem(req, res, {
+      status: choice.status || DEFAULT_REFUSAL.status,
+      code: choice.code || DEFAULT_REFUSAL.code,
+      detail: failures.length === 1 ? failures[0].detail : BODY_SENTENCE,
+      field: failures[0].field,
+      errors: failures,
+      legacy: choice.legacy ? choice.legacy(failures) : undefined
+    });
+  };
+  /* the register and the contract-test generator find a route's schema check by these two properties */
+  schemaValidated.schemaOperation = operation;
+  schemaValidated.schemaOptions = choice;
+  return schemaValidated;
+}
+
+module.exports = { validate, sanitise, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
