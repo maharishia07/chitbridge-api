@@ -14,10 +14,11 @@ function counter(crashAfterWrites) {
   const DB = {
     put: async (st, row) => { if (crashAfterWrites != null && writes >= crashAfterWrites) throw new Error('reload'); writes++; stores[st][row.no] = JSON.parse(JSON.stringify(row)); },
     del: async (st, key) => { delete stores[st][key]; },
+    all: async (st) => Object.keys(stores[st]).map((k) => stores[st][k]), /* rekeyCompanions (TILL-FIX2 H5) reads the queue */
   };
-  const ctx = { DB, LAST_SERIES: null, tillId: () => 'T1', nextNumber: async () => 'B' + (++issued), cbQuiet() {}, Object, Number, Date, JSON };
+  const ctx = { DB, LAST_SERIES: null, tillId: () => 'T1', nextNumber: async () => 'B' + (++issued), cbQuiet() {}, BILL_COMPANIONS: ['/reward'], Object, Number, Date, JSON };
   vm.createContext(ctx);
-  vm.runInContext(grab('renumberBill') + grab('rememberRenumber'), ctx);
+  vm.runInContext(grab('renumberBill') + grab('rememberRenumber') + grab('rekeyCompanions'), ctx);
   return { ctx, stores, issued: () => issued };
 }
 (async () => {
@@ -29,7 +30,7 @@ function counter(crashAfterWrites) {
   /* … then the page reloads: a fresh run over what IndexedDB kept. */
   const second = counter(); second.stores.bills = first.stores.bills; second.stores.queue = first.stores.queue;
   const moved = await second.ctx.renumberBill(left, 'taken again');
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(moved)), { from: 'X1', to: 'B1' }, 'the SAME number, not a second draw');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(moved)), { from: 'X1', to: 'B1', companions: [] }, 'the SAME number, not a second draw (no reward rode behind this bill)');
   assert.strictEqual(second.issued(), 0, 'no new number was drawn after the reload');
   assert.deepStrictEqual(Object.keys(second.stores.queue), ['B1']); assert.deepStrictEqual(Object.keys(second.stores.bills), ['B1']);
   assert.ok(!('renumber_to' in second.stores.queue.B1), 'the new row carries no pending stamp');

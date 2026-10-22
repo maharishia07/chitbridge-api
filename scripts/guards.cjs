@@ -393,7 +393,14 @@ const GUARDS = [
   'till-rail.test.cjs',
   'till-since-word.test.cjs',
   'till-t2d.test.cjs',
-  'till-t2j.test.cjs'
+  'till-t2j.test.cjs',
+  /* QA-80 (22 Oct): six whose expectations had gone stale (US pack, hasColumn probe, compare-and-set, N1 move, re-wrapped routes) - updated to the current truth */
+  'country-crm-shop.test.cjs',
+  'crm-viewer.test.cjs',
+  'pay-fix-renumber.test.cjs',
+  'pay-fix-void.test.cjs',
+  'std2-one-reading.test.cjs',
+  'till-t2c.test.cjs'
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
@@ -443,7 +450,8 @@ const NEEDS_ENGINES = [
   'books-todo.test.cjs',
   'books-manual-events.test.cjs',
   'books-voucher-series.test.cjs',
-  'two-sided-books.test.cjs'
+  'two-sided-books.test.cjs',
+  'pay-fix-void.test.cjs' // QA-80: runs the real chits router over the books harness
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';

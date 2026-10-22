@@ -19,7 +19,8 @@ ok('M162: lineIdOf is b142\'s cb_line_id - md5(chit:line:pos) as a uuid, positio
   assert(/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(lineIdOf(chit, null, 3)));
 });
 ok('M162: /api/till/tasks hands the till the line_id the line has in chit_line (never null for a storefront order)', () => {
-  assert(ROUTE.includes('deliverline.lineIdOf(h.chit_id, l, i + 1)') && ROUTE.includes('return { line_id,'));
+  /* the lines are built by lib/open-orders.orderLines (M168: one helper for the till and Home); till.js asks lib/open-orders.tasks */
+  assert(ROUTE.includes('deliverline.lineIdOf(chit_id, line, pos + 1)') && /return \{\s*line_id,/.test(ROUTE) && ROUTE.includes('orderLines('));
   assert(!ROUTE.includes('line_id: l.line_id || null'));
 });
 ok('M129b: an order with a despatch note against it and no movement written is not open - one read for all orders', () => {
@@ -27,7 +28,8 @@ ok('M129b: an order with a despatch note against it and no movement written is n
   assert.strictEqual((ROUTE.match(/business_json->'against'->>'chit_id' = ANY/g) || []).length, 1);
 });
 ok('M160: billing an order sets the Dine-in / Takeaway / Delivery chip to the order\'s', () => {
-  assert(PAGE.includes('setOrderKind(BILL_ORDER.kind)'));
+  /* T2f M169 (960228db): the order's kind is read for its bill only (orderKind), never written over the counter's own saved kind (setOrderKind stores only with no order) */
+  assert(PAGE.includes('function orderKind(){ return (BILL_ORDER && BILL_ORDER.kind) ||') && PAGE.includes('function setOrderKind(v){ if (!BILL_ORDER) ls.set('));
 });
 ok('M163: the keys badge is a picture and the count, named by aria-label and title - never "QK"', () => {
   assert(PAGE.includes("(QK_FULL ? '⌑' : '⊞')") && PAGE.includes('aria-label="\' + (QK_FULL ? \'All products\' : \'Quick keys\')'));

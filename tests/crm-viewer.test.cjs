@@ -89,7 +89,7 @@ const who = (identity) => t.as('E1', { identity: Object.assign({ identity_id: 'A
   const inserts = [];
   const dbPath = require.resolve(path.join(API, 'db'));
   require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
-    query: async (sql, p) => { if (/^\s*INSERT INTO identities/.test(sql)) inserts.push({ sql: String(sql).replace(/\s+/g, ' '), p }); return { rows: [] }; },
+    query: async (sql, p) => { if (/^\s*INSERT INTO identities/.test(sql)) inserts.push({ sql: String(sql).replace(/\s+/g, ' '), p }); /* lib/schema.hasColumn probes information_schema: the column is there (b173), so the INSERT names it */ return { rows: /information_schema/.test(sql) ? [{ one: 1 }] : [] }; },
     withEntity: async (_i, fn) => fn({ query: async () => ({ rows: [] }) }), trySavepoint: async (_h, fn, fb) => { try { return await fn(); } catch (_) { return fb; } } } };
   const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
   require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: Object.assign((req, res, next) => { req.identity = { identity_id: 'e1', identity_type: 'entity', display_name: 'Acme' }; next(); }, { entityOf: () => 'e1' }) };
@@ -97,7 +97,7 @@ const who = (identity) => t.as('E1', { identity: Object.assign({ identity_id: 'A
   const app = express(); app.use(express.json()); app.use('/api/actors', require(path.join(API, 'routes', 'actors')));
   const srv = app.listen(0), port = srv.address().port;
   const post = (body) => new Promise((ok, no) => { const d = JSON.stringify(body); const r = http.request({ port, path: '/api/actors', method: 'POST', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(d) } }, (res) => { let b = ''; res.on('data', (c) => (b += c)); res.on('end', () => ok({ status: res.statusCode, body: b ? JSON.parse(b) : {} })); }); r.on('error', no); r.end(d); });
-  const level = () => { const i = inserts[inserts.length - 1]; const m = i.sql.match(/entity_kind, access_level\s*\)/); assert.ok(m, 'the INSERT names access_level: ' + i.sql.slice(0, 200)); return i.p[12]; };
+  const level = () => { const i = inserts[inserts.length - 1]; const m = i.sql.match(/email, access_level, whole_entity\s*\)/); assert.ok(m, 'the INSERT names access_level: ' + i.sql.slice(0, 200)); return i.p[13]; /* $14, after PEOPLE-EMAIL's $13 */ };
   await ita('{ hat: view_only, access_level: viewer } → the row holds viewer (the walk\'s own case)', async () => { inserts.length = 0; const r = await post({ display_name: 'Vel Viewer', actor_key: 'velview', hat: 'view_only', access_level: 'viewer' }); assert.ok(r.status < 300, JSON.stringify(r.body)); assert.strictEqual(level(), 'viewer'); });
   await ita('{ hat: view_only } alone → commenter (lib/access.FROM_HAT, what the hat always meant)', async () => { inserts.length = 0; await post({ display_name: 'Old Client', actor_key: 'oldc', hat: 'view_only' }); assert.strictEqual(level(), 'commenter'); });
   await ita('{ access_level: commenter } → commenter', async () => { inserts.length = 0; await post({ display_name: 'Audit Anu', actor_key: 'anuk', access_level: 'commenter' }); assert.strictEqual(level(), 'commenter'); });
