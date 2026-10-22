@@ -5181,10 +5181,12 @@
     "sent_n": 0,
     "failed_n": 0,
     "refused_n": 2,
-    "refusals_logged": 0
+    "refusals_logged": 0,
+    "refusals_unlogged": false
    },
    "optional": [
-    "refusals_logged"
+    "refusals_logged",
+    "refusals_unlogged"
    ]
   },
   "POST /api/crm/segments/:key/send #400": {
