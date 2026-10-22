@@ -10,7 +10,7 @@
  * — and sends each bill afterwards. This route is where that copy comes from, and it is deliberately ONE request: the counter's whole
  * world in a single round trip, because the old shape (a call per fact) is what made screens slow in the first place.
  *
- *   GET /api/till/snapshot  → { at, version, shop, items, slabs, categories, face, offers, customers, policy }
+ *   GET /api/till/snapshot  → { at, version, shop, items, slabs, categories (tax), category_master, face, offers, customers, policy }
  *
  * ⚠️ IT IS A COPY, AND IT SAYS WHEN IT WAS TAKEN. Every bill records `catalogue_version`, so "what price did we sell at" has an answer
  * later instead of an argument. A shop that changes a price while the till is offline keeps selling at the snapshot's price until it
@@ -1035,11 +1035,11 @@ router.get('/snapshot', auth, async (req, res) => {
       staff,
       /**
        * ⭐⭐⭐ THE CATEGORY MASTER, ON THE COUNTER ([TILL-114]). id → name for the shop's own categories, so the
-       * relation exists locally and mapping is not a problem with the line down.
+       * relation exists locally (own key `category_master`: `categories` is the TAX categories, docs/FIELDS.md) and mapping is not a problem with the line down.
        * ⚠️ Small by nature — a shop has categories in the tens, not the thousands — so it rides every
        * snapshot rather than needing a door of its own.
        */
-      categories: catList.map((item) => ({ id: item.id, name: item.name, status: item.status })),
+      category_master: catList.map((item) => ({ id: item.id, name: item.name, status: item.status })),
       /* how many sellable products the shop has right now — the counter checks its merged copy against this (see the note above) */
       /* ⚠️ INCLUDES THE NETWORK LINES, which ride on every read: the counter compares its merged copy against this, and a
          total that left them out would make every refresh look wrong and pull the whole shop again, for ever */
@@ -1060,7 +1060,7 @@ router.get('/snapshot', auth, async (req, res) => {
        * checks produces: correct in four call sites and silently empty in the fifth.
        */
       slabs: shelf && shelf.slabs instanceof Map ? [...shelf.slabs.values()] : (shelf && shelf.slabs) || [],
-      categories: (shelf && shelf.categories) || [],
+      categories: (shelf && shelf.categories) || [] /* the TAX categories CBTax.slab.resolve reads */,
       face: (shelf && shelf.face) || {},
       customers,
       suppliers,
