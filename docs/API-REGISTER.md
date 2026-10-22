@@ -43,7 +43,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:335 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:612 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/assist/catalogue-sources | assist | routes/assist.js:195 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/assist/container/:id | assist | routes/assist.js:484 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
+| GET | /api/assist/container/:id | assist | routes/assist.js:484 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/assist/erp-handoffs | assist | routes/assist.js:496 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/assist/gaps | assist | routes/assist.js:736 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/assist/penetration | assist | routes/assist.js:581 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
@@ -89,14 +89,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/capture/stores | capture | routes/capture.js:298 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/capture/webhook/whatsapp | capture | routes/capture.js:121 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:16 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1084 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
-| GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1103 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
+| GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1084 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
+| GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1103 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/catalogue/:bridge_id/my-documents | catalogue | routes/catalogue.js:1890 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/catalogue/:bridge_id/my-orders | catalogue | routes/catalogue.js:1864 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/catalogue/:bridge_id/support/preview | catalogue | routes/catalogue.js:1179 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/catalogue/enquiry | catalogue | routes/catalogue.js:1039 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2000 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
-| GET | /api/catalogue/network-store/:networkId | catalogue | routes/catalogue.js:599 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
+| GET | /api/catalogue/network-store/:networkId | catalogue | routes/catalogue.js:599 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/catalogue/network/:bridge_id | catalogue | routes/catalogue.js:879 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/channels | channels | routes/channels.js:20 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/channels/outbound | channels | routes/channels.js:29 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -180,7 +180,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/forms/instances/all | forms | routes/forms.js:54 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/governance/ai-skills | governance | routes/governance.js:535 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/governance/ai-usage | governance | routes/governance.js:524 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
-| GET | /api/governance/boilerplate/:key | governance | routes/governance.js:230 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
+| GET | /api/governance/boilerplate/:key | governance | routes/governance.js:230 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/governance/commerce-standards | governance | routes/governance.js:354 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/governance/country-setup | governance | routes/governance.js:474 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/governance/entities/:id | governance | routes/governance.js:73 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
@@ -191,8 +191,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/governance/profile/path | governance | routes/governance.js:454 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/governance/profile/readiness | governance | routes/governance.js:445 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/governance/readiness | governance | routes/governance.js:296 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/governance/readiness/:bridge_id | governance | routes/governance.js:546 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
-| GET | /api/governance/source/:key | governance | routes/governance.js:284 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
+| GET | /api/governance/readiness/:bridge_id | governance | routes/governance.js:546 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
+| GET | /api/governance/source/:key | governance | routes/governance.js:284 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/governance/supplier-acceptance/:handle | governance | routes/governance.js:694 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
 | GET | /api/governance/track-record | governance | routes/governance.js:325 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/governance/vault-schema | governance | routes/governance.js:396 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
@@ -205,7 +205,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/integrations/profile-map | integrations | routes/integrations.js:949 | yes | no | no | no | yes | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/integrations/reconcile | integrations | routes/integrations.js:798 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/integrations/status | integrations | routes/integrations.js:687 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/integrations/stock/:handle | integrations | routes/integrations.js:924 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
+| GET | /api/integrations/stock/:handle | integrations | routes/integrations.js:924 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/integrations/streams | integrations | routes/integrations.js:718 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/invoice/:chit_id | invoice | routes/invoice.js:109 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/keys | keys | routes/keys.js:149 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -394,9 +394,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:190 | no | no | no | no | no | no | no | no | no | yes | yes | no | no | not started |
 | POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1813 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1319 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
-| POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1115 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
+| POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1115 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/catalogue/:bridge_id/support | catalogue | routes/catalogue.js:1257 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
-| POST | /api/catalogue/:bridge_id/support/start | catalogue | routes/catalogue.js:1217 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
+| POST | /api/catalogue/:bridge_id/support/start | catalogue | routes/catalogue.js:1217 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2023 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | POST | /api/catalogue/network-store/:networkId/order | catalogue | routes/catalogue.js:729 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/catalogue/photo-extract | catalogue | routes/catalogue.js:1932 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
@@ -478,7 +478,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/forms/instances/:id/attach | forms | routes/forms.js:78 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/forms/instances/:id/sign | forms | routes/forms.js:70 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/governance/ai-draft | governance | routes/governance.js:511 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/governance/boilerplate/:key/adopt | governance | routes/governance.js:242 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
+| POST | /api/governance/boilerplate/:key/adopt | governance | routes/governance.js:242 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/governance/compliance | governance | routes/governance.js:586 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/governance/conformance | governance | routes/governance.js:218 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/governance/entities | governance | routes/governance.js:102 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
@@ -489,7 +489,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/identity/documents/:scheme/code | identity-docs | routes/identity-docs.js:389 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/identity/documents/:scheme/verify | identity-docs | routes/identity-docs.js:405 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/integrations/:actor_id/approve | integrations | routes/integrations.js:603 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:903 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
+| POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:903 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/integrations/books | integrations | routes/integrations.js:640 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/integrations/books/skip | integrations | routes/integrations.js:765 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/integrations/heartbeat | integrations | routes/integrations.js:429 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |

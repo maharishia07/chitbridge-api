@@ -1112,19 +1112,11 @@
    },
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "GET /api/integrations/stock/:handle": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "GET /api/integrations/profile-map": {
@@ -2625,10 +2617,6 @@
   "GET /api/catalogue/network-store/:networkId": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/network-store/:networkId/order": {
@@ -2664,19 +2652,11 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 500"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 500, not the unknown id's 404"
    }
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/order/start": {
@@ -2687,10 +2667,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "GET /api/catalogue/:bridge_id/support/preview": {
@@ -2710,10 +2686,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/support": {
@@ -3113,10 +3085,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "the answer holds leak_canary, a column the answer schema does not list"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "POST /api/governance/boilerplate/:key/adopt": {
@@ -3126,10 +3094,6 @@
    },
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "POST /api/governance/source": {
@@ -3146,10 +3110,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "the answer holds leak_canary, a column the answer schema does not list"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "GET /api/governance/readiness": {
@@ -3261,10 +3221,6 @@
   "GET /api/governance/readiness/:bridge_id": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "POST /api/governance/compliance": {
@@ -3709,10 +3665,6 @@
   "GET /api/assist/container/:id": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 200, not the unknown id's 404"
    }
   },
   "GET /api/assist/erp-handoffs": {

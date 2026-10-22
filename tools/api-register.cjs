@@ -206,8 +206,8 @@ function outputAllowlistColumn(operation, evidence) {
   return schemas.length === 0 || (schemas.every(refusesUnknownKeys) && !!(evidence && evidence.output_allowlist === true));
 }
 
-/** foreign_id_404 (S35): a route addressed by an id needs its generated case to see another shop's id answered with the unknown id's 404; a route with no id in its path is not addressed by one */
-const foreignIdColumn = (leaf, evidence) => !leaf.path.includes(':') || !!(evidence && evidence.foreign_id_404 === true);
+/** foreign_id_404 (S35): a route addressed by an id needs its generated case to see another shop's id answered with the unknown id's 404; a route with no id in its path, or whose id is public by design (api-hardening-scope.json public_ids), is not addressed by a shop's own id */
+const foreignIdColumn = (leaf, evidence, isPublicId) => !leaf.path.includes(':') || !!isPublicId || !!(evidence && evidence.foreign_id_404 === true);
 
 /** does the operation declare an Idempotency-Key header as required, or the chain hold a requireIdempotencyKey gate */
 function requiresIdempotencyKey(operation, leaf) {
@@ -228,13 +228,13 @@ const tripsBudgetedColumn = (key, budget) => !!(budget && budget[key] && budget[
 function hardeningApplies(leaf, operation, scope) {
   const key = leaf.method + ' ' + leaf.path;
   const hasBody = !!(operation && require('../middleware/validate').bodySchemaOf(operation)) || BODY_METHODS.includes(leaf.method);
-  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':'), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
+  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !scope.publicIds.has(key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
 }
 
 /** the curated lists of docs/contracts/api-hardening-scope.json as sets */
 function hardeningScope() {
   const file = readJson('docs/contracts/api-hardening-scope.json', {});
-  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []) };
+  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})) };
 }
 
 /** a mutating route whose path reads like money but is in no list: someone must say whether it is a money write (--check fails) */
@@ -257,7 +257,7 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
     strict_input: strictInputColumn(operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
-    foreign_id_404: foreignIdColumn(leaf, evidence),
+    foreign_id_404: foreignIdColumn(leaf, evidence, scope.publicIds.has(key)),
     idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf, evidence),
     inbound_validated: inboundColumn(scope.inbound.has(key), operation, facts),
     trips_budgeted: tripsBudgetedColumn(key, budget)
