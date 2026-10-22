@@ -108,6 +108,31 @@ jobs:
             --kind unit --layer engine --label "guards ${GITHUB_SHA::7}" --build "${GITHUB_SHA::7}" --warn \
             --project "${{ vars.CB_BOARD_PROJECT }}"
 
+  seams-drift:
+    # DOC-68 (docs truth): docs/SEAMS.md is GENERATED (node C:/dev/seams.cjs --write), so a drift check fails the build the way MODULES.md does.
+    # ONE copy of the logic: seams.cjs lives in the docs repo and is run from a checkout of it (a same-named branch there wins, like the twin repos).
+    # It reads only THIS repo's checkout, so a change in the sibling repo can never turn this red. Refresh: node C:/dev/seams.cjs --write (LF checkout).
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-docs
+          token: ${{ secrets.ROUNDS_PAT }}
+          path: .side/chitbridge-docs
+      - name: Twin docs branch?
+        env:
+          B: ${{ github.head_ref || github.ref_name }}
+        run: |
+          cd .side/chitbridge-docs
+          if [ -n "$B" ] && git fetch -q origin "$B" 2>/dev/null; then git checkout -q FETCH_HEAD; echo "twin: docs branch $B"; else echo "no twin: docs default branch"; fi
+      - name: docs/SEAMS.md has not drifted (node .side/chitbridge-docs/seams.cjs --check --repo api)
+        run: node .side/chitbridge-docs/seams.cjs --check --repo api
+
   pr-checklist:
     # ⭐ READ-GUARD (DISCIPLINES §6): a PR's body carries the §6 checklist WITH NUMBERS (.github/pull_request_template.md), filled from
     # `node ../chitbridge-web/tools/readability.cjs --changed --repo api --root . --ratchet --md`. ONE reader for both repos: the web's
