@@ -17,7 +17,7 @@
    },
    "foreign_id_404": {
     "applies": 239,
-    "failing": 239
+    "failing": 162
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -74,7 +74,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -204,7 +204,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -248,7 +248,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -292,7 +292,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": false,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -336,7 +336,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -380,7 +380,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -468,7 +468,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -512,7 +512,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -600,7 +600,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -783,7 +783,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -827,7 +827,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -915,7 +915,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -1047,7 +1047,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -1177,7 +1177,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -1351,7 +1351,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -1909,7 +1909,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -4005,7 +4005,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -4313,7 +4313,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -4401,7 +4401,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -5633,7 +5633,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -5895,7 +5895,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -7343,7 +7343,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -8699,7 +8699,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -9750,7 +9750,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -10540,7 +10540,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -10672,7 +10672,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -10934,7 +10934,7 @@
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -12864,7 +12864,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -12996,7 +12996,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -13436,7 +13436,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -13612,7 +13612,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -13744,7 +13744,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -13920,7 +13920,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -16462,7 +16462,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -16506,7 +16506,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -16550,7 +16550,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -16594,7 +16594,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17236,7 +17236,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17280,7 +17280,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -17452,7 +17452,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17496,7 +17496,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17540,7 +17540,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17584,7 +17584,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17628,7 +17628,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -17672,7 +17672,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17848,7 +17848,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17980,7 +17980,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -18024,7 +18024,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -18068,7 +18068,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -18112,7 +18112,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -18596,7 +18596,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -19384,7 +19384,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -19428,7 +19428,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -20474,7 +20474,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -20914,7 +20914,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -20958,7 +20958,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -21002,7 +21002,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -21622,7 +21622,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -21666,7 +21666,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23118,7 +23118,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23250,7 +23250,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23294,7 +23294,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23338,7 +23338,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23382,7 +23382,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23426,7 +23426,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23470,7 +23470,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23514,7 +23514,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23558,7 +23558,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23602,7 +23602,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23646,7 +23646,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23866,7 +23866,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -23954,7 +23954,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -26275,7 +26275,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -26891,7 +26891,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -26979,7 +26979,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -27111,7 +27111,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -27727,7 +27727,7 @@
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true

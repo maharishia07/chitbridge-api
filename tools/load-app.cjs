@@ -10,21 +10,26 @@ const path = require('path');
 const API = path.join(__dirname, '..');
 const BACKSLASH = String.fromCharCode(92);
 
-/** (root: another checkout of the api, e.g. the base of a PR; default this one) a database nothing answers: no rows, a transaction that runs its function. Installed in the require cache BEFORE server.js loads. */
-function stubDatabase(root) {
-  const answer = async () => ({ rows: [], rowCount: 0 });
-  const client = { query: answer };
+/**
+ * (root: another checkout of the api, e.g. the base of a PR; default this one) a database nothing answers: no rows, a transaction that runs its function. Installed in the require cache BEFORE server.js loads.
+ * (answer: optional, (sql, params, entity) → { rows, rowCount } for every statement; entity is the shop of a withEntity/onEntity scope, else null — the hardening cases of tools/api-contract-tests.cjs play a world through it)
+ */
+function stubDatabase(root, answer) {
+  const answerOf = (entity) => async (sql, params) => (answer ? answer(String(sql && sql.text ? sql.text : sql), params || [], entity) : { rows: [], rowCount: 0 });
+  const scoped = (entity) => ({ query: answerOf(entity) });
+  const client = scoped(null);
+  const unscoped = answerOf(null);
   const dbPath = require.resolve(path.join(root || API, 'db'));
   require.cache[dbPath] = {
     id: dbPath,
     filename: dbPath,
     loaded: true,
     exports: {
-      query: answer,
-      pool: { query: answer, connect: async () => Object.assign({ release() {} }, client) },
-      withEntity: async (id, body) => body(client),
+      query: unscoped,
+      pool: { query: unscoped, connect: async () => Object.assign({ release() {} }, client) },
+      withEntity: async (id, body) => body(scoped(id)),
       withTransaction: async (body) => body(client),
-      onEntity: async (id, db, body) => body(client),
+      onEntity: async (id, db, body) => body(scoped(id)),
       readBatch: async () => ({}),
       trySavepoint: async (db, body, fallback) => {
         try {

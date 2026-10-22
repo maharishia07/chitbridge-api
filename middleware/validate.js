@@ -58,6 +58,7 @@ const urlSchemaOf = (operation) => {
 const fieldOf = (failure) => {
   const where = failure.instancePath.split('/').filter(Boolean);
   if (failure.keyword === 'required') where.push(failure.params.missingProperty);
+  if (failure.keyword === 'additionalProperties') where.push(failure.params.additionalProperty); /* S33: the unknown key is named, not the body */
   return where.join('.') || '(body)';
 };
 
@@ -65,6 +66,7 @@ const fieldOf = (failure) => {
 const sentenceOf = (failure, field) => {
   if (failure.keyword === 'required') return field + ' is needed.';
   if (failure.keyword === 'type') return field + ' must be ' + (Array.isArray(failure.params.type) ? failure.params.type.join(' or ') : 'a ' + failure.params.type) + '.';
+  if (failure.keyword === 'additionalProperties') return field + ' is not a field this request takes.';
   if (failure.keyword === 'enum') return field + ' must be one of: ' + failure.params.allowedValues.join(', ') + '.';
   return field + ' ' + failure.message + '.';
 };

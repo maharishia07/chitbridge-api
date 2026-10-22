@@ -58,6 +58,11 @@ function openapiOperations(routerFiles) {
   return operations;
 }
 
+/** every routes file's OpenAPI operations, keyed 'METHOD /express/path' (the register and the generated hardening cases read the same map) */
+function operationsOfApp() {
+  return openapiOperations(Object.fromEntries([...routerFilesOf().values()].map((info) => [info.file, info])));
+}
+
 const ROUTER_DIRS = ['routes', 'src/routes'];
 
 /** { router object -> { file: 'routes/x.js', exported } } for every routes file (they are in the require cache once server.js has loaded) */
@@ -187,21 +192,21 @@ function successSchemas(operation) {
 /** a schema that lists its fields and refuses any other (the allow-list): an object with additionalProperties false */
 const refusesUnknownKeys = (schema) => !!schema && schema.additionalProperties === false;
 
-/** strict_input (S33): a route that takes a body declares it with additionalProperties false behind a schemaValidate check, so an unknown key is refused, never dropped; a route with no body has nothing to refuse */
-function strictInputColumn(operation, leaf, facts) {
+/** strict_input (S33): a route that takes a body declares it with additionalProperties false behind a schemaValidate check, AND its generated case (tools/api-contract-tests.cjs → api-hardening-evidence.json) saw an unknown key refused by name; a route with no body has nothing to refuse */
+function strictInputColumn(operation, leaf, facts, evidence) {
   const bodySchema = operation && require('../middleware/validate').bodySchemaOf(operation);
   if (!bodySchema) return !BODY_METHODS.includes(leaf.method);
-  return facts.hasSchemaCheck && refusesUnknownKeys(bodySchema);
+  return facts.hasSchemaCheck && refusesUnknownKeys(bodySchema) && !!(evidence && evidence.strict_input === true);
 }
 
-/** output_allowlist (S34): every success schema is an allow-list AND a contract test (docs/contracts/api-hardening-evidence.json) showed the answer holds only those fields; a 204 answer has no body to leak */
+/** output_allowlist (S34): every success schema is an allow-list AND its generated case (docs/contracts/api-hardening-evidence.json) saw a row's extra column kept out of the answer; a 204 answer has no body to leak */
 function outputAllowlistColumn(operation, evidence) {
   const schemas = successSchemas(operation);
   if (!schemaOutColumn(operation)) return false;
   return schemas.length === 0 || (schemas.every(refusesUnknownKeys) && !!(evidence && evidence.output_allowlist === true));
 }
 
-/** foreign_id_404 (S35): a route addressed by an id needs a test that another shop's id answers the same 404 as an unknown one; a route with no id in its path is not addressed by one */
+/** foreign_id_404 (S35): a route addressed by an id needs its generated case to see another shop's id answered with the unknown id's 404; a route with no id in its path is not addressed by one */
 const foreignIdColumn = (leaf, evidence) => !leaf.path.includes(':') || !!(evidence && evidence.foreign_id_404 === true);
 
 /** does the operation declare an Idempotency-Key header as required, or the chain hold a requireIdempotencyKey gate */
@@ -210,8 +215,8 @@ function requiresIdempotencyKey(operation, leaf) {
   return declared || leaf.fns.some((fn) => typeof fn === 'function' && fn.name === 'requireIdempotencyKey');
 }
 
-/** idempotent_money_write (S36): a money write (docs/contracts/api-hardening-scope.json) must REQUIRE the header; the global middleware only honours it when sent, which is opt-in */
-const idempotentMoneyColumn = (isMoneyWrite, operation, leaf) => !isMoneyWrite || requiresIdempotencyKey(operation, leaf);
+/** idempotent_money_write (S36): a money write (docs/contracts/api-hardening-scope.json) must REQUIRE the header, and its generated case saw no key refused 422 and a resend replayed; the global middleware only honours the header when sent, which is opt-in */
+const idempotentMoneyColumn = (isMoneyWrite, operation, leaf, evidence) => !isMoneyWrite || (requiresIdempotencyKey(operation, leaf) && !!(evidence && evidence.idempotent_money_write === true));
 
 /** inbound_validated (S37): a peer or webhook door checks its JSON against a schema (schemaValidate with a body schema) before the handler reads it */
 const inboundColumn = (isInbound, operation, facts) => !isInbound || (facts.hasSchemaCheck && !!(operation && require('../middleware/validate').bodySchemaOf(operation)));
@@ -250,10 +255,10 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
     error_tests: declared.length > 0 && declared.every((status) => tested.includes(status)),
     status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
-    strict_input: strictInputColumn(operation, leaf, facts),
+    strict_input: strictInputColumn(operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
     foreign_id_404: foreignIdColumn(leaf, evidence),
-    idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf),
+    idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf, evidence),
     inbound_validated: inboundColumn(scope.inbound.has(key), operation, facts),
     trips_budgeted: tripsBudgetedColumn(key, budget)
   };
@@ -321,7 +326,7 @@ function buildRegister() {
   const routerFiles = routerFilesOf();
   /* a code counts as registered once its shopkeeper sentence is written: a PENDING row is a seed, not a finished entry (S14) */
   const registered = new Set(readJson('docs/error-codes.json', { codes: [] }).codes.filter((row) => row.shopkeeper !== 'PENDING').map((row) => row.code));
-  const context = { app, routerFiles, shared: sharedFunctions(), operations: openapiOperations(Object.fromEntries([...routerFiles.values()].map((info) => [info.file, info]))), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: readJson('docs/contracts/api-hardening-evidence.json', { routes: {} }).routes, errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
+  const context = { app, routerFiles, shared: sharedFunctions(), operations: operationsOfApp(), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: readJson('docs/contracts/api-hardening-evidence.json', { routes: {} }).routes, errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
   const seen = new Set();
   const rows = loader
     .leavesOf(app, true)
@@ -407,4 +412,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check };
+module.exports = { operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check };
