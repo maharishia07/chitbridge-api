@@ -85,7 +85,7 @@ it('⚠️⚠️⚠️ each bulk door carries its own limiter', () => {
 it('⚠️⚠️ the limits are keyed by the key, not by the address', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'products.js'), 'utf8');
   assert.ok(/keyGenerator/.test(src), 'the import limiters no longer say what they are keyed by');
-  assert.ok(/x-api-key/.test(src), 'the import limiters are keyed by IP alone — one NAT is now one shop');
+  assert.ok(/callerKey: importKey/.test(src) && /limiter-key/.test(src), 'the import limiters are keyed by IP alone — one NAT is now one shop');
   /* the same choice the house already made for its service limiter */
   assert.ok(/limiter-key/.test(server), 'server.js serviceLimiter has stopped keying by the caller key');
   assert.ok(/x-api-key/.test(fs.readFileSync(path.join(API, 'lib', 'limiter-key.js'), 'utf8')), 'the caller key no longer reads the API key');
