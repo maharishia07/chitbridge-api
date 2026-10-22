@@ -1,0 +1,29 @@
+{
+ "about": "API-3 scope (API-STANDARD S33-S36). Curated by cb-api with the owning area. money_writes: routes that move or record money; each must require an Idempotency-Key. inbound: routes that take a peer's or a webhook's JSON; each must schema-check it before use. money_reviewed_not: routes whose path looks like money but that write nothing (a preview, a build). tools/api-register.cjs --check fails when a mutating route that looks like money is in none of the lists.",
+ "money_writes": [
+  "DELETE /api/chits/:chit_id/payment",
+  "PATCH /api/books/payments/:id",
+  "POST /api/books/gst/pay",
+  "POST /api/books/payments",
+  "POST /api/books/payments/:id/confirm",
+  "POST /api/books/payments/:id/propose",
+  "POST /api/chits/:chit_id/payment",
+  "POST /api/supplies/purchase",
+  "POST /api/till/reward",
+  "POST /api/till/reward/claim",
+  "POST /api/connectors/ingest",
+  "POST /api/connectors/erp-ingest"
+ ],
+ "money_reviewed_not": [
+  "POST /api/books/payments/preview",
+  "POST /api/invoice/build"
+ ],
+ "inbound": [
+  "POST /api/capture/webhook/email",
+  "POST /api/capture/webhook/whatsapp",
+  "POST /api/connectors/erp-ingest",
+  "POST /api/connectors/ingest",
+  "POST /api/ctp/deliver",
+  "POST /api/ctp/query"
+ ]
+}

@@ -9,9 +9,9 @@
  *
  *   node tools/api-ratchet.cjs --base origin/main     check (CI)
  *   node tools/api-ratchet.cjs --base origin/main --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
- *   node tools/api-ratchet.cjs --write                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
+ *   node tools/api-ratchet.cjs --write --rebaseline   (only in the PR that switches the stage)                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
  * RAW ERROR TEXT (Athi 23 Oct): rawErrorTextWrites() counts response writes (res.json / .send / .end) whose body holds an exception's own text (e.message, err.stack, String(e), `${e}`) outside safeErr()/problem(); logs are not response writes. The count may only go down (docs/api-ratchet.json raw_error_writes); a new one prints file:line.
- * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js) must have all seven machine columns true; every other touched route is counted, not blocked. Stage "all" holds every route.
+ * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js) must have all thirteen machine columns true (stage 2: the six hardening columns of S33-S38 included); every other touched route is counted, not blocked. Stage "all" holds every route.
  */
 const fs = require('fs');
 const os = require('os');
@@ -20,7 +20,7 @@ const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const RATCHET_FILE = path.join(ROOT, 'docs', 'api-ratchet.json');
-/* the route files brought to the standard so far: a PR touching one of their routes must keep it at all seven machine columns (S16 a); the list grows with each slice */
+/* the route files brought to the standard so far: a PR touching one of their routes must keep it at all thirteen machine columns (S16 a); the list grows with each slice */
 const HELD_FILES = ['routes/keys.js'];
 const DEBT_DAYS = 14;
 const argv = process.argv.slice(2);
@@ -180,7 +180,7 @@ const meets = (row) => row.status === 'meets standard';
 
 /** routes held to the standard: the brought-over files until stage 'all' (every route, once the sweep is done) */
 const isHeld = (row, stage) => stage === 'all' || HELD_FILES.includes(row.file);
-/** a held route passes on its seven machine columns; the cb-api sign-off is the reviewer's, dated in the register, and is not the builder's to give (consult-map rule 1) */
+/** a held route passes on its thirteen machine columns; the cb-api sign-off is the reviewer's, dated in the register, and is not the builder's to give (consult-map rule 1) */
 const passesHold = (row) => liveColumnsPass(row);
 
 /** debt entries: a route listed here is allowed to stay below the standard until `expires` */
@@ -212,11 +212,28 @@ function checkRoutes(base, head, ratchet, hotfix) {
 /** the count of routes not meeting the standard may only go down, adjusted for routes added or removed (S16 b) */
 function checkCounts(baseRatchet, head, headRatchet) {
   const actual = head.counts.routes - head.counts.meets;
-  const allowed = baseRatchet.not_meeting + Math.max(0, head.counts.routes - baseRatchet.total);
+  /* a stage switch re-measures honestly (API-3: stage 2 asks thirteen columns, not seven): the one PR that changes the stage may raise the count, nobody else */
+  const rebaselined = baseRatchet.stage !== headRatchet.stage;
+  const allowed = rebaselined ? head.counts.routes : baseRatchet.not_meeting + Math.max(0, head.counts.routes - baseRatchet.total);
+  if (rebaselined) console.log('stage switch ' + baseRatchet.stage + ' -> ' + headRatchet.stage + ': the count is re-measured, not grandfathered');
   const problems = [];
   if (actual > allowed) problems.push('routes not meeting the standard rose to ' + actual + ' (allowed ' + allowed + ' from the base ratchet of ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
   if (headRatchet.not_meeting < actual || headRatchet.total !== head.counts.routes) problems.push('docs/api-ratchet.json says ' + headRatchet.not_meeting + ' of ' + headRatchet.total + ' but the register says ' + actual + ' of ' + head.counts.routes + ': run node tools/api-ratchet.cjs --write');
   console.log('not meeting: ' + actual + ' of ' + head.counts.routes + ' (base ratchet ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
+  return problems;
+}
+
+/** per hardening column, the routes failing it may only go down (a new route may add its own); the first run with no base figure just records */
+function checkColumns(baseRatchet, head, headRatchet) {
+  const problems = [];
+  const added = Math.max(0, head.counts.routes - baseRatchet.total);
+  Object.keys(head.counts.columns || {}).forEach((name) => {
+    const actual = head.counts.columns[name].failing;
+    const before = baseRatchet.columns_failing && baseRatchet.columns_failing[name];
+    if (before !== undefined && actual > before + added) problems.push('routes failing ' + name + ' rose to ' + actual + ' (allowed ' + (before + added) + ')');
+    if (!headRatchet.columns_failing || headRatchet.columns_failing[name] < actual) problems.push('docs/api-ratchet.json columns_failing.' + name + ' is below the register: run node tools/api-ratchet.cjs --write');
+  });
+  console.log('failing per column: ' + Object.keys(head.counts.columns || {}).map((name) => name + ' ' + head.counts.columns[name].failing + '/' + head.counts.columns[name].applies).join(' · '));
   return problems;
 }
 
@@ -234,16 +251,26 @@ function checkCodes(baseRatchet, headRatchet) {
   return problems;
 }
 
+/** --write never records a worse figure than the committed one: raw error text, routes failing a hardening column, routes not meeting (only --rebaseline, in the stage-switch PR, may raise the last two) */
+function refuseRises(previous, now) {
+  if (!previous) return;
+  if (previous.raw_error_writes !== undefined && now.rawNow > previous.raw_error_writes) throw new Error('refusing to raise the raw error text count (' + now.rawNow + ' against ' + previous.raw_error_writes + ')');
+  if (flag('--rebaseline')) return;
+  const before = previous.columns_failing || {};
+  Object.keys(now.columnsFailing).filter((name) => before[name] !== undefined && now.columnsFailing[name] > before[name]).forEach((name) => { throw new Error('refusing to raise the routes failing ' + name); });
+  if (!flag('--seed') && now.notMeeting > previous.not_meeting + Math.max(0, now.routes - previous.total)) throw new Error('refusing to raise the count of routes not meeting the standard');
+}
+
 /** --write: rewrite docs/api-ratchet.json from the head register (never raises the count) */
 function writeRatchet(head) {
   const codes = require('./error-codes.cjs');
   const { rows } = codes.readRows();
   const previous = readJson(RATCHET_FILE, null);
   const notMeeting = head.counts.routes - head.counts.meets;
+  const columnsFailing = Object.fromEntries(Object.keys(head.counts.columns || {}).map((name) => [name, head.counts.columns[name].failing]));
   const rawNow = rawErrorWritesOf(ROOT).length;
-  if (previous && previous.raw_error_writes !== undefined && rawNow > previous.raw_error_writes) throw new Error('refusing to raise the raw error text count (' + rawNow + ' against ' + previous.raw_error_writes + ')');
-  if (previous && !flag('--seed') && notMeeting > previous.not_meeting + Math.max(0, head.counts.routes - previous.total)) throw new Error('refusing to raise the count of routes not meeting the standard');
-  const next = { version: 1, stage: previous ? previous.stage : '1a', updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, debt: previous ? previous.debt : [] };
+  refuseRises(previous, { notMeeting, rawNow, columnsFailing, routes: head.counts.routes });
+  const next = { version: 1, stage: head.stage || (previous ? previous.stage : '1a'), updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, columns_failing: columnsFailing, debt: previous ? previous.debt : [] };
   fs.writeFileSync(RATCHET_FILE, JSON.stringify(next, null, 1) + '\n');
   console.log('wrote docs/api-ratchet.json: ' + next.not_meeting + ' of ' + next.total + ' not meeting; ' + next.codes_pending + ' of ' + next.codes_total + ' codes waiting for a sentence; ' + next.raw_error_writes + ' response writes carry raw error text');
 }
@@ -260,7 +287,7 @@ function main() {
     const baseRegister = registerOf(base.dir);
     const headRatchet = readJson(RATCHET_FILE, null);
     const baseRatchet = readJson(path.join(base.dir, 'docs', 'api-ratchet.json'), headRatchet);
-    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet));
+    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet), checkColumns(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet));
   } finally {
     base.remove();
   }

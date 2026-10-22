@@ -9,8 +9,8 @@
  *   node tools/api-register.cjs            write docs/API-REGISTER.md and docs/api-register.json
  *   node tools/api-register.cjs --check    exit 1 when either file differs from what the code says (and when the error-code table fails its own check)
  *   node tools/api-register.cjs --json F   write the register as JSON to file F (the ratchet reads base and head this way); --root <dir> runs it over another checkout
- * API-STANDARD S15. Stage "1b": all seven machine columns are live (schema_in and schema_out from the route's OpenAPI operation and its schemaValidate check; missing_input_answer from
- * docs/contracts/api-contract-results.json, which tools/api-contract-tests.cjs writes). "meets standard" = all seven AND a cb-api sign-off in the json.
+ * API-STANDARD S15. Stage "2" adds the six hardening columns (S33-S38, API-3) to the seven of stage "1b": all thirteen are live (schema_in and schema_out from the route's OpenAPI operation and its schemaValidate check; missing_input_answer from
+ * docs/contracts/api-contract-results.json, which tools/api-contract-tests.cjs writes). "meets standard" = all thirteen AND a cb-api sign-off in the json.
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,8 +19,10 @@ const crypto = require('crypto');
 const TOOLS_DIR = __dirname;
 const rootArg = process.argv.indexOf('--root');
 const ROOT = rootArg > 0 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(TOOLS_DIR, '..');
-const STAGE = '1b';
-const MACHINE_COLUMNS = ['schema_in', 'schema_out', 'error_shape', 'codes_registered', 'missing_input_answer', 'error_tests', 'status_codes'];
+const STAGE = '2';
+const MACHINE_COLUMNS = ['schema_in', 'schema_out', 'error_shape', 'codes_registered', 'missing_input_answer', 'error_tests', 'status_codes', 'strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
+/* the five hardening columns of stage 2 (API-3): they close the OWASP API Top 10 gaps route by route */
+const HARDENING_COLUMNS = ['strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
 const SUCCESS_STATUSES = ['200', '201', '202', '204'];
 const HUMAN_COLUMNS = ['names_clear', 'sentence_plain', 'backward_compatible', 'signed_off_by_date', 'lifecycle'];
 const BODY_METHODS = ['POST', 'PUT', 'PATCH'];
@@ -174,8 +176,69 @@ function missingInputColumn(operation, result) {
   return !hasInput || !!(result && result.missing_input_ok && result.failed === 0);
 }
 
-/** the seven machine columns of one route, each true or false */
-function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, registered, operation, result }) {
+/** the success answers' JSON schemas of an operation (204 has none) */
+function successSchemas(operation) {
+  const responses = (operation && operation.responses) || {};
+  return Object.keys(responses)
+    .filter((status) => SUCCESS_STATUSES.includes(status) && status !== '204')
+    .map((status) => responses[status].content && responses[status].content['application/json'] && responses[status].content['application/json'].schema);
+}
+
+/** a schema that lists its fields and refuses any other (the allow-list): an object with additionalProperties false */
+const refusesUnknownKeys = (schema) => !!schema && schema.additionalProperties === false;
+
+/** strict_input (S33): a route that takes a body declares it with additionalProperties false behind a schemaValidate check, so an unknown key is refused, never dropped; a route with no body has nothing to refuse */
+function strictInputColumn(operation, leaf, facts) {
+  const bodySchema = operation && require('../middleware/validate').bodySchemaOf(operation);
+  if (!bodySchema) return !BODY_METHODS.includes(leaf.method);
+  return facts.hasSchemaCheck && refusesUnknownKeys(bodySchema);
+}
+
+/** output_allowlist (S34): every success schema is an allow-list AND a contract test (docs/contracts/api-hardening-evidence.json) showed the answer holds only those fields; a 204 answer has no body to leak */
+function outputAllowlistColumn(operation, evidence) {
+  const schemas = successSchemas(operation);
+  if (!schemaOutColumn(operation)) return false;
+  return schemas.length === 0 || (schemas.every(refusesUnknownKeys) && !!(evidence && evidence.output_allowlist === true));
+}
+
+/** foreign_id_404 (S35): a route addressed by an id needs a test that another shop's id answers the same 404 as an unknown one; a route with no id in its path is not addressed by one */
+const foreignIdColumn = (leaf, evidence) => !leaf.path.includes(':') || !!(evidence && evidence.foreign_id_404 === true);
+
+/** does the operation declare an Idempotency-Key header as required, or the chain hold a requireIdempotencyKey gate */
+function requiresIdempotencyKey(operation, leaf) {
+  const declared = ((operation && operation.parameters) || []).some((item) => item && item.in === 'header' && String(item.name).toLowerCase() === 'idempotency-key' && item.required === true);
+  return declared || leaf.fns.some((fn) => typeof fn === 'function' && fn.name === 'requireIdempotencyKey');
+}
+
+/** idempotent_money_write (S36): a money write (docs/contracts/api-hardening-scope.json) must REQUIRE the header; the global middleware only honours it when sent, which is opt-in */
+const idempotentMoneyColumn = (isMoneyWrite, operation, leaf) => !isMoneyWrite || requiresIdempotencyKey(operation, leaf);
+
+/** inbound_validated (S37): a peer or webhook door checks its JSON against a schema (schemaValidate with a body schema) before the handler reads it */
+const inboundColumn = (isInbound, operation, facts) => !isInbound || (facts.hasSchemaCheck && !!(operation && require('../middleware/validate').bodySchemaOf(operation)));
+
+/** trips_budgeted (S38): the route has a FIRED line (a measured ceiling, not the placeholder) in round-trips.budget.json; tests/round-trips-all.test.cjs fails the guards when the route goes over it. Making it cheaper is cb-speed's; this only checks the budget exists */
+const tripsBudgetedColumn = (key, budget) => !!(budget && budget[key] && budget[key].fired === true);
+
+/** which of the five columns apply to a route (a column that does not apply passes, and is not counted as a pass in the per-column baseline) */
+function hardeningApplies(leaf, operation, scope) {
+  const key = leaf.method + ' ' + leaf.path;
+  const hasBody = !!(operation && require('../middleware/validate').bodySchemaOf(operation)) || BODY_METHODS.includes(leaf.method);
+  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':'), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
+}
+
+/** the curated lists of docs/contracts/api-hardening-scope.json as sets */
+function hardeningScope() {
+  const file = readJson('docs/contracts/api-hardening-scope.json', {});
+  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []) };
+}
+
+/** a mutating route whose path reads like money but is in no list: someone must say whether it is a money write (--check fails) */
+const MONEY_WORDS = /(^|[/-])(pay|payment|payments|receipt|receipts|refund|refunds|settle|settlement|credit|collect|collection|advance|redeem|wallet|cash|ledger|journal|invoice|invoices|purchase|bill|bills|billing|day-close|expense|expenses|payout|reward|points|transfer|deposit|adjust)(\b|[/:-]|$)/i;
+const unclassifiedMoney = (rows, scope) => rows.filter((row) => row.method !== 'GET' && MONEY_WORDS.test(row.path) && !scope.money.has(row.key) && !scope.notMoney.has(row.key)).map((row) => row.key);
+
+/** the thirteen machine columns of one route, each true or false */
+function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
+  const key = leaf.method + ' ' + leaf.path;
   const codes = codesWritten(source);
   const usesProblem = /\bproblem\(|\bfromError\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
   const legacyOk = !/legacy:/.test(source) || !!legacyEntry;
@@ -186,7 +249,13 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     error_shape: usesProblem && !rawErrorWrites(source) && legacyOk,
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
     error_tests: declared.length > 0 && declared.every((status) => tested.includes(status)),
-    status_codes: statusColumn(declared, statusesWritten(source), leaf, facts)
+    status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
+    strict_input: strictInputColumn(operation, leaf, facts),
+    output_allowlist: outputAllowlistColumn(operation, evidence),
+    foreign_id_404: foreignIdColumn(leaf, evidence),
+    idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf),
+    inbound_validated: inboundColumn(scope.inbound.has(key), operation, facts),
+    trips_budgeted: tripsBudgetedColumn(key, budget)
   };
 }
 
@@ -201,9 +270,9 @@ function rowOf(leaf, context) {
   const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400);
   const facts = stackFactsOf(leaf, context.shared);
   const legacyEntry = context.legacy[key];
-  const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key] });
+  const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
   const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(operation || null);
-  return { key, method: leaf.method, path: leaf.path, owner_area: path.basename(info.file, '.js'), file: info.file, line: lineOf(fileText, leaf), hash: shortHash(hashSource), columns, declared, notes: notesOf(facts, legacyEntry) };
+  return { key, method: leaf.method, path: leaf.path, owner_area: path.basename(info.file, '.js'), file: info.file, line: lineOf(fileText, leaf), hash: shortHash(hashSource), columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) };
 }
 
 /** the 4xx statuses tests cover for a route: the scenario tests' list plus what the generated contract cases answered */
@@ -228,7 +297,8 @@ function lineOf(fileText, leaf) {
 /** status: "meets standard" is every machine column AND a current cb-api sign-off (S15); some columns, or a missing sign-off, is "partial" */
 function statusOf(columns, human) {
   if (MACHINE_COLUMNS.every((name) => columns[name]) && human && human.signed_off_by_date) return 'meets standard';
-  return MACHINE_COLUMNS.some((name) => columns[name]) ? 'partial' : 'not started';
+  /* progress is the seven core columns: a hardening column that does not apply passes for free and would make every route look begun */
+  return MACHINE_COLUMNS.slice(0, MACHINE_COLUMNS.length - HARDENING_COLUMNS.length).some((name) => columns[name]) ? 'partial' : 'not started';
 }
 
 /** the human columns are kept from the committed json by route key; a changed hash drops a sign-off to stale */
@@ -251,7 +321,7 @@ function buildRegister() {
   const routerFiles = routerFilesOf();
   /* a code counts as registered once its shopkeeper sentence is written: a PENDING row is a seed, not a finished entry (S14) */
   const registered = new Set(readJson('docs/error-codes.json', { codes: [] }).codes.filter((row) => row.shopkeeper !== 'PENDING').map((row) => row.code));
-  const context = { app, routerFiles, shared: sharedFunctions(), operations: openapiOperations(Object.fromEntries([...routerFiles.values()].map((info) => [info.file, info]))), legacy: legacyRoutes(), errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
+  const context = { app, routerFiles, shared: sharedFunctions(), operations: openapiOperations(Object.fromEntries([...routerFiles.values()].map((info) => [info.file, info]))), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: readJson('docs/contracts/api-hardening-evidence.json', { routes: {} }).routes, errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
   const seen = new Set();
   const rows = loader
     .leavesOf(app, true)
@@ -271,7 +341,8 @@ function legacyRoutes() {
 /** totals by status, for the scorecard line */
 function countsOf(rows) {
   const count = (status) => rows.filter((row) => row.status === status).length;
-  return { routes: rows.length, not_started: count('not started'), partial: count('partial'), meets: count('meets standard') };
+  const columns = Object.fromEntries(HARDENING_COLUMNS.map((name) => [name, { applies: rows.filter((row) => row.applies[name]).length, failing: rows.filter((row) => !row.columns[name]).length }]));
+  return { routes: rows.length, not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns };
 }
 
 const mark = (value) => (value === true ? 'yes' : value === false ? 'no' : '-');
@@ -288,10 +359,10 @@ function renderMarkdown(register) {
     '',
     '**API standard: ' + counts.meets + ' of ' + counts.routes + ' meet** - partial ' + counts.partial + ' - not started ' + counts.not_started + '.',
     '',
-    'Seven machine columns (S15): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes. "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs live in `docs/api-register.json`.',
+    'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs live in `docs/api-register.json`.',
     '',
-    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | status |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|'
+    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
   ];
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => mark(row.columns[name]));
@@ -312,7 +383,8 @@ function check(register) {
   same(MD_FILE, renderMarkdown(register));
   same(JSON_FILE, jsonText(register));
   const codes = require(path.join(TOOLS_DIR, 'error-codes.cjs')).check();
-  return problems.concat(codes.problems);
+  const unsaid = unclassifiedMoney(register.routes, hardeningScope()).map((key) => key + ' looks like a money write but is in neither list of docs/contracts/api-hardening-scope.json (money_writes or money_reviewed_not)');
+  return problems.concat(codes.problems, unsaid);
 }
 
 /** command line: no flag writes both files; --check compares; --json writes one json file for the ratchet */
@@ -335,4 +407,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { buildRegister, renderMarkdown, normalise, check };
+module.exports = { tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check };
