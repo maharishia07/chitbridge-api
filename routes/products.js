@@ -44,12 +44,12 @@ const rateLimit = require('express-rate-limit');
  *   THE COMMIT writes up to IMPORT_MAX_ROWS products. A 10,000-product catalogue is five files, so five
  *     commits plus retries is a genuine setting-up session. Twenty in a quarter of an hour is not.
  *
- * ⚠️ KEYED THE WAY THE HOUSE KEYS THINGS — the API key first, the IP only as a fallback. Several counters of
+ * ⚠️ KEYED THE WAY THE HOUSE KEYS THINGS — lib/limiter-key callerKey: a verified key first, the IP only as a fallback (SEC-79). Several counters of
  * one shop are different keys; two shops behind one broadband line are not each other's problem.
  * ⚠️ Both numbers are env-overridable, like every other limit in server.js, so a real shop that trips one
  * can be let through without a deploy.
  */
-const importKey = (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64);
+const { callerKey: importKey } = require('../lib/limiter-key');
 const preflightLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.IMPORT_PREFLIGHT_MAX || '60'),
