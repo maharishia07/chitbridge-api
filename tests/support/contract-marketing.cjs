@@ -32,7 +32,8 @@ async function captureMarketing() {
   };
   const handle = { query: run };
   stub('db', { query: run, withEntity: async (o, fn) => fn(handle), readBatch: async () => [] });
-  stub('lib/schema', { hasColumn: async () => true, hasTable: async () => true });
+  let migrated = true; /* the third answer of each route: b776 not run yet (code · say · note) */
+  stub('lib/schema', { hasColumn: async () => migrated, hasTable: async () => true });
   stub('lib/policy', { get: async () => ({ came_back_days: 14 }) });
   stub('lib/select', { rows: async () => [
     { chit_id: 'c1', counterparty_id: P(1), counterparty_name: 'Chola Auto Care', created_at: BILL_AT, purpose: 'order', doc_kind: 'bill_issued', bill_no: 'B-1', value: '480.00', currency: 'INR', current_status: 'completed', read_at: null, open_disputes: 0, resolved_disputes: 0, touched_at: BILL_AT },
@@ -55,6 +56,10 @@ async function captureMarketing() {
     quiet = true;
     keep('GET /api/marketing/came-back', await call('/api/marketing/came-back'));
     quiet = false;
+    migrated = false;
+    keep('GET /api/marketing/came-back', await call('/api/marketing/came-back'));
+    keep('GET /api/channels/outbound', await call('/api/channels/outbound?purpose=marketing'));
+    migrated = true;
     keep('GET /api/channels/outbound', await call('/api/channels/outbound?purpose=marketing&page=1&limit=50'));
   } finally { srv.close(); }
   return got;
