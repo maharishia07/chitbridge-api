@@ -52,6 +52,13 @@ require.cache[require.resolve(API + '/db')] = { exports: {
     txOpens++;
     return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: rowsFor(String(s)) }; } });
   },
+  /* The real helper's cost, not a shortcut: SAVEPOINT + RELEASE are two statements on the caller's open transaction.
+     Without this key lib/dispute-may.js threw, the status change answered 500, and the budget measured the error exit. */
+  trySavepoint: async (db, fn, fallback) => {
+    await db.query('SAVEPOINT sp');
+    try { const r = await fn(db); await db.query('RELEASE SAVEPOINT sp'); return r; }
+    catch (e) { await db.query('ROLLBACK TO SAVEPOINT sp').catch(() => {}); return fallback; }
+  },
   withTransaction: async (fn) => {
     txOpens++;
     return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: rowsFor(String(s)) }; } });

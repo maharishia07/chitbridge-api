@@ -27,7 +27,8 @@ const FILE = path.join(__dirname, '..', 'docs', 'contracts', 'web-api.json');
 if (process.argv[2] === '--capture') {
   const which = process.argv[3], out = process.argv[4];
   const run = which === 'crm' ? require('./support/contract-crm.cjs').captureCrm : which === 'work' ? require('./support/contract-work.cjs').captureWork : which === 'repeat' ? require('./support/contract-repeat.cjs').captureRepeat : which === 'tax' ? require('./support/contract-tax.cjs').captureTax : which === 'till' ? require('./support/contract-till.cjs').captureTill : which === 'network' ? require('./support/contract-network.cjs').captureNetwork : which === 'marketing' ? require('./support/contract-marketing.cjs').captureMarketing : require('./support/contract-books.cjs').captureBooks;
-  run().then((g) => { fs.writeFileSync(out, JSON.stringify(g)); process.exit(0); }).catch((e) => { console.error(e); process.exit(1); });
+  /* exitCode, not exit(): exit() with a server socket mid-close aborts Node 24 on Windows (UV_HANDLE_CLOSING, win/async.c:94) */
+  run().then((g) => { fs.writeFileSync(out, JSON.stringify(g)); process.exitCode = 0; }).catch((e) => { console.error(e); process.exitCode = 1; });
   return;
 }
 
