@@ -194,6 +194,11 @@ function userSafeMessage(e) {
   return e.userMessage || safeErr(e);
 }
 
+/* An error that carries its own HTTP status: a 4xx is the caller's mistake and its sentence is safe to show; a 5xx is ours, so only the generic line. */
+function statusSafeMessage(e) {
+  return e.status < 500 ? e.message : safeErr(e);
+}
+
 /**
  * A DELIBERATE refusal must not be reported as an internal failure.
  *
@@ -523,7 +528,7 @@ router.post('/status/bulk', auth, [body('ids').isArray({ min: 1 }), body('status
       reads_as: r.rows.length ? itemstatus.explain(r.rows[0].item_data || {}) : null
     });
   } catch (e) {
-    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: e.message });
+    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: statusSafeMessage(e) });
     fail(res, e, 'Bulk status failed');
   }
 });
@@ -1674,7 +1679,7 @@ router.put('/:id/status', auth, [body('status').isString()], validate, async (re
       schema_org: d.status_schema_org || itemstatus.SCHEMA_ORG[itemstatus.statusOf(d)]
     });
   } catch (e) {
-    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: e.message });
+    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: statusSafeMessage(e) });
     fail(res, e, 'Status update failed');
   }
 });

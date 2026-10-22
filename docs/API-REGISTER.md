@@ -26,9 +26,9 @@ Columns: error_shape · codes_registered · error_tests · status_codes are meas
 | DELETE | /api/folders/:id | folders | routes/folders.js:296 | no | no | no | no | - | - | - | not started |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:541 | no | no | no | no | - | - | - | not started |
 | DELETE | /api/keys/:jti | keys | routes/keys.js:667 | yes | yes | yes | yes | - | - | - | partial |
-| DELETE | /api/products/:id | products | routes/products.js:1678 | no | no | no | no | - | - | - | not started |
-| DELETE | /api/products/:id/media/:mid | products | routes/products.js:1829 | no | no | no | no | - | - | - | not started |
-| DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1550 | no | no | no | no | - | - | - | not started |
+| DELETE | /api/products/:id | products | routes/products.js:1688 | no | no | no | no | - | - | - | not started |
+| DELETE | /api/products/:id/media/:mid | products | routes/products.js:1839 | no | no | no | no | - | - | - | not started |
+| DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1560 | no | no | no | no | - | - | - | not started |
 | DELETE | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:64 | no | no | no | no | - | - | - | not started |
 | DELETE | /api/quick-keys/groups/:id/items/:productId | quick-keys | routes/quick-keys.js:90 | no | no | no | no | - | - | - | not started |
 | DELETE | /api/relationships/suppliers/:id | relationships | routes/relationships.js:434 | no | yes | no | no | - | - | - | partial |
@@ -229,15 +229,15 @@ Columns: error_shape · codes_registered · error_tests · status_codes are meas
 | GET | /api/pricing/kinds | pricing | routes/pricing.js:17 | no | no | no | no | - | - | - | not started |
 | GET | /api/privacy/facts | privacy | routes/privacy.js:34 | no | no | no | no | - | - | - | not started |
 | GET | /api/privacy/me | privacy | routes/privacy.js:58 | no | no | no | no | - | - | - | not started |
-| GET | /api/products | products | routes/products.js:593 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/:id/schedule | products | routes/products.js:1512 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/:id/versions | products | routes/products.js:1865 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/export.csv | products | routes/products.js:953 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/lists | products | routes/products.js:1980 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1723 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/starter-columns | products | routes/products.js:1308 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/template | products | routes/products.js:982 | no | no | no | no | - | - | - | not started |
-| GET | /api/products/workbook.xlsx | products | routes/products.js:882 | no | no | no | no | - | - | - | not started |
+| GET | /api/products | products | routes/products.js:603 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/:id/schedule | products | routes/products.js:1522 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/:id/versions | products | routes/products.js:1875 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/export.csv | products | routes/products.js:963 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/lists | products | routes/products.js:1990 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1733 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/starter-columns | products | routes/products.js:1318 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/template | products | routes/products.js:992 | no | no | no | no | - | - | - | not started |
+| GET | /api/products/workbook.xlsx | products | routes/products.js:892 | no | no | no | no | - | - | - | not started |
 | GET | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:31 | no | no | no | no | - | - | - | not started |
 | GET | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:110 | no | no | no | no | - | - | - | not started |
 | GET | /api/relationships/customers | relationships | routes/relationships.js:674 | no | no | no | no | - | - | - | not started |
@@ -314,7 +314,7 @@ Columns: error_shape · codes_registered · error_tests · status_codes are meas
 | PATCH | /api/entities/profile | entities | routes/entities.js:939 | no | no | no | no | - | - | - | not started |
 | PATCH | /api/folders/:id | folders | routes/folders.js:255 | no | no | no | no | - | - | - | not started |
 | PATCH | /api/folders/rules/:rule_id | folders | routes/folders.js:534 | no | no | no | no | - | - | - | not started |
-| PATCH | /api/products/:id | products | routes/products.js:1446 | no | no | no | no | - | - | - | not started |
+| PATCH | /api/products/:id | products | routes/products.js:1456 | no | no | no | no | - | - | - | not started |
 | PATCH | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:51 | no | no | no | no | - | - | - | not started |
 | PATCH | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:100 | no | no | no | no | - | - | - | not started |
 | PATCH | /api/relationships/customers/:id | relationships | routes/relationships.js:924 | no | no | no | no | - | - | - | not started |
@@ -522,17 +522,17 @@ Columns: error_shape · codes_registered · error_tests · status_codes are meas
 | POST | /api/pricing/price | pricing | routes/pricing.js:34 | no | no | no | no | - | - | - | not started |
 | POST | /api/privacy/me/consent | privacy | routes/privacy.js:66 | no | no | no | no | - | - | - | not started |
 | POST | /api/privacy/me/requests | privacy | routes/privacy.js:79 | no | no | no | no | - | - | - | not started |
-| POST | /api/products | products | routes/products.js:378 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/:id/media | products | routes/products.js:1763 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/:id/schedule | products | routes/products.js:1519 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/availability/bulk | products | routes/products.js:1564 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/bulk | products | routes/products.js:438 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/bulk-update | products | routes/products.js:541 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/import | products | routes/products.js:1080 | no | yes | no | no | - | - | - | partial |
-| POST | /api/products/import/preflight | products | routes/products.js:1006 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/lists/adopt | products | routes/products.js:2101 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/starter-columns | products | routes/products.js:1317 | no | no | no | no | - | - | - | not started |
-| POST | /api/products/status/bulk | products | routes/products.js:487 | no | no | no | no | - | - | - | not started |
+| POST | /api/products | products | routes/products.js:388 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/:id/media | products | routes/products.js:1773 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/:id/schedule | products | routes/products.js:1529 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/availability/bulk | products | routes/products.js:1574 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/bulk | products | routes/products.js:448 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/bulk-update | products | routes/products.js:551 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/import | products | routes/products.js:1090 | no | yes | no | no | - | - | - | partial |
+| POST | /api/products/import/preflight | products | routes/products.js:1016 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/lists/adopt | products | routes/products.js:2111 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/starter-columns | products | routes/products.js:1327 | no | no | no | no | - | - | - | not started |
+| POST | /api/products/status/bulk | products | routes/products.js:497 | no | no | no | no | - | - | - | not started |
 | POST | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:40 | no | no | no | no | - | - | - | not started |
 | POST | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:77 | no | no | no | no | - | - | - | not started |
 | POST | /api/relationships/customers | relationships | routes/relationships.js:789 | no | no | no | no | - | - | - | not started |
@@ -638,8 +638,8 @@ Columns: error_shape · codes_registered · error_tests · status_codes are meas
 | PUT | /api/integrations/streams | integrations | routes/integrations.js:727 | no | no | no | no | - | - | - | not started |
 | PUT | /api/network-design | network-design | routes/network-design.js:43 | no | no | no | no | - | - | - | not started |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:275 | no | no | no | no | - | - | - | not started |
-| PUT | /api/products/:id/availability | products | routes/products.js:1609 | no | no | no | no | - | - | - | not started |
-| PUT | /api/products/:id/status | products | routes/products.js:1648 | no | no | no | no | - | - | - | not started |
+| PUT | /api/products/:id/availability | products | routes/products.js:1619 | no | no | no | no | - | - | - | not started |
+| PUT | /api/products/:id/status | products | routes/products.js:1658 | no | no | no | no | - | - | - | not started |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:120 | no | no | no | no | - | - | - | not started |
 | PUT | /api/service/:chit_id | service | routes/service.js:146 | no | no | no | no | - | - | - | not started |
 | PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1043 | no | no | no | no | - | - | - | not started |

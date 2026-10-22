@@ -468,7 +468,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1678,
+   "line": 1688,
    "hash": "fc6ba947457b1d8b",
    "columns": {
     "error_shape": false,
@@ -495,7 +495,7 @@
    "path": "/api/products/:id/media/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1829,
+   "line": 1839,
    "hash": "7d48c14e9a39159d",
    "columns": {
     "error_shape": false,
@@ -522,7 +522,7 @@
    "path": "/api/products/:id/schedule/:sid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1550,
+   "line": 1560,
    "hash": "030795fc0232eeb3",
    "columns": {
     "error_shape": false,
@@ -5896,7 +5896,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 593,
+   "line": 603,
    "hash": "05c8fa924f2d1cac",
    "columns": {
     "error_shape": false,
@@ -5923,7 +5923,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1512,
+   "line": 1522,
    "hash": "780e15226a1bef38",
    "columns": {
     "error_shape": false,
@@ -5950,7 +5950,7 @@
    "path": "/api/products/:id/versions",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1865,
+   "line": 1875,
    "hash": "593de6b6066b5460",
    "columns": {
     "error_shape": false,
@@ -5977,7 +5977,7 @@
    "path": "/api/products/export.csv",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 953,
+   "line": 963,
    "hash": "a4db4aa64563a834",
    "columns": {
     "error_shape": false,
@@ -6004,7 +6004,7 @@
    "path": "/api/products/lists",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1980,
+   "line": 1990,
    "hash": "4efb6e72ced6c10d",
    "columns": {
     "error_shape": false,
@@ -6031,7 +6031,7 @@
    "path": "/api/products/media/:item_id/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1723,
+   "line": 1733,
    "hash": "3c925584c0ea6323",
    "columns": {
     "error_shape": false,
@@ -6056,7 +6056,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1308,
+   "line": 1318,
    "hash": "27eddd3555fc8913",
    "columns": {
     "error_shape": false,
@@ -6083,7 +6083,7 @@
    "path": "/api/products/template",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 982,
+   "line": 992,
    "hash": "8f167e89c4a3e382",
    "columns": {
     "error_shape": false,
@@ -6110,7 +6110,7 @@
    "path": "/api/products/workbook.xlsx",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 882,
+   "line": 892,
    "hash": "bd38b1c9a218c09a",
    "columns": {
     "error_shape": false,
@@ -8181,7 +8181,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1446,
+   "line": 1456,
    "hash": "1661a224d139868b",
    "columns": {
     "error_shape": false,
@@ -13755,7 +13755,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 378,
+   "line": 388,
    "hash": "ae06da7039bde7e6",
    "columns": {
     "error_shape": false,
@@ -13782,7 +13782,7 @@
    "path": "/api/products/:id/media",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1763,
+   "line": 1773,
    "hash": "7db0602121510afc",
    "columns": {
     "error_shape": false,
@@ -13809,7 +13809,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1519,
+   "line": 1529,
    "hash": "9045f2218eaf1c56",
    "columns": {
     "error_shape": false,
@@ -13836,7 +13836,7 @@
    "path": "/api/products/availability/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1564,
+   "line": 1574,
    "hash": "02734948651a20cf",
    "columns": {
     "error_shape": false,
@@ -13863,7 +13863,7 @@
    "path": "/api/products/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 438,
+   "line": 448,
    "hash": "3455402d377268e4",
    "columns": {
     "error_shape": false,
@@ -13890,7 +13890,7 @@
    "path": "/api/products/bulk-update",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 541,
+   "line": 551,
    "hash": "0c67909580dfa383",
    "columns": {
     "error_shape": false,
@@ -13917,8 +13917,8 @@
    "path": "/api/products/import",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1080,
-   "hash": "6e8b0fba6ab6b049",
+   "line": 1090,
+   "hash": "10bb9f2a825cb03e",
    "columns": {
     "error_shape": false,
     "codes_registered": true,
@@ -13944,8 +13944,8 @@
    "path": "/api/products/import/preflight",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1006,
-   "hash": "99d54684dffb88c6",
+   "line": 1016,
+   "hash": "4b435036814183dd",
    "columns": {
     "error_shape": false,
     "codes_registered": false,
@@ -13971,8 +13971,8 @@
    "path": "/api/products/lists/adopt",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2101,
-   "hash": "91be482b2f6b43e1",
+   "line": 2111,
+   "hash": "b8ce24c7f1ca9aa1",
    "columns": {
     "error_shape": false,
     "codes_registered": false,
@@ -13998,7 +13998,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1317,
+   "line": 1327,
    "hash": "9c145108ee58c285",
    "columns": {
     "error_shape": false,
@@ -14025,8 +14025,8 @@
    "path": "/api/products/status/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 487,
-   "hash": "c635ce79f0c92d81",
+   "line": 497,
+   "hash": "642092e19b9aad89",
    "columns": {
     "error_shape": false,
     "codes_registered": false,
@@ -16876,7 +16876,7 @@
    "path": "/api/products/:id/availability",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1609,
+   "line": 1619,
    "hash": "5c15f3700d4405f5",
    "columns": {
     "error_shape": false,
@@ -16903,8 +16903,8 @@
    "path": "/api/products/:id/status",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1648,
-   "hash": "0cb2e2dea72dd910",
+   "line": 1658,
+   "hash": "1dee5b7e6c43ea4a",
    "columns": {
     "error_shape": false,
     "codes_registered": false,
