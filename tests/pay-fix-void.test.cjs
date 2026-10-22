@@ -36,7 +36,8 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
     const dir = (s.match(/direction = '(received|sent)'/) || [])[1];
     const mine = STATUS.filter((r) => r.chit_id === p[0] && r.entity_id === p[1] && (!dir || r.direction === dir));
     if (/^SELECT current_status FROM chit_status/.test(s)) return mine.map((r) => ({ current_status: r.current_status }));
-    if (/^UPDATE chit_status SET current_status = \$1/.test(s)) { STATUS.filter((r) => r.chit_id === p[1] && r.entity_id === p[2] && r.direction === dir).forEach((r) => { r.current_status = p[0]; }); return []; }
+    /* ORD-FIX O6: the write is compare-and-set (… AND current_status = $4) and RETURNING chit_id: only a row still holding the status the gate read moves, and the stub answers it so rowCount is real */
+    if (/^UPDATE chit_status SET current_status = \$1/.test(s)) { const hit = STATUS.filter((r) => r.chit_id === p[1] && r.entity_id === p[2] && r.direction === dir && r.current_status === p[3]); hit.forEach((r) => { r.current_status = p[0]; }); return hit.map((r) => ({ chit_id: r.chit_id })); }
     if (/SELECT sender_entity_id FROM chit_header/.test(s)) return [{ sender_entity_id: SHOP }];
     if (/SELECT all_recipients FROM chit_header/.test(s)) return [{ all_recipients: [] }];
     return null;
@@ -81,10 +82,10 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   t('…the sale is out of Dues: ₹0 open from Mala on that bill', (await openOf(C1)) === 0, String(await openOf(C1)));
   t('…one entry was added, no second status writer, the reason on the narration', X.T.entries.length === entriesBefore + 1 && /Withdrawn: customer cancelled/.test(rev.narration), rev && rev.narration);
   const srcRoute = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
-  const voidSrc = srcRoute.slice(srcRoute.indexOf("router.put('/:chit_id/void'"), srcRoute.indexOf("router.post('/assign-bulk'"));
+  const voidSrc = srcRoute.slice(srcRoute.indexOf("router.put('/:chit_id/void'"), srcRoute.indexOf('// POST /chits/assign-bulk')); /* that route's opening line was re-wrapped; its comment is the stable end */
   t('the reversal is posted INSIDE the gate transaction (after g.write(), before the handle returns) — a refusal rolls the withdrawal back and answers 409 in words',
     voidSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason') > voidSrc.indexOf('for (const g of gates) await g.write();')
-    && /withdrawFailure\(res, err\)/.test(voidSrc) && /status\(409\)\.json\(\{ error: 'Cannot withdraw', code: err\.code \|\| 'BOOKS_REFUSED', why: 'books_refused'/.test(srcRoute));
+    && /withdrawFailure\(res, err\)/.test(voidSrc) && /status\(409\)\.json\(\{\s*error: 'Cannot withdraw',\s*code: err\.code \|\| 'BOOKS_REFUSED',\s*why: 'books_refused'/.test(srcRoute));
 
   console.log('\n— B · a chit the books never posted —');
   STATUS = [{ chit_id: C2, entity_id: SHOP, direction: 'sent', current_status: 'delivered' }]; SENT = [];

@@ -26,7 +26,7 @@ const walk = (dir, re, out) => { for (const f of fs.readdirSync(dir, { withFileT
 
   ok('T1 taxIdWordOf: IN GSTIN · AU ABN · AE TRN (code or pack)', P.taxIdWordOf('IN') === 'GSTIN' && P.taxIdWordOf('au') === 'ABN' && P.taxIdWordOf('AE') === 'TRN'
     && P.taxIdWordOf(require(path.join(API, 'lib', 'regulation')).packFor('AU')) === 'ABN');
-  ok('T2 taxIdWordOf: no pack → null (never GSTIN): "" · null · US · ZZ', [ '', null, undefined, 'US', 'ZZ' ].every((c) => P.taxIdWordOf(c) === null));
+  ok('T2 taxIdWordOf: no pack → null (never GSTIN): "" · null · undefined · ZZ · XX; US has a pack now and says its own word (EIN)', [ '', null, undefined, 'ZZ', 'XX' ].every((c) => P.taxIdWordOf(c) === null) && P.taxIdWordOf('US') === 'EIN');
   ok('T3 countries()[].tax.id IS taxIdWordOf (country-setup.taxIdOf is gone)', typeof CS.taxIdOf === 'undefined'
     && CS.countries().every((c) => c.tax.id === P.taxIdWordOf(c.code)), JSON.stringify(CS.countries().map((c) => [c.code, c.tax.id])));
 
@@ -79,7 +79,8 @@ const walk = (dir, re, out) => { for (const f of fs.readdirSync(dir, { withFileT
     && !/currency: me\.currency_code \|\| \(pack && pack\.currency\) \|\| 'INR'/.test(src('lib/profile.js')) && !/\.currency\) \|\| 'INR'/.test(till));
   ok('M4 the sentence is typed once: books.enable and till read country-setup.MONEY_UNSTATED',
     /throw refuse\(CS\.MONEY_UNSTATED, 'NO_MONEY'\)/.test(src('lib/books.js')) && walk(path.join(API, 'lib'), /\.js$/, []).concat(walk(path.join(API, 'routes'), /\.js$/, []))
-      .filter((f) => /month its year starts \(Country setup\)/.test(fs.readFileSync(f, 'utf8'))).map((f) => path.basename(f)).join() === 'country-setup.js');
+      .filter((f) => /month its year starts \(Country setup\)/.test(fs.readFileSync(f, 'utf8'))).map((f) => path.basename(f)).join() === 'regional.js' /* N1: typed once, in regional.js ... */
+      && /MONEY_UNSTATED = require\('\.\/regional'\)\.NO_CURRENCY_SAYS/.test(src('lib/country-setup.js'))); /* ... and country-setup reads it from there */
   const mig = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b400_currency_no_default.sql'), 'utf8');
   ok('M5 b400 drops identities.currency_code DEFAULT (and cb_entity\'s when it is a table); schema.sql has no INR default on identities',
     /ALTER TABLE identities ALTER COLUMN currency_code DROP DEFAULT/.test(mig) && /RLS:/.test(mig) && !/currency_code\s+VARCHAR\(3\) DEFAULT 'INR',\n\s+identity_type/.test(fs.readFileSync(path.join(API, 'db', 'schema.sql'), 'utf8')));

@@ -35,7 +35,7 @@ require.cache[require.resolve(path.join(API, 'db'))] = { id: 'db', loaded: true,
   ok('R1 an ABN still goes through reg-au (unchanged)', !e3, e3 && e3.message);
 
   /* S1 */
-  ok('S1 taxIdWordOf: IN GSTIN · AU ABN · AE TRN · none null (STD2: never GSTIN for an unstated country)', P.taxIdWordOf('IN') === 'GSTIN' && P.taxIdWordOf('AU') === 'ABN' && P.taxIdWordOf('ae') === 'TRN' && P.taxIdWordOf('') === null && P.taxIdWordOf('US') === null);
+  ok('S1 taxIdWordOf: IN GSTIN · AU ABN · AE TRN · US EIN (engines pack) · no pack null (STD2: never GSTIN for an unstated country)', P.taxIdWordOf('IN') === 'GSTIN' && P.taxIdWordOf('AU') === 'ABN' && P.taxIdWordOf('ae') === 'TRN' && P.taxIdWordOf('US') === 'EIN' /* engines v1.61+ ship a US pack that names its own word */ && P.taxIdWordOf('') === null && P.taxIdWordOf('ZZ') === null);
 
   /* R4 */
   ROW = { display_name: 'Sim Stores', gstn: '33AAPFU0939F1ZV', address: 'Anna Salai', phone: '9876543210', country: 'IN', currency_code: 'INR' };
