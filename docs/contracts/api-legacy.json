@@ -158,6 +158,975 @@
      }
     }
    ]
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "answers": [
+    {
+     "scenario": "nstore-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     }
+    },
+    {
+     "scenario": "nstore-read-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "nstore-items-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Storefront failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Storefront failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/network-store/:networkId/order": {
+   "answers": [
+    {
+     "scenario": "norder-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Disabled",
+      "code": "NETWORK_ORDERS_OFF",
+      "may": false,
+      "why": "Network ordering is not switched on here.",
+      "message": "Network ordering is not switched on here."
+     },
+     "fixture": {
+      "error": "Disabled",
+      "code": "NETWORK_ORDERS_OFF",
+      "may": false,
+      "why": "Network ordering is not switched on here.",
+      "message": "Network ordering is not switched on here."
+     }
+    },
+    {
+     "scenario": "norder-no-shopper",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "code": "SIGN_IN_FIRST",
+      "message": "Sign in at the store to order."
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "code": "SIGN_IN_FIRST",
+      "message": "Sign in at the store to order."
+     }
+    },
+    {
+     "scenario": "norder-no-items",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "items required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "items required"
+     }
+    },
+    {
+     "scenario": "norder-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     }
+    },
+    {
+     "scenario": "norder-other-network",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "NOT_THIS_NETWORK",
+      "message": "Your sign-in belongs to another store. Sign in at this network's store to order."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "NOT_THIS_NETWORK",
+      "message": "Your sign-in belongs to another store. Sign in at this network's store to order."
+     }
+    },
+    {
+     "scenario": "norder-no-products",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No matching products in this network"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No matching products in this network"
+     }
+    },
+    {
+     "scenario": "norder-no-operator",
+     "status": 409,
+     "body_keys": {
+      "error": "No operator",
+      "message": "Operator not found"
+     },
+     "fixture": {
+      "error": "No operator",
+      "message": "Operator not found"
+     }
+    },
+    {
+     "scenario": "norder-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "norder-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "total",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "total",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    }
+   ]
+  },
+  "GET /api/catalogue/network/:bridge_id": {
+   "answers": [
+    {
+     "scenario": "network-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "network-no-members",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "network-no-departments",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "network-read-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "network-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Network storefront failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Network storefront failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id": {
+   "answers": [
+    {
+     "scenario": "shop-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "shop-private",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "shop-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Catalogue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Catalogue failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "answers": [
+    {
+     "scenario": "fields-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "fields-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Capture fields failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Capture fields failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/order/start": {
+   "answers": [
+    {
+     "scenario": "start-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "start-closed",
+     "status": 403,
+     "body_keys": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     },
+     "fixture": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     }
+    },
+    {
+     "scenario": "start-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "start-send-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order start failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order start failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "start-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "coupon",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "coupon",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/support/preview": {
+   "answers": [
+    {
+     "scenario": "preview-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "why": "This shop could not be found."
+     },
+     "fixture": {
+      "ok": false,
+      "why": "This shop could not be found."
+     },
+     "note": "before slice 1e this answered 200 with `ok: false`; since 1e it is the 404 every other door gives an unknown shop, with `ok` and `why` unchanged. public/shop.html reads the body whatever the status."
+    },
+    {
+     "scenario": "preview-fails",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "why": "Could not check where this would go."
+     },
+     "fixture": {
+      "ok": false,
+      "why": "Could not check where this would go."
+     },
+     "note": "before slice 1e a failure answered 200 with `ok: false`; since 1e it is a 500 with `ok` and `why` unchanged. public/shop.html reads the body whatever the status."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/support/start": {
+   "answers": [
+    {
+     "scenario": "sstart-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "sstart-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Give just one — a phone OR an email, not both."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Give just one — a phone OR an email, not both."
+     }
+    },
+    {
+     "scenario": "sstart-send-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not send the code",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not send the code",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "sstart-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "role",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "role",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/support": {
+   "answers": [
+    {
+     "scenario": "support-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "observed",
+        "message": "Say what went wrong"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "observed",
+        "message": "Say what went wrong"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "support-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "support-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "support-no-code-asked",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Ask for a code first"
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Ask for a code first"
+     }
+    },
+    {
+     "scenario": "support-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Incorrect code — 4 attempts left."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    },
+    {
+     "scenario": "support-locked",
+     "status": 429,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Too many incorrect attempts — request a new code."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Too many incorrect attempts — request a new code."
+     }
+    },
+    {
+     "scenario": "support-not-raised",
+     "status": 502,
+     "body_keys": {
+      "error": "Could not send it",
+      "message": "Nobody at the shop takes these yet."
+     },
+     "fixture": {
+      "error": "Could not send it",
+      "message": "Nobody at the shop takes these yet."
+     }
+    },
+    {
+     "scenario": "support-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not send it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not send it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "support-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_bridge_id",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_bridge_id",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/order/confirm": {
+   "answers": [
+    {
+     "scenario": "confirm-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "confirm-empty-order",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "confirm-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "confirm-closed",
+     "status": 403,
+     "body_keys": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     },
+     "fixture": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     }
+    },
+    {
+     "scenario": "confirm-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "confirm-not-started",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Start the order first"
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Start the order first"
+     }
+    },
+    {
+     "scenario": "confirm-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Incorrect code — 4 attempts left."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    },
+    {
+     "scenario": "confirm-locked",
+     "status": 429,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Too many incorrect attempts — request a new code."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Too many incorrect attempts — request a new code."
+     }
+    },
+    {
+     "scenario": "confirm-not-in-catalogue",
+     "status": 422,
+     "body_keys": {
+      "error": "Order rejected",
+      "message": "\"Nothing here\" is not available in this shop's catalogue"
+     },
+     "fixture": {
+      "error": "Order rejected",
+      "message": "\"Nothing here\" is not available in this shop's catalogue"
+     }
+    },
+    {
+     "scenario": "confirm-reprice-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order rejected",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order rejected",
+      "message": "Something went wrong — please try again."
+     },
+     "note": "before slice 1e an unexpected failure while pricing the order answered 422 with the raw error text as `message` (a database message, shown to the shopper); since 1e it is a 500 with the safe sentence. The deliberate refusals of the pricing (an item not in the catalogue, no price, out of stock, mixed currencies) keep their 422/409 and their words. public/shop.html reads only `message` on any non-200."
+    },
+    {
+     "scenario": "confirm-too-many-forms",
+     "status": 422,
+     "body_keys": {
+      "error": "Submission rejected",
+      "message": "At most 5 forms in one submission"
+     },
+     "fixture": {
+      "error": "Submission rejected",
+      "message": "At most 5 forms in one submission"
+     }
+    },
+    {
+     "scenario": "confirm-template-unread",
+     "status": 503,
+     "body_keys": {
+      "error": "Submission rejected",
+      "message": "Could not resolve the template for \"Form A\" — please retry"
+     },
+     "fixture": {
+      "error": "Submission rejected",
+      "message": "Could not resolve the template for \"Form A\" — please retry"
+     }
+    },
+    {
+     "scenario": "confirm-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "confirm-already-sent",
+     "status": 409,
+     "body_keys": {
+      "error": "Already sent",
+      "message": "This order was already sent — check My orders before sending it again.",
+      "code": "code_already_used"
+     },
+     "fixture": {
+      "error": "Already sent",
+      "message": "This order was already sent — check My orders before sending it again.",
+      "code": "code_already_used"
+     }
+    },
+    {
+     "scenario": "confirm-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "delivery_address",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "delivery_address",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/login/verify": {
+   "answers": [
+    {
+     "scenario": "login-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "identity_type",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "identity_type",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "login-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "login-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "login-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "login-no-account",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "No account — place an order first"
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "No account — place an order first"
+     }
+    },
+    {
+     "scenario": "login-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "Incorrect code — 4 attempts left."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    },
+    {
+     "scenario": "login-locked",
+     "status": 429,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "Too many incorrect attempts — request a new code."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "Too many incorrect attempts — request a new code."
+     }
+    },
+    {
+     "scenario": "login-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

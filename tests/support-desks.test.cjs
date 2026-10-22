@@ -222,7 +222,7 @@ ok('severity is taken from the ENGINE’s list, not re-listed here',
   'three sentences written twice is two wordings, and the shop sorting its queue gets both');
 
 ok('a refused raise reaches the buyer as a sentence, not a green tick',
-  /if \(!out\.raised\)[\s\S]{0,160}res\.status\(502\)/.test(cat),
+  /if \(!out\.raised\)[\s\S]{0,160}status: 502/.test(cat) /* API-1 slice 1e: a Problem that keeps the old body */,
   'raise() never throws and always answers — raised:false is a real outcome');
 
 /* ⚠️ THE PAYLOAD, NOT THE BLOCK. Scanning the whole handler failed on the COMMENT that explains why there is

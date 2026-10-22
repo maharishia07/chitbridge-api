@@ -25,6 +25,7 @@ const NOTHING_SENT = 'nothing sent';
 function sampleOf(schema) {
   const shape = schema || {};
   if (shape.enum) return shape.enum[0];
+  if (shape.examples) return shape.examples[0]; /* a schema that states a valid value (JSON Schema 2020 examples) — a pattern or an anyOf the type alone cannot meet */
   const type = [].concat(shape.type || 'object')[0];
   if (type !== 'object') return SAMPLES[type];
   const made = {};
