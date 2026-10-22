@@ -22,7 +22,10 @@
  * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
  */
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
-const { safeErr } = require('../lib/respond');
+const { problem, fromError } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+/* the contract (each route's OpenAPI operation) and the answers these routes gave before the standard — lib/integrations-contract.js */
+const { KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
 const logger = require('../lib/logger');
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -242,26 +245,43 @@ function kitManifest() {
     .slice(0, 12);
   return { version, at: new Date().toISOString(), files };
 }
-router.get('/kit', auth, (req, res) => res.json(kitManifest()));
+
+router.get('/kit', auth, (req, res) => {
+  try {
+    res.json(kitManifest());
+  } catch (e) {
+    fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
+  }
+});
 router.get('/kit/*', auth, (req, res) => {
-  /* ⚠️ the whitelist IS the path check: a name not on the list is not a file, whatever it looks like */
-  const name = String(req.params[0] || '');
-  if (KIT_NAMES.indexOf(name) < 0) return res.status(404).json({ error: 'Not part of the kit' });
-  const p = path.join(KIT, name);
-  if (!fs.existsSync(p)) return res.status(404).json({ error: 'Not found' });
-  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store');
-  res.end(fs.readFileSync(p));
+  try {
+    /* ⚠️ the whitelist IS the path check: a name not on the list is not a file, whatever it looks like */
+    const name = String(req.params[0] || '');
+    if (KIT_NAMES.indexOf(name) < 0) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not part of the kit' } });
+    const p = path.join(KIT, name);
+    if (!fs.existsSync(p)) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
+    const body = fs.readFileSync(p);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.end(body);
+  } catch (e) {
+    fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
+  }
 });
 
 /** the instruction document of a connector, as markdown — shown on the Integrations screen and shipped in the kit */
-router.get('/docs/:id', (req, res) => {
-  const c = CATALOGUE.find((x) => x.id === req.params.id);
-  if (!c) return res.status(404).json({ error: 'Not found' });
-  const p = path.join(KIT, 'docs', c.id + '.md');
-  if (!fs.existsSync(p)) return res.status(404).json({ error: 'No document' });
-  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-  res.end(fs.readFileSync(p, 'utf8'));
+router.get('/docs/:id', schemaValidate(DOCS_OPERATION), (req, res) => {
+  try {
+    const c = CATALOGUE.find((x) => x.id === req.params.id);
+    if (!c) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
+    const p = path.join(KIT, 'docs', c.id + '.md');
+    if (!fs.existsSync(p)) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'No document' } });
+    const body = fs.readFileSync(p, 'utf8');
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.end(body);
+  } catch (e) {
+    fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
+  }
 });
 /**
  * ⭐ CX6 (K1) · A CONNECTOR OFFERED ONLY WHERE IT WORKS — the shop's country pack decides, never a country name here. `fits` names what the
@@ -338,95 +358,103 @@ async function countryOf(req) {
 /* signed in → the zip carries a key; anonymous (a bare link) → the placeholder, as before. auth only runs when credentials are offered. */
 const authIfOffered = (req, res, next) => (req.headers.authorization || req.headers['x-api-key'] ? auth(req, res, next) : next());
 router.get('/catalogue', authIfOffered, async (req, res) => {
-  const country = await countryOf(req);
-  res.json({
-    connectors: catalogueFor(country).map((connector) => {
-      const row = Object.assign({}, connector, {
-        download: '/api/integrations/download/' + connector.id,
-        docs: '/api/integrations/docs/' + connector.id,
-        may: mayFor(connector, country)
-      });
-      delete row.fits;
-      delete row.for;
-      return row;
-    })
-  });
-});
-router.get('/download/:id', authIfOffered, async (req, res) => {
-  const c = CATALOGUE.find((x) => x.id === req.params.id);
-  if (!c) return res.status(404).json({ error: 'Not found' });
-  const may = mayFor(c, await countryOf(req));
-  if (!may.ok) return res.status(409).json({ error: may.why, code: may.code || 'NOT_FOR_COUNTRY', message: may.why });
-  const adapter = c.adapters.includes(String(req.query.adapter || '')) ? String(req.query.adapter) : c.default_adapter;
-  const base = require('../lib/public-base').apiBase(req);
-  /* HX1: the site the counter's "open ChitBridge" link opens — PUBLIC_WEB_BASE, else the page that asked for the kit (its Origin) */
-  const origin = String(req.get('origin') || '');
-  const web = require('../lib/public-base').webBase() || (/^https?:\/\/[^/\s]+$/.test(origin) ? origin : null);
-  /* ⭐ THE KEY IS INSIDE (Athi, 2026-09-06: "download option should autofill everything"): a session download mints a connector key named
-     for this kit and writes it into connector.json — the "shown once" is the zip itself. `configured:false` sends start.cmd through setup
-     (Tally port, company, ledgers) before it ever watches. An anonymous download, or the 20-key limit, falls back to the placeholder. */
-  let key = 'PASTE THE KEY FROM SETTINGS › INTEGRATIONS (scope: connector)',
-    minted = null;
-  /* SEC-FIX3 S8: a key writes (products, prices, GSTIN), and hat-gate lets every GET through — so only the OWNER's download carries one;
-     a co-assist's zip holds the placeholder (a key's power never exceeds its maker's access) */
-  if (req.identity && isOwner(req)) {
-    /* ⚠️ THE COUNTER'S KEY IS A TILL KEY. Its four calls (snapshot · engine · chits/send · bills) are behind the 'till' scope, and a
-       till key may address nobody but itself — which is the whole point of it. A kit minted with the connector scopes could not read
-       the shop it was downloaded for (found 2026-09-08). */
-    const scopes = c.id === 'till' ? ['till'] : ['connector', 'services'];
-    try {
-      minted = await require('./keys').mint(auth.entityOf(req), req.identity, {
-        name: 'kit ' + c.id + ' · ' + new Date().toISOString().slice(0, 10),
-        scopes: scopes
-      });
-      key = minted.key;
-    } catch (e) {
-      console.log('kit download: key not minted —', e && e.message);
-    }
+  try {
+    const country = await countryOf(req);
+    res.json({
+      connectors: catalogueFor(country).map((connector) => {
+        const row = Object.assign({}, connector, {
+          download: '/api/integrations/download/' + connector.id,
+          docs: '/api/integrations/docs/' + connector.id,
+          may: mayFor(connector, country)
+        });
+        delete row.fits;
+        delete row.for;
+        return row;
+      })
+    });
+  } catch (e) {
+    fromError(req, res, e); /* ⚠️ was outside any try: a failing country pack left the request unanswered — no old keys to keep */
   }
-  const cfg = {
-    api: base,
-    web,
-    key,
-    configured: false,
-    adapter,
-    name: c.name,
-    tally: { url: 'http://localhost:9000', company: null, partyLedger: 'Cash', salesLedger: 'Sales', voucherType: 'Sales' },
-    csv: { products: 'products.csv', orders: 'orders' },
-    zoho: {
-      base: 'https://www.zohoapis.in',
-      org: '',
-      token: '',
-      customer_name: 'Walk-in'
-    } /* blank, never a placeholder: setup fills these and a placeholder would pass for an answer */
-  };
-  const files = kitFiles(adapter).concat([
-    { name: 'chitbridge-connector/connector.json', data: JSON.stringify(cfg, null, 2) + '\n' },
-    {
-      name: 'chitbridge-connector/START.txt',
-      data:
-        'ChitBridge connector — ' +
-        c.name +
-        '\n\n1. On the Tally PC: F1 › Settings › Connectivity › TallyPrime acts as Both · Enable ODBC: Yes · port 9000. Keep the company open.\n2. Double-click start.cmd in this folder. That is all.\n   It installs Node.js if the PC has none, asks a few questions (where Tally listens, company, ledgers, Educational edition), tests both ends,\n   syncs your products, registers itself to run on its own (Windows restarts it after a crash or reboot) and starts watching for orders.\n\nYour key is already inside connector.json' +
-        (minted
-          ? ' (Settings › Integrations › Your keys: "' + minted.name + '", last4 ' + minted.last4 + ')'
-          : ' — no: this zip was fetched without signing in; paste a key from Settings › Integrations, scope connector') +
-        '. Keep this folder private.\n\n3. Approve this PC once in ChitBridge › Settings › Integrations › Running connectors (it shows this PC and your Tally company; automatic when the Tally GSTIN equals your profile GSTIN).\n\nHOW YOU KNOW IT WORKED: the window prints Products: read N; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows this connector as live.\n\nEverything else, with a table of what each failure message means: docs/' +
-        c.id +
-        '.md\n'
+});
+router.get('/download/:id', authIfOffered, schemaValidate(DOWNLOAD_OPERATION), async (req, res) => {
+  try {
+    const c = CATALOGUE.find((x) => x.id === req.params.id);
+    if (!c) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
+    const may = mayFor(c, await countryOf(req));
+    if (!may.ok) return problem(req, res, { status: 409, code: may.code, detail: may.why, legacy: { error: may.why, code: may.code, message: may.why } });
+    const adapter = c.adapters.includes(String(req.query.adapter || '')) ? String(req.query.adapter) : c.default_adapter;
+    const base = require('../lib/public-base').apiBase(req);
+    /* HX1: the site the counter's "open ChitBridge" link opens — PUBLIC_WEB_BASE, else the page that asked for the kit (its Origin) */
+    const origin = String(req.get('origin') || '');
+    const web = require('../lib/public-base').webBase() || (/^https?:\/\/[^/\s]+$/.test(origin) ? origin : null);
+    /* ⭐ THE KEY IS INSIDE (Athi, 2026-09-06: "download option should autofill everything"): a session download mints a connector key named
+       for this kit and writes it into connector.json — the "shown once" is the zip itself. `configured:false` sends start.cmd through setup
+       (Tally port, company, ledgers) before it ever watches. An anonymous download, or the 20-key limit, falls back to the placeholder. */
+    let key = 'PASTE THE KEY FROM SETTINGS › INTEGRATIONS (scope: connector)',
+      minted = null;
+    /* SEC-FIX3 S8: a key writes (products, prices, GSTIN), and hat-gate lets every GET through — so only the OWNER's download carries one;
+       a co-assist's zip holds the placeholder (a key's power never exceeds its maker's access) */
+    if (req.identity && isOwner(req)) {
+      /* ⚠️ THE COUNTER'S KEY IS A TILL KEY. Its four calls (snapshot · engine · chits/send · bills) are behind the 'till' scope, and a
+         till key may address nobody but itself — which is the whole point of it. A kit minted with the connector scopes could not read
+         the shop it was downloaded for (found 2026-09-08). */
+      const scopes = c.id === 'till' ? ['till'] : ['connector', 'services'];
+      try {
+        minted = await require('./keys').mint(auth.entityOf(req), req.identity, {
+          name: 'kit ' + c.id + ' · ' + new Date().toISOString().slice(0, 10),
+          scopes: scopes
+        });
+        key = minted.key;
+      } catch (e) {
+        console.log('kit download: key not minted —', e && e.message);
+      }
     }
-  ]);
-  const buf = zip(files);
-  res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Disposition', 'attachment; filename="chitbridge-connector-' + c.id + '.zip"');
-  res.setHeader('Content-Length', String(buf.length));
-  res.end(buf);
+    const cfg = {
+      api: base,
+      web,
+      key,
+      configured: false,
+      adapter,
+      name: c.name,
+      tally: { url: 'http://localhost:9000', company: null, partyLedger: 'Cash', salesLedger: 'Sales', voucherType: 'Sales' },
+      csv: { products: 'products.csv', orders: 'orders' },
+      zoho: {
+        base: 'https://www.zohoapis.in',
+        org: '',
+        token: '',
+        customer_name: 'Walk-in'
+      } /* blank, never a placeholder: setup fills these and a placeholder would pass for an answer */
+    };
+    const files = kitFiles(adapter).concat([
+      { name: 'chitbridge-connector/connector.json', data: JSON.stringify(cfg, null, 2) + '\n' },
+      {
+        name: 'chitbridge-connector/START.txt',
+        data:
+          'ChitBridge connector — ' +
+          c.name +
+          '\n\n1. On the Tally PC: F1 › Settings › Connectivity › TallyPrime acts as Both · Enable ODBC: Yes · port 9000. Keep the company open.\n2. Double-click start.cmd in this folder. That is all.\n   It installs Node.js if the PC has none, asks a few questions (where Tally listens, company, ledgers, Educational edition), tests both ends,\n   syncs your products, registers itself to run on its own (Windows restarts it after a crash or reboot) and starts watching for orders.\n\nYour key is already inside connector.json' +
+          (minted
+            ? ' (Settings › Integrations › Your keys: "' + minted.name + '", last4 ' + minted.last4 + ')'
+            : ' — no: this zip was fetched without signing in; paste a key from Settings › Integrations, scope connector') +
+          '. Keep this folder private.\n\n3. Approve this PC once in ChitBridge › Settings › Integrations › Running connectors (it shows this PC and your Tally company; automatic when the Tally GSTIN equals your profile GSTIN).\n\nHOW YOU KNOW IT WORKED: the window prints Products: read N; ChitBridge › Catalogue shows your Tally items; Settings › Integrations shows this connector as live.\n\nEverything else, with a table of what each failure message means: docs/' +
+          c.id +
+          '.md\n'
+      }
+    ]);
+    const buf = zip(files);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="chitbridge-connector-' + c.id + '.zip"');
+    res.setHeader('Content-Length', String(buf.length));
+    res.end(buf);
+  } catch (e) {
+    fromError(req, res, e); /* ⚠️ was outside any try: a failing country pack left the request unanswered — no old keys to keep */
+  }
 });
 
 /* the checked-in connectors: ONE statement and row shape — lib/connector-rows.js (SET-35: the Home card reads it too); health stays routes/connectors' */
 const { KIT_ROWS, rowOut, connectorsOf } = require('../lib/connector-rows');
 
-router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res) => {
+router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(HEARTBEAT_OPERATION, KIT_REFUSAL()), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -596,22 +624,22 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
       stream_owner: owner
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 /** the owner approves a PC (session only): the key behind that connector row may now do its work; a later heartbeat from the same host stays approved */
-router.post('/:actor_id/approve', auth, async (req, res) => {
+router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async (req, res) => {
   try {
-    if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'A key cannot approve itself — sign in.' });
+    if (req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.approveKey, legacy: { error: 'Forbidden', message: SAID.approveKey } });
     const entity_id = auth.entityOf(req);
     const r = await query(
       `SELECT identity_id, site, connector_config FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`,
       [req.params.actor_id, entity_id]
     );
     const a = r.rows[0];
-    if (!a) return res.status(404).json({ error: 'Not found' });
+    if (!a) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
     const c = a.connector_config || {};
-    if (!c.key_jti) return res.status(400).json({ error: 'No key', message: 'This connector has no key to approve' });
+    if (!c.key_jti) return problem(req, res, { status: 400, code: 'CONNECTOR_HAS_NO_KEY', detail: SAID.noKey, legacy: { error: 'No key', message: SAID.noKey } });
     const hostNow = (c.enrol && c.enrol.host) || a.site || null;
     const patch = {
       approved: true,
@@ -628,7 +656,7 @@ router.post('/:actor_id/approve', auth, async (req, res) => {
     ]);
     res.json({ ok: true, enrol });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 /**
@@ -637,11 +665,10 @@ router.post('/:actor_id/approve', auth, async (req, res) => {
  * — the kit's write-back after every push, onto MY copy of the chit (business_json.books[kind]); never a second voucher, only the record
  * of the one that went (or did not). A connector key with scope connector; the bell rings for the entity so an open Task repaints.
  */
-router.post('/books', auth, auth.requireScope('connector'), async (req, res) => {
+router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS_OPERATION, KIT_REFUSAL(CHIT_SAID)), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    if (!b.chit_id || !/^[0-9a-f-]{36}$/.test(String(b.chit_id))) return res.status(400).json({ error: 'validation', message: 'chit_id required' });
     const kind = /^(order|receipt|purchase)$/.test(String(b.kind || '')) ? String(b.kind) : 'order';
     const rec = {
       system: String(b.system || 'books').slice(0, 40),
@@ -659,7 +686,7 @@ router.post('/books', auth, auth.requireScope('connector'), async (req, res) => 
         [kind, JSON.stringify(rec), b.chit_id, entity_id]
       )
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
     /* ⭐ every answer is kept, not just the last one (2026-09-07): books[kind] is what the Task shows, books_log is what reconciliation
        reads when two systems answered for one order — a duplicate then SHOWS instead of hiding behind the newer row. */
     try {
@@ -681,15 +708,15 @@ router.post('/books', auth, auth.requireScope('connector'), async (req, res) => 
     }
     res.json({ ok: true, kind, books: rec });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
-router.get('/status', auth, async (req, res) => {
+router.get('/status', auth, schemaValidate(STATUS_OPERATION), async (req, res) => {
   try {
     const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]);
     res.json(PL.pageOut('connectors', r.rows.map(rowOut), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 const SQL_RECONCILE = `SELECT ch.chit_id, ch.direction, ch.purpose, ch.auto_subject, ch.manual_subject, ch.created_at, ch.all_recipients,
@@ -721,12 +748,12 @@ router.get('/streams', auth, async (req, res) => {
     const flags = await require('../lib/policy').get(entity_id);
     res.json({ streams: STREAM_LIST, owner: flags.stream_owner || {}, connectors: await connectorsOf(entity_id) });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
-router.put('/streams', auth, async (req, res) => {
+router.put('/streams', auth, schemaValidate(STREAMS_SET_OPERATION), async (req, res) => {
   try {
-    if (!req.identity || req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'a connector cannot reassign its own streams' });
+    if (!req.identity || req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.streamsKey, legacy: { error: 'Forbidden', message: SAID.streamsKey } });
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const policy = require('../lib/policy');
@@ -740,11 +767,14 @@ router.put('/streams', auth, async (req, res) => {
       if (v === null || v === '' || v === false) delete next[st];
       else next[st] = String(v).slice(0, 120);
     }
-    if (!touched) return res.status(400).json({ error: 'validation', message: 'name at least one stream' });
+    if (!touched) return problem(req, res, { status: 400, code: 'NO_STREAM_NAMED', detail: SAID.noStream, legacy: { error: 'validation', message: SAID.noStream } });
     const after = await policy.set(entity_id, { stream_owner: next });
     res.json({ ok: true, owner: after.stream_owner || {} });
   } catch (e) {
-    res.status(e.status || 500).json({ error: 'Failed', message: String(e && e.message) });
+    /* a map the policy refuses (its only refusal is a 400) says why; anything else is a fault of ours and says nothing of its cause — it sent the raw error text before slice 1c */
+    if (e && e.status === 400)
+      return problem(req, res, { status: 400, code: 'INTEGRATION_BAD_REQUEST', detail: String(e.message), legacy: { error: 'Failed', message: String(e.message) } });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 
@@ -762,12 +792,11 @@ router.put('/streams', auth, async (req, res) => {
  * outside. The flag is on the chit, so the connector obeys it (core.booksGate) and stops retrying, and reconciliation stops asking for
  * a person. Reversible: sending false lifts it. Recorded with who and when — a row that vanishes with no trace is worse than a row.
  */
-router.post('/books/skip', auth, async (req, res) => {
+router.post('/books/skip', auth, schemaValidate(SKIP_OPERATION, KIT_REFUSAL(CHIT_SAID)), async (req, res) => {
   try {
-    if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'a connector cannot decide this — sign in' });
+    if (req.api_key) return problem(req, res, { status: 403, code: 'KEY_CANNOT_DECIDE', detail: SAID.skipKey, legacy: { error: 'Forbidden', message: SAID.skipKey } });
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    if (!b.chit_id || !/^[0-9a-f-]{36}$/.test(String(b.chit_id))) return res.status(400).json({ error: 'validation', message: 'chit_id required' });
     const on = b.on !== false;
     const rec = on ? { at: new Date().toISOString(), by: req.identity.identity_id, why: String(b.why || '').slice(0, 200) || null } : null;
     const r = await require('../db').withEntity(entity_id, (db) =>
@@ -780,10 +809,10 @@ router.post('/books/skip', auth, async (req, res) => {
         [JSON.stringify(rec), b.chit_id, entity_id]
       )
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
     res.json({ ok: true, skipped: on });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 
@@ -795,7 +824,7 @@ function nameOfParty(list) {
   if (typeof pick === 'string') return pick;
   return pick.display_name || pick.name || pick.user_id || pick.handle || null;
 }
-router.get('/reconcile', auth, async (req, res) => {
+router.get('/reconcile', auth, schemaValidate(RECONCILE_OPERATION), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
@@ -874,7 +903,7 @@ router.get('/reconcile', auth, async (req, res) => {
       }, {});
     res.json({ days, books_at: at, overdue_hours: hrs, connector_since: since ? new Date(since).toISOString() : null, counts, by_system, rows: out });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 
@@ -900,10 +929,10 @@ async function publicEntityOfHandle(h) {
   const vis = await require('../lib/catalogue-view').catalogueVisibility({ entity_id, query, visibilityCap: require('../lib/visibility-cap'), viewer: null });
   return vis === 'private' ? null : entity_id;
 }
-router.post('/ask/:handle/stock', async (req, res) => {
+router.post('/ask/:handle/stock', schemaValidate(ASK_OPERATION), async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle);
-    if (!entity_id) return res.status(404).json({ error: 'Not found' });
+    if (!entity_id) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
     const ask_id = uuidv4();
     const n = require('../lib/events').emit([entity_id], {
       kind: 'ask',
@@ -918,13 +947,13 @@ router.post('/ask/:handle/stock', async (req, res) => {
       note: n ? 'a connector is listening — re-read the stock in a few seconds' : 'no connector is listening now — the last stamped figures stand'
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
-router.get('/stock/:handle', async (req, res) => {
+router.get('/stock/:handle', schemaValidate(STOCK_OPERATION), async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle);
-    if (!entity_id) return res.status(404).json({ error: 'Not found' });
+    if (!entity_id) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
     const r = await require('../db').withEntity(entity_id, (db) =>
       db.query(`SELECT item_id, item_data->'avail' AS avail FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data ? 'avail'`, [
         entity_id
@@ -941,7 +970,7 @@ router.get('/stock/:handle', async (req, res) => {
       )
     );
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 /* ── THE PROFILE FROM THEIR SYSTEM (Athi, 2026-09-05): what we look for · where it comes from · how trusted ── */
@@ -959,10 +988,10 @@ router.get('/profile-map', auth, async (req, res) => {
     if (tn && tn.other && norm(tn.other.value) !== norm(tn.value)) out.name_mismatch = { profile: tn.value, other: tn.other.value, source: tn.other.source };
     res.json(out);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
-router.post('/profile', auth, auth.requireScope('connector'), async (req, res) => {
+router.post('/profile', auth, auth.requireScope('connector'), schemaValidate(PROFILE_OPERATION, KIT_REFUSAL(PROFILE_FIELDS_SAID())), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -973,7 +1002,7 @@ router.post('/profile', auth, auth.requireScope('connector'), async (req, res) =
       .filter(([k]) => PM.FIELDS.some((item) => item.key === k))
       .map(([k, val]) => ({ key: k, value: val, source, as_of, rung: 'copied' }));
     if (!incoming.length)
-      return res.status(400).json({ error: 'validation', message: 'fields{} required — keys: ' + PM.FIELDS.map((item) => item.key).join(', ') });
+      return problem(req, res, { status: 400, code: 'INTEGRATION_BAD_REQUEST', detail: PROFILE_FIELDS_SAID(), legacy: { error: 'validation', message: PROFILE_FIELDS_SAID() } });
     const current = await P.profileValues(entity_id);
     const m = PM.merge(current, incoming);
     /* the checks raise what they can: a GSTIN with a good check digit becomes 'checked', and so on — before it is written */
@@ -988,77 +1017,27 @@ router.post('/profile', auth, auth.requireScope('connector'), async (req, res) =
       Object.assign({ message: 'Profile updated from ' + source, written: m.written, kept: m.kept, rows: w.rows }, PM.assess(await P.profileValues(entity_id)))
     );
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, FAILED_LEGACY);
   }
 });
 router.openapi = {
   paths: {
-    '/api/integrations/profile-map': {
-      get: {
-        summary: 'What we look for about the store, where it comes from, how trusted — with the current values',
-        tags: ['keys'],
-        security: [{ bearer: [] }, { apiKey: [] }],
-        responses: { 200: { description: 'the map' } }
-      }
-    },
-    '/api/integrations/profile': {
-      post: {
-        summary: "The connector writes the store's profile from its own system (rung copied; checks may raise it; never below a held rung)",
-        tags: ['keys'],
-        security: [{ apiKey: [] }],
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: { type: 'object', properties: { source: { type: 'string' }, as_of: { type: 'string' }, fields: { type: 'object' } } }
-            }
-          }
-        },
-        responses: { 200: { description: 'written · kept · the map' } }
-      }
-    },
-    '/api/integrations/ask/{handle}/stock': {
-      post: {
-        summary: "Ask the store's connector for fresh stock (public; answered through the bell)",
-        tags: ['keys'],
-        parameters: [{ name: 'handle', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'asked · listeners' } }
-      }
-    },
-    '/api/integrations/stock/{handle}': {
-      get: {
-        summary: 'The stamped stock figures of a public storefront',
-        tags: ['keys'],
-        parameters: [{ name: 'handle', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'stock' } }
-      }
-    },
-    '/api/integrations/catalogue': {
-      get: { summary: 'The connectors that exist, with a download each', tags: ['keys'], responses: { 200: { description: 'catalogue' } } }
-    },
-    '/api/integrations/heartbeat': {
-      post: {
-        summary: 'A running connector checks in (key: connector)',
-        tags: ['keys'],
-        security: [{ apiKey: [] }],
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  adapter: { type: 'string' },
-                  host: { type: 'string' },
-                  version: { type: 'string' },
-                  counters: { type: 'object' }
-                }
-              }
-            }
-          }
-        },
-        responses: { 200: { description: 'seen' } }
-      }
-    }
+    '/api/integrations/kit': { get: KIT_OPERATION },
+    '/api/integrations/kit/*': { get: KIT_FILE_OPERATION },
+    '/api/integrations/docs/{id}': { get: DOCS_OPERATION },
+    '/api/integrations/catalogue': { get: CATALOGUE_OPERATION },
+    '/api/integrations/download/{id}': { get: DOWNLOAD_OPERATION },
+    '/api/integrations/heartbeat': { post: HEARTBEAT_OPERATION },
+    '/api/integrations/{actor_id}/approve': { post: APPROVE_OPERATION },
+    '/api/integrations/books': { post: BOOKS_OPERATION },
+    '/api/integrations/status': { get: STATUS_OPERATION },
+    '/api/integrations/streams': { get: STREAMS_OPERATION, put: STREAMS_SET_OPERATION },
+    '/api/integrations/books/skip': { post: SKIP_OPERATION },
+    '/api/integrations/reconcile': { get: RECONCILE_OPERATION },
+    '/api/integrations/ask/{handle}/stock': { post: ASK_OPERATION },
+    '/api/integrations/stock/{handle}': { get: STOCK_OPERATION },
+    '/api/integrations/profile-map': { get: PROFILE_MAP_OPERATION },
+    '/api/integrations/profile': { post: PROFILE_OPERATION }
   },
   schemas: {}
 };

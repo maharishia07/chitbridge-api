@@ -29,6 +29,11 @@ t('a held route with a failing column does not pass', !ratchet.passesHold(row('x
 t('an expired debt entry is a problem', ratchet.debtProblems([{ route: 'GET /b', opened: '2020-01-01', expires: '2020-01-10', pr: '#1' }], false, []).length === 1);
 t('a hotfix with no debt entry is a problem', ratchet.debtProblems([], true, [row('GET /b', 'h', 'b.js')]).length === 1);
 t('the register normaliser ignores comments and spacing', register.normalise('a = 1 // note') === register.normalise('a  =  1'));
+/* schema_out (S9): a non-JSON answer counts as a string of its media type; a declared media type with no schema still fails */
+const answers = (content) => ({ responses: { 200: { description: 'ok', content } } });
+t('schema_out: a JSON answer declared without a schema fails', !register.schemaOutColumn(answers({ 'application/json': {} })));
+t('schema_out: a success declared with no media type at all fails', !register.schemaOutColumn({ responses: { 200: { description: 'ok' } } }));
+t('schema_out: a zip declared as a string of its media type passes', register.schemaOutColumn(answers({ 'application/zip': { schema: { type: 'string', contentMediaType: 'application/zip' } } })));
 t('the error-code parser finds the table of the committed register', codes.readRows().rows.length > 100);
 t('a 500 carries the generic sentence, never the error text', safeErr(new Error('relation x does not exist')) === SAFE_SENTENCE);
 t('the assembled OpenAPI is a contract that carries the Problem schema', typeof openapi.assemble === 'function');

@@ -10,7 +10,7 @@
  *   node tools/api-ratchet.cjs --base origin/main     check (CI)
  *   node tools/api-ratchet.cjs --base origin/main --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
  *   node tools/api-ratchet.cjs --write                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
- * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js) must have all seven machine columns true; every other touched route is counted, not blocked. Stage "all" holds every route.
+ * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js, routes/integrations.js) must have all seven machine columns true; every other touched route is counted, not blocked. Stage "all" holds every route.
  */
 const fs = require('fs');
 const os = require('os');
@@ -20,7 +20,7 @@ const { spawnSync } = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
 const RATCHET_FILE = path.join(ROOT, 'docs', 'api-ratchet.json');
 /* the route files brought to the standard so far: a PR touching one of their routes must keep it at all seven machine columns (S16 a); the list grows with each slice */
-const HELD_FILES = ['routes/keys.js'];
+const HELD_FILES = ['routes/keys.js', 'routes/integrations.js'];
 const DEBT_DAYS = 14;
 const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(name);

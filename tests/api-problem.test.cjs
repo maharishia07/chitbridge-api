@@ -212,8 +212,13 @@ function checkUnits() {
   await checkServerHandlers(recording);
   if (argv.includes('--capture')) fs.writeFileSync(argv[argv.indexOf('--capture') + 1], JSON.stringify(recording, null, 1));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort()]));
-  if (argv.includes('--write')) fs.writeFileSync(TESTED_FILE, JSON.stringify(coverage, null, 1) + '\n');
-  else if (!argv.includes('--capture')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover', sameValue(JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8')), coverage), coverage);
+  /* this file owns the routes/keys.js rows; tests/api-problem-integrations.test.cjs owns the /api/integrations rows of the same manifest */
+  const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
+  const OTHERS = (route) => / \/api\/integrations\//.test(route);
+  const mine = Object.fromEntries(Object.keys(onDisk).filter((route) => !OTHERS(route)).map((route) => [route, onDisk[route]]));
+  const merged = Object.assign(Object.fromEntries(Object.keys(onDisk).filter(OTHERS).map((route) => [route, onDisk[route]])), coverage);
+  if (argv.includes('--write')) fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
+  else if (!argv.includes('--capture')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover', sameValue(mine, coverage), coverage);
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })().catch((failure) => {
