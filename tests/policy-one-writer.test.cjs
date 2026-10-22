@@ -101,7 +101,7 @@ const profile = require(path.join(API, 'lib', 'profile'));
 
   console.log('\n── POL1 · FLAGS carries the card and who may change ──');
   const card = Object.keys(policy.FLAGS).filter((k) => policy.FLAGS[k].ui).concat(Object.keys(policy.BOUND_SCHEMA).filter((k) => policy.BOUND_SCHEMA[k].ui));
-  ok('17 card rows carry label · level · gov · order (was the web\'s POLICY_FLAGS)', card.length === 17
+  ok('18 card rows carry label · level · gov · order (was the web\'s POLICY_FLAGS; +came_back_days 22 Oct 2026)', card.length === 18
     && card.every((k) => { const u = (policy.FLAGS[k] || policy.BOUND_SCHEMA[k]).ui; return u.label && u.level && u.gov && u.order > 0; }));
   ok('a row\'s shown options are the flag\'s own options, only reordered', card.every((k) => { const f = policy.FLAGS[k] || policy.BOUND_SCHEMA[k]; return !f.ui.options || f.ui.options.slice().sort().join() === f.options.slice().sort().join(); }));
   ok('owner-only is data: system_folders / books refused for a co-assist, in the flag\'s own words', policy.refusalFor({ books: {} }, false) === 'Only the owner may let the books post by themselves.'

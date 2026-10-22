@@ -40,7 +40,7 @@ seed();
 D.memberships = [{ entity_id: 'E1', item_id: P(9), kind: 'lead_stage', grp: 'lead', at: '2026-10-01T00:00:00.000Z' }];
 
 /* the tables beyond the stub's own: offers (b160), consent (b306), the WhatsApp line (b123) and the outbound log (b126) */
-const T = { offers: [{ g: 'group:Dealers', n: 2 }, { g: 'regular', n: 1 }], consent: false, prefs: [], groupsColumn: true, outbound: [], line: null };
+const T = { offers: [{ g: 'group:Dealers', n: 2 }, { g: 'regular', n: 1 }], consent: false, prefs: [], groupsColumn: true, outbound: [], line: null, mkt: false, inserts: [] };
 D.extra = async (sql, p) => {
   if (/FROM definition d/.test(sql)) return { rows: T.offers };
   if (/^SELECT DISTINCT unnest\(groups\)/.test(sql)) { if (!T.groupsColumn) { const e = new Error('column "groups" does not exist'); e.code = '42703'; throw e; } const s = new Set(); D.cust.forEach((r) => (r.groups || []).forEach((g) => s.add(g))); return { rows: [...s].sort().map((name) => ({ name })) }; }
@@ -60,7 +60,8 @@ D.extra = async (sql, p) => {
   }
   if (/^SELECT count\(\*\)::int AS n FROM customer_list/.test(sql)) return { rows: [{ n: D.cust.filter((r) => r.owner === p[0] && (r.groups || []).indexOf(p[1]) >= 0).length }] };
   if (/FROM channel_binding WHERE entity_id = \$1 AND channel = 'whatsapp'/.test(sql)) return { rows: T.line ? [T.line] : [] };
-  if (/^INSERT INTO channel_outbound/.test(sql)) { const r = { id: 'ob' + T.outbound.length, status: p[6], reason: p[7], to: p[4] }; T.outbound.push(r); return { rows: [r] }; }
+  if (/information_schema.columns/.test(sql)) return { rows: T.mkt ? [{ '?column?': 1 }] : [] }; /* b776: the MKT columns on channel_outbound */
+  if (/^INSERT INTO channel_outbound/.test(sql)) { T.inserts.push({ sql, p }); const r = { id: 'ob' + T.outbound.length, status: p[6], reason: p[7], to: p[4] }; T.outbound.push(r); return { rows: [r] }; }
   if (/FROM capture\s+WHERE entity_id = \$1 AND channel = 'whatsapp' AND sender_ref/.test(sql)) return { rows: [{ last_in: null }] };
   return null;
 };
@@ -170,6 +171,17 @@ const seg = (r, k) => r.body.segments.find((s) => s.key === k);
     T.prefs.push({ owner: 'E1', party_id: P(6), channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent', withdrawn_at: null });
     const r = await t.post('/segments/high_value/send', { text: 'Thank you' }); assert.strictEqual(r.status, 200);
     assert.deepStrictEqual([r.body.may, r.body.sent[0].status, r.body.sent[0].reason], [1, 'refused', 'No phone number.']);
+  });
+  await ita('MKT b776: the people NOT messaged are logged as refused receipts of the same send (one INSERT through the one writer), and the answer names the send', async () => {
+    T.mkt = true; T.inserts = []; require('../lib/schema')._reset(); /* a no is remembered for a minute: forget it */
+    const r = await t.post('/segments/high_value/send', { text: 'Thank you' }); T.mkt = false;
+    assert.strictEqual(r.status, 200); assert.ok(/^[0-9a-f-]{36}$/.test(r.body.send_ref), 'the send has a ref'); assert.strictEqual(r.body.refusals_logged, 1);
+    const multi = T.inserts.filter((x) => /send_ref/.test(x.sql)); assert.strictEqual(multi.length, 1, 'one statement for the refusals');
+    assert.deepStrictEqual([multi[0].p[4], multi[0].p[6], multi[0].p[10], multi[0].p[11]], ['', 'refused', 'marketing', r.body.send_ref]);
+    assert.strictEqual(JSON.parse(multi[0].p[12]).code, 'NO_PHONE');
+  });
+  await ita('before b776 the send is the same and logs no group refusals (refusals_logged 0)', async () => {
+    T.mkt = false; require('../lib/schema')._reset(); const r = await t.post('/segments/high_value/send', { text: 'Thank you' }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.refusals_logged, 0);
   });
   await ita('refused in words: no text · over 1000 characters · an unknown key · e-mail (not sendable here) · a viewer', async () => {
     let r = await t.post('/segments/group:Dealers/send', { text: '  ' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'NO_TEXT');
