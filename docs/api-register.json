@@ -8586,7 +8586,7 @@
    "path": "/health",
    "owner_area": "server",
    "file": "server.js",
-   "line": 475,
+   "line": 486,
    "hash": "717ec4ac7f9b3bd8",
    "columns": {
     "schema_in": false,
