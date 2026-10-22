@@ -108,7 +108,7 @@ const srcOf = (rel) => blank(fs.readFileSync(path.join(API, rel), 'utf8').replac
   });
   const privacy = require(path.join(API, 'lib', 'privacy'));
   await it('a privacy request for a NULL-country shop with no country given is ASKED in words (never India\'s clock); AU stays AU', async () => {
-    const h = (country) => ({ query: async (sql) => /to_regclass/.test(sql) ? { rows: [{ ok: true }] } : /SELECT country FROM identities/.test(sql) ? { rows: [{ country }] }
+    const h = (country) => ({ query: async (sql) => /to_regclass/.test(sql) ? { rows: [{ ok: true }] } : /SELECT country(, display_name)? FROM identities/.test(sql) ? { rows: [{ country, display_name: "Test shop" }] }
       : { rows: [{ request_id: 'r1', country: 'AU' }] } });
     let e = null; try { await privacy.logRequest(h(null), 'shop', { kind: 'access', who: 'Ann' }, 'me'); } catch (x) { e = x; }
     assert.ok(e && /country/i.test(e.message) && !/\bIN\b/.test(String(e.message).replace('like AU', '')), e ? e.message : 'not refused');

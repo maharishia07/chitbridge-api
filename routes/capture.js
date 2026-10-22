@@ -1,7 +1,7 @@
 /*
  * OWNS      the intake inbox and channel adapters (web simulate, webhooks).
  * CALLED BY web Inbox · WhatsApp / email webhooks.
- * FLOW      channel → capture → AI structure → human confirm → chit
+ * FLOW      channel → capture → AI structure → human confirm → chit   (a WhatsApp STOP reply: capture → lib/optout withdraws consent, never a chit)
  * CARD      11-crm-and-marketing/capture
  */
 // routes/capture.js — the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm
@@ -14,6 +14,7 @@ const auth = require('../middleware/auth');
 const { safeErr } = require('../lib/respond');
 const capture = require('../lib/capture');
 const channels = require('../lib/channels'); // b123 — the number/address → entity map the webhooks resolve against
+const optout = require('../lib/optout'); // CON-2 — a STOP reply withdraws marketing consent (new messages only, before auto-raise)
 
 // HMAC verify over the RAW request body (constant-time). Providers sign every POST; a shared verify-token is NOT auth.
 // header e.g. WhatsApp `X-Hub-Signature-256: sha256=<hex>`. Returns true only on a valid signature.
@@ -122,6 +123,69 @@ router.get('/webhook/whatsapp', (req, res) => {
   if (vt && req.query['hub.verify_token'] === vt && req.query['hub.mode'] === 'subscribe') return res.status(200).send(req.query['hub.challenge']);
   return res.status(403).send('forbidden');
 });
+/** the capture row for one inbound message, or null for a delivery receipt / status (no text, no media) */
+async function captureOf(entity, to, names, message) {
+  const text = (message.text && message.text.body) || message.caption || '';
+  const media = message.image || message.document || message.audio || message.video;
+  if (!text && !media) return null; // a receipt/status, not a message
+  return capture.createCapture(entity, {
+    channel: 'whatsapp',
+    sender_ref: message.from,
+    sender_name: names[message.from] || null,
+    raw_text: text || '[' + (message.type || 'media') + ']',
+    media_refs: media && media.id ? [{ name: media.filename || message.type, id: media.id }] : [],
+    to_ref: to, // b126 — the line they wrote to, so a reply can come FROM it
+    provider_msg_id: message.id // b129 — Meta retries; a redelivery must not become a second order
+  });
+}
+/**
+ * takeMessage — ONE inbound WhatsApp message of a signed delivery: capture it, let a STOP reply withdraw consent (CON-2), else schedule the auto-raise.
+ * Returns how many captures it placed (0 for a delivery receipt or a status, 1 otherwise). `afterAnswer` collects work that must wait for Meta's 200.
+ */
+async function takeMessage(entity, bind, to, names, message, afterAnswer) {
+  const cap = await captureOf(entity, to, names, message);
+  if (!cap) return 0;
+  /**
+   * CON-2 · A STOP IS NOT AN ORDER. Whole-message match only (lib/optout), new messages only, and BEFORE auto-raise: the withdrawal is written now
+   * (a lost confirmation is a courtesy missed, a lost withdrawal is a person who still gets offers), the STOP capture is dismissed, and the
+   * confirmation goes out after the 200. A redelivery (cap.duplicate) never reaches this.
+   */
+  const stopped = cap.duplicate ? { stop: false } : await optout.fromReply(entity, { sender_ref: message.from, text: (message.text && message.text.body) || '', capture_id: cap.id });
+  if (stopped.stop) {
+    if (!stopped.failed) afterAnswer.push(() => optout.confirmReply(entity, Object.assign({ sender_ref: message.from, to_ref: to, capture_id: cap.id }, stopped)));
+    return 1;
+  }
+  /**
+   * ⚠️ AUTO-RAISE RUNS AFTER WE HAVE ANSWERED, NEVER BEFORE (b131). Reading a message with a co-assist takes
+   * seconds; Meta wants a fast 200 and retries anything slow. Doing this inline would turn every message
+   * into a redelivery storm — and b129's dedupe would then be load-bearing for a problem we created.
+   *
+   * ⚠️ AND A REDELIVERY MUST NOT RAISE TWICE. `cap.duplicate` means this exact provider message id is
+   * already on the queue, so it is skipped: the first delivery owns it. Without this, Meta retrying a
+   * message we already handled would mint a second chit for one request.
+   */
+  if (bind && bind.auto_raise && !cap.duplicate) {
+    setImmediate(() => {
+      require('../lib/autoraise').run(entity, cap.id).catch(log.orElse('capture: auto-raise failed — the message waits in Intake to be raised by hand'));
+    });
+  }
+  return 1;
+}
+/** one `changes` entry of a signed delivery: resolve the shop from OUR number (b123 · b131), then take each message; returns how many were placed */
+async function takeChange(change, afterAnswer) {
+  const value = (change && change.value) || {};
+  const to = (value.metadata && (value.metadata.display_phone_number || value.metadata.phone_number_id)) || '';
+  /* b131 — resolve the OWNER and the line's settings in one SECURITY DEFINER call. Falls back to ownerOf on a
+     pre-b131 database, where auto_raise simply does not exist and every line behaves as it does today. */
+  const bind = await channels.bindingFor('whatsapp', to);
+  const entity = bind ? bind.entity_id : await channels.ownerOf('whatsapp', to);
+  if (!entity) return 0; // not bound to anyone here — not for us
+  const names = {};
+  for (const contact of value.contacts || []) names[contact.wa_id] = (contact.profile && contact.profile.name) || null;
+  let placed = 0;
+  for (const message of value.messages || []) placed += await takeMessage(entity, bind, to, names, message, afterAnswer);
+  return placed;
+}
 // RAW body on the webhook POSTs (needed for HMAC — the parsed JSON can't be re-signed byte-for-byte).
 router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, res) => {
   // Inert until BOTH an app secret AND a number→entity binding exist. Meta expects a fast 200 (no retry-storm).
@@ -141,52 +205,13 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
      */
     const parsed = JSON.parse(req.body.toString('utf8'));
     let placed = 0;
-    for (const entry of parsed.entry || []) {
-      for (const ch of entry.changes || []) {
-        const v = (ch && ch.value) || {};
-        const to = (v.metadata && (v.metadata.display_phone_number || v.metadata.phone_number_id)) || '';
-        /* b131 — resolve the OWNER and the line's settings in one SECURITY DEFINER call. Falls back to ownerOf on a
-           pre-b131 database, where auto_raise simply does not exist and every line behaves as it does today. */
-        const bind = await channels.bindingFor('whatsapp', to);
-        const entity = bind ? bind.entity_id : await channels.ownerOf('whatsapp', to);
-        if (!entity) continue; // not bound to anyone here — not for us
-        const names = {};
-        for (const c of v.contacts || []) names[c.wa_id] = (c.profile && c.profile.name) || null;
-        for (const m of v.messages || []) {
-          const text = (m.text && m.text.body) || m.caption || '';
-          const media = m.image || m.document || m.audio || m.video;
-          if (!text && !media) continue; // a receipt/status, not a message
-          const cap = await capture.createCapture(entity, {
-            channel: 'whatsapp',
-            sender_ref: m.from,
-            sender_name: names[m.from] || null,
-            raw_text: text || '[' + (m.type || 'media') + ']',
-            media_refs: media && media.id ? [{ name: media.filename || m.type, id: media.id }] : [],
-            to_ref: to, // b126 — the line they wrote to, so a reply can come FROM it
-            provider_msg_id: m.id // b129 — Meta retries; a redelivery must not become a second order
-          });
-          /**
-           * ⚠️ AUTO-RAISE RUNS AFTER WE HAVE ANSWERED, NEVER BEFORE (b131). Reading a message with a co-assist takes
-           * seconds; Meta wants a fast 200 and retries anything slow. Doing this inline would turn every message
-           * into a redelivery storm — and b129's dedupe would then be load-bearing for a problem we created.
-           *
-           * ⚠️ AND A REDELIVERY MUST NOT RAISE TWICE. `cap.duplicate` means this exact provider message id is
-           * already on the queue, so it is skipped: the first delivery owns it. Without this, Meta retrying a
-           * message we already handled would mint a second chit for one request.
-           */
-          if (bind && bind.auto_raise && !cap.duplicate) {
-            const _cid = cap.id,
-              _ent = entity;
-            setImmediate(() => {
-              require('../lib/autoraise').run(_ent, _cid).catch(log.orElse('capture: auto-raise failed — the message waits in Intake to be raised by hand'));
-            });
-          }
-          placed++;
-        }
-      }
-    }
-    return res.status(200).json({ ok: true, captured: placed });
-  } catch (_) {
+    const afterAnswer = []; /* CON-2: the STOP confirmations, sent once Meta has its 200 */
+    for (const entry of parsed.entry || []) for (const change of entry.changes || []) placed += await takeChange(change, afterAnswer);
+    res.status(200).json({ ok: true, captured: placed });
+    setImmediate(() => afterAnswer.forEach((send) => send()));
+    return;
+  } catch (e) {
+    log.error('capture: a signed WhatsApp delivery could not be handled - Meta still gets its 200', { why: String(e && e.message) });
     return res.status(200).json({ ok: true });
   }
 });

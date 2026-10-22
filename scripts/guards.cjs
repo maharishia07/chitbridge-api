@@ -296,6 +296,7 @@ const GUARDS = [
   'crm-segment.test.cjs', // high_value in SEGMENT_SQL (top 10 %, >= 3 bills, override wins) and the fall-back before party_item exists
   'crm-read.test.cjs', // a both-roles party is ONE row; a merged / hidden / other-population party is never listed; dues = the stored figures; no per-row fetch
   'crm-interactions.test.cjs', // log a call / note (party_interaction stubbed); the 503 before b276
+  'optout.test.cjs', // ⭐ CON-2: a STOP reply withdraws marketing consent for every party on the number (whatsapp + sms, source reply), whole-message match, per-country words, the offer footer, the signed webhook dismisses it and confirms after the 200
   'privacy.test.cjs', // CO1: consent append-only + may/why, the request register's legal clock + answered once, the public facts; 503 before b306/b307
   'crm-followups.test.cjs', // follow-ups CRUD, assignment (owner or assignee), late in the SHOP's day, the 503 before b276
   'crm-sweep.test.cjs', // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
