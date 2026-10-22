@@ -110,7 +110,7 @@ jobs:
 
   seams-drift:
     # DOC-68 (docs truth): docs/SEAMS.md is GENERATED (node C:/dev/seams.cjs --write), so a drift check fails the build the way MODULES.md does.
-    # ONE copy of the logic: tools/seams.cjs in the web repo (run from a web checkout, a same-named branch wins like the other twin steps).
+    # ONE copy of the logic: tools/vendor/seams.cjs in the web repo (run from a web checkout, a same-named branch wins like the other twin steps).
     # It reads only THIS repo's checkout, so a change in the sibling repo can never turn this red. Refresh: node C:/dev/seams.cjs --write (LF checkout).
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -131,8 +131,8 @@ jobs:
           repository: maharishia07/chitbridge-web
           ref: ${{ steps.twin.outputs.ref }}
           path: .side/chitbridge-web
-      - name: docs/SEAMS.md has not drifted (node .side/chitbridge-web/tools/seams.cjs --check --repo api)
-        run: node .side/chitbridge-web/tools/seams.cjs --check --repo api
+      - name: docs/SEAMS.md has not drifted (node .side/chitbridge-web/tools/vendor/seams.cjs --check --repo api)
+        run: node .side/chitbridge-web/tools/vendor/seams.cjs --check --repo api
 
   pr-checklist:
     # ⭐ READ-GUARD (DISCIPLINES §6): a PR's body carries the §6 checklist WITH NUMBERS (.github/pull_request_template.md), filled from
