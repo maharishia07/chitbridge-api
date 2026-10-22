@@ -1898,3 +1898,34 @@ it('⭐ and that guard can see it when it is wrong', () => {
 });
 
 console.log(pass + ' checks');
+
+/**
+ * ⭐⭐ THE CATEGORY MASTER REACHES THE COUNTER, AND THE COUNTER READS IT ([TILL-114]).
+ * `categories` was written twice in the response literal (the tax categories, then the master); the later key won, so the master
+ * never arrived and catRestamp silently did nothing. Two things, two keys.
+ */
+it('⭐ the snapshot carries the master under its own key and no key is written twice', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const at = src.indexOf('category_master: catList.map(');
+  assert.ok(at > 0, 'the snapshot no longer carries the category master');
+  const body = src.slice(src.lastIndexOf('const body = {', at), src.indexOf('policy: {', at));
+  const keys = body.split(/\r?\n/).map(function (l) { return (l.match(/^ {6}([a-z_]+):/) || [])[1]; }).filter(Boolean);
+  const dup = keys.filter(function (k, i) { return keys.indexOf(k) !== i; });
+  assert.deepStrictEqual(dup, [], 'a key is written twice in the snapshot answer, so the later silently wins: ' + dup.join(', '));
+  assert.ok(keys.includes('categories') && keys.includes('category_master'), 'tax categories and the master must both be present');
+});
+
+it('⭐ the counter stamps product names from category_master, and leaves the tax categories alone', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const from = page.indexOf('function catRestamp(snap){');
+  const fn = page.slice(from, page.indexOf('function byCatOf', from));
+  const catRestamp = new Function('S', fn + '; return catRestamp;')(null);
+  const snap = {
+    items: [{ category_id: 'c1', category: 'Old' }, { category_id: 'zz', category: 'Kept' }],
+    categories: [{ id: 'c1', name: 'TAX ROW' }],
+    category_master: [{ id: 'c1', name: 'Vegetables', status: 'active' }]
+  };
+  catRestamp(snap);
+  assert.strictEqual(snap.items[0].category, 'Vegetables', 'the master did not decide the name');
+  assert.strictEqual(snap.items[1].category, 'Kept', 'an id the master lacks must keep its stored name');
+});

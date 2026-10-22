@@ -7831,9 +7831,10 @@ function byCatToggle(){ ls.set('cb_till_bycat', byCatOn() ? '' : '1'); paintQuic
  */
 function catRestamp(snap){
   var sn = snap || S;
-  if (!sn || !Array.isArray(sn.items) || !Array.isArray(sn.categories) || !sn.categories.length) return sn;
+  /* the master rides as `category_master`; `categories` is the TAX categories and must not be read as names */
+  if (!sn || !Array.isArray(sn.items) || !Array.isArray(sn.category_master) || !sn.category_master.length) return sn;
   var by = {};
-  sn.categories.forEach(function(c){ if (c && c.id) by[String(c.id)] = c.name; });
+  sn.category_master.forEach(function(c){ if (c && c.id) by[String(c.id)] = c.name; });
   sn.items.forEach(function(i){
     if (!i || !i.category_id) return;
     var n = by[String(i.category_id)];

@@ -1165,3 +1165,10 @@ One row per retention commit attempt. Written ONLY by `ops.f_retention_flush_eve
 | `receipt` | jsonb object or NULL | the archive receipt the caller handed: `{ archive_ref, sha256, rows, at }` (DB-21: where the archive lives is Athi's call) |
 | `guardrail` | jsonb | planRetirement's guardrail at that moment: `{ rows, total, pct, threshold_rows, threshold_pct, blocked }` |
 | `run_by` · `at` | text · timestamptz | `session_user` of the caller · when |
+
+## GET /api/till/snapshot `categories` vs `category_master` (TILL-114, duplicate key fixed)
+
+| Field | Type | Meaning |
+|---|---|---|
+| `categories` | array of definition rows (`kind: 'category'`) | Source: `lib/tax-shelf.readShelf`. The TAX categories, each with `rules.default_slab`. Read by the counter only as `categories` into `CBTax.slab.resolve`. Never names. |
+| `category_master` | array `{ id, name, status }` | Source: `lib/categories.listCategories`. The shop's own category master, id to name. Read by the till master `catRestamp`, which stamps `item.category` from `item.category_id`. Rides every snapshot (tens of rows). Tests: tests/snapshot-wire.test.js. |
