@@ -9,4 +9,4 @@ assert.strictEqual(s.kind, 'day'); assert.strictEqual(s.count, 2);
 assert.deepStrictEqual(s.bills.map((b) => b.ref), ['C5/26-27/0001', 'C5/26-27/0002']);
 assert.strictEqual(sourceOf(Object.assign({}, day, { day_bills: null })).bills, null, 'no list read → null, the count still shows');
 assert.strictEqual(sourceOf({ covers: null, source_chit_id: 'x', src_chit_id: 'x', src_ref: 'C5/1', event_type: 'sale_bill' }).bills, null, 'a single bill has no list');
-console.log('books-day-bills: ok');
+console.log('books-day-bills: ok · 5 checks');

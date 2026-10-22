@@ -21,4 +21,4 @@ assert.deepStrictEqual(judge(['c.js'], rows, {}).fresh, [], 'no ratchet yet: not
 
 const page = '<script src="x.js"></script><script>var one;</script><script type="application/json">{}</script><script type="module">let two;</script>';
 assert.deepStrictEqual(inlineScripts(page), ['var one;', 'let two;'], 'only inline javascript is linted');
-console.log('lint-ratchet: ok');
+console.log('lint-ratchet: ok · 7 checks');

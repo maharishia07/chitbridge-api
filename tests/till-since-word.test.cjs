@@ -10,4 +10,4 @@ const now = Date.now();
 assert.ok(/^\d\d:\d\d$/.test(ctx.sinceWord(now - 60000)) || /^yesterday /.test(ctx.sinceWord(now - 60000)));
 assert.ok(/^yesterday \d\d:\d\d$/.test(ctx.sinceWord(now - 86400000)));
 assert.ok(/^\d\d \w{3} \d\d:\d\d$/.test(ctx.sinceWord(now - 5 * 86400000)));
-console.log('till-since-word ok');
+console.log('till-since-word ok · 3 checks');

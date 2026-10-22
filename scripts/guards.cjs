@@ -349,8 +349,58 @@ const GUARDS = [
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
   'move-in-added-via.test.cjs', // QM-1: the move-in writes only an added_via the migrations' CHECKs allow (read from the .sql); a 23514 is a 422 sentence
   'local-kind.test.cjs', // K-DB OPS-41: a minted party is 'local' once b769's CHECK allows it, 'supplier' + a log line before; an unreadable CHECK never fails a mint
-  'retention-archive-gate.test.cjs' // K-DB DB-21/PM-16: a retention commit without an archive receipt is BLOCKED, deletes 0, sends no write; every attempt is one flush event
+  'retention-archive-gate.test.cjs', // K-DB DB-21/PM-16: a retention commit without an archive receipt is BLOCKED, deletes 0, sends no write; every attempt is one flush event
+  /* QA-79 (22 Oct): tests that passed offline (stub db, no server) and no runner reached. Their output is counted as '<n> passed' too. */
+  'account-sessions.test.cjs',
+  'actors-create-level.test.cjs',
+  'actors-max-tasks-cap.test.cjs',
+  'ai-one-pipe.test.cjs',
+  'assign-merge-patch.test.cjs',
+  'auth-first-routes.test.cjs',
+  'baseline-from-snapshot.test.cjs',
+  'books-close-country.test.cjs',
+  'books-day-bills.test.cjs',
+  'books-day-country.test.cjs',
+  'books-hooks-kinds.test.cjs',
+  'books-returns.test.cjs',
+  'books-tally-remoteid.test.cjs',
+  'chit-currency-default.test.cjs',
+  'country-registry-callers.test.cjs',
+  'crm-fix.test.cjs',
+  'crm-late.test.cjs',
+  'crm-traded.test.cjs',
+  'health-line.test.cjs',
+  'integrations-country.test.cjs',
+  'line-guard-missing-qty.test.cjs',
+  'lint-ratchet.test.cjs',
+  'network-member-rows.test.cjs',
+  'network-offer-scope.test.cjs',
+  'open-orders-counts.test.cjs',
+  'ops-stock.test.cjs',
+  'pay-fix-delivery.test.cjs',
+  'pay-fix.test.cjs',
+  'rail-lab.test.cjs',
+  'rcm-post.test.cjs',
+  'register-spin-country.test.cjs',
+  'schema-fingerprint.test.cjs',
+  'sec4-server-gates.test.cjs',
+  'seed-local-refusals.test.cjs',
+  'select-counter-customer.test.cjs',
+  'showcase-policy.test.cjs',
+  't2e-orders.test.cjs',
+  'tax-compute.test.cjs',
+  'till-network-unpriced.test.cjs',
+  'till-rail.test.cjs',
+  'till-since-word.test.cjs',
+  'till-t2d.test.cjs',
+  'till-t2j.test.cjs'
 ];
+
+/** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line; 0 = it proved nothing */
+function countChecks(out) {
+  const m = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/ℹ pass (\d+)/g);
+  return m ? Number(String(m[m.length - 1]).match(/\d+/)[0]) : 0;
+}
 
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
@@ -375,6 +425,10 @@ const files = all
  * without it they ran with no engine and failed with 0 checks (CI run 37414852968, red since 2026-10-06). Measured
  * the same way: these are exactly the CI failures, and each passes locally with the engines present. */
 const NEEDS_ENGINES = [
+  'books-close-country.test.cjs',
+  'books-returns.test.cjs',
+  'pay-fix.test.cjs',
+  'rcm-post.test.cjs',
   'engines-pinned.test.js',
   'tax-vendor.test.js',
   'books-collections.test.cjs',
@@ -422,8 +476,7 @@ for (const text of files) {
   const r = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000 });
   const out = (r.stdout || '') + (r.stderr || '');
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
-  const m = out.match(/(\d+)\s+checks/g);
-  const n = m ? Number(String(m[m.length - 1]).match(/\d+/)[0]) : 0;
+  const n = countChecks(out);
   /* ⚠️ A GUARD THAT COUNTED NOTHING PROVED NOTHING (2026-09-17: three guards ended without "<n> checks" and read "ok · 0") */
   const bad = r.status !== 0 || /\bFAIL\b/.test(out) || n === 0;
   total += n;

@@ -20,4 +20,4 @@ const alerts = crm.markLate(parties, 'IN');
 global.Date = real;
 assert.deepStrictEqual(parties.map((p) => p.dues && p.dues.overdue), [true, false, false, null], 'late = oldest due before today and a balance open');
 assert.strictEqual(alerts.dues_overdue, parties.filter((p) => p.dues && p.dues.overdue).length, 'the banner count is the marked rows');
-console.log('crm-late: ok');
+console.log('crm-late: ok · 9 checks');
