@@ -46,6 +46,8 @@ policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodi
 | 4a | `b773_chit_status_current_status_check.sql` | DB-72: CHECK on `chit_status.current_status` = the rail's 9 statuses (NOT VALID, then VALIDATE); NULL allowed | Athi runs |
 | 4b | `b774_definition_name_unique_folded.sql` | DB-44: UNIQUE (entity_id, kind, lower(btrim(name))) on `definition`; counts first and stops with the number; parent is not a column, see header | Athi runs |
 | 4c | `b775_minted_parties_to_local.sql` | OPS-41: the minted `~` parties move `supplier` to `local` (expected 1); run AFTER b769 | Athi runs |
+| 4d | `b778_rls_governance_exceptions.sql` | SEC-75: RLS ON + FORCE + rls_entity on `governance_exceptions`; run AFTER the api with the new-shop binding (routes/governance.js) is deployed | Athi runs |
+| 4e | `b779_rls_dormant_cb_tables.sql` | SEC-75: RLS ON + FORCE + rls_entity on six legacy cb_* tables no code reads (cb_device, cb_external_reference, cb_entity_supplier, cb_contact, cb_entity_employee, cb_consumer_traction) | Athi runs |
 | 5 | `READ-2026-10-21-1-chit-status-values.sql` | DB-72: every current_status value; the CHECK (NOT VALID, then VALIDATE) is written only from this paste | paste back |
 | 6 | `READ-2026-10-21-2-db44-duplicate-names.sql` | DB-44: definitions that would break UNIQUE (entity_id, kind, parent, name); which copy survives | paste back; then cb-catalogue + cb-accounting decide |
 | 7 | `READ-2026-10-21-3-db65-governance-rows.sql` | DB-65: governed identities with no entity_governance row; then the drop of identities.constitution_version / governed_by | paste back; the drop is Athi's yes |

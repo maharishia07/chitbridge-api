@@ -162,7 +162,9 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
   'quick_key_group_item', 'register_acceptance', 'register_attachable', 'register_entry',
   'register_entry_standard', 'register_subject', 'register_template', 'register_template_standard',
   'retention_config', 'reward_ledger', 'signup_context', 'state_log', 'stock_balance', 'stock_movement',
-  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store'];
+  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store',
+  /* SEC-75 (b778, b779): written ahead of the migrations; no code reads them context-free, so the guard stays quiet until one does */
+  'supplier_list', 'governance_exceptions', 'cb_device', 'cb_external_reference', 'cb_entity_supplier', 'cb_contact', 'cb_entity_employee', 'cb_consumer_traction'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {

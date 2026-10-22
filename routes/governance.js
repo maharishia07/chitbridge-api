@@ -97,6 +97,18 @@ router.get('/entities/:id', auth, async (req, res) => {
   }
 });
 
+/**
+ * Write the Class-C exceptions a governed create stamped, under the NEW shop's own binding. governance_exceptions is RLS-scoped to one shop (b778),
+ * and this request makes the shop it writes for, so the new id is bound for the rest of the transaction (the step routes/catalogue.js:1632 takes);
+ * until b778 runs the binding changes nothing.
+ */
+async function writeMintExceptions(client, newId, exceptions) {
+  await client.query(`SELECT set_config('app.current_entity', $1, true)`, [String(newId)]);
+  for (const ex of exceptions) {
+    await client.query(`INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`, [newId, ex.klass, ex.key, ex.detail]);
+  }
+}
+
 // ── POST /api/governance/entities — governed create (the platform role only: lib/platformroot.refuseUnlessPlatform) ──
 // Transactional: the identity row + its Class-C exceptions commit together.
 router.post('/entities', auth, async (req, res) => {
@@ -135,9 +147,7 @@ router.post('/entities', auth, async (req, res) => {
         [genBridge(), display_name, email, stamp.governed_by, stamp.constitution_version, JSON.stringify(stamp.params_override), plan]
       );
       const newId = ins.rows[0].identity_id;
-      for (const ex of stamp.exceptions) {
-        await client.query(`INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`, [newId, ex.klass, ex.key, ex.detail]);
-      }
+      await writeMintExceptions(client, newId, stamp.exceptions);
       return { id: newId };
     });
 

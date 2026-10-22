@@ -77,6 +77,17 @@ const SQL = `
    where n.nspname = 'public' and c.relkind = 'r'
    order by 1`;
 
+/** SEC-75: --save must not erase what a person wrote down: the class, the reason and the migration that fixes a table survive a re-save */
+function keepClassification(now) {
+  if (!fs.existsSync(BASE)) return;
+  const before = JSON.parse(fs.readFileSync(BASE, 'utf8')).tables;
+  Object.keys(now).forEach((name) => {
+    if (!before[name]) return;
+    ['class', 'why', 'fix', 'note'].forEach((key) => { if (before[name][key] !== undefined) now[name][key] = before[name][key]; });
+    if (now[name].fix && now[name].rls) delete now[name].fix;   /* the migration ran: the table needs no fix any more */
+  });
+}
+
 (async () => {
   let rows;
   if (FROM) {
@@ -111,6 +122,7 @@ const SQL = `
   console.log('  OFF and cb_app can read ' + openRead + (openRead ? '   ⚠️ every one of these is cross-tenant readable' : ''));
 
   if (SAVE) {
+    keepClassification(now);
     fs.mkdirSync(path.dirname(BASE), { recursive: true });
     fs.writeFileSync(BASE, JSON.stringify({ at: new Date().toISOString(), tables: now }, null, 1) + '\n');
     console.log('\n  baseline written: db/rls-baseline.json  (' + Object.keys(now).length + ' tables)');
