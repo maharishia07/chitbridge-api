@@ -630,7 +630,7 @@ const SCENARIOS = [
     id: 'start-no-key',
     route: 'POST /api/catalogue/:bridge_id/order/start',
     url: C + '/shop-s/order/start',
-    status: 400,
+    status: 422,
     keyless: true,
     body: { identifier: '9876543210', name: 'Buyer' }
   },
@@ -654,7 +654,7 @@ const SCENARIOS = [
     id: 'confirm-no-key',
     route: 'POST /api/catalogue/:bridge_id/order/confirm',
     url: C + '/shop-s/order/confirm',
-    status: 400,
+    status: 422,
     keyless: true,
     setup: { items: [PRICED_ITEM] },
     body: CONFIRM({ line_items: [{ item_id: ITEM_ID, name: 'Rice', qty: 2 }] })

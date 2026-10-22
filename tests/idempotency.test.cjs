@@ -163,12 +163,12 @@ const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.lengt
   await ita('S36 · the gate is named requireIdempotencyKey — tools/api-register.cjs finds a money door\'s gate by that name', async () => {
     assert.strictEqual(gate.name, 'requireIdempotencyKey');
   });
-  await ita('S36 · no key, or one longer than 200 → 400 IDEMPOTENCY_KEY_REQUIRED as a Problem with the old words; nothing runs, nothing is stored', async () => {
+  await ita('S36 · no key, or one longer than 200 → 422 IDEMPOTENCY_KEY_REQUIRED as a Problem with the old words; nothing runs, nothing is stored', async () => {
     reset(); shopFails = null;
     for (const key of [undefined, '', 'k'.repeat(201)]) {
       const r = await tap({ shop: 'shop-a', contact: 'a@b.co', key });
-      assert.strictEqual(r.status, 400); assert.strictEqual(r.ran, false); assert.strictEqual(r.body.code, 'IDEMPOTENCY_KEY_REQUIRED');
-      assert.strictEqual(r.body.error, 'Bad request'); assert.ok(/Idempotency-Key/.test(r.body.message)); assert.strictEqual(r.body.status, 400);
+      assert.strictEqual(r.status, 422); assert.strictEqual(r.ran, false); assert.strictEqual(r.body.code, 'IDEMPOTENCY_KEY_REQUIRED');
+      assert.strictEqual(r.body.error, 'Missing Idempotency-Key'); assert.ok(/Idempotency-Key/.test(r.body.message)); assert.strictEqual(r.body.status, 422);
     }
     assert.strictEqual(stmts.length, 0);
   });

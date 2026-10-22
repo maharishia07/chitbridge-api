@@ -471,7 +471,7 @@
   },
   {
    "code": "IDEMPOTENCY_KEY_REQUIRED",
-   "status": "400",
+   "status": "422",
    "title": "Idempotency key required",
    "shopkeeper": "The order came without its one-time mark, so nothing was sent.",
    "hint": "Reload the shop page and try again.",

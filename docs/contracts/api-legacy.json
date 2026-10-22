@@ -547,13 +547,13 @@
     },
     {
      "scenario": "start-no-key",
-     "status": 400,
+     "status": 422,
      "body_keys": {
-      "error": "Bad request",
+      "error": "Missing Idempotency-Key",
       "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      },
      "fixture": {
-      "error": "Bad request",
+      "error": "Missing Idempotency-Key",
       "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      },
      "note": "new with public idempotency (API-3 S36): before, a request without an Idempotency-Key ran, so a double tap or a retry after a lost answer ran twice. public/shop.html sends one key per attempt (web twin, landed first)."
@@ -1046,13 +1046,13 @@
     },
     {
      "scenario": "confirm-no-key",
-     "status": 400,
+     "status": 422,
      "body_keys": {
-      "error": "Bad request",
+      "error": "Missing Idempotency-Key",
       "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      },
      "fixture": {
-      "error": "Bad request",
+      "error": "Missing Idempotency-Key",
       "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      },
      "note": "new with public idempotency (API-3 S36): before, a request without an Idempotency-Key ran, so a double tap or a retry after a lost answer ran twice. public/shop.html sends one key per attempt (web twin, landed first)."

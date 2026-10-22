@@ -11,7 +11,7 @@
 //            routes/catalogue.js mounts requireKey() on the public money doors (order/start, order/confirm).
 // FLOW  key? → scopeOf(token) → fingerprint(body) → store.begin → { existing → answerExisting | claimed → capture res.json → next → store.finalize }
 //       store off (table missing · store error · body unfingerprintable) → the SAME flow on memoryStore, every answer marked X-Idempotency: unverified
-//       public door: no key → 400 IDEMPOTENCY_KEY_REQUIRED · shopOf + contactOf → (shop entity, hashed contact + key) → the SAME flow
+//       public door: no key → 422 IDEMPOTENCY_KEY_REQUIRED · shopOf + contactOf → (shop entity, hashed contact + key) → the SAME flow
 //
 // ⭐ LIM2 (W1-PLAT, 15 Oct): WHEN IDEMPOTENCY IS OFF, A RETRY WARNS AND IS REFUSED. Before, three silent paths ran a retried
 // mutation A SECOND TIME with no trace: an unreadable token (`catch (_) { return null }`), a body the canon could not
@@ -241,7 +241,7 @@ module.exports = function idempotency(req, res, next) {
    themselves: the shop the door is on (its entity, so the row sits inside that shop's RLS) and the contact the shopper typed,
    hashed, never kept in clear. One shopper's key can never answer for another shopper, or on another shop. ── */
 const KEY_REQUIRED = {
-  error: 'Bad request',
+  error: 'Missing Idempotency-Key',
   message: 'Send an Idempotency-Key header: one per attempt, the same one when you retry it.'
 };
 /** requireKey({ shopOf, contactOf }) → the gate a public money door mounts; tools/api-register.cjs finds it by its name */
@@ -250,7 +250,7 @@ function requireKey({ shopOf, contactOf }) {
   return async function requireIdempotencyKey(req, res, next) {
     const key = req.headers['idempotency-key'];
     if (!key || String(key).length > KEY_MAX_LENGTH)
-      return problem(req, res, { status: 400, code: 'IDEMPOTENCY_KEY_REQUIRED', detail: KEY_REQUIRED.message, legacy: KEY_REQUIRED });
+      return problem(req, res, { status: 422, code: 'IDEMPOTENCY_KEY_REQUIRED', detail: KEY_REQUIRED.message, legacy: KEY_REQUIRED });
     let shop = null;
     try {
       shop = await shopOf(req);

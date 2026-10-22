@@ -61,7 +61,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | HANDOFF_STORE_MISSING | 503 | Handoff store missing | PENDING | - | assist | 2026-10-22 |
 | IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
 | IDEMPOTENCY_IN_PROGRESS | 409 | Idempotency in progress | The same request is still being handled. | Wait a moment and look before sending it again. | idempotency | 2026-10-22 |
-| IDEMPOTENCY_KEY_REQUIRED | 400 | Idempotency key required | The order came without its one-time mark, so nothing was sent. | Reload the shop page and try again. | idempotency | 2026-10-23 |
+| IDEMPOTENCY_KEY_REQUIRED | 422 | Idempotency key required | The order came without its one-time mark, so nothing was sent. | Reload the shop page and try again. | idempotency | 2026-10-23 |
 | IDOC_CONSENT_REQUIRED | 400 | Idoc consent required | PENDING | - | identity-docs | 2026-10-22 |
 | IDOC_EMPLOYER_ONLY | 403 | Idoc employer only | PENDING | - | identity-docs | 2026-10-22 |
 | IDOC_NOT_CODE_VERIFIED | varies | Idoc not code verified | PENDING | - | iddoc-verify | 2026-10-22 |
