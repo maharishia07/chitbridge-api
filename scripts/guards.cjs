@@ -396,9 +396,9 @@ const GUARDS = [
   'till-t2j.test.cjs'
 ];
 
-/** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line; 0 = it proved nothing */
+/** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
 function countChecks(out) {
-  const m = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/ℹ pass (\d+)/g);
+  const m = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
   return m ? Number(String(m[m.length - 1]).match(/\d+/)[0]) : 0;
 }
 
