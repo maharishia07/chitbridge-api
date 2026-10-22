@@ -17,8 +17,8 @@ of file each thing is; this says what already does the job.
 | 71 | `words` | `variant.browser.js` |  |
 | 69 | `answer` | `availability.js` | from March; then nearest. |
 | 65 | `list` | `cap-settings.js` |  |
+| 64 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 64 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 63 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 63 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 60 | `here` | `screen-id.js` |  |
 | 56 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
@@ -82,6 +82,7 @@ of file each thing is; this says what already does the job.
 | 24 | `money` | `cart.js` |  |
 | 24 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 24 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 24 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 24 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 24 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
@@ -89,7 +90,6 @@ of file each thing is; this says what already does the job.
 | 23 | `call` | `cap-assist.js` |  |
 | 23 | `opts` | `cap-stock.js` |  |
 | 23 | `view` | `country-ready.js` |  |
-| 23 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 23 | `rate` | `convert.js` | A rate, with its evidence. |
 | 22 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 21 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
@@ -148,6 +148,7 @@ of file each thing is; this says what already does the job.
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `connectors` | `home-facts.js` | declare (said in words — |
 | 15 | `governance` | `home-facts.js` |  |
+| 15 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 15 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `control` | `cap-settings.js` |  |
@@ -159,7 +160,6 @@ of file each thing is; this says what already does the job.
 | 14 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
-| 14 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 14 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 14 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
@@ -182,6 +182,7 @@ of file each thing is; this says what already does the job.
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `update` | `folder-rules.js` |  |
 | 12 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
+| 12 | `register` | `regulation.js` | register(pack) → the pack — |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
 | 11 | `close` | `avatar.js` |  |
 | 11 | `link` | `chit-sheet.js` |  |
@@ -198,7 +199,6 @@ of file each thing is; this says what already does the job.
 | 11 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 11 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 11 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
-| 11 | `register` | `regulation.js` | register(pack) → the pack — |
 | 10 | `start` | `app.html` |  |
 | 10 | `show` | `cap-catalogue.js` |  |
 | 10 | `reload` | `cap-employees.js` |  |

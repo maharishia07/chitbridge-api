@@ -272,6 +272,159 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CTP_CROSSING_REFUSED",
+   "status": "409",
+   "title": "Crossing refused",
+   "shopkeeper": "This business does not take chits from that installation.",
+   "hint": "The two installations must name each other as peers first.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_CROSSING_UNCHECKABLE",
+   "status": "503",
+   "title": "Crossing cannot be checked",
+   "shopkeeper": "We could not check whether this chit may cross, so we refused it.",
+   "hint": "Try again later; nothing was written.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_ENVELOPE_REFUSED",
+   "status": "409",
+   "title": "Envelope refused",
+   "shopkeeper": "The chit did not open here: its signature or its contents were refused.",
+   "hint": "Check the sending installation signs with the key it publishes.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_MANIFEST_UNAVAILABLE",
+   "status": "500",
+   "title": "Manifest unavailable",
+   "shopkeeper": "This installation could not say who it is just now.",
+   "hint": "Try again later.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NOT_AN_ENVELOPE",
+   "status": "400",
+   "title": "Not a CTP envelope",
+   "shopkeeper": "This is not a chit this door understands.",
+   "hint": "Send a CTP/1 envelope.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NOT_A_QUERY",
+   "status": "400",
+   "title": "Not a CTP query",
+   "shopkeeper": "This is not a question this door understands.",
+   "hint": "Send a CTP/1 query.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NO_INSTALLATION",
+   "status": "400",
+   "title": "No installation named",
+   "shopkeeper": "The message does not say which installation sent it.",
+   "hint": "Send it from an installation that names itself.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NO_RECIPIENT",
+   "status": "400",
+   "title": "No recipient named",
+   "shopkeeper": "The chit does not say which business it is for.",
+   "hint": "Name the recipient by its bridge id.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NO_SENDER",
+   "status": "400",
+   "title": "No sender named",
+   "shopkeeper": "The chit does not say which business sent it.",
+   "hint": "The sending installation must name its sender.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_HOSTED_HERE",
+   "status": "409",
+   "title": "Installation is hosted here",
+   "shopkeeper": "That installation lives on this server, so its chits must not come over the internet.",
+   "hint": "Deliver it locally.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_KEY_UNREADABLE",
+   "status": "403",
+   "title": "Peer's key cannot be read",
+   "shopkeeper": "We could not read the other installation's public key, so we cannot trust the message.",
+   "hint": "Check the other installation's manifest is reachable.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_REFUSED",
+   "status": "403",
+   "title": "Installation not known",
+   "shopkeeper": "We do not deal with that installation.",
+   "hint": "The owners of both installations must agree to connect first.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_QUERY_FAILED",
+   "status": "500",
+   "title": "Question failed",
+   "shopkeeper": "This installation could not answer just now.",
+   "hint": "Try again later.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_QUERY_REFUSED",
+   "status": "403",
+   "title": "Question refused",
+   "shopkeeper": "The question was not signed by the installation that sent it.",
+   "hint": "Check the asking installation signs with the key it publishes.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_RECIPIENT_NOT_HERE",
+   "status": "404",
+   "title": "Recipient not here",
+   "shopkeeper": "There is no active business here with that bridge id.",
+   "hint": "Check the address of the business.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_STORE_FAILED",
+   "status": "500",
+   "title": "Could not store the chit",
+   "shopkeeper": "This installation could not store the chit just now.",
+   "hint": "Try again later; it was not written.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_UNKNOWN_QUESTION",
+   "status": "400",
+   "title": "Unknown question",
+   "shopkeeper": "This installation does not answer that question.",
+   "hint": "Ask to resolve a business or for its catalogue.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CURRENCY_ENTITY_ONLY",
    "status": "403",
    "title": "Currency entity only",
