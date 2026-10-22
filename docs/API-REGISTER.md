@@ -297,7 +297,7 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | GET | /api/work/:chit_id | work | routes/work.js:58 | no | no | no | no | no | no | no | not started |
 | GET | /api/work/facts | work | routes/work.js:48 | no | no | no | no | no | no | no | not started |
 | GET | /api/work/list | work | routes/work.js:36 | no | no | no | no | no | no | no | not started |
-| GET | /health | server | server.js:475 | no | no | no | no | no | no | no | not started |
+| GET | /health | server | server.js:486 | no | no | no | no | no | no | no | not started |
 | OPTIONS | * | server | server.js:163 | no | no | no | no | no | no | no | not started |
 | PATCH | /api/actors/:id | actors | routes/actors.js:472 | no | no | no | yes | no | no | no | partial |
 | PATCH | /api/books/payments/:id | books | routes/books.js:1314 | no | no | no | no | no | no | no | not started |

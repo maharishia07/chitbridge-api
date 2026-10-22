@@ -94,7 +94,7 @@ const corsOptions = {
    * environment, deliberately: an AsyncLocalStorage per request is not free, and a permanent header
    * describing the shape of the inside is something to switch on for a week of work, not to ship on.
    */
-  exposedHeaders: ['X-DB-Trips', 'X-DB-Ms', 'X-Request-Id'],
+  exposedHeaders: ['X-DB-Trips', 'X-DB-Ms', 'X-Request-Id', 'Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset', 'RateLimit'], /* SEC-84: a browser client must be able to read how long to wait */
   /**
    * ⚠️⚠️ EVERY HEADER THE BROWSER SENDS MUST BE LISTED HERE OR NOTHING WORKS AT ALL — and the failure does not
    * look like a CORS failure. Athi, 2026-08-22, mid-test: *"I couldn't create or sign in a store, it says
@@ -209,6 +209,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-Id', req.id);
   next();
 });
+app.use(require('./lib/problem').wwwAuthenticate); // SEC-82 · every 401 carries the challenge
 
 // Request logger (leveled — quiet with LOG_LEVEL=warn, verbose with LOG_LEVEL=debug)
 app.use((req, res, next) => {
@@ -250,6 +251,8 @@ app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.l
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX || '500'),
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Please try again in 15 minutes' }
 });
 app.use('/api/', limiter);
@@ -258,6 +261,8 @@ app.use('/api/', limiter);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '30'),
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many attempts', message: 'Too many login/OTP attempts — please try again in 15 minutes' }
 });
 /* M06: the new sign-in doors share the same budget (one IP, one 30/15 min) — renew/logout/sessions stay outside it, so a
@@ -285,6 +290,8 @@ app.use(
 const checkLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.CHECK_LOGIN_RATE_LIMIT_MAX || '120'),
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many sign-in checks — please try again in a few minutes' }
 });
 app.use('/api/actors/check-login', checkLoginLimiter);
@@ -297,7 +304,7 @@ const publicLimiter = rateLimit({
   max: 240,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64)
+  keyGenerator: require('./lib/limiter-key').callerKey /* SEC-79 */
 });
 app.use(
   [
@@ -321,6 +328,8 @@ app.use(
 const catalogueLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.CATALOGUE_RATE_LIMIT_MAX || '60'),
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many attempts — please try again in a few minutes' }
 });
 app.use('/api/catalogue', catalogueLimiter);
@@ -330,6 +339,8 @@ app.use('/api/catalogue', catalogueLimiter);
 const assistLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.ASSIST_RATE_LIMIT_MAX || '40'),
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many assistant requests — please try again shortly.' }
 });
 app.use('/api/assist', assistLimiter);
@@ -381,7 +392,7 @@ const serviceLimiter = () =>
     max: 240,
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64)
+    keyGenerator: require('./lib/limiter-key').callerKey /* SEC-79 */
   });
 app.use('/api/offers', serviceLimiter(), require('./routes/offers')); // ⭐ THE GOVERNED CAPABILITIES AS SERVICES (rung 2): offers
 app.use('/api/pricing', serviceLimiter(), require('./routes/pricing')); //   pricing structure → unit price at a quantity
