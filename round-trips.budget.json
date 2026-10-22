@@ -687,6 +687,28 @@
         "since": "2026-10-13"
       }
     },
+    "GET /api/marketing/came-back": {
+      "file": "marketing.js",
+      "trips": 3,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
+        "since": "2026-10-22"
+      }
+    },
+    "GET /api/channels/outbound": {
+      "file": "channels.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
+        "since": "2026-10-22"
+      }
+    },
     "GET /api/crm/segments": {
       "file": "crm.js",
       "trips": 3,

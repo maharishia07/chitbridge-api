@@ -284,6 +284,8 @@ const GUARDS = [
   /* ⭐⭐⭐ ONE INVOICE, EVERYWHERE (2026-10-02) — broken once each by scripts/tax-truth-breaks.cjs */
   'tax-truth.test.cjs', // one counter bill read six ways (bill · chit · both ledgers · reprint · buyer's read), equal to the paisa; place of supply = the shop's state
   /* ⭐⭐ THE BILLS FOLDER (2026-10-01) — broken once each by scripts/bills-folder-breaks.cjs */
+  'marketing-results.test.cjs', // ⭐ MKT-4: Who came back counts only SENT offers matched to real bills inside the shop's came_back_days (14 → 20 moves 3 to 4); a 0 carries its reason; before b776 a code, never a 500
+  'marketing-outbound.test.cjs', // ⭐ MKT-2/17: Offers sent are receipts with the person, purpose, send and consent basis (b776 columns only once they exist); refusals in one INSERT; the list pages; select takes counterparty_ids/until
   'bills-folder.test.cjs', // the folder inventory numbered with the ledger; view folders; the step function; bills leave Task — nothing else
   'bills-private.test.cjs', // ⭐⭐ a bill's steps stay with the shop that took them, at the folder's messaging level; only the dispute always crosses
   /* ⭐⭐ THE SHOP'S NAME IS THE PROFILE'S NAME (2026-10-01) — broken once each by tests/shop-name-breaks.test.js */

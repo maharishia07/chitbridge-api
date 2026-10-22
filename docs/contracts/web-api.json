@@ -1915,6 +1915,46 @@
    },
    "optional": []
   },
+  "GET /api/channels/outbound": {
+   "status": 200,
+   "example": {
+    "outbound": [
+     {
+      "id": "ob1",
+      "chit_id": null,
+      "capture_id": null,
+      "channel": "whatsapp",
+      "from_ref": null,
+      "to_ref": "+919840099999",
+      "body": "Diwali offer",
+      "status": "sent",
+      "reason": "No consent for offers on whatsapp. Ask them first.",
+      "provider_msg_id": "wamid.1",
+      "created_at": "2026-10-17T01:15:34.420Z",
+      "party_id": "10000000-0000-4000-8000-000000000001",
+      "purpose": "marketing",
+      "send_ref": "S1",
+      "basis": {
+       "code": "CONSENT",
+       "pref_id": "pf1",
+       "at": "2026-10-17T01:15:34.420Z"
+      },
+      "party_name": "Chola Auto Care",
+      "reason_code": "NO_CONSENT"
+     }
+    ],
+    "migrated": false,
+    "code": "MKT_NOT_MIGRATED",
+    "note": "Offers sent arrives after the next update.",
+    "total": 0,
+    "page": 1,
+    "limit": 0
+   },
+   "optional": [
+    "code",
+    "note"
+   ]
+  },
   "GET /api/crm/calls": {
    "status": 200,
    "example": {
@@ -2614,6 +2654,91 @@
     "state": "needs_you"
    },
    "optional": []
+  },
+  "GET /api/marketing/came-back": {
+   "status": 200,
+   "example": {
+    "migrated": true,
+    "days": 14,
+    "sent_n": 2,
+    "came_back_n": 2,
+    "counts": {
+     "all": 3,
+     "sent": 2,
+     "refused": 1,
+     "failed": 0
+    },
+    "why": {
+     "code": "NO_SENDS",
+     "say": "No offer has been sent yet. Send one from Groups."
+    },
+    "money": {
+     "by_currency": [
+      {
+       "currency": "INR",
+       "total": 600,
+       "chits": 2
+      }
+     ],
+     "mixed": false,
+     "excluded": {
+      "non_monetary": 0,
+      "awaiting_agreement": 0
+     },
+     "total": {
+      "currency": "INR",
+      "total": 600,
+      "chits": 2
+     }
+    },
+    "customers": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000001",
+      "name": "Chola Auto Care",
+      "sent_at": "2026-10-17T01:15:34.420Z",
+      "send_ref": "S1",
+      "first_bill_at": "2026-10-18T01:15:34.421Z",
+      "bills_n": 1,
+      "money": {
+       "by_currency": [
+        {
+         "currency": "INR",
+         "total": 480,
+         "chits": 1
+        }
+       ],
+       "mixed": false,
+       "excluded": {
+        "non_monetary": 0,
+        "awaiting_agreement": 0
+       },
+       "total": {
+        "currency": "INR",
+        "total": 480,
+        "chits": 1
+       }
+      },
+      "bills": [
+       {
+        "chit_id": "c1",
+        "bill_no": "B-1",
+        "at": "2026-10-18T01:15:34.421Z",
+        "value": 480,
+        "currency": "INR"
+       }
+      ]
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "limit": 50,
+    "code": "MKT_NOT_MIGRATED",
+    "say": "Who came back arrives after the next update."
+   },
+   "optional": [
+    "code",
+    "say"
+   ]
   },
   "GET /api/network-offers": {
    "status": 200,
@@ -5032,6 +5157,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
+    "send_ref": "4d7f3c1e-5b0a-4e55-9a51-0c2a6f1d9e10",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
@@ -5054,9 +5180,14 @@
     "sent": [],
     "sent_n": 0,
     "failed_n": 0,
-    "refused_n": 2
+    "refused_n": 2,
+    "refusals_logged": 0,
+    "refusals_unlogged": false
    },
-   "optional": []
+   "optional": [
+    "refusals_logged",
+    "refusals_unlogged"
+   ]
   },
   "POST /api/crm/segments/:key/send #400": {
    "status": 400,

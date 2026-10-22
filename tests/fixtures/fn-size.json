@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 236,
+  "long_functions": 234,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -84,9 +84,6 @@
     ],
     "lib/country.js": [
       "(anonymous)"
-    ],
-    "lib/crm-groups.js": [
-      "send"
     ],
     "lib/crm-leads.js": [
       "(anonymous)",
@@ -331,9 +328,6 @@
     ],
     "lib/visibility-cap.js": [
       "capOf"
-    ],
-    "lib/whatsapp-out.js": [
-      "notify"
     ],
     "lib/workflow.js": [
       "(anonymous)"
