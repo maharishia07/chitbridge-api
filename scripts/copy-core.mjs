@@ -1,6 +1,8 @@
 // Shared: config, file walk, and the multi-parser string extractor.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, extname, basename } from 'node:path';
+// eslint-disable-next-line no-control-regex -- stripping control characters is the point
+const CONTROL_CHARS = /\u0000/g;
 
 export const DEFAULTS = {
   roots: ['src'],
@@ -39,7 +41,7 @@ const globLike = (text, s) =>
         .replace(/[.+^${}()|[\]\\]/g, '\\$&')
         .replace(/\*\*/g, '\u0000')
         .replace(/\*/g, '[^/]*')
-        .replace(/\u0000/g, '.*') +
+        .replace(CONTROL_CHARS, '.*') +
       '$'
   ).test(s);
 

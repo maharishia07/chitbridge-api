@@ -1,176 +1,171 @@
 {
  "_about": "lint ratchet (MNT-1): eslint warnings per own-code file, 18 Oct = the baseline. A file may have FEWER warnings than its row, never more. Warn-only: no CI step reads this yet. Lower with `node tools/lint-ratchet.cjs --write`.",
  "_totals": {
-  "files": 430,
-  "eslintWarnings": 167,
-  "parseErrors": 1,
-  "prettierFail": 424,
-  "prettierChecked": 425
+  "files": 431,
+  "eslintWarnings": 74,
+  "parseErrors": 0,
+  "prettierFail": 12,
+  "prettierChecked": 431
  },
  "_rules": {
-  "no-redeclare": 56,
-  "no-unused-vars": 17,
-  "no-useless-escape": 10,
-  "no-control-regex": 5,
-  "no-empty": 77,
-  "no-dupe-keys": 1,
-  "no-shadow": 1
+  "no-empty": 73,
+  "no-dupe-keys": 1
  },
  "lib/access-events.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/access.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/adopt.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/ai.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/amend.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/assign-chit.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/assign.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/assist-kb.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/autoraise.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/availability.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/beckn-map.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/bill-privacy.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/bill-steps.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/bill-use.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/boilerplate.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-assets.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-cashflow.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-engines.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/books-hooks.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-manual.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-nightly.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-pack.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/books-payables.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-period.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-recurring.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/books-store.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-tally.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books-todo.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/books.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/bridgeid.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/canon.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/capture.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/catalogue-blueprint.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/catalogue-build.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/catalogue-columns.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/catalogue-read.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/catalogue-view.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/catalogue-write.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/categories.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/channels.js": {
   "warnings": 0,
@@ -178,215 +173,215 @@
  },
  "lib/cmdb.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/column-rules.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/compliance.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/confcache.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/conformance.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/connector-rows.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/consolidate.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/container.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/cost.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/counter-bill.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/country-setup.js": {
-  "warnings": 4,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/crm-calls.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/crm-followups.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/crm-groups.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/crm-leads.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/crm.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/csv-preflight.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/csv.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/ctpaddress.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/ctpdirectory.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/ctpenvelope.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/ctpkeys.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/ctpquery.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/ctptransport.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/customer-groups.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/db-role.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/dbwatch.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/defaults.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/definition-check.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/deliverline.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/dev-otp.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/dispute-may.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/employee-code.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/entity-header.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/entitykind.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/events.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/exposure.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/field-ledger.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/finance-terms.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/folder-inventory.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/folder-rules.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/folder-views.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/form-handshake.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/forms.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/fx-rates.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/gherkin.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/govresolve.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/groupsum.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/handle.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/holder.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/home-facts.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/iddoc-verify.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/identity-auth.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/identity.js": {
   "warnings": 0,
@@ -394,203 +389,211 @@
  },
  "lib/impact.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/instruments.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/inventory.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/issued-invoice.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/istest.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/item-cost.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/itemmatch.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/itemstatus.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/junitresults.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/jwt-verify.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/knownerr.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/kyb.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/licence-rules.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/limits.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/local-identity.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/logger.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "lib/marketing-results.js": {
   "warnings": 0,
   "prettierOk": false
  },
  "lib/match.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/measure.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/memberships.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/meter.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/mint-product.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/mint.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/mintuserid.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/move-in-gate.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/move-in-proof.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/move-in.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/namedentity.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/network-build-run.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/network-build.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/network-catalogue.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/network-membership.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/network-offers.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/network-view.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/notify.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/offer-clash.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/offers-live.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/open-orders.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "lib/optout.js": {
   "warnings": 0,
   "prettierOk": false
  },
  "lib/order-input.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": false
  },
  "lib/otp.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/owner.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/pack-words.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/page-limit.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/parallel-run.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/party-fields.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/people.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/person-session.js": {
-  "warnings": 3,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/plans.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/platformroot.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/points.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/policy.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/privacy.js": {
   "warnings": 0,
@@ -598,247 +601,247 @@
  },
  "lib/profile.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/public-base.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/public-facts.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/quick-keys.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/raida.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/rail-actions.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/rail-status.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/raiseticket.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/rates.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/readiness.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/reference.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/regional.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/repeat-supply.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/reporting.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/reprice.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/reqctx.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/resolveuserid.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/respond.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/retention.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/reward-store.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/rootlink.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/schedule.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/schema-bootstrap.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/schema.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/select.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/services.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/sheet.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/shop-clock.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/shopchanged.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/sides.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/signin-events.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/sla.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/slab-cites.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/source.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/speech.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/starter-fields.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/stock-from-chit.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/stock-store.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/storage-object.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/storage.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/stores.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/supply-store.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/supportcopy.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/tax-copy.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/tax-governance.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/tax-lines.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/tax-shelf.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/testboard.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/testnews.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/teststatus.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/their-bill.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/till-summary.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/trace.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/transcribe.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/trips.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/vault-patch.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/vaultcrypto.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/verify.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/versionref.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/visibility-cap.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/whatsapp-media.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/whatsapp-out.js": {
   "warnings": 0,
@@ -846,845 +849,861 @@
  },
  "lib/whatsapp-templates.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/work-rows.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/workpattern.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/workroute.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/xact-lock.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/xlsx-read.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/xlsx-write.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "lib/zip-store.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "middleware/auth-first.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "middleware/auth.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "middleware/customer-auth.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "middleware/hat-gate.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "middleware/idempotency.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "middleware/validate.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/actors.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/adopt.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/assist.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/attachments.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/books.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/capture.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": false
  },
  "routes/catalogue-face.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/catalogue.js": {
-  "warnings": 3,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/channels.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/chits.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/combo-templates.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/connections.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/connectors.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/counters.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/crm.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "routes/csp-report.js": {
   "warnings": 0,
   "prettierOk": false
  },
  "routes/ctp.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/definitions.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/entities.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/events.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/facts.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/folders.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/forms.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/governance.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/identity-docs.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/integrations.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/invoice.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/keys.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/kyb.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
+ },
+ "routes/marketing.js": {
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/network-design.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/network-offers.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/notifications.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/offers.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/openapi.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/people.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/pricing.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/privacy.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/products.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/quick-keys.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/relationships.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/repeat-supply.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/schemas.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/service.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/signin.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "routes/simulator.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/supplies.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/tax.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/testing.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "routes/till.js": {
-  "warnings": 3,
-  "prettierOk": false
+  "warnings": 1,
+  "prettierOk": true
  },
  "routes/work.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/_proof.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/actor-harness.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/add-catalogue-synonyms.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/akums-demo.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/assimilate-standard.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/bills-folder-breaks.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/bills-private-breaks.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/books-breaks.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/cancel-request.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/cascade-diff.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/catalogue-persist.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/category-cite.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/check-db-role.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/check-screw-message.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/cleanup-test-data.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/close-proof-lines.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/conform-check.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/connector-gateway-sim.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/container-model.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/container-wiring.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/copy-core.mjs": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/dbfree.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/dedupe-catalogue.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/demo-lifecycle.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/dept-store-demo.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 1,
+  "prettierOk": true
  },
  "scripts/design-kit.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/dispute-reads.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/dispute-scope.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/empty-catches.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/entity-vertical.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/erp-connector.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 1,
+  "prettierOk": true
  },
  "scripts/erp-handoff.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/fn-size.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/gold-demo.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/gov-cascade.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/governance-report.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/guards.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/iot-assignee.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/journey-document-store.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 1,
+  "prettierOk": true
  },
  "scripts/journey-supplier-hop.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/lib-make-form16-pdf.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/lifecycle-iot.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/lint-copy.mjs": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/make-test-media.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/matrix.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/multi-source.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/o1-seal.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/penetration.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/powerplay-itr2.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prototype-form16-to-itr2.js": {
-  "warnings": 3,
-  "prettierOk": false
+  "warnings": 2,
+  "prettierOk": true
  },
  "scripts/prove-adoption-freeze.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-amend-live.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-amend.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-assign-live.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-autoraise.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-availability.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-b159-attachments.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-capture.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-channels.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-chitline-live.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-commerce-standards.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-commerce.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-cost-live.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-definer-guards.js": {
   "warnings": 2,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-definitions.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-delivery-live.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-f5.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-folders-scorecard.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-forms.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-groupsum.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-idempotency.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-itemmatch.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-itemversion.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-kyb.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-lanes.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-lifecycle.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-line-events.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-line-threads.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-lot.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-message-to-chit.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-network-cap.js": {
   "warnings": 2,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-network-mint.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-network-search.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-nothing-dropped.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-numerals.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-one-roof.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 1,
+  "prettierOk": true
  },
  "scripts/prove-orderbind.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-outbound.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-partial.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-policy-flags.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-private-shop.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-profile.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-readiness.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-reference.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-request-from-message.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-retention.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-sectors.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 1,
+  "prettierOk": true
  },
  "scripts/prove-security-fixes.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-sla.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-storefront-mint.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-storefront.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-three-party-messaging.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-usecases.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-verify.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-vision.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/prove-whatsapp-live.js": {
-  "warnings": 3,
-  "prettierOk": false
+  "warnings": 2,
+  "prettierOk": true
  },
  "scripts/prove-wholesaler-e2e.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/prove-wholesaler.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/reference-stores.cjs": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/regional-scatter.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/register-mint.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/regression.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/reset-and-seed.js": {
   "warnings": 2,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/retention-logic-test.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/rls-census.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/rls-context-test.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/sealed-guard.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/seed-2026-08-05.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/seed-bulk-catalogue.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/seed-catalogue-veg.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/seed-folders-demo.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/seed-livewalk.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/seed-local.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/seed-test-entities.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/self-copy-pref.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/send-test-message.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/source-entity.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/source-rules.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/sql.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/tax-truth-breaks.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/test-dev.js": {
-  "warnings": 2,
-  "prettierOk": false
+  "warnings": 1,
+  "prettierOk": true
  },
  "scripts/two-sided-breaks.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "scripts/vault-crypto-test.js": {
-  "warnings": 1,
-  "prettierOk": false
+  "warnings": 0,
+  "prettierOk": true
  },
  "scripts/vendor-till.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "server.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/app.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/db.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/lib/bridgeId.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/routes/catalogue.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/routes/network.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/services/catalogue.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/services/chit.js": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "src/services/network.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "tools/baseline-from-snapshot.cjs": {
   "warnings": 0,
   "prettierOk": false
  },
  "tools/endpoint-usage.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/fresh-db-check.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/lint-ratchet.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/migrate.cjs": {
-  "warnings": 3,
+  "warnings": 0,
   "prettierOk": false
  },
  "tools/round-trips.cjs": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "tools/schema-fingerprint.cjs": {
   "warnings": 0,
   "prettierOk": false
  },
@@ -1694,26 +1713,26 @@
  },
  "tools/server-mounts.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/sim-load.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/sim-plan.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/sim-scale.cjs": {
   "warnings": 0,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/simulate-years.cjs": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "tools/sql-inventory.cjs": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  }
 }

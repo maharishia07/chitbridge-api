@@ -2102,7 +2102,6 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
   try {
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
-    const units = require('../lib/units');
     const cats = require('../lib/categories');
     const b = req.body || {};
 

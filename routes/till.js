@@ -649,7 +649,6 @@ router.get('/snapshot', auth, async (req, res) => {
      * ⚠️ "avail" already rides on every row, and hits() refuses to offer an unavailable one in Sell, Receive or Despatch. The
      * snapshot's job is to say what is true; deciding what may be BILLED is the counter's, and it was already doing it.
      */
-    const sellable = (r) => r.is_active !== false && itemstatus.isOfferable(r.item_data || {});
     const onTheCounter = (r) => r.is_active !== false && ['available', 'unavailable'].indexOf(itemstatus.statusOf(r.item_data || {})) >= 0;
     /* a removal is now "no longer on the counter at all" — retired or redundant — not merely "not sellable today" */
     const removed = since ? all.filter((item) => !onTheCounter(item)).map((item) => item.item_id) : [];

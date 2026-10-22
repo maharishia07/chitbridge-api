@@ -51,10 +51,7 @@
  */
 'use strict';
 const path = require('path'),
-  fs = require('fs'),
-  net = require('net'),
-  http = require('http');
-const { spawnSync } = require('child_process');
+  net = require('net');
 const API = path.join(__dirname, '..');
 
 const arg = (k, d) => {
