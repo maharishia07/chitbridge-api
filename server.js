@@ -464,6 +464,7 @@ app.use('/api/books', require('./routes/books'));
 app.use('/api/facts', require('./routes/facts')); // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
 app.use('/api/work', require('./routes/work')); // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
 app.use('/api/crm', require('./routes/crm')); // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
+app.use('/api/marketing', require('./routes/marketing')); // MKT first slice — Who came back: the offers a shop sent, matched to the bills that followed (lib/marketing-results.js)
 app.use('/api/repeat', require('./routes/repeat-supply')); // RI1 — repeat supply as an AGREEMENT both parties hold: accept · counter · skip · pause · end; each run a normal chit (lib/repeat-supply.js)
 app.use('/api/csp-report', require('./routes/csp-report')); // K-SEC PR A — where the web's report-only CSP reports (public, its own limiter, 204)
 app.use('/api/privacy', require('./routes/privacy')); // CO1 — public privacy facts: sub-processors + regions, notice, contact (lib/privacy.js)

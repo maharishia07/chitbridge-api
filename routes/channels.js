@@ -25,10 +25,10 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// GET /outbound — the receipts: what we tried to send back, and what became of it (b126).
+// GET /outbound — the receipts: what we tried to send back, and what became of it (b126). ?purpose=marketing → Offers sent; ?page= ?limit= (total · page · limit).
 router.get('/outbound', auth, async (req, res) => {
   try {
-    res.json(await channels.listOutbound(entityId(req), req.query.limit));
+    res.json(await channels.listOutbound(entityId(req), req.query));
   } catch (err) {
     res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) });
   }
