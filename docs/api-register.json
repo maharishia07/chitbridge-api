@@ -16310,7 +16310,7 @@
    "path": "/api/signin/ask",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 936,
+   "line": 950,
    "hash": "42cb51cd388da68d",
    "columns": {
     "schema_in": false,
@@ -16368,7 +16368,7 @@
    "path": "/api/signin/pin",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 938,
+   "line": 952,
    "hash": "7032d4cf101ec273",
    "columns": {
     "schema_in": false,
@@ -16458,7 +16458,7 @@
    "path": "/api/signin/verify",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 937,
+   "line": 951,
    "hash": "be90f4652ffa4fb3",
    "columns": {
     "schema_in": false,
