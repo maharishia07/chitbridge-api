@@ -3469,7 +3469,6 @@ router.get('/:chit_id', auth, async (req, res) => {
       });
 
     _mark('bundle_6_reads');
-    const participants = bundle.participants;
     /* ⚠️ ATTACHMENTS STAY OUTSIDE. storage.listForChit reaches a different store and owns its own error handling;
        dragging it into this transaction would couple a blob read to the chit's own read for no round-trip saving. */
     /* ⭐ Already read inside the one-shot transaction when that path ran. Only the FALLBACK path — an
@@ -5891,8 +5890,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
   const words = typeof list.q === 'string' ? list.q.trim().slice(0, 100) : '';
   const like = words ? '%' + words.replace(/[\\%_]/g, (c) => '\\' + c) + '%' : null;
   const pageAsked = PAGE_LIMIT.pageArgs(list, 50, 200); /* not asked = every row, as before */
-  const paged = pageAsked.asked,
-    limit = pageAsked.limit,
+  const limit = pageAsked.limit,
     page = pageAsked.page;
   const dir = list.sort === 'new' ? 'DESC' : 'ASC';
 

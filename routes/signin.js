@@ -587,7 +587,7 @@ async function verify(req, res) {
           const cc = /^[A-Za-z]{2}$/.test(String(ctx.country || '')) ? String(ctx.country).toUpperCase() : null;
           const cur = /^[A-Za-z]{3}$/.test(String(ctx.currency_code || '')) ? String(ctx.currency_code).toUpperCase() : null;
           /* ⚠️ an IANA zone, not free text — anything else is somebody's typing and would break every date we print */
-          const tz = /^[A-Za-z][A-Za-z0-9_+\-]*(?:\/[A-Za-z0-9_+\-]+){1,2}$/.test(String(ctx.timezone || '')) ? String(ctx.timezone) : null;
+          const tz = /^[A-Za-z][A-Za-z0-9_+-]*(?:\/[A-Za-z0-9_+-]+){1,2}$/.test(String(ctx.timezone || '')) ? String(ctx.timezone) : null;
           const langs = Array.isArray(ctx.languages) ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
           if (cc || cur || tz) {
             await query(

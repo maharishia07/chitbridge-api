@@ -1145,7 +1145,7 @@ router.post(
       // T3.12 · re-issuing a code does not ZERO the attempt counter (it decays with the 15-minute TTL) — lib/otp.js has the why.
       const otp = await issueShopperOtp(query, identity_id, raw); /* SH-OTP1: the one OTP door */
       // F2: deliver the OTP on the SAME channel, to the RAW contact (never the .cr handle).
-      const sent = await sendOtp(channel, raw, name, otp);
+      await sendOtp(channel, raw, name, otp);
       res.json({
         message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
         channel,
@@ -1242,7 +1242,7 @@ router.post('/:bridge_id/support/start', validate, async (req, res) => {
     }
     /* ⚠️ the same issue /order/start makes (the T3.12 decay rule included) — one helper, not a repeated rule */
     const otp = await issueShopperOtp(query, identity_id, raw); /* SH-OTP1: the one OTP door */
-    const sent = await sendOtp(channel, raw, name, otp);
+    await sendOtp(channel, raw, name, otp);
     res.json({
       message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
       channel,

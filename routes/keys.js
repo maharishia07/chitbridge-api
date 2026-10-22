@@ -291,7 +291,7 @@ function cleanEngines(raw) {
     .split(',')
     .slice(0, 60)
     .forEach((pair) => {
-      const m = /^([a-z0-9-]{1,32}):([0-9A-Za-z.\-]{1,20})$/.exec(pair.trim());
+      const m = /^([a-z0-9-]{1,32}):([0-9A-Za-z.-]{1,20})$/.exec(pair.trim());
       if (m) out[m[1]] = m[2];
     });
   return Object.keys(out).length ? out : null;

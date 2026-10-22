@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 /**
  * tools/sim-load.cjs — PUT THE THREE-YEAR SIMULATED SHOP INTO A REAL DATABASE (round Y1b; Y1 proved it in memory).
+ * OWNS      loading tools/sim-plan.cjs's simulated shop into a LOCAL Postgres through the api's own doors (and refusing any non-local host).
+ * CALLED BY by hand (node tools/sim-load.cjs --db …), deploy test spins (deploy/<platform>/test.sh), tests/sim-load.test.cjs
+ * FLOW      refuse a remote --db ──▶ schema step ──▶ register the shop ──▶ per planned day: bills · purchases · expenses · day summary ──▶ proof (reads)
+ * CARD      qa/sim-load
  *
  * The shop of tools/sim-plan.cjs — daily cash / UPI / credit bills, supplier purchases, expenses, month GST close + lock, the
  * year close — written into Postgres through THE SAME DOORS THE APP USES, with the api running in this process and the shop
@@ -51,10 +55,7 @@
  */
 'use strict';
 const path = require('path'),
-  fs = require('fs'),
-  net = require('net'),
-  http = require('http');
-const { spawnSync } = require('child_process');
+  net = require('net');
 const API = path.join(__dirname, '..');
 
 const arg = (k, d) => {
