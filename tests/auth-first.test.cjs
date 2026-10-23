@@ -49,7 +49,6 @@ require.cache[schemaPath] = { id: schemaPath, filename: schemaPath, loaded: true
   exports: { hasColumn: async () => true, has: async () => true, columns: async () => [], table: async () => ({}) } };
 
 const authFirst = require(path.join(API, 'middleware', 'auth-first'));
-const { contextsKey } = require('express-validator/lib/base');
 
 let pass = 0, fail = 0;
 const t = (name, ok, extra) => { if (ok) { pass++; console.log('  ok  ' + name); } else { fail++; console.log('  FAIL ' + name + (extra ? '\n       ' + extra : '')); } };
@@ -58,16 +57,12 @@ const t = (name, ok, extra) => { if (ok) { pass++; console.log('  ok  ' + name);
 const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
 const nl = SRC.includes('\r\n') ? '\r\n' : '\n';
 const head = SRC.search(/router\.post\(\s*'\/send',\r?\n/); /* iter1: the formatter moved the path onto its own line */
-const firstAuth = SRC.indexOf(nl + '  auth,' + nl + '  [' + nl, head);
-const tail = SRC.indexOf(nl + '  ],' + nl + '  validate,' + nl, head);
-t('the /send route today puts auth FIRST — ahead of the validator chain', head > 0 && firstAuth > head && firstAuth < tail);
-const OLD = SRC.slice(0, firstAuth) + nl + '  [' + nl + SRC.slice(firstAuth + (nl + '  auth,' + nl + '  [' + nl).length, tail)
-  + nl + '  ],' + nl + '  auth,' + nl + '  validate,' + nl + SRC.slice(tail + (nl + '  ],' + nl + '  validate,' + nl).length);
-const OLD_FILE = path.join(API, 'routes', '.m04-before-order.tmp.js');
-fs.writeFileSync(OLD_FILE, OLD);
+const firstAuth = SRC.indexOf(nl + '  auth,' + nl + '  recipientsRule(', head);
+const checkAt = SRC.indexOf("...checked('POST /send')", head);
+t('the /send route today puts auth FIRST — ahead of the recipients rule and the schema check', head > 0 && firstAuth > head && firstAuth < checkAt);
+/* what changed in M04 was the GLOBAL parser (the before app below parses every body before auth); the route's own order (auth, then what the body must look like) is the same on both sides */
 let oldRouter, newRouter;
-try { oldRouter = require(OLD_FILE); } finally { try { fs.unlinkSync(OLD_FILE); } catch (_) {} }
-newRouter = require(path.join(API, 'routes', 'chits'));
+oldRouter = newRouter = require(path.join(API, 'routes', 'chits'));
 
 /* ── the two apps; `seen` keeps the last request so the test can look inside it ─────────────────────────────── */
 let seen = null;
@@ -131,7 +126,7 @@ function send(app, token, body, url) {
     const r = await send(after, null, body);
     t('no token + ' + bname + ' → 401 (not 400/413)', r.status === 401, 'got ' + r.status + ' ' + String(r.body).slice(0, 120));
     t('  …the body was never parsed (req.body undefined)', r.req && r.req.body === undefined && !r.req._body);
-    t('  …and the validator chain never ran', r.req && r.req[contextsKey] === undefined);
+    t('  …and the schema check never ran (nothing was read, so nothing could be refused about it)', r.req && r.req.body === undefined);
     const o = await send(before, null, body);
     t('  (before M04 the same request was answered ' + o.status + ' — the parser spoke first)', o.status === 400 || o.status === 413);
   }
@@ -142,7 +137,7 @@ function send(app, token, body, url) {
   {
     const r = await send(after, CALLERS['owner session'], BODIES['invalid purpose']);
     t('an admitted caller still has its body parsed and validated (400 Invalid purpose)', r.status === 400 && /Invalid purpose/.test(r.body)
-      && r.req.body && r.req.body.purpose === 'bogus' && Array.isArray(r.req[contextsKey]), 'got ' + r.status + ' ' + String(r.body).slice(0, 160));
+      && r.req.body && r.req.body.purpose === 'bogus', 'got ' + r.status + ' ' + String(r.body).slice(0, 160));
     const tk = await send(after, CALLERS['till key'], BODIES['invalid purpose']);
     t('  …and the route saw the holder the auth built once: req.till.holder === "key:k-till"',
       tk.req.till && tk.req.till.holder === 'key:k-till' && tk.req.till.counter === 'C1');
