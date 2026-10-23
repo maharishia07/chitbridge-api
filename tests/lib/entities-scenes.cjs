@@ -1,0 +1,211 @@
+/**
+ * entities-scenes.cjs — the named scenarios of tests/api-problem-entities.test.cjs: an answer the generic worlds cannot reach (a refusal inside a handler, a success to prove byte for byte).
+ *
+ * OWNS      the extras: one scenario per answer of the 25 routes of routes/entities.js (the shop itself: sign-up, sign-in, profile, policy, routing, populations), each with the
+ *           stand-in rows it needs (answered by the shape of the statement, so the same facts meet old and new code).
+ * CALLED BY tests/api-problem-entities.test.cjs. Not a test itself.
+ * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who, db }, patch, body, url, after }] → the harness runs each one against the real route
+ * CARD      28-platform-and-operations/entities-routes
+ * Sign-in (POST /register, POST /verify) is here only to be RECORDED: the test replays what they answered before the sweep byte for byte, and never judges their refusals (they are routes/signin.js's).
+ */
+'use strict';
+
+const ENT = '/api/entities';
+const SHOP = '11111111-1111-4111-8111-111111111111';
+const STRANGER_ID = '66666666-6666-4666-8666-666666666666';
+const OTHER = '88888888-8888-4888-8888-888888888888';
+const HANDLER = '99999999-9999-4999-8999-999999999999';
+
+/** the tools a scene is built from: the harness's own stand-ins */
+function extras(tools) {
+  const { OWNER, STAFF, SECRET_SQL, answering, raising, firstOf, nobodyRoot } = tools;
+  const STRANGER = { identity_id: STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' };
+  const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
+  const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  /** a scenario for an answer the sweep ADDS (the schema's refusal): it is not frozen, since the old code answered it otherwise */
+  const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more));
+  const failing = { db: 'fail' };
+  const at = (tail) => ENT + tail;
+  const sqlState = (code, message, hint) => (sql) => { throw Object.assign(new Error(message || 'pg ' + code), { code }, hint ? { hint } : {}); };
+  const when = (pattern, run) => (sql, params) => (pattern.test(sql) ? run(sql, params) : null);
+  const row = (pattern, one) => answering(pattern, [one]);
+  const noRoot = { platform: { refuseUnlessRoot: nobodyRoot.refuseUnlessRoot, configured: nobodyRoot.configured, isRoot: nobodyRoot.isRoot } };
+
+  const ME_ROW = { identity_id: SHOP, bridge_id: 'AAAA2222', display_name: 'Shop A', email: 'a@example.com', user_id: 'shop-a', country: 'IN', currency_code: 'INR', capabilities: ['x'], policy_flags: {} };
+  const meRow = row(/SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref/, ME_ROW);
+
+  /* ── sign-in and sign-up (recorded, never judged: routes/signin.js owns their refusals) ── */
+  const signin = [
+    X('register-needs-an-id', 'POST ' + at('/register'), 400, { body: {} }),
+    X('register-name-too-short', 'POST ' + at('/register'), 400, { body: { email: 'new@example.com', display_name: 'Z' } }),
+    X('register-user-id-unusable', 'POST ' + at('/register'), 400, { body: { email: 'new@example.com', display_name: 'ab' } }),
+    X('register-user-id-taken', 'POST ' + at('/register'), 409, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: row(/SELECT 1 FROM identities WHERE LOWER\(user_id\) = \$1/, { '?column?': 1 }) } }),
+    X('register-made', 'POST ' + at('/register'), 200, { body: { email: 'new@example.com', display_name: 'Brand New Shop' } }),
+    X('register-made-with-a-chosen-id', 'POST ' + at('/register'), 200, { body: { email: 'new2@example.com', display_name: 'Brand New Shop', user_id: 'chosen-id' } }),
+    X('register-insert-fails', 'POST ' + at('/register'), 500, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: raising(/INSERT INTO identities/, '23505') } }),
+    X('register-login-of-unknown', 'POST ' + at('/register'), 400, { body: { email: 'ghost@example.com', mode: 'login' } }),
+    X('verify-needs-an-id', 'POST ' + at('/verify'), 400, { body: {} }),
+    X('verify-short-code', 'POST ' + at('/verify'), 400, { body: { email: 'a@example.com', otp: '12' } }),
+    X('verify-unknown-account', 'POST ' + at('/verify'), 400, { body: { email: 'ghost@example.com', otp: '123456' } })
+  ];
+
+  /* ── the public door and the reads ── */
+  const reads = [
+    X('constitutions-listed', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: answering(/FROM constitution/, [{ key: 'general', version: 1, label: 'General', vertical: 'general', capabilities: [], is_default: true }]) } }),
+    X('constitutions-with-a-zone', 'GET ' + at('/constitutions'), 200, { url: at('/constitutions?tz=Asia/Kolkata') }),
+    X('constitutions-catalogue-unread', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: raising(/FROM constitution/, '42P01') } }),
+    X('search-too-short', 'GET ' + at('/search'), 400, { url: at('/search?q=a') }),
+    X('search-nothing-asked', 'GET ' + at('/search'), 400, {}),
+    X('search-found', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b', created_at: '2026-10-01T00:00:00.000Z' }]) } }),
+    X('search-db-fails', 'GET ' + at('/search'), 500, { url: at('/search?q=shop'), setup: failing }),
+    X('header-read', 'GET ' + at('/header'), 200, { patch: { header: { read: async () => ({ business: { name: 'Shop A' }, licences: [], trade_ready: false }) } } }),
+    X('header-fails', 'GET ' + at('/header'), 500, { patch: { header: { read: async () => { throw new Error(SECRET_SQL); } } } }),
+    X('sides-read', 'GET ' + at('/sides'), 200, { patch: { sides: { read: async () => ({ lean: [], use: [], impact: null }) } } }),
+    X('sides-fails', 'GET ' + at('/sides'), 500, { patch: { sides: { read: async () => { throw new Error(SECRET_SQL); } } } }),
+    X('me-found', 'GET ' + at('/me'), 200, { setup: { sqlRows: meRow } }),
+    X('me-with-includes', 'GET ' + at('/me'), 200, { url: at('/me?include=nothing,readiness'), setup: { sqlRows: meRow } }),
+    X('me-of-staff', 'GET ' + at('/me'), 200, { setup: { who: STAFF, sqlRows: meRow } }),
+    X('me-unknown', 'GET ' + at('/me'), 404, {}),
+    X('me-db-fails', 'GET ' + at('/me'), 500, { setup: failing }),
+    X('can-see-costs-owner', 'GET ' + at('/me/can-see-costs'), 200, {}),
+    X('can-see-costs-staff', 'GET ' + at('/me/can-see-costs'), 200, { setup: { who: STAFF, sqlRows: row(/SELECT can_see_costs/, { can_see_costs: true }) } }),
+    X('can-see-costs-fails', 'GET ' + at('/me/can-see-costs'), 500, { setup: { who: STAFF, sqlRows: sqlState('XX000', SECRET_SQL) } }),
+    X('lookup-missing', 'GET ' + at('/lookup'), 400, {}),
+    X('lookup-none', 'GET ' + at('/lookup'), 404, { url: at('/lookup?user_id=ghost') }),
+    X('lookup-found', 'GET ' + at('/lookup'), 200, { url: at('/lookup?user_id=Shop-B'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b' }]) } }),
+    X('lookup-asked-twice', 'GET ' + at('/lookup'), 404, { url: at('/lookup?user_id=a&user_id=b') }),
+    X('lookup-db-fails', 'GET ' + at('/lookup'), 500, { url: at('/lookup?user_id=shop-b'), setup: failing }),
+    X('usage-read', 'GET ' + at('/usage'), 200, {}),
+    X('usage-window', 'GET ' + at('/usage'), 200, { url: at('/usage?days=7') }),
+    X('usage-not-enabled', 'GET ' + at('/usage'), 200, { setup: { sqlRows: sqlState('42P01', 'relation "usage_ledger" does not exist') } }),
+    X('usage-db-fails', 'GET ' + at('/usage'), 500, { setup: failing }),
+    X('entitlements-read', 'GET ' + at('/entitlements'), 200, { setup: { sqlRows: row(/SELECT plan, vertical, entity_kind/, { plan: null, vertical: 'general', entity_kind: 'customer', catalogue_visibility: 'public' }) } }),
+    X('entitlements-row-unread', 'GET ' + at('/entitlements'), 200, {}),
+    X('entitlements-fails', 'GET ' + at('/entitlements'), 500, { patch: { plans: { plan: () => { throw new Error(SECRET_SQL); } } } })
+  ];
+
+  /* ── policy ── */
+  const policy = [
+    X('policy-read', 'GET ' + at('/policy'), 200, { setup: { sqlRows: row(/policy_flags/, { policy_flags: {}, country: 'IN' }) } }),
+    X('policy-read-fails', 'GET ' + at('/policy'), 500, { setup: failing }),
+    X('policy-owner-only', 'PATCH ' + at('/policy'), 403, { body: { books: { auto_post: true } }, setup: { who: STAFF } }),
+    X('policy-bound-flag', 'PATCH ' + at('/policy'), 400, { body: { dispute_scope: 'x' } }),
+    X('policy-unknown-flag', 'PATCH ' + at('/policy'), 400, { body: { nope: 1 } }),
+    X('policy-not-migrated', 'PATCH ' + at('/policy'), 503, { body: { trade_side: 'sell' }, setup: { sqlRows: raising(/policy_flags/, '42703') } }),
+    X('policy-set', 'PATCH ' + at('/policy'), 200, { body: { trade_side: 'receive' }, setup: { sqlRows: row(/policy_flags/, { policy_flags: { trade_side: 'receive' }, country: 'IN' }) } }),
+    X('policy-set-fails', 'PATCH ' + at('/policy'), 500, { body: { trade_side: 'sell' }, setup: failing }),
+    N('policy-body-a-list', 'PATCH ' + at('/policy'), 400, { body: [] })
+  ];
+
+  /* ── the person's preferences and the business's switches ── */
+  const prefsRows = row(/UPDATE identities SET (ui_prefs|locale_prefs)/, { v: { theme: 'dark' } });
+  const prefs = [
+    X('prefs-unknown-set', 'PATCH ' + at('/me/prefs/:kind'), 404, { url: at('/me/prefs/nope'), body: { theme: 'dark' } }),
+    X('prefs-prototype-name', 'PATCH ' + at('/me/prefs/:kind'), 404, { url: at('/me/prefs/__proto__'), body: { theme: 'dark' } }),
+    X('prefs-bad-value', 'PATCH ' + at('/me/prefs/:kind'), 400, { url: at('/me/prefs/ui'), body: { theme: 'a b' } }),
+    X('prefs-unknown-font', 'PATCH ' + at('/me/prefs/:kind'), 400, { url: at('/me/prefs/ui'), body: { font: 'comic' } }),
+    X('prefs-bad-locale', 'PATCH ' + at('/me/prefs/:kind'), 400, { url: at('/me/prefs/locale'), body: { locale: 'en--us' } }),
+    X('prefs-unknown-zone', 'PATCH ' + at('/me/prefs/:kind'), 400, { url: at('/me/prefs/locale'), body: { tz: 'Mars/Phobos' } }),
+    X('prefs-saved', 'PATCH ' + at('/me/prefs/:kind'), 200, { url: at('/me/prefs/ui'), body: { theme: 'dark' }, setup: { sqlRows: prefsRows } }),
+    X('prefs-cleared', 'PATCH ' + at('/me/prefs/:kind'), 200, { url: at('/me/prefs/ui'), body: { theme: '' }, setup: { sqlRows: prefsRows } }),
+    X('prefs-column-missing', 'PATCH ' + at('/me/prefs/:kind'), 200, { url: at('/me/prefs/ui'), body: { theme: 'dark' }, setup: { sqlRows: sqlState('42703', 'column "ui_prefs" does not exist') } }),
+    X('prefs-db-fails', 'PATCH ' + at('/me/prefs/:kind'), 500, { url: at('/me/prefs/ui'), body: { theme: 'dark' }, setup: failing }),
+    N('prefs-body-a-list', 'PATCH ' + at('/me/prefs/:kind'), 400, { url: at('/me/prefs/ui'), body: [] }),
+    X('locale-saved', 'PATCH ' + at('/me/locale'), 200, { body: { lang: 'ta' }, setup: { sqlRows: prefsRows } }),
+    X('locale-bad-value', 'PATCH ' + at('/me/locale'), 400, { body: { lang: 'a b' } }),
+    X('locale-db-fails', 'PATCH ' + at('/me/locale'), 500, { body: { lang: 'ta' }, setup: failing }),
+    N('locale-body-a-list', 'PATCH ' + at('/me/locale'), 400, { body: [] }),
+    X('exposure-no-switch', 'PATCH ' + at('/me/exposure'), 400, { body: {} }),
+    X('exposure-saved', 'PATCH ' + at('/me/exposure'), 200, { body: { tax: false }, setup: { sqlRows: row(/storefront_exposure/, { x: { tax: false } }) } }),
+    X('exposure-db-fails', 'PATCH ' + at('/me/exposure'), 500, { body: { tax: false }, setup: failing }),
+    N('exposure-body-a-list', 'PATCH ' + at('/me/exposure'), 400, { body: [] })
+  ];
+
+  /* ── the shop's own details ── */
+  const user = (id) => row(/SELECT user_id FROM identities WHERE identity_id = \$1/, { user_id: id });
+  const profile = [
+    X('profile-viewer', 'PATCH ' + at('/profile'), 403, { body: { address: 'x' }, setup: { who: VIEWER } }),
+    X('profile-chain-refused', 'PATCH ' + at('/profile'), 400, { body: { business_status: 'sleeping', supplies: 'x', dispute_handler_actor_id: 'nope' } }),
+    X('profile-name-too-short', 'PATCH ' + at('/profile'), 400, { body: { display_name: 'A' } }),
+    X('profile-staff-user-id', 'PATCH ' + at('/profile'), 403, { body: { user_id: 'clerkstolen' }, setup: { who: STAFF } }),
+    X('profile-user-id-fixed', 'PATCH ' + at('/profile'), 409, { body: { user_id: 'other-name' }, setup: { sqlRows: user('shop-a') } }),
+    X('profile-user-id-unusable', 'PATCH ' + at('/profile'), 400, { body: { user_id: 'a b' }, setup: { sqlRows: user(null) } }),
+    X('profile-user-id-taken', 'PATCH ' + at('/profile'), 409, { body: { user_id: 'fresh-name' }, setup: { sqlRows: firstOf(user(null), row(/SELECT 1 FROM identities WHERE LOWER\(user_id\) = \$1 AND identity_id/, { '?column?': 1 })) } }),
+    X('profile-handler-not-yours', 'PATCH ' + at('/profile'), 400, { body: { dispute_handler_actor_id: HANDLER } }),
+    X('profile-staff-currency', 'PATCH ' + at('/profile'), 403, { body: { currency_code: 'USD' }, setup: { who: STAFF } }),
+    X('profile-currency-malformed', 'PATCH ' + at('/profile'), 400, { body: { currency_code: 'U$D' } }),
+    X('profile-tax-number-refused', 'PATCH ' + at('/profile'), 400, { body: { gstn: 'bad' }, setup: { sqlRows: row(/SELECT country FROM identities/, { country: 'IN' }) } }),
+    X('profile-visibility-capped', 'PATCH ' + at('/profile'), 403, { body: { catalogue_visibility: 'public' }, setup: { sqlRows: row(/SELECT plan, params_override FROM identities/, { plan: null, params_override: { caps: { catalogue_visibility: 'private' } } }) } }),
+    X('profile-visibility-not-migrated', 'PATCH ' + at('/profile'), 409, { body: { catalogue_visibility: 'network' }, setup: { sqlRows: raising(/UPDATE identities SET catalogue_visibility/, '23514') } }),
+    X('profile-visibility-not-stored', 'PATCH ' + at('/profile'), 500, { body: { catalogue_visibility: 'private' }, setup: { sqlRows: raising(/UPDATE identities SET catalogue_visibility/, 'XX000') } }),
+    X('profile-schema-not-stored', 'PATCH ' + at('/profile'), 500, { body: { catalogue_visibility: 'private' }, setup: { sqlRows: raising(/UPDATE entity_schemas/, 'XX000') } }),
+    X('profile-user-id-race', 'PATCH ' + at('/profile'), 409, { body: { address: 'x' }, setup: { sqlRows: raising(/UPDATE identities SET display_name/, '23505') } }),
+    X('profile-saved', 'PATCH ' + at('/profile'), 200, { body: { display_name: ' Shop A2 ', logo_url: 'https://x/y.png', business_status: 'open', self_copy_pref: 'both', supplies: 'goods', storefront_access: 'login', ui_prefs: { theme: 'dark', old: null } } }),
+    X('profile-saved-visibility', 'PATCH ' + at('/profile'), 200, { body: { catalogue_visibility: 'network' } }),
+    X('profile-db-fails', 'PATCH ' + at('/profile'), 500, { body: { address: 'x' }, setup: failing }),
+    N('profile-body-a-list', 'PATCH ' + at('/profile'), 400, { body: [] })
+  ];
+
+  /* ── erasure, the platform's population registry and routing ── */
+  const platform = [
+    X('erase-not-platform', 'PATCH ' + at('/:id/erase'), 403, { url: at('/' + OTHER + '/erase'), body: {}, setup: { who: STRANGER } }),
+    X('erase-sealed', 'PATCH ' + at('/:id/erase'), 403, { url: at('/' + OTHER + '/erase'), body: {}, setup: { sqlRows: row(/SELECT sealed FROM identities/, { sealed: true }) } }),
+    X('erase-done', 'PATCH ' + at('/:id/erase'), 200, { url: at('/' + OTHER + '/erase'), body: {} }),
+    N('erase-body-a-list', 'PATCH ' + at('/:id/erase'), 400, { url: at('/' + OTHER + '/erase'), body: [] }),
+    X('erase-db-fails', 'PATCH ' + at('/:id/erase'), 500, { url: at('/' + OTHER + '/erase'), body: {}, setup: failing }),
+    X('populations-not-root', 'GET ' + at('/populations'), 403, { setup: { who: STRANGER } }),
+    X('populations-no-root', 'GET ' + at('/populations'), 404, { patch: noRoot }),
+    X('populations-listed', 'GET ' + at('/populations'), 200, { setup: { sqlRows: answering(/FROM ops\.population/, [{ code: 'live', label: 'Live', is_live: true, note: 'n', desk_entity_id: null, desk_name: null, desk_bridge_id: null, entities: 3 }]) } }),
+    X('populations-desk-column-missing', 'GET ' + at('/populations'), 200, { setup: { sqlRows: when(/p\.desk_entity_id,\s+d\.display_name/, sqlState('42703')) } }),
+    X('populations-registry-missing', 'GET ' + at('/populations'), 200, { setup: { sqlRows: raising(/FROM ops\.population/, '42P01') } }),
+    X('populations-db-fails', 'GET ' + at('/populations'), 500, { setup: { sqlRows: raising(/FROM ops\.population/, 'XX000') } }),
+    X('desk-not-root', 'PUT ' + at('/populations/:code/desk'), 403, { url: at('/populations/live/desk'), body: {}, setup: { who: STRANGER } }),
+    X('desk-no-root', 'PUT ' + at('/populations/:code/desk'), 404, { url: at('/populations/live/desk'), body: {}, patch: noRoot }),
+    X('desk-no-such-population', 'PUT ' + at('/populations/:code/desk'), 404, { url: at('/populations/Ghost/desk'), body: { desk_entity_id: OTHER } }),
+    X('desk-set', 'PUT ' + at('/populations/:code/desk'), 200, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: answering(/UPDATE ops\.population SET desk_entity_id/, [{}]) } }),
+    X('desk-cleared', 'PUT ' + at('/populations/:code/desk'), 200, { url: at('/populations/live/desk'), body: { desk_entity_id: '' }, setup: { sqlRows: answering(/UPDATE ops\.population SET desk_entity_id/, [{}]) } }),
+    X('desk-column-missing', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: raising(/UPDATE ops\.population/, '42703') } }),
+    X('desk-not-for-this-population', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'that business is not in this population', 'Pick one of its own.') } }),
+    X('desk-not-for-this-population-no-hint', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: raising(/UPDATE ops\.population/, '23514') } }),
+    X('desk-db-fails', 'PUT ' + at('/populations/:code/desk'), 500, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: failing }),
+    N('desk-body-a-list', 'PUT ' + at('/populations/:code/desk'), 400, { url: at('/populations/live/desk'), body: [] }),
+    X('population-not-root', 'POST ' + at('/populations'), 403, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { who: STRANGER } }),
+    X('population-no-root', 'POST ' + at('/populations'), 404, { body: { code: 'lab', label: 'Lab', note: 'n' }, patch: noRoot }),
+    X('population-code-unusable', 'POST ' + at('/populations'), 400, { body: { code: 'L!', label: 'Lab', note: 'n' } }),
+    X('population-needs-a-name', 'POST ' + at('/populations'), 400, { body: { code: 'lab', note: 'n' } }),
+    X('population-needs-a-note', 'POST ' + at('/populations'), 400, { body: { code: 'lab', label: 'Lab' } }),
+    X('population-made', 'POST ' + at('/populations'), 201, { body: { code: ' Lab ', label: 'Lab', note: 'for tests' } }),
+    X('population-exists', 'POST ' + at('/populations'), 409, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { sqlRows: raising(/INSERT INTO ops\.population/, '23505') } }),
+    X('population-registry-missing', 'POST ' + at('/populations'), 409, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { sqlRows: raising(/INSERT INTO ops\.population/, '42P01') } }),
+    X('population-db-fails', 'POST ' + at('/populations'), 500, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { sqlRows: raising(/INSERT INTO ops\.population/, 'XX000') } }),
+    N('population-body-a-list', 'POST ' + at('/populations'), 400, { body: [] }),
+    X('mis-no-root', 'GET ' + at('/mis'), 404, { patch: noRoot }),
+    X('mis-not-root', 'GET ' + at('/mis'), 403, { setup: { who: STRANGER } }),
+    X('mis-read', 'GET ' + at('/mis'), 200, { setup: { sqlRows: () => ({ rows: [{ n: 1 }], rowCount: 1 }) } }),
+    X('mis-counts-unavailable', 'GET ' + at('/mis'), 200, { setup: { sqlRows: (sql) => { if (/f_entity_counts/.test(sql)) throw Object.assign(new Error('permission denied for schema ops'), { code: '42501' }); return /current_user/.test(sql) ? { rows: [{ u: 'cb_app', su: 'off' }], rowCount: 1 } : { rows: [{ n: 1, identity_id: OTHER }], rowCount: 1 }; } } }),
+    X('mis-db-fails', 'GET ' + at('/mis'), 500, { setup: failing }),
+    X('mis-fails', 'GET ' + at('/mis'), 500, { patch: { platform: { configured: () => { throw new Error(SECRET_SQL); } } } })
+  ];
+
+  const routing = [
+    X('routing-preview', 'GET ' + at('/routing/preview'), 200, {}),
+    X('routing-preview-of-a-kind', 'GET ' + at('/routing/preview'), 200, { url: at('/routing/preview?kind=spec&audience=customer') }),
+    X('routing-preview-fails', 'GET ' + at('/routing/preview'), 200, { setup: failing }),
+    X('routing-read', 'GET ' + at('/routing'), 200, {}),
+    X('routing-read-with-rows', 'GET ' + at('/routing'), 200, { setup: { sqlRows: answering(/FROM entity_work_routing/, [{ kind: 'incident', folder_id: null, assignee_actor_id: null, notify_email: null, route_to_entity_id: OTHER }]) } }),
+    X('routing-table-missing', 'GET ' + at('/routing'), 200, { setup: { sqlRows: raising(/FROM entity_work_routing/, '42P01') } }),
+    X('routing-read-fails', 'GET ' + at('/routing'), 500, { setup: failing }),
+    X('routing-bad-kind', 'PUT ' + at('/routing'), 400, { body: { kind: 'nope' } }),
+    X('routing-no-kind', 'PUT ' + at('/routing'), 400, { body: {} }),
+    X('routing-saved', 'PUT ' + at('/routing'), 200, { body: { kind: 'incident', folder_id: '', assignee_actor_id: HANDLER, route_to_entity_id: null } }),
+    X('routing-table-not-there', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident' }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '42P01') } }),
+    X('routing-team-outside-network', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'that team is outside your network', 'Pick a team of your own network.') } }),
+    X('routing-team-outside-network-no-hint', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '23514') } }),
+    X('routing-folder-gone', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', folder_id: OTHER }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '23503') } }),
+    X('routing-save-fails', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident' }, setup: failing }),
+    N('routing-body-a-list', 'PUT ' + at('/routing'), 400, { body: [] })
+  ];
+  return signin.concat(reads, policy, prefs, profile, platform, routing);
+}
+
+module.exports = { extras, ENT, SHOP, STRANGER_ID, OTHER };
