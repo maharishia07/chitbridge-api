@@ -85,7 +85,7 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const voidSrc = srcRoute.slice(srcRoute.indexOf("router.put('/:chit_id/void'"), srcRoute.indexOf('// POST /chits/assign-bulk')); /* that route's opening line was re-wrapped; its comment is the stable end */
   t('the reversal is posted INSIDE the gate transaction (after g.write(), before the handle returns) — a refusal rolls the withdrawal back and answers 409 in words',
     voidSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason') > voidSrc.indexOf('for (const g of gates) await g.write();')
-    && /withdrawFailure\(res, err\)/.test(voidSrc) && /status\(409\)\.json\(\{\s*error: 'Cannot withdraw',\s*code: err\.code \|\| 'BOOKS_REFUSED',\s*why: 'books_refused'/.test(srcRoute));
+    && /withdrawFailure\(req, res, err\)/.test(voidSrc) && /status: 409, \.\.\.said\(\{\s*error: 'Cannot withdraw',\s*code: err\.code \|\| 'BOOKS_REFUSED',\s*why: 'books_refused'/.test(srcRoute));
 
   console.log('\n— B · a chit the books never posted —');
   STATUS = [{ chit_id: C2, entity_id: SHOP, direction: 'sent', current_status: 'delivered' }]; SENT = [];

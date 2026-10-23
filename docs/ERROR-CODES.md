@@ -79,8 +79,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DEVICE_MISMATCH | 401 | Device mismatch | PENDING | - | auth | 2026-10-22 |
 | DEVICE_REVOKED | 401/403 | Device revoked | PENDING | - | person-session | 2026-10-22 |
 | DEVICE_TO_REFUSED | varies | Device to refused | PENDING | - | connectors | 2026-10-22 |
-| DISPUTES_NOT_SET_UP | varies | Disputes not set up | PENDING | - | chits | 2026-10-22 |
-| DISPUTE_TARGET_NOT_PARTY | 400 | Dispute target not party | PENDING | - | chits | 2026-10-22 |
+| DISPUTES_NOT_SET_UP | 200 | Disputes not set up yet | Disputes are not switched on on this server yet, so there are none to show. | Nothing to do; they will appear once the update has run. | chits | 2026-10-23 |
+| DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | PENDING | - | folder-inventory | 2026-10-22 |
 | DUPLICATE_PARTY | 409 | Duplicate party | PENDING | - | relationships | 2026-10-22 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | varies | Email delivery not configured | PENDING | - | employee-code | 2026-10-22 |
@@ -117,7 +117,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | KEY_CANNOT_SIGN_IN | 403 | Key cannot sign in | PENDING | - | signin | 2026-10-22 |
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
 | KEY_UNKNOWN | 401 | Key unknown | PENDING | - | connectors | 2026-10-22 |
-| LAB_CHIT_LIVE_SHOP | 409 | Lab chit live shop | PENDING | - | chits | 2026-10-22 |
+| LAB_CHIT_LIVE_SHOP | 409 | Lab chit on a live shop | A practice chit cannot be sent from a live shop. | Send it from a practice shop, or make a real chit. | chits | 2026-10-23 |
 | LEADS_NOT_MIGRATED | 503 | Leads not migrated | PENDING | - | crm | 2026-10-22 |
 | LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |
 | LOCKED | 409 | Locked | PENDING | - | schemas | 2026-10-22 |
@@ -164,10 +164,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ORIGIN_NOT_ALLOWED | 403 | Origin not allowed | This address is not allowed to call the service. | Use the shop app, or ask us to allow your address. | platform | 2026-10-22 |
 | OTP_EXPIRED | 400/429 | Otp expired | That code has expired. | Ask for a new code. | iddoc-verify | 2026-10-22 |
 | OTP_LOCKED | 400/429 | Otp locked | Too many wrong codes were typed. | Ask for a new code. | iddoc-verify | 2026-10-22 |
-| OVER_LIMIT | 409 | Over limit | PENDING | - | chits | 2026-10-22 |
+| OVER_LIMIT | 409 | Over the credit limit | This sale would take the customer past their credit limit. | Ask the owner to allow it, or take a payment first. | chits | 2026-10-23 |
 | OWNER_ONLY | 403 | Owner only | Only the owner can do this. | Ask the owner of the shop to do it. | people | 2026-10-22 |
 | PACK_NO_FILE | 409 | Pack has no file | This pack has no file to download. | Build it again, download it, then confirm. | books | 2026-10-22 |
-| PAGE_UNKNOWN | varies | Page unknown | PENDING | - | mint | 2026-10-22 |
+| PAGE_UNKNOWN | 400 | Unknown chit page | That chit page is not one this server knows. | Use a page from the list, or none. | chits | 2026-10-23 |
 | PAIR_CODE_UNKNOWN | 404 | Pairing code not known | That code is wrong or has expired. | Ask ChitBridge for a new code. | till | 2026-10-23 |
 | PAIR_TOO_MANY_TRIES | 429 | Too many wrong codes | Too many wrong codes were tried. | Wait a minute, then ask for a new code. | till | 2026-10-23 |
 | PENETRATION_STORE_MISSING | 503 | Penetration store missing | PENDING | - | assist | 2026-10-22 |
@@ -224,12 +224,12 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TAX_ID_BAD | varies | Tax id bad | PENDING | - | profile | 2026-10-22 |
 | TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
 | TILL_BAD_REQUEST | 400 | Counter request not valid | The counter sent something that is missing or not right. | Check what was entered and try again. | till | 2026-10-23 |
-| TILL_CLAIM_MISMATCH | varies | Till claim mismatch | PENDING | - | holder | 2026-10-22 |
+| TILL_CLAIM_MISMATCH | 400 | Bill from another phone | This bill was made on another phone. | Send it from the phone that made it. | holder | 2026-10-23 |
 | TILL_NO_COUNTER | 403 | Key holds no counter | This key is not holding a counter. | Open the counter on this PC first. | till | 2026-10-23 |
 | TILL_REFUSED | varies | Counter request refused | ChitBridge could not do that. | Read the sentence beside it, then try again. | till | 2026-10-23 |
 | TILL_SCREEN_ONLY | 403 | Shop screens only | Only a shop screen can be changed from the counter. | Pick one of the paired screens. | till | 2026-10-23 |
-| TILL_SEND_REFUSED | 403 | Till send refused | PENDING | - | chits | 2026-10-22 |
-| TILL_SERIES_COLLISION | varies | Till series collision | PENDING | - | chits | 2026-10-22 |
+| TILL_SEND_REFUSED | 403 | Counter bill not sent | That counter bill could not be sent as it is. | The counter keeps it; send the rest. | chits | 2026-10-23 |
+| TILL_SERIES_COLLISION | 409 | Bill number already used | Another counter already used that bill number. | The bill stays on this counter, unsent; it is given its own number next time. | chits | 2026-10-23 |
 | TILL_SIGN_IN_FIRST | 403 | Sign in first | Sign in as the shop to do this. | Sign in, then try again. | till | 2026-10-23 |
 | TOKEN_INVALID | 401 | Token invalid | PENDING | - | auth | 2026-10-22 |
 | USER_ID_ENTITY_ONLY | 403 | User id entity only | PENDING | - | entities | 2026-10-22 |
@@ -260,4 +260,31 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SHOP_CLOSED | 403 | Shop closed | This shop is closed and is not taking orders just now. | Try again when the shop opens. | catalogue | 2026-10-23 |
 | SUBMISSION_REJECTED | 422/503 | Form not accepted | The form could not be sent as it is — the reason says what to fix. | Fix what it names and send it again; if it says try again, wait a minute. | catalogue | 2026-10-23 |
 | SUPPORT_NOT_TAKEN | 502 | Report not delivered | Your report did not reach the shop. | Contact the shop another way for now. | catalogue | 2026-10-23 |
+| CHIT_BAD_REQUEST | 400 | Chit request not accepted | That chit request could not be done. | Read the message, fix what it names and try again. | chits | 2026-10-23 |
+| CHIT_CANNOT_WITHDRAW | 409 | Cannot withdraw | This chit cannot be withdrawn from where it is. | Raise a dispute on it if something is wrong. | chits | 2026-10-23 |
+| CHIT_CONFLICT | 409 | Chit not in that state | The chit is not in a state that allows that. | Look at the chit again, then try once more. | chits | 2026-10-23 |
+| CHIT_INVALID | 400 | Chit details not valid | Something on the chit is missing or not valid. | Read the list of fields it names, fix them and try again. | chits | 2026-10-23 |
+| CHIT_NOT_A_BILL | 409 | Not a bill | Only a bill you received says what its goods are for. | Open a bill you received. | chits | 2026-10-23 |
+| CHIT_NOT_MIGRATED | 503 | Chits update still to run | This part of chits is not ready on this server yet. | Try again after the next update. | chits | 2026-10-23 |
+| CHIT_NOT_PERMITTED | 403 | Not allowed on this chit | This login is not allowed to do that on this chit. | Ask the owner for the right access, or open the chit from the side that holds it. | chits | 2026-10-23 |
+| CHIT_NO_BRIDGE_ID | 409 | Shop has no ChitBridge address | This shop has no ChitBridge address yet, so this cannot be recorded. | Open Settings, set the shop address, then send the bill again. | chits | 2026-10-23 |
+| CHIT_PRIORITY_LOCKED | 409 | Customer priority already set | The customer priority on this chit is set once and cannot change. | Leave it as it is. | chits | 2026-10-23 |
+| CHIT_REASON_REQUIRED | 400 | A reason is needed | An urgent priority needs a reason. | Write the reason and try again. | chits | 2026-10-23 |
+| CHIT_TOO_MANY | 400 | Too many at once | That is more than can be done in one go. | Send fewer, then repeat for the rest. | chits | 2026-10-23 |
+| CHIT_UNPROCESSABLE | 422 | Chit refused | That was understood but cannot be done as it stands. | Read the sentence shown and fix what it names. | chits | 2026-10-23 |
+| CHIT_VALUE_NOT_ACCEPTED | 409 | Value not accepted | The database does not accept one of those values yet. | Try again after the next update. | chits | 2026-10-23 |
+| DISPUTES_TABLE_MISSING | 500 | Disputes not set up | Disputes are not set up on this server yet. | Tell us; the update has to be run. | chits | 2026-10-23 |
+| DISPUTE_ALREADY_RESOLVED | 400 | Dispute already resolved | That dispute is already resolved. | Nothing more to do. | chits | 2026-10-23 |
+| DISPUTE_EXISTS | 400 | Dispute already open | You already have an open dispute of that kind on this chit. | Open the existing dispute instead. | chits | 2026-10-23 |
+| LINE_BELOW_DELIVERED | 409 | Below what was delivered | That would take the line below what has been delivered. | Record a negative delivery first. | chits | 2026-10-23 |
+| LINE_DELIVERED | 409 | Line already delivered | That line has been delivered, so it cannot be changed this way. | Record a negative delivery to take it back. | chits | 2026-10-23 |
+| LINE_UNIT_LOCKED | 409 | Unit locked | The unit cannot change once something has been delivered. | Leave the unit as it is. | chits | 2026-10-23 |
+| PAYMENT_ABOVE_QUOTE | 422 | Above the quoted amount | The amount received is above what the bill asked for. | Add a note saying why, or record the quoted amount. | chits | 2026-10-23 |
+| PAYMENT_TENDER_ON_BILL | 422 | The tender is on the bill | This bill carries its own payment, so it cannot be marked paid here. | Record money received later at the counter, against the bill. | chits | 2026-10-23 |
+| co_held_record | 409 | A record both parties hold | This chit is a record both parties hold, so it cannot be deleted. | Archive it instead. | chits | 2026-10-23 |
+| code_already_used | 409 | Code already used | That code was already used. | Use the order that was made the first time. | chits | 2026-10-23 |
+| dispute_open | 409 | A dispute is open | A dispute is open on this chit. | Resolve it first. | chits | 2026-10-23 |
+| disputes_unknown | 503 | Could not check disputes | Could not check for open disputes. | Try again in a moment. | chits | 2026-10-23 |
+| reason_required | 400 | A reason is needed to reject | Say why you are rejecting this bill. | Write the reason and try again. | chits | 2026-10-23 |
+| status_conflict | 409 | Status changed under you | Someone else just changed this chit. | Look at it again, then try once more. | chits | 2026-10-23 |
 <!-- codes:end -->
