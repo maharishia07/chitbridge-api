@@ -212,7 +212,7 @@ function checkUnits() {
   await checkServerHandlers(recording);
   if (argv.includes('--capture')) fs.writeFileSync(argv[argv.indexOf('--capture') + 1], JSON.stringify(recording, null, 1));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort()]));
-  /* this file owns the /api/keys rows; each area's own test file (api-problem-<area>.test.cjs) owns its rows of the same manifest */
+  /* this file owns the /api/keys rows; tests/api-problem-integrations.test.cjs, tests/api-problem-ctp.test.cjs and each other area's own test file (api-problem-<area>.test.cjs) owns its rows of the same manifest */
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const OURS = (route) => / \/api\/keys(\/|$)/.test(route);
   const mine = Object.fromEntries(Object.keys(onDisk).filter(OURS).map((route) => [route, onDisk[route]]));
