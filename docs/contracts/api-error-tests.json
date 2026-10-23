@@ -84,6 +84,46 @@
   200,
   500
  ],
+ "GET /api/assist/catalogue-mine": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/assist/catalogue-source/:key": [
+  404,
+  500
+ ],
+ "GET /api/assist/container/:id": [
+  404,
+  500
+ ],
+ "GET /api/assist/erp-handoffs": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/assist/gaps": [
+  401
+ ],
+ "GET /api/assist/penetration": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/assist/questions": [
+  500
+ ],
+ "GET /api/assist/regions": [
+  500
+ ],
+ "GET /api/assist/resolve": [
+  400,
+  404,
+  500
+ ],
+ "GET /api/assist/whoami": [
+  401
+ ],
  "GET /api/books/accounts": [
   401,
   404,
@@ -1127,6 +1167,41 @@
   401,
   404,
   500
+ ],
+ "POST /api/assist": [
+  422,
+  500,
+  502,
+  503
+ ],
+ "POST /api/assist/catalogue-adopt": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/assist/catalogue-structure": [
+  404,
+  500
+ ],
+ "POST /api/assist/conform": [
+  404,
+  422,
+  500
+ ],
+ "POST /api/assist/gap": [
+  422,
+  500
+ ],
+ "POST /api/assist/publish": [
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/assist/resolve": [
+  401,
+  410
  ],
  "POST /api/books/accounts": [
   401,
@@ -2423,6 +2498,28 @@
   403,
   409,
   500
+ ],
+ "PUT /api/assist/catalogue-source": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/assist/container": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/assist/region-override": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
  ],
  "PUT /api/catalogue-face": [
   400,
