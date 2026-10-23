@@ -10,7 +10,7 @@
     "variant": "1.4.0",
     "search": "1.4.0",
     "govcontext": "1.42.0",
-    "locale": "1.65.1",
+    "locale": "1.70.0",
     "units": "1.5.0",
     "qty": "1.5.0",
     "verdict": "1.5.0",
@@ -47,7 +47,7 @@
     "reg-us": "1.65.0",
     "reg-jp": "1.65.0",
     "regulation": "1.68.0",
-    "country": "1.68.0",
+    "country": "1.69.0",
     "chart": "1.65.0"
   },
   "adopt": {
@@ -228,7 +228,7 @@
     "variant": "2b82dcbaba8ad8590623ef72d41979894d4390468abf74d862f158d7d4e48946",
     "search": "3e6b74d84e1fa082d5aa7d676f53421b263beafd8c455dfe9719f7d25cd841fa",
     "govcontext": "d6eaa7aab22daeb73b006f25996a23d74ca571bb1260d61dfd56669f21e59a82",
-    "locale": "74f4a84e3399d9679918bf39311a65288ff391dba83c55233fc7f1d78d63948f",
+    "locale": "0c75b5d424df82052db060abf16032c27bf00a83fcc05f195fd79fea00969b6a",
     "units": "93626bcaf343cde1a56ca3fa554b8ed0a0e6cdf40e5ab6368fe3b332572b8219",
     "qty": "48f6fb0cc0338202b1b938193cff6e0e9b1ef1edc10cd36a27104e967d1b9fbe",
     "verdict": "fd056da9669edcf81ce3fc94b9505982628e56ec471b69005b6330fc27452f10",
@@ -265,7 +265,7 @@
     "reg-us": "28eccd704db91bc66c3a8ff719c5e37f67ecdce9de5a669a5511dc13de0813dd",
     "reg-jp": "290797e22ae29bf0934a78e994a89228aa5d6ef2cd4a0244bf31105920315f2c",
     "regulation": "b23ffb018bc4cb35180965b378c28f0d45c92f706bf6e7b4b00824d8ea13bd19",
-    "country": "ec6730c3e4184c1ec445b3888ef6eb8d711f965b6c0794c294a7332fd86881a5",
+    "country": "c207933cd669d7a595b0e6df6272695ed7e21d3a6e079b6c2a00c46d470e1429",
     "chart": "7201c432d50a3f35038f415cfef71c7ac1652c79ed3aadacca8cea3ec42fed37"
   }
 }
