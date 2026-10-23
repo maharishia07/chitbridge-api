@@ -7,7 +7,7 @@
  *           each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world for the routes that name a record by an id in the path
  *           (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json. Also: no answer outside the statuses the route's contract declares
  *           (lib/actors-contract.js), its words as units, that the deliberate 503 (a sealed shop with no e-mail sender) answers its old words, and that sign-in (GET /check-login, POST /set-pin,
- *           POST /login) answers what it answered before: those three are RECORDED here (byte for byte), never judged, since their refusals are routes/signin.js's.
+ *           POST /login) is RUN here, not frozen and never judged (api-legacy.json holds no key for them; the one byte-for-byte check was the --compare against the untouched base, 24 of 24), since their refusals are routes/signin.js's.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs).
  * FLOW      route list (read from the router) x world (signed out, staff, a stranger, a bad id, a failing db, an empty db) + the named extras (tests/lib/actors-scenes.cjs) → real route →
  *           body → Problem fields present · frozen legacy keys equal · no leak on a 5xx · statuses tested → manifest; then the foreign-id world
@@ -32,7 +32,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/actors';
 const ROUTE_FILE = 'routes/actors.js';
-/** sign-in: recorded byte for byte, never judged (their refusals are routes/signin.js's, an area of its own) */
+/** sign-in: run, not frozen, never judged (their refusals are routes/signin.js's, an area of its own) */
 const SIGN_IN = ['GET ' + MOUNT + '/check-login', 'POST ' + MOUNT + '/set-pin', 'POST ' + MOUNT + '/login'];
 const lab = harness({
   here: HERE,
