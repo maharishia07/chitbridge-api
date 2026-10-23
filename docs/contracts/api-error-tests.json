@@ -5,6 +5,29 @@
   404,
   500
  ],
+ "DELETE /api/catalogue/:bridge_id/my-documents/:id": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/chits/:chit_id": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "DELETE /api/chits/:chit_id/payment": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/chits/:chit_id/purge": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "DELETE /api/combo-templates/:id": [
   401,
   404,
@@ -46,6 +69,20 @@
   401,
   403,
   404,
+  500
+ ],
+ "DELETE /api/products/:id": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/products/:id/media/:mid": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/products/:id/schedule/:sid": [
+  401,
   500
  ],
  "GET /.well-known/ctp.json": [
@@ -231,6 +268,158 @@
  "GET /api/books/year/:fy/status": [
   401,
   404,
+  500
+ ],
+ "GET /api/catalogue-face": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id": [
+  404,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/capture-fields": [
+  404,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/my-documents": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/my-orders": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/support/preview": [
+  404,
+  500
+ ],
+ "GET /api/catalogue/enquiry": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/enquiry/:item_id": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/network-store/:networkId": [
+  404,
+  500,
+  503
+ ],
+ "GET /api/catalogue/network/:bridge_id": [
+  404,
+  500,
+  503
+ ],
+ "GET /api/chits/:chit_id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/chits/:chit_id/catalogue-overlay": [
+  401
+ ],
+ "GET /api/chits/:chit_id/costs": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/chits/:chit_id/diagnosis": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/disputes": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/messages": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/raida": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/use": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "GET /api/chits/:id/children": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/chits/:id/trace": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/chits/disputes/queue": [
+  401,
+  500
+ ],
+ "GET /api/chits/folder": [
+  401,
+  500
+ ],
+ "GET /api/chits/inbox": [
+  401,
+  500
+ ],
+ "GET /api/chits/pulse": [
+  401
+ ],
+ "GET /api/chits/raida/report": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/attachables": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/subjects": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/templates": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/walk/:from": [
+  401,
+  500
+ ],
+ "GET /api/chits/rollup": [
+  401,
+  500
+ ],
+ "GET /api/chits/sent": [
+  401,
+  500
+ ],
+ "GET /api/chits/trace/batches": [
+  401,
+  500
+ ],
+ "GET /api/chits/trace/by-batch": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/chits/trace/networks": [
+  401,
+  500
+ ],
+ "GET /api/chits/unread": [
+  401,
   500
  ],
  "GET /api/combo-templates": [
@@ -429,6 +618,47 @@
  "GET /api/pricing/kinds": [
   500
  ],
+ "GET /api/products": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/products/:id/schedule": [
+  401,
+  500
+ ],
+ "GET /api/products/:id/versions": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/products/export.csv": [
+  401,
+  500
+ ],
+ "GET /api/products/lists": [
+  401,
+  500
+ ],
+ "GET /api/products/media/:item_id/:mid": [
+  404,
+  500,
+  503
+ ],
+ "GET /api/products/starter-columns": [
+  401,
+  500
+ ],
+ "GET /api/products/template": [
+  401,
+  500
+ ],
+ "GET /api/products/workbook.xlsx": [
+  401,
+  500
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -440,6 +670,90 @@
  ],
  "GET /api/tax/ledger": [
   401,
+  500
+ ],
+ "GET /api/till/bills": [
+  401,
+  500
+ ],
+ "GET /api/till/catalogue/blueprints": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/counters": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/engine/:name": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/till/match": [
+  401,
+  500
+ ],
+ "GET /api/till/quick-keys/groups": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/quick-keys/hidden": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/quick-keys/screen-config": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/quick-keys/state": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/reward": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/screens": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/snapshot": [
+  401,
+  500
+ ],
+ "GET /api/till/stock": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/summary": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "GET /api/till/tasks": [
+  401,
+  500
+ ],
+ "GET /api/till/verify": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/worth-an-offer": [
+  401,
+  403,
   500
  ],
  "PATCH /api/books/payments/:id": [
@@ -482,6 +796,14 @@
   404,
   500,
   503
+ ],
+ "PATCH /api/products/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
  ],
  "POST /api/books/accounts": [
   401,
@@ -782,6 +1104,221 @@
   422,
   500
  ],
+ "POST /api/catalogue/:bridge_id/login/verify": [
+  400,
+  404,
+  422,
+  500
+ ],
+ "POST /api/catalogue/:bridge_id/order/confirm": [
+  400,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/catalogue/:bridge_id/order/start": [
+  400,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/catalogue/:bridge_id/support": [
+  400,
+  404,
+  422,
+  500,
+  502
+ ],
+ "POST /api/catalogue/:bridge_id/support/start": [
+  400,
+  404,
+  422,
+  500
+ ],
+ "POST /api/catalogue/enquiry/:item_id": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/catalogue/network-store/:networkId/order": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/catalogue/photo-extract": [
+  400,
+  401,
+  402,
+  429,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/amend": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/chits/:chit_id/archive": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/assign-lines": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/books-request": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/costs": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/deliver-lines": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/disputes": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/chits/:chit_id/messages": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/chits/:chit_id/payment": [
+  400,
+  401,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/chits/:chit_id/raida": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/raida/:raida_id/close": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/raida/:raida_id/dispute": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/reprice": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/chits/:chit_id/restore": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/unarchive": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/unread": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/assign-bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/chits/register/entries/:raida_id/accept": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/entries/:raida_id/close": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/entries/:raida_id/revise": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/subjects": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/subjects/:subject_id/close": [
+  400,
+  401,
+  409,
+  500,
+  503
+ ],
+ "POST /api/chits/register/subjects/:subject_id/entries": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/templates": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/send": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
  "POST /api/combo-templates": [
   400,
   401,
@@ -1025,6 +1562,70 @@
   403,
   500
  ],
+ "POST /api/products": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "POST /api/products/:id/media": [
+  400,
+  401,
+  404,
+  413,
+  500,
+  503
+ ],
+ "POST /api/products/:id/schedule": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/products/availability/bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/bulk-update": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/import": [
+  400,
+  401,
+  409,
+  413,
+  500
+ ],
+ "POST /api/products/import/preflight": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/lists/adopt": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/starter-columns": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/status/bulk": [
+  400,
+  401,
+  500
+ ],
  "POST /api/tax/compute": [
   400,
   401,
@@ -1033,6 +1634,157 @@
   500
  ],
  "POST /api/tax/rate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/alias": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/till/catalogue": [
+  400,
+  401,
+  403,
+  409,
+  422,
+  500
+ ],
+ "POST /api/till/close": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/diagnostic": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/enrol": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/till/flags": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/listen": [
+  401
+ ],
+ "POST /api/till/offer-item": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/pair": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/pair/claim": [
+  404,
+  429,
+  500
+ ],
+ "POST /api/till/price": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/till/quick-keys/hide": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/quick-keys/screen-config": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/quick-keys/state": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/quick-keys/unhide": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/reconcile": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/reward": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/till/reward/claim": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/till/screens/rename": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/screens/revoke": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/shop": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/state": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/stock": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/stock/bulk": [
   400,
   401,
   403,
@@ -1051,6 +1803,60 @@
   200,
   400,
   403,
+  409,
+  500
+ ],
+ "PUT /api/catalogue-face": [
+  400,
+  401,
+  413,
+  422,
+  500
+ ],
+ "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/priority": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/priority-flag": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/star": [
+  401,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/status": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/use": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/void": [
+  400,
+  401,
+  403,
+  404,
   409,
   500
  ],
@@ -1074,6 +1880,18 @@
   400,
   401,
   403,
+  500
+ ],
+ "PUT /api/products/:id/availability": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/products/:id/status": [
+  400,
+  401,
+  404,
   500
  ]
 }

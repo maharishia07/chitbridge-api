@@ -191,7 +191,8 @@ ok('a storefront buyer has a door at all',
 
 ok('it reuses the ORDER path’s identity, not a second anonymous sender',
   /crHandle\(c0\.channel, c0\.raw, entity\)/.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1))
-    && /verifyOtp\(query, c, req\.body\.otp[,)]/.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1)),
+    && /codeHolds\(c, req\.body\.otp, /.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1)) /* SEC-81c: the one code check of the public doors */
+    && /async function codeHolds\(row, typed, names\) \{[\s\S]{0,80}verifyOtp\(query, row, typed, /.test(cat),
   'a second mechanism for who a shopper is ends up with two different answers');
 
 ok('the code is SPENT, so one code is one ticket',
@@ -222,7 +223,7 @@ ok('severity is taken from the ENGINE’s list, not re-listed here',
   'three sentences written twice is two wordings, and the shop sorting its queue gets both');
 
 ok('a refused raise reaches the buyer as a sentence, not a green tick',
-  /if \(!out\.raised\)[\s\S]{0,160}res\.status\(502\)/.test(cat),
+  /if \(!out\.raised\)[\s\S]{0,160}status: 502/.test(cat) /* API-1 slice 1e: a Problem that keeps the old body */,
   'raise() never throws and always answers — raised:false is a real outcome');
 
 /* ⚠️ THE PAYLOAD, NOT THE BLOCK. Scanning the whole handler failed on the COMMENT that explains why there is

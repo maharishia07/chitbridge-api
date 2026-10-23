@@ -1,13 +1,15 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search.   CARD storefront-and-catalogue/products-routes
 // OWNS the products door: list · search · create · bulk · update · retire · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter.
-// FLOW  validate → auth → withEntity → lib/catalogue-write / mint-product (the one writer) → { ok, data, error }, every list paged
+// FLOW  auth → schema check (lib/products-contract.js) → withEntity → lib/catalogue-write / mint-product (the one writer) → { ok, data, error }, every list paged;
+//       a refusal → problem(req, res, { status, ...words.x() } | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
 const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
-const { body } = require('express-validator');
 const { query, withEntity, readBatch } = require('../db');
-const { validate } = require('../middleware/validate');
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { words, faultOf, failed, badStatus, schemaOptionsFor, operationFor, pathsOf } = require('../lib/products-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const money = require('../lib/money'); // a price is never a bare number — stamped on write
 const availability = require('../lib/availability'); // a quantity is not an answer without a date
@@ -207,15 +209,15 @@ function statusSafeMessage(e) {
  * never have helped, and the one message that would have explained the problem ("this catalogue is priced in INR")
  * was thrown away. A guard that refuses for a good reason and reports a bad one teaches the user nothing.
  *
- * Deliberate 4xx keeps its status and its message; anything else stays a sanitised 500.
+ * Deliberate 4xx keeps its status and its message; anything else stays a sanitised 500. That rule is lib/products-contract.js faultOf(e, req, label):
+ * every catch below answers `problem(req, res, faultOf(e, req, 'Add failed'))`.
  */
-function fail(res, e, label) {
-  if (e && e.status && e.status >= 400 && e.status < 500) {
-    return res.status(e.status).json({ error: label, message: e.message });
-  }
-  return res.status(500).json({ error: label, message: safeErr(e) });
-}
 const ctx = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/products-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptionsFor(route))] : [];
+}
 
 /**
  * ⚠️⚠️⚠️ [OFFR-04] COST — VISIBLE ONLY TO THE OWNER, UNLESS THE OWNER SAID OTHERWISE.
@@ -385,7 +387,7 @@ async function catalogueShape(entity_id) {
 }
 
 // CREATE — add a product
-router.post('/', auth, [body('item_data').isObject()], validate, async (req, res) => {
+router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const schema_id = await defaultSchemaId(entity_id);
@@ -412,11 +414,11 @@ router.post('/', auth, [body('item_data').isObject()], validate, async (req, res
       rid: req.id,
       validate: (data, rows) => validateAgainst(rows, data)
     });
-    if (made.error) return res.status(400).json(declRefusal('Invalid product', made));
+    if (made.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', made) });
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
   } catch (e) {
-    fail(res, e, 'Add failed');
+    problem(req, res, faultOf(e, req, 'Add failed'));
   }
 });
 
@@ -445,15 +447,15 @@ router.post('/', auth, [body('item_data').isObject()], validate, async (req, res
 const BULK_MAX = 200;
 
 /* ⚠️ up to BULK_MAX products a request, so it is a bulk door like the import ([TILL-112]) */
-router.post('/bulk', auth, bulkLimiter, [body('items').isArray({ min: 1 })], validate, async (req, res) => {
+router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const items = req.body.items;
     if (items.length > BULK_MAX) {
-      return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
+      return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
     }
     if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
-      return res.status(400).json({ error: 'Invalid product', message: 'Every item must be an object.' });
+      return problem(req, res, { status: 400, ...words.notObjects() });
     }
 
     /**
@@ -464,13 +466,13 @@ router.post('/bulk', auth, bulkLimiter, [body('items').isArray({ min: 1 })], val
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
     const w = await catwrite.writeItems({ entity_id, items });
-    if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
+    if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
     shopChanged(entity_id, 'products bulk');
     res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings });
   } catch (e) {
-    fail(res, e, 'Bulk add failed');
+    problem(req, res, faultOf(e, req, 'Bulk add failed'));
   }
 });
 
@@ -494,21 +496,18 @@ router.post('/bulk', auth, bulkLimiter, [body('items').isArray({ min: 1 })], val
  */
 const BULK_STATUS = ['available', 'unavailable'];
 
-router.post('/status/bulk', auth, [body('ids').isArray({ min: 1 }), body('status').isString()], validate, async (req, res) => {
+router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const ids = req.body.ids;
     if (ids.length > BULK_MAX) {
-      return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
+      return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
     }
     if (!ids.every((x) => typeof x === 'string' && x)) {
-      return res.status(400).json({ error: 'Bad ids', message: 'Every id must be a string.' });
+      return problem(req, res, { status: 400, ...words.notStrings() });
     }
     if (BULK_STATUS.indexOf(req.body.status) < 0) {
-      return res.status(400).json({
-        error: 'Bad status',
-        message: 'In bulk, status must be one of: ' + BULK_STATUS.join(', ') + '. retired and redundant need a per-item reason, so they are set one at a time.'
-      });
+      return problem(req, res, { status: 400, ...words.bulkStatus(BULK_STATUS) });
     }
     /* ⚠️ THE SAME LIBRARY CALL THE SINGLE ROUTE MAKES — not a copy. A bulk path that re-implements the stamp is
        how the bulk answer and the single answer start disagreeing about what "unavailable" recorded. */
@@ -528,8 +527,8 @@ router.post('/status/bulk', auth, [body('ids').isArray({ min: 1 }), body('status
       reads_as: r.rows.length ? itemstatus.explain(r.rows[0].item_data || {}) : null
     });
   } catch (e) {
-    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: statusSafeMessage(e) });
-    fail(res, e, 'Bulk status failed');
+    if (e.status) return problem(req, res, badStatus(e, statusSafeMessage(e)));
+    problem(req, res, faultOf(e, req, 'Bulk status failed'));
   }
 });
 
@@ -548,12 +547,12 @@ router.post('/status/bulk', auth, [body('ids').isArray({ min: 1 }), body('status
  * so a rejected row left the category attached to 39 of 40 and the toast said "39 updated" without saying which
  * one did not.
  */
-router.post('/bulk-update', auth, [body('items').isArray({ min: 1 })], validate, async (req, res) => {
+router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const items = req.body.items;
     if (items.length > BULK_MAX) {
-      return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
+      return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
     }
     const shaped = items.every(
       (item) =>
@@ -565,7 +564,7 @@ router.post('/bulk-update', auth, [body('items').isArray({ min: 1 })], validate,
         !Array.isArray(item.item_data)
     );
     if (!shaped) {
-      return res.status(400).json({ error: 'Bad shape', message: 'Every item must be { id, item_data }.' });
+      return problem(req, res, { status: 400, ...words.badShape() });
     }
 
     const schema_id = await defaultSchemaId(entity_id);
@@ -577,7 +576,7 @@ router.post('/bulk-update', auth, [body('items').isArray({ min: 1 })], validate,
       if (verr) list.push({ index: i, id: items[i].id, message: verr });
     }
     if (list.length) {
-      return res.status(400).json({ error: 'Invalid product', message: list.length + ' item(s) were refused and nothing was written.', invalid: list });
+      return problem(req, res, { status: 400, ...words.refusedItems(list) });
     }
 
     const ids = items.map((item) => item.id);
@@ -595,12 +594,12 @@ router.post('/bulk-update', auth, [body('items').isArray({ min: 1 })], validate,
     const missed = ids.filter((item) => done.indexOf(item) < 0);
     res.json({ message: done.length + ' updated', updated: done.length, missed: missed });
   } catch (e) {
-    fail(res, e, 'Bulk update failed');
+    problem(req, res, faultOf(e, req, 'Bulk update failed'));
   }
 });
 
 // READ + SEARCH — list my products, optional ?q=
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const q = (req.query.q || '').trim();
@@ -634,8 +633,7 @@ router.get('/', auth, async (req, res) => {
     else if (itemstatus.STATUSES.includes(wantRaw)) {
       statusWhere = ` AND ${STATUS_SQL} = $${q ? 3 : 2}`;
       statusParams = [wantRaw];
-    } else if (wantRaw)
-      return res.status(400).json({ error: 'Bad status', message: 'status must be one of: ' + itemstatus.STATUSES.join(', ') + ', not-available' });
+    } else if (wantRaw) return problem(req, res, { status: 400, ...words.listStatus() });
 
     const base = q
       ? { where: `entity_id=$1 AND is_active=true AND item_data::text ILIKE $2`, params: [entity_id, `%${q}%`] }
@@ -805,7 +803,7 @@ router.get('/', auth, async (req, res) => {
       uncategorised: uncat
     });
   } catch (e) {
-    res.status(500).json({ error: 'List failed', message: safeErr(e) });
+    problem(req, res, failed(e, req, 'List failed'));
   }
 });
 
@@ -956,7 +954,7 @@ router.get('/workbook.xlsx', auth, async (req, res) => {
     res.setHeader('Content-Length', String(buf.length));
     res.end(buf);
   } catch (e) {
-    fail(res, e, 'Workbook failed');
+    problem(req, res, faultOf(e, req, 'Workbook failed'));
   }
 });
 
@@ -972,7 +970,7 @@ router.get('/export.csv', auth, async (req, res) => {
     // Excel assumes the system codepage without this and mangles every non-ASCII product name.
     res.send('﻿' + payload);
   } catch (e) {
-    fail(res, e, 'Export failed');
+    problem(req, res, faultOf(e, req, 'Export failed'));
   }
 });
 
@@ -994,7 +992,7 @@ router.get('/template', auth, async (req, res) => {
     const { template, orderInput: oi } = await catalogueShape(ctx(req));
     res.json({ ...template, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
   } catch (e) {
-    fail(res, e, 'Template failed');
+    problem(req, res, faultOf(e, req, 'Template failed'));
   }
 });
 
@@ -1017,13 +1015,12 @@ router.post(
   '/import/preflight',
   auth,
   preflightLimiter,
-  [body('csv').optional().isString(), body('xlsx').optional().isString(), body('header_row').optional().isInt({ min: 1, max: 1000 })],
-  validate,
+  ...checked('POST /import/preflight'),
   async (req, res) => {
     try {
       const entity_id = ctx(req);
       const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim());
-      if (!hasFile) return res.status(400).json({ error: 'Nothing to read', message: 'The file is empty.' });
+      if (!hasFile) return problem(req, res, { status: 400, ...words.fileEmpty() });
 
       // The accepted format, built by the SAME function the download template uses — one definition, so a merchant
       // who fills our own sheet can never be told a column is unrecognised.
@@ -1033,7 +1030,7 @@ router.post(
       try {
         parsed = readUpload(req.body);
       } catch (e) {
-        return res.status(400).json({ error: 'Could not read the file', message: userSafeMessage(e) });
+        return problem(req, res, { status: 400, ...words.unreadable(userSafeMessage(e)) });
       }
       // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
       const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
@@ -1063,7 +1060,7 @@ router.post(
         preview: parsed.preview || null
       });
     } catch (e) {
-      fail(res, e, 'Could not read the file');
+      problem(req, res, faultOf(e, req, 'Could not read the file'));
     }
   }
 );
@@ -1091,21 +1088,15 @@ router.post(
   '/import',
   auth,
   importLimiter,
-  [
-    body('csv').optional().isString(),
-    body('xlsx').optional().isString(),
-    body('header_row').optional().isInt({ min: 1, max: 1000 }),
-    body('decisions').isArray()
-  ],
-  validate,
+  ...checked('POST /import'),
   async (req, res) => {
     try {
       const entity_id = ctx(req);
       if (req.body.confirm !== true) {
-        return res.status(400).json({ error: 'Not confirmed', message: 'Nothing was imported — this needs an explicit confirmation.' });
+        return problem(req, res, { status: 400, ...words.notConfirmed() });
       }
       const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim());
-      if (!hasFile) return res.status(400).json({ error: 'Nothing to import', message: 'The file is empty.' });
+      if (!hasFile) return problem(req, res, { status: 400, ...words.nothingToImport() });
 
       const { schema_id, template, labels, required, identity: ident } = await catalogueShape(entity_id);
       /* ⚠️ THE SAME READER THE PREFLIGHT USED. The report a person approved was built from this file read this
@@ -1114,35 +1105,28 @@ router.post(
       try {
         parsed = readUpload(req.body);
       } catch (e) {
-        return res.status(400).json({ error: 'Could not read the file', message: userSafeMessage(e) });
+        return problem(req, res, { status: 400, ...words.unreadable(userSafeMessage(e)) });
       }
       /* ⚠️ A CUT WORKBOOK IS REFUSED, like a file over IMPORT_MAX_ROWS: importing the part that was read would leave a person
        working out which products are missing — the all-or-nothing rule this route keeps everywhere else. */
       const cut = workbookCut(parsed);
-      if (cut) return res.status(413).json(Object.assign({ error: 'Workbook too large' }, cut));
+      if (cut) return problem(req, res, { status: 413, ...words.workbookCut(cut) });
       if (parsed.rows.length > IMPORT_MAX_ROWS) {
-        return res.status(413).json({
-          error: 'Too many rows',
-          message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.`
-        });
+        return problem(req, res, { status: 413, ...words.tooManyRows(parsed.rows.length, IMPORT_MAX_ROWS) });
       }
       const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
       const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
       const rowErrors = report.issues.filter((item) => item.severity === 'error');
       if (rowErrors.length) {
-        return res
-          .status(409)
-          .json({ error: 'The file has problems', report, message: `${rowErrors.length} row problem(s) must be fixed first. Nothing was imported.` });
+        return problem(req, res, { status: 409, ...words.fileProblems(report, rowErrors.length) });
       }
 
       const applied = preflight.applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions });
       if (applied.errors.length) {
-        return res.status(400).json({ error: 'Those choices do not hold up', messages: applied.errors, message: applied.errors[0] + ' Nothing was imported.' });
+        return problem(req, res, { status: 400, ...words.choicesDoNotHold(applied.errors) });
       }
       if (!applied.items.length) {
-        return res
-          .status(400)
-          .json({ error: 'Nothing to import', message: 'No row had a product name once your choices were applied, so there was nothing to create.' });
+        return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
       }
 
       const currency = await regional.currencyFor(entity_id);
@@ -1158,7 +1142,7 @@ router.post(
           const boot = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
           sid = boot.schema_id || null;
         }
-        if (!sid) return res.status(500).json({ error: 'No catalogue definition', message: 'Your catalogue has no definition to add columns to.' });
+        if (!sid) return problem(req, res, { status: 500, ...words.noDefinition() });
         /* ⭐ ONE APPENDER. This loop WAS the correct implementation — it is now the shared one, so the single add
          and the bulk paste append a column exactly the way an import does. See lib/catalogue-columns.commitFields. */
         created.push(...(await catcols.commitFields({ query, schema_id: sid, newFields: applied.newFields })));
@@ -1304,7 +1288,7 @@ router.post(
         }
       });
     } catch (e) {
-      fail(res, e, 'Import failed');
+      problem(req, res, faultOf(e, req, 'Import failed'));
     }
   }
 );
@@ -1315,27 +1299,27 @@ router.post(
  * GET  → the list to pick from.  POST {vertical} → adopt it, adding whatever the schema does not already have.
  * Adoption is ADDITIVE: it never removes or retypes a column the entity already uses.
  */
-router.get('/starter-columns', auth, async (req, res) => {
+router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (req, res) => {
   try {
     const v = req.query.vertical;
     res.json(v ? { starter: starter.starterFor(v), verticals: starter.list() } : { verticals: starter.list() });
   } catch (e) {
-    fail(res, e, 'Could not list the standard sets');
+    problem(req, res, faultOf(e, req, 'Could not list the standard sets'));
   }
 });
 
-router.post('/starter-columns', auth, [body('vertical').isString()], validate, async (req, res) => {
+router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const set = starter.starterFor(req.body.vertical);
-    if (!set.vertical) return res.status(400).json({ error: 'Unknown trade', message: 'That is not one of the standard sets.' });
+    if (!set.vertical) return problem(req, res, { status: 400, ...words.unknownTrade() });
 
     let sid = await defaultSchemaId(entity_id);
     if (!sid) {
       const boot = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
       sid = boot.schema_id || null;
     }
-    if (!sid) return res.status(500).json({ error: 'No catalogue definition', message: 'Your catalogue has no definition to add columns to.' });
+    if (!sid) return problem(req, res, { status: 500, ...words.noDefinition() });
 
     /* ⭐ The running display_order used to be tracked here; commitFields owns it now, so this only needs to know
        WHICH keys already exist — the additive-only rule. */
@@ -1411,7 +1395,7 @@ router.post('/starter-columns', auth, [body('vertical').isString()], validate, a
       unchanged: picked.filter((item) => !added.includes(item.field_key)).map((item) => item.field_key)
     });
   } catch (e) {
-    fail(res, e, 'Could not adopt the standard set');
+    problem(req, res, faultOf(e, req, 'Could not adopt the standard set'));
   }
 });
 
@@ -1424,10 +1408,6 @@ async function readStoredForEdit(entity_id, item_id, payload) {
   if (!current.rows.length) return { missing: true };
   const stored = current.rows[0].item_data || {};
   return { stored, bodyItem: payload.merge === true ? mergePatch(stored, payload.item_data) : payload.item_data };
-}
-/** the 400 body for a declaration refused (a SERVER_OWNED key travels with its code) */
-function declRefusal(label, decl) {
-  return { error: label, code: decl.code || undefined, message: decl.error };
 }
 // UPDATE — edit a product
 /** RFC 7386 merge-patch: an object merges key by key, null deletes a key, anything else replaces. The catalogue standard we adopted
@@ -1453,7 +1433,7 @@ router.defaultSchemaId = defaultSchemaId;
 router.validateAgainst = validateAgainst;
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
    one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
-router.patch('/:id', auth, [body('item_data').isObject()], validate, async (req, res) => {
+router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     /**
@@ -1463,7 +1443,7 @@ router.patch('/:id', auth, [body('item_data').isObject()], validate, async (req,
      * caller never touched.
      */
     const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
-    if (refused) return res.status(403).json(refused);
+    if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
     /**
      * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client
      * comment claimed it merged). The exposure pane sent the whole item_data it had loaded minutes earlier, so a rate set in between
@@ -1475,7 +1455,7 @@ router.patch('/:id', auth, [body('item_data').isObject()], validate, async (req,
        it, or when the body names a server-owned key (an unchanged echo passes, a change is refused) — an ordinary edit costs
        no extra trip. */
     const read = await readStoredForEdit(entity_id, req.params.id, req.body);
-    if (read.missing) return res.status(404).json({ error: 'Not found' });
+    if (read.missing) return problem(req, res, { status: 404, ...words.notFound() });
     const stored = read.stored,
       bodyItem = read.bodyItem;
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
@@ -1490,16 +1470,16 @@ router.patch('/:id', auth, [body('item_data').isObject()], validate, async (req,
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: (data, rows) => validateAgainst(rows, data)
     });
-    if (decl.error) return res.status(400).json(declRefusal('Invalid product', decl));
+    if (decl.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', decl) });
     // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
     // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
     const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }));
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     shopChanged(entity_id, 'product updated');
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) {
-    fail(res, e, 'Update failed');
+    problem(req, res, faultOf(e, req, 'Update failed'));
   }
 });
 
@@ -1519,19 +1499,19 @@ router.patch('/:id', auth, [body('item_data').isObject()], validate, async (req,
  * checking and writing.
  */
 /* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
-router.get('/:id/schedule', auth, async (req, res) => {
+router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
   try {
     res.json({ enabled: await schedule.enabled(), pending: await schedule.pending(ctx(req), req.params.id) });
   } catch (e) {
-    fail(res, e, 'Could not read the schedule');
+    problem(req, res, faultOf(e, req, 'Could not read the schedule'));
   }
 });
-router.post('/:id/schedule', auth, [body('effective_at').isString(), body('item_data').isObject()], validate, async (req, res) => {
+router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     /* [OFFR-04] a parked change is an edit that lands later — the same cost gate as PATCH /:id, before anything is read */
     const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
-    if (refused) return res.status(403).json(refused);
+    if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
     /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
     const decl = await catcols.ensureDeclared({
       query,
@@ -1541,27 +1521,28 @@ router.post('/:id/schedule', auth, [body('effective_at').isString(), body('item_
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: () => null
     });
-    if (decl.error) return res.status(400).json(declRefusal('Invalid change', decl));
+    if (decl.error) return problem(req, res, { status: 400, ...words.declined('Invalid change', decl) });
     const cur = await withEntity(entity_id, (db) =>
       db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id])
     );
-    if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!cur.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     const patch = schedule.diff(
       cur.rows[0].item_data,
       money.stampItem(Object.assign({}, cur.rows[0].item_data, decl.item_data), await regional.currencyFor(entity_id))
     );
     const r = await schedule.schedule(entity_id, req.params.id, req.body.effective_at, patch, (req.identity && req.identity.identity_id) || null);
-    if (r.error) return res.status(r.error === 'not_enabled' ? 409 : 400).json({ error: r.error, message: r.message });
+    if (r.error === 'not_enabled') return problem(req, res, { status: 409, ...words.scheduleRefused(r) });
+    if (r.error) return problem(req, res, { status: 400, ...words.scheduleRefused(r) });
     res.json({ message: 'Change scheduled', scheduled: r.row });
   } catch (e) {
-    fail(res, e, 'Could not schedule the change');
+    problem(req, res, faultOf(e, req, 'Could not schedule the change'));
   }
 });
-router.delete('/:id/schedule/:sid', auth, async (req, res) => {
+router.delete('/:id/schedule/:sid', auth, ...checked('DELETE /:id/schedule/:sid'), async (req, res) => {
   try {
     res.json({ cancelled: await schedule.cancel(ctx(req), req.params.sid) });
   } catch (e) {
-    fail(res, e, 'Could not cancel the change');
+    problem(req, res, faultOf(e, req, 'Could not cancel the change'));
   }
 });
 
@@ -1571,7 +1552,7 @@ router.delete('/:id/schedule/:sid', auth, async (req, res) => {
  * Each figure goes through availability.stamp — a quantity is not an answer without a date — and lands on item_data.avail,
  * exactly where the single PUT above lands, so every reader (the Stock row, the storefront, the network) sees one shape.
  */
-router.post('/availability/bulk', auth, [body('items').isArray({ min: 1, max: 2000 })], validate, async (req, res) => {
+router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const out = await withEntity(entity_id, async (db) => {
@@ -1612,35 +1593,26 @@ router.post('/availability/bulk', auth, [body('items').isArray({ min: 1, max: 20
     });
     res.json(Object.assign({ message: 'Availability updated' }, out));
   } catch (e) {
-    fail(res, e, 'Availability bulk update failed');
+    problem(req, res, faultOf(e, req, 'Availability bulk update failed'));
   }
 });
 
-router.put(
-  '/:id/availability',
-  auth,
-  [body('qty').exists(), body('source').optional().isString(), body('as_of').optional().isString()],
-  validate,
-  async (req, res) => {
-    try {
-      const entity_id = ctx(req);
-      const rec = availability.stamp(req.body);
-      if (!rec) {
-        return res.status(400).json({
-          error: 'Bad quantity',
-          message: 'A quantity must be zero or more. A negative figure means the feed is wrong, and storing it ' + 'would make a full shelf look empty.'
-        });
-      }
-      const r = await withEntity(entity_id, (db) =>
-        catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec } }], { returning: 'item_id, item_data' })
-      );
-      if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
-      res.json({ message: 'Availability updated', availability: rec });
-    } catch (e) {
-      fail(res, e, 'Availability update failed');
+router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const rec = availability.stamp(req.body);
+    if (!rec) {
+      return problem(req, res, { status: 400, ...words.badQuantity() });
     }
+    const r = await withEntity(entity_id, (db) =>
+      catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec } }], { returning: 'item_id, item_data' })
+    );
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchItem() });
+    res.json({ message: 'Availability updated', availability: rec });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Availability update failed'));
   }
-);
+});
 
 /**
  * PUT /:id/status — the item's LIFECYCLE. Athi, 2026-08-13: *"so we don't need to amend the catalogue, but we
@@ -1655,14 +1627,14 @@ router.put(
  * ⚠️ MERGED, NOT REPLACED. `||` on jsonb keeps every other field — a status change must never be able to lose a
  * price or a synonym list, which is exactly what PATCH /:id would do if used for this.
  */
-router.put('/:id/status', auth, [body('status').isString()], validate, async (req, res) => {
+router.put('/:id/status', auth, ...checked('PUT /:id/status'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const rec = itemstatus.stamp(req.body, { actor_name: req.identity.display_name });
     const r = await withEntity(entity_id, (db) =>
       catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: rec }], { returning: 'item_id, item_data' })
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchItem() });
     const d = r.rows[0].item_data || {};
     res.json({
       message: 'Status updated',
@@ -1679,21 +1651,21 @@ router.put('/:id/status', auth, [body('status').isString()], validate, async (re
       schema_org: d.status_schema_org || itemstatus.SCHEMA_ORG[itemstatus.statusOf(d)]
     });
   } catch (e) {
-    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: statusSafeMessage(e) });
-    fail(res, e, 'Status update failed');
+    if (e.status) return problem(req, res, badStatus(e, statusSafeMessage(e)));
+    problem(req, res, faultOf(e, req, 'Status update failed'));
   }
 });
 
 // DELETE — soft remove
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, active: false }]));
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     shopChanged(entity_id, 'product removed');
     res.json({ message: 'Product removed' });
   } catch (e) {
-    res.status(500).json({ error: 'Delete failed', message: safeErr(e) });
+    problem(req, res, failed(e, req, 'Delete failed'));
   }
 });
 
@@ -1730,9 +1702,9 @@ function mediaUrl(req, item_id, mid) {
 }
 /* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the
    item lists (the key is never taken from the URL). */
-router.get('/media/:item_id/:mid', async (req, res) => {
+router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async (req, res) => {
   try {
-    if (!(await objStore.available())) return res.status(503).json({ error: 'media store not configured' });
+    if (!(await objStore.available())) return problem(req, res, { status: 503, ...words.storeOff() });
     /* ⚠️ THE OWNER'S OWN PICTURE MUST SHOW WHILE THE CATALOGUE IS PRIVATE. This is a public route, so a bare query runs
        under the anonymous RLS context and a private catalogue's item is simply not there → 404 for the owner too (the
        tour's console errors, 2026-09-04). The blob store is WITHOUT RLS and knows the entity: find it by the media id,
@@ -1754,9 +1726,9 @@ router.get('/media/:item_id/:mid', async (req, res) => {
       const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
       row = r.rows[0];
     }
-    if (!row) return res.status(404).end();
+    if (!row) return problem(req, res, { status: 404, ...words.noSuchPicture() });
     const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
-    if (!m || !m.key) return res.status(404).end();
+    if (!m || !m.key) return problem(req, res, { status: 404, ...words.noSuchPicture() });
     /* ⭐ C4: the bytes are read as the ITEM'S OWNER — a key the item names outside its own prefix is a 404, never served */
     const buf = await objStore.get(m.key, row.entity_id);
     res.set('Content-Type', m.mime || 'application/octet-stream');
@@ -1765,19 +1737,19 @@ router.get('/media/:item_id/:mid', async (req, res) => {
   } catch (e) {
     if (e && e.code === objStore.NOT_OWNER) {
       log.warn('products GET /media: the item names a key outside its shop — not served', { item_id: req.params.item_id, mid: req.params.mid });
-      return res.status(404).end();
+      return problem(req, res, { status: 404, ...words.noSuchPicture() });
     }
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req, 'Failed'));
   }
 });
-router.post('/:id/media', auth, async (req, res) => {
+router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const { name, mime, data_base64, url } = req.body || {};
     /* a video LINK: no bytes, no store */
     if (url) {
       const v = videoLink(url);
-      if (!v) return res.status(400).json({ error: 'not_a_video_link', message: 'Paste a YouTube or Vimeo link.' });
+      if (!v) return problem(req, res, { status: 400, ...words.notAVideoLink() });
       const nestedMid = require('crypto').randomUUID();
       const nestedOut = await withEntity(entity_id, async (db) => {
         const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [
@@ -1801,15 +1773,14 @@ router.post('/:id/media', auth, async (req, res) => {
         const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
         return u.rows[0];
       });
-      if (!nestedOut) return res.status(404).json({ error: 'Not found' });
+      if (!nestedOut) return problem(req, res, { status: 404, ...words.notFound() });
       return res.json({ message: 'Video linked', id: nestedMid, media: nestedOut.item_data.media });
     }
-    if (!name || !data_base64) return res.status(400).json({ error: 'validation', message: 'name and data_base64, or a video url' });
-    if (!(await objStore.available()))
-      return res.status(503).json({ error: 'not_configured', message: 'The media store is not configured (S3 env, or run b204 for the database store).' });
+    if (!name || !data_base64) return problem(req, res, { status: 400, ...words.mediaNeedsBytes() });
+    if (!(await objStore.available())) return problem(req, res, { status: 503, ...words.mediaNotConfigured() });
     const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
-    if (!buffer.length) return res.status(400).json({ error: 'empty' });
-    if (buffer.length > MEDIA_MAX) return res.status(413).json({ error: 'too_large', message: 'Up to 8 MB per file.' });
+    if (!buffer.length) return problem(req, res, { status: 400, ...words.mediaEmpty() });
+    if (buffer.length > MEDIA_MAX) return problem(req, res, { status: 413, ...words.mediaTooLarge(MEDIA_MAX) });
     const kind = /^video\//.test(mime || '') ? 'video' : /^image\//.test(mime || '') ? 'image' : 'file';
     const mid = require('crypto').randomUUID();
     const key = objStore.objectKey(entity_id, mid);
@@ -1830,13 +1801,13 @@ router.post('/:id/media', auth, async (req, res) => {
       const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
       return u.rows[0];
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return problem(req, res, { status: 404, ...words.notFound() });
     res.json({ message: 'Media added', id: mid, url: mediaUrl(req, req.params.id, mid), media: out.item_data.media });
   } catch (e) {
-    fail(res, e, 'Could not add the media');
+    problem(req, res, faultOf(e, req, 'Could not add the media'));
   }
 });
-router.delete('/:id/media/:mid', auth, async (req, res) => {
+router.delete('/:id/media/:mid', auth, ...checked('DELETE /:id/media/:mid'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const out = await withEntity(entity_id, async (db) => {
@@ -1852,7 +1823,7 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
       await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }]);
       return { gone, media: d.media };
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return problem(req, res, { status: 404, ...words.notFound() });
     /* ⭐ C4: the object is deleted as THIS shop's — a key outside its prefix is left alone and said (NOT_OWNER), never deleted */
     if (out.gone && out.gone.key && (await objStore.available())) {
       try {
@@ -1868,11 +1839,11 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
     }
     res.json({ message: 'Media removed', media: out.media });
   } catch (e) {
-    fail(res, e, 'Could not remove the media');
+    problem(req, res, faultOf(e, req, 'Could not remove the media'));
   }
 });
 
-router.get('/:id/versions', auth, async (req, res) => {
+router.get('/:id/versions', auth, ...checked('GET /:id/versions'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     /* ⚠️ SCOPED TO MY OWN ITEM BEFORE ANYTHING IS READ. RLS already confines the rows, but an id in the URL should
@@ -1896,7 +1867,7 @@ router.get('/:id/versions', auth, async (req, res) => {
     let when = null;
     if (at) {
       when = new Date(at);
-      if (isNaN(when)) return res.status(400).json({ error: 'Bad date', message: '`at` must be a timestamp.' });
+      if (isNaN(when)) return problem(req, res, { status: 400, ...words.badDate() });
     }
 
     const out = await withEntity(entity_id, async (db) => {
@@ -1945,7 +1916,7 @@ router.get('/:id/versions', auth, async (req, res) => {
     /* ⚠️ THE RESPONSE IS SENT OUTSIDE THE TRANSACTION, deliberately. Calling res.json() inside the callback
        would hold the connection open across serialisation, and an error thrown after the response had started
        would leave a half-written body with an open BEGIN behind it. Return a value; answer with it here. */
-    if (out.notFound) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
+    if (out.notFound) return problem(req, res, { status: 404, ...words.noSuchItem() });
     /* [OFFR-04] the snapshot is the WHOLE item_data, cost included: same strip as the list */
     if (!(await safeCanSeeCosts(req, entity_id))) {
       const snap = (v) => {
@@ -1962,9 +1933,9 @@ router.get('/:id/versions', auth, async (req, res) => {
        503 and sent Athi back to the SQL editor for a migration that had applied perfectly. */
     if (e && (e.code === '42P01' || e.code === '42703')) {
       console.error('versions: b146 not applied —', e.code);
-      return res.status(503).json({ error: 'Not migrated', message: 'Item versions need b146 on this environment.' });
+      return problem(req, res, { status: 503, ...words.versionsNotMigrated() });
     }
-    fail(res, e, 'Versions failed');
+    problem(req, res, faultOf(e, req, 'Versions failed'));
   }
 });
 
@@ -1987,7 +1958,7 @@ router.get('/:id/versions', auth, async (req, res) => {
  * stays as it is. Two doors, two authorities, one library underneath — lib/catalogue-blueprint decides what
  * a list contains and lib/catalogue-write is still the only thing that writes a product.
  */
-router.get('/lists', auth, async (req, res) => {
+router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
@@ -2075,7 +2046,7 @@ router.get('/lists', auth, async (req, res) => {
       mine
     });
   } catch (e) {
-    fail(res, e, 'Could not read the product lists');
+    problem(req, res, faultOf(e, req, 'Could not read the product lists'));
   }
 });
 
@@ -2108,7 +2079,7 @@ async function dropForeignListPrices(items, req) {
     return items; /* the lists' figures ARE rupees: kept for a rupee shop only; no money stated → dropped */
   return items.map(withoutListPrice);
 }
-router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], validate, async (req, res) => {
+router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
@@ -2117,11 +2088,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
 
     const bp = BP.blueprint(b.list);
     if (bp.key === 'general') {
-      return res.status(400).json({
-        error: 'unknown list',
-        message: 'There is no product list called "' + String(b.list).slice(0, 40) + '".',
-        choices: Object.keys(BP.BLUEPRINTS)
-      });
+      return problem(req, res, { status: 400, ...words.unknownList('There is no product list called "' + String(b.list).slice(0, 40) + '".', Object.keys(BP.BLUEPRINTS)) });
     }
 
     /* ⚠️ WHAT THEY ALREADY SELL IS READ HERE, not trusted from the page — the browser's copy can be minutes
@@ -2209,7 +2176,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
       const stamped = itemstatus.stamp({ status: wantStatus }, { id: (req.identity && req.identity.identity_id) || null });
       items = items.map((item) => Object.assign({}, item, stamped));
     } catch (e) {
-      return res.status(400).json({ error: 'status', message: safeErr(e) });
+      return problem(req, res, { status: 400, ...words.badListStatus(safeErr(e)) });
     }
 
     if (!items.length) {
@@ -2230,9 +2197,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
       try {
         catIds = await cats.ensureCategories(entity_id, wantCats, { withEntity, by: (req.identity && req.identity.identity_id) || null });
       } catch (e) {
-        return res
-          .status(500)
-          .json({ error: 'Failed', message: 'Your categories could not be set up, so nothing was added. ' + safeErr(e) });
+        return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(e)) });
       }
     }
     items = items.map((x) => {
@@ -2244,7 +2209,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
     });
 
     const w = await catwrite.writeItems({ entity_id, items });
-    if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
+    if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
 
     shopChanged(entity_id, 'product list adopted');
     /* ⭐ SAID IN THE SHOPKEEPER'S OWN TERMS, because "what did it actually add?" is the next question. */
@@ -2268,8 +2233,10 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
         '.'
     });
   } catch (e) {
-    fail(res, e, 'Could not adopt that product list');
+    problem(req, res, faultOf(e, req, 'Could not adopt that product list'));
   }
 });
+
+router.openapi = { paths: pathsOf() }; // S9: the 26 routes (lib/products-contract.js)
 
 module.exports = router;

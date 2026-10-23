@@ -3341,7 +3341,13 @@
    "example": {
     "error": "Set the shop country first. The books never open on a guess.",
     "code": "NO_COUNTRY",
-    "message": "Set the shop country first. The books never open on a guess."
+    "message": "Set the shop country first. The books never open on a guess.",
+    "type": "https://chitbridge.com/problems/no_country",
+    "title": "No country set",
+    "status": 422,
+    "detail": "Set the shop country first. The books never open on a guess.",
+    "hint": "Set the country in Country setup.",
+    "request_id": null
    },
    "optional": []
   },
