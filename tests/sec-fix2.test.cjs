@@ -10,7 +10,7 @@
  *       customer token — never an e-mail), and that customer belongs to the brand or a member.
  *   M3  POST /assist/catalogue-adopt and GET /assist/catalogue-mine run the real `auth` (revoked actor → 401, viewer → 403).
  *   L1  DELETE /api/keys/:jti is owner-only (lib/owner.gate): a co-assist gets 403 OWNER_ONLY.
- *   LIVE 2/3  lib/db-role verdict (RLS-bypassing role refuses to serve) · the tester door stays open on an empty TESTER_NAMES (INT7c) with a WARN; * is every account
+ *   LIVE 2/3  lib/db-role verdict (RLS-bypassing role refuses to serve) · the tester door is SHUT on an empty TESTER_NAMES (fail closed, SEC finding 3) with a WARN; * is every account outside production
  *   L2  routes/entities.js routing/preview and routes/till.js listen answer safeErr words, never the raw error text.
  *
  * Run: node tests/sec-fix2.test.cjs · no DB, no network beyond 127.0.0.1.
@@ -232,14 +232,14 @@ const sawSql = (re) => SQL.some((x) => re.test(x.s));
   const was = { n: process.env.NODE_ENV, d: process.env.DATABASE_URL, names: process.env.TESTER_NAMES, code: process.env.TESTER_CODE };
   process.env.NODE_ENV = ' development'; process.env.DATABASE_URL = 'postgres://cb@db.example.com:5432/cb'; delete process.env.TESTER_NAMES; process.env.TESTER_CODE = 'tester-code-12345';
   let devOtp = freshDevOtp();
-  t('production-like (remote DB), TESTER_NAMES empty → the door stays open (INT7c: the owner has not set it)', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === true);
-  t('…and boot says so at WARN: set TESTER_NAMES', devOtp.testerNotices().some((n) => n.level === 'warn' && /set TESTER_NAMES/.test(n.msg)));
+  t('production-like (remote DB), TESTER_NAMES empty → the door is SHUT to everyone (SEC finding 3: fail closed)', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false);
+  t('…and boot says so at WARN: set TESTER_NAMES (the door is shut)', devOtp.testerNotices().some((n) => n.level === 'warn' && /set TESTER_NAMES/.test(n.msg)));
   process.env.TESTER_NAMES = '*'; devOtp = freshDevOtp();
-  t('TESTER_NAMES * = every account, explicit, with its own WARN', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === true && devOtp.testerNotices().some((n) => n.level === 'warn' && /TESTER_NAMES is \*/.test(n.msg)));
+  t('TESTER_NAMES * on a remote DB (NODE_ENV " development") is REFUSED, with its own WARN', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false && devOtp.testerNotices().some((n) => n.level === 'warn' && /TESTER_NAMES \* is refused/.test(n.msg)));
   process.env.TESTER_NAMES = 'qa-*'; devOtp = freshDevOtp();
   t('…with TESTER_NAMES set, a listed name passes and another does not', devOtp.testerCodeOk('tester-code-12345', ['qa-one']) === true && devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false);
   delete process.env.TESTER_NAMES; process.env.DATABASE_URL = 'postgres://cb@localhost:5432/cb'; process.env.NODE_ENV = 'development'; devOtp = freshDevOtp();
-  t('a local stack with an empty list still lets a tester in', devOtp.testerCodeOk('tester-code-12345', ['anyone']) === true);
+  t('a local stack with an empty list is shut too', devOtp.testerCodeOk('tester-code-12345', ['anyone']) === false);
   for (const [k, v] of [['NODE_ENV', was.n], ['DATABASE_URL', was.d], ['TESTER_NAMES', was.names], ['TESTER_CODE', was.code]]) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
 
   console.error = origErr;

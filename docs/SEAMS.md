@@ -31,8 +31,8 @@ of file each thing is; this says what already does the job.
 | 48 | `record` | `access-events.js` |  |
 | 48 | `entry` | `books-store.js` |  |
 | 48 | `next` | `dayopen.js` | the next thing to do — |
+| 48 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 47 | `again` | `signin-ui.js` |  |
-| 47 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 45 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 45 | `pack` | `books-store.js` |  |
 | 43 | `read` | `cap-print.js` |  |
@@ -90,12 +90,12 @@ of file each thing is; this says what already does the job.
 | 24 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 24 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
-| 24 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 24 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
 | 23 | `call` | `cap-assist.js` |  |
 | 23 | `opts` | `cap-stock.js` |  |
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `rate` | `convert.js` | A rate, with its evidence. |
+| 23 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `account` | `home-facts.js` | OMITTED: |
 | 22 | `customer` | `mintuserid.js` | silently becomes a second identity. |
@@ -186,6 +186,7 @@ of file each thing is; this says what already does the job.
 | 12 | `says` | `adopt.js` |  |
 | 12 | `post` | `books-manual.js` | POST /events — |
 | 12 | `migrated` | `country-setup.js` |  |
+| 12 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
 | 12 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
@@ -200,7 +201,6 @@ of file each thing is; this says what already does the job.
 | 11 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 11 | `format` | `ctpaddress.js` | Render one. |
 | 11 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
-| 11 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 11 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 10 | `start` | `app.html` |  |
 | 10 | `show` | `cap-catalogue.js` |  |
