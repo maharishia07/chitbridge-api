@@ -6,7 +6,7 @@
  * OWNS      the proof that each refusal of the channel routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the
  *           code before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json
  *           (the statuses each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world: a binding addressed by an id in the
- *           path answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json.
+ *           path answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence-areas.json.
  *           Also: the old relay modes kept exactly (which routes pass a library's sentence on, at which statuses), the three platform doors with and without their key, every 503 replayed
  *           word for word, no thrown text in any answer, and lib/channels-contract.js as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/channels.js and the real lib/channels.js over the stand-in db and sign-in (tests/lib/problem-world.cjs,
@@ -16,7 +16,7 @@
  * CARD      11-crm-and-marketing/channels
  *
  *   node tests/api-problem-channels.test.cjs                    check
- *   node tests/api-problem-channels.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-channels.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-channels.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-channels.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-channels.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -37,7 +37,7 @@ const MOUNT = '/api/channels';
 const OTHER_SHOP = '99999999-9999-4999-8999-999999999999';
 const STRANGER = { identity_id: OTHER_SHOP, identity_type: 'entity', display_name: 'Other shop' };
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const SAFE = 'Something went wrong — please try again.';
 const tools = { PARTY, OWNER, STAFF, SECRET_SQL, answering, raising, firstOf };
@@ -260,7 +260,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/channels.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
