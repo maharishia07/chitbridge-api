@@ -11,6 +11,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | code | status | title | shopkeeper | hint | owner_area | since |
 |---|---|---|---|---|---|---|
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
+| AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
+| AI_LIMIT | 429 | AI limit reached | You have used your AI allowance for now. | Try again later. | governance | 2026-10-23 |
+| AI_PROVIDER | 502 | AI did not answer | The AI did not answer just now. | Try again in a moment. | governance | 2026-10-23 |
 | ALL_REFUSED | varies | All refused | PENDING | - | marketing-results | 2026-10-22 |
 | ALL_SENT | varies | All sent | PENDING | - | verdict | 2026-10-22 |
 | ALREADY_PAID | 409 | Already paid | This looks like a payment you already recorded. | Check the list, then confirm if it is really a new one. | books | 2026-10-22 |
@@ -21,6 +24,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ASSIST_GATED | varies | Assist gated | PENDING | - | assist | 2026-10-22 |
 | ASSIST_SIGN_IN | 503 | Assist sign in | PENDING | - | assist | 2026-10-22 |
 | AUTO_TOKEN | varies | Auto token | PENDING | - | auth | 2026-10-22 |
+| A_INVARIANT | 422 | Rule would be loosened | That would loosen a rule the platform has set. | Only tighten the setting, never loosen it. | governance | 2026-10-23 |
 | BAD_AFTER | 400 | Day not understood | That day is not one the follow-up knows. | Pick today, tomorrow, in 3 days or next week. | crm | 2026-10-23 |
 | BAD_ASSIGNEE | 400 | Person not on the team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |
 | BAD_BEFORE | 400 | Time not understood | The time to look before is not a time. | Send a date and time, or leave it out. | crm | 2026-10-23 |
@@ -46,6 +50,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | This cannot be saved yet: a database update is still to arrive. | Try again after the next update. | books | 2026-10-22 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
+| B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
 | CAPABILITY_OFF | varies | Capability off | PENDING | - | connectors | 2026-10-22 |
 | CATALOGUE_NOT_EMPTY | 409 | Shop already has products | This shop already has products. | Start a starter list only on an empty shop. | till | 2026-10-23 |
 | CATALOGUE_STORE_MISSING | 503 | Catalogue store missing | PENDING | - | assist | 2026-10-22 |
@@ -62,12 +67,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
 | CONFIRM_REMOVE | 400 | Confirm remove | PENDING | - | actors | 2026-10-22 |
+| CONFORMANCE | 422 | Rule not met | That does not meet the platform's rules. | Change it to fit the rules, then try again. | governance | 2026-10-23 |
 | CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
 | CONTAINER_STORE_MISSING | 403/503 | Container store missing | PENDING | - | assist | 2026-10-22 |
 | COST_BLIND | varies | Cost blind | Your access does not include cost or price. | Ask the owner to give you Sees costs, or change availability only. | cost | 2026-10-22 |
 | COUNTER_CLOSED | 401 | Counter closed | PENDING | - | auth | 2026-10-22 |
 | COUNTER_HELD | varies | Counter held | That counter is open on another PC. | Close it there first, or take it over when asked. | counters | 2026-10-22 |
+| COUNTRY_SETUP_NOT_MIGRATED | 503 | Country setup not ready | Country setup arrives after the next update. Selling and the rail work meanwhile. | Carry on selling; come back after the update. | governance | 2026-10-23 |
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | varies | Cover conflict | PENDING | - | actors | 2026-10-22 |
 | CRM_NOT_MIGRATED | 503 | Customer list update pending | This part of the customer list is not ready yet. | Try again after the next update. | crm | 2026-10-22 |
@@ -102,6 +109,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | EMAIL_DELIVERY_NOT_CONFIGURED | varies | Email delivery not configured | PENDING | - | employee-code | 2026-10-22 |
 | EMAIL_TAKEN | varies | Email taken | PENDING | - | actors | 2026-10-22 |
 | EMPLOYEE_EMAIL_REQUIRED | varies | Employee email required | PENDING | - | employee-code | 2026-10-22 |
+| ENTITY_EMAIL_TAKEN | 409 | Email already used | A shop with that email already exists. | Use another email. | governance | 2026-10-23 |
+| ENTITY_QUOTA | 409 | Shop limit reached | This installation cannot add another shop on its plan. | Choose a plan with room for more shops. | governance | 2026-10-23 |
 | EXISTS | 409 | Already on your list | They are already on your list. | Open the existing entry instead. | crm | 2026-10-23 |
 | FOLDER_BAD_REQUEST | 400 | Folder request not accepted | That folder request could not be done. | Read the message, fix what it names and try again. | folders | 2026-10-23 |
 | FOLDER_INVALID | 400 | Folder details not valid | The folder name or id is missing or not valid. | Give the folder a name of 1 to 60 characters, then try again. | folders | 2026-10-23 |
@@ -110,6 +119,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FOLDER_WRONG_SIDE | 400 | Folder on the other track | A Task folder holds chits that came to you; an Order folder holds chits you sent. | Pick a folder on the chit's own track. | folders | 2026-10-22 |
 | FX_RATE_MISSING | 422 | Exchange rate missing | There is no exchange rate for that day. | Add the rate for that day, then try again. | forms | 2026-10-22 |
 | FX_RATE_OF_DAY | varies | Fx rate of day | PENDING | - | forms | 2026-10-22 |
+| GOV_BAD_REQUEST | 400 | Needs one more answer | Something needed is missing. | Read the question shown and answer it. | governance | 2026-10-23 |
+| GOV_CONFLICT | 409 | Clashes with what is recorded | That clashes with what is already recorded. | Reload the page and try again. | governance | 2026-10-23 |
+| GOV_NOT_AVAILABLE | 503 | Not available yet | That is not available on this installation yet. | Try again after the next update. | governance | 2026-10-23 |
+| GOV_REFUSED | 422 | Could not be done as sent | That could not be done as it was sent. | Check what was sent and try again. | governance | 2026-10-23 |
 | GROUPS_NOT_MIGRATED | 503 | Groups update pending | Groups are not ready yet. | Try again after the next update. | crm | 2026-10-23 |
 | HANDOFF_STORE_MISSING | 503 | Handoff store missing | PENDING | - | assist | 2026-10-22 |
 | HAS_DUES | 409 | Open dues | There are open dues on this party, so it cannot be removed. | Settle the dues first. | crm | 2026-10-23 |
@@ -174,6 +187,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_ACCOUNT | varies | No account | PENDING | - | signin | 2026-10-22 |
 | NO_BUYERS | varies | No buyers | PENDING | - | marketing-results | 2026-10-22 |
 | NO_CONSENT | 403 | No consent yet | They have not agreed to offers on that channel. | Ask them first. | marketing-results | 2026-10-22 |
+| NO_CONSTITUTION | 503 | No rules in force | This installation has no active rules to govern a shop yet. | Tell the platform team. | governance | 2026-10-23 |
 | NO_COUNTRY | 422 | No country set | This shop has no country set. | Set the country in Country setup. | assist | 2026-10-22 |
 | NO_COUNTRY_PACK | 422 | Country not supported yet | We do not have the rules for this shop's country yet. | Tell us the country. We add countries one at a time. | country-setup | 2026-10-22 |
 | NO_DEVICE | 400 | No device | PENDING | - | person-session | 2026-10-22 |
@@ -250,7 +264,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SIGN_IN_FIRST | 401/409 | Sign in first | Sign in at the store to order. | Sign in with your phone or email, then order again. | catalogue | 2026-10-22 |
 | SIGN_IN_FOR_LEDGER | 403 | Sign in as a person | Sign in as a person to use the ledger. | A counter or device key cannot use the ledger. | books | 2026-10-23 |
 | SOURCE_STORE_MISSING | 503 | Source store missing | PENDING | - | assist | 2026-10-22 |
-| SRA_NOT_MIGRATED | 503 | Sra not migrated | PENDING | - | governance | 2026-10-22 |
+| SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | PENDING | - | verdict | 2026-10-22 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
@@ -276,8 +290,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | USER_ID_INVALID | 400 | User id invalid | PENDING | - | entities | 2026-10-22 |
 | USER_ID_TAKEN | 409 | User id taken | PENDING | - | entities | 2026-10-22 |
 | VALIDATION_FAILED | 400 | Fields not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send again. | validate | 2026-10-23 |
+| VAULT_CHANGED | 409 | Vault changed | Changed since you opened it — reload? | Reload the vault, then save again. | governance | 2026-10-23 |
 | VAULT_ENC_UNCONFIGURED | 503 | Vault enc unconfigured | PENDING | - | identity-docs | 2026-10-22 |
-| VAULT_VERSION_REQUIRED | varies | Vault version required | PENDING | - | governance | 2026-10-22 |
+| VAULT_VERSION_REQUIRED | 409 | Vault version required | This screen is older than the vault — reload it, then save. | Reload the screen, then save. | governance | 2026-10-22 |
+| VERIFICATION_FAILED | 422 | Registry check failed | That registry number could not be confirmed. | Check the number and try again. | governance | 2026-10-23 |
 | VIEW_ONLY | 403 | View only | Your login can only view. | Ask the owner for edit access. | crm-groups | 2026-10-22 |
 | VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | PENDING | - | entities | 2026-10-22 |
 | WITHDRAWN | 403 | They withdrew consent | They withdrew their consent to offers on that channel. | Do not send offers there. | crm | 2026-10-23 |
