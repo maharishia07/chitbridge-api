@@ -84,7 +84,7 @@ services:
 
   mailsink:
     profiles: [proof]
-    image: node:20-alpine
+    image: node:22-alpine
     command: ["node", "/sink/mail-sink.cjs"]
     volumes: ["./mail-sink.cjs:/sink/mail-sink.cjs:ro"]
     ports: ["127.0.0.1:8025:8025"]

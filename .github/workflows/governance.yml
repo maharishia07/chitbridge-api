@@ -37,7 +37,7 @@ jobs:
           path: chitbridge-web
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: gather the facts
         working-directory: chitbridge-api

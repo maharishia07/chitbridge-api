@@ -202,7 +202,7 @@ it on production: the owner runs the SQL, then records it.
 ## Running it anywhere — deploy/compose.yml
 
 The stack (HX0): `db` Postgres 16 · `migrate` one shot (`tools/migrate.cjs` = `000_baseline` → `part2` → every `bNNN` on an empty
-database, only the unrecorded ones later — HX1 ledger; then `cb_app`'s password) · `api` this repo's `Dockerfile` (`node:20-alpine`, user `node`, `/health` healthcheck,
+database, only the unrecorded ones later — HX1 ledger; then `cb_app`'s password) · `api` this repo's `Dockerfile` (`node:22-alpine`, user `node`, `/health` healthcheck,
 `NODE_ENV=production`) · `web` chitbridge-web's `Dockerfile` (unprivileged nginx, the `vercel.json` rewrite) · `mailsink` (profile
 `proof` only: a Resend stand-in so a walk can read the sign-in code) · `minio` + `minio-bucket` (profiles `minio`/`proof`: an
 S3-compatible store; the api reaches it over SigV4). Ports bind to 127.0.0.1 — put TLS in front for anything public.
