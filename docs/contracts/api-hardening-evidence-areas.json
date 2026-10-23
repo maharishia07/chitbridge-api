@@ -63,6 +63,9 @@
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true
   },
+  "PATCH /api/supplies/:id": {
+   "foreign_id_404": true
+  },
   "PATCH /api/testing/incidents/:id": {
    "foreign_id_404": true
   },

@@ -914,6 +914,14 @@
     400
    ]
   },
+  "GET /api/supplies": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/tax/gstr": {
    "cases": 2,
    "failed": 0,
@@ -1256,6 +1264,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "PATCH /api/supplies/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "PATCH /api/testing/incidents/:id": {
@@ -2592,6 +2608,30 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/supplies": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/supplies/:id/issue": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/supplies/purchase": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/tax/compute": {
