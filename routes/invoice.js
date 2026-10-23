@@ -1,3 +1,7 @@
+// OWNS      /api/invoice: the invoice as a service — build the whole pipeline in one call, read the invoice of a chit.
+// CALLED BY server.js (mounted at /api/invoice behind the service limiter), a key with scope invoice or connector.
+// FLOW      auth → scope → schema check → lib/services · lib/tax-lines · lib/tax-copy → the answer; a fault → problem(req, res, readFault(...))
+// CARD      15-tax-and-country-packs/tax-compute-rate-invoice-tax
 /**
  * /api/invoice — THE INVOICE AS A SERVICE (rung 2): the whole line pipeline in one call, on the same engines the chit
  * uses — pricing structure → offers → tax → the INV-01 block (India's e-invoice JSON shape; `_cb.scheme` names GST or a
@@ -10,18 +14,25 @@
  * ⚠️ IT BUILDS, IT DOES NOT ISSUE. Nothing is written; an invoice number, a signature and the freeze belong to the chit.
  */
 const express = require('express');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { readFault, invoiceContract: contract } = require('../lib/tax-contract'); // the contract: each route's operation and the 5xx words
 const router = express.Router();
 const auth = require('../middleware/auth');
 const S = require('../lib/services');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
+/** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
 
-router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
+router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /build'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const lines0 = S.normLines(req.body);
-    if (!lines0.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
+    if (!lines0.length) return problem(req, res, { status: 400, code: 'INVOICE_BAD_REQUEST', detail: 'lines[] required', legacy: { error: 'validation', message: 'lines[] required' } });
     const body = req.body || {};
     const sh = await S.shelfOf(entity_id);
     /* a line named by CODE is the product: its id (offers aim at ids), its categories (category offers reach it), its opt-outs */
@@ -102,7 +113,7 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
       heads: T.heads(invoice)
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, readFault(e, req));
   }
 });
 
@@ -110,11 +121,12 @@ router.get(
   '/:chit_id',
   auth,
   auth.requireScope('invoice', 'connector') /* the B2B voucher reads the buyer's GSTIN and the tax split from here */,
+  ...checked('GET /:chit_id'),
   async (req, res) => {
     try {
       const me = auth.entityOf(req);
       const hdr = await C.copyOf(req.params.chit_id, me);
-      if (!hdr) return res.status(404).json({ error: 'Not found' });
+      if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
       const e = await C.entryFor(hdr, me);
       res.json({
         chit_id: e.chit_id,
@@ -131,7 +143,7 @@ router.get(
         heads: T.heads(e.invoice)
       });
     } catch (e) {
-      res.status(500).json({ error: 'Failed', message: safeErr(e) });
+      problem(req, res, readFault(e, req));
     }
   }
 );
@@ -221,4 +233,5 @@ router.openapi = {
     }
   }
 };
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

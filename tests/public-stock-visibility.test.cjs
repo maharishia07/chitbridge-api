@@ -49,7 +49,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     console.log('\npublic stock · the storefront\'s visibility rule, at both doors');
     const none = await get('nobody');
     await it('an unknown handle: 404 Not found, nothing read beyond the handle lookup', async () => {
-      assert.strictEqual(none.status, 404); assert.deepStrictEqual(none.body, { error: 'Not found' });
+      // API-1 slice 1c: the 404 is the one Problem body now; private shops are still compared to it byte for byte below
+      assert.strictEqual(none.status, 404); assert.strictEqual(none.body.code, 'NOT_FOUND'); assert.ok(none.body.error, 'no error sentence');
       assert.strictEqual(seen.filter((s) => /withEntity/.test(s)).length, 0);
     });
     await it('a PUBLIC shop: 200 with its stamped figures', async () => {
