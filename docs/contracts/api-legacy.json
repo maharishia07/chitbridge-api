@@ -8773,6 +8773,34 @@
     }
    ]
   },
+  "GET /api/chits/:chit_id/raida": {
+   "answers": [
+    {
+     "scenario": "chit-register-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "chit-register-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
   "GET /api/chits/:chit_id/use": {
    "answers": [
     {
@@ -9001,6 +9029,98 @@
     }
    ]
   },
+  "GET /api/chits/raida/report": {
+   "answers": [
+    {
+     "scenario": "report-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to read the register",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/register/attachables": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "attachables-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/register/subjects": {
+   "answers": [
+    {
+     "scenario": "subjects-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list registers",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to list registers",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/register/templates": {
+   "answers": [
+    {
+     "scenario": "library-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to read the library",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to read the library",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/register/walk/:from": {
+   "answers": [
+    {
+     "scenario": "walk-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to walk it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to walk it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
   "GET /api/chits/rollup": {
    "answers": [
     {
@@ -9140,6 +9260,902 @@
      },
      "fixture": {
       "error": "Unread failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/raida": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "entry-on-a-chit-not-mine",
+     "status": 404,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "entry-on-a-chit-kind-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "kind must be one of: risk, assumption, issue, dependency, action, decision"
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "kind must be one of: risk, assumption, issue, dependency, action, decision"
+     }
+    },
+    {
+     "scenario": "entry-on-a-chit-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/close": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "chit-entry-needs-a-disposition",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "An ending needs a disposition: resolved, action, carried_forward, accepted, constraint, waived"
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "An ending needs a disposition: resolved, action, carried_forward, accepted, constraint, waived"
+     }
+    },
+    {
+     "scenario": "chit-entry-close-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "An ending needs a disposition: resolved, action, carried_forward, accepted, constraint, waived"
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "An ending needs a disposition: resolved, action, carried_forward, accepted, constraint, waived"
+     }
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dispute-link-unknown-entry",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to link the dispute",
+      "message": "No issue with that id."
+     },
+     "fixture": {
+      "error": "Failed to link the dispute",
+      "message": "No issue with that id."
+     }
+    },
+    {
+     "scenario": "dispute-link-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to link the dispute",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/register/entries/:raida_id/accept": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "accept-unknown-entry",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to record the acceptance",
+      "message": "No such entry."
+     },
+     "fixture": {
+      "error": "Failed to record the acceptance",
+      "message": "No such entry."
+     }
+    },
+    {
+     "scenario": "accept-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record the acceptance",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/register/entries/:raida_id/close": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "entry-needs-a-disposition",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "An ending needs a disposition: resolved, action, carried_forward, accepted, constraint, waived"
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "An ending needs a disposition: resolved, action, carried_forward, accepted, constraint, waived"
+     }
+    },
+    {
+     "scenario": "entry-close-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to close it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/register/entries/:raida_id/revise": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "revise-unknown-entry",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to revise it",
+      "message": "No such entry."
+     },
+     "fixture": {
+      "error": "Failed to revise it",
+      "message": "No such entry."
+     }
+    },
+    {
+     "scenario": "revise-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to revise it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/register/subjects": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "register-open-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to open the register",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "register-open-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to open the register",
+      "message": "Name the register."
+     },
+     "fixture": {
+      "error": "Failed to open the register",
+      "message": "Name the register."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/register/subjects/:subject_id/close": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "register-close-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "No such register."
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "No such register."
+     }
+    },
+    {
+     "scenario": "register-close-gate",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "2 entries are still open.",
+      "outstanding": [
+       {
+        "raida_id": "22222222-2222-4222-8222-222222222222"
+       },
+       {
+        "raida_id": "33333333-3333-4333-8333-333333333333"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "2 entries are still open.",
+      "outstanding": [
+       {
+        "raida_id": "22222222-2222-4222-8222-222222222222"
+       },
+       {
+        "raida_id": "33333333-3333-4333-8333-333333333333"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "register-close-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Cannot close yet",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/register/subjects/:subject_id/entries": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "entry-kind-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "kind must be one of: risk, assumption, issue, dependency, action, decision"
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "kind must be one of: risk, assumption, issue, dependency, action, decision"
+     }
+    },
+    {
+     "scenario": "entry-record-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/chits/register/templates": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "template-kind-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to save it",
+      "message": "kind must be one of: risk, assumption, issue, dependency, action, decision"
+     },
+     "fixture": {
+      "error": "Failed to save it",
+      "message": "kind must be one of: risk, assumption, issue, dependency, action, decision"
+     }
+    },
+    {
+     "scenario": "template-save-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save it",
       "message": "Something went wrong — please try again."
      }
     }

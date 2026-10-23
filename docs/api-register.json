@@ -3,8 +3,8 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 468,
-  "partial": 60,
+  "not_started": 452,
+  "partial": 76,
   "meets": 105
  },
  "machine_columns": [
@@ -155,7 +155,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5984,
+   "line": 5982,
    "hash": "727070f8232e756f",
    "columns": {
     "schema_in": false,
@@ -185,7 +185,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4586,
+   "line": 4584,
    "hash": "5e7c302dbbf25637",
    "columns": {
     "schema_in": false,
@@ -215,7 +215,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6248,
+   "line": 6246,
    "hash": "1d409fce33ce00d2",
    "columns": {
     "schema_in": false,
@@ -2957,7 +2957,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4392,
+   "line": 4390,
    "hash": "336f23691ee01d37",
    "columns": {
     "schema_in": true,
@@ -3029,7 +3029,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5669,
+   "line": 5667,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -3066,7 +3066,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5623,
+   "line": 5621,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -3103,7 +3103,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5293,
+   "line": 5291,
    "hash": "670ecd88a1125b2d",
    "columns": {
     "schema_in": true,
@@ -3140,20 +3140,26 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3905,
-   "hash": "79b2dffeda4ca46f",
+   "line": 3903,
+   "hash": "1695754393f195a4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3162,7 +3168,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/:chit_id/use",
@@ -3170,7 +3176,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4008,
+   "line": 4006,
    "hash": "625c08b9e212d735",
    "columns": {
     "schema_in": true,
@@ -3207,7 +3213,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6548,
+   "line": 6546,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -3244,7 +3250,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6575,
+   "line": 6573,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -3281,7 +3287,7 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5889,
+   "line": 5887,
    "hash": "46daea8f32caa803",
    "columns": {
     "schema_in": true,
@@ -3419,20 +3425,25 @@
    "path": "/api/chits/raida/report",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3889,
-   "hash": "51cf2fbbbc8b5ca8",
+   "line": 3887,
+   "hash": "5216ef531eaa784b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3441,7 +3452,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/register/attachables",
@@ -3450,19 +3461,23 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 3738,
-   "hash": "27ba9fe3991ba7d8",
+   "hash": "979cb6a933b53c47",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3471,7 +3486,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/register/subjects",
@@ -3480,19 +3495,24 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 3746,
-   "hash": "cb27d4a1389b3a00",
+   "hash": "c301e82efd66c02d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3501,7 +3521,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/register/templates",
@@ -3509,20 +3529,24 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3789,
-   "hash": "4db35d03133966b5",
+   "line": 3787,
+   "hash": "e43efc96f747efa8",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3531,7 +3555,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/register/walk/:from",
@@ -3539,20 +3563,26 @@
    "path": "/api/chits/register/walk/:from",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3848,
-   "hash": "0ec660957c53c830",
+   "line": 3846,
+   "hash": "600c2cdb5a83af1a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3561,7 +3591,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/rollup",
@@ -3639,7 +3669,7 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6775,
+   "line": 6773,
    "hash": "6f3dc35905e3296e",
    "columns": {
     "schema_in": true,
@@ -3674,7 +3704,7 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6816,
+   "line": 6814,
    "hash": "7fd343a2fc790048",
    "columns": {
     "schema_in": true,
@@ -3710,7 +3740,7 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6997,
+   "line": 6995,
    "hash": "fb7da6818f541830",
    "columns": {
     "schema_in": true,
@@ -12671,7 +12701,7 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4282,
+   "line": 4280,
    "hash": "5a79387c1b53a845",
    "columns": {
     "schema_in": false,
@@ -12701,7 +12731,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6140,
+   "line": 6138,
    "hash": "d10df65156ee45be",
    "columns": {
     "schema_in": false,
@@ -12731,7 +12761,7 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4227,
+   "line": 4225,
    "hash": "54b3c9dfd586ce8a",
    "columns": {
     "schema_in": false,
@@ -12761,7 +12791,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4637,
+   "line": 4635,
    "hash": "44d9ebede7547ca4",
    "columns": {
     "schema_in": false,
@@ -12821,7 +12851,7 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4036,
+   "line": 4034,
    "hash": "b308d784d2fb0d10",
    "columns": {
     "schema_in": false,
@@ -12851,7 +12881,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5378,
+   "line": 5376,
    "hash": "a8594840c2b9725e",
    "columns": {
     "schema_in": false,
@@ -12881,7 +12911,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5110,
+   "line": 5108,
    "hash": "8cb116770ad2d767",
    "columns": {
     "schema_in": false,
@@ -12911,7 +12941,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4537,
+   "line": 4535,
    "hash": "d0cbe09acf23c1b1",
    "columns": {
     "schema_in": false,
@@ -12941,20 +12971,26 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3917,
-   "hash": "c0743edae2875e6a",
+   "line": 3915,
+   "hash": "fa614a65ed096269",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -12963,7 +12999,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/:chit_id/raida/:raida_id/close",
@@ -12971,20 +13007,26 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3973,
-   "hash": "075e9c37a28c39dd",
+   "line": 3971,
+   "hash": "62bb3a21876513d8",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -12993,7 +13035,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/:chit_id/raida/:raida_id/dispute",
@@ -13001,20 +13043,26 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3988,
-   "hash": "e934216ad52a9b33",
+   "line": 3986,
+   "hash": "0a44ec786434934d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13023,7 +13071,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/:chit_id/reprice",
@@ -13061,7 +13109,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6219,
+   "line": 6217,
    "hash": "8b062c6dcd6930e5",
    "columns": {
     "schema_in": false,
@@ -13091,7 +13139,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6198,
+   "line": 6196,
    "hash": "4891c17e9e3fcc93",
    "columns": {
     "schema_in": false,
@@ -13121,7 +13169,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6180,
+   "line": 6178,
    "hash": "4c1675764fcefe5e",
    "columns": {
     "schema_in": false,
@@ -13151,7 +13199,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6450,
+   "line": 6448,
    "hash": "d7dc473b5f180702",
    "columns": {
     "schema_in": false,
@@ -13181,20 +13229,26 @@
    "path": "/api/chits/register/entries/:raida_id/accept",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3866,
-   "hash": "132b22fcac9d9442",
+   "line": 3864,
+   "hash": "e2db551a63bca7f6",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13203,7 +13257,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/register/entries/:raida_id/close",
@@ -13211,20 +13265,26 @@
    "path": "/api/chits/register/entries/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3840,
-   "hash": "75c9291e6e009bf1",
+   "line": 3838,
+   "hash": "7a2b31a1b656f4a1",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13233,7 +13293,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/register/entries/:raida_id/revise",
@@ -13241,20 +13301,26 @@
    "path": "/api/chits/register/entries/:raida_id/revise",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3857,
-   "hash": "e5904f5f649004de",
+   "line": 3855,
+   "hash": "ce47d8d931db1cb4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13263,7 +13329,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/register/subjects",
@@ -13272,19 +13338,24 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 3759,
-   "hash": "53a432a61e3e70b2",
+   "hash": "1507d719250a3496",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13293,7 +13364,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/register/subjects/:subject_id/close",
@@ -13302,19 +13373,25 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 3778,
-   "hash": "009f57fb5c27eb63",
+   "hash": "74058e210809aafa",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13323,7 +13400,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/register/subjects/:subject_id/entries",
@@ -13331,20 +13408,26 @@
    "path": "/api/chits/register/subjects/:subject_id/entries",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3817,
-   "hash": "e0b8673782463034",
+   "line": 3815,
+   "hash": "bbd018ce89b5c086",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13353,7 +13436,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/register/templates",
@@ -13361,20 +13444,25 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3797,
-   "hash": "e51a6bdb761fead1",
+   "line": 3795,
+   "hash": "2b2950dc4cf69a73",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13383,7 +13471,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/send",
@@ -19105,7 +19193,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5748,
+   "line": 5746,
    "hash": "9fd0d2829a4b9013",
    "columns": {
     "schema_in": false,
@@ -19135,7 +19223,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6029,
+   "line": 6027,
    "hash": "9522ee31020e88d2",
    "columns": {
     "schema_in": false,
@@ -19165,7 +19253,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6088,
+   "line": 6086,
    "hash": "eaf708fccc8e7b8f",
    "columns": {
     "schema_in": false,
@@ -19195,7 +19283,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6163,
+   "line": 6161,
    "hash": "52bbcde7ddb19198",
    "columns": {
     "schema_in": false,
@@ -19225,7 +19313,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4960,
+   "line": 4958,
    "hash": "aad29f780689aa6e",
    "columns": {
     "schema_in": false,
@@ -19255,7 +19343,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4026,
+   "line": 4024,
    "hash": "13ef0b26ea0c6b53",
    "columns": {
     "schema_in": false,
@@ -19285,7 +19373,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6293,
+   "line": 6291,
    "hash": "9cc762dd8cf29bba",
    "columns": {
     "schema_in": false,

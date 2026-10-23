@@ -58,7 +58,7 @@ const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
 const { validate, sanitise, schemaValidate } = require('../middleware/validate'); // S9: a request is checked against the route's own schema (validate stays for the routes not yet moved)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { said, failed, operationFor, pathsOf } = require('../lib/chits-contract'); // the contract (each route's operation) and the words of a refusal
+const { said, failed, faultOf, operationFor, pathsOf } = require('../lib/chits-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
@@ -3739,11 +3739,11 @@ router.get('/register/attachables', auth, async (req, res) => {
   try {
     res.json(await raida.attachables());
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
 
-router.get('/register/subjects', auth, async (req, res) => {
+router.get('/register/subjects', auth, ...checked('GET /register/subjects'), async (req, res) => {
   try {
     res.json(
       await raida.listSubjects(entityId(req), {
@@ -3752,11 +3752,11 @@ router.get('/register/subjects', auth, async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(500).json({ error: 'Failed to list registers', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to list registers'));
   }
 });
 
-router.post('/register/subjects', auth, async (req, res) => {
+router.post('/register/subjects', auth, ...checked('POST /register/subjects'), async (req, res) => {
   try {
     res.json(
       await raida.subjectFor(entityId(req), {
@@ -3767,7 +3767,7 @@ router.post('/register/subjects', auth, async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to open the register', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to open the register', { words: true }));
   }
 });
 
@@ -3775,13 +3775,11 @@ router.post('/register/subjects', auth, async (req, res) => {
  * ⭐⭐ THE GATE. A register may not close while any entry is undispositioned — and the refusal is a 409 that
  * NAMES what is outstanding, because "4 still open" without the four sends someone hunting.
  */
-router.post('/register/subjects/:subject_id/close', auth, async (req, res) => {
+router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
   try {
     res.json(await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name }));
   } catch (err) {
-    const payload = { error: 'Cannot close yet', message: err.status && err.status < 500 ? err.message : safeErr(err) };
-    if (err.outstanding) payload.outstanding = err.outstanding;
-    res.status(err.status || 500).json(payload);
+    problem(req, res, faultOf(err, req, 'Cannot close yet', { words: true, extra: err.outstanding ? { outstanding: err.outstanding } : undefined }));
   }
 });
 
@@ -3790,15 +3788,15 @@ router.get('/register/templates', auth, async (req, res) => {
   try {
     res.json(await raida.templates(entityId(req)));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to read the library', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to read the library'));
   }
 });
 
-router.post('/register/templates', auth, async (req, res) => {
+router.post('/register/templates', auth, ...checked('POST /register/templates'), async (req, res) => {
   try {
     res.json(await raida.addTemplate(entityId(req), req.body || {}));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to save it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to save it', { words: true }));
   }
 });
 
@@ -3814,7 +3812,7 @@ router.post('/register/templates', auth, async (req, res) => {
  * ⚠️ chit_id is NULL here, which b185 made legal by dropping the NOT NULL. That is the whole point of the
  * subject: the register is attached to the THING, and an order is only one kind of thing.
  */
-router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => {
+router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
   try {
     res.json(
       await raida.add(
@@ -3827,7 +3825,7 @@ router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => 
       )
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to record it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
   }
 });
 
@@ -3837,33 +3835,33 @@ router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => 
  * and an entry that cannot be ended is what makes the closure gate unpassable. close() locates the row by
  * raida_id and reads chit_id back off it, so null here is correct rather than a shortcut.
  */
-router.post('/register/entries/:raida_id/close', auth, async (req, res) => {
+router.post('/register/entries/:raida_id/close', auth, ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
   try {
     res.json(await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to close it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
   }
 });
 
-router.get('/register/walk/:from', auth, async (req, res) => {
+router.get('/register/walk/:from', auth, ...checked('GET /register/walk/:from'), async (req, res) => {
   try {
     res.json(await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth }));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to walk it', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to walk it'));
   }
 });
 
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
-router.post('/register/entries/:raida_id/revise', auth, async (req, res) => {
+router.post('/register/entries/:raida_id/revise', auth, ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
   try {
     res.json(await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to revise it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to revise it', { words: true }));
   }
 });
 
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
-router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
+router.post('/register/entries/:raida_id/accept', auth, ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
   try {
     res.json(
       await raida.accept(entityId(req), req.params.raida_id, {
@@ -3874,7 +3872,7 @@ router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to record the acceptance', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record the acceptance', { words: true }));
   }
 });
 
@@ -3886,7 +3884,7 @@ router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
  * :chit_id — put this second and every call to it would be read as a request for the register of a chit named
  * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
  */
-router.get('/raida/report', auth, async (req, res) => {
+router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, res) => {
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
        of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
@@ -3898,11 +3896,11 @@ router.get('/raida/report', auth, async (req, res) => {
     );
   } catch (err) {
     console.error('Raida report error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to read the register'));
   }
 });
 
-router.get('/:chit_id/raida', auth, async (req, res) => {
+router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* line_id absent = the whole chit; a uuid = that line PLUS the order-level entries it inherits. */
@@ -3910,11 +3908,11 @@ router.get('/:chit_id/raida', auth, async (req, res) => {
     res.json(await raida.list(entity_id, req.params.chit_id, line_id));
   } catch (err) {
     console.error('Raida read error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to read the register'));
   }
 });
 
-router.post('/:chit_id/raida', auth, async (req, res) => {
+router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
@@ -3963,19 +3961,19 @@ router.post('/:chit_id/raida', auth, async (req, res) => {
     res.json(out);
   } catch (err) {
     console.error('Raida add error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to record it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
   }
 });
 
 /* ⭐ CLOSING IS A POST, NOT A DELETE OR A PATCH, and the verb is the design. A close APPENDS the row that
    closes — it carries who ended it and why, because "we booked the slot" and "the customer withdrew it" are
    different endings and a flag cannot tell them apart. */
-router.post('/:chit_id/raida/:raida_id/close', auth, async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
   try {
     res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id, { body: req.body.body, by_name: req.identity.display_name }));
   } catch (err) {
     console.error('Raida close error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to close it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
   }
 });
 
@@ -3985,12 +3983,12 @@ router.post('/:chit_id/raida/:raida_id/close', auth, async (req, res) => {
  * disputes are raised, then posts the id back so the register can say it was escalated. Reimplementing any part
  * of that lifecycle here would be a second answer to a question that already has one.
  */
-router.post('/:chit_id/raida/:raida_id/dispute', auth, async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/dispute', auth, ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
   try {
     res.json(await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id));
   } catch (err) {
     console.error('Raida dispute link error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to link the dispute', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to link the dispute', { words: true }));
   }
 });
 // ═══ b144 · PER-LINE DELIVERY — the SHARED half ════════════════════════════════════════════════════════════════

@@ -153,6 +153,11 @@ const answeringAll = (pairs) => (sql) => {
   const found = pairs.find(([pattern]) => pattern.test(sql));
   return found ? { rows: found[1], rowCount: found[1].length } : null;
 };
+/** a stand-in db that fails with text a caller must never see, for statements matching a pattern */
+const breaking = (pattern) => (sql) => {
+  if (pattern.test(sql)) throw new Error(SECRET_SQL);
+  return null;
+};
 const C = MOUNT;
 const COPY_ROW = { entity_id: SHOP, '?column?': 1 };
 const CHIT_ROW = { chit_id: PARTY, all_recipients: [{ entity_id: SHOP, display_name: 'Test shop' }, { entity_id: OTHER, display_name: 'Other shop', role: 'Act' }], purpose: 'order', created_at: '2026-10-01T00:00:00.000Z', role: 'Sent' };
@@ -182,6 +187,43 @@ const EXTRAS = [
   X('batches-listed', 'GET ' + C + '/trace/batches', 200, { setup: { sqlRows: answering(/summary_json->'trace' AS trace, created_at/, [{ chit_id: PARTY, trace: { product: 'Tea', qty: 3, is_origin: true }, all_recipients: [] }]) } }),
   X('batch-asked-for', 'GET ' + C + '/trace/by-batch', 200, { url: C + '/trace/by-batch?q=B1' }),
   X('batch-trace-fails', 'GET ' + C + '/trace/by-batch', 500, { url: C + '/trace/by-batch?q=B1', setup: { db: 'fail' } }),
+  /* ── the register and the raida (the schema is there: the statements are the library's own) ── */
+  X('attachables-fail', 'GET ' + C + '/register/attachables', 500, { patch: { raida: { attachables: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('attachables', 'GET ' + C + '/register/attachables', 200, { setup: { migrated: true } }),
+  X('subjects-listed', 'GET ' + C + '/register/subjects', 200, { url: C + '/register/subjects?type_key=audit&open=1', setup: { migrated: true } }),
+  X('subjects-fail', 'GET ' + C + '/register/subjects', 500, { setup: { migrated: true, sqlRows: breaking(/register_subject/) } }),
+  X('register-opened', 'POST ' + C + '/register/subjects', 200, { body: { type_key: 'audit', name: 'Q4 audit' }, setup: { migrated: true } }),
+  X('register-open-fails', 'POST ' + C + '/register/subjects', 500, { body: { type_key: 'audit', name: 'Q4 audit' }, setup: { migrated: true, sqlRows: breaking(/register_subject/) } }),
+  X('register-open-refused', 'POST ' + C + '/register/subjects', 400, { body: { type_key: 'audit' }, patch: { raida: { subjectFor: async () => { throw Object.assign(new Error('Name the register.'), { status: 400 }); } } } }),
+  X('register-close-unknown', 'POST ' + C + '/register/subjects/:subject_id/close', 400, { setup: { migrated: true } }),
+  X('register-close-gate', 'POST ' + C + '/register/subjects/:subject_id/close', 409, { patch: { raida: { closeSubject: async () => { throw Object.assign(new Error('2 entries are still open.'), { status: 409, outstanding: [{ raida_id: PARTY }, { raida_id: OTHER }] }); } } } }),
+  X('register-close-fails', 'POST ' + C + '/register/subjects/:subject_id/close', 500, { setup: { migrated: true, sqlRows: breaking(/register_subject/) } }),
+  X('library-listed', 'GET ' + C + '/register/templates', 200, { setup: { migrated: true } }),
+  X('library-fails', 'GET ' + C + '/register/templates', 500, { setup: { migrated: true, sqlRows: breaking(/register_template/) } }),
+  X('template-kind-missing', 'POST ' + C + '/register/templates', 400, { body: {}, setup: { migrated: true } }),
+  X('template-save-fails', 'POST ' + C + '/register/templates', 500, { body: { title: 'Late delivery', kind: 'risk', body: 'x' }, setup: { migrated: true } }),
+  X('entry-kind-missing', 'POST ' + C + '/register/subjects/:subject_id/entries', 400, { body: {}, setup: { migrated: true } }),
+  X('entry-record-fails', 'POST ' + C + '/register/subjects/:subject_id/entries', 500, { body: { kind: 'risk', body: 'x' }, setup: { migrated: true } }),
+  X('entry-needs-a-disposition', 'POST ' + C + '/register/entries/:raida_id/close', 400, { body: { body: 'done' }, setup: { migrated: true } }),
+  X('entry-close-fails', 'POST ' + C + '/register/entries/:raida_id/close', 500, { body: { disposition: 'resolved' }, setup: { migrated: true, sqlRows: breaking(/raida/) } }),
+  X('walk-answers', 'GET ' + C + '/register/walk/:from', 200, { url: C + '/register/walk/' + PARTY + '?backwards=1&depth=2', setup: { migrated: true } }),
+  X('walk-fails', 'GET ' + C + '/register/walk/:from', 500, { setup: { migrated: true, sqlRows: breaking(/raida/) } }),
+  X('revise-unknown-entry', 'POST ' + C + '/register/entries/:raida_id/revise', 400, { body: { body: 'new' }, setup: { migrated: true } }),
+  X('revise-fails', 'POST ' + C + '/register/entries/:raida_id/revise', 500, { body: { body: 'new' }, setup: { migrated: true, sqlRows: breaking(/raida/) } }),
+  X('accept-unknown-entry', 'POST ' + C + '/register/entries/:raida_id/accept', 400, { body: { rationale: 'ok' }, setup: { migrated: true } }),
+  X('accept-fails', 'POST ' + C + '/register/entries/:raida_id/accept', 500, { body: { rationale: 'ok' }, setup: { migrated: true, sqlRows: breaking(/raida/) } }),
+  X('report-read', 'GET ' + C + '/raida/report', 200, { url: C + '/raida/report?subject_id=' + PARTY + '&standard=iso9001', setup: { migrated: true } }),
+  X('report-fails', 'GET ' + C + '/raida/report', 500, { setup: { migrated: true, sqlRows: breaking(/raida/) } }),
+  X('chit-register-read', 'GET ' + C + '/:chit_id/raida', 200, { url: C + '/' + PARTY + '/raida?line_id=' + OTHER, setup: { migrated: true } }),
+  X('chit-register-fails', 'GET ' + C + '/:chit_id/raida', 500, { setup: { migrated: true, sqlRows: breaking(/raida/) } }),
+  X('chit-register-refused', 'GET ' + C + '/:chit_id/raida', 403, { patch: { raida: { list: async () => { throw Object.assign(new Error('Nope.'), { status: 403 }); } } } }),
+  X('entry-on-a-chit-not-mine', 'POST ' + C + '/:chit_id/raida', 404, { body: { kind: 'risk', body: 'x' }, setup: { migrated: true } }),
+  X('entry-on-a-chit-kind-missing', 'POST ' + C + '/:chit_id/raida', 400, { body: {}, setup: { migrated: true, sqlRows: answering(/SELECT 1 FROM chit_header/, [{ '?column?': 1 }]) } }),
+  X('entry-on-a-chit-fails', 'POST ' + C + '/:chit_id/raida', 500, { body: { kind: 'risk', body: 'x' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [{ '?column?': 1 }]], [/raida/, null]]) } }),
+  X('chit-entry-needs-a-disposition', 'POST ' + C + '/:chit_id/raida/:raida_id/close', 400, { body: { body: 'x' }, setup: { migrated: true } }),
+  X('chit-entry-close-fails', 'POST ' + C + '/:chit_id/raida/:raida_id/close', 500, { body: { body: 'x' }, patch: { raida: { close: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('dispute-link-unknown-entry', 'POST ' + C + '/:chit_id/raida/:raida_id/dispute', 400, { body: { dispute_id: OTHER }, setup: { migrated: true } }),
+  X('dispute-link-fails', 'POST ' + C + '/:chit_id/raida/:raida_id/dispute', 500, { body: { dispute_id: OTHER }, setup: { migrated: true, sqlRows: breaking(/raida/) } }),
   X('networks-listed', 'GET ' + C + '/trace/networks', 200, { setup: { sqlRows: answering(/network_id/, [{ network_id: 'net1', is_operator: true, edges: '2' }]) } })
 ];
 

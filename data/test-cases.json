@@ -63925,12 +63925,12 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 470 lines. Run: node chitbridge-api/tests/api-problem-chits.test.cjs",
+   "note": "test.guard · unit · 512 lines. Run: node chitbridge-api/tests/api-problem-chits.test.cjs",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.guard",
    "automated": true,
-   "seq": 470,
+   "seq": 512,
    "step": "",
    "areas": [
     "api"
