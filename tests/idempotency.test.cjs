@@ -40,6 +40,8 @@ const jwtStub = { verifyJwt: () => { if (tokenThrows) throw tokenThrows; return 
 const warns = [];
 const logStub = { warn: (msg, ctx) => warns.push({ msg, ctx }), info() {}, debug() {}, error: (msg, ctx) => warns.push({ msg, ctx, level: 'error' }), critical() {}, fellBack: (msg) => warns.push({ msg }) };
 const stub = (rel, exports) => { const id = path.join(API, rel); require.cache[require.resolve(id)] = { id, filename: id, loaded: true, exports }; };
+/* the route's own auth is a pass-through here (a replay runs it first; tests/idempotency-after-auth.test.cjs runs the REAL one) */
+stub('middleware/auth', (req, res, next) => next());
 stub('db', dbStub); stub('lib/jwt-verify', jwtStub); stub('lib/logger', logStub);
 const idempotency = require(path.join(API, 'middleware', 'idempotency'));
 
