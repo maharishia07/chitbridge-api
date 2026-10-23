@@ -3,8 +3,8 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 431,
-  "partial": 24,
+  "not_started": 409,
+  "partial": 46,
   "meets": 178
  },
  "machine_columns": [
@@ -3912,20 +3912,25 @@
    "path": "/api/counters",
    "owner_area": "counters",
    "file": "routes/counters.js",
-   "line": 154,
-   "hash": "586e7c789dc7aa83",
+   "line": 163,
+   "hash": "9641e91dd938d69e",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3934,7 +3939,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/crm/calls",
@@ -7507,20 +7512,24 @@
    "path": "/api/repeat",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 55,
-   "hash": "ab474719905d711b",
+   "line": 56,
+   "hash": "a88fb4e6fc3dbf9c",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7529,7 +7538,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/repeat/:id",
@@ -7537,20 +7546,26 @@
    "path": "/api/repeat/:id",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 83,
-   "hash": "67dbea03a47d2df9",
+   "line": 82,
+   "hash": "5ec7914c1baa62f0",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7559,7 +7574,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/schemas/fields",
@@ -8990,20 +9005,27 @@
    "path": "/api/work/:chit_id",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 58,
-   "hash": "54856d7328b75cfb",
+   "line": 63,
+   "hash": "83c889d624c72318",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -9012,7 +9034,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/work/facts",
@@ -9020,20 +9042,26 @@
    "path": "/api/work/facts",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 48,
-   "hash": "fdf8e62c525f6292",
+   "line": 53,
+   "hash": "0b475c2077ad3403",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -9042,7 +9070,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/work/list",
@@ -9050,20 +9078,26 @@
    "path": "/api/work/list",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 36,
-   "hash": "d50bab4c26ec2d75",
+   "line": 41,
+   "hash": "09b3a633d4fd5864",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -9072,7 +9106,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /health",
@@ -9303,20 +9337,27 @@
    "path": "/api/counters/:id",
    "owner_area": "counters",
    "file": "routes/counters.js",
-   "line": 197,
-   "hash": "c44c630d8904b2ad",
+   "line": 206,
+   "hash": "16b279021b037946",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -9325,7 +9366,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/crm/followups/:id",
@@ -13816,20 +13857,26 @@
    "path": "/api/counters",
    "owner_area": "counters",
    "file": "routes/counters.js",
-   "line": 170,
-   "hash": "e7e41dd04938975b",
+   "line": 179,
+   "hash": "2eccb03ed6d58661",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13838,7 +13885,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/counters/:id/assign",
@@ -13846,20 +13893,27 @@
    "path": "/api/counters/:id/assign",
    "owner_area": "counters",
    "file": "routes/counters.js",
-   "line": 226,
-   "hash": "3767ff001c392e82",
+   "line": 235,
+   "hash": "b736fd0b303b6676",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13868,7 +13922,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/counters/:id/open",
@@ -13876,20 +13930,28 @@
    "path": "/api/counters/:id/open",
    "owner_area": "counters",
    "file": "routes/counters.js",
-   "line": 254,
-   "hash": "76cbe8fd27bc5f9a",
+   "line": 263,
+   "hash": "2829ee715a1af9ad",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13906,20 +13968,27 @@
    "path": "/api/counters/:id/release",
    "owner_area": "counters",
    "file": "routes/counters.js",
-   "line": 318,
-   "hash": "2b3922f683003129",
+   "line": 327,
+   "hash": "571eb00e2d0b8ba9",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -13928,7 +13997,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/crm/followups",
@@ -16760,20 +16829,26 @@
    "path": "/api/repeat",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 65,
-   "hash": "bb0d8f48be5f288b",
+   "line": 66,
+   "hash": "d5b3401a16161211",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16782,7 +16857,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/accept",
@@ -16790,20 +16865,27 @@
    "path": "/api/repeat/:id/accept",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 92,
-   "hash": "77d1de19c3380f26",
+   "line": 91,
+   "hash": "c7bb7e14f5e79192",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16812,7 +16894,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/agree",
@@ -16820,20 +16902,27 @@
    "path": "/api/repeat/:id/agree",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 137,
-   "hash": "4d08b4d499d1296f",
+   "line": 136,
+   "hash": "cd498707d2333de2",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16842,7 +16931,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/counter",
@@ -16850,20 +16939,27 @@
    "path": "/api/repeat/:id/counter",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 101,
-   "hash": "3f1e04a9e44c5d5f",
+   "line": 99,
+   "hash": "f50583d7a8ff6377",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16872,7 +16968,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/decline",
@@ -16880,20 +16976,27 @@
    "path": "/api/repeat/:id/decline",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 109,
-   "hash": "65841d9552f0b5ff",
+   "line": 106,
+   "hash": "b0957464f7540390",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16902,7 +17005,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/end",
@@ -16910,20 +17013,27 @@
    "path": "/api/repeat/:id/end",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 157,
-   "hash": "4d08b4d499d1296f",
+   "line": 156,
+   "hash": "7dd3c0a029980a57",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16932,7 +17042,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/pause",
@@ -16940,20 +17050,27 @@
    "path": "/api/repeat/:id/pause",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 147,
-   "hash": "4d08b4d499d1296f",
+   "line": 146,
+   "hash": "d917f63a7bce9f7c",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16962,7 +17079,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/refuse",
@@ -16970,20 +17087,27 @@
    "path": "/api/repeat/:id/refuse",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 142,
-   "hash": "4d08b4d499d1296f",
+   "line": 141,
+   "hash": "e85c3a73458164fe",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16992,7 +17116,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/resume",
@@ -17000,20 +17124,27 @@
    "path": "/api/repeat/:id/resume",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 152,
-   "hash": "4d08b4d499d1296f",
+   "line": 151,
+   "hash": "e94d710976f04ee4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -17022,7 +17153,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/run",
@@ -17030,20 +17161,27 @@
    "path": "/api/repeat/:id/run",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 162,
-   "hash": "4d08b4d499d1296f",
+   "line": 161,
+   "hash": "8485001a43bed7db",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -17052,7 +17190,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/:id/skip",
@@ -17060,20 +17198,27 @@
    "path": "/api/repeat/:id/skip",
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
-   "line": 119,
-   "hash": "438000156f0dd84b",
+   "line": 115,
+   "hash": "9d7794a68a842d51",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -17082,7 +17227,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat/sweep",
@@ -17091,19 +17236,25 @@
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
    "line": 74,
-   "hash": "b79b6c3902dac86f",
+   "hash": "9febaba5d0a5cb2a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -17112,7 +17263,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/schemas/create-default",
