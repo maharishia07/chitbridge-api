@@ -6,6 +6,7 @@
  *           and the three recordings: --capture (the answers of the code BEFORE the change), --freeze (the refusals of a capture into docs/contracts/api-legacy.json) and
  *           --compare (the answers now, byte for byte against a capture).
  * CALLED BY tests/api-problem-products.test.cjs · tests/api-problem-catalogue.test.cjs · tests/api-problem-network.test.cjs. Not a test itself.
+ * A scenario with `until: '<text>'` is a stream (SSE): the answer is what arrived up to that text, masked like any body, and the socket is closed then (the bell sweep, tests/lib/bell-scenes.cjs).
  * Options a sweep may add: `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
  * FLOW      harness({ here, mounts, routeFiles, ... }) → installStubs() → scenariosOf(routes) → runScenario() → record / check / compare
  * CARD      qa/offline-guards
@@ -127,17 +128,26 @@ function harness(options) {
   }
 
   /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is */
-  function send(port, method, urlPath, body, extraHeaders) {
+  function send(port, method, urlPath, body, extraHeaders, until) {
     return new Promise((resolve) => {
       const data = body === undefined ? null : JSON.stringify(body);
       const request = http.request({ port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {}) }, (response) => {
         const parts = [];
-        response.on('data', (part) => parts.push(part));
-        response.on('end', () => {
-          const bytes = Buffer.concat(parts);
-          const text = bytes.toString('utf8');
-          resolve({ status: response.statusCode, type: String(response.headers['content-type'] || ''), disposition: String(response.headers['content-disposition'] || ''), cache: String(response.headers['cache-control'] || ''), bytes, text, json: safeParse(text) });
+        const answer = () => {
+          const read = Buffer.concat(parts);
+          const text = until ? steady(read.toString('utf8')) : read.toString('utf8'); /* a stream's first frames carry a clock stamp: masked, as every body is */
+          const bytes = until ? Buffer.from(text) : read;
+          return { status: response.statusCode, type: String(response.headers['content-type'] || ''), disposition: String(response.headers['content-disposition'] || ''), cache: String(response.headers['cache-control'] || ''), bytes, text, json: safeParse(text) };
+        };
+        response.on('data', (part) => {
+          parts.push(part);
+          /* `until`: a stream never ends. The answer is what arrived up to the frame asked for, and the socket is closed so no test holds a stream open. */
+          if (until && Buffer.concat(parts).toString('utf8').includes(until)) {
+            resolve(answer());
+            request.destroy();
+          }
         });
+        response.on('end', () => resolve(answer()));
       });
       request.setTimeout(ANSWER_WAIT_MS, () => {
         request.destroy();
@@ -174,7 +184,7 @@ function harness(options) {
     const unset = setEnv(scenario.env);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body, scenario.headers);
+    const answer = await send(port, method, scenario.url, body, scenario.headers, scenario.until);
     unset();
     restore();
     return answer;

@@ -1289,6 +1289,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "EVENTS_NOT_SIGNED_IN",
+   "status": "401",
+   "title": "Not signed in to live updates",
+   "shopkeeper": "Sign in to get live updates.",
+   "hint": "Sign in, then try again.",
+   "owner_area": "events",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "EVENTS_TICKET_REFUSED",
+   "status": "401",
+   "title": "Live updates link expired",
+   "shopkeeper": "The live-updates link has run out. Reload the page to connect again.",
+   "hint": "Reload the page.",
+   "owner_area": "events",
+   "since": "2026-10-23"
+  },
+  {
    "code": "EXISTS",
    "status": "409",
    "title": "Already asked or connected",
@@ -1939,11 +1957,29 @@
   {
    "code": "NOTIF_DISMISS_NOT_MIGRATED",
    "status": "503",
-   "title": "Notif dismiss not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Activity clearing update pending",
+   "shopkeeper": "Activity cannot be cleared yet: a database update is still to arrive.",
+   "hint": "Try again after the next update.",
    "owner_area": "notifications",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NOTIF_NOTHING_TO_CLEAR",
+   "status": "400",
+   "title": "Nothing to clear",
+   "shopkeeper": "There is nothing chosen to clear.",
+   "hint": "Pick an item to clear, or choose clear all.",
+   "owner_area": "notifications",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NOTIF_SEEN_NOT_MIGRATED",
+   "status": "503",
+   "title": "Unread count update pending",
+   "shopkeeper": "The unread count cannot be cleared yet: a database update is still to arrive.",
+   "hint": "Try again after the next update.",
+   "owner_area": "notifications",
+   "since": "2026-10-23"
   },
   {
    "code": "NOT_ALLOWED",
