@@ -22,7 +22,6 @@ const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE sta
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
 const log = require('../lib/logger');
-const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const storage = require('../lib/storage');
@@ -56,7 +55,10 @@ async function countryOfEntity(entity_id) {
 /* Cached "does the database actually have this?" probe — cheaper than a savepoint and truer than a guess. */
 const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
-const { validate, sanitise } = require('../middleware/validate');
+const { sanitise, schemaValidate } = require('../middleware/validate'); // S9: a request is checked against the route's own schema (validate stays for the routes not yet moved)
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { said, failed, faultOf, codeOfStatus, railSaid, schemaOptionsFor, operationFor, pathsOf } = require('../lib/chits-contract');
+const { PRIORITIES, trimmedBody, recipientsRule } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
@@ -86,6 +88,11 @@ const billPrivacy = require('../lib/bill-privacy');
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
 const entityId = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/chits-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptionsFor(route))] : [];
+}
 
 // ── B1 RLS — the crossing helper ─────────────────────────────────────────────────────────────────────────
 // A few chit operations legitimately cross the entity boundary (log an event into every/selected participant,
@@ -342,45 +349,9 @@ router.post(
      has its body examined — and server.js (middleware/auth-first.js) authenticates this route before the body is even
      parsed. The second auth here keeps the route self-guarding; it reuses the decision, it does not repeat it. */
   auth,
-  [
-    // Accept legacy `receivers` (all = To) OR fan-out `recipients` [{..., role:'to'|'cc'|'for'}];
-    // a draft may have no recipients. (ATH-119)
-    body().custom((_v, { req }) => {
-      const list = Array.isArray(req.body.recipients) ? req.body.recipients : Array.isArray(req.body.receivers) ? req.body.receivers : [];
-      if (!req.body.is_draft && list.length === 0) {
-        throw new Error('At least one recipient required');
-      }
-      for (const r of list) {
-        if (!r.entity_id && !r.display_name && !r.name && r.self !== true) {
-          throw new Error('Each recipient must have entity_id, display_name, name, or self:true');
-        }
-      }
-      return true;
-    }),
-    body('purpose')
-      .optional()
-      .trim()
-      /* ⭐ 'credit_note' — a GST §34 return from the counter. This allow-list refuses at the door, and a 4xx is
-         FINAL at the counter (never queued, never retried) — so a purpose missing from here is a return lost.
-         ⭐ 'expense' — the counter's own money paid OUT (rent, a delivery boy, anything not a refund of a
-         sale), same reasoning: missing from here means the till's own drawer stops balancing.
-         ⭐ 'subscription' — a recurring commitment sold at the counter (a delivery run, an AMC): the money is
-         taken like an ordinary sale (no rollup change needed — it is not 'credit_note'/'expense', so it falls
-         through to the normal sale bucket, correctly), but it is its own document, in its own numbered series
-         (docnumber.js KINDS.subscription), same reasoning as the two above.
-         ⭐ 'income' (SPEC-books-v2 §3, 2026-09-29) — money that comes IN and is not a sale (commission, rent received,
-         scrap): the mirror of 'expense', business_json.income = { what, mode, amount, class }. Posted by class (4210+)
-         when the shop's ledger is on (lib/books-hooks.js). ⚠️ The counter's rollup (engine rollup.js v1.5.0) does not
-         know it yet and would count it as a sale — no counter sends one until engines v1.8.0 teaches rollup isIncome. */
-      .isIn(['order', 'invoice', 'receipt', 'inquiry', 'delivery_note', 'general', 'credit_note', 'expense', 'income', 'subscription'])
-      .withMessage('Invalid purpose'),
-    body('manual_subject').optional().trim().isLength({ max: 500 }),
-    // Per-send copy choice — honoured ONLY on a pure self-chit (see the pureSelfChit branch); ignored elsewhere.
-    body('self_copy').optional().isIn(['both', 'sent', 'received']).withMessage('self_copy must be both|sent|received'),
-    body('line_items').optional().isArray(),
-    body('business_json').optional().isObject()
-  ],
-  validate,
+  recipientsRule(operationFor('POST /send')),
+  ...checked('POST /send'),
+  trimmedBody(['purpose', 'manual_subject']),
   async (req, res) => {
     try {
       /* ⭐ T2-SPLIT (2026-10-14): the 1,408 lines that stood here are the named steps below, in order, each under 80
@@ -427,7 +398,7 @@ router.post(
             /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
                longer drift from it (it used to: this branch had no sameName wording at all). */
             const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
-            if (verdict.collision) return res.status(409).json(verdict.body);
+            if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
             /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
             return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref: raceRef, raced: true });
           }
@@ -438,9 +409,9 @@ router.post(
       /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
          as "Send failed" (lib/knownerr, external review §23) */
       const _known = require('../lib/knownerr').known(err);
-      if (_known) return res.status(_known.status).json(_known.body);
+      if (_known) return problem(req, res, { status: _known.status, ...said(_known.body, codeOfStatus(_known.status)) });
       console.error('Send chit error:', err.message);
-      res.status(500).json({ error: 'Send failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Send failed'));
     }
   }
 );
@@ -522,12 +493,12 @@ async function sendSender(st, req, res) {
    * is actually wrong and who can fix it, and the counter shows it on the bill that is stuck.
    */
   if (!sender_bridge_id) {
-    return res.status(409).json({
+    return problem(req, res, { status: 409, ...said({
       error: 'no_bridge_id',
       message:
         'This shop has no ChitBridge address yet, so a sale cannot be recorded against it. ' +
         "Open ChitBridge → Settings and set the shop's bridge id, then send this bill again."
-    });
+    }, 'CHIT_NO_BRIDGE_ID') });
   }
   Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
 }
@@ -544,7 +515,7 @@ async function sendMoneyStated(state, req, res) {
   if (req.body.is_draft) return false;
   const refusal = countrySetup.documentRefusal(facts);
   if (!refusal) return false;
-  return res.status(refusal.status).json({ error: 'refused', code: refusal.code, message: refusal.message });
+  return problem(req, res, { status: refusal.status, ...said({ error: 'refused', code: refusal.code, message: refusal.message }, codeOfStatus(refusal.status)) });
 }
 
 /**
@@ -563,7 +534,7 @@ async function sendLab(st, req, res) {
   const r = await query(`SELECT to_jsonb(i)->>'population' AS population FROM identities i WHERE identity_id = $1`, [st.sender_id]);
   const population = r.rows[0] && r.rows[0].population != null ? String(r.rows[0].population) : null;
   const may = istest.maySample(population);
-  if (!may.ok) return res.status(409).json({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: may.why, message: may.say });
+  if (!may.ok) return problem(req, res, { status: 409, ...said({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: may.why, message: may.say }, 'CHIT_CONFLICT') });
   st.lab = true;
 }
 
@@ -708,7 +679,7 @@ async function sendTillClaim(st, req, res) {
   const tillClaim = tillClaimOf(req.till, req.body && req.body.business_json);
   if (!tillClaim.ok) {
     res.locals.code = tillClaim.code;
-    return res.status(400).json({ error: 'Bill claim mismatch', code: tillClaim.code, field: tillClaim.field, client_ref, message: tillClaim.message });
+    return problem(req, res, { status: 400, ...said({ error: 'Bill claim mismatch', code: tillClaim.code, field: tillClaim.field, client_ref, message: tillClaim.message }, 'CHIT_BAD_REQUEST') });
   }
   if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp); /* merge-patch: `by` is never overwritten by sent_by */
   if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other'; /* the request log line names it */
@@ -771,7 +742,7 @@ async function sendReplay(st, req, res) {
         const myAt = _bj && _bj.billed_at ? String(_bj.billed_at) : null;
         const theirAt = seen.billed_at ? String(seen.billed_at) : null;
         const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
-        if (verdict.collision) return res.status(409).json(verdict.body);
+        if (verdict.collision) return problem(req, res, { status: 409, ...said(verdict.body, 'CHIT_CONFLICT') });
         return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
       }
     } catch (e) {
@@ -798,11 +769,11 @@ async function sendTillGate(st, req, res) {
     const gate = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;
     if (gate && gate.refuse) {
       /* ⚠️ code TILL_SEND_REFUSED: a refusal of THIS BILL's shape, not of the key — the counter keeps it and sends the rest */
-      return res.status(403).json({
+      return problem(req, res, { status: 403, ...said({
         error: 'Forbidden',
         code: 'TILL_SEND_REFUSED',
         message: 'Not sent: ' + gate.refuse + '. Counter bills go only to listed customers on ChitBridge.'
-      });
+      }, 'CHIT_NOT_PERMITTED') });
     }
     if (gate && gate.oneSided) {
       /* ⭐ ONE-SIDED: the sale and its ledger are recorded; only the customer's copy is dropped. The bill keeps naming its
@@ -835,7 +806,7 @@ async function sendBody(st, req, res) {
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
   const pageAsked = business_json && typeof business_json === 'object' ? business_json.page : undefined;
   const pageStamp = mint.page(pageAsked);
-  if (!pageStamp.ok) return res.status(400).json({ error: 'Unknown page', code: pageStamp.code, message: pageStamp.message });
+  if (!pageStamp.ok) return problem(req, res, { status: 400, ...said({ error: 'Unknown page', code: pageStamp.code, message: pageStamp.message }, 'PAGE_UNKNOWN') });
   /**
    * ⚠️⚠️ THE SAME FAULT, LATENT. `currency_code` was declared ~90 lines below the tax-invoice block that reads
    * it as `currency: currency_code`. Same scope, proven by brace depth over source with strings blanked (a
@@ -868,7 +839,7 @@ async function sendCredit(st, req, res) {
     if (chk.over) {
       const allowedBy = F.overrideBy(req, business_json.credit_override);
       if (!allowedBy)
-        return res.status(409).json({
+        return problem(req, res, { status: 409, ...said({
           code: 'OVER_LIMIT',
           error: 'Over the credit limit.',
           message: F.overSentence(chk),
@@ -876,7 +847,7 @@ async function sendCredit(st, req, res) {
           owed_minor: chk.owed_minor,
           after_minor: chk.after_minor,
           party_id: chk.party_id
-        });
+        }, 'CHIT_CONFLICT') });
       F.noteOverride(sender_id, chk, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
     }
   }
@@ -951,15 +922,15 @@ async function sendFanOut(st, req, res) {
   const counts = { to: 0, cc: 0, for: 0 };
   for (const r of rawList) {
     if (!(r.kind in counts)) {
-      return res.status(400).json({ error: 'Invalid recipient role', message: `role must be to|cc|for, got "${r.kind}"` });
+      return problem(req, res, { status: 400, ...said({ error: 'Invalid recipient role', message: `role must be to|cc|for, got "${r.kind}"` }, 'CHIT_BAD_REQUEST') });
     }
     counts[r.kind]++;
   }
   if (counts.to > LIMITS.to || counts.cc > LIMITS.cc || counts.for > LIMITS.for) {
-    return res.status(400).json({ error: 'Limit exceeded', message: `Recipient caps — to:${LIMITS.to}, cc:${LIMITS.cc}, for:${LIMITS.for}` });
+    return problem(req, res, { status: 400, ...said({ error: 'Limit exceeded', message: `Recipient caps — to:${LIMITS.to}, cc:${LIMITS.cc}, for:${LIMITS.for}` }, 'CHIT_BAD_REQUEST') });
   }
   if (line_items.length > LIMITS.items) {
-    return res.status(400).json({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` });
+    return problem(req, res, { status: 400, ...said({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` }, 'CHIT_BAD_REQUEST') });
   }
   Object.assign(st, { is_draft, promote_draft_id, ROLE_MAP, rawList, counts });
 }
@@ -974,7 +945,7 @@ async function sendTrace(st, req, res) {
   let traceEdge = null;
   if (req.body.trace && !is_draft) {
     const built = trace.buildEdge(req.body.trace);
-    if (built.error) return res.status(400).json({ error: 'Invalid handoff', message: built.error });
+    if (built.error) return problem(req, res, { status: 400, ...said({ error: 'Invalid handoff', message: built.error }, 'CHIT_BAD_REQUEST') });
     traceEdge = built.edge;
     if (traceEdge && traceEdge.parents.length) {
       const held = await withEntity(sender_id, (db) =>
@@ -982,7 +953,7 @@ async function sendTrace(st, req, res) {
       );
       const heldSet = new Set(held.rows.map((item) => item.chit_id));
       const missing = traceEdge.parents.filter((item) => !heldSet.has(item));
-      if (missing.length) return res.status(400).json({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` });
+      if (missing.length) return problem(req, res, { status: 400, ...said({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` }, 'CHIT_BAD_REQUEST') });
     }
   }
   Object.assign(st, { traceEdge });
@@ -1064,7 +1035,7 @@ async function sendRecipients(st, req, res) {
      */
     const typedAny = String(r.user_id || r.bridge || r.bridge_id || r.display_name || r.name || '').trim();
     if (require('../lib/handle').isMinted(typedAny)) {
-      return res.status(404).json({ error: 'Not found', message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` });
+      return problem(req, res, { status: 404, ...said({ error: 'Not found', message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` }, 'NOT_FOUND') });
     }
     const rec = await sendLookupRecipient(r);
 
@@ -1081,10 +1052,10 @@ async function sendRecipients(st, req, res) {
         });
         continue;
       }
-      return res.status(404).json({
+      return problem(req, res, { status: 404, ...said({
         error: 'Not found',
         message: `Recipient "${r.entity_id || r.display_name || r.name}" not found in the platform`
-      });
+      }, 'NOT_FOUND') });
     }
 
     const rid = rec.rows[0].identity_id;
@@ -1508,8 +1479,8 @@ async function sendPromote(st, req, res) {
     const dchk = await withEntity(sender_id, (db) =>
       db.query(`SELECT role, business_json->>'page' AS page FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id])
     );
-    if (dchk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
-    if (dchk.rows[0].role !== 'Draft') return res.status(400).json({ error: 'Not a draft', message: 'This chit has already been sent' });
+    if (dchk.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Draft not found' }, 'NOT_FOUND') });
+    if (dchk.rows[0].role !== 'Draft') return problem(req, res, { status: 400, ...said({ error: 'Not a draft', message: 'This chit has already been sent' }, 'CHIT_BAD_REQUEST') });
     /* the draft's page goes with it when the resend does not name one — a draft resumed through a form that does not
        carry business_json.page must not quietly become a base-page chit (N03) */
     if (pageAsked == null && dchk.rows[0].page) {
@@ -1587,7 +1558,7 @@ async function sendRetention(st, req, res) {
   /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
   if (issuedTotal != null) summary.total_value = issuedTotal;
   // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
-  const ext_priority = ['normal', 'high', 'urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
+  const ext_priority = PRIORITIES.includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
   // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
   //    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
   //    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
@@ -2660,7 +2631,7 @@ function chitFilters(req, where, params) {
   return where;
 }
 
-router.get('/sent', auth, async (req, res) => {
+router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* PERF1: as the Inbox — a server-side maximum, keyset after page 1, the count on page 1 only */
@@ -2719,13 +2690,13 @@ router.get('/sent', auth, async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Sent list error:', err.message);
-    res.status(500).json({ error: 'Failed to get sent items', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get sent items'));
   }
 });
 
 // GET /chits/folder?view=drafts|trash|archive — mailbox folders (both directions), paginated + searchable + sortable.
 // Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
-router.get('/folder', auth, async (req, res) => {
+router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
@@ -2797,13 +2768,13 @@ router.get('/folder', auth, async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Folder error:', err.message);
-    res.status(500).json({ error: 'Failed to get folder', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get folder'));
   }
 });
 
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
-router.get('/rollup', auth, async (req, res) => {
+router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const groupBy = req.query.group_by === 'state' ? 'state' : 'counterparty';
@@ -2855,7 +2826,7 @@ router.get('/rollup', auth, async (req, res) => {
     res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
-    res.status(500).json({ error: 'Rollup failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Rollup failed'));
   }
 });
 
@@ -2897,7 +2868,7 @@ async function cancelCols() {
   return (req ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '') + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
-router.get('/inbox', auth, async (req, res) => {
+router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
     const entity_id = entityId(req);
@@ -3056,7 +3027,7 @@ router.get('/inbox', auth, async (req, res) => {
     ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
   } catch (err) {
     console.error('Inbox error:', err.message);
-    res.status(500).json({ error: 'Failed to get inbox', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get inbox'));
   }
 });
 
@@ -3140,7 +3111,7 @@ router.get('/unread', auth, async (req, res) => {
     );
     res.json({ unread: r.rows.map((x) => x.chit_id) });
   } catch (err) {
-    res.status(500).json({ error: 'Unread failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Unread failed'));
   }
 });
 
@@ -3151,7 +3122,7 @@ router.get('/unread', auth, async (req, res) => {
 function orderBilledSql(header) {
   return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
 }
-router.get('/:chit_id', auth, async (req, res) => {
+router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
   const _wantTiming = String(req.query.timing || '') === '1';
@@ -3273,10 +3244,7 @@ router.get('/:chit_id', auth, async (req, res) => {
     });
 
     if (data.notFound) {
-      return res.status(404).json({
-        error: 'Not found',
-        message: 'Chit not found or you do not have access'
-      });
+      return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
     }
 
     // Participants panel = a deliberate CROSS-entity read (who has read/accepted). Under RLS it is served by the
@@ -3635,7 +3603,7 @@ router.get('/:chit_id', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Chit detail error:', err.message);
-    res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get chit'));
   }
 });
 
@@ -3648,7 +3616,7 @@ router.get('/:chit_id', auth, async (req, res) => {
 // ⚠️ preview:true COMPUTES AND WRITES NOTHING. Pricing a whole chit in one tap is the useful version and also the
 //    dangerous one, so the decision is made against a list rather than a promise.
 // ⚠️ It writes AMENDMENTS, never a direct price. The old figure stays struck through — a chit is a record.
-router.post('/:chit_id/reprice', auth, async (req, res) => {
+router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
@@ -3657,7 +3625,7 @@ router.post('/:chit_id/reprice', auth, async (req, res) => {
        so it is the `amend` action — the level ladder (viewer · commenter refused in the engine's word), then "I hold a copy".
        Preview too: the answer GET /chits/:id gives for `amend` is the door's answer, preview or apply. */
     const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
-    if (!verdict.ok) return railActions.refuseOwnCopy(res, verdict);
+    if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
     const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
@@ -3670,7 +3638,7 @@ router.post('/:chit_id/reprice', auth, async (req, res) => {
     );
   } catch (err) {
     console.error('Reprice error:', err.message);
-    res.status(err.status || 500).json({ error: 'Reprice failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Reprice failed'));
   }
 });
 
@@ -3684,12 +3652,12 @@ router.post('/:chit_id/reprice', auth, async (req, res) => {
 // POST body: { rows: [{ line_id?, kind, amount | (minutes + rate_per_hour), currency?, note }] }
 // ⚠️ line_id omitted = a whole-chit cost (one auto fare for one trip). Splitting that across lines would invent
 //    an allocation nobody agreed to.
-router.post('/:chit_id/costs', auth, async (req, res) => {
+router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
     const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
-    if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
+    if (!mine.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
     res.json(
       await cost.record(entity_id, chit_id, req.body.rows || req.body, {
         actor_id: req.identity.identity_id,
@@ -3698,21 +3666,21 @@ router.post('/:chit_id/costs', auth, async (req, res) => {
     );
   } catch (err) {
     console.error('Cost record error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to record cost', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record cost'));
   }
 });
 
 // GET — everything if permitted; otherwise ONLY the caller's own rows and no totals at all.
-router.get('/:chit_id/costs', auth, async (req, res) => {
+router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const permitted = await cost.canRead(req, entity_id);
     const out = await cost.read(entity_id, req.params.chit_id, { permitted, actor_id: req.identity.identity_id });
-    if (out === null) return res.status(503).json({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' });
+    if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' }, 'CHIT_NOT_MIGRATED') });
     res.json(out);
   } catch (err) {
     console.error('Cost read error:', err.message);
-    res.status(500).json({ error: 'Failed to read costs', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to read costs'));
   }
 });
 
@@ -3735,11 +3703,11 @@ router.get('/register/attachables', auth, async (req, res) => {
   try {
     res.json(await raida.attachables());
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
 
-router.get('/register/subjects', auth, async (req, res) => {
+router.get('/register/subjects', auth, ...checked('GET /register/subjects'), async (req, res) => {
   try {
     res.json(
       await raida.listSubjects(entityId(req), {
@@ -3748,11 +3716,11 @@ router.get('/register/subjects', auth, async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(500).json({ error: 'Failed to list registers', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to list registers'));
   }
 });
 
-router.post('/register/subjects', auth, async (req, res) => {
+router.post('/register/subjects', auth, ...checked('POST /register/subjects'), async (req, res) => {
   try {
     res.json(
       await raida.subjectFor(entityId(req), {
@@ -3763,7 +3731,7 @@ router.post('/register/subjects', auth, async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to open the register', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to open the register', { words: true }));
   }
 });
 
@@ -3771,13 +3739,11 @@ router.post('/register/subjects', auth, async (req, res) => {
  * ⭐⭐ THE GATE. A register may not close while any entry is undispositioned — and the refusal is a 409 that
  * NAMES what is outstanding, because "4 still open" without the four sends someone hunting.
  */
-router.post('/register/subjects/:subject_id/close', auth, async (req, res) => {
+router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
   try {
     res.json(await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name }));
   } catch (err) {
-    const payload = { error: 'Cannot close yet', message: err.status && err.status < 500 ? err.message : safeErr(err) };
-    if (err.outstanding) payload.outstanding = err.outstanding;
-    res.status(err.status || 500).json(payload);
+    problem(req, res, faultOf(err, req, 'Cannot close yet', { words: true, extra: err.outstanding ? { outstanding: err.outstanding } : undefined }));
   }
 });
 
@@ -3786,15 +3752,15 @@ router.get('/register/templates', auth, async (req, res) => {
   try {
     res.json(await raida.templates(entityId(req)));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to read the library', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to read the library'));
   }
 });
 
-router.post('/register/templates', auth, async (req, res) => {
+router.post('/register/templates', auth, ...checked('POST /register/templates'), async (req, res) => {
   try {
     res.json(await raida.addTemplate(entityId(req), req.body || {}));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to save it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to save it', { words: true }));
   }
 });
 
@@ -3810,7 +3776,7 @@ router.post('/register/templates', auth, async (req, res) => {
  * ⚠️ chit_id is NULL here, which b185 made legal by dropping the NOT NULL. That is the whole point of the
  * subject: the register is attached to the THING, and an order is only one kind of thing.
  */
-router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => {
+router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
   try {
     res.json(
       await raida.add(
@@ -3823,7 +3789,7 @@ router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => 
       )
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to record it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
   }
 });
 
@@ -3833,33 +3799,33 @@ router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => 
  * and an entry that cannot be ended is what makes the closure gate unpassable. close() locates the row by
  * raida_id and reads chit_id back off it, so null here is correct rather than a shortcut.
  */
-router.post('/register/entries/:raida_id/close', auth, async (req, res) => {
+router.post('/register/entries/:raida_id/close', auth, ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
   try {
     res.json(await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to close it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
   }
 });
 
-router.get('/register/walk/:from', auth, async (req, res) => {
+router.get('/register/walk/:from', auth, ...checked('GET /register/walk/:from'), async (req, res) => {
   try {
     res.json(await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth }));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to walk it', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to walk it'));
   }
 });
 
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
-router.post('/register/entries/:raida_id/revise', auth, async (req, res) => {
+router.post('/register/entries/:raida_id/revise', auth, ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
   try {
     res.json(await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to revise it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to revise it', { words: true }));
   }
 });
 
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
-router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
+router.post('/register/entries/:raida_id/accept', auth, ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
   try {
     res.json(
       await raida.accept(entityId(req), req.params.raida_id, {
@@ -3870,7 +3836,7 @@ router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to record the acceptance', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record the acceptance', { words: true }));
   }
 });
 
@@ -3882,7 +3848,7 @@ router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
  * :chit_id — put this second and every call to it would be read as a request for the register of a chit named
  * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
  */
-router.get('/raida/report', auth, async (req, res) => {
+router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, res) => {
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
        of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
@@ -3894,11 +3860,11 @@ router.get('/raida/report', auth, async (req, res) => {
     );
   } catch (err) {
     console.error('Raida report error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to read the register'));
   }
 });
 
-router.get('/:chit_id/raida', auth, async (req, res) => {
+router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* line_id absent = the whole chit; a uuid = that line PLUS the order-level entries it inherits. */
@@ -3906,11 +3872,11 @@ router.get('/:chit_id/raida', auth, async (req, res) => {
     res.json(await raida.list(entity_id, req.params.chit_id, line_id));
   } catch (err) {
     console.error('Raida read error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to read the register'));
   }
 });
 
-router.post('/:chit_id/raida', auth, async (req, res) => {
+router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
@@ -3959,14 +3925,14 @@ router.post('/:chit_id/raida', auth, async (req, res) => {
     res.json(out);
   } catch (err) {
     console.error('Raida add error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to record it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
   }
 });
 
 /* ⭐ CLOSING IS A POST, NOT A DELETE OR A PATCH, and the verb is the design. A close APPENDS the row that
    closes — it carries who ended it and why, because "we booked the slot" and "the customer withdrew it" are
    different endings and a flag cannot tell them apart. */
-router.post('/:chit_id/raida/:raida_id/close', auth, async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
   try {
     /* RAIL-93: the ending's disposition (and where a carried-forward one goes, and its evidence) reach raida.close — without
        them every close of a full register answered 400 "An ending needs a disposition" (cap-worklist sends { body, disposition }) */
@@ -3975,7 +3941,7 @@ router.post('/:chit_id/raida/:raida_id/close', auth, async (req, res) => {
       { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash, by_name: req.identity.display_name }));
   } catch (err) {
     console.error('Raida close error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to close it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
   }
 });
 
@@ -3985,12 +3951,12 @@ router.post('/:chit_id/raida/:raida_id/close', auth, async (req, res) => {
  * disputes are raised, then posts the id back so the register can say it was escalated. Reimplementing any part
  * of that lifecycle here would be a second answer to a question that already has one.
  */
-router.post('/:chit_id/raida/:raida_id/dispute', auth, async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/dispute', auth, ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
   try {
     res.json(await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id));
   } catch (err) {
     console.error('Raida dispute link error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to link the dispute', message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to link the dispute', { words: true }));
   }
 });
 // ═══ b144 · PER-LINE DELIVERY — the SHARED half ════════════════════════════════════════════════════════════════
@@ -4005,35 +3971,35 @@ router.post('/:chit_id/raida/:raida_id/dispute', auth, async (req, res) => {
  * { use?, lines? } records a choice — merged, and refused (409) once the bill is accepted. Goods-in may carry the same
  * `use` on deliver-lines.
  */
-router.get('/:chit_id/use', auth, async (req, res) => {
+router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const copy = await taxCopy.copyOf(req.params.chit_id, entity_id);
-    if (!copy) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    if (!copy) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') });
     if (!taxCopy.billReceived(copy, entity_id))
-      return res.status(409).json({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' });
+      return problem(req, res, { status: 409, ...said({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' }, 'CHIT_NOT_A_BILL') });
     const eff = await require('../lib/bill-use').forCopy(entity_id, copy);
     res.json(
       Object.assign(
-        { chit_id: req.params.chit_id, status: copy.current_status, changeable: /^(pending|delivered|read)$/.test(String(copy.current_status || '')) },
+        { chit_id: req.params.chit_id, status: copy.current_status, changeable: railActions.BUCKETS.open.includes(String(copy.current_status || '')) },
         eff
       )
     );
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
-router.put('/:chit_id/use', auth, async (req, res) => {
+router.put('/:chit_id/use', auth, ...checked('PUT /:chit_id/use'), async (req, res) => {
   try {
     const r = await require('../lib/bill-use').set(entityId(req), req.params.chit_id, req.body || {}, { name: req.identity && req.identity.display_name });
-    if (!r.ok) return res.status(r.status || 400).json({ error: 'Not saved', message: r.message });
+    if (!r.ok) return problem(req, res, { status: r.status || 400, ...said({ error: 'Not saved', message: r.message }, codeOfStatus(r.status || 400)) });
     res.json(r);
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
 
-router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
+router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-lines'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -4042,7 +4008,7 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
        participant gate, as before — only a read that answers "no copy" refuses here (404, the answer an id in the URL always got). */
     const _me = railActions.meOf(req);
     const _lv = railActions.canDeliver({ held: true }, _me);
-    if (!_lv.ok) return railActions.refuseOwnCopy(res, _lv);
+    if (!_lv.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(_lv)));
     let _mineCopy = null,
       _copyRead = true;
     try {
@@ -4053,7 +4019,7 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
     }
     if (_copyRead) {
       const _v = railActions.canDeliver({ held: !!_mineCopy }, _me);
-      if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
+      if (!_v.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(_v)));
     }
     const useSaid = await deliverUse(req, entity_id, chit_id);
     /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
@@ -4073,7 +4039,7 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
     res.json(out);
   } catch (err) {
     console.error('Deliver lines error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to record delivery', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to record delivery'));
   }
 });
 
@@ -4201,7 +4167,7 @@ async function goodsInAccept(req, entity_id, chit_id, out) {
     const s = out.summary;
     if (s && s.lines > 0 && s.complete === s.lines) {
       const mine = await taxCopy.copyOf(chit_id, entity_id);
-      if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
+      if (mine && taxCopy.billReceived(mine, entity_id) && railActions.BUCKETS.open.includes(String(mine.current_status || ''))) {
         const mv = await moveStatus(
           entity_id,
           chit_id,
@@ -4224,7 +4190,7 @@ async function goodsInAccept(req, entity_id, chit_id, out) {
 //
 // POST body: { edits: [{ line_id, assignee_actor_id|null, assignee_name, assignee_type, task, due_date, note }] }
 // ⚠️ assignee_actor_id: null means UNASSIGN — a deliberate act, and not the same as never having been assigned.
-router.post('/:chit_id/assign-lines', auth, async (req, res) => {
+router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-lines'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -4233,7 +4199,7 @@ router.post('/:chit_id/assign-lines', auth, async (req, res) => {
     const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
     const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'assign');
-    if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
+    if (!_v.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(_v)));
 
     const out = await assign.assign(entity_id, chit_id, req.body.edits || req.body, {
       actor_id: req.identity.identity_id,
@@ -4263,7 +4229,7 @@ router.post('/:chit_id/assign-lines', auth, async (req, res) => {
     res.json(out);
   } catch (err) {
     console.error('Assign lines error:', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to assign', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to assign'));
   }
 });
 
@@ -4279,7 +4245,7 @@ router.post('/:chit_id/assign-lines', auth, async (req, res) => {
 //                        reason_code, reason }] }
 // ⚠️ `line: null` REMOVES the line — Athi: "old line deleted and new line is nothing". It stays visible on the
 //    chit and counts in nothing. That is NOT quantity:0, which is a real zero and would leak into totals.
-router.post('/:chit_id/amend', auth, async (req, res) => {
+router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -4290,7 +4256,7 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
     const mine = await withEntity(entity_id, (db) => db.query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
     const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
-    if (!verdict.ok) return railActions.refuseOwnCopy(res, verdict);
+    if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
       actor_id: req.identity.identity_id,
@@ -4361,19 +4327,19 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
      * unit change wants the line left alone. One code for all three would send people to the wrong remedy.
      */
     if (err && ['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
-      return res.status(409).json({ error: 'Already delivered', message: err.message, code: err.code });
+      return problem(req, res, { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') });
     }
     if (err && err.code === '23514') {
       console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
-      return res.status(409).json({
+      return problem(req, res, { status: 409, ...said({
         error: 'Not an accepted value',
         message: /reason_code/.test(err.constraint || '')
           ? 'That amendment reason is not accepted on this environment yet — b148 adds it.'
           : 'The database refused one of these values: ' + (err.constraint || 'constraint violation')
-      });
+      }, 'CHIT_VALUE_NOT_ACCEPTED') });
     }
     console.error('Amend error:', err.code || '', err.message);
-    res.status(err.status || 500).json({ error: 'Failed to amend', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to amend'));
   }
 });
 
@@ -4389,7 +4355,7 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
 //
 // ⚠️ READS THE CATALOGUE, WRITES NOTHING TO IT. Standing rule since the raise path: a message never creates a
 // product. Here it does not create one either — a human picks from what exists, or types free text.
-router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
+router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalogue-overlay'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const q = String(req.query.q || '').trim();
@@ -4478,7 +4444,7 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Catalogue overlay error:', err.message);
-    res.status(500).json({ error: 'Failed to load catalogue', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
 /** the quote a Mark-paid is held against: the summary's total, else the frozen invoice's grand total, else null */
@@ -4528,24 +4494,17 @@ function pressPayment(req, entity_id) {
   return payment;
 }
 /** a Mark-paid that failed: the books' own refusals in words (already paid · a locked month · …), else a 500 */
-function payFailure(res, err) {
+function payFailure(req, res, err) {
   const BR = require('./books');
   if (err && err.code === 'ALREADY_PAID') return BR.alreadyPaid(res, err);
   if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return BR.fail(res, err);
-  return res.status(500).json({ error: 'Payment failed', message: safeErr(err) });
+  return problem(req, res, failed(err, req, 'Payment failed'));
 }
 router.post(
   '/:chit_id/payment',
   auth,
-  [
-    body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']),
-    body('ref').optional().trim().isLength({ max: 120 }),
-    body('amount').optional().isFloat({ min: 0 }),
-    body('note').optional().trim().isLength({ max: 240 }),
-    body('acknowledge').optional().isArray(),
-    body('client_ref').optional().trim().isLength({ max: 80 })
-  ],
-  validate,
+  ...checked('POST /:chit_id/payment'),
+  trimmedBody(['ref', 'note', 'client_ref']),
   async (req, res) => {
     try {
       const entity_id = auth.entityOf(req),
@@ -4555,18 +4514,18 @@ router.post(
       const payment = pressPayment(req, entity_id);
       const hooks = require('../lib/books-hooks');
       const out = await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks }));
-      if (!out) return res.status(404).json({ error: 'Not found' });
+      if (!out) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
       if (out.parts)
-        return res.status(422).json({
+        return problem(req, res, { status: 422, ...said({
           error: 'The tender is on the bill',
           message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
-        });
+        }, 'PAYMENT_TENDER_ON_BILL') });
       if (out.over != null)
-        return res.status(422).json({
+        return problem(req, res, { status: 422, ...said({
           error: 'Above the quoted amount',
           message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.',
           quoted: out.over
-        });
+        }, 'PAYMENT_ABOVE_QUOTE') });
       /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
       if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
       /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
@@ -4579,11 +4538,11 @@ router.post(
       const replayed = !!(out.books && out.books.payment && out.books.payment.duplicate);
       res.json({ message: replayed ? 'Already recorded' : 'Payment recorded', replayed, payment, books: out.books });
     } catch (err) {
-      payFailure(res, err);
+      payFailure(req, res, err);
     }
   }
 );
-router.delete('/:chit_id/payment', auth, async (req, res) => {
+router.delete('/:chit_id/payment', auth, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, (db) =>
@@ -4592,7 +4551,7 @@ router.delete('/:chit_id/payment', auth, async (req, res) => {
         [req.params.chit_id, entity_id]
       )
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
     /* the books' record is not undone by clearing the mark (drift D1): name the entry, so the owner reverses it there — never silently */
     let books = null;
     try {
@@ -4625,7 +4584,7 @@ router.delete('/:chit_id/payment', auth, async (req, res) => {
     }
     res.json({ message: 'Payment cleared', books });
   } catch (err) {
-    res.status(500).json({ error: 'Payment clear failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Payment clear failed'));
   }
 });
 
@@ -4634,9 +4593,9 @@ router.delete('/:chit_id/payment', auth, async (req, res) => {
  * is "send it now, do not wait for the state". Marks MY copy (business_json.books_request) and rings my own bell so the watching
  * connector books it within a second; the kit's five-minute catch-up would find it anyway.
  */
-router.post('/:chit_id/books-request', auth, async (req, res) => {
+router.post('/:chit_id/books-request', auth, ...checked('POST /:chit_id/books-request'), async (req, res) => {
   try {
-    if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' });
+    if (req.api_key) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }, 'CHIT_NOT_PERMITTED') });
     const entity_id = entityId(req);
     const reqRec = { at: new Date().toISOString(), by: req.identity.identity_id };
     const r = await withEntity(entity_id, (db) =>
@@ -4645,7 +4604,7 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
         [JSON.stringify(reqRec), req.params.chit_id, entity_id]
       )
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
     try {
       require('../lib/events').emit([entity_id], { kind: 'books', id: req.params.chit_id });
     } catch (e) {
@@ -4653,24 +4612,24 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
     }
     res.json({ ok: true, books_request: reqRec });
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
 /**
  * H3 (PAY-FIX): the books would not take the reversal of a withdrawn chit (every month locked, …) — the withdrawal did NOT happen (its
  * transaction rolled back); the sentence says why and what to do. The sale is reversed in the SAME transaction as the withdrawal.
  */
-function withdrawFailure(res, err) {
+function withdrawFailure(req, res, err) {
   if (!require('../lib/books-hooks').isBooksRefusal(err)) {
     console.error('Void error:', err.message);
-    return res.status(500).json({ error: 'Void failed', message: safeErr(err) });
+    return problem(req, res, failed(err, req, 'Void failed'));
   }
-  return res.status(409).json({
+  return problem(req, res, { status: 409, ...said({
     error: 'Cannot withdraw',
     code: err.code || 'BOOKS_REFUSED',
     why: 'books_refused',
     message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.'
-  });
+  }, 'CHIT_CANNOT_WITHDRAW') });
 }
 /**
  * the sender's own cancel leg (T1-RAIL + H3): my SENT copy goes through the same rail gate, the sale it posted is reversed in that SAME
@@ -4957,17 +4916,17 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
   };
 }
 
+/** the answer of PUT /status: a refusal of the rail as a Problem (its old body kept), else the 200 of a move or of the no-op of a status already held; true when the status really moved */
+function answerMoved(req, res, moved) {
+  if (moved.code >= 400) problem(req, res, { status: moved.code, ...said(moved.body, codeOfStatus(moved.code)) });
+  else res.json(moved.body);
+  return !!moved.moved;
+}
 router.put(
   '/:chit_id/status',
-  [
-    body('status')
-      .trim()
-      .isIn(railActions.ASKABLE) /* W2-RAIL R2: every transition target of the engine's table — delivered · read are the system's alone */
-      .withMessage('Invalid status'),
-    body('note').optional().trim().isLength({ max: 500 })
-  ],
   auth,
-  validate,
+  ...checked('PUT /:chit_id/status'),
+  trimmedBody(['status', 'note']),
   async (req, res) => {
     try {
       const chit_id = req.params.chit_id;
@@ -5027,8 +4986,7 @@ router.put(
        */
 
       const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req));
-      res.status(_moved.code).json(_moved.body);
-      if (!_moved.moved) return;
+      if (!answerMoved(req, res, _moved)) return;
 
       /**
        * ⚠️ NOTIFY BACK — AFTER res.json(), AND DELIBERATELY NOT AWAITED (b126).
@@ -5056,7 +5014,7 @@ router.put(
       }
     } catch (err) {
       console.error('Update status error:', err.message);
-      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Update failed'));
     }
   }
 );
@@ -5109,15 +5067,9 @@ async function postMessageCopies(msg, db) {
 
 router.post(
   '/:chit_id/messages',
-  [
-    body('message_text').trim().notEmpty().withMessage('Message text required'),
-    body('thread_type').isIn(['external', 'internal']).withMessage('thread_type must be external or internal'),
-    body('is_dispute').optional().isBoolean(),
-    body('dispute_id').optional({ nullable: true }).isUUID(),
-    body('line_id').optional({ nullable: true }).isUUID()
-  ],
   auth,
-  validate,
+  ...checked('POST /:chit_id/messages'),
+  trimmedBody(['message_text']),
   async (req, res) => {
     const { chit_id } = req.params;
     const { message_text, thread_type } = req.body;
@@ -5148,14 +5100,14 @@ router.post(
     const _act = thread_type === 'external' ? 'message_external' : 'message_internal';
     const _lvl = railActions.can({ held: true }, _me, _act); // the copy is not read yet — this verdict is the level's alone
     if (!_lvl.ok) {
-      return railActions.refuse(res, _lvl, 403, {
+      return problem(req, res, railSaid(railActions.refusalOf(_lvl, 403, {
         error: 'Not permitted',
         message:
           _lvl.why === 'read_only'
             ? 'Your access is view-only. You can read this conversation but not post to it.'
             : 'Your access is comment-only. You can reply internally, but not to the other party.',
         access_level: _me.level
-      });
+      })));
     }
 
     try {
@@ -5165,7 +5117,7 @@ router.post(
       );
       const _v = railActions.can({ held: held.rows.length > 0 }, _me, _act);
       if (!_v.ok) {
-        return railActions.refuse(res, _v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' });
+        return problem(req, res, railSaid(railActions.refusalOf(_v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' })));
       }
 
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
@@ -5184,7 +5136,7 @@ router.post(
           db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id])
         );
         if (party.rows.length === 0) {
-          return res.status(403).json({ error: 'Forbidden', message: 'Not a party to this dispute' });
+          return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
         }
         if ((party.rows[0].scope || 'targeted') !== 'chit_wide') {
           // fail closed: a roster that cannot be read means the poster's own timeline only, and no bell
@@ -5283,14 +5235,14 @@ router.post(
       });
     } catch (err) {
       console.error('Send message error:', err.message);
-      res.status(500).json({ error: 'Send message failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Send message failed'));
     }
   }
 );
 
 // ─── GET /chits/:chit_id/messages ────────────────────────────
 // thread_type query: 'all' | 'external' | 'internal'
-router.get('/:chit_id/messages', auth, async (req, res) => {
+router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
   const thread_filter = req.query.thread_type || 'all';
@@ -5318,7 +5270,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
       }
       return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
     });
-    if (result === null) return res.status(403).json({ error: 'Forbidden' });
+    if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
 
     const msgIds = result.rows.map((item) => item.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', [])); // per-entity: caller's own copies
@@ -5333,7 +5285,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
   } catch (err) {
     console.error('Get messages error:', err.message);
     if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
-    res.status(500).json({ error: 'Get messages failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Get messages failed'));
   }
 });
 
@@ -5377,16 +5329,9 @@ async function holdersAmong(callerEntity, chit_id, ids) {
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
 router.post(
   '/:chit_id/disputes',
-  [
-    body('category').isIn(['quality', 'quantity', 'delivery', 'payment', 'docs', 'other']).withMessage('Invalid category'),
-    body('reason').trim().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'),
-    body('target_entity_id').optional({ nullable: true }).isUUID().withMessage('Bad target'),
-    body('participant_entity_ids').optional().isArray().withMessage('participant_entity_ids must be an array'),
-    body('chit_wide').optional().isBoolean(),
-    body('via').optional().isIn(['chit', 'mailbox'])
-  ],
   auth,
-  validate,
+  ...checked('POST /:chit_id/disputes'),
+  trimmedBody(['reason']),
   async (req, res) => {
     const { chit_id } = req.params;
     const { category, reason, target_entity_id = null, chit_wide = false, via = 'chit' } = req.body;
@@ -5397,7 +5342,7 @@ router.post(
       const access = await withEntity(entity_id, (db) =>
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
-      if (access.rows.length === 0) return res.status(403).json({ error: 'Not a participant' });
+      if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
       const _cs = access.rows[0].current_status;
@@ -5416,7 +5361,7 @@ router.post(
 
       // 2. can't target yourself
       if (target_entity_id && target_entity_id === entity_id)
-        return res.status(400).json({ error: 'Invalid target', message: 'You cannot raise a dispute against yourself' });
+        return problem(req, res, { status: 400, ...said({ error: 'Invalid target', message: 'You cannot raise a dispute against yourself' }, 'CHIT_BAD_REQUEST') });
 
       // 3. decide scope + probe parity → mode
       // D4: an explicit party checklist means a TARGETED dispute (only those parties see it), even when no
@@ -5441,7 +5386,7 @@ router.post(
           [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]
         )
       );
-      if (dup.rows.length) return res.status(400).json({ error: 'Dispute exists', message: `You already have an open ${category} dispute here` });
+      if (dup.rows.length) return problem(req, res, { status: 400, ...said({ error: 'Dispute exists', message: `You already have an open ${category} dispute here` }, 'DISPUTE_EXISTS') });
 
       // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
       //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
@@ -5566,8 +5511,8 @@ router.post(
     } catch (err) {
       console.error('Raise dispute error:', err.message);
       if (err.message.includes('chit_disputes'))
-        return res.status(500).json({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true });
-      res.status(500).json({ error: 'Raise dispute failed', message: safeErr(err) });
+        return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
+      problem(req, res, failed(err, req, 'Raise dispute failed'));
     }
   }
 );
@@ -5620,7 +5565,7 @@ async function finishDisputes(rows, entity_id, me) {
     };
   });
 }
-router.get('/:chit_id/disputes', auth, async (req, res) => {
+router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
 
@@ -5634,7 +5579,7 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
-    if (!own) return res.status(403).json({ error: 'Forbidden' });
+    if (!own) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
     const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);
@@ -5651,7 +5596,7 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
-    res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Get disputes failed'));
   }
 });
 
@@ -5666,7 +5611,7 @@ const FAULT_SUMMARY = {
   defunct: 'Counterparty no longer active',
   absent: 'No counterparty copy found on this chit'
 };
-router.get('/:chit_id/diagnosis', auth, async (req, res) => {
+router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
   try {
@@ -5678,7 +5623,7 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
       const nestedDet = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
       return { hdr: nestedHdr, det: nestedDet };
     });
-    if (!rls) return res.status(403).json({ error: 'Forbidden' });
+    if (!rls) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
     const { hdr, det } = rls;
     let itemLabel = null;
     try {
@@ -5739,7 +5684,7 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ chit_id, chit_subject: null, diagnoses: [], count: 0 });
     console.error('Diagnosis error:', err.message);
-    res.status(500).json({ error: 'Diagnosis failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Diagnosis failed'));
   }
 });
 
@@ -5747,9 +5692,9 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
 // Only the entity that raised the dispute can resolve it
 router.put(
   '/:chit_id/disputes/:dispute_id/resolve',
-  [body('resolution_note').trim().notEmpty().withMessage('Resolution note required'), body('target_entity_id').optional({ nullable: true }).isUUID()],
   auth,
-  validate,
+  ...checked('PUT /:chit_id/disputes/:dispute_id/resolve'),
+  trimmedBody(['resolution_note']),
   async (req, res) => {
     const { chit_id, dispute_id } = req.params;
     const { resolution_note } = req.body;
@@ -5770,7 +5715,7 @@ router.put(
       const dispute = await withEntity(entity_id, (db) =>
         db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2`, [dispute_id, chit_id])
       );
-      if (dispute.rows.length === 0) return res.status(404).json({ error: 'Dispute not found' });
+      if (dispute.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Dispute not found' }, 'NOT_FOUND') });
 
       const d = dispute.rows[0];
       /* T3-DISPUTES-ASSIST: the SAME verdict GET answers as actions.resolve (lib/dispute-may) — the status codes and words unchanged, `why` added */
@@ -5778,18 +5723,18 @@ router.put(
         open: d.status === 'open',
         raisedByMe: d.raised_by_entity_id === entity_id
       });
-      if (!may.ok && may.why === 'already_resolved') return res.status(400).json({ error: 'Dispute already resolved', why: may.why });
+      if (!may.ok && may.why === 'already_resolved') return problem(req, res, { status: 400, ...said({ error: 'Dispute already resolved', why: may.why }, 'DISPUTE_ALREADY_RESOLVED') });
       if (!may.ok && may.why === 'not_raiser') {
-        return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it', why: may.why });
+        return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it', why: may.why }, 'CHIT_NOT_PERMITTED') });
       }
-      if (!may.ok) return res.status(403).json({ error: 'Not permitted', message: may.say, why: may.why });
+      if (!may.ok) return problem(req, res, { status: 403, ...said({ error: 'Not permitted', message: may.say, why: may.why }, 'CHIT_NOT_PERMITTED') });
 
       /* ⭐ N02 / I2 — the body's target_entity_id becomes the notice list below, so it must be a PARTY on this dispute's roster.
          The definer only checks chit membership; an unchecked id would hand an outsider "Dispute resolved — <category>: <note>". */
       if (targetParty) {
         const ros = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [dispute_id]));
         if (!ros.rows.some((item) => item.role === 'party' && String(item.entity_id) === String(targetParty))) {
-          return res.status(400).json({ error: 'Invalid target', code: 'DISPUTE_TARGET_NOT_PARTY', message: 'That business is not a party to this dispute' });
+          return problem(req, res, { status: 400, ...said({ error: 'Invalid target', code: 'DISPUTE_TARGET_NOT_PARTY', message: 'That business is not a party to this dispute' }, 'CHIT_BAD_REQUEST') });
         }
       }
 
@@ -5870,7 +5815,7 @@ router.put(
       });
     } catch (err) {
       console.error('Resolve dispute error:', err.message);
-      res.status(500).json({ error: 'Resolve failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Resolve failed'));
     }
   }
 );
@@ -5886,7 +5831,7 @@ router.put(
  * rows · total · page · limit · counts { open, resolved } and, per row, others · mine · actions.resolve (finishDisputes above).
  * Trips: ONE withEntity transaction (the page + the counts) + ONE roster read for the whole page (was one per row).
  */
-router.get('/disputes/queue', auth, async (req, res) => {
+router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (req, res) => {
   const entity_id = entityId(req);
   const list = req.query || {};
   const status = ['open', 'resolved', 'all'].includes(list.status) ? list.status : 'open';
@@ -5959,7 +5904,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
         code: 'DISPUTES_NOT_SET_UP'
       });
     }
-    res.status(500).json({ error: 'Get dispute queue failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Get dispute queue failed'));
   }
 });
 
@@ -5981,7 +5926,7 @@ async function housekeepFacts(db, chit_id, entity_id) {
   if (copy.rows.length === 0) return null;
   return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) };
 }
-router.delete('/:chit_id', auth, async (req, res) => {
+router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -5991,9 +5936,9 @@ router.delete('/:chit_id', auth, async (req, res) => {
     // B1 RLS: caller deletes only its own copy -> withEntity(me). ONE transaction: the facts, the verdict, the write, the log.
     await withEntity(entity_id, async (db) => {
       const facts = await housekeepFacts(db, chit_id, entity_id);
-      if (!facts) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already deleted' });
+      if (!facts) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or already deleted' }, 'NOT_FOUND') });
       const verdict = railActions.canHousekeep('delete', facts);
-      if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
+      if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
 
       // Soft delete this entity's copy only
       await db.query(
@@ -6016,7 +5961,7 @@ router.delete('/:chit_id', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Delete chit error:', err.message);
-    res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Delete failed'));
   }
 });
 
@@ -6028,12 +5973,9 @@ router.delete('/:chit_id', auth, async (req, res) => {
 // urgent requires a reason, logged as an internal action message.
 router.put(
   '/:chit_id/priority',
-  [
-    body('priority').trim().isIn(['normal', 'high', 'urgent']).withMessage('priority must be normal|high|urgent'),
-    body('reason').optional().trim().isLength({ max: 500 })
-  ],
   auth,
-  validate,
+  ...checked('PUT /:chit_id/priority'),
+  trimmedBody(['priority', 'reason']),
   async (req, res) => {
     try {
       const chit_id = req.params.chit_id;
@@ -6042,14 +5984,14 @@ router.put(
       const reason = sanitise(req.body.reason || '');
 
       if (priority === 'urgent' && !reason) {
-        return res.status(400).json({ error: 'Reason required', message: 'An urgent priority needs a reason' });
+        return problem(req, res, { status: 400, ...said({ error: 'Reason required', message: 'An urgent priority needs a reason' }, 'CHIT_REASON_REQUIRED') });
       }
 
       // B1 RLS: caller sets priority on its own copy -> withEntity(me).
       await withEntity(entity_id, async (db) => {
         const access = await db.query(`SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
         if (access.rows.length === 0) {
-          return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
+          return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found for this entity' }, 'NOT_FOUND') });
         }
 
         await db.query(
@@ -6077,7 +6019,7 @@ router.put(
       });
     } catch (err) {
       console.error('Set priority error:', err.message);
-      res.status(500).json({ error: 'Priority update failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Priority update failed'));
     }
   }
 );
@@ -6085,7 +6027,7 @@ router.put(
 // PUT /chits/:chit_id/priority-flag — CUSTOMER cross-edge priority, WRITE-ONCE.
 // DESIGN (review): set + lock on EVERY participant row so the counterparty sees it;
 // reject once customer_priority_locked is true.
-router.put('/:chit_id/priority-flag', [body('priority').isBoolean().withMessage('priority must be true or false')], auth, validate, async (req, res) => {
+router.put('/:chit_id/priority-flag', auth, ...checked('PUT /:chit_id/priority-flag'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -6096,10 +6038,10 @@ router.put('/:chit_id/priority-flag', [body('priority').isBoolean().withMessage(
       db.query(`SELECT customer_priority_locked FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
     );
     if (access.rows.length === 0) {
-      return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
+      return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found for this entity' }, 'NOT_FOUND') });
     }
     if (access.rows[0].customer_priority_locked) {
-      return res.status(409).json({ error: 'Locked', message: 'Customer priority is write-once and already set' });
+      return problem(req, res, { status: 409, ...said({ error: 'Locked', message: 'Customer priority is write-once and already set' }, 'CHIT_PRIORITY_LOCKED') });
     }
 
     // Customer flag is cross-edge (write-once) -> set on ALL participant rows via chit_set_customer_priority_all
@@ -6126,7 +6068,7 @@ router.put('/:chit_id/priority-flag', [body('priority').isBoolean().withMessage(
     res.json({ message: 'Customer priority set', chit_id, customer_priority: flag, locked: true });
   } catch (err) {
     console.error('Customer flag error:', err.message);
-    res.status(500).json({ error: 'Customer flag failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Customer flag failed'));
   }
 });
 
@@ -6137,47 +6079,47 @@ router.put('/:chit_id/priority-flag', [body('priority').isBoolean().withMessage(
 // POST /chits/:chit_id/archive — hide MY copy from inbox/sent (reversible; never deletes).
 // ⭐ W2-RAIL R2: the open-dispute guard FAILS CLOSED — the count that could not be read used to answer 0 (`.catch(() => count 0)`)
 // and the chit was archived; now it is 503 disputes_unknown, logged (lib/dispute-may openOn). One transaction, not two.
-router.post('/:chit_id/archive', auth, async (req, res) => {
+router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), async (req, res) => {
   try {
     const entity_id = entityId(req),
       chit_id = req.params.chit_id;
     // B1 RLS: caller archives only its own copy -> withEntity(me). Per-copy: my own open dispute copies.
     await withEntity(entity_id, async (db) => {
       const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id) });
-      if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
+      if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       const r = await db.query(
         `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
           WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL AND archived_at IS NULL
           RETURNING chit_id`,
         [chit_id, entity_id]
       );
-      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
+      if (r.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or already archived' }, 'NOT_FOUND') });
       res.json({ message: 'Chit archived', chit_id });
     });
   } catch (err) {
-    res.status(500).json({ error: 'Archive failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Archive failed'));
   }
 });
 
 // PUT /chits/:chit_id/star — toggle the star/flag on MY copies (kept in sync across both directions).
-router.put('/:chit_id/star', auth, async (req, res) => {
+router.put('/:chit_id/star', auth, ...checked('PUT /:chit_id/star'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
     await withEntity(entity_id, async (db) => {
       const cur = await db.query(`SELECT star_flag FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [req.params.chit_id, entity_id]);
-      if (cur.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+      if (cur.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') });
       const next = !cur.rows[0].star_flag;
       await db.query(`UPDATE chit_status SET star_flag = $3, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`, [req.params.chit_id, entity_id, next]);
       res.json({ message: 'Star toggled', chit_id: req.params.chit_id, star_flag: next });
     });
   } catch (err) {
-    res.status(500).json({ error: 'Star failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Star failed'));
   }
 });
 
 // POST /chits/:chit_id/unread — mark MY copy unread (clear read_at).
-router.post('/:chit_id/unread', auth, async (req, res) => {
+router.post('/:chit_id/unread', auth, ...checked('POST /:chit_id/unread'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
@@ -6187,15 +6129,15 @@ router.post('/:chit_id/unread', auth, async (req, res) => {
         entity_id
       ])
     );
-    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    if (r.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') });
     res.json({ message: 'Marked unread', chit_id: req.params.chit_id });
   } catch (err) {
-    res.status(500).json({ error: 'Mark-unread failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Mark-unread failed'));
   }
 });
 
 // POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
-router.post('/:chit_id/unarchive', auth, async (req, res) => {
+router.post('/:chit_id/unarchive', auth, ...checked('POST /:chit_id/unarchive'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
@@ -6207,16 +6149,16 @@ router.post('/:chit_id/unarchive', auth, async (req, res) => {
         [req.params.chit_id, entity_id]
       )
     );
-    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or not archived' });
+    if (r.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or not archived' }, 'NOT_FOUND') });
     res.json({ message: 'Chit restored', chit_id: req.params.chit_id });
   } catch (err) {
-    res.status(500).json({ error: 'Unarchive failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Unarchive failed'));
   }
 });
 
 // POST /chits/:chit_id/restore — bring MY copy back from Trash (undo a soft delete).
 // Mirrors DELETE /:chit_id (which sets deleted_at); clears deleted_at on this entity's copy only + logs it.
-router.post('/:chit_id/restore', auth, async (req, res) => {
+router.post('/:chit_id/restore', auth, ...checked('POST /:chit_id/restore'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -6230,7 +6172,7 @@ router.post('/:chit_id/restore', auth, async (req, res) => {
         RETURNING chit_id`,
         [chit_id, entity_id]
       );
-      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found in Trash' });
+      if (r.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found in Trash' }, 'NOT_FOUND') });
       await db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
        VALUES ($1, $2, 'restored', $3, $4, $5)`,
@@ -6239,25 +6181,25 @@ router.post('/:chit_id/restore', auth, async (req, res) => {
       res.json({ message: 'Chit restored from Trash', chit_id });
     });
   } catch (err) {
-    res.status(500).json({ error: 'Restore failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Restore failed'));
   }
 });
 
 // DELETE /chits/:chit_id/purge — permanently remove a DRAFT (owner only). Real chits are immutable co-held
 // records and can NEVER be hard-deleted here; only role='Draft' (un-bridged, sender-only) qualifies.
-router.delete('/:chit_id/purge', auth, async (req, res) => {
+router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
     // B1 RLS: caller purges only its own draft copy -> withEntity(me) (was withTransaction).
     await withEntity(entity_id, async (db) => {
       const chk = await db.query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      if (chk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
+      if (chk.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Draft not found' }, 'NOT_FOUND') });
       /* W2-RAIL R2: the same draft rule the trash door now enforces (canHousekeep: a sent/received copy → 409 co_held_record) */
       const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) });
-      if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
+      if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       if (chk.rows[0].created_by_actor_id !== req.identity.identity_id)
-        return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
+        return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'You can only delete drafts you created.' }, 'CHIT_NOT_PERMITTED') });
       await db.query(`DELETE FROM chit_messages WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]); // per-entity: my own copies only
       await db.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
@@ -6272,7 +6214,7 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Purge draft error:', err.message);
-    res.status(500).json({ error: 'Purge failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Purge failed'));
   }
 });
 
@@ -6290,7 +6232,7 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
 // rather than being overwritten. Never a cross-entity write: you cannot reach into somebody else's records.
 //
 // Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
-router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A reason is required to void')], auth, validate, async (req, res) => {
+router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody(['reason']), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -6300,9 +6242,9 @@ router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A re
     const own = await withEntity(entity_id, (db) =>
       db.query(`SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
     );
-    if (own.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    if (own.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') });
     if (own.rows[0].sender_entity_id !== entity_id) {
-      return res.status(403).json({ error: 'Forbidden', message: 'Only the sender can void a chit' });
+      return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Only the sender can void a chit' }, 'CHIT_NOT_PERMITTED') });
     }
 
     // Void = the sender withdraws ITS OWN copy and REQUESTS cancellation from the recipients — never a cross-entity
@@ -6349,15 +6291,15 @@ router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A re
     if (gate.refused) {
       const g = gate.refused;
       if (g.why !== 'wrong_step') {
-        return railActions.refuse(res, g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] });
+        return problem(req, res, railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] })));
       }
       /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
-      return railActions.refuse(res, g, 409, {
+      return problem(req, res, railSaid(railActions.refusalOf(g, 409, {
         error: 'Cannot withdraw',
         message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
         from: g.from,
         allowed_transitions: g.allowed
-      });
+      })));
     }
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
@@ -6442,16 +6384,15 @@ router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A re
          the private word this change exists to retire. */
     res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books });
   } catch (err) {
-    withdrawFailure(res, err);
+    withdrawFailure(req, res, err);
   }
 });
 
 // POST /chits/assign-bulk — push-assign many chits to one actor (mirrors the single push).
 router.post(
   '/assign-bulk',
-  [body('chit_ids').isArray({ min: 1 }).withMessage('chit_ids[] required'), body('target_actor_id').isUUID().withMessage('target_actor_id required')],
   auth,
-  validate,
+  ...checked('POST /assign-bulk'),
   async (req, res) => {
     try {
       const entity_id = entityId(req);
@@ -6459,7 +6400,7 @@ router.post(
       const action_by_name = req.identity.display_name;
       const { chit_ids, target_actor_id } = req.body;
       const me = railActions.meOf(req); // T1-RAIL: who moves each copy back to pending (the rail's level ladder)
-      if (chit_ids.length > 200) return res.status(400).json({ error: 'Too many', message: 'Assign at most 200 chits at once.' }); // F4: bound the batch (long tx / lock contention)
+      if (chit_ids.length > 200) return problem(req, res, { status: 400, ...said({ error: 'Too many', message: 'Assign at most 200 chits at once.' }, 'CHIT_TOO_MANY') }); // F4: bound the batch (long tx / lock contention)
 
       // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
       // a mid-loop failure no longer leaves a partial assign. Target validated inside the tx.
@@ -6533,9 +6474,9 @@ router.post(
       });
       res.json({ message: 'Bulk assign complete', assigned_to: out.t.display_name, assigned: out.assigned.length, skipped: out.skipped });
     } catch (err) {
-      if (err.status === 400) return res.status(400).json({ error: 'Invalid target', message: err.message });
+      if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: 'Invalid target', message: err.message }, 'CHIT_BAD_REQUEST') });
       console.error('Bulk assign error:', err.message);
-      res.status(500).json({ error: 'Bulk assign failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Bulk assign failed'));
     }
   }
 );
@@ -6545,11 +6486,11 @@ router.post(
 // contains :id. RLS-scoped — the caller sees only children they CO-HOLD, so a rival's downstream edge is invisible
 // by construction (the TR-6 privacy floor). Proves the forward link is a SET: a fan-out node returns all N children.
 // The cross-entity, multi-hop operator WALK (past parties you don't co-hold) is Fragment 2's participant-gated definer.
-router.get('/:id/children', auth, async (req, res) => {
+router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, res) => {
   try {
     const me = entityId(req);
     const id = req.params.id;
-    if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
+    if (!trace.UUID_RE.test(id)) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'Invalid chit id' }, 'CHIT_BAD_REQUEST') });
     const r = await withEntity(me, (db) =>
       db.query(
         `SELECT chit_id, entity_id, direction, manual_subject, auto_subject,
@@ -6562,7 +6503,7 @@ router.get('/:id/children', auth, async (req, res) => {
     );
     res.json({ parent_chit_id: id, count: r.rows.length, children: r.rows });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to get children', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get children'));
   }
 });
 
@@ -6572,11 +6513,11 @@ router.get('/:id/children', auth, async (req, res) => {
 // whole subtree — and a rival sees nothing of another's chain (TR-6, the moat, by construction). forward =
 // exposure / recall set (BFS; the visited-set collapses diamonds + cycles); backward = provenance to source.
 // A hop the caller doesn't co-hold is an honest dead-end (the branch stops), never a silent skip to grandchildren.
-router.get('/:id/trace', auth, async (req, res) => {
+router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) => {
   try {
     const me = entityId(req);
     const id = req.params.id;
-    if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
+    if (!trace.UUID_RE.test(id)) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'Invalid chit id' }, 'CHIT_BAD_REQUEST') });
     const dir = req.query.dir === 'backward' ? 'backward' : 'forward';
     const MAX_NODES = 2000,
       MAX_DEPTH = 40;
@@ -6585,7 +6526,7 @@ router.get('/:id/trace', auth, async (req, res) => {
     const net = typeof req.query.network === 'string' && req.query.network.trim() ? req.query.network.trim() : null;
     const g = traceGraph(me, net);
     const seed = await g.fetch1(id);
-    if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
+    if (!seed.rows[0]) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not visible to you' }, 'NOT_FOUND') });
     g.put(seed.rows[0], 0);
 
     if (dir === 'forward') {
@@ -6618,7 +6559,7 @@ router.get('/:id/trace', auth, async (req, res) => {
     const path = await traceBackward(g, id, MAX_DEPTH);
     return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...g.nodes.values()], edges: g.edges });
   } catch (err) {
-    res.status(500).json({ error: 'Trace walk failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Trace walk failed'));
   }
 });
 
@@ -6772,7 +6713,7 @@ async function traceBackward(g, id, MAX_DEPTH) {
 // ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
 // List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
 // RLS-scoped — the operator sees its network's batches, a party sees only its own; origins listed first.
-router.get('/trace/batches', auth, async (req, res) => {
+router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req, res) => {
   try {
     const me = entityId(req);
     const toName = traceToName; /* the ONE label for a handoff — shared with the walk (T2-SPLIT) */
@@ -6804,7 +6745,7 @@ router.get('/trace/batches', auth, async (req, res) => {
     }
     res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to list batches', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to list batches'));
   }
 });
 
@@ -6813,11 +6754,11 @@ router.get('/trace/batches', auth, async (req, res) => {
 // even if the explicit links weren't followed. Finds the caller's chits carrying that batch, then rebuilds the
 // directed chain by PARTY-CHAINING: X → Y when the receiver of X is the sender of Y. No parent_chit_ids used.
 // RLS-scoped (you match only within what you hold). Same response shape as the walk, so the tree render is reused.
-router.get('/trace/by-batch', auth, async (req, res) => {
+router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (req, res) => {
   try {
     const me = entityId(req);
     const q = String(req.query.q || '').trim();
-    if (!q) return res.status(400).json({ error: 'Bad request', message: 'A batch value (q) is required' });
+    if (!q) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'A batch value (q) is required' }, 'CHIT_BAD_REQUEST') });
     const { r, matched_on } = await batchRows(me, q);
     const items = batchItems(r.rows);
     const { edges, nodeArr, kidsMap, nmap } = batchChain(items);
@@ -6845,7 +6786,7 @@ router.get('/trace/by-batch', auth, async (req, res) => {
       edges
     });
   } catch (err) {
-    res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Batch trace failed'));
   }
 });
 
@@ -7011,10 +6952,11 @@ router.get('/trace/networks', auth, async (req, res) => {
     );
     res.json({ networks: r.rows.map((x) => ({ network_id: x.network_id, is_operator: !!x.is_operator, edges: Number(x.edges) })) });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to list networks', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to list networks'));
   }
 });
 
+router.openapi = { paths: pathsOf(), schemas: {} };
 router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;

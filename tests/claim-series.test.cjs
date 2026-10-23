@@ -250,7 +250,7 @@ function dupes() {
   const send = CHITS.slice(routeAt(CHITS, 'post', '/send'));
   t('/api/chits/send logs kind sent_by_other and still refuses only another device (400)',
     send.indexOf("if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';") > 0
-    && send.indexOf("return res.status(400).json({ error: 'Bill claim mismatch'") > 0);
+    && send.indexOf("return problem(req, res, { status: 400, ...said({ error: 'Bill claim mismatch'") > 0);
   t('T9 · /api/chits/send asks tillClaimOf(req.till, …) BEFORE the client_ref dedupe',
     send.indexOf('tillClaimOf(req.till') > 0 && send.indexOf('tillClaimOf(req.till') < send.indexOf('await sameRefLook(sender_id, client_ref)'));
   t('one allocator: claimTill is claimSeries asked as a key; one bookedPrefixes (counters.js reads keys\')',

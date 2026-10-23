@@ -214,6 +214,9 @@ const INFRA_LIBS = [
   'folders-contract.js',
   'facts-contract.js',
   'pricing-contract.js',
+  /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
+  'chits-contract.js',
+  'chits-input.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
   'integrations-contract.js',
   /* API-4 sweep, the catalogue items: the contract of routes/products.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */

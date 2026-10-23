@@ -29,7 +29,7 @@ it('⭐⭐ every route that writes a chit asks it BEFORE its generic 500 — and
     const k = s.lastIndexOf("knownerr').known(err)", g);
     assert.ok(k > 0 && g - k < 2500, file + ' answers "' + generic + '" without asking lib/knownerr first');   /* server.js keeps its origin check in between */
   };
-  at('routes/chits.js', "res.status(500).json({ error: 'Send failed'");
+  at('routes/chits.js', "problem(req, res, failed(err, req, 'Send failed'))");
   /* both storefront orders write chits — the single-shop confirm and the network order (deliverEdge) */
   /* API-1 slice 1e: both answer "Order failed" through lib/problem.js fromError, which asks known() first (checked below) */
   const cat = fs.readFileSync(path.join(API, 'routes', 'catalogue.js'), 'utf8');
