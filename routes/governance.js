@@ -12,12 +12,24 @@ const log = require('../lib/logger');
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
 const express = require('express');
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { said, faultOf, thrownAs, vaultFault, countrySetupFault, conformanceRefusal, contract } = require('../lib/governance-contract'); // each route's operation (S9) and the words of its refusals
 const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const { writeGate } = require('../lib/access'); /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
 const { memo } = require('../lib/confcache'); // the active constitution is read once a minute, not once a call
 const platformroot = require('../lib/platformroot'); /* W1-SET: the ONE platform-role door (create · re-attest · register a source) */
+const checked = contract.checked; // the schema check of one route (its operation in lib/governance-contract.js), spread after its gates
+
+/** the platform door as a gate: a shop's login is refused 403 NOT_PLATFORM before anything is read or checked */
+function platformGate(req, res, next) {
+  if (platformroot.refuseUnlessPlatform(req, res)) next();
+}
+/** Country setup is the OWNER's (not a key, not a co-assist): the server decides */
+function ownerGate(req, res, next) {
+  if (require('../lib/owner').isOwner(req)) return next();
+  return problem(req, res, said({ status: 403, code: 'OWNER_ONLY' }, 'Only the owner may do this.', 'Only the owner may do this.'));
+}
 
 const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
@@ -71,22 +83,22 @@ async function countChitsToday(entityId) {
 
 // ── GET /api/governance/entities/:id — read-only view, no PII ──
 /* the one answer for an id this caller may not read and for an id that is not there: the door never says another shop exists */
-const NOT_GOVERNED = { error: 'entity not found or not governed' };
-router.get('/entities/:id', auth, async (req, res) => {
+const notGoverned = () => said({ status: 404, code: 'NOT_FOUND' }, 'entity not found or not governed');
+router.get('/entities/:id', auth, ...checked('GET /entities/:id'), async (req, res) => {
   /* ⚠️ SEC (23 Oct, found by the generated foreign_id_404 case): a shop's plan, overrides and exceptions are ITS data. A shop reads
      its own; the platform reads any; another shop's id gets the unknown id's 404. Before, any signed-in shop could read any shop's. */
-  if (String(req.params.id) !== String(auth.entityOf(req)) && !platformroot.isPlatform(req)) return res.status(404).json(NOT_GOVERNED);
+  if (String(req.params.id) !== String(auth.entityOf(req)) && !platformroot.isPlatform(req)) return problem(req, res, notGoverned());
   try {
     const { rows } = await query(
       `SELECT constitution_version, params_override, plan
          FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`,
       [req.params.id]
     );
-    if (!rows.length) return res.status(404).json(NOT_GOVERNED);
+    if (!rows.length) return problem(req, res, notGoverned());
     const ent = rows[0];
 
     const active = await loadActiveConstitution();
-    if (!active) return res.status(503).json({ error: 'no active constitution' });
+    if (!active) return problem(req, res, said({ status: 503, code: 'NO_CONSTITUTION' }, 'no active constitution'));
 
     const { effective, exceptions } = resolve(active, ent.params_override || {});
     res.json({
@@ -98,36 +110,34 @@ router.get('/entities/:id', auth, async (req, res) => {
       exceptions
     });
   } catch (err) {
-    res.status(500).json({ error: 'governance view failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'governance view failed'));
   }
 });
 
 // ── POST /api/governance/entities — governed create (the platform role only: lib/platformroot.refuseUnlessPlatform) ──
 // Transactional: the identity row + its Class-C exceptions commit together.
-router.post('/entities', auth, async (req, res) => {
-  if (!platformroot.refuseUnlessPlatform(req, res)) return;
-
+router.post('/entities', auth, platformGate, ...checked('POST /entities'), async (req, res) => {
   const override = (req.body && req.body.params_override) || {};
   const plan = (req.body && req.body.plan) || 'free';
   const display_name = ((req.body && req.body.display_name) || '').trim();
   const email = ((req.body && req.body.email) || '').trim().toLowerCase();
-  if (!display_name || !email) return res.status(400).json({ error: 'display_name and email required' });
+  if (!display_name || !email) return problem(req, res, said({ status: 400, code: 'GOV_BAD_REQUEST' }, 'display_name and email required'));
 
   try {
     const active = await loadActiveConstitution();
-    if (!active) return res.status(503).json({ error: 'no active constitution (default-deny)' });
+    if (!active) return problem(req, res, said({ status: 503, code: 'NO_CONSTITUTION' }, 'no active constitution (default-deny)'));
 
     // entitlement: entity-count quota for the installation's plan
     const used = await countEntities(active.root_id);
     const q = checkCount(planFor(active, plan), 'max_entities', used);
-    if (!q.ok) return res.status(409).json({ error: 'entity quota reached', quota: q.info });
+    if (!q.ok) return problem(req, res, said({ status: 409, code: 'ENTITY_QUOTA' }, 'entity quota reached', undefined, { quota: q.info }));
 
     // conformance: resolve + stamp (throws GovernanceError on Class A/B)
     let stamp;
     try {
       stamp = mintEntity(active, active.root_id, override);
     } catch (e) {
-      return res.status(422).json({ error: 'conformance', code: e.code, detail: e.message });
+      return problem(req, res, conformanceRefusal(e));
     }
 
     const out = await withTransaction(async (client) => {
@@ -148,34 +158,33 @@ router.post('/entities', auth, async (req, res) => {
 
     res.status(201).json({ id: out.id, effective: stamp.effective, exceptions: stamp.exceptions });
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'email already exists' });
-    res.status(500).json({ error: 'governed create failed', message: safeErr(err) });
+    if (err.code === '23505') return problem(req, res, said({ status: 409, code: 'ENTITY_EMAIL_TAKEN' }, 'email already exists'));
+    problem(req, res, faultOf(err, req, 'governed create failed'));
   }
 });
 
 // ── POST /api/governance/entities/:id/reattest — re-stamp to active version (clears drift) ──
 // Forward-only: an entity's NEW chits then resolve under the active constitution;
 // chits already sent stay frozen at their original version (handled at send/freeze time).
-router.post('/entities/:id/reattest', auth, async (req, res) => {
-  if (!platformroot.refuseUnlessPlatform(req, res)) return;
+router.post('/entities/:id/reattest', auth, platformGate, ...checked('POST /entities/:id/reattest'), async (req, res) => {
   try {
     const { rows } = await query(`SELECT params_override FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`, [req.params.id]);
-    if (!rows.length) return res.status(404).json({ error: 'entity not found or not governed' });
+    if (!rows.length) return problem(req, res, notGoverned());
 
     const active = await loadActiveConstitution();
-    if (!active) return res.status(503).json({ error: 'no active constitution' });
+    if (!active) return problem(req, res, said({ status: 503, code: 'NO_CONSTITUTION' }, 'no active constitution'));
 
     let ra;
     try {
       ra = reattest(active, rows[0].params_override || {});
     } catch (e) {
-      return res.status(422).json({ error: 'conformance', code: e.code, detail: e.message });
+      return problem(req, res, conformanceRefusal(e));
     }
 
     await query(`UPDATE identities SET constitution_version = $1 WHERE identity_id = $2`, [ra.constitution_version, req.params.id]);
     res.json({ message: 'Re-attested', constitution_version: ra.constitution_version, drift: false, effective: ra.effective, exceptions: ra.exceptions });
   } catch (err) {
-    res.status(500).json({ error: 'reattest failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'reattest failed'));
   }
 });
 
@@ -220,35 +229,35 @@ function assertPublicAllowed() {
 // (ISO 9000 quality + EXIM trade + …) assimilated into the boilerplate, and report contradictions (missing required
 // items). Read-only: computes a verdict, never mutates or blocks anything. This is the runtime "the standard actually
 // governs" surface — the light, deterministic form; an AI co-assist adds semantic judgement on top later.
-router.post('/conformance', auth, async (req, res) => {
+router.post('/conformance', auth, ...checked('POST /conformance'), async (req, res) => {
   try {
     const data = req.body && typeof req.body.data === 'object' && req.body.data ? req.body.data : req.body || {};
     const scope = req.body && typeof req.body.scope === 'string' ? req.body.scope : 'chit';
     const verdict = await require('../lib/conformance').checkConformance(data, scope);
     res.json(verdict);
   } catch (err) {
-    res.status(500).json({ error: 'Conformance check failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Conformance check failed'));
   }
 });
 
 // GET /api/governance/boilerplate/:key — read the sealed MOULD: its DECLARED sources + bound locale ("see the mould").
-router.get('/boilerplate/:key', auth, async (req, res) => {
+router.get('/boilerplate/:key', auth, ...checked('GET /boilerplate/:key'), async (req, res) => {
   try {
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
-    if (!bp) return res.status(404).json({ error: 'Not found', message: 'No such boilerplate' });
+    if (!bp) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such boilerplate'));
     res.json(bp);
   } catch (err) {
-    res.status(500).json({ error: 'Boilerplate read failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Boilerplate read failed'));
   }
 });
 
 // POST /api/governance/boilerplate/:key/adopt — the minted-path binding: stamp the caller's entity with this mould so
 // it resolves the mould's DECLARED sources (bounded, not global). Upsert; preserves any existing constitution.
-router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
+router.post('/boilerplate/:key/adopt', auth, ...checked('POST /boilerplate/:key/adopt'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
-    if (!bp) return res.status(404).json({ error: 'Not found', message: 'No such boilerplate' });
+    if (!bp) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such boilerplate'));
     await withEntity(entity_id, (c) =>
       c.query(
         `INSERT INTO entity_governance (entity_id, constitution_key, boilerplate_key)
@@ -260,7 +269,7 @@ router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
     require('../lib/workpattern').invalidateWorkPattern(entity_id); // re-stamp → next resolve re-derives
     res.json({ message: 'Minted from boilerplate', boilerplate: versionref.format(bp.key, bp.version), standards: bp.standards, locale: bp.locale });
   } catch (err) {
-    res.status(500).json({ error: 'Adopt failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Adopt failed'));
   }
 });
 
@@ -268,8 +277,7 @@ router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
 // One call = the runbook's "register entity → upload standard → stamp as source". Idempotent by source_key.
 // ⚠️ W1-SET (GOV2): the platform role only — a source is a PLATFORM entity every shop's standards resolve against (lib/source.js
 // mints it with owner_scope 'platform'), so a shop's login is refused BEFORE anything is read (403 NOT_PLATFORM, the sentence).
-router.post('/source', auth, async (req, res) => {
-  if (!platformroot.refuseUnlessPlatform(req, res)) return;
+router.post('/source', auth, platformGate, ...checked('POST /source'), async (req, res) => {
   try {
     const b = req.body || {};
     const out = await require('../lib/source').registerSource({
@@ -281,24 +289,24 @@ router.post('/source', auth, async (req, res) => {
     });
     res.json({ message: 'Source registered & stamped', source: out });
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Register source failed', message: safeErr(err) });
+    problem(req, res, thrownAs(err, req, 'Register source failed'));
   }
 });
 
 // GET /api/governance/source/:key — view a source: its typed content + its owning source-entity (stable id + mutable name).
-router.get('/source/:key', auth, async (req, res) => {
+router.get('/source/:key', auth, ...checked('GET /source/:key'), async (req, res) => {
   try {
     const s = await require('../lib/source').resolveSourceEntity(req.params.key);
-    if (!s) return res.status(404).json({ error: 'Not found', message: 'No such source' });
+    if (!s) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such source'));
     res.json(s);
   } catch (err) {
-    res.status(500).json({ error: 'Source read failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Source read failed'));
   }
 });
 
 // GET /api/governance/readiness — the CALLER's own trade readiness. ?destination=EU&vertical=paint → resolved FOR that
 // destination (spin the globe), with guidance on each gap; otherwise the entity's own standards.
-router.get('/readiness', auth, async (req, res) => {
+router.get('/readiness', auth, ...checked('GET /readiness'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const R = require('../lib/readiness');
@@ -309,18 +317,18 @@ router.get('/readiness', auth, async (req, res) => {
     const m = require('../lib/access').mayWrite(req);
     res.json({ ...out, may: { gather: m, verify: m } });
   } catch (err) {
-    res.status(500).json({ error: 'Readiness failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Readiness failed'));
   }
 });
 
 // GET /api/governance/lanes?vertical=paint — the CALLER's market-readiness MATRIX (readiness % per destination + gaps).
-router.get('/lanes', auth, async (req, res) => {
+router.get('/lanes', auth, ...checked('GET /lanes'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const m = require('../lib/access').mayWrite(req); /* G8 */
     res.json({ ...(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin)), may: { gather: m, verify: m } });
   } catch (err) {
-    res.status(500).json({ error: 'Lanes failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Lanes failed'));
   }
 });
 
@@ -332,27 +340,27 @@ router.get('/track-record', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/reference').resolveTrackRecord(entity_id));
   } catch (err) {
-    res.status(500).json({ error: 'Track record failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Track record failed'));
   }
 });
 
 // ── COMMERCE LAYER — the commercial-instrument cluster + the end-to-end settlement chain (derive-not-enumerate). ──
 // GET /api/governance/instruments?incoterm=CIF&cross_border=1 — the cluster of EXIM instruments grouped by RISK covered.
-router.get('/instruments', auth, async (req, res) => {
+router.get('/instruments', auth, ...checked('GET /instruments'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
     res.json(require('../lib/instruments').resolveInstruments({ cross_border, incoterm: req.query.incoterm }));
   } catch (err) {
-    res.status(500).json({ error: 'Instruments failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Instruments failed'));
   }
 });
 // GET /api/governance/journey?incoterm=CIF&cross_border=1 — the ordered end-to-end settlement chain (partner + cover per stage).
-router.get('/journey', auth, async (req, res) => {
+router.get('/journey', auth, ...checked('GET /journey'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
     res.json(require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm }));
   } catch (err) {
-    res.status(500).json({ error: 'Journey failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Journey failed'));
   }
 });
 // GET /api/governance/commerce-standards — the commerce standards (Incoterms/UCP/FRM) as governed source-entities (b93).
@@ -360,7 +368,7 @@ router.get('/commerce-standards', auth, async (req, res) => {
   try {
     res.json(await require('../lib/instruments').commerceStandards());
   } catch (err) {
-    res.status(500).json({ error: 'Commerce standards failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Commerce standards failed'));
   }
 });
 
@@ -370,7 +378,7 @@ router.get('/profile', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').getProfile(entity_id));
   } catch (err) {
-    res.status(500).json({ error: 'Profile failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Profile failed'));
   }
 });
 /**
@@ -378,7 +386,7 @@ router.get('/profile', auth, async (req, res) => {
  * the vault. It was the one piece of reference data that changed without telling anybody, so a tab open
  * elsewhere kept showing the old supplier block until it was reloaded.
  */
-router.put('/profile', auth, writeGate, async (req, res) => {
+router.put('/profile', auth, writeGate, ...checked('PUT /profile'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const saved = await require('../lib/profile').saveProfile(entity_id, req.body || {});
@@ -391,7 +399,7 @@ router.put('/profile', auth, writeGate, async (req, res) => {
     }
     res.json(saved);
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) });
+    problem(req, res, thrownAs(err, req, 'Save profile failed'));
   }
 });
 // TRADE DOCUMENTS VAULT — recurring inputs that pre-fill forms. The vault is now repeatable SECTIONS of free
@@ -403,7 +411,7 @@ router.get('/vault-schema', auth, async (req, res) => {
     const p = require('../lib/profile');
     res.json({ section_types: p.SECTION_TYPES, verifiable_tags: p.VERIFIABLE_TAGS });
   } catch (err) {
-    res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Vault schema failed'));
   }
 });
 /** one PUT /profile/vault body: a patch, or a whole vault (a first fill — over an existing vault it must name the version); → { saved } or { refusal } */
@@ -413,7 +421,7 @@ async function writeVaultBody(entity_id, body) {
   const held = await profile.readVault(entity_id);
   if (held.version && body.version == null) {
     const words = 'This screen is older than the vault — reload it, then save.';
-    return { refusal: { code: 'VAULT_VERSION_REQUIRED', error: words, message: words } };
+    return { refusal: words };
   }
   if (held.version && String(body.version) !== held.version) throw profile.vaultChanged();
   return { saved: await profile.saveVault(entity_id, body.vault || body, { expect: held.version }) };
@@ -427,12 +435,12 @@ async function writeVaultBody(entity_id, body) {
  *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
  *   Who may: the owner or an editor (SEC-71: lib/access writeGate — a viewer/commenter gets 403 read_only/comment_only WITH the rail's sentence). Trips: 1 read + 1 conditional write (+ the mirror's).
  */
-router.put('/profile/vault', auth, writeGate, async (req, res) => {
+router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const written = await writeVaultBody(entity_id, b);
-    if (written.refusal) return res.status(409).json(written.refusal);
+    if (written.refusal) return problem(req, res, said({ status: 409, code: 'VAULT_VERSION_REQUIRED' }, written.refusal, written.refusal, { code: 'VAULT_VERSION_REQUIRED' }));
     const saved = written.saved;
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
     try {
@@ -442,8 +450,7 @@ router.put('/profile/vault', auth, writeGate, async (req, res) => {
     }
     res.json(saved);
   } catch (err) {
-    if (err && err.code === 'VAULT_CHANGED') return res.status(409).json({ code: err.code, error: err.say, message: err.say });
-    res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, vaultFault(err, req));
   }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
@@ -452,7 +459,7 @@ router.get('/profile/readiness', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').resolveProfileReadiness(entity_id));
   } catch (err) {
-    res.status(500).json({ error: 'Profile readiness failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Profile readiness failed'));
   }
 });
 // the forward roadmap — which markets you could reach next and what to add
@@ -461,7 +468,7 @@ router.get('/profile/path', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').resolvePath(entity_id));
   } catch (err) {
-    res.status(500).json({ error: 'Path failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Path failed'));
   }
 });
 
@@ -476,19 +483,18 @@ router.get('/profile/path', auth, async (req, res) => {
  *                                        400 in words · 409 a different country (a new entity) · 503 COUNTRY_SETUP_NOT_MIGRATED before b299.
  * Trips: GET 2 (identities + entity_governance, inside one withEntity) · PUT 2 reads + 2 writes (+1 insert for a shop with no stamp row).
  */
-router.get('/country-setup', auth, async (req, res) => {
+router.get('/country-setup', auth, ...checked('GET /country-setup'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const CS = require('../lib/country-setup');
     res.json(await withEntity(entity_id, (h) => CS.profile(h, entity_id)));
   } catch (err) {
-    res.status(err.status || 500).json({ code: err.code || undefined, error: err.say || 'Country setup could not be read', message: err.say || safeErr(err) });
+    problem(req, res, countrySetupFault(err, req, 'Country setup could not be read', 500));
   }
 });
-router.put('/country-setup', auth, async (req, res) => {
+router.put('/country-setup', auth, ownerGate, ...checked('PUT /country-setup'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
     const CS = require('../lib/country-setup');
     const out = await withEntity(entity_id, (h) =>
       CS.save(h, entity_id, req.body || {}, req.identity && req.identity.identity_id)
@@ -506,23 +512,21 @@ router.put('/country-setup', auth, async (req, res) => {
     }
     res.json(out);
   } catch (err) {
-    if (err && err.say) return res.status(err.status || 422).json({ code: err.code, error: err.say, message: err.say });
-    res.status(err.status || 500).json({ error: 'Country setup could not be saved', message: safeErr(err) });
+    problem(req, res, countrySetupFault(err, req, 'Country setup could not be saved', 422));
   }
 });
 
 // ── AI CO-ASSIST — INVOKED (never autonomous). Drafts a clearance document from the order/product context; returns a
 // draft for the human to confirm (not evidence until accepted). Meters per-entity usage (b99). ──
-router.post('/ai-draft', auth, async (req, res) => {
+router.post('/ai-draft', auth, ...checked('POST /ai-draft'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     res.json(await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {}));
   } catch (err) {
-    // 4xx are intentional, client-safe reasons (gate 402/429 · unknown skill 400 · not-connected 503) → show them;
+    // 4xx are intentional, client-safe reasons (gate 402/429 · unknown skill 400) → show them;
     // 5xx keep the generic message (no internal/DB text leaks).
-    const st = err.status || 500;
-    res.status(st).json({ error: 'AI draft failed', message: st < 500 ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, thrownAs(err, req, 'AI draft failed', true));
   }
 });
 // per-entity AI spend (metering / charge-back)
@@ -531,7 +535,7 @@ router.get('/ai-usage', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/ai').usageSummary(entity_id));
   } catch (err) {
-    res.status(500).json({ error: 'AI usage failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'AI usage failed'));
   }
 });
 // the AI skill INVENTORY — what the one co-assist can be invoked to do (id · category · kind · gate · label). The UI
@@ -541,14 +545,14 @@ router.get('/ai-skills', auth, async (req, res) => {
   try {
     res.json({ skills: await require('../lib/ai').listSkills() });
   } catch (err) {
-    res.status(500).json({ error: 'AI skills failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'AI skills failed'));
   }
 });
 
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
 // a connection.)
-router.get('/readiness/:bridge_id', auth, async (req, res) => {
+router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'), async (req, res) => {
   try {
     /**
      * ⚠️ ACCEPTS A user_id TOO — this is the SUPPLIER-FACING read ("how other suppliers will view this
@@ -565,7 +569,7 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [req.params.bridge_id]
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such entity' });
+    if (!r.rows.length) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such entity'));
     const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */
@@ -583,12 +587,12 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
       : Object.assign({}, rd, { clearances: (rd.clearances || []).map((clearance) => Object.assign({}, clearance, { evidence_ref: null })) });
     res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...shown });
   } catch (err) {
-    res.status(500).json({ error: 'Readiness failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Readiness failed'));
   }
 });
 
 // POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
-router.post('/compliance', auth, writeGate, async (req, res) => {
+router.post('/compliance', auth, writeGate, ...checked('POST /compliance'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -603,19 +607,19 @@ router.post('/compliance', auth, writeGate, async (req, res) => {
     });
     res.json({ message: 'Clearance gathered', ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Gather failed', message: safeErr(err) });
+    problem(req, res, thrownAs(err, req, 'Gather failed'));
   }
 });
 
 // POST /api/governance/verify — MACHINE-VERIFY a registry ID (IEC/GSTN/PAN) → the "verified" rung. Un-fakeable once the
 // Registry verify: confirms the ID against a KYB provider when one is connected (→ VERIFIED); otherwise records it as a
 // format-checked claim (→ NOT verified, honest). A malformed ID or a registry "not-active" is refused with 422.
-router.post('/verify', auth, writeGate, async (req, res) => {
+router.post('/verify', auth, writeGate, ...checked('POST /verify'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const node = await require('../lib/verify').verifyRegistry(b.id_type, b.id_value);
-    if (!node.ok) return res.status(422).json({ error: 'Verification failed', message: node.note, verdict: node });
+    if (!node.ok) return problem(req, res, said({ status: 422, code: 'VERIFICATION_FAILED' }, 'Verification failed', node.note, { verdict: node }));
     await require('../lib/readiness').gatherDocument(entity_id, {
       standard_key: b.standard_key,
       doc_key: b.doc_key,
@@ -636,10 +640,11 @@ router.post('/verify', auth, writeGate, async (req, res) => {
     const msg = node.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
     res.json({ message: msg, verdict: node, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Verify failed', message: safeErr(err) });
+    problem(req, res, thrownAs(err, req, 'Verify failed'));
   }
 });
 
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;
@@ -656,14 +661,14 @@ module.exports.countChitsToday = countChitsToday; /* SET-35: the Plan & usage ca
  */
 
 /** POST /api/governance/supplier-acceptance — record that this entity accepted a supplier's readiness. */
-router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
+router.post('/supplier-acceptance', auth, writeGate, ...checked('POST /supplier-acceptance'), async (req, res) => {
   try {
     if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
-      return res.status(503).json({ error: 'Not enabled', code: 'SRA_NOT_MIGRATED', message: 'Acceptance is not switched on yet.' });
+      return problem(req, res, said({ status: 503, code: 'SRA_NOT_MIGRATED' }, 'Not enabled', 'Acceptance is not switched on yet.', { code: 'SRA_NOT_MIGRATED' }));
     }
     const entity_id = auth.entityOf(req);
     const handle = String(req.body.supplier || '').trim();
-    if (!handle) return res.status(400).json({ error: 'Bad request', message: 'Which supplier?' });
+    if (!handle) return problem(req, res, said({ status: 400, code: 'GOV_BAD_REQUEST' }, 'Bad request', 'Which supplier?'));
 
     /* ⭐ RESOLVED BY HANDLE OR KEY, key first — the same ordering as resolveEntity and the readiness read. */
     const s = await query(
@@ -672,7 +677,7 @@ router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [handle]
     );
-    if (!s.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such supplier' });
+    if (!s.rows.length) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such supplier'));
 
     /**
      * ⚠️⚠️ THE SUMMARY IS TAKEN HERE, ON THE SERVER — NEVER ACCEPTED FROM THE CLIENT. A snapshot posted by the
@@ -691,12 +696,12 @@ router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
 
     res.json({ message: 'Accepted', acceptance: r.rows[0], summary: rd.summary });
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Acceptance failed', message: safeErr(err) });
+    problem(req, res, thrownAs(err, req, 'Acceptance failed'));
   }
 });
 
 /** GET /api/governance/supplier-acceptance/:handle — the LATEST acceptance, if any. */
-router.get('/supplier-acceptance/:handle', auth, async (req, res) => {
+router.get('/supplier-acceptance/:handle', auth, ...checked('GET /supplier-acceptance/:handle'), async (req, res) => {
   try {
     if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
       return res.json({ acceptance: null, applied: false });
@@ -725,6 +730,6 @@ router.get('/supplier-acceptance/:handle', auth, async (req, res) => {
 
     res.json({ acceptance: r.rows[0] || null, applied: true });
   } catch (err) {
-    res.status(500).json({ error: 'Read failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Read failed'));
   }
 });
