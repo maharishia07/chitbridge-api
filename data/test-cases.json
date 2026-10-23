@@ -64375,6 +64375,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-actors.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE PEOPLE ROUTES (ROUTES/ACTORS.JS: ADD, EDIT, SWITCH OFF, PIN AND FIRST CODE, COVER AND BREAK, TASKS AND ROUTING, SETTINGS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO ANSWER CARRIES THE DATABASE TEXT; SIGN-IN IS RECORDED BYTE FOR BYTE; ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE PEOPLE ROUTES (ROUTES/ACTORS.JS: ADD, EDIT, SWITCH OFF, PIN AND FIRST CODE, COVER AND BREAK, TASKS AND ROUTING, SETTINGS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO ANSWER CARRIES THE DATABASE TEXT; SIGN-IN IS RECORDED BYTE FOR BYTE; ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 231 lines. Run: node chitbridge-api/tests/api-problem-actors.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 231,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-entities.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

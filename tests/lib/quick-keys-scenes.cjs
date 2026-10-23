@@ -112,6 +112,7 @@ function extras() {
     X('group-drop-unknown', R('DELETE', '/groups/:id'), 404, Object.assign({ body: {} }, at('/groups/' + GROUP))),
     X('group-drop-fails', R('DELETE', '/groups/:id'), 500, Object.assign({ body: {} }, failing)),
     N('group-drop-body-a-list', R('DELETE', '/groups/:id'), 400, Object.assign({ body: [] }, at('/groups/' + GROUP), planted())),
+    N('group-drop-unknown-key', R('DELETE', '/groups/:id'), 400, Object.assign({ body: { version: 1, colour: 'red' } }, at('/groups/' + GROUP), planted())), /* closed body: refused by name, the group stays */
     X('key-add', R('POST', items), 201, Object.assign({ body: { product_id: BUN, position: 3 } }, at('/groups/' + GROUP + '/items'), planted())),
     X('key-add-no-product', R('POST', items), 400, Object.assign({ body: { position: 1 } }, at('/groups/' + GROUP + '/items'), planted())),
     X('key-add-unknown-group', R('POST', items), 404, Object.assign({ body: { product_id: BUN } }, at('/groups/' + GROUP + '/items'))),

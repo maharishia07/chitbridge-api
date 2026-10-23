@@ -6,7 +6,7 @@
  * OWNS      the proof that each refusal of the 9 routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code before
  *           the sweep), that no success answer moved (--compare against a capture of the code before), that the 409 keeps `current` (the group's own row) byte for byte, this file's rows of
  *           docs/contracts/api-error-tests.json, and the "signed in as another shop" world for the five routes that name a group (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded
- *           in docs/contracts/api-hardening-evidence.json. Also: no answer of any status carries database text, no answer outside the statuses the contract declares
+ *           in docs/contracts/api-hardening-evidence-areas.json. Also: no answer of any status carries database text, no answer outside the statuses the contract declares
  *           (lib/quick-keys-contract.js), and its words as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/quick-keys.js and the real lib/quick-keys.js over the tables in memory (tests/lib/quick-keys-scenes.cjs).
  * FLOW      route list (read from the router) x world (signed out, a key, a failing db, an empty db, a bad id) + the named scenes → real route → body → Problem fields present ·
@@ -14,7 +14,7 @@
  * CARD      28-platform-and-operations/quick-keys-routes
  *
  *   node tests/api-problem-quick-keys.test.cjs                    check
- *   node tests/api-problem-quick-keys.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-quick-keys.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-quick-keys.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-quick-keys.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-quick-keys.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -32,7 +32,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/quick-keys';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const ADDED = new Set(S.extras().filter((one) => one.after).map((one) => one.id));
 const lab = harness({
@@ -204,6 +204,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkContractShape(routes);
   checkConflictBody(recording);
   checkNoDatabaseText(recording);
+  const drop = (scene) => recording['DELETE /api/quick-keys/groups/:id|' + scene] || {};
+  check('DELETE /groups/:id: a body with a key it does not read is refused 400 naming that key (closed body, stage 2), and the version alone is accepted', drop('group-drop-unknown-key').status === 400 && /colour/.test(JSON.stringify(drop('group-drop-unknown-key').body)) && drop('group-drop').status === 200, { unknown: drop('group-drop-unknown-key').body, known: drop('group-drop').status });
   const proved = await foreignWorld(port);
   server.close();
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
@@ -221,7 +223,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/quick-keys.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
