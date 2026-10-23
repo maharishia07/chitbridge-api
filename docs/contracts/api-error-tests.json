@@ -207,6 +207,28 @@
   404,
   500
  ],
+ "GET /api/catalogue/:bridge_id": [
+  404,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/capture-fields": [
+  404,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/support/preview": [
+  404,
+  500
+ ],
+ "GET /api/catalogue/network-store/:networkId": [
+  404,
+  500,
+  503
+ ],
+ "GET /api/catalogue/network/:bridge_id": [
+  404,
+  500,
+  503
+ ],
  "GET /api/ctp/.well-known/ctp.json": [
   200,
   500
@@ -671,6 +693,52 @@
   403,
   404,
   422,
+  500
+ ],
+ "POST /api/catalogue/:bridge_id/login/verify": [
+  400,
+  404,
+  422,
+  429,
+  500
+ ],
+ "POST /api/catalogue/:bridge_id/order/confirm": [
+  400,
+  403,
+  404,
+  409,
+  422,
+  429,
+  500,
+  503
+ ],
+ "POST /api/catalogue/:bridge_id/order/start": [
+  400,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/catalogue/:bridge_id/support": [
+  400,
+  404,
+  422,
+  429,
+  500,
+  502
+ ],
+ "POST /api/catalogue/:bridge_id/support/start": [
+  400,
+  404,
+  422,
+  500
+ ],
+ "POST /api/catalogue/network-store/:networkId/order": [
+  400,
+  401,
+  403,
+  404,
+  409,
   500
  ],
  "POST /api/ctp/deliver": [

@@ -14,25 +14,25 @@ of file each thing is; this says what already does the job.
 | 100 | `withEntity` | `books-hooks.js` |  |
 | 86 | `read` | `books-cashflow.js` | Trips: |
 | 75 | `money` | `bill-privacy.js` |  |
-| 72 | `words` | `variant.browser.js` |  |
+| 73 | `words` | `variant.browser.js` |  |
 | 69 | `answer` | `availability.js` | from March; then nearest. |
 | 65 | `list` | `cap-settings.js` |  |
-| 64 | `catalogue` | `books-manual.js` | GET /events → the grid. |
+| 65 | `catalogue` | `books-manual.js` | GET /events → the grid. |
+| 65 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
-| 64 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 60 | `here` | `screen-id.js` |  |
 | 56 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 56 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
-| 55 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
 | 47 | `again` | `signin-ui.js` |  |
 | 46 | `entry` | `books-store.js` |  |
-| 45 | `next` | `dayopen.js` | the next thing to do — |
-| 45 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 46 | `next` | `dayopen.js` | the next thing to do — |
+| 46 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 44 | `pack` | `books-store.js` |  |
 | 43 | `read` | `cap-print.js` |  |
 | 42 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -63,11 +63,11 @@ of file each thing is; this says what already does the job.
 | 29 | `sentence` | `one-person.js` |  |
 | 29 | `facts` | `bill-steps.js` | MY state_log — |
 | 29 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
+| 29 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
-| 28 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 28 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 27 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
-| 27 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
@@ -101,6 +101,7 @@ of file each thing is; this says what already does the job.
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `account` | `home-facts.js` | OMITTED: |
 | 21 | `keep` | `signin.js` | see. |
+| 21 | `checked` | `books.js` | the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gate |
 | 21 | `owner` | `books.js` |  |
 | 21 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 20 | `form` | `accounts-shell.js` |  |
@@ -108,21 +109,21 @@ of file each thing is; this says what already does the job.
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `entries` | `books-store.js` |  |
 | 20 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
+| 20 | `register` | `regulation.js` | register(pack) → the pack — |
 | 20 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 20 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
-| 20 | `checked` | `books.js` | the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gate |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `card` | `cap-shop.js` |  |
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `more` | `lab-kit.js` | idKey: |
-| 19 | `register` | `regulation.js` | register(pack) → the pack — |
+| 19 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
+| 19 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 18 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `later` | `signin-ui.js` |  |
 | 18 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 18 | `note` | `dbwatch.js` |  |
 | 18 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
-| 18 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 17 | `step` | `cart.js` |  |
 | 17 | `model` | `chit-sheet.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
@@ -134,7 +135,6 @@ of file each thing is; this says what already does the job.
 | 17 | `match` | `itemmatch.js` | actually state. |
 | 17 | `known` | `knownerr.js` | known(err) → { status, body } · null |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
-| 17 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
@@ -163,6 +163,7 @@ of file each thing is; this says what already does the job.
 | 14 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 14 | `update` | `folder-rules.js` |  |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
+| 14 | `orders` | `home-facts.js` | the till said 2 — |
 | 14 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 14 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 14 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
@@ -176,7 +177,6 @@ of file each thing is; this says what already does the job.
 | 13 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 13 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 13 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
-| 13 | `orders` | `home-facts.js` | the till said 2 — |
 | 13 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 13 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 13 | `report` | `raida.js` | register at the one moment it must not. |

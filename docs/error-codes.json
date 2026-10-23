@@ -263,6 +263,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CODE_NOT_ASKED",
+   "status": "400",
+   "title": "No code asked for",
+   "shopkeeper": "Ask for a code first — none was sent to that phone or email at this shop.",
+   "hint": "Tap \"Send code\", then type the code you get.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
+  },
+  {
    "code": "COMMENT_ONLY",
    "status": "403",
    "title": "Comment only",
@@ -306,6 +315,15 @@
    "hint": "-",
    "owner_area": "whatsapp-out",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CONTACT_INVALID",
+   "status": "422",
+   "title": "Phone or email not usable",
+   "shopkeeper": "Enter one phone number or one email — not both, and in a form we can send to.",
+   "hint": "Check the number or the address and try again.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
   },
   {
    "code": "CONTAINER_STORE_MISSING",
@@ -1031,10 +1049,19 @@
    "code": "NETWORK_ORDERS_OFF",
    "status": "403",
    "title": "Network orders off",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Ordering across this network is not switched on here.",
+   "hint": "Order from the shop itself instead.",
    "owner_area": "catalogue",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NETWORK_READ_FAILED",
+   "status": "503",
+   "title": "Network not read",
+   "shopkeeper": "We could not read who is in the network just now. Nothing was changed.",
+   "hint": "Try again in a minute.",
+   "owner_area": "network-membership",
+   "since": "2026-10-23"
   },
   {
    "code": "NOTIF_DISMISS_NOT_MIGRATED",
@@ -1103,8 +1130,8 @@
    "code": "NOT_THIS_NETWORK",
    "status": "403",
    "title": "Not this network",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "You are signed in at a store outside this network.",
+   "hint": "Sign in at this network's store to order.",
    "owner_area": "catalogue",
    "since": "2026-10-22"
   },
@@ -1208,6 +1235,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NO_MATCHING_PRODUCTS",
+   "status": "404",
+   "title": "No matching products",
+   "shopkeeper": "None of those products is sold in this network.",
+   "hint": "Go back to the store and choose again.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_MONEY",
    "status": "422",
    "title": "No money set",
@@ -1215,6 +1251,15 @@
    "hint": "Set the money in Country setup.",
    "owner_area": "catalogue-view",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_OPERATOR",
+   "status": "409",
+   "title": "Network has no operator",
+   "shopkeeper": "This network has nobody to take the order just now.",
+   "hint": "Tell the store; try again later.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
   },
   {
    "code": "NO_PHONE",
@@ -1253,6 +1298,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_SHOPPER_ACCOUNT",
+   "status": "400",
+   "title": "No account here yet",
+   "shopkeeper": "There is no account with that phone or email at this shop yet.",
+   "hint": "Place an order first; it makes your account.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_SHOP_COPY",
    "status": "varies",
    "title": "No shop copy",
@@ -1274,8 +1328,8 @@
    "code": "NO_SUCH_NETWORK",
    "status": "400/404",
    "title": "No such network",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "There is no network store by that name.",
+   "hint": "Check the link you were given.",
    "owner_area": "catalogue",
    "since": "2026-10-22"
   },
@@ -1325,6 +1379,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ORDER_EMPTY",
+   "status": "400",
+   "title": "Order is empty",
+   "shopkeeper": "The order has nothing in it.",
+   "hint": "Add something to the cart and send it again.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ORDER_REJECTED",
+   "status": "409/422",
+   "title": "Order not accepted",
+   "shopkeeper": "The shop could not take this order as it is — the reason says which item.",
+   "hint": "Change that item and send the order again.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ORIGIN_NOT_ALLOWED",
    "status": "403",
    "title": "Origin not allowed",
@@ -1337,8 +1409,8 @@
    "code": "OTP_EXPIRED",
    "status": "400/429",
    "title": "Otp expired",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That code has expired.",
+   "hint": "Ask for a new code.",
    "owner_area": "iddoc-verify",
    "since": "2026-10-22"
   },
@@ -1346,10 +1418,19 @@
    "code": "OTP_LOCKED",
    "status": "400/429",
    "title": "Otp locked",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Too many wrong codes were typed.",
+   "hint": "Ask for a new code.",
    "owner_area": "iddoc-verify",
    "since": "2026-10-22"
+  },
+  {
+   "code": "OTP_WRONG",
+   "status": "400",
+   "title": "Wrong code",
+   "shopkeeper": "That code is not right.",
+   "hint": "Check the code and type it again; the message says how many tries are left.",
+   "owner_area": "otp",
+   "since": "2026-10-23"
   },
   {
    "code": "OVER_LIMIT",
@@ -1568,6 +1649,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SHOP_CLOSED",
+   "status": "403",
+   "title": "Shop closed",
+   "shopkeeper": "This shop is closed and is not taking orders just now.",
+   "hint": "Try again when the shop opens.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
+  },
+  {
    "code": "SHOP_REFUSING",
    "status": "varies",
    "title": "Shop refusing",
@@ -1598,8 +1688,8 @@
    "code": "SIGN_IN_FIRST",
    "status": "401/409",
    "title": "Sign in first",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Sign in at the store to order.",
+   "hint": "Sign in with your phone or email, then order again.",
    "owner_area": "catalogue",
    "since": "2026-10-22"
   },
@@ -1647,6 +1737,24 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SUBMISSION_REJECTED",
+   "status": "422/503",
+   "title": "Form not accepted",
+   "shopkeeper": "The form could not be sent as it is — the reason says what to fix.",
+   "hint": "Fix what it names and send it again; if it says try again, wait a minute.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SUPPORT_NOT_TAKEN",
+   "status": "502",
+   "title": "Report not delivered",
+   "shopkeeper": "Your report did not reach the shop.",
+   "hint": "Contact the shop another way for now.",
+   "owner_area": "catalogue",
+   "since": "2026-10-23"
   },
   {
    "code": "SUSPENSE_NOT_NIL",
