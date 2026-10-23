@@ -77,6 +77,12 @@ const minor = (rupees) => Math.round(rupees * 100);
   buy(9, [line('Waiting stock', 800, 18)], { at: '2026-09-15T05:00:00.000Z', current_status: 'delivered' }); /* not accepted yet */
   buy(10, [line('Accepted stock', 600, 18)], { at: '2026-09-16T05:00:00.000Z', current_status: 'accepted' }); /* ITC 108 */
   rows.push(Object.assign({}, rows[0], { chit_id: uuid(11), role: 'Draft' })); /* a draft is no document */
+  /* what the books never post, and the old return counted (Fable review of #362): */
+  add(12, { purpose: 'general', sender_entity_id: SHOP, all_recipients: [{ role: 'sender', entity_id: SHOP }, { role: 'receiver', entity_id: CUST }], business_json: {},
+    at: '2026-09-18T05:00:00.000Z', line_items: [{ line_id: 'l1', particulars: 'Bill INV-7', quantity: 1, price: 12500, total: 12500 }] }); /* a payment advice: priced words, no rate */
+  add(13, { purpose: 'order', sender_entity_id: CUST, all_recipients: [{ role: 'sender', entity_id: CUST }, { role: 'receiver', entity_id: SHOP }], business_json: {},
+    at: '2026-09-19T05:00:00.000Z', line_items: [{ line_id: 'l1', particulars: 'Brake pad', quantity: 2, price: 500, total: 1000, gst_rate: 18 }] }); /* a storefront order RECEIVED: classify posts nothing */
+  buy(14, [line('Disputed stock', 900, 18)], { at: '2026-09-17T05:00:00.000Z', current_status: 'accepted', disputed: true }); /* accepted but the books hold it for a dispute */
 
   /* ── the two reads tax-copy makes, answered from the fixture (the books' own SQL stays in memory) ── */
   const momentOf = (r, newRule) => Date.parse((newRule && r.business_json && r.business_json.billed_at) || r.sent_at || r.created_at);
@@ -91,7 +97,11 @@ const minor = (rupees) => Math.round(rupees * 100);
       const newRule = /billed_at/.test(sql),
         from = Date.parse(params[1]),
         to = Date.parse(params[2]);
-      return { rows: rows.filter((r) => r.role !== 'Draft' && momentOf(r, newRule) >= from && momentOf(r, newRule) < to) };
+      /* the SQL's EXISTS (tax-copy POSTED_IN_BOOKS_SQL), modelled on the in-memory journal: an unreversed entry of the chit's own, or one that covers it */
+      const held = (r) => !/journal_entry/.test(sql) || X.T.entries.some((j) => j.entity_id === SHOP && !j.reverses_entry_id &&
+        (String(j.source_ref || '').indexOf('chit:' + r.chit_id) === 0 || j.source_ref === 'bill:' + r.chit_id || (j.source_chit_ids || []).indexOf(r.chit_id) >= 0) &&
+        !X.T.entries.some((v) => v.entity_id === SHOP && v.reverses_entry_id === j.entry_id));
+      return { rows: rows.filter((r) => r.role !== 'Draft' && held(r) && momentOf(r, newRule) >= from && momentOf(r, newRule) < to) };
     }
     return ask(text, params);
   };
@@ -107,7 +117,7 @@ const minor = (rupees) => Math.round(rupees * 100);
   const posted = [];
   for (const r of rows.filter((x) => x.role !== 'Draft')) {
     const entry = await TC.entryFor(r, SHOP);
-    const k = K.classify({ chit: r, entry, setting: S, status: r.current_status });
+    const k = K.classify({ chit: r, entry, setting: S, status: r.current_status, disputed: !!r.disputed });
     if (k.kind !== 'post') continue;
     const out = await X.B.postEntry(X.db, SHOP, Object.assign({}, k.event, { source_chit_id: r.chit_id }));
     if (!out.ok) throw new Error('fixture did not post: ' + JSON.stringify(out));
@@ -135,7 +145,7 @@ const minor = (rupees) => Math.round(rupees * 100);
     [books.output.cgst, books.output.sgst, books.input.cgst, books.input.sgst], [10000, 10000, 5400, 5400]);
 
   const rowIds = ledger.rows.map((r) => r.chit_id.slice(-2)).sort();
-  eq('rows: sales 1 3 4 5 6 and the accepted purchase 10 — not the cancelled sale, the rejected or waiting purchase, nor next month\'s bill, nor the draft', rowIds, ['01', '03', '04', '05', '06', '10']);
+  eq('rows: sales 1 3 4 5 6 and the accepted purchase 10 — not the cancelled (reversed) sale, the rejected, waiting or dispute-held purchase, the payment advice, the received storefront order, next month\'s bill, nor the draft', rowIds, ['01', '03', '04', '05', '06', '10']);
   eq('the 23:30 IST bill is September\'s and its document date is the 30th', ledger.rows.filter((r) => r.chit_id.endsWith('03')).map((r) => r.day), ['2026-09-30']);
 
   /* ── 3.1: the boxes add up to the taxable value and split by supply kind ── */
@@ -151,6 +161,11 @@ const minor = (rupees) => Math.round(rupees * 100);
   ['CgstAmt', 'SgstAmt', 'IgstAmt'].forEach((k) => lost.business_json.invoice.ItemList.forEach((item) => { item[k] = 0; }));
   const held = K.classify({ chit: lost, entry: await TC.entryFor(lost, SHOP), setting: S, status: 'delivered' });
   ok('a taxed sale whose place of supply is unknown WAITS in words', held.kind === 'queue' && /cannot be decided/.test(held.why), JSON.stringify(held));
+
+  /* ── C2: the books and the return's SQL honour the same billed_at shape ── */
+  const sent = '2026-09-10T05:00:00.000Z';
+  eq('a malformed free-text billed_at falls back to the send, as the SQL does', [K.postingMoment({ business_json: { billed_at: 'yesterday evening' }, sent_at: sent }), K.postingMoment({ business_json: { billed_at: '2026-09-09 18:35:00' }, sent_at: sent })], [sent, '2026-09-09 18:35:00']);
+  ok('…and tax-copy builds its SQL window from that very shape', require('fs').readFileSync(path.join(H.API, 'lib', 'tax-copy.js'), 'utf8').indexOf('BILLED_AT_SHAPE.source') > 0 && K.BILLED_AT_SHAPE.test('2026-09-09 18:35'));
 
   /* ── the keys an older reader knew are still there ── */
   ok('the old answer keys stay (gstin · ret_period · osup_det.txval/iamt/camt/samt/csamt · itc_net · _cb.net)',
