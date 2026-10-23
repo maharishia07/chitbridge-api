@@ -32108,12 +32108,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not a desk for this population",
-      "message": "that business is not in this population",
+      "message": "the live desk must itself be in the live population (it is in test)",
       "hint": "Pick one of its own."
      },
      "fixture": {
       "error": "Not a desk for this population",
-      "message": "that business is not in this population",
+      "message": "the live desk must itself be in the live population (it is in test)",
       "hint": "Pick one of its own."
      }
     },
@@ -32122,12 +32122,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not a desk for this population",
-      "message": "pg 23514",
+      "message": "the live desk must be a business, not a person",
       "hint": null
      },
      "fixture": {
       "error": "Not a desk for this population",
-      "message": "pg 23514",
+      "message": "the live desk must be a business, not a person",
       "hint": null
      }
     },
@@ -32236,12 +32236,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not your network",
-      "message": "that team is outside your network",
+      "message": "work can only be routed inside your own network",
       "hint": "Pick a team of your own network."
      },
      "fixture": {
       "error": "Not your network",
-      "message": "that team is outside your network",
+      "message": "work can only be routed inside your own network",
       "hint": "Pick a team of your own network."
      }
     },
@@ -32250,12 +32250,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not your network",
-      "message": "pg 23514",
+      "message": "work can only be routed inside your own network",
       "hint": null
      },
      "fixture": {
       "error": "Not your network",
-      "message": "pg 23514",
+      "message": "work can only be routed inside your own network",
       "hint": null
      }
     },

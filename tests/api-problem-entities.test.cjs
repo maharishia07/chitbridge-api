@@ -190,6 +190,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const leaks = (key) => JSON.stringify(recording[key].body || {}).includes('vault');
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
+  const SEC94 = ['me-capabilities-fail-leaks-nothing', 'mis-counts-fail-leaks-nothing', 'routing-plain-check-violation', 'desk-plain-check-violation'];
+  const thrown = Object.keys(recording).filter((key) => SEC94.some((id) => key.endsWith('|' + id)));
+  check('SEC-94: a thrown error never appears in the body, 200 or 4xx or 5xx (' + thrown.length + ' of ' + SEC94.length + ' scenes ran)', thrown.length === SEC94.length && thrown.every((key) => !/vault|secret_role|42501|connected as|superuser=/.test(JSON.stringify(recording[key].body || {}))), thrown.map((key) => [key, recording[key].status, (JSON.stringify(recording[key].body).match(/.{30}(vault|secret_role|42501|connected as|superuser=).{30}/) || [])[0]]));
   check('a 2xx is never a Problem: every success answer keeps its own shape', Object.keys(recording).filter((key) => recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));

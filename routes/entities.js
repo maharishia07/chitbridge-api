@@ -13,6 +13,7 @@ const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
 
@@ -522,7 +523,7 @@ router.get('/me', auth, async (req, res) => {
       capabilities_debug =
         (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8) + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
     } catch (e) {
-      capabilities_debug = 'ERR: ' + String((e && e.message) || e).slice(0, 140);
+      capabilities_debug = 'unavailable'; log.fellBack('entities GET /me: the capability read failed — carried on without it', e);
     }
     // NOTE: the web client's api() runs every body through unwrap(), which returns j.entity for /me and
     // DROPS sibling keys. So the capability selection MUST ride INSIDE entity to reach SESSION.capabilities
@@ -1601,7 +1602,7 @@ router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   } catch (e) {
     if (e.code === '42P01') return problem(req, res, { status: 409, ...contract.words.routingNotThere() });
     /* ⚠️ b251 refuses a team outside your own network, and that refusal is a sentence, not a stack trace. */
-    if (e.code === '23514') return problem(req, res, { status: 409, ...contract.words.teamOutsideNetwork(e) });
+    if (isTriggerRefusal(e)) return problem(req, res, { status: 409, ...contract.words.teamOutsideNetwork(e) });
     if (e.code === '23503') return problem(req, res, { status: 409, ...contract.words.folderGone() });
     console.error('routing write:', e.code || '', e.message);
     problem(req, res, failed(e, req, 'Could not save it'));
@@ -1686,7 +1687,7 @@ router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populatio
     if (e.code === '42703' || e.code === '42P01') return problem(req, res, { status: 409, ...contract.words.deskColumnMissing() });
     /* ⚠️ b252's trigger refuses a desk outside the population it serves, or one that is not a business. That
        refusal is a sentence somebody can act on, not a stack trace. */
-    if (e.code === '23514') return problem(req, res, { status: 409, ...contract.words.notADesk(e) });
+    if (isTriggerRefusal(e)) return problem(req, res, { status: 409, ...contract.words.notADesk(e) });
     console.error('population desk:', e.code || '', e.message);
     problem(req, res, failed(e, req, 'Could not set the desk'));
   }
@@ -2193,9 +2194,9 @@ router.get('/mis', auth, async (req, res) => {
            ⚠️⚠️ THE CODE ALONE IS NOT ENOUGH. 42501 says "permission denied" and stops there — denied on the
            SCHEMA, on the FUNCTION, or on a table INSIDE it are three different faults with three different
            fixes, and postgres puts which one in the message. Reporting only e.code sent me guessing at a
-           question the database had already answered. This route is root-only, so the message is safe here
-           and nowhere else. [[feedback-silence-is-the-bug]] */
-        counts_error = (e.code || 'unknown') + (e.message ? ' — ' + e.message : '');
+           question the database had already answered. The message goes to the log (fellBack), never into the
+           answer (SEC-94): the body carries the code word COUNTS_UNAVAILABLE. [[feedback-silence-is-the-bug]] */
+        counts_error = 'COUNTS_UNAVAILABLE'; log.fellBack('entities GET /mis: the counts read failed — carried on without it', e);
         /* ⭐⭐ AND WHO WAS REFUSED. b241's own verification query returned real counts when Athi ran it, so the
            function reads through FORCE RLS correctly and 42501 can only be a GRANT — which means the API is
            not connecting as the role the migration granted to. Every migration in this repo says `TO cb_app`;
@@ -2203,7 +2204,7 @@ router.get('/mis', auth, async (req, res) => {
            The database knows. Asking it beats reading a connection string out of a deploy dashboard. */
         try {
           const who = await query("SELECT current_user AS u, current_setting('is_superuser') AS su");
-          counts_error += ' [connected as ' + who.rows[0].u + ', superuser=' + who.rows[0].su + ']';
+          log.warn('entities GET /mis: the counts read was refused for this database role', { id: req.id, role: who.rows[0].u, superuser: who.rows[0].su }); /* the log carries who was refused, the answer does not */
         } catch (whoFailed) {
           log.fellBack(
             'entities GET /mis: the read failed — carried on without it',
