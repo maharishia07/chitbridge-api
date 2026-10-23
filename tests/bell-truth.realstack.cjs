@@ -21,6 +21,7 @@ const { DB, j, ok, kase, expect, freshShop, finish } = H;
 const RUN = 'bl' + (Date.now() % 1e10).toString(36);
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000';
 const MADE_UP_UUID = '123e4567-e89b-42d3-a456-426614174000';
+const NO_EVENT_UUID = '00000000-0000-4000-8000-0000000000e1'; /* stands in for the other shop's log_id when its fresh shop has no event yet */
 let pg = null;
 
 /** the first frames of a stream, never holding it open: the status, the type and the text up to 'hello' (the socket is closed after) */
@@ -74,7 +75,7 @@ const same = (left, right) => left.status === right.status && JSON.stringify(Obj
 
     await kase('BELL-02', 'POST /dismiss: another shop\'s real log_id, an unknown uuid and a made-up one answer alike (no foreign key, no oracle)', async () => {
       const foreignLog = (await pg.query(`SELECT log_id FROM state_log WHERE entity_id = $1 LIMIT 1`, [A.entity])).rows[0];
-      const real = foreignLog ? foreignLog.log_id : UNKNOWN_UUID; /* a fresh shop may have no event yet: then the "real" id is an unknown one and the case still proves the three answers alike */
+      const real = foreignLog ? foreignLog.log_id : NO_EVENT_UUID; /* a fresh shop may have no event yet: then the "real" id is a THIRD unknown uuid, never UNKNOWN_UUID itself (S41 run 1: the same uuid twice made the second dismissal an ON CONFLICT no-op, cleared:0, a false oracle) */
       const noFk = (await pg.query(`SELECT count(*)::int AS n FROM pg_constraint WHERE conrelid = 'notif_dismissed'::regclass AND contype = 'f'`)).rows[0].n;
       expect(noFk === 0, 'notif_dismissed has ' + noFk + ' foreign key(s): the sweep\'s model of it (none) is wrong, and the oracle question must be asked again');
       const foreign = await j('/api/notifications/dismiss', { method: 'POST', token: B.token, body: { log_ids: [real] } });

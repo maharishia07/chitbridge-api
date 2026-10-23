@@ -7232,7 +7232,7 @@
    "path": "/api/events/stats",
    "owner_area": "events",
    "file": "routes/events.js",
-   "line": 40,
+   "line": 42,
    "hash": "434e24b16c6ea9ee",
    "columns": {
     "schema_in": true,
@@ -7282,7 +7282,7 @@
    "path": "/api/events/stream",
    "owner_area": "events",
    "file": "routes/events.js",
-   "line": 28,
+   "line": 30,
    "hash": "9950def900b470d4",
    "columns": {
     "schema_in": true,
@@ -10269,7 +10269,7 @@
    "path": "/api/notifications",
    "owner_area": "notifications",
    "file": "routes/notifications.js",
-   "line": 52,
+   "line": 54,
    "hash": "7493137af8579513",
    "columns": {
     "schema_in": true,
@@ -22134,7 +22134,7 @@
    "path": "/api/events/ticket",
    "owner_area": "events",
    "file": "routes/events.js",
-   "line": 23,
+   "line": 25,
    "hash": "a785aad8d9b3e459",
    "columns": {
     "schema_in": true,
@@ -24469,7 +24469,7 @@
    "path": "/api/notifications/dismiss",
    "owner_area": "notifications",
    "file": "routes/notifications.js",
-   "line": 208,
+   "line": 210,
    "hash": "eec8a3ea560c4282",
    "columns": {
     "schema_in": true,
@@ -24519,7 +24519,7 @@
    "path": "/api/notifications/seen",
    "owner_area": "notifications",
    "file": "routes/notifications.js",
-   "line": 179,
+   "line": 181,
    "hash": "de2df848572c47dc",
    "columns": {
     "schema_in": true,
