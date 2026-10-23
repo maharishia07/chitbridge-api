@@ -52,7 +52,7 @@
    "title": "Already recorded",
    "shopkeeper": "That is already recorded.",
    "hint": "Refresh the list: it is already there.",
-   "owner_area": "books-contract",
+   "owner_area": "books",
    "since": "2026-10-23"
   },
   {
@@ -288,6 +288,15 @@
    "hint": "-",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CONNECTOR_HAS_NO_KEY",
+   "status": "400",
+   "title": "Connector has no key",
+   "shopkeeper": "This connector was set up without a key, so there is nothing to approve.",
+   "hint": "Download the kit again while signed in as the owner.",
+   "owner_area": "integrations",
+   "since": "2026-10-23"
   },
   {
    "code": "CONSENT_UNREADABLE",
@@ -623,6 +632,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "INTEGRATION_BAD_REQUEST",
+   "status": "400",
+   "title": "Request not usable",
+   "shopkeeper": "Something this needs is missing or not valid.",
+   "hint": "Check the order or the fields named, then send it again.",
+   "owner_area": "integrations",
+   "since": "2026-10-23"
+  },
+  {
    "code": "INTERNAL",
    "status": "500",
    "title": "Something went wrong",
@@ -674,6 +692,15 @@
    "shopkeeper": "A line names an item this shop does not sell.",
    "hint": "Check the item id or code.",
    "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "KEY_CANNOT_DECIDE",
+   "status": "403",
+   "title": "A key cannot decide this",
+   "shopkeeper": "A connector cannot decide this on its own. Sign in as a person.",
+   "hint": "Sign in to the shop and do it there.",
+   "owner_area": "integrations",
    "since": "2026-10-23"
   },
   {
@@ -841,9 +868,9 @@
   {
    "code": "NOT_FOR_COUNTRY",
    "status": "varies",
-   "title": "Not for country",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not for your country",
+   "shopkeeper": "This is not offered for a shop in your country.",
+   "hint": "The message names what to use instead.",
    "owner_area": "integrations",
    "since": "2026-10-22"
   },
@@ -903,19 +930,19 @@
   },
   {
    "code": "NOT_YET",
-   "status": "varies",
-   "title": "Not yet",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Not built yet",
+   "shopkeeper": "This connector is not built yet.",
+   "hint": "Use the File connector (CSV) or the Counter, and ask for it under Help.",
    "owner_area": "integrations",
    "since": "2026-10-22"
   },
   {
    "code": "NOT_YET_FOR_COUNTRY",
-   "status": "varies",
-   "title": "Not yet for country",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Not yet for your country",
+   "shopkeeper": "This connector is not ready for your country yet.",
+   "hint": "Use the File connector (CSV) or the Counter.",
    "owner_area": "integrations",
    "since": "2026-10-22"
   },
@@ -1044,6 +1071,15 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_STREAM_NAMED",
+   "status": "400",
+   "title": "No stream named",
+   "shopkeeper": "Pick at least one stream to hand over.",
+   "hint": "Choose who carries products, stock or orders, then save.",
+   "owner_area": "integrations",
+   "since": "2026-10-23"
   },
   {
    "code": "NO_SUCH_NETWORK",

@@ -159,6 +159,456 @@
     }
    ]
   },
+  "GET /api/integrations/catalogue": {
+   "answers": [
+    {
+     "scenario": "catalogue-pack-fails",
+     "status": 500,
+     "body_keys": {},
+     "fixture": {},
+     "note": "before slice 1c a failing country pack was an unhandled rejection: the request never answered. Now a 500 Problem; no old keys to keep"
+    }
+   ]
+  },
+  "GET /api/integrations/docs/:id": {
+   "answers": [
+    {
+     "scenario": "docs-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "docs-disk-fails",
+     "status": 500,
+     "body_keys": {},
+     "fixture": {},
+     "note": "before slice 1c express answered this 500 with an HTML page: no old keys to keep"
+    }
+   ]
+  },
+  "GET /api/integrations/download/:id": {
+   "answers": [
+    {
+     "scenario": "download-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "download-not-for-country",
+     "status": 409,
+     "body_keys": {
+      "error": "The Tally connector is built on Tally's Indian GST books, so it is not offered for a Australia shop. Use the File connector (CSV) or the Counter.",
+      "code": "NOT_FOR_COUNTRY",
+      "message": "The Tally connector is built on Tally's Indian GST books, so it is not offered for a Australia shop. Use the File connector (CSV) or the Counter."
+     },
+     "fixture": {
+      "error": "The Tally connector is built on Tally's Indian GST books, so it is not offered for a Australia shop. Use the File connector (CSV) or the Counter.",
+      "code": "NOT_FOR_COUNTRY",
+      "message": "The Tally connector is built on Tally's Indian GST books, so it is not offered for a Australia shop. Use the File connector (CSV) or the Counter."
+     }
+    },
+    {
+     "scenario": "download-pack-fails",
+     "status": 500,
+     "body_keys": {},
+     "fixture": {},
+     "note": "before slice 1c a failing country pack was an unhandled rejection: the request never answered. Now a 500 Problem; no old keys to keep"
+    }
+   ]
+  },
+  "GET /api/integrations/kit": {
+   "answers": [
+    {
+     "scenario": "kit-disk-fails",
+     "status": 500,
+     "body_keys": {},
+     "fixture": {},
+     "note": "before slice 1c express answered this 500 with an HTML page: no old keys to keep"
+    }
+   ]
+  },
+  "GET /api/integrations/kit/*": {
+   "answers": [
+    {
+     "scenario": "kitfile-not-in-kit",
+     "status": 404,
+     "body_keys": {
+      "error": "Not part of the kit"
+     },
+     "fixture": {
+      "error": "Not part of the kit"
+     }
+    },
+    {
+     "scenario": "kitfile-disk-fails",
+     "status": 500,
+     "body_keys": {},
+     "fixture": {},
+     "note": "before slice 1c express answered this 500 with an HTML page: no old keys to keep"
+    }
+   ]
+  },
+  "GET /api/integrations/profile-map": {
+   "answers": [
+    {
+     "scenario": "profilemap-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/integrations/reconcile": {
+   "answers": [
+    {
+     "scenario": "reconcile-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/integrations/status": {
+   "answers": [
+    {
+     "scenario": "status-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/integrations/stock/:handle": {
+   "answers": [
+    {
+     "scenario": "stock-unknown-shop",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "stock-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/integrations/streams": {
+   "answers": [
+    {
+     "scenario": "streams-policy-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/integrations/:actor_id/approve": {
+   "answers": [
+    {
+     "scenario": "approve-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "A key cannot approve itself — sign in."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "A key cannot approve itself — sign in."
+     }
+    },
+    {
+     "scenario": "approve-no-actor",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "approve-no-key",
+     "status": 400,
+     "body_keys": {
+      "error": "No key",
+      "message": "This connector has no key to approve"
+     },
+     "fixture": {
+      "error": "No key",
+      "message": "This connector has no key to approve"
+     }
+    },
+    {
+     "scenario": "approve-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/integrations/ask/:handle/stock": {
+   "answers": [
+    {
+     "scenario": "ask-unknown-shop",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "ask-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/integrations/books": {
+   "answers": [
+    {
+     "scenario": "books-no-chit",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "chit_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "chit_id required"
+     }
+    },
+    {
+     "scenario": "books-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "books-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/integrations/books/skip": {
+   "answers": [
+    {
+     "scenario": "skip-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "a connector cannot decide this — sign in"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "a connector cannot decide this — sign in"
+     }
+    },
+    {
+     "scenario": "skip-no-chit",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "chit_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "chit_id required"
+     }
+    },
+    {
+     "scenario": "skip-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "skip-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/integrations/heartbeat": {
+   "answers": [
+    {
+     "scenario": "heartbeat-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/integrations/profile": {
+   "answers": [
+    {
+     "scenario": "profile-no-fields",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "fields{} required — keys: legal_name, trade_name, gstin, pan, reg_type, state, address, city, pincode, country, phone, email, currency, upi_id, bank_account, ifsc"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "fields{} required — keys: legal_name, trade_name, gstin, pan, reg_type, state, address, city, pincode, country, phone, email, currency, upi_id, bank_account, ifsc"
+     }
+    },
+    {
+     "scenario": "profile-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/integrations/streams": {
+   "answers": [
+    {
+     "scenario": "putstreams-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "a connector cannot reassign its own streams"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "a connector cannot reassign its own streams"
+     }
+    },
+    {
+     "scenario": "putstreams-none-named",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name at least one stream"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name at least one stream"
+     }
+    },
+    {
+     "scenario": "putstreams-policy-refuses",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Unknown or invalid policy flag: stream_owner"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Unknown or invalid policy flag: stream_owner"
+     }
+    },
+    {
+     "scenario": "putstreams-policy-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "note": "before slice 1c this 500 sent the raw error text as message (a leak); the key stays, its value is the safe sentence"
+    }
+   ]
+  },
   "DELETE /api/books/recurring/:id": {
    "answers": [
     {

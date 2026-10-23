@@ -192,6 +192,49 @@
   404,
   500
  ],
+ "GET /api/integrations/catalogue": [
+  401,
+  500
+ ],
+ "GET /api/integrations/docs/:id": [
+  404,
+  500
+ ],
+ "GET /api/integrations/download/:id": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "GET /api/integrations/kit": [
+  401,
+  500
+ ],
+ "GET /api/integrations/kit/*": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/integrations/profile-map": [
+  401,
+  500
+ ],
+ "GET /api/integrations/reconcile": [
+  401,
+  500
+ ],
+ "GET /api/integrations/status": [
+  401,
+  500
+ ],
+ "GET /api/integrations/stock/:handle": [
+  404,
+  500
+ ],
+ "GET /api/integrations/streams": [
+  401,
+  500
+ ],
  "GET /api/invoice/:chit_id": [
   401,
   403,
@@ -530,6 +573,43 @@
   422,
   500
  ],
+ "POST /api/integrations/:actor_id/approve": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/integrations/ask/:handle/stock": [
+  404,
+  500
+ ],
+ "POST /api/integrations/books": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/integrations/books/skip": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/integrations/heartbeat": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/integrations/profile": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/invoice/build": [
   400,
   401,
@@ -553,6 +633,13 @@
   400,
   401,
   403,
+  500
+ ],
+ "PUT /api/integrations/streams": [
+  400,
+  401,
+  403,
+  422,
   500
  ]
 }

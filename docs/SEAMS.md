@@ -24,8 +24,8 @@ of file each thing is; this says what already does the job.
 | 56 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 56 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 55 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 54 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
@@ -98,13 +98,13 @@ of file each thing is; this says what already does the job.
 | 21 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `account` | `home-facts.js` | OMITTED: |
+| 21 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 21 | `keep` | `signin.js` | see. |
 | 21 | `owner` | `books.js` |  |
 | 21 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 20 | `form` | `accounts-shell.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `entries` | `books-store.js` |  |
-| 20 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 20 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 20 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 19 | `renderApp` | `app.html` |  |
@@ -150,6 +150,7 @@ of file each thing is; this says what already does the job.
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `connectors` | `home-facts.js` | declare (said in words — |
 | 15 | `governance` | `home-facts.js` |  |
+| 15 | `register` | `regulation.js` | register(pack) → the pack — |
 | 15 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `control` | `cap-settings.js` |  |
@@ -162,7 +163,6 @@ of file each thing is; this says what already does the job.
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 14 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
-| 14 | `register` | `regulation.js` | register(pack) → the pack — |
 | 14 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
