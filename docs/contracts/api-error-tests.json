@@ -10,6 +10,12 @@
   404,
   500
  ],
+ "DELETE /api/channels/:id": [
+  401,
+  404,
+  500,
+  503
+ ],
  "DELETE /api/chits/:chit_id": [
   401,
   404,
@@ -306,6 +312,15 @@
   404,
   500,
   503
+ ],
+ "GET /api/channels": [
+  401,
+  500
+ ],
+ "GET /api/channels/outbound": [
+  400,
+  401,
+  500
  ],
  "GET /api/chits/:chit_id": [
   401,
@@ -1484,6 +1499,52 @@
   401,
   402,
   429,
+  500,
+  503
+ ],
+ "POST /api/channels": [
+  400,
+  401,
+  409,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/approve": [
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/auto-raise": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/provider-ref": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/revoke": [
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/template": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/template-approve": [
+  400,
+  403,
+  404,
   500,
   503
  ],
