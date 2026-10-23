@@ -56,7 +56,9 @@ async function countryOfEntity(entity_id) {
 /* Cached "does the database actually have this?" probe — cheaper than a savepoint and truer than a guess. */
 const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
-const { validate, sanitise } = require('../middleware/validate');
+const { validate, sanitise, schemaValidate } = require('../middleware/validate'); // S9: a request is checked against the route's own schema (validate stays for the routes not yet moved)
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { said, failed, operationFor, pathsOf } = require('../lib/chits-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
@@ -86,6 +88,11 @@ const billPrivacy = require('../lib/bill-privacy');
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
 const entityId = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/chits-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
 
 // ── B1 RLS — the crossing helper ─────────────────────────────────────────────────────────────────────────
 // A few chit operations legitimately cross the entity boundary (log an event into every/selected participant,
@@ -2660,7 +2667,7 @@ function chitFilters(req, where, params) {
   return where;
 }
 
-router.get('/sent', auth, async (req, res) => {
+router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* PERF1: as the Inbox — a server-side maximum, keyset after page 1, the count on page 1 only */
@@ -2719,13 +2726,13 @@ router.get('/sent', auth, async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Sent list error:', err.message);
-    res.status(500).json({ error: 'Failed to get sent items', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get sent items'));
   }
 });
 
 // GET /chits/folder?view=drafts|trash|archive — mailbox folders (both directions), paginated + searchable + sortable.
 // Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
-router.get('/folder', auth, async (req, res) => {
+router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
@@ -2797,13 +2804,13 @@ router.get('/folder', auth, async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Folder error:', err.message);
-    res.status(500).json({ error: 'Failed to get folder', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get folder'));
   }
 });
 
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
-router.get('/rollup', auth, async (req, res) => {
+router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const groupBy = req.query.group_by === 'state' ? 'state' : 'counterparty';
@@ -2855,7 +2862,7 @@ router.get('/rollup', auth, async (req, res) => {
     res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
-    res.status(500).json({ error: 'Rollup failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Rollup failed'));
   }
 });
 
@@ -2897,7 +2904,7 @@ async function cancelCols() {
   return (req ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '') + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
-router.get('/inbox', auth, async (req, res) => {
+router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
     const entity_id = entityId(req);
@@ -3056,7 +3063,7 @@ router.get('/inbox', auth, async (req, res) => {
     ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
   } catch (err) {
     console.error('Inbox error:', err.message);
-    res.status(500).json({ error: 'Failed to get inbox', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get inbox'));
   }
 });
 
@@ -3140,7 +3147,7 @@ router.get('/unread', auth, async (req, res) => {
     );
     res.json({ unread: r.rows.map((x) => x.chit_id) });
   } catch (err) {
-    res.status(500).json({ error: 'Unread failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Unread failed'));
   }
 });
 
@@ -3151,7 +3158,7 @@ router.get('/unread', auth, async (req, res) => {
 function orderBilledSql(header) {
   return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
 }
-router.get('/:chit_id', auth, async (req, res) => {
+router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
   const _wantTiming = String(req.query.timing || '') === '1';
@@ -3273,10 +3280,7 @@ router.get('/:chit_id', auth, async (req, res) => {
     });
 
     if (data.notFound) {
-      return res.status(404).json({
-        error: 'Not found',
-        message: 'Chit not found or you do not have access'
-      });
+      return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
     }
 
     // Participants panel = a deliberate CROSS-entity read (who has read/accepted). Under RLS it is served by the
@@ -3635,7 +3639,7 @@ router.get('/:chit_id', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Chit detail error:', err.message);
-    res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get chit'));
   }
 });
 
@@ -3703,16 +3707,16 @@ router.post('/:chit_id/costs', auth, async (req, res) => {
 });
 
 // GET — everything if permitted; otherwise ONLY the caller's own rows and no totals at all.
-router.get('/:chit_id/costs', auth, async (req, res) => {
+router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const permitted = await cost.canRead(req, entity_id);
     const out = await cost.read(entity_id, req.params.chit_id, { permitted, actor_id: req.identity.identity_id });
-    if (out === null) return res.status(503).json({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' });
+    if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' }, 'CHIT_NOT_MIGRATED') });
     res.json(out);
   } catch (err) {
     console.error('Cost read error:', err.message);
-    res.status(500).json({ error: 'Failed to read costs', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to read costs'));
   }
 });
 
@@ -4001,13 +4005,13 @@ router.post('/:chit_id/raida/:raida_id/dispute', auth, async (req, res) => {
  * { use?, lines? } records a choice — merged, and refused (409) once the bill is accepted. Goods-in may carry the same
  * `use` on deliver-lines.
  */
-router.get('/:chit_id/use', auth, async (req, res) => {
+router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const copy = await taxCopy.copyOf(req.params.chit_id, entity_id);
-    if (!copy) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    if (!copy) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') });
     if (!taxCopy.billReceived(copy, entity_id))
-      return res.status(409).json({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' });
+      return problem(req, res, { status: 409, ...said({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' }, 'CHIT_NOT_A_BILL') });
     const eff = await require('../lib/bill-use').forCopy(entity_id, copy);
     res.json(
       Object.assign(
@@ -4016,7 +4020,7 @@ router.get('/:chit_id/use', auth, async (req, res) => {
       )
     );
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
 router.put('/:chit_id/use', auth, async (req, res) => {
@@ -4385,7 +4389,7 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
 //
 // ⚠️ READS THE CATALOGUE, WRITES NOTHING TO IT. Standing rule since the raise path: a message never creates a
 // product. Here it does not create one either — a human picks from what exists, or types free text.
-router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
+router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalogue-overlay'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const q = String(req.query.q || '').trim();
@@ -4474,7 +4478,7 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Catalogue overlay error:', err.message);
-    res.status(500).json({ error: 'Failed to load catalogue', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
 /** the quote a Mark-paid is held against: the summary's total, else the frozen invoice's grand total, else null */
@@ -5286,7 +5290,7 @@ router.post(
 
 // ─── GET /chits/:chit_id/messages ────────────────────────────
 // thread_type query: 'all' | 'external' | 'internal'
-router.get('/:chit_id/messages', auth, async (req, res) => {
+router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
   const thread_filter = req.query.thread_type || 'all';
@@ -5314,7 +5318,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
       }
       return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
     });
-    if (result === null) return res.status(403).json({ error: 'Forbidden' });
+    if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
 
     const msgIds = result.rows.map((item) => item.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', [])); // per-entity: caller's own copies
@@ -5329,7 +5333,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
   } catch (err) {
     console.error('Get messages error:', err.message);
     if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
-    res.status(500).json({ error: 'Get messages failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Get messages failed'));
   }
 });
 
@@ -5616,7 +5620,7 @@ async function finishDisputes(rows, entity_id, me) {
     };
   });
 }
-router.get('/:chit_id/disputes', auth, async (req, res) => {
+router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
 
@@ -5630,7 +5634,7 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
-    if (!own) return res.status(403).json({ error: 'Forbidden' });
+    if (!own) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
     const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);
@@ -5647,7 +5651,7 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
-    res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Get disputes failed'));
   }
 });
 
@@ -5662,7 +5666,7 @@ const FAULT_SUMMARY = {
   defunct: 'Counterparty no longer active',
   absent: 'No counterparty copy found on this chit'
 };
-router.get('/:chit_id/diagnosis', auth, async (req, res) => {
+router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
   try {
@@ -5674,7 +5678,7 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
       const nestedDet = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
       return { hdr: nestedHdr, det: nestedDet };
     });
-    if (!rls) return res.status(403).json({ error: 'Forbidden' });
+    if (!rls) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
     const { hdr, det } = rls;
     let itemLabel = null;
     try {
@@ -5735,7 +5739,7 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ chit_id, chit_subject: null, diagnoses: [], count: 0 });
     console.error('Diagnosis error:', err.message);
-    res.status(500).json({ error: 'Diagnosis failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Diagnosis failed'));
   }
 });
 
@@ -5882,7 +5886,7 @@ router.put(
  * rows · total · page · limit · counts { open, resolved } and, per row, others · mine · actions.resolve (finishDisputes above).
  * Trips: ONE withEntity transaction (the page + the counts) + ONE roster read for the whole page (was one per row).
  */
-router.get('/disputes/queue', auth, async (req, res) => {
+router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (req, res) => {
   const entity_id = entityId(req);
   const list = req.query || {};
   const status = ['open', 'resolved', 'all'].includes(list.status) ? list.status : 'open';
@@ -5955,7 +5959,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
         code: 'DISPUTES_NOT_SET_UP'
       });
     }
-    res.status(500).json({ error: 'Get dispute queue failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Get dispute queue failed'));
   }
 });
 
@@ -6541,11 +6545,11 @@ router.post(
 // contains :id. RLS-scoped — the caller sees only children they CO-HOLD, so a rival's downstream edge is invisible
 // by construction (the TR-6 privacy floor). Proves the forward link is a SET: a fan-out node returns all N children.
 // The cross-entity, multi-hop operator WALK (past parties you don't co-hold) is Fragment 2's participant-gated definer.
-router.get('/:id/children', auth, async (req, res) => {
+router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, res) => {
   try {
     const me = entityId(req);
     const id = req.params.id;
-    if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
+    if (!trace.UUID_RE.test(id)) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'Invalid chit id' }, 'CHIT_BAD_REQUEST') });
     const r = await withEntity(me, (db) =>
       db.query(
         `SELECT chit_id, entity_id, direction, manual_subject, auto_subject,
@@ -6558,7 +6562,7 @@ router.get('/:id/children', auth, async (req, res) => {
     );
     res.json({ parent_chit_id: id, count: r.rows.length, children: r.rows });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to get children', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get children'));
   }
 });
 
@@ -6568,11 +6572,11 @@ router.get('/:id/children', auth, async (req, res) => {
 // whole subtree — and a rival sees nothing of another's chain (TR-6, the moat, by construction). forward =
 // exposure / recall set (BFS; the visited-set collapses diamonds + cycles); backward = provenance to source.
 // A hop the caller doesn't co-hold is an honest dead-end (the branch stops), never a silent skip to grandchildren.
-router.get('/:id/trace', auth, async (req, res) => {
+router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) => {
   try {
     const me = entityId(req);
     const id = req.params.id;
-    if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
+    if (!trace.UUID_RE.test(id)) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'Invalid chit id' }, 'CHIT_BAD_REQUEST') });
     const dir = req.query.dir === 'backward' ? 'backward' : 'forward';
     const MAX_NODES = 2000,
       MAX_DEPTH = 40;
@@ -6581,7 +6585,7 @@ router.get('/:id/trace', auth, async (req, res) => {
     const net = typeof req.query.network === 'string' && req.query.network.trim() ? req.query.network.trim() : null;
     const g = traceGraph(me, net);
     const seed = await g.fetch1(id);
-    if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
+    if (!seed.rows[0]) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not visible to you' }, 'NOT_FOUND') });
     g.put(seed.rows[0], 0);
 
     if (dir === 'forward') {
@@ -6614,7 +6618,7 @@ router.get('/:id/trace', auth, async (req, res) => {
     const path = await traceBackward(g, id, MAX_DEPTH);
     return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...g.nodes.values()], edges: g.edges });
   } catch (err) {
-    res.status(500).json({ error: 'Trace walk failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Trace walk failed'));
   }
 });
 
@@ -6768,7 +6772,7 @@ async function traceBackward(g, id, MAX_DEPTH) {
 // ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
 // List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
 // RLS-scoped — the operator sees its network's batches, a party sees only its own; origins listed first.
-router.get('/trace/batches', auth, async (req, res) => {
+router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req, res) => {
   try {
     const me = entityId(req);
     const toName = traceToName; /* the ONE label for a handoff — shared with the walk (T2-SPLIT) */
@@ -6800,7 +6804,7 @@ router.get('/trace/batches', auth, async (req, res) => {
     }
     res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
-    res.status(500).json({ error: 'Failed to list batches', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to list batches'));
   }
 });
 
@@ -6809,11 +6813,11 @@ router.get('/trace/batches', auth, async (req, res) => {
 // even if the explicit links weren't followed. Finds the caller's chits carrying that batch, then rebuilds the
 // directed chain by PARTY-CHAINING: X → Y when the receiver of X is the sender of Y. No parent_chit_ids used.
 // RLS-scoped (you match only within what you hold). Same response shape as the walk, so the tree render is reused.
-router.get('/trace/by-batch', auth, async (req, res) => {
+router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (req, res) => {
   try {
     const me = entityId(req);
     const q = String(req.query.q || '').trim();
-    if (!q) return res.status(400).json({ error: 'Bad request', message: 'A batch value (q) is required' });
+    if (!q) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'A batch value (q) is required' }, 'CHIT_BAD_REQUEST') });
     const { r, matched_on } = await batchRows(me, q);
     const items = batchItems(r.rows);
     const { edges, nodeArr, kidsMap, nmap } = batchChain(items);
@@ -6841,7 +6845,7 @@ router.get('/trace/by-batch', auth, async (req, res) => {
       edges
     });
   } catch (err) {
-    res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Batch trace failed'));
   }
 });
 
@@ -7007,10 +7011,11 @@ router.get('/trace/networks', auth, async (req, res) => {
     );
     res.json({ networks: r.rows.map((x) => ({ network_id: x.network_id, is_operator: !!x.is_operator, edges: Number(x.edges) })) });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to list networks', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to list networks'));
   }
 });
 
+router.openapi = { paths: pathsOf(), schemas: {} };
 router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;

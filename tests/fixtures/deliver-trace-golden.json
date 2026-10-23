@@ -585,7 +585,14 @@
   "status": 400,
   "body": {
    "error": "Bad request",
-   "message": "Invalid chit id"
+   "message": "Invalid chit id",
+   "type": "https://chitbridge.com/problems/chit_bad_request",
+   "title": "Chit request not accepted",
+   "status": 400,
+   "code": "CHIT_BAD_REQUEST",
+   "detail": "Invalid chit id",
+   "hint": "Read the message, fix what it names and try again.",
+   "request_id": null
   },
   "calls": []
  },
@@ -593,7 +600,14 @@
   "status": 404,
   "body": {
    "error": "Not found",
-   "message": "Chit not visible to you"
+   "message": "Chit not visible to you",
+   "type": "https://chitbridge.com/problems/not_found",
+   "title": "Not found",
+   "status": 404,
+   "code": "NOT_FOUND",
+   "detail": "Chit not visible to you",
+   "hint": "Check the address or the name and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -1134,7 +1148,14 @@
   "status": 400,
   "body": {
    "error": "Bad request",
-   "message": "A batch value (q) is required"
+   "message": "A batch value (q) is required",
+   "type": "https://chitbridge.com/problems/chit_bad_request",
+   "title": "Chit request not accepted",
+   "status": 400,
+   "code": "CHIT_BAD_REQUEST",
+   "detail": "A batch value (q) is required",
+   "hint": "Read the message, fix what it names and try again.",
+   "request_id": null
   },
   "calls": []
  },

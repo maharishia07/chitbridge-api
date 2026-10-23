@@ -8512,6 +8512,638 @@
      }
     }
    ]
+  },
+  "GET /api/chits/:chit_id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get chit",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get chit",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/costs": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to read costs",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to read costs",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "costs-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Cost is not migrated on this environment (b145)."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Cost is not migrated on this environment (b145)."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/diagnosis": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Diagnosis failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Diagnosis failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/disputes": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get disputes failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get disputes failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get messages failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get messages failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/use": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found"
+     }
+    },
+    {
+     "scenario": "not-a-bill",
+     "status": 409,
+     "body_keys": {
+      "error": "Not a bill",
+      "message": "Only a bill you received says what its goods are for"
+     },
+     "fixture": {
+      "error": "Not a bill",
+      "message": "Only a bill you received says what its goods are for"
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:id/children": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Invalid chit id"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Invalid chit id"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get children",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get children",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:id/trace": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Invalid chit id"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Invalid chit id"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Trace walk failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Trace walk failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     }
+    },
+    {
+     "scenario": "trace-seed-is-not-visible",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not visible to you"
+     }
+    }
+   ]
+  },
+  "GET /api/chits/disputes/queue": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get dispute queue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get dispute queue failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/folder": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get folder",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get folder",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/inbox": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get inbox",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get inbox",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/rollup": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Rollup failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Rollup failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/sent": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get sent items",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get sent items",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/trace/batches": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list batches",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to list batches",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/trace/by-batch": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "A batch value (q) is required"
+     }
+    },
+    {
+     "scenario": "batch-trace-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Batch trace failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Batch trace failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/trace/networks": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list networks",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to list networks",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/unread": {
+   "answers": [
+    {
+     "scenario": "unread-for-staff-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Unread failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Unread failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

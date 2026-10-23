@@ -236,6 +236,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CHIT_BAD_REQUEST",
+   "status": "400",
+   "title": "Chit request not accepted",
+   "shopkeeper": "That chit request could not be done.",
+   "hint": "Read the message, fix what it names and try again.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_CONFLICT",
+   "status": "409",
+   "title": "Chit not in that state",
+   "shopkeeper": "The chit is not in a state that allows that.",
+   "hint": "Look at the chit again, then try once more.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_NOT_A_BILL",
+   "status": "409",
+   "title": "Not a bill",
+   "shopkeeper": "Only a bill you received says what its goods are for.",
+   "hint": "Open a bill you received.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CHIT_NOT_DELIVERED",
    "status": "503",
    "title": "Chit not delivered",
@@ -243,6 +270,24 @@
    "hint": "-",
    "owner_area": "connectors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CHIT_NOT_MIGRATED",
+   "status": "503",
+   "title": "Chits update still to run",
+   "shopkeeper": "This part of chits is not ready on this server yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_NOT_PERMITTED",
+   "status": "403",
+   "title": "Not allowed on this chit",
+   "shopkeeper": "This login is not allowed to do that on this chit.",
+   "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
   },
   {
    "code": "CHOOSE_IDENTITY",
@@ -435,12 +480,12 @@
   },
   {
    "code": "DISPUTES_NOT_SET_UP",
-   "status": "varies",
-   "title": "Disputes not set up",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "200",
+   "title": "Disputes not set up yet",
+   "shopkeeper": "Disputes are not switched on on this server yet, so there are none to show.",
+   "hint": "Nothing to do; they will appear once the update has run.",
    "owner_area": "chits",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
   },
   {
    "code": "DISPUTE_TARGET_NOT_PARTY",

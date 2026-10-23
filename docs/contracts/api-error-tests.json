@@ -203,6 +203,91 @@
   404,
   500
  ],
+ "GET /api/chits/:chit_id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/chits/:chit_id/catalogue-overlay": [
+  401
+ ],
+ "GET /api/chits/:chit_id/costs": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/chits/:chit_id/diagnosis": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/disputes": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/messages": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/use": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "GET /api/chits/:id/children": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/chits/:id/trace": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/chits/disputes/queue": [
+  401,
+  500
+ ],
+ "GET /api/chits/folder": [
+  401,
+  500
+ ],
+ "GET /api/chits/inbox": [
+  401,
+  500
+ ],
+ "GET /api/chits/pulse": [
+  401
+ ],
+ "GET /api/chits/rollup": [
+  401,
+  500
+ ],
+ "GET /api/chits/sent": [
+  401,
+  500
+ ],
+ "GET /api/chits/trace/batches": [
+  401,
+  500
+ ],
+ "GET /api/chits/trace/by-batch": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/chits/trace/networks": [
+  401,
+  500
+ ],
+ "GET /api/chits/unread": [
+  401,
+  500
+ ],
  "GET /api/facts/:card": [
   401,
   403,
