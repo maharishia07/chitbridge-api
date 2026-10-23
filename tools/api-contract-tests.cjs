@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict';
 /*
  * OWNS      the contract tests GENERATED from each route's own schema (API-STANDARD S18, schema-level cases that need no data): what a request with a field missing, a field of the wrong kind, or nothing at all is answered.
  *           Also docs/contracts/api-contract-results.json, the proof the register's missing_input_answer column and part of error_tests read (never filled by hand, S15).
@@ -13,6 +12,8 @@
  *   node tools/api-contract-tests.cjs --write   run, then rewrite docs/contracts/api-contract-results.json, api-hardening-results.json and api-hardening-evidence.json
  * Other cases that need data (role 403, a real 409) are T2 on realstack, not here. No database is touched and nothing leaves the machine: the schema cases run the middleware alone; the hardening cases serve the app on 127.0.0.1 inside this process.
  */
+'use strict';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* the generated output_allowlist case needs the filter to cut for real */
 const fs = require('fs');
 const path = require('path');
 const { bodySchemaOf, urlSchemaOf } = require('../middleware/validate');

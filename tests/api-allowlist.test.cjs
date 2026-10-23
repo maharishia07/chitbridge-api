@@ -44,14 +44,22 @@ t('prune: a Date, a Buffer and a value with toJSON are not walked', (() => { con
 t('prune: a list at the top is pruned by its items', same(allow.prune({ type: 'array', items: closed({ a: {} }) }, [{ a: 1, z: 2 }]).value, [{ a: 1 }]));
 
 /* ── the filter on res.json ── */
-const operation = { responses: { 200: { content: { 'application/json': { schema } } }, 422: { content: { 'application/problem+json': { schema: { type: 'object' } } } } } };
+const filterShape = { status: 200, observed: 2, schema };
 const fakeRes = (status) => { const sent = []; const res = { statusCode: status, json: (value) => (sent.push(value), res) }; return { res, sent }; };
-const run = (status, value) => { const { res, sent } = fakeRes(status); allow.outputFilter(operation, 'GET /x')({ method: 'GET' }, res, () => undefined); res.json(value); return sent[0]; };
+const run = (status, value, shape) => { const { res, sent } = fakeRes(status); allow.outputFilter(shape || filterShape, 'GET /x')({ method: 'GET' }, res, () => undefined); res.json(value); return sent[0]; };
+process.env.OUTPUT_ALLOWLIST = 'enforce';
 allow.forgetDropped();
-t('filter: a 2xx answer is pruned and the drop is counted with its route', same(run(200, body), cut.value) && allow.droppedKeys().length === 2 && allow.droppedKeys()[0].route === 'GET /x');
+t('filter (enforce): a 2xx answer is pruned and the drop is counted with its route', same(run(200, body), cut.value) && allow.droppedKeys().length === 2 && allow.droppedKeys()[0].route === 'GET /x' && allow.droppedCount() === 2);
 t('filter: a refusal (4xx) is never touched', (() => { const problem = { type: 't', extra: 1 }; return run(422, problem) === problem; })());
-t('filter: an operation whose success schema closes nothing gets no filter', allow.outputFilter({ responses: { 200: { content: { 'application/json': { schema: { type: 'object', properties: {} } } } } } }) === null);
-t('filter: a schema that closes only a nested node still gets one', allow.outputFilter({ responses: { 200: { content: { 'application/json': { schema: { type: 'object', properties: { a: closed({ b: {} }) } } } } } } }) !== null);
+delete process.env.OUTPUT_ALLOWLIST;
+allow.forgetDropped();
+t('filter (report, the default): the key goes through unchanged and is counted', run(200, body) === body && allow.droppedCount() === 2);
+process.env.OUTPUT_ALLOWLIST = 'enforce';
+t('filter: the counter is bounded per route (paths) and in total (routes)', (() => { allow.forgetDropped(); for (let at = 0; at < 50; at++) run(200, { ok: true, ['k' + at]: 1 }); const out = allow.droppedKeys(); return allow.droppedCount() === 50 && out.length === 20; })());
+t('filter: a shape with observed 0, no shape, or one that closes nothing gets no filter', allow.outputFilter({ status: 200, observed: 0, schema }) === null && allow.outputFilter(null) === null && allow.outputFilter({ status: 200, observed: 3, schema: { type: 'object', properties: {} } }) === null);
+t('filter: a schema that closes only a nested node still gets one', allow.outputFilter({ status: 200, observed: 1, schema: { type: 'object', properties: { a: closed({ b: {} }) } } }) !== null);
+t('shapeOf: a route whose shape has observed 0 reads as no shape', (() => { const file = allow.shapesFile(); file.routes['GET /nothing'] = { status: 200, observed: 0, schema }; const none = allow.shapeOf('GET /nothing'); delete file.routes['GET /nothing']; return none === null; })());
+t('samplesOf: the same scenario in BASE and NEW counts once', (() => { const one = { route: 'GET /r', status: 200, body: { a: 1 } }; return tool.samplesOf([{ 'GET /r|s1': one, 'GET /r|s2': one }, { 'GET /r|s1': one }], 'GET /r')[200].length === 2; })());
 
 /* ── the literal reader ── */
 t('closingOf: braces inside strings, templates and comments do not close', tool.closingOf("{ a: '}', b: `${ {c:1}.c }}`, /* } */ d: 1 } tail", 0) === "{ a: '}', b: `${ {c:1}.c }}`, /* } */ d: 1 }".length - 1);

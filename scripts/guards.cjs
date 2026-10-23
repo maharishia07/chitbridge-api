@@ -509,7 +509,7 @@ for (const text of files) {
     continue;
   }
   const t0 = Date.now();
-  const r = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000 });
+  const r = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000, env: Object.assign({}, process.env, { OUTPUT_ALLOWLIST: 'enforce' }) /* S34: the gate runs the output allow-list for real; production defaults to report */ });
   const out = (r.stdout || '') + (r.stderr || '');
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
   const n = countChecks(out);

@@ -17,6 +17,7 @@ const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
 const express = require('express');
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
 const allowlist = require('../../lib/output-allowlist');
 
 const SHOP = '11111111-1111-4111-8111-111111111111';

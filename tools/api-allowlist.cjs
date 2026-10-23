@@ -278,15 +278,17 @@ const readJson = (file, fallback) => {
   }
 };
 
-/** the success answers of one route in captures: { status: [bodies] } (JSON bodies of 2xx only; the recorded key is 'METHOD /path|scenario') */
+/** the success answers of one route in captures: { status: [bodies] } (JSON bodies of 2xx only, ONE per scenario even when several captures hold it; the recorded key is 'METHOD /path|scenario') */
 function samplesOf(captures, routeKey) {
   const byStatus = {};
   captures.forEach((capture) => Object.keys(capture).forEach((key) => {
     const recorded = capture[key];
     if (recorded.route !== routeKey || recorded.status < 200 || recorded.status > 299 || recorded.body === undefined || recorded.body === null || typeof recorded.body !== 'object') return;
-    (byStatus[recorded.status] = byStatus[recorded.status] || []).push(recorded.body);
+    const scenario = key.split('|').slice(1).join('|'); /* the same scenario in BASE and NEW is ONE answer seen, not two */
+    byStatus[recorded.status] = byStatus[recorded.status] || new Map();
+    if (!byStatus[recorded.status].has(scenario)) byStatus[recorded.status].set(scenario, recorded.body);
   }));
-  return byStatus;
+  return Object.fromEntries(Object.entries(byStatus).map(([status, scenarios]) => [status, [...scenarios.values()]]));
 }
 
 /** the first recorded request that reached the success status: { example: { url, body } }, or nothing when no capture kept the request */
@@ -309,8 +311,8 @@ function deriveFile(file, captures) {
   routesOfFile(file).forEach((route) => {
     const byStatus = samplesOf(captures, route.key);
     const statuses = Object.keys(byStatus);
+    if (!statuses.length) return void (result.listed[route.key] = 'not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial');
     const answers = handlerAnswers(handlerText(lines, route.line));
-    if (!statuses.length && !answers.node) return void (result.listed[route.key] = 'no recorded success answer and no res.json literal in the handler (it answers through a helper, a download, or only refuses)');
     const status = statuses.includes('200') ? '200' : statuses[0] || '200';
     const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node });
     result.shapes[route.key] = Object.assign({ status, schema: derived.schema, observed: (byStatus[status] || []).length, open: derived.open }, exampleOf(captures, route.key, status));
@@ -342,6 +344,7 @@ function writeShapes(result) {
   const file = readJson(SHAPES_FILE, null) || { _about: 'The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route\'s success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.', routes: {}, listed: {} };
   Object.assign(file.routes, result.shapes);
   Object.keys(result.shapes).forEach((key) => delete file.listed[key]);
+  Object.keys(result.listed).filter((key) => !result.shapes[key]).forEach((key) => delete file.routes[key]); /* a route no recorded answer reaches keeps no shape */
   Object.assign(file.listed, result.listed);
   const sorted = (object) => Object.fromEntries(Object.keys(object).sort().map((key) => [key, object[key]]));
   fs.writeFileSync(SHAPES_FILE, JSON.stringify({ _about: file._about, routes: sorted(file.routes), listed: sorted(file.listed) }, null, 1) + '\n');
