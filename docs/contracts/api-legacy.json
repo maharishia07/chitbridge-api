@@ -24917,6 +24917,1928 @@
     }
    ]
   },
+  "GET /api/connections/list": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get connections",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get connections",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/connections/pending": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get requests",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get requests",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/network-design": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/network-design/availability": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     }
+    },
+    {
+     "scenario": "availability-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Search for a product — two characters or more."
+     }
+    },
+    {
+     "scenario": "availability-account-unread",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     }
+    },
+    {
+     "scenario": "availability-tree-unread",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "availability-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Search failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Search failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/network-design/stores": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     }
+    },
+    {
+     "scenario": "stores-account-unread",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     }
+    },
+    {
+     "scenario": "stores-tree-unread",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "stores-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/network/entities/:id/connections": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "connections-foreign",
+     "status": 403,
+     "body_keys": {
+      "error": "those are not your connections",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "those are not your connections",
+      "code": "NOT_ALLOWED"
+     }
+    }
+   ]
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "subtree-foreign",
+     "status": 403,
+     "body_keys": {
+      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "subtree-suspended-member",
+     "status": 403,
+     "body_keys": {
+      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
+      "code": "NOT_ALLOWED"
+     }
+    }
+   ]
+  },
+  "GET /api/network/entities/lookup": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    }
+   ]
+  },
+  "GET /api/network/place": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    }
+   ]
+  },
+  "POST /api/connections/request": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "request-needs-a-receiver",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_entity_id",
+        "message": "Receiver entity ID required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "request-note-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "note",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "note",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "handshake-to-self",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid request",
+      "message": "Cannot connect to yourself"
+     },
+     "fixture": {
+      "error": "Invalid request",
+      "message": "Cannot connect to yourself"
+     }
+    },
+    {
+     "scenario": "handshake-receiver-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Entity not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Entity not found"
+     }
+    },
+    {
+     "scenario": "handshake-already-there",
+     "status": 400,
+     "body_keys": {
+      "error": "Connection exists",
+      "message": "Connection already exists with status: pending",
+      "status": "pending"
+     },
+     "fixture": {
+      "error": "Connection exists",
+      "message": "Connection already exists with status: pending",
+      "status": "pending"
+     }
+    },
+    {
+     "scenario": "handshake-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Request failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Request failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-design/build": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Only the business owner can build a network. Sign in as the business itself."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Only the business owner can build a network. Sign in as the business itself."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Build failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Build failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your account could not be read."
+     }
+    },
+    {
+     "scenario": "build-by-staff",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Only the business owner can build a network. Sign in as the business itself."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Only the business owner can build a network. Sign in as the business itself."
+     }
+    },
+    {
+     "scenario": "build-needs-a-user-id",
+     "status": 409,
+     "body_keys": {
+      "error": "User ID needed",
+      "code": "ROOT_HANDLE_NEEDED",
+      "message": "Set your User ID before building a network. Every store below is named from it (<your-user-id>.store), and it cannot be changed afterwards without orphaning them — so it is yours to choose, not ours to guess from a diagram label.",
+      "suggestion": "shop-a",
+      "where": "Profile › IAM"
+     },
+     "fixture": {
+      "error": "User ID needed",
+      "code": "ROOT_HANDLE_NEEDED",
+      "message": "Set your User ID before building a network. Every store below is named from it (<your-user-id>.store), and it cannot be changed afterwards without orphaning them — so it is yours to choose, not ours to guess from a diagram label.",
+      "suggestion": "shop-a",
+      "where": "Profile › IAM"
+     }
+    },
+    {
+     "scenario": "build-user-id-unusable",
+     "status": 409,
+     "body_keys": {
+      "error": "Root name unusable",
+      "code": "ROOT_HANDLE_UNUSABLE",
+      "message": "Your User ID \"a@b.com\" cannot be a network name: A handle is not an email address. Change your User ID in Settings first — every store in the network is named from it.",
+      "suggestion": "shop-a"
+     },
+     "fixture": {
+      "error": "Root name unusable",
+      "code": "ROOT_HANDLE_UNUSABLE",
+      "message": "Your User ID \"a@b.com\" cannot be a network name: A handle is not an email address. Change your User ID in Settings first — every store in the network is named from it.",
+      "suggestion": "shop-a"
+     }
+    },
+    {
+     "scenario": "build-root-name-unusable",
+     "status": 400,
+     "body_keys": {
+      "error": "Root name unusable",
+      "code": "ROOT_HANDLE_NEEDED",
+      "message": "Choose a network name. \"a b\" will not do: \"a b\" must be letters, numbers and dashes, starting with a letter or number."
+     },
+     "fixture": {
+      "error": "Root name unusable",
+      "code": "ROOT_HANDLE_NEEDED",
+      "message": "Choose a network name. \"a b\" will not do: \"a b\" must be letters, numbers and dashes, starting with a letter or number."
+     }
+    },
+    {
+     "scenario": "build-root-name-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "Root name taken",
+      "code": "ROOT_HANDLE_TAKEN",
+      "message": "\"taken\" is already taken. Choose another network name."
+     },
+     "fixture": {
+      "error": "Root name taken",
+      "code": "ROOT_HANDLE_TAKEN",
+      "message": "\"taken\" is already taken. Choose another network name."
+     }
+    },
+    {
+     "scenario": "build-nothing-designed",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing designed",
+      "message": "Draw the network first — add the branches and units you want, then build."
+     },
+     "fixture": {
+      "error": "Nothing designed",
+      "message": "Draw the network first — add the branches and units you want, then build."
+     }
+    },
+    {
+     "scenario": "build-name-taken-meanwhile",
+     "status": 409,
+     "body_keys": {
+      "error": "Name taken",
+      "message": "One of these names was taken while the network was being built. Nothing was created — try again."
+     },
+     "fixture": {
+      "error": "Name taken",
+      "message": "One of these names was taken while the network was being built. Nothing was created — try again."
+     }
+    },
+    {
+     "scenario": "build-visibility-not-migrated",
+     "status": 409,
+     "body_keys": {
+      "error": "Migration needed",
+      "code": "VISIBILITY_NOT_MIGRATED",
+      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+     },
+     "fixture": {
+      "error": "Migration needed",
+      "code": "VISIBILITY_NOT_MIGRATED",
+      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+     }
+    },
+    {
+     "scenario": "build-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Build failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Build failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-design/reissue": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Only the business owner can re-issue a store code."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Only the business owner can re-issue a store code."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Which store? Send its handle as user_id."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Which store? Send its handle as user_id."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Which store? Send its handle as user_id."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Which store? Send its handle as user_id."
+     }
+    },
+    {
+     "scenario": "reissue-by-staff",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Only the business owner can re-issue a store code."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Only the business owner can re-issue a store code."
+     }
+    },
+    {
+     "scenario": "reissue-no-store-named",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Which store? Send its handle as user_id."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Which store? Send its handle as user_id."
+     }
+    },
+    {
+     "scenario": "reissue-not-yours",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "You did not create a store called \"shop-a.c\"."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "You did not create a store called \"shop-a.c\"."
+     }
+    },
+    {
+     "scenario": "reissue-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Re-issue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Re-issue failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-design/validate": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "validate-draft-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     }
+    },
+    {
+     "scenario": "validate-too-large",
+     "status": 413,
+     "body_keys": {
+      "error": "Too large",
+      "message": "design exceeds 2000000 bytes"
+     },
+     "fixture": {
+      "error": "Too large",
+      "message": "design exceeds 2000000 bytes"
+     }
+    }
+   ]
+  },
+  "POST /api/network/connections": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 401,
+     "body_keys": {
+      "error": "sign in as a business first",
+      "code": "NO_ACTOR"
+     },
+     "fixture": {
+      "error": "sign in as a business first",
+      "code": "NO_ACTOR"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 401,
+     "body_keys": {
+      "error": "sign in as a business first",
+      "code": "NO_ACTOR"
+     },
+     "fixture": {
+      "error": "sign in as a business first",
+      "code": "NO_ACTOR"
+     }
+    },
+    {
+     "scenario": "request-bad-type",
+     "status": 400,
+     "body_keys": {
+      "error": "type must be governance or commercial",
+      "code": "BAD_TYPE"
+     },
+     "fixture": {
+      "error": "type must be governance or commercial",
+      "code": "BAD_TYPE"
+     }
+    },
+    {
+     "scenario": "request-parent-missing",
+     "status": 404,
+     "body_keys": {
+      "error": "network not found",
+      "code": "PARENT_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "network not found",
+      "code": "PARENT_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "request-child-missing",
+     "status": 404,
+     "body_keys": {
+      "error": "business not found — check the handle",
+      "code": "CHILD_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "business not found — check the handle",
+      "code": "CHILD_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "request-to-self",
+     "status": 400,
+     "body_keys": {
+      "error": "cannot connect to self",
+      "code": "SELF"
+     },
+     "fixture": {
+      "error": "cannot connect to self",
+      "code": "SELF"
+     }
+    },
+    {
+     "scenario": "request-not-your-edge",
+     "status": 403,
+     "body_keys": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "request-child-has-a-parent",
+     "status": 409,
+     "body_keys": {
+      "error": "child already in a network (tree-only)",
+      "code": "HAS_PARENT"
+     },
+     "fixture": {
+      "error": "child already in a network (tree-only)",
+      "code": "HAS_PARENT"
+     }
+    },
+    {
+     "scenario": "request-already-asked",
+     "status": 409,
+     "body_keys": {
+      "error": "already asked — waiting for an answer",
+      "code": "EXISTS"
+     },
+     "fixture": {
+      "error": "already asked — waiting for an answer",
+      "code": "EXISTS"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/approve": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "approve-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "approve-stranger",
+     "status": 403,
+     "body_keys": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "approve-by-the-asker",
+     "status": 403,
+     "body_keys": {
+      "error": "the other business has to accept this — you asked",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "the other business has to accept this — you asked",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "approve-already-active",
+     "status": 409,
+     "body_keys": {
+      "error": "cannot approve from active",
+      "code": "BAD_STATE"
+     },
+     "fixture": {
+      "error": "cannot approve from active",
+      "code": "BAD_STATE"
+     }
+    },
+    {
+     "scenario": "approve-unclaimed-child",
+     "status": 409,
+     "body_keys": {
+      "error": "child is an unclaimed stub — cannot consent",
+      "code": "UNCLAIMED"
+     },
+     "fixture": {
+      "error": "child is an unclaimed stub — cannot consent",
+      "code": "UNCLAIMED"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/decline": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "decline-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "decline-stranger",
+     "status": 403,
+     "body_keys": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "decline-not-pending",
+     "status": 409,
+     "body_keys": {
+      "error": "no pending request to decline",
+      "code": "BAD_STATE"
+     },
+     "fixture": {
+      "error": "no pending request to decline",
+      "code": "BAD_STATE"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/disconnect": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "disconnect-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "disconnect-stranger",
+     "status": 403,
+     "body_keys": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "only the two businesses on this connection can act on it",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "disconnect-not-live",
+     "status": 409,
+     "body_keys": {
+      "error": "cannot disconnect from requested",
+      "code": "BAD_STATE"
+     },
+     "fixture": {
+      "error": "cannot disconnect from requested",
+      "code": "BAD_STATE"
+     }
+    },
+    {
+     "scenario": "disconnect-open-chit",
+     "status": 409,
+     "body_keys": {
+      "error": "open chit on this edge — settle first",
+      "code": "IN_FLIGHT"
+     },
+     "fixture": {
+      "error": "open chit on this edge — settle first",
+      "code": "IN_FLIGHT"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/resume": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "resume-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "resume-not-held",
+     "status": 409,
+     "body_keys": {
+      "error": "cannot move to active",
+      "code": "BAD_STATE"
+     },
+     "fixture": {
+      "error": "cannot move to active",
+      "code": "BAD_STATE"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/suspend": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "suspend-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     },
+     "fixture": {
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "suspend-by-the-member",
+     "status": 403,
+     "body_keys": {
+      "error": "only the network can suspend or resume a member",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "only the network can suspend or resume a member",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "suspend-not-active",
+     "status": 409,
+     "body_keys": {
+      "error": "cannot move to suspended",
+      "code": "BAD_STATE"
+     },
+     "fixture": {
+      "error": "cannot move to suspended",
+      "code": "BAD_STATE"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "POST /api/network/entities": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     },
+     "fixture": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     },
+     "fixture": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     },
+     "fixture": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     }
+    },
+    {
+     "scenario": "register-no-name",
+     "status": 400,
+     "body_keys": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     },
+     "fixture": {
+      "error": "name required",
+      "code": "NAME_REQUIRED"
+     }
+    },
+    {
+     "scenario": "register-mint-collides",
+     "status": 500,
+     "body_keys": {
+      "error": "could not mint a unique bridge id",
+      "code": "MINT_FAILED"
+     },
+     "fixture": {
+      "error": "could not mint a unique bridge id",
+      "code": "MINT_FAILED"
+     }
+    },
+    {
+     "scenario": "register-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "POST /api/network/entities/:id/claim": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "claim-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     },
+     "fixture": {
+      "error": "not found",
+      "code": "NOT_FOUND"
+     }
+    },
+    {
+     "scenario": "claim-already",
+     "status": 409,
+     "body_keys": {
+      "error": "already claimed",
+      "code": "ALREADY_CLAIMED"
+     },
+     "fixture": {
+      "error": "already claimed",
+      "code": "ALREADY_CLAIMED"
+     }
+    },
+    {
+     "scenario": "claim-not-yours",
+     "status": 403,
+     "body_keys": {
+      "error": "only the business this node belongs to can claim it",
+      "code": "NOT_ALLOWED"
+     },
+     "fixture": {
+      "error": "only the business this node belongs to can claim it",
+      "code": "NOT_ALLOWED"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED"
+     }
+    }
+   ]
+  },
+  "PUT /api/connections/:id/respond": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "respond-needs-an-action",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be accept or reject"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "respond-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
+     }
+    },
+    {
+     "scenario": "respond-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Response failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Response failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/network-design": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     }
+    },
+    {
+     "scenario": "save-draft-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "draft must be an object"
+     }
+    },
+    {
+     "scenario": "save-too-large",
+     "status": 413,
+     "body_keys": {
+      "error": "Too large",
+      "message": "design exceeds 2000000 bytes"
+     },
+     "fixture": {
+      "error": "Too large",
+      "message": "design exceeds 2000000 bytes"
+     }
+    },
+    {
+     "scenario": "save-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Save failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Save failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
   "GET /api/governance/boilerplate/:key": {
    "answers": [
     {

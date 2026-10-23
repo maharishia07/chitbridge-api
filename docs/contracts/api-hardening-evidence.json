@@ -92,6 +92,9 @@
   },
   "POST /api/repeat/:id/skip": {
    "foreign_id_404": true
+  },
+  "PUT /api/connections/:id/respond": {
+   "foreign_id_404": true
   }
  }
 }

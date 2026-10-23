@@ -3,9 +3,9 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 285,
+  "not_started": 262,
   "partial": 48,
-  "meets": 300
+  "meets": 323
  },
  "machine_columns": [
   "schema_in",
@@ -3942,29 +3942,34 @@
    "path": "/api/connections/list",
    "owner_area": "connections",
    "file": "routes/connections.js",
-   "line": 220,
-   "hash": "55f8c4b8580b1c4d",
+   "line": 200,
+   "hash": "9785c5ff74a411a3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/connections/pending",
@@ -3972,29 +3977,34 @@
    "path": "/api/connections/pending",
    "owner_area": "connections",
    "file": "routes/connections.js",
-   "line": 109,
-   "hash": "e012177c6bfad39b",
+   "line": 100,
+   "hash": "11c124d9fdb1f9db",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/connectors",
@@ -6771,29 +6781,33 @@
    "path": "/api/network-design",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 32,
-   "hash": "99696cda39865271",
+   "line": 41,
+   "hash": "6938d03fc5912c61",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/network-design/availability",
@@ -6801,29 +6815,36 @@
    "path": "/api/network-design/availability",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 438,
-   "hash": "7f3d602b3c156feb",
+   "line": 435,
+   "hash": "e0b8292db349741f",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/network-design/stores",
@@ -6831,29 +6852,35 @@
    "path": "/api/network-design/stores",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 402,
-   "hash": "75c9b2a3c9f0564b",
+   "line": 399,
+   "hash": "51d96e2bc11f68fe",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/network-offers",
@@ -6891,29 +6918,35 @@
    "path": "/api/network/entities/:id/connections",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 117,
-   "hash": "d472b9492c75d56e",
+   "line": 129,
+   "hash": "6ffabe83a8eb0cfb",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/network/entities/:id/subtree",
@@ -6921,29 +6954,35 @@
    "path": "/api/network/entities/:id/subtree",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 112,
-   "hash": "d472b9492c75d56e",
+   "line": 123,
+   "hash": "c48427150f65026b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/network/entities/lookup",
@@ -6951,29 +6990,34 @@
    "path": "/api/network/entities/lookup",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 37,
-   "hash": "d472b9492c75d56e",
+   "line": 45,
+   "hash": "c253907b7767cfd8",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/network/place",
@@ -6981,29 +7025,34 @@
    "path": "/api/network/place",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 68,
-   "hash": "d472b9492c75d56e",
+   "line": 78,
+   "hash": "2193476ac8a98348",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/notifications",
@@ -14105,29 +14154,35 @@
    "path": "/api/connections/request",
    "owner_area": "connections",
    "file": "routes/connections.js",
-   "line": 17,
-   "hash": "4ccce9225b6ac26e",
+   "line": 25,
+   "hash": "2b38a0f30ba3770d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/connectors",
@@ -16198,29 +16253,37 @@
    "path": "/api/network-design/build",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 171,
-   "hash": "d142a078bcf1b779",
+   "line": 180,
+   "hash": "3bd2f825c064ee81",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network-design/reissue",
@@ -16228,29 +16291,36 @@
    "path": "/api/network-design/reissue",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 280,
-   "hash": "3c778ed53ff92bff",
+   "line": 278,
+   "hash": "62029f6165abba94",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network-design/validate",
@@ -16258,29 +16328,35 @@
    "path": "/api/network-design/validate",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 133,
-   "hash": "fd18bd17ee175352",
+   "line": 142,
+   "hash": "28e823f3e932e564",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    413,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network-offers/:id/choice",
@@ -16468,29 +16544,35 @@
    "path": "/api/network/connections",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 122,
-   "hash": "594435e6ff2f942d",
+   "line": 135,
+   "hash": "7bd5a2b4632f9f07",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network/connections/:id/approve",
@@ -16498,29 +16580,36 @@
    "path": "/api/network/connections/:id/approve",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 136,
-   "hash": "594435e6ff2f942d",
+   "line": 150,
+   "hash": "133725029b8f8d52",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network/connections/:id/decline",
@@ -16528,29 +16617,36 @@
    "path": "/api/network/connections/:id/decline",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 142,
-   "hash": "594435e6ff2f942d",
+   "line": 157,
+   "hash": "ccee169c322d589e",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network/connections/:id/disconnect",
@@ -16558,29 +16654,36 @@
    "path": "/api/network/connections/:id/disconnect",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 160,
-   "hash": "594435e6ff2f942d",
+   "line": 178,
+   "hash": "b62306786f794d86",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network/connections/:id/resume",
@@ -16588,29 +16691,36 @@
    "path": "/api/network/connections/:id/resume",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 154,
-   "hash": "594435e6ff2f942d",
+   "line": 171,
+   "hash": "ff17bc64d957da65",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network/connections/:id/suspend",
@@ -16618,29 +16728,36 @@
    "path": "/api/network/connections/:id/suspend",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 148,
-   "hash": "594435e6ff2f942d",
+   "line": 164,
+   "hash": "8012835eceb62c94",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network/entities",
@@ -16648,29 +16765,35 @@
    "path": "/api/network/entities",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 31,
-   "hash": "594435e6ff2f942d",
+   "line": 38,
+   "hash": "df329726b7a86648",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/network/entities/:id/claim",
@@ -16678,29 +16801,36 @@
    "path": "/api/network/entities/:id/claim",
    "owner_area": "network",
    "file": "src/routes/network.js",
-   "line": 45,
-   "hash": "594435e6ff2f942d",
+   "line": 54,
+   "hash": "1a4abd9f7882b671",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/notifications/dismiss",
@@ -20414,29 +20544,35 @@
    "path": "/api/connections/:id/respond",
    "owner_area": "connections",
    "file": "routes/connections.js",
-   "line": 129,
-   "hash": "d01fed7dca1a9541",
+   "line": 119,
+   "hash": "6470089e3312598d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/definitions/:id",
@@ -20749,29 +20885,35 @@
    "path": "/api/network-design",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 43,
-   "hash": "82a46c2b5e50f0eb",
+   "line": 52,
+   "hash": "0a0f0647d76be8ad",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    413,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/network-offers/policy",
