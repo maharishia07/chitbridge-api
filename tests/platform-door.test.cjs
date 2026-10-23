@@ -37,12 +37,16 @@ const GATED = [[GOV, 'post', '/source', "require('../lib/source')"], [GOV, 'post
 for (const [src, verb, route, firstTouch] of GATED) {
   it('⚠️⚠️ ' + verb.toUpperCase() + ' ' + route + ' refuses a non-platform caller before it touches anything', () => {
     const body = handler(src, verb, route);
-    const gate = body.indexOf('refuseUnlessPlatform(req, res)');
+    const gate = Math.max(body.indexOf('refuseUnlessPlatform(req, res)'), body.indexOf(', platformGate,')); /* the door asked inline, or as the route's own gate (before its schema check and handler) */
     assert.ok(gate > 0, 'no refuseUnlessPlatform in the handler');
     const touch = body.indexOf(firstTouch);
     assert.ok(touch < 0 || touch > gate, 'the handler reaches ' + firstTouch + ' at ' + touch + ', the door is asked at ' + gate);
   });
 }
+it('the governance routes platformGate asks the one door and nothing else', () => {
+  const gate = /function platformGate\(req, res, next\) \{([^}]*)\}/.exec(GOV);
+  assert.ok(gate && /platformroot\.refuseUnlessPlatform\(req, res\)/.test(gate[1]) && !/owner_scope/.test(gate[1]), 'platformGate is not the one door');
+});
 it('no inline owner_scope test is left in a route (one door, one name)', () => {
   const hits = [];
   for (const f of fs.readdirSync(path.join(API, 'routes'))) if (/owner_scope\s*[!=]==?\s*'platform'/.test(code('routes/' + f))) hits.push(f);

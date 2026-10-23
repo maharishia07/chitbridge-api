@@ -133,7 +133,7 @@ const allocatedAgainst = (X, ref) => X.T.items.filter((i) => i.ref_kind === 'all
     const route = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
     const doorSrc = route.slice(routeAt(route, 'post', '/:chit_id/payment'), routeAt(route, 'post', '/:chit_id/books-request'));
     ok('POST /chits/:id/payment takes body.client_ref (≤ 80) into business_json.payment.client_ref, and answers "Already recorded" for a replay, "Payment recorded" otherwise',
-      /body\('client_ref'\)\.optional\(\)[^\n]*isLength\(\{ max: 80 \}\)/.test(doorSrc) && /client_ref/.test(doorSrc.slice(0, doorSrc.indexOf('hooks.chitPaid'))) && /'Already recorded'/.test(doorSrc) && /'Payment recorded'/.test(doorSrc));
+      /client_ref: trimmedUpTo\(80\)/.test(fs.readFileSync(path.join(H.API, 'lib', 'chits-input.js'), 'utf8')) && /client_ref/.test(doorSrc.slice(0, doorSrc.indexOf('hooks.chitPaid'))) && /'Already recorded'/.test(doorSrc) && /'Payment recorded'/.test(doorSrc));
     ok('DELETE /chits/:id/payment reads paymentsOfChit (every key of the chit), not the one old key', /paymentsOfChit\(db, entity_id, req\.params\.chit_id\)/.test(doorSrc) && !/paymentByRef\(db, entity_id, 'chitpay:'/.test(doorSrc));
   });
 

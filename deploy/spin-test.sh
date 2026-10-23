@@ -6,7 +6,7 @@
 #   3 /health says production, the web serves Home + the rewrite    4 CTP: the manifest on the api, never the app on the web, /config.js
 #   5 the stack walk (web e2e/stack-walk.cjs: sign in with the code the sealed api mailed to the spin's sink)
 #   6 CTP with ANOTHER platform's spin when CTP_PEER_API names one — reachability today; the exchange itself is HX4's
-# PLAN=1 prints the steps. Needs: docker, node 20+ (npm ci here), the web checkout beside this one with e2e/node_modules + chromium.
+# PLAN=1 prints the steps. Needs: docker, node 22 (npm ci here), the web checkout beside this one with e2e/node_modules + chromium.
 spin_test() {
   if dry; then say "test plan for spin $CB_SPIN_ID"; fi
   say "1 migrate (a second run: the ledger says nothing is pending)"; spin_migrate "$OWNER_URL"

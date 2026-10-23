@@ -3,7 +3,7 @@
 #   docker build --target migrate -t chitbridge-migrate .   the one-shot schema job deploy/compose.yml runs (tools/migrate.cjs, HX1 ledger)
 # No secret is baked in: every key arrives as an environment variable at run time. Runs as the image's `node` user; the code
 # is owned by root and only read (the api writes no file at run time — uploads go to the database or the object store).
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force

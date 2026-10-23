@@ -5,6 +5,50 @@
   404,
   500
  ],
+ "DELETE /api/catalogue/:bridge_id/my-documents/:id": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/chits/:chit_id": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "DELETE /api/chits/:chit_id/payment": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/chits/:chit_id/purge": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "DELETE /api/crm/followups/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "DELETE /api/crm/groups/:name": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "DELETE /api/crm/parties/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "DELETE /api/folders/:id": [
   400,
   401,
@@ -20,6 +64,20 @@
   401,
   403,
   404,
+  500
+ ],
+ "DELETE /api/products/:id": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/products/:id/media/:mid": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/products/:id/schedule/:sid": [
+  401,
   500
  ],
  "GET /.well-known/ctp.json": [
@@ -207,6 +265,10 @@
   404,
   500
  ],
+ "GET /api/catalogue-face": [
+  401,
+  500
+ ],
  "GET /api/catalogue/:bridge_id": [
   404,
   500
@@ -215,8 +277,24 @@
   404,
   500
  ],
+ "GET /api/catalogue/:bridge_id/my-documents": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/my-orders": [
+  401,
+  500
+ ],
  "GET /api/catalogue/:bridge_id/support/preview": [
   404,
+  500
+ ],
+ "GET /api/catalogue/enquiry": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/enquiry/:item_id": [
+  401,
   500
  ],
  "GET /api/catalogue/network-store/:networkId": [
@@ -229,8 +307,244 @@
   500,
   503
  ],
+ "GET /api/chits/:chit_id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/chits/:chit_id/catalogue-overlay": [
+  401
+ ],
+ "GET /api/chits/:chit_id/costs": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/chits/:chit_id/diagnosis": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/disputes": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/messages": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/raida": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/chits/:chit_id/use": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "GET /api/chits/:id/children": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/chits/:id/trace": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/chits/disputes/queue": [
+  401,
+  500
+ ],
+ "GET /api/chits/folder": [
+  401,
+  500
+ ],
+ "GET /api/chits/inbox": [
+  401,
+  500
+ ],
+ "GET /api/chits/pulse": [
+  401
+ ],
+ "GET /api/chits/raida/report": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/attachables": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/subjects": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/templates": [
+  401,
+  500
+ ],
+ "GET /api/chits/register/walk/:from": [
+  401,
+  500
+ ],
+ "GET /api/chits/rollup": [
+  401,
+  500
+ ],
+ "GET /api/chits/sent": [
+  401,
+  500
+ ],
+ "GET /api/chits/trace/batches": [
+  401,
+  500
+ ],
+ "GET /api/chits/trace/by-batch": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/chits/trace/networks": [
+  401,
+  500
+ ],
+ "GET /api/chits/unread": [
+  401,
+  500
+ ],
+ "GET /api/connections/list": [
+  401,
+  500
+ ],
+ "GET /api/connections/pending": [
+  401,
+  500
+ ],
+ "GET /api/counters": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/crm/calls": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/followups": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/parties": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/crm/parties/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/crm/parties/:id/contact-prefs": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/crm/parties/:id/timeline": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/crm/privacy-requests": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/segments": [
+  401,
+  403,
+  500
+ ],
  "GET /api/ctp/.well-known/ctp.json": [
   200,
+  500
+ ],
+ "GET /api/entities/entitlements": [
+  401,
+  500
+ ],
+ "GET /api/entities/header": [
+  401,
+  500
+ ],
+ "GET /api/entities/lookup": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/entities/me": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/entities/me/can-see-costs": [
+  401,
+  500
+ ],
+ "GET /api/entities/mis": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/entities/policy": [
+  401,
+  500
+ ],
+ "GET /api/entities/populations": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/entities/routing": [
+  401,
+  500
+ ],
+ "GET /api/entities/routing/preview": [
+  401
+ ],
+ "GET /api/entities/search": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/entities/sides": [
+  401,
+  500
+ ],
+ "GET /api/entities/usage": [
+  401,
   500
  ],
  "GET /api/facts/:card": [
@@ -298,6 +612,84 @@
   401,
   500
  ],
+ "GET /api/governance/ai-skills": [
+  401,
+  500
+ ],
+ "GET /api/governance/ai-usage": [
+  401,
+  500
+ ],
+ "GET /api/governance/boilerplate/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/commerce-standards": [
+  401,
+  500
+ ],
+ "GET /api/governance/country-setup": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/governance/entities/:id": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/governance/instruments": [
+  401,
+  500
+ ],
+ "GET /api/governance/journey": [
+  401,
+  500
+ ],
+ "GET /api/governance/lanes": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile/path": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile/readiness": [
+  401,
+  500
+ ],
+ "GET /api/governance/readiness": [
+  401,
+  500
+ ],
+ "GET /api/governance/readiness/:bridge_id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/source/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/supplier-acceptance/:handle": [
+  401,
+  500
+ ],
+ "GET /api/governance/track-record": [
+  401,
+  500
+ ],
+ "GET /api/governance/vault-schema": [
+  401,
+  500
+ ],
  "GET /api/integrations/catalogue": [
   401,
   500
@@ -352,8 +744,98 @@
   403,
   500
  ],
+ "GET /api/network-design": [
+  401,
+  500
+ ],
+ "GET /api/network-design/availability": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/network-design/stores": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/network/entities/:id/connections": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/network/entities/:id/subtree": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/network/entities/lookup": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/network/place": [
+  401,
+  500
+ ],
  "GET /api/pricing/kinds": [
   500
+ ],
+ "GET /api/products": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/products/:id/schedule": [
+  401,
+  500
+ ],
+ "GET /api/products/:id/versions": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/products/export.csv": [
+  401,
+  500
+ ],
+ "GET /api/products/lists": [
+  401,
+  500
+ ],
+ "GET /api/products/media/:item_id/:mid": [
+  404,
+  500,
+  503
+ ],
+ "GET /api/products/starter-columns": [
+  401,
+  500
+ ],
+ "GET /api/products/template": [
+  401,
+  500
+ ],
+ "GET /api/products/workbook.xlsx": [
+  401,
+  500
+ ],
+ "GET /api/repeat": [
+  401,
+  500
+ ],
+ "GET /api/repeat/:id": [
+  400,
+  401,
+  404,
+  500,
+  503
  ],
  "GET /api/tax/gstr": [
   401,
@@ -366,6 +848,84 @@
  ],
  "GET /api/tax/ledger": [
   401,
+  500
+ ],
+ "GET /api/testing/cases": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/cases/gherkin": [
+  401,
+  500
+ ],
+ "GET /api/testing/changes": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/cmdb": [
+  401,
+  500
+ ],
+ "GET /api/testing/cmdb/:ci": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/testing/coverage": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/engine": [
+  401,
+  500
+ ],
+ "GET /api/testing/incidents": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/releases": [
+  401,
+  500
+ ],
+ "GET /api/testing/reliability": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/report": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/requirements": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/results": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/runs": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/stale": [
+  401,
+  500
+ ],
+ "GET /api/testing/trace": [
+  401,
+  500
+ ],
+ "GET /api/testing/vocabulary": [
   500
  ],
  "GET /api/till/bills": [
@@ -452,6 +1012,24 @@
   403,
   500
  ],
+ "GET /api/work/:chit_id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/work/facts": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/work/list": [
+  400,
+  401,
+  403,
+  500
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -467,6 +1045,56 @@
   404,
   500
  ],
+ "PATCH /api/counters/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/crm/followups/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/entities/:id/erase": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "PATCH /api/entities/me/exposure": [
+  400,
+  401,
+  500
+ ],
+ "PATCH /api/entities/me/locale": [
+  400,
+  401,
+  500
+ ],
+ "PATCH /api/entities/me/prefs/:kind": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/entities/policy": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "PATCH /api/entities/profile": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
  "PATCH /api/folders/:id": [
   400,
   401,
@@ -479,6 +1107,26 @@
   404,
   500,
   503
+ ],
+ "PATCH /api/products/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PATCH /api/testing/incidents/:id": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/testing/requirements/:id": [
+  400,
+  401,
+  404,
+  500
  ],
  "POST /api/books/accounts": [
   401,
@@ -815,12 +1463,308 @@
   422,
   500
  ],
+ "POST /api/catalogue/enquiry/:item_id": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
  "POST /api/catalogue/network-store/:networkId/order": [
   400,
   401,
   403,
   404,
   409,
+  422,
+  500
+ ],
+ "POST /api/catalogue/photo-extract": [
+  400,
+  401,
+  402,
+  429,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/amend": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/chits/:chit_id/archive": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/assign-lines": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/books-request": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/costs": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/deliver-lines": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/disputes": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/chits/:chit_id/messages": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/chits/:chit_id/payment": [
+  400,
+  401,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/chits/:chit_id/raida": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/raida/:raida_id/close": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/raida/:raida_id/dispute": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/reprice": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/chits/:chit_id/restore": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/unarchive": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/unread": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/assign-bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/chits/register/entries/:raida_id/accept": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/entries/:raida_id/close": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/entries/:raida_id/revise": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/subjects": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/subjects/:subject_id/close": [
+  400,
+  401,
+  409,
+  500,
+  503
+ ],
+ "POST /api/chits/register/subjects/:subject_id/entries": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/register/templates": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/chits/send": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/connections/request": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/counters": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/counters/:id/assign": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/counters/:id/open": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/counters/:id/release": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/crm/followups": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/groups": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/crm/leads": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/crm/leads/import": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/contact-prefs": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/interactions": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/outcome": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/stage": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/crm/privacy-requests": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/privacy-requests/:id/answer": [
+  400,
+  401,
+  403,
+  409,
+  500,
+  503
+ ],
+ "POST /api/crm/segments/:key/send": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/crm/walk-ins/add": [
+  400,
+  401,
+  403,
   500
  ],
  "POST /api/ctp/deliver": [
@@ -836,6 +1780,14 @@
   200,
   400,
   403,
+  409,
+  500
+ ],
+ "POST /api/entities/populations": [
+  400,
+  401,
+  403,
+  404,
   409,
   500
  ],
@@ -866,6 +1818,68 @@
  "POST /api/folders/rules/preview": [
   400,
   401,
+  500
+ ],
+ "POST /api/governance/ai-draft": [
+  400,
+  401,
+  402,
+  429,
+  500,
+  503
+ ],
+ "POST /api/governance/boilerplate/:key/adopt": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/governance/compliance": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/governance/conformance": [
+  401,
+  500
+ ],
+ "POST /api/governance/entities": [
+  400,
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/governance/entities/:id/reattest": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/governance/source": [
+  400,
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/governance/supplier-acceptance": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/governance/verify": [
+  400,
+  401,
+  403,
+  422,
   500
  ],
  "POST /api/integrations/:actor_id/approve": [
@@ -917,8 +1931,242 @@
   403,
   500
  ],
+ "POST /api/network-design/build": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/network-design/reissue": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/network-design/validate": [
+  400,
+  401,
+  413,
+  500
+ ],
+ "POST /api/network/connections": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/approve": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/decline": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/disconnect": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/resume": [
+  401,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/suspend": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/entities": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/network/entities/:id/claim": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
  "POST /api/pricing/price": [
   400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/products": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "POST /api/products/:id/media": [
+  400,
+  401,
+  404,
+  413,
+  500,
+  503
+ ],
+ "POST /api/products/:id/schedule": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/products/availability/bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/bulk-update": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/import": [
+  400,
+  401,
+  409,
+  413,
+  500
+ ],
+ "POST /api/products/import/preflight": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/lists/adopt": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/starter-columns": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/status/bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/repeat": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/agree": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/counter": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/repeat/:id/decline": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/end": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/pause": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/refuse": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/resume": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/run": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/skip": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/sweep": [
   401,
   403,
   500
@@ -934,6 +2182,79 @@
   400,
   401,
   403,
+  500
+ ],
+ "POST /api/testing/cases/close": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/testing/cases/gherkin": [
+  400,
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/testing/cases/import": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/testing/cases/seed": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/testing/changes": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/cmdb/seed": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/testing/evidence": [
+  400,
+  401,
+  413,
+  500
+ ],
+ "POST /api/testing/incidents": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/releases": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/requirements": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/results": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "POST /api/testing/results/junit": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "POST /api/testing/trace": [
+  400,
+  401,
   500
  ],
  "POST /api/till/alias": [
@@ -1103,6 +2424,80 @@
   409,
   500
  ],
+ "PUT /api/catalogue-face": [
+  400,
+  401,
+  413,
+  422,
+  500
+ ],
+ "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/priority": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/priority-flag": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/star": [
+  401,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/status": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/use": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/void": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/connections/:id/respond": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/entities/populations/:code/desk": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/entities/routing": [
+  400,
+  401,
+  409,
+  500
+ ],
  "PUT /api/folders/inventory/:code": [
   400,
   401,
@@ -1112,11 +2507,57 @@
   500,
   503
  ],
+ "PUT /api/governance/country-setup": [
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/governance/profile": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "PUT /api/governance/profile/vault": [
+  400,
+  401,
+  403,
+  409,
+  500,
+  503
+ ],
  "PUT /api/integrations/streams": [
   400,
   401,
   403,
   422,
+  500
+ ],
+ "PUT /api/network-design": [
+  400,
+  401,
+  413,
+  500
+ ],
+ "PUT /api/products/:id/availability": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/products/:id/status": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/testing/cmdb/:ci": [
+  400,
+  401,
+  403,
   500
  ]
 }
