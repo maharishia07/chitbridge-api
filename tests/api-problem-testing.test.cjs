@@ -160,7 +160,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 60, frozen);
   check('a caller who is not signed in is refused with 401 on every route that asks for sign-in', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401 || /vocabulary/.test(key)));
-  check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).every((one) => !JSON.stringify(one.body || {}).includes('vault')));
+  check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).filter((one) => one.status >= 500).every((one) => !/SELECT|vault|relation "/.test(JSON.stringify(one.body || {})))); /* 5xx only, as tests/lib/problem-world.cjs: a 200 may list a module whose header names the vault (GET /engine) */
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
