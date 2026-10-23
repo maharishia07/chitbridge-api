@@ -176,6 +176,15 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PIN | varies | Pin | PENDING | - | country | 2026-10-22 |
 | PLATFORM_BOUND | varies | Platform bound | PENDING | - | entities | 2026-10-22 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
+| PRODUCT_BAD_REQUEST | 400 | The catalogue needs something else | The catalogue could not take that request, and the sentence says why. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
+| PRODUCT_CLASH | 409 | Clashes with the catalogue | That clashes with how this catalogue is set up. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
+| PRODUCT_FILE_UNREADABLE | 400 | File could not be read | That file could not be read. | Save it again as a spreadsheet or a CSV and upload it again. | products | 2026-10-23 |
+| PRODUCT_IMPORT_BLOCKED | 409 | The file has problems | The file has rows that must be fixed first, so nothing was imported. | Fix the rows listed and upload the file again. | products | 2026-10-23 |
+| PRODUCT_INVALID | 400 | Product refused | The catalogue refused that product, and the sentence says why. | Fix what the sentence says and try again. | products | 2026-10-23 |
+| PRODUCT_NOT_READY | 503 | Not set up on this system yet | This is not set up on this system yet. | Try again later. If it stays, tell us. | products | 2026-10-23 |
+| PRODUCT_NO_DEFINITION | 500 | No catalogue definition | Your catalogue has no definition to add columns to. | Set up the catalogue first, then try again. | products | 2026-10-23 |
+| PRODUCT_REFUSED | varies | Refused by a catalogue rule | A rule of the catalogue refused that, and the sentence says why. | Fix what the sentence says and try again. | products | 2026-10-23 |
+| PRODUCT_TOO_LARGE | 413 | Too large for this door | What you sent is too big for this door. | Send less at a time: split the file, or use a smaller picture. | products | 2026-10-23 |
 | QTY_OK | varies | Qty ok | PENDING | - | line-guard | 2026-10-22 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | REGION_STORE_MISSING | 403/404/503 | Region store missing | PENDING | - | assist | 2026-10-22 |
@@ -195,6 +204,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ROOT_HANDLE_TAKEN | varies | Root handle taken | PENDING | - | network-build-run | 2026-10-22 |
 | ROOT_HANDLE_UNUSABLE | varies | Root handle unusable | PENDING | - | network-build-run | 2026-10-22 |
 | SENDING | varies | Sending | PENDING | - | verdict | 2026-10-22 |
+| SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
 | SESSION_EXPIRED | 401 | Session expired | PENDING | - | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | PENDING | - | identity-auth | 2026-10-22 |
 | SESSION_UPGRADE | varies | Session upgrade | PENDING | - | auth | 2026-10-22 |
@@ -230,7 +240,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | VAULT_VERSION_REQUIRED | varies | Vault version required | PENDING | - | governance | 2026-10-22 |
 | VIEW_ONLY | varies | View only | PENDING | - | crm-groups | 2026-10-22 |
 | VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | PENDING | - | entities | 2026-10-22 |
-| WORKBOOK_CUT | varies | Workbook cut | PENDING | - | products | 2026-10-22 |
+| WORKBOOK_CUT | 413 | Workbook cut | This sheet is bigger than we read, so only part of it was read and nothing was imported. | Delete unused columns, or split the sheet, and upload again. | products | 2026-10-22 |
 | WORK_BAD_REQUEST | 400 | Work request not valid | That list request is not valid. | Ask for one view at a time. | work | 2026-10-23 |
 | WORK_STAFF_ONLY | 403 | Staff only | Sign in as staff to see Tasks and Orders. | Sign in with a staff login. | work | 2026-10-23 |
 | WRITER_THREW | varies | Writer threw | PENDING | - | signin-events | 2026-10-22 |

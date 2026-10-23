@@ -12306,6 +12306,19 @@
      }
     },
     {
+     "scenario": "norder-no-currency",
+     "status": 422,
+     "body_keys": {
+      "error": "No money",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     },
+     "fixture": {
+      "error": "No money",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     },
+     "note": "ORD-65 (2026-10-23): new answer. Before, deliverEdge called NO_CURRENCY_SAYS() on a string and the operator with no currency got a 500."
+    },
+    {
      "scenario": "norder-fails",
      "status": 500,
      "body_keys": {
@@ -16096,6 +16109,3252 @@
      "fixture": {
       "error": "Server error",
       "message": "Repeat supply could not answer. Try again."
+     }
+    }
+   ]
+  },
+  "DELETE /api/products/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "DELETE /api/products/:id/media/:mid": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not remove the media",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not remove the media",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "DELETE /api/products/:id/schedule/:sid": {
+   "answers": [
+    {
+     "scenario": "schedule-cancel-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not cancel the change",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not cancel the change",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-status-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad status",
+      "message": "status must be one of: available, unavailable, redundant, retired, not-available"
+     },
+     "fixture": {
+      "error": "Bad status",
+      "message": "status must be one of: available, unavailable, redundant, retired, not-available"
+     }
+    },
+    {
+     "scenario": "list-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products/:id/schedule": {
+   "answers": [
+    {
+     "scenario": "schedule-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the schedule",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the schedule",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products/:id/versions": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Versions failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Versions failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     }
+    },
+    {
+     "scenario": "versions-bad-date",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad date",
+      "message": "`at` must be a timestamp."
+     },
+     "fixture": {
+      "error": "Bad date",
+      "message": "`at` must be a timestamp."
+     }
+    },
+    {
+     "scenario": "versions-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Item versions need b146 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Item versions need b146 on this environment."
+     }
+    }
+   ]
+  },
+  "GET /api/products/export.csv": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Export failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Export failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products/lists": {
+   "answers": [
+    {
+     "scenario": "lists-trade-unreadable",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the product lists",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the product lists",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products/media/:item_id/:mid": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 503,
+     "body_keys": {
+      "error": "media store not configured"
+     },
+     "fixture": {
+      "error": "media store not configured"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "media store not configured"
+     },
+     "fixture": {
+      "error": "media store not configured"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "media store not configured"
+     },
+     "fixture": {
+      "error": "media store not configured"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "media store not configured"
+     },
+     "fixture": {
+      "error": "media store not configured"
+     }
+    },
+    {
+     "scenario": "media-store-off",
+     "status": 503,
+     "body_keys": {
+      "error": "media store not configured"
+     },
+     "fixture": {
+      "error": "media store not configured"
+     }
+    },
+    {
+     "scenario": "media-item-not-found",
+     "status": 404,
+     "body_keys": {},
+     "fixture": {}
+    },
+    {
+     "scenario": "media-not-listed",
+     "status": 404,
+     "body_keys": {},
+     "fixture": {}
+    },
+    {
+     "scenario": "media-key-outside-the-shop",
+     "status": 404,
+     "body_keys": {},
+     "fixture": {}
+    },
+    {
+     "scenario": "media-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products/starter-columns": {
+   "answers": [
+    {
+     "scenario": "starter-list-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not list the standard sets",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not list the standard sets",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products/template": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Template failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Template failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/products/workbook.xlsx": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Workbook failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Workbook failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/products/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "edit-item-data-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "edit-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "edit-cost-blind",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: price."
+     }
+    },
+    {
+     "scenario": "edit-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "edit-merge-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "edit-refused-by-the-rules",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "message": "Name is required"
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "message": "Name is required"
+     }
+    },
+    {
+     "scenario": "edit-server-owned-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "code": "SERVER_OWNED",
+      "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "code": "SERVER_OWNED",
+      "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
+     }
+    },
+    {
+     "scenario": "edit-currency-clash",
+     "status": 409,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "This catalogue is priced in INR; a price in USD cannot be stored on it. The currency comes from the business, not the request."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "This catalogue is priced in INR; a price in USD cannot be stored on it. The currency comes from the business, not the request."
+     }
+    }
+   ]
+  },
+  "POST /api/products": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "item-data-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails-with-an-item",
+     "status": 500,
+     "body_keys": {
+      "error": "Add failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "product-refused-by-the-rules",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "message": "Name is required"
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "message": "Name is required"
+     }
+    },
+    {
+     "scenario": "server-owned-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "code": "SERVER_OWNED",
+      "message": "Pictures and video are added from the product's Media, not by editing \"media\"."
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "code": "SERVER_OWNED",
+      "message": "Pictures and video are added from the product's Media, not by editing \"media\"."
+     }
+    },
+    {
+     "scenario": "price-below-zero",
+     "status": 422,
+     "body_keys": {
+      "error": "Add failed",
+      "message": "Price must be a finite number, got \"abc\""
+     },
+     "fixture": {
+      "error": "Add failed",
+      "message": "Price must be a finite number, got \"abc\""
+     }
+    }
+   ]
+  },
+  "POST /api/products/:id/media": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     }
+    },
+    {
+     "scenario": "media-link-not-a-video",
+     "status": 400,
+     "body_keys": {
+      "error": "not_a_video_link",
+      "message": "Paste a YouTube or Vimeo link."
+     },
+     "fixture": {
+      "error": "not_a_video_link",
+      "message": "Paste a YouTube or Vimeo link."
+     }
+    },
+    {
+     "scenario": "media-link-item-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "media-name-and-bytes-needed",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name and data_base64, or a video url"
+     }
+    },
+    {
+     "scenario": "media-store-not-configured",
+     "status": 503,
+     "body_keys": {
+      "error": "not_configured",
+      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+     },
+     "fixture": {
+      "error": "not_configured",
+      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+     }
+    },
+    {
+     "scenario": "media-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "empty"
+     },
+     "fixture": {
+      "error": "empty"
+     }
+    },
+    {
+     "scenario": "media-too-large",
+     "status": 413,
+     "body_keys": {
+      "error": "too_large",
+      "message": "Up to 8 MB per file."
+     },
+     "fixture": {
+      "error": "too_large",
+      "message": "Up to 8 MB per file."
+     }
+    },
+    {
+     "scenario": "media-upload-item-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "media-upload-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not add the media",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not add the media",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/:id/schedule": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "effective_at",
+        "message": "Invalid value"
+       },
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "effective_at",
+        "message": "Invalid value"
+       },
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "effective_at",
+        "message": "Invalid value"
+       },
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "effective_at",
+        "message": "Invalid value"
+       },
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "effective_at",
+        "message": "Invalid value"
+       },
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "effective_at",
+        "message": "Invalid value"
+       },
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "schedule-needs-both",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "item_data",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "schedule-cost-blind",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: price."
+     }
+    },
+    {
+     "scenario": "schedule-server-owned-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid change",
+      "code": "SERVER_OWNED",
+      "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
+     },
+     "fixture": {
+      "error": "Invalid change",
+      "code": "SERVER_OWNED",
+      "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
+     }
+    },
+    {
+     "scenario": "schedule-item-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "schedule-not-enabled",
+     "status": 409,
+     "body_keys": {
+      "error": "not_enabled",
+      "message": "Scheduled changes need migration b203 (catalogue_item_schedule)."
+     },
+     "fixture": {
+      "error": "not_enabled",
+      "message": "Scheduled changes need migration b203 (catalogue_item_schedule)."
+     }
+    },
+    {
+     "scenario": "schedule-bad-time",
+     "status": 400,
+     "body_keys": {
+      "error": "bad_time",
+      "message": "effective_at must be a date-time."
+     },
+     "fixture": {
+      "error": "bad_time",
+      "message": "effective_at must be a date-time."
+     }
+    },
+    {
+     "scenario": "schedule-nothing-changed",
+     "status": 400,
+     "body_keys": {
+      "error": "empty",
+      "message": "Nothing changed — no patch to schedule."
+     },
+     "fixture": {
+      "error": "empty",
+      "message": "Nothing changed — no patch to schedule."
+     }
+    },
+    {
+     "scenario": "schedule-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not schedule the change",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not schedule the change",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/availability/bulk": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "availability-bulk-none",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "availability-bulk-too-many",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "availability-bulk-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Availability bulk update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Availability bulk update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/bulk": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "too-many-products",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "At most 200 items in one request."
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "At most 200 items in one request."
+     }
+    },
+    {
+     "scenario": "an-item-is-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "message": "Every item must be an object."
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "message": "Every item must be an object."
+     }
+    },
+    {
+     "scenario": "bulk-refused-by-the-rules",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "message": "1 item(s) were refused and nothing was written.",
+      "invalid": [
+       {
+        "index": 0,
+        "message": "Name is required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "message": "1 item(s) were refused and nothing was written.",
+      "invalid": [
+       {
+        "index": 0,
+        "message": "Name is required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bulk-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Bulk add failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Bulk add failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/bulk-update": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "items",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "too-many-edits",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "At most 200 items in one request."
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "At most 200 items in one request."
+     }
+    },
+    {
+     "scenario": "an-edit-has-the-wrong-shape",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad shape",
+      "message": "Every item must be { id, item_data }."
+     },
+     "fixture": {
+      "error": "Bad shape",
+      "message": "Every item must be { id, item_data }."
+     }
+    },
+    {
+     "scenario": "an-edit-is-refused-by-the-rules",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "message": "1 item(s) were refused and nothing was written.",
+      "invalid": [
+       {
+        "index": 0,
+        "id": "22222222-2222-4222-8222-222222222222",
+        "message": "Name is required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "message": "1 item(s) were refused and nothing was written.",
+      "invalid": [
+       {
+        "index": 0,
+        "id": "22222222-2222-4222-8222-222222222222",
+        "message": "Name is required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "edits-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Bulk update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Bulk update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/import": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "import-not-confirmed",
+     "status": 400,
+     "body_keys": {
+      "error": "Not confirmed",
+      "message": "Nothing was imported — this needs an explicit confirmation."
+     },
+     "fixture": {
+      "error": "Not confirmed",
+      "message": "Nothing was imported — this needs an explicit confirmation."
+     }
+    },
+    {
+     "scenario": "import-nothing-to-import",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "The file is empty."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "The file is empty."
+     }
+    },
+    {
+     "scenario": "import-file-unreadable",
+     "status": 400,
+     "body_keys": {
+      "error": "Could not read the file",
+      "message": "That is not an .xlsx file. If it is an older .xls, open it in Excel and use \"Save As\" → \"Excel Workbook (.xlsx)\"."
+     },
+     "fixture": {
+      "error": "Could not read the file",
+      "message": "That is not an .xlsx file. If it is an older .xls, open it in Excel and use \"Save As\" → \"Excel Workbook (.xlsx)\"."
+     }
+    },
+    {
+     "scenario": "import-no-product-name",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "No row had a product name once your choices were applied, so there was nothing to create."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "No row had a product name once your choices were applied, so there was nothing to create."
+     }
+    },
+    {
+     "scenario": "import-choices-do-not-hold",
+     "status": 400,
+     "body_keys": {
+      "error": "Those choices do not hold up",
+      "messages": [
+       "Both \"name\" and \"sku\" were mapped to sku. Pick one."
+      ],
+      "message": "Both \"name\" and \"sku\" were mapped to sku. Pick one. Nothing was imported."
+     },
+     "fixture": {
+      "error": "Those choices do not hold up",
+      "messages": [
+       "Both \"name\" and \"sku\" were mapped to sku. Pick one."
+      ],
+      "message": "Both \"name\" and \"sku\" were mapped to sku. Pick one. Nothing was imported."
+     }
+    },
+    {
+     "scenario": "import-too-many-rows",
+     "status": 413,
+     "body_keys": {
+      "error": "Too many rows",
+      "message": "This file has 2001 rows and one upload can carry 2000. Nothing was imported — split the file and it will all go in."
+     },
+     "fixture": {
+      "error": "Too many rows",
+      "message": "This file has 2001 rows and one upload can carry 2000. Nothing was imported — split the file and it will all go in."
+     }
+    },
+    {
+     "scenario": "import-a-row-has-a-problem",
+     "status": 409,
+     "body_keys": {
+      "error": "The file has problems",
+      "report": {
+       "mapping": [
+        {
+         "incoming": "sku",
+         "canonical": "sku",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        },
+        {
+         "incoming": "name",
+         "canonical": "name",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        },
+        {
+         "incoming": "unit",
+         "canonical": "unit",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        },
+        {
+         "incoming": "price",
+         "canonical": "price",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        }
+       ],
+       "mapped": [
+        "sku",
+        "name",
+        "unit",
+        "price"
+       ],
+       "missing": [],
+       "blocked": [],
+       "unmatched": [],
+       "needsConfirming": [],
+       "issues": [
+        {
+         "row": 2,
+         "column": "price",
+         "message": "\"not-a-number\" is not a number",
+         "severity": "error"
+        }
+       ],
+       "rowCount": 1,
+       "summary": {
+        "rows": 1,
+        "importable": 0,
+        "errors": 1,
+        "warnings": 0
+       },
+       "ready": false,
+       "notes": []
+      },
+      "message": "1 row problem(s) must be fixed first. Nothing was imported."
+     },
+     "fixture": {
+      "error": "The file has problems",
+      "report": {
+       "mapping": [
+        {
+         "incoming": "sku",
+         "canonical": "sku",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        },
+        {
+         "incoming": "name",
+         "canonical": "name",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        },
+        {
+         "incoming": "unit",
+         "canonical": "unit",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        },
+        {
+         "incoming": "price",
+         "canonical": "price",
+         "how": "exact",
+         "confidence": 1,
+         "why": "matches your catalogue exactly"
+        }
+       ],
+       "mapped": [
+        "sku",
+        "name",
+        "unit",
+        "price"
+       ],
+       "missing": [],
+       "blocked": [],
+       "unmatched": [],
+       "needsConfirming": [],
+       "issues": [
+        {
+         "row": 2,
+         "column": "price",
+         "message": "\"not-a-number\" is not a number",
+         "severity": "error"
+        }
+       ],
+       "rowCount": 1,
+       "summary": {
+        "rows": 1,
+        "importable": 0,
+        "errors": 1,
+        "warnings": 0
+       },
+       "ready": false,
+       "notes": []
+      },
+      "message": "1 row problem(s) must be fixed first. Nothing was imported."
+     }
+    },
+    {
+     "scenario": "import-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Import failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Import failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "import-decisions-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "decisions",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "POST /api/products/import/preflight": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to read",
+      "message": "The file is empty."
+     },
+     "fixture": {
+      "error": "Nothing to read",
+      "message": "The file is empty."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to read",
+      "message": "The file is empty."
+     },
+     "fixture": {
+      "error": "Nothing to read",
+      "message": "The file is empty."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to read",
+      "message": "The file is empty."
+     },
+     "fixture": {
+      "error": "Nothing to read",
+      "message": "The file is empty."
+     }
+    },
+    {
+     "scenario": "preflight-row-past-the-end",
+     "status": 400,
+     "body_keys": {
+      "error": "Could not read the file",
+      "message": "Row 40 is past the end of that file — it has 2 rows."
+     },
+     "fixture": {
+      "error": "Could not read the file",
+      "message": "Row 40 is past the end of that file — it has 2 rows."
+     }
+    },
+    {
+     "scenario": "preflight-workbook-unreadable",
+     "status": 400,
+     "body_keys": {
+      "error": "Could not read the file",
+      "message": "That is not an .xlsx file. If it is an older .xls, open it in Excel and use \"Save As\" → \"Excel Workbook (.xlsx)\"."
+     },
+     "fixture": {
+      "error": "Could not read the file",
+      "message": "That is not an .xlsx file. If it is an older .xls, open it in Excel and use \"Save As\" → \"Excel Workbook (.xlsx)\"."
+     }
+    },
+    {
+     "scenario": "preflight-header-row-zero",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "header_row",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "header_row",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "preflight-file-not-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "csv",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "csv",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "preflight-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the file",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the file",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/lists/adopt": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "lists-adopt-list-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "list",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "lists-adopt-unknown-list",
+     "status": 400,
+     "body_keys": {
+      "error": "unknown list",
+      "message": "There is no product list called \"nope\".",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     },
+     "fixture": {
+      "error": "unknown list",
+      "message": "There is no product list called \"nope\".",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     }
+    },
+    {
+     "scenario": "lists-adopt-a-row-with-a-picture",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid product",
+      "message": "1 item(s) were refused and nothing was written.",
+      "invalid": [
+       {
+        "index": 0,
+        "code": "SERVER_OWNED",
+        "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Invalid product",
+      "message": "1 item(s) were refused and nothing was written.",
+      "invalid": [
+       {
+        "index": 0,
+        "code": "SERVER_OWNED",
+        "message": "Pictures and video are added from the product's Media, not by editing \"image\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "lists-adopt-categories-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Your categories could not be set up, so nothing was added. Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Your categories could not be set up, so nothing was added. Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "lists-adopt-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not adopt that product list",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not adopt that product list",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/starter-columns": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "vertical",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "vertical",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "vertical",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "vertical",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "vertical",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "vertical",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "starter-unknown-trade",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown trade",
+      "message": "That is not one of the standard sets."
+     },
+     "fixture": {
+      "error": "Unknown trade",
+      "message": "That is not one of the standard sets."
+     }
+    },
+    {
+     "scenario": "starter-no-definition",
+     "status": 500,
+     "body_keys": {
+      "error": "No catalogue definition",
+      "message": "Your catalogue has no definition to add columns to."
+     },
+     "fixture": {
+      "error": "No catalogue definition",
+      "message": "Your catalogue has no definition to add columns to."
+     }
+    },
+    {
+     "scenario": "starter-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not adopt the standard set",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not adopt the standard set",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/products/status/bulk": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "too-many-ids",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "At most 200 items in one request."
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "At most 200 items in one request."
+     }
+    },
+    {
+     "scenario": "an-id-is-not-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad ids",
+      "message": "Every id must be a string."
+     },
+     "fixture": {
+      "error": "Bad ids",
+      "message": "Every id must be a string."
+     }
+    },
+    {
+     "scenario": "retired-is-not-bulk",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad status",
+      "message": "In bulk, status must be one of: available, unavailable. retired and redundant need a per-item reason, so they are set one at a time."
+     },
+     "fixture": {
+      "error": "Bad status",
+      "message": "In bulk, status must be one of: available, unavailable. retired and redundant need a per-item reason, so they are set one at a time."
+     }
+    },
+    {
+     "scenario": "bulk-status-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Bulk status failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Bulk status failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bulk-status-ids-and-status-wrong",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ids",
+        "message": "Invalid value"
+       },
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bulk-status-status-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "PUT /api/products/:id/availability": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "availability-qty-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "qty",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "availability-source-not-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "source",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "source",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "availability-qty-negative",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad quantity",
+      "message": "A quantity must be zero or more. A negative figure means the feed is wrong, and storing it would make a full shelf look empty."
+     },
+     "fixture": {
+      "error": "Bad quantity",
+      "message": "A quantity must be zero or more. A negative figure means the feed is wrong, and storing it would make a full shelf look empty."
+     }
+    },
+    {
+     "scenario": "availability-item-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     }
+    },
+    {
+     "scenario": "availability-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Availability update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Availability update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/products/:id/status": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "status-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "status",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "status-item-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such item in your catalogue."
+     }
+    },
+    {
+     "scenario": "status-unknown-word",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad status",
+      "message": "status must be one of: available, unavailable, redundant, retired"
+     },
+     "fixture": {
+      "error": "Bad status",
+      "message": "status must be one of: available, unavailable, redundant, retired"
+     }
+    },
+    {
+     "scenario": "status-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Status update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Status update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     }
+    },
+    {
+     "scenario": "document-not-theirs",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     }
+    },
+    {
+     "scenario": "document-delete-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue-face": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "face-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "documents-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/my-orders": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "orders-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/enquiry": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "enquiries-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/enquiry/:item_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thread-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/enquiry/:item_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-text-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-thread-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-both-wrong",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       },
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       },
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-product-not-visible",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such product"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such product"
+     }
+    },
+    {
+     "scenario": "enquiry-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Product enquiries need b162 — not applied on this deployment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Product enquiries need b162 — not applied on this deployment."
+     }
+    },
+    {
+     "scenario": "enquiry-db-fails-after-the-gate",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "enquiry-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/photo-extract": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-no-images",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-images-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-empty-list",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-wallet-empty",
+     "status": 402,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Top up the wallet."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Top up the wallet."
+     }
+    },
+    {
+     "scenario": "photo-refusal-without-words",
+     "status": 429,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "photo-not-connected",
+     "status": 503,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "photo-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/catalogue-face": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-too-large",
+     "status": 413,
+     "body_keys": {
+      "error": "Too large",
+      "message": "face exceeds 1000000 bytes"
+     },
+     "fixture": {
+      "error": "Too large",
+      "message": "face exceeds 1000000 bytes"
+     }
+    },
+    {
+     "scenario": "face-declaration-unsupported",
+     "status": 422,
+     "body_keys": {
+      "error": "Declaration not supported",
+      "message": "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     },
+     "fixture": {
+      "error": "Declaration not supported",
+      "message": "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     }
+    },
+    {
+     "scenario": "face-item-declaration-unsupported",
+     "status": 422,
+     "body_keys": {
+      "error": "Declaration not supported",
+      "message": "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     },
+     "fixture": {
+      "error": "Declaration not supported",
+      "message": "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     }
+    },
+    {
+     "scenario": "face-identity-unknown-column",
+     "status": 422,
+     "body_keys": {
+      "error": "Declaration not supported",
+      "message": "identity: the identity field \"nope\" is not a column in this catalogue",
+      "errors": [
+       "identity: the identity field \"nope\" is not a column in this catalogue"
+      ]
+     },
+     "fixture": {
+      "error": "Declaration not supported",
+      "message": "identity: the identity field \"nope\" is not a column in this catalogue",
+      "errors": [
+       "identity: the identity field \"nope\" is not a column in this catalogue"
+      ]
+     }
+    },
+    {
+     "scenario": "face-save-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Save failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Save failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
