@@ -57,6 +57,15 @@
   409,
   500
  ],
+ "DELETE /api/definitions/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
  "DELETE /api/folders/:id": [
   400,
   401,
@@ -553,6 +562,18 @@
  "GET /api/ctp/.well-known/ctp.json": [
   200,
   500
+ ],
+ "GET /api/definitions": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "GET /api/definitions/:id": [
+  401,
+  404,
+  500,
+  503
  ],
  "GET /api/entities/entitlements": [
   401,
@@ -1918,6 +1939,20 @@
   409,
   500
  ],
+ "POST /api/definitions": [
+  400,
+  401,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/definitions/freeze": [
+  400,
+  401,
+  500,
+  503
+ ],
  "POST /api/entities/populations": [
   400,
   401,
@@ -2687,6 +2722,16 @@
   401,
   404,
   500
+ ],
+ "PUT /api/definitions/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
  ],
  "PUT /api/entities/populations/:code/desk": [
   400,

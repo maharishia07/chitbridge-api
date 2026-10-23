@@ -35023,6 +35023,2684 @@
     }
    ]
   },
+  "DELETE /api/definitions/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "retire-a-governed-slab",
+     "status": 403,
+     "body_keys": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     },
+     "fixture": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     }
+    },
+    {
+     "scenario": "retire-a-slab-that-is-cited",
+     "status": 409,
+     "body_keys": {
+      "error": "cited",
+      "products": 3,
+      "categories": 3,
+      "message": "3 product(s) and 3 categories cite this slab. Pick the slab that takes over, or they lose their rate."
+     },
+     "fixture": {
+      "error": "cited",
+      "products": 3,
+      "categories": 3,
+      "message": "3 product(s) and 3 categories cite this slab. Pick the slab that takes over, or they lose their rate."
+     }
+    },
+    {
+     "scenario": "retire-takeover-is-the-same-slab",
+     "status": 400,
+     "body_keys": {
+      "error": "same",
+      "message": "The takeover slab is the one being retired."
+     },
+     "fixture": {
+      "error": "same",
+      "message": "The takeover slab is the one being retired."
+     }
+    },
+    {
+     "scenario": "retire-takeover-is-not-a-live-slab",
+     "status": 400,
+     "body_keys": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     },
+     "fixture": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     }
+    },
+    {
+     "scenario": "retire-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "retire-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "retire-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "retire-takeover-given-twice",
+     "status": 400,
+     "body_keys": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     },
+     "fixture": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     }
+    },
+    {
+     "scenario": "retire-guard-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/definitions": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "list-governed-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/definitions/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "read-one-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "read-one-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "read-one-history-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/definitions": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-kind-only",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-name-only",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-both-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-both-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-kind-is-a-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-name-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-offer-without-its-percent",
+     "status": 422,
+     "body_keys": {
+      "error": "Incomplete rule",
+      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+     },
+     "fixture": {
+      "error": "Incomplete rule",
+      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+     }
+    },
+    {
+     "scenario": "create-offer-clash",
+     "status": 409,
+     "body_keys": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-name-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     },
+     "fixture": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     }
+    },
+    {
+     "scenario": "create-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "create-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-version-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-clash-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-rule-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/definitions/freeze": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-ids-are-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-ids-are-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "freeze-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "freeze-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "freeze-governed-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/definitions/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "save-a-governed-slab",
+     "status": 403,
+     "body_keys": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     },
+     "fixture": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     }
+    },
+    {
+     "scenario": "save-incomplete-slab",
+     "status": 422,
+     "body_keys": {
+      "error": "Incomplete rule",
+      "message": "The rate is needed (0 for a zero-rated slab)."
+     },
+     "fixture": {
+      "error": "Incomplete rule",
+      "message": "The rate is needed (0 for a zero-rated slab)."
+     }
+    },
+    {
+     "scenario": "save-offer-clash",
+     "status": 409,
+     "body_keys": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "save-name-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     },
+     "fixture": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     }
+    },
+    {
+     "scenario": "save-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "save-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "save-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "save-clash-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/catalogue-mine": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "mine-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "mine-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/catalogue-source/:key": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "source-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "source-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/container/:id": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "container-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "container-read-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/erp-handoffs": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     }
+    },
+    {
+     "scenario": "handoffs-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     }
+    },
+    {
+     "scenario": "handoffs-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/penetration": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     }
+    },
+    {
+     "scenario": "penetration-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     }
+    },
+    {
+     "scenario": "penetration-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/questions": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     }
+    },
+    {
+     "scenario": "questions-unread",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/regions": {
+   "answers": [
+    {
+     "scenario": "regions-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/resolve": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "resolve-needs-a-region",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "resolve-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "resolve-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "ask-nothing",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "ask-too-long",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Question is too long."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Question is too long."
+     }
+    },
+    {
+     "scenario": "ask-a-list",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "ask-not-configured",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "message": "The assistant model is not configured yet."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "message": "The assistant model is not configured yet."
+     }
+    },
+    {
+     "scenario": "ask-anonymous",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_SIGN_IN",
+      "message": "Sign in for fuller answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_SIGN_IN",
+      "message": "Sign in for fuller answers."
+     }
+    },
+    {
+     "scenario": "ask-empty-answer",
+     "status": 502,
+     "body_keys": {
+      "error": "Assistant error",
+      "message": "No answer produced — try again."
+     },
+     "fixture": {
+      "error": "Assistant error",
+      "message": "No answer produced — try again."
+     }
+    },
+    {
+     "scenario": "ask-wallet-empty",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     }
+    },
+    {
+     "scenario": "ask-rate-held",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     }
+    },
+    {
+     "scenario": "ask-day-cap",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     }
+    },
+    {
+     "scenario": "ask-model-fails",
+     "status": 502,
+     "body_keys": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     },
+     "fixture": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     }
+    },
+    {
+     "scenario": "ask-model-throws",
+     "status": 502,
+     "body_keys": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     },
+     "fixture": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     }
+    },
+    {
+     "scenario": "ask-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Assistant error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Assistant error",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/catalogue-adopt": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "adopt-unknown-source",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown catalogue source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown catalogue source."
+     }
+    },
+    {
+     "scenario": "adopt-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "adopt-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/catalogue-structure": {
+   "answers": [
+    {
+     "scenario": "structure-unknown-source",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown catalogue source.",
+      "available": [
+       {
+        "key": "beta-royale-play@v1",
+        "for_entity": "Beta",
+        "title": "Beta Traders — Royale Play designer wall finishes",
+        "item_count": 6,
+        "for_vertical": null
+       }
+      ]
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown catalogue source.",
+      "available": [
+       {
+        "key": "beta-royale-play@v1",
+        "for_entity": "Beta",
+        "title": "Beta Traders — Royale Play designer wall finishes",
+        "item_count": 6,
+        "for_vertical": null
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "structure-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/conform": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "conform-needs-a-standard",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "conform-unknown-standard",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown standard.",
+      "available": [
+       {
+        "standard": "food-safety@v1",
+        "title": "Food safety — cold-chain storage",
+        "points": [
+         {
+          "key": "storage_temp_c",
+          "label": "Storage temperature (°C)",
+          "obligation": "must",
+          "rule": {
+           "max": 5
+          }
+         },
+         {
+          "key": "batch_id",
+          "label": "Batch / lot identifier",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "expiry_date",
+          "label": "Expiry date",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "haccp_checked",
+          "label": "HACCP check performed",
+          "obligation": "must",
+          "rule": {
+           "equals": true
+          }
+         }
+        ]
+       }
+      ]
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown standard.",
+      "available": [
+       {
+        "standard": "food-safety@v1",
+        "title": "Food safety — cold-chain storage",
+        "points": [
+         {
+          "key": "storage_temp_c",
+          "label": "Storage temperature (°C)",
+          "obligation": "must",
+          "rule": {
+           "max": 5
+          }
+         },
+         {
+          "key": "batch_id",
+          "label": "Batch / lot identifier",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "expiry_date",
+          "label": "Expiry date",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "haccp_checked",
+          "label": "HACCP check performed",
+          "obligation": "must",
+          "rule": {
+           "equals": true
+          }
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "conform-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/gap": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "gap-needs-a-question",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "gap-too-long",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Question is too long."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Question is too long."
+     }
+    },
+    {
+     "scenario": "gap-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not note the question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not note the question."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/publish": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "publish-needs-both",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "publish-not-a-help-desk",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "Only a help desk can publish to its catalogue.",
+      "why": "not_helpdesk"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Only a help desk can publish to its catalogue.",
+      "why": "not_helpdesk"
+     }
+    },
+    {
+     "scenario": "publish-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not publish."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not publish."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/resolve": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "resolve-retired",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    }
+   ]
+  },
+  "PUT /api/assist/catalogue-source": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "source-needs-a-key",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "source-a-list",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "source-of-another-brand",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This source is owned by another brand."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This source is owned by another brand."
+     }
+    },
+    {
+     "scenario": "source-of-the-platform",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This source belongs to the platform."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This source belongs to the platform."
+     }
+    },
+    {
+     "scenario": "source-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     }
+    },
+    {
+     "scenario": "source-write-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     }
+    },
+    {
+     "scenario": "source-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/assist/container": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "container-needs-an-id",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "container-of-another-brand",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This product container is owned by another brand."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This product container is owned by another brand."
+     }
+    },
+    {
+     "scenario": "container-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CONTAINER_STORE_MISSING",
+      "error": "Container model not enabled yet — apply migration b80."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CONTAINER_STORE_MISSING",
+      "error": "Container model not enabled yet — apply migration b80."
+     }
+    },
+    {
+     "scenario": "container-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/assist/region-override": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "region-needs-both",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "region-unknown-container",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container."
+     }
+    },
+    {
+     "scenario": "region-of-another-brand",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This container is owned by another brand."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This container is owned by another brand."
+     }
+    },
+    {
+     "scenario": "region-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "REGION_STORE_MISSING",
+      "error": "Regional scatter not enabled yet — apply migration b81."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "REGION_STORE_MISSING",
+      "error": "Regional scatter not enabled yet — apply migration b81."
+     }
+    },
+    {
+     "scenario": "region-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
   "DELETE /api/actors/:id/pin": {
    "answers": [
     {
@@ -37895,1612 +40573,6 @@
       "detail": "Only the owner can change people.",
       "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
-     }
-    }
-   ]
-  },
-  "GET /api/assist/catalogue-mine": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     }
-    },
-    {
-     "scenario": "mine-store-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     }
-    },
-    {
-     "scenario": "mine-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/assist/catalogue-source/:key": {
-   "answers": [
-    {
-     "scenario": "signed-out",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown source."
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown source."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown source."
-     }
-    },
-    {
-     "scenario": "bad-id",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown source."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown source."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown source."
-     }
-    },
-    {
-     "scenario": "source-unknown",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown source."
-     }
-    },
-    {
-     "scenario": "source-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/assist/container/:id": {
-   "answers": [
-    {
-     "scenario": "signed-out",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "bad-id",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "container-unknown",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "container-read-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/assist/erp-handoffs": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
-     }
-    },
-    {
-     "scenario": "handoffs-store-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
-     }
-    },
-    {
-     "scenario": "handoffs-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/assist/penetration": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
-     }
-    },
-    {
-     "scenario": "penetration-store-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
-     }
-    },
-    {
-     "scenario": "penetration-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/assist/questions": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Could not load assistant questions."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Could not load assistant questions."
-     }
-    },
-    {
-     "scenario": "questions-unread",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Could not load assistant questions."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Could not load assistant questions."
-     }
-    }
-   ]
-  },
-  "GET /api/assist/regions": {
-   "answers": [
-    {
-     "scenario": "regions-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/assist/resolve": {
-   "answers": [
-    {
-     "scenario": "signed-out",
-     "status": 400,
-     "body_keys": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 400,
-     "body_keys": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 400,
-     "body_keys": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 400,
-     "body_keys": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 400,
-     "body_keys": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     }
-    },
-    {
-     "scenario": "resolve-needs-a-region",
-     "status": 400,
-     "body_keys": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "NO_COUNTRY",
-      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
-     }
-    },
-    {
-     "scenario": "resolve-unknown",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container or version."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container or version."
-     }
-    },
-    {
-     "scenario": "resolve-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "POST /api/assist": {
-   "answers": [
-    {
-     "scenario": "signed-out",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     }
-    },
-    {
-     "scenario": "ask-nothing",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     }
-    },
-    {
-     "scenario": "ask-too-long",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Question is too long."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Question is too long."
-     }
-    },
-    {
-     "scenario": "ask-a-list",
-     "status": 422,
-     "body_keys": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     },
-     "fixture": {
-      "error": "Bad request",
-      "message": "Ask a question."
-     }
-    },
-    {
-     "scenario": "ask-not-configured",
-     "status": 503,
-     "body_keys": {
-      "error": "assist_unavailable",
-      "message": "The assistant model is not configured yet."
-     },
-     "fixture": {
-      "error": "assist_unavailable",
-      "message": "The assistant model is not configured yet."
-     }
-    },
-    {
-     "scenario": "ask-anonymous",
-     "status": 503,
-     "body_keys": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_SIGN_IN",
-      "message": "Sign in for fuller answers."
-     },
-     "fixture": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_SIGN_IN",
-      "message": "Sign in for fuller answers."
-     }
-    },
-    {
-     "scenario": "ask-empty-answer",
-     "status": 502,
-     "body_keys": {
-      "error": "Assistant error",
-      "message": "No answer produced — try again."
-     },
-     "fixture": {
-      "error": "Assistant error",
-      "message": "No answer produced — try again."
-     }
-    },
-    {
-     "scenario": "ask-wallet-empty",
-     "status": 503,
-     "body_keys": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_GATED",
-      "message": "The assistant is resting — the help library answers."
-     },
-     "fixture": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_GATED",
-      "message": "The assistant is resting — the help library answers."
-     }
-    },
-    {
-     "scenario": "ask-rate-held",
-     "status": 503,
-     "body_keys": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_GATED",
-      "message": "The assistant is resting — the help library answers."
-     },
-     "fixture": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_GATED",
-      "message": "The assistant is resting — the help library answers."
-     }
-    },
-    {
-     "scenario": "ask-day-cap",
-     "status": 503,
-     "body_keys": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_GATED",
-      "message": "The assistant is resting — the help library answers."
-     },
-     "fixture": {
-      "error": "assist_unavailable",
-      "code": "ASSIST_GATED",
-      "message": "The assistant is resting — the help library answers."
-     }
-    },
-    {
-     "scenario": "ask-model-fails",
-     "status": 502,
-     "body_keys": {
-      "error": "Assistant upstream error",
-      "message": "The assistant is busy — please try again."
-     },
-     "fixture": {
-      "error": "Assistant upstream error",
-      "message": "The assistant is busy — please try again."
-     }
-    },
-    {
-     "scenario": "ask-model-throws",
-     "status": 502,
-     "body_keys": {
-      "error": "Assistant upstream error",
-      "message": "The assistant is busy — please try again."
-     },
-     "fixture": {
-      "error": "Assistant upstream error",
-      "message": "The assistant is busy — please try again."
-     }
-    },
-    {
-     "scenario": "ask-fault",
-     "status": 500,
-     "body_keys": {
-      "error": "Assistant error",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Assistant error",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "POST /api/assist/catalogue-adopt": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     }
-    },
-    {
-     "scenario": "adopt-unknown-source",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown catalogue source."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown catalogue source."
-     }
-    },
-    {
-     "scenario": "adopt-store-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
-     }
-    },
-    {
-     "scenario": "adopt-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "POST /api/assist/catalogue-structure": {
-   "answers": [
-    {
-     "scenario": "structure-unknown-source",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown catalogue source.",
-      "available": [
-       {
-        "key": "beta-royale-play@v1",
-        "for_entity": "Beta",
-        "title": "Beta Traders — Royale Play designer wall finishes",
-        "item_count": 6,
-        "for_vertical": null
-       }
-      ]
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown catalogue source.",
-      "available": [
-       {
-        "key": "beta-royale-play@v1",
-        "for_entity": "Beta",
-        "title": "Beta Traders — Royale Play designer wall finishes",
-        "item_count": 6,
-        "for_vertical": null
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "structure-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "POST /api/assist/conform": {
-   "answers": [
-    {
-     "scenario": "signed-out",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     }
-    },
-    {
-     "scenario": "conform-needs-a-standard",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Name the standard to check against."
-     }
-    },
-    {
-     "scenario": "conform-unknown-standard",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown standard.",
-      "available": [
-       {
-        "standard": "food-safety@v1",
-        "title": "Food safety — cold-chain storage",
-        "points": [
-         {
-          "key": "storage_temp_c",
-          "label": "Storage temperature (°C)",
-          "obligation": "must",
-          "rule": {
-           "max": 5
-          }
-         },
-         {
-          "key": "batch_id",
-          "label": "Batch / lot identifier",
-          "obligation": "must",
-          "rule": {
-           "present": true
-          }
-         },
-         {
-          "key": "expiry_date",
-          "label": "Expiry date",
-          "obligation": "must",
-          "rule": {
-           "present": true
-          }
-         },
-         {
-          "key": "haccp_checked",
-          "label": "HACCP check performed",
-          "obligation": "must",
-          "rule": {
-           "equals": true
-          }
-         }
-        ]
-       }
-      ]
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown standard.",
-      "available": [
-       {
-        "standard": "food-safety@v1",
-        "title": "Food safety — cold-chain storage",
-        "points": [
-         {
-          "key": "storage_temp_c",
-          "label": "Storage temperature (°C)",
-          "obligation": "must",
-          "rule": {
-           "max": 5
-          }
-         },
-         {
-          "key": "batch_id",
-          "label": "Batch / lot identifier",
-          "obligation": "must",
-          "rule": {
-           "present": true
-          }
-         },
-         {
-          "key": "expiry_date",
-          "label": "Expiry date",
-          "obligation": "must",
-          "rule": {
-           "present": true
-          }
-         },
-         {
-          "key": "haccp_checked",
-          "label": "HACCP check performed",
-          "obligation": "must",
-          "rule": {
-           "equals": true
-          }
-         }
-        ]
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "conform-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "POST /api/assist/gap": {
-   "answers": [
-    {
-     "scenario": "signed-out",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "gap-needs-a-question",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Ask a question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Ask a question."
-     }
-    },
-    {
-     "scenario": "gap-too-long",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "Question is too long."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Question is too long."
-     }
-    },
-    {
-     "scenario": "gap-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Could not note the question."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Could not note the question."
-     }
-    }
-   ]
-  },
-  "POST /api/assist/publish": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "question and answer are required."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "question and answer are required."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "question and answer are required."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "question and answer are required."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "question and answer are required."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "question and answer are required."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "question and answer are required."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "question and answer are required."
-     }
-    },
-    {
-     "scenario": "publish-needs-both",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "question and answer are required."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "question and answer are required."
-     }
-    },
-    {
-     "scenario": "publish-not-a-help-desk",
-     "status": 403,
-     "body_keys": {
-      "ok": false,
-      "error": "Only a help desk can publish to its catalogue.",
-      "why": "not_helpdesk"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Only a help desk can publish to its catalogue.",
-      "why": "not_helpdesk"
-     }
-    },
-    {
-     "scenario": "publish-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Could not publish."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Could not publish."
-     }
-    }
-   ]
-  },
-  "POST /api/assist/resolve": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 410,
-     "body_keys": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     },
-     "fixture": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 410,
-     "body_keys": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     },
-     "fixture": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 410,
-     "body_keys": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     },
-     "fixture": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 410,
-     "body_keys": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     },
-     "fixture": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     }
-    },
-    {
-     "scenario": "resolve-retired",
-     "status": 410,
-     "body_keys": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     },
-     "fixture": {
-      "ok": false,
-      "deprecated": true,
-      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
-     }
-    }
-   ]
-  },
-  "PUT /api/assist/catalogue-source": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     }
-    },
-    {
-     "scenario": "source-needs-a-key",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     }
-    },
-    {
-     "scenario": "source-a-list",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "source_key is required (e.g. royale-play@v1)"
-     }
-    },
-    {
-     "scenario": "source-of-another-brand",
-     "status": 403,
-     "body_keys": {
-      "ok": false,
-      "error": "This source is owned by another brand."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "This source is owned by another brand."
-     }
-    },
-    {
-     "scenario": "source-of-the-platform",
-     "status": 403,
-     "body_keys": {
-      "ok": false,
-      "error": "This source belongs to the platform."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "This source belongs to the platform."
-     }
-    },
-    {
-     "scenario": "source-store-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
-     }
-    },
-    {
-     "scenario": "source-write-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
-     }
-    },
-    {
-     "scenario": "source-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "PUT /api/assist/container": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     }
-    },
-    {
-     "scenario": "container-needs-an-id",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id is required (e.g. royaleplay/tussar)"
-     }
-    },
-    {
-     "scenario": "container-of-another-brand",
-     "status": 403,
-     "body_keys": {
-      "ok": false,
-      "error": "This product container is owned by another brand."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "This product container is owned by another brand."
-     }
-    },
-    {
-     "scenario": "container-store-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
-     }
-    },
-    {
-     "scenario": "container-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "PUT /api/assist/region-override": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id and region are required"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id and region are required"
-     }
-    },
-    {
-     "scenario": "stranger-asks",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id and region are required"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id and region are required"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id and region are required"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id and region are required"
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id and region are required"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id and region are required"
-     }
-    },
-    {
-     "scenario": "region-needs-both",
-     "status": 422,
-     "body_keys": {
-      "ok": false,
-      "error": "container_id and region are required"
-     },
-     "fixture": {
-      "ok": false,
-      "error": "container_id and region are required"
-     }
-    },
-    {
-     "scenario": "region-unknown-container",
-     "status": 404,
-     "body_keys": {
-      "ok": false,
-      "error": "Unknown container."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Unknown container."
-     }
-    },
-    {
-     "scenario": "region-of-another-brand",
-     "status": 403,
-     "body_keys": {
-      "ok": false,
-      "error": "This container is owned by another brand."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "This container is owned by another brand."
-     }
-    },
-    {
-     "scenario": "region-store-missing",
-     "status": 503,
-     "body_keys": {
-      "ok": false,
-      "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
-     },
-     "fixture": {
-      "ok": false,
-      "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
-     }
-    },
-    {
-     "scenario": "region-fault",
-     "status": 500,
-     "body_keys": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "ok": false,
-      "error": "Something went wrong — please try again."
      }
     }
    ]
