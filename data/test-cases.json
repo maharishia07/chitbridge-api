@@ -64542,6 +64542,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-channels.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 sweep, channels: every refusal of routes/channels.js (10 routes) is a Problem with its old keys frozen; the relay modes are kept; another shop's binding id answers as an unknown one.",
+   "claim": "API-4 sweep, channels: every refusal of routes/channels.js (10 routes) is a Problem with its old keys frozen; the relay modes are kept; another shop's binding id answers as an unknown one.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 267 lines. Run: node chitbridge-api/tests/api-problem-channels.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 267,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-till.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
