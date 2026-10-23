@@ -208,6 +208,8 @@ const INFRA_LIBS = [
   'contract-kit.js',
   'books-contract.js',
   'tax-contract.js',
+  /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'till-contract.js',
   /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'folders-contract.js',
   'facts-contract.js',

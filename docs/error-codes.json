@@ -113,8 +113,8 @@
    "code": "BAD_PERIOD",
    "status": "400",
    "title": "Bad period",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Ask for a week, a month, a quarter or a year.",
+   "hint": "Pick one of those and try again.",
    "owner_area": "till-summary",
    "since": "2026-10-22"
   },
@@ -158,8 +158,8 @@
    "code": "BILL_NOT_RECORDED",
    "status": "varies",
    "title": "Bill not recorded",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That bill has not reached ChitBridge yet.",
+   "hint": "It is tried again once the bill arrives.",
    "owner_area": "till",
    "since": "2026-10-22"
   },
@@ -227,6 +227,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CATALOGUE_NOT_EMPTY",
+   "status": "409",
+   "title": "Shop already has products",
+   "shopkeeper": "This shop already has products.",
+   "hint": "Start a starter list only on an empty shop.",
+   "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CATALOGUE_STORE_MISSING",
    "status": "503",
    "title": "Catalogue store missing",
@@ -234,6 +243,15 @@
    "hint": "-",
    "owner_area": "assist",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CATEGORIES_NOT_SET_UP",
+   "status": "500",
+   "title": "Categories not set up",
+   "shopkeeper": "Your categories could not be set up, so nothing was added.",
+   "hint": "Try again in a moment.",
+   "owner_area": "till",
+   "since": "2026-10-23"
   },
   {
    "code": "CHIT_NOT_DELIVERED",
@@ -257,8 +275,8 @@
    "code": "CLAIM_RECORDED",
    "status": "409",
    "title": "Claim recorded",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That claim is already recorded.",
+   "hint": "Nothing more to do: the points were moved.",
    "owner_area": "reward-store",
    "since": "2026-10-22"
   },
@@ -320,8 +338,8 @@
    "code": "COST_BLIND",
    "status": "varies",
    "title": "Cost blind",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Your access does not include cost or price.",
+   "hint": "Ask the owner to give you Sees costs, or change availability only.",
    "owner_area": "cost",
    "since": "2026-10-22"
   },
@@ -338,8 +356,8 @@
    "code": "COUNTER_HELD",
    "status": "varies",
    "title": "Counter held",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That counter is open on another PC.",
+   "hint": "Close it there first, or take it over when asked.",
    "owner_area": "counters",
    "since": "2026-10-22"
   },
@@ -1388,6 +1406,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "PAIR_CODE_UNKNOWN",
+   "status": "404",
+   "title": "Pairing code not known",
+   "shopkeeper": "That code is wrong or has expired.",
+   "hint": "Ask ChitBridge for a new code.",
+   "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PAIR_TOO_MANY_TRIES",
+   "status": "429",
+   "title": "Too many wrong codes",
+   "shopkeeper": "Too many wrong codes were tried.",
+   "hint": "Wait a minute, then ask for a new code.",
+   "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
    "code": "PENETRATION_STORE_MISSING",
    "status": "503",
    "title": "Penetration store missing",
@@ -1703,6 +1739,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "TILL_BAD_REQUEST",
+   "status": "400",
+   "title": "Counter request not valid",
+   "shopkeeper": "The counter sent something that is missing or not right.",
+   "hint": "Check what was entered and try again.",
+   "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
    "code": "TILL_CLAIM_MISMATCH",
    "status": "varies",
    "title": "Till claim mismatch",
@@ -1710,6 +1755,33 @@
    "hint": "-",
    "owner_area": "holder",
    "since": "2026-10-22"
+  },
+  {
+   "code": "TILL_NO_COUNTER",
+   "status": "403",
+   "title": "Key holds no counter",
+   "shopkeeper": "This key is not holding a counter.",
+   "hint": "Open the counter on this PC first.",
+   "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TILL_REFUSED",
+   "status": "varies",
+   "title": "Counter request refused",
+   "shopkeeper": "ChitBridge could not do that.",
+   "hint": "Read the sentence beside it, then try again.",
+   "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TILL_SCREEN_ONLY",
+   "status": "403",
+   "title": "Shop screens only",
+   "shopkeeper": "Only a shop screen can be changed from the counter.",
+   "hint": "Pick one of the paired screens.",
+   "owner_area": "till",
+   "since": "2026-10-23"
   },
   {
    "code": "TILL_SEND_REFUSED",
@@ -1728,6 +1800,15 @@
    "hint": "-",
    "owner_area": "chits",
    "since": "2026-10-22"
+  },
+  {
+   "code": "TILL_SIGN_IN_FIRST",
+   "status": "403",
+   "title": "Sign in first",
+   "shopkeeper": "Sign in as the shop to do this.",
+   "hint": "Sign in, then try again.",
+   "owner_area": "till",
+   "since": "2026-10-23"
   },
   {
    "code": "TOKEN_INVALID",
