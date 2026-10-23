@@ -1,11 +1,19 @@
 {
  "version": 1,
- "stage": "1b",
+ "stage": "2",
  "updated": "2026-10-23",
  "total": 633,
- "not_meeting": 207,
- "codes_total": 380,
+ "not_meeting": 632,
+ "codes_total": 382,
  "codes_pending": 59,
- "raw_error_writes": 33,
+ "raw_error_writes": 32,
+ "columns_failing": {
+  "strict_input": 338,
+  "output_allowlist": 618,
+  "foreign_id_404": 119,
+  "idempotent_money_write": 12,
+  "inbound_validated": 4,
+  "trips_budgeted": 245
+ },
  "debt": []
 }
