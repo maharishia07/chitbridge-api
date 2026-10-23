@@ -197,6 +197,16 @@ function debtProblems(debt, hotfix, failing) {
   return problems.concat(failing.filter((row) => !debt.some((entry) => entry.route === row.key)).map((row) => 'hotfix: ' + row.key + ' does not meet the standard and has no debt entry in docs/api-ratchet.json'));
 }
 
+/** a route signed off in the base that is gone from the head while a new route appears in the same file with the same method: a rename would escape the hold, so it is named */
+function renamedSigned(base, head) {
+  const headKeys = new Set(head.routes.map((row) => row.key));
+  const baseKeys = new Set(base.routes.map((row) => row.key));
+  const added = head.routes.filter((row) => !baseKeys.has(row.key));
+  return base.routes.filter((row) => row.human && row.human.signed_off_by_date && !headKeys.has(row.key))
+    .filter((gone) => added.some((row) => row.file === gone.file && row.method === gone.method))
+    .map((gone) => gone.key + ' was signed off and is gone while ' + added.filter((row) => row.file === gone.file && row.method === gone.method).map((row) => row.key).join(', ') + ' is new in ' + gone.file + ': a renamed route keeps its hold, so sign the new key or say why in a debt entry');
+}
+
 /** the touched routes held to the standard at this stage; returns the sentences that fail the PR */
 function checkRoutes(base, head, ratchet, hotfix) {
   const stage = ratchet.stage || '1a';
@@ -209,17 +219,37 @@ function checkRoutes(base, head, ratchet, hotfix) {
   const problems = hotfix ? [] : owed.map((row) => row.key + ' was added or changed and does not meet the standard (' + heldColumns(row, baseRows.get(row.key)).filter((name) => row.columns[name] !== true).join(', ') + ')');
   const counted = touched.filter((row) => !isHeld(row, stage, baseRows.get(row.key)) && !meets(row));
   console.log(touched.length + ' routes touched against the base: ' + held.length + ' held, ' + counted.length + ' counted only (stage ' + stage + ')');
-  return problems.concat(debtProblems(debt, hotfix, failing));
+  return problems.concat(renamedSigned(base, head), debtProblems(debt, hotfix, failing));
+}
+
+/* the stages in order; a stage only moves forward */
+const STAGES = ['1a', '1b', '2', 'all'];
+
+/** the STAGE constant in a checkout's own tools/api-register.cjs (the base register is built by the HEAD's tool, so its .stage is the head's) */
+function stageOfCode(checkout) {
+  const file = path.join(checkout, 'tools', 'api-register.cjs');
+  const found = fs.existsSync(file) && /const STAGE = '([^']+)'/.exec(fs.readFileSync(file, 'utf8'));
+  return found ? found[1] : null;
+}
+
+/** the stage switch: decided by the STAGE constant in the base code and the head code (tools/api-register.cjs), never by the ratchet json the PR writes; forward only */
+function stageSwitch(baseStage, head, headRatchet) {
+  const problems = [];
+  const from = baseStage || head.stage;
+  if (headRatchet.stage !== head.stage) problems.push('docs/api-ratchet.json says stage ' + headRatchet.stage + ' but the register code says ' + head.stage + ': the stage is set in tools/api-register.cjs STAGE');
+  if (STAGES.indexOf(head.stage) < STAGES.indexOf(from)) problems.push('the stage moved back from ' + from + ' to ' + head.stage + ': a stage only moves forward');
+  return { switched: from !== head.stage && STAGES.indexOf(head.stage) > STAGES.indexOf(from), from, problems };
 }
 
 /** the count of routes not meeting the standard may only go down, adjusted for routes added or removed (S16 b) */
-function checkCounts(baseRatchet, head, headRatchet) {
+function checkCounts(baseRatchet, head, headRatchet, baseStage) {
   const actual = head.counts.routes - head.counts.meets;
-  /* a stage switch re-measures honestly (API-3: stage 2 asks thirteen columns, not seven): the one PR that changes the stage may raise the count, nobody else */
-  const rebaselined = baseRatchet.stage !== headRatchet.stage;
+  /* a stage switch re-measures honestly (API-3: stage 2 asks thirteen columns, not seven): the one PR that changes the register's STAGE may raise the count, nobody else */
+  const stage = stageSwitch(baseStage, head, headRatchet);
+  const rebaselined = stage.switched;
   const allowed = rebaselined ? head.counts.routes : baseRatchet.not_meeting + Math.max(0, head.counts.routes - baseRatchet.total);
-  if (rebaselined) console.log('stage switch ' + baseRatchet.stage + ' -> ' + headRatchet.stage + ': the count is re-measured, not grandfathered');
-  const problems = [];
+  if (rebaselined) console.log('stage switch ' + stage.from + ' -> ' + head.stage + ': the count is re-measured, not grandfathered');
+  const problems = stage.problems.slice();
   if (actual > allowed) problems.push('routes not meeting the standard rose to ' + actual + ' (allowed ' + allowed + ' from the base ratchet of ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
   if (headRatchet.not_meeting < actual || headRatchet.total !== head.counts.routes) problems.push('docs/api-ratchet.json says ' + headRatchet.not_meeting + ' of ' + headRatchet.total + ' but the register says ' + actual + ' of ' + head.counts.routes + ': run node tools/api-ratchet.cjs --write');
   console.log('not meeting: ' + actual + ' of ' + head.counts.routes + ' (base ratchet ' + baseRatchet.not_meeting + ' of ' + baseRatchet.total + ')');
@@ -290,7 +320,7 @@ function main() {
     const baseRegister = registerOf(base.dir);
     const headRatchet = readJson(RATCHET_FILE, null);
     const baseRatchet = readJson(path.join(base.dir, 'docs', 'api-ratchet.json'), headRatchet);
-    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet), checkColumns(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet));
+    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet));
   } finally {
     base.remove();
   }
@@ -308,4 +338,4 @@ if (require.main === module) {
   }
   process.exit(process.exitCode || 0);
 }
-module.exports = { rawErrorTextWrites, rawErrorWritesOf, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };
+module.exports = { stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, rawErrorWritesOf, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };

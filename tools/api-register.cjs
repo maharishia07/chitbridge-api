@@ -32,11 +32,24 @@ const JSON_FILE = path.join(ROOT, 'docs', 'api-register.json');
 /** a JSON file under the repo root, or the fallback when it is absent */
 /** the hardening evidence: the generator's cases (api-hardening-evidence.json, written only by tools/api-contract-tests.cjs) united with the area tests' worlds (api-hardening-evidence-areas.json, written only by tests/api-problem-<area>.test.cjs); a column is proved when either file proves it */
 function hardeningEvidence() {
+  return evidenceUnion(readJson('docs/contracts/api-hardening-evidence.json', { routes: {} }).routes, readJson('docs/contracts/api-hardening-evidence-areas.json', { routes: {} }).routes);
+}
+
+/** two evidence maps {route: {column: true}} as one: a column is proved when either map proves it */
+function evidenceUnion(generated, areas) {
   const union = {};
-  ['docs/contracts/api-hardening-evidence.json', 'docs/contracts/api-hardening-evidence-areas.json'].forEach((file) => {
-    Object.entries(readJson(file, { routes: {} }).routes || {}).forEach(([route, columns]) => { union[route] = Object.assign(union[route] || {}, columns); });
-  });
+  [generated || {}, areas || {}].forEach((routes) => Object.entries(routes).forEach(([route, columns]) => { union[route] = Object.assign(union[route] || {}, columns); }));
   return union;
+}
+
+/** the columns an area test proves where the generator's own case ran and FAILED: allowed (the area world is the stronger test), never silent; --check lists each one */
+function evidenceOverrides(results, areas) {
+  const overrides = [];
+  Object.entries(areas || {}).forEach(([route, columns]) => Object.keys(columns).forEach((column) => {
+    const generated = results && results[route] && results[route][column];
+    if (columns[column] === true && generated && generated.pass === false) overrides.push(route + ' · ' + column + ' · the generator saw: ' + (generated.why || 'a failure'));
+  }));
+  return overrides.sort();
 }
 
 const readJson = (relative, fallback) => {
@@ -404,6 +417,8 @@ function check(register) {
   same(JSON_FILE, jsonText(register));
   const codes = require(path.join(TOOLS_DIR, 'error-codes.cjs')).check();
   const unsaid = unclassifiedMoney(register.routes, hardeningScope()).map((key) => key + ' looks like a money write but is in neither list of docs/contracts/api-hardening-scope.json (money_writes or money_reviewed_not)');
+  const overrides = evidenceOverrides(readJson('docs/contracts/api-hardening-results.json', { routes: {} }).routes, readJson('docs/contracts/api-hardening-evidence-areas.json', { routes: {} }).routes);
+  if (overrides.length) console.log(overrides.length + ' column(s) proved by an area test where the generated case failed (review each):\n  ' + overrides.join('\n  '));
   return problems.concat(codes.problems, unsaid);
 }
 
@@ -427,4 +442,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { hardeningEvidence, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
