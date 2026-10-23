@@ -650,20 +650,47 @@
    "since": "2026-10-22"
   },
   {
+   "code": "FOLDER_BAD_REQUEST",
+   "status": "400",
+   "title": "Folder request not accepted",
+   "shopkeeper": "That folder request could not be done.",
+   "hint": "Read the message, fix what it names and try again.",
+   "owner_area": "folders",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FOLDER_INVALID",
+   "status": "400",
+   "title": "Folder details not valid",
+   "shopkeeper": "The folder name or id is missing or not valid.",
+   "hint": "Give the folder a name of 1 to 60 characters, then try again.",
+   "owner_area": "folders",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FOLDER_IS_VIEW",
    "status": "400",
-   "title": "Folder is view",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not a place for chits",
+   "shopkeeper": "That folder shows what its rule matches, so nothing can be moved into it.",
+   "hint": "Move the chit to a filing folder instead.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },
   {
+   "code": "FOLDER_NOT_MIGRATED",
+   "status": "503",
+   "title": "Folders update still to run",
+   "shopkeeper": "This part of folders is not ready on this server yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "folders",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FOLDER_WRONG_SIDE",
-   "status": "varies",
-   "title": "Folder wrong side",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "400",
+   "title": "Folder on the other track",
+   "shopkeeper": "A Task folder holds chits that came to you; an Order folder holds chits you sent.",
+   "hint": "Pick a folder on the chit's own track.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },
@@ -866,6 +893,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "KEY_CANNOT_SEE_HOME",
+   "status": "403",
+   "title": "A key cannot see Home",
+   "shopkeeper": "Sign in to see the Home figures.",
+   "hint": "Open the app with your login, not a key.",
+   "owner_area": "facts",
+   "since": "2026-10-23"
+  },
+  {
    "code": "KEY_CANNOT_SIGN_IN",
    "status": "403",
    "title": "Key cannot sign in",
@@ -967,18 +1003,18 @@
   {
    "code": "MSG_ABOVE_CEILING",
    "status": "409",
-   "title": "Msg above ceiling",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Messaging level too high",
+   "shopkeeper": "That folder can be kept internal or switched off, but not shared further than its default.",
+   "hint": "Pick a lower level.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },
   {
    "code": "MSG_FIXED",
    "status": "409",
-   "title": "Msg fixed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Messaging level fixed",
+   "shopkeeper": "This folder's messaging level cannot be changed.",
+   "hint": "Leave it as it is.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },

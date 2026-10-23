@@ -1,6 +1,7 @@
 // routes/folders.js — FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per
 // OWNS  /api/folders: a per-entity tree for filing any chit, and a folder's chit list (paged; a cut list says so).
-// FLOW  auth → the folder read (withEntity) → pageOut
+// CALLED BY server.js (mounted at /api/folders), the Task and Order lists, the folder panes and rules builder, MIS and the messages inbox.
+// FLOW  auth → schema check (lib/folders-contract.js) → the folder read (withEntity) → pageOut; a refusal → problem(req, res, said(...) | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
 // CARD 01-rail-core-the-chit/folders
 // entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
@@ -13,11 +14,17 @@ const log = require('../lib/logger');
 const router = express.Router();
 const { withEntity } = require('../db'); // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
 const { safeErr } = require('../lib/respond');
-const { body, param } = require('express-validator');
-const { validate, sanitise } = require('../middleware/validate');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate, sanitise } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { said, failed, faultOf, schemaOptionsFor, operationFor, pathsOf } = require('../lib/folders-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 
 const ent = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/folders-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptionsFor(route))] : [];
+}
 /**
  * ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Athi, 2026-08-10: *"tasks and order cannot be on the same folder. folder
  * are having same characteristics as tasks, so all the icon is possible and arithmetic is possible."*
@@ -62,7 +69,7 @@ async function viewFolder(e, id) {
 }
 
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const e = ent(req);
     const readFolders = (withScope) =>
@@ -112,7 +119,7 @@ router.get('/', auth, async (req, res) => {
     }
     res.json(Object.assign(PL.pageOut('folders', list.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
   } catch (err) {
-    res.status(500).json({ error: 'List failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'List failed'));
   }
 });
 
@@ -126,7 +133,7 @@ router.get('/inventory', auth, async (req, res) => {
     const e = ent(req);
     res.json({ rows: views.inventoryRows(await views.flagsOf(e)), can_change: isOwner(req) });
   } catch (err) {
-    res.status(500).json({ error: 'Inventory failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Inventory failed'));
   }
 });
 
@@ -138,31 +145,26 @@ router.get('/inventory', auth, async (req, res) => {
  * ⚠️ THE LEVEL ONLY GOES DOWN (Athi, 2026-10-01): the inventory's level is the ceiling — a level above it is refused with 409
  * and a plain sentence, and the dispute's level cannot be changed at all.
  */
-router.put('/inventory/:code', auth, async (req, res) => {
+router.put('/inventory/:code', auth, ...checked('PUT /inventory/:code'), async (req, res) => {
   try {
-    if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
+    if (!isOwner(req)) return problem(req, res, { status: 403, ...said('OWNER_ONLY', 'Only the owner may do this.', 'Only the owner may do this.') });
     const f = INV.byCode(String(req.params.code || ''));
-    if (!f) return res.status(404).json({ error: 'No such folder', message: 'There is no folder ' + req.params.code + ' in the inventory.' });
+    if (!f) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'No such folder', 'There is no folder ' + req.params.code + ' in the inventory.') });
     const b = req.body || {};
     const hasOn = b.on !== undefined,
       hasMsg = b.msg !== undefined;
-    if (!hasOn && !hasMsg) return res.status(400).json({ error: 'Bad request', message: 'Send on (true or false) or msg (external, internal or none).' });
-    if (hasOn && typeof b.on !== 'boolean') return res.status(400).json({ error: 'Bad request', message: 'on must be true or false' });
-    if (hasOn && f.fixed) return res.status(400).json({ error: 'Always on', message: f.name + ' is always on — it cannot be switched off.' });
+    if (!hasOn && !hasMsg) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'Send on (true or false) or msg (external, internal or none).') });
+    if (hasOn && typeof b.on !== 'boolean') return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'on must be true or false') });
+    if (hasOn && f.fixed) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Always on', f.name + ' is always on — it cannot be switched off.') });
     if (hasMsg) {
-      if (INV.LEVELS.indexOf(b.msg) < 0) return res.status(400).json({ error: 'Bad request', message: 'msg must be external, internal or none.' });
-      if (f.msg_fixed || f.kind === 'track')
-        return res.status(409).json({
-          error: 'Fixed',
-          code: 'MSG_FIXED',
-          message:
-            f.kind === 'track' ? f.name + ' has no messaging level of its own.' : f.name + ' are always shared with the other party — that cannot be changed.'
-        });
+      if (INV.LEVELS.indexOf(b.msg) < 0) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'msg must be external, internal or none.') });
+      if (f.msg_fixed || f.kind === 'track') {
+        const fixedWords = f.kind === 'track' ? f.name + ' has no messaging level of its own.' : f.name + ' are always shared with the other party — that cannot be changed.';
+        return problem(req, res, { status: 409, ...said('MSG_FIXED', 'Fixed', fixedWords, 'before') });
+      }
       if (!INV.msgAllowed(f, b.msg)) {
         const how = f.msg === 'internal' ? 'kept internal or switched off' : 'switched off';
-        return res
-          .status(409)
-          .json({ error: 'Above the default', code: 'MSG_ABOVE_CEILING', message: f.name + ' can be ' + how + ', but not shared beyond the default.' });
+        return problem(req, res, { status: 409, ...said('MSG_ABOVE_CEILING', 'Above the default', f.name + ' can be ' + how + ', but not shared beyond the default.', 'before') });
       }
     }
     const e = ent(req);
@@ -175,7 +177,7 @@ router.put('/inventory/:code', auth, async (req, res) => {
     await policy.set(e, { system_folders: Object.assign({}, cur, { [f.code]: row }) });
     res.json({ rows: views.inventoryRows(await views.flagsOf(e)), can_change: true });
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Switch failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Switch failed'));
   }
 });
 
@@ -183,8 +185,7 @@ router.put('/inventory/:code', auth, async (req, res) => {
 router.post(
   '/',
   auth,
-  [body('name').trim().isLength({ min: 1, max: 60 }).withMessage('Name required'), body('parent_id').optional({ nullable: true }).isUUID()],
-  validate,
+  ...checked('POST /'),
   async (req, res) => {
     try {
       const e = ent(req);
@@ -207,7 +208,7 @@ router.post(
           );
           return res.json({ folder: Object.assign({}, r.rows[0], { count: 0 }) });
         } catch (ev) {
-          if (missingCol(ev)) return res.status(503).json({ error: 'Not migrated', message: 'View folders need b275 on this environment.' });
+          if (missingCol(ev)) return problem(req, res, { status: 503, ...said('FOLDER_NOT_MIGRATED', 'Not migrated', 'View folders need b275 on this environment.') });
           throw ev;
         }
       }
@@ -243,10 +244,10 @@ router.post(
         if (!missingCol(e1)) throw e1;
         row = await doInsert(false);
       }
-      if (row.badParent) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' });
+      if (row.badParent) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad parent', 'Parent folder not found.') });
       res.json({ folder: { ...row.folder, count: 0 } });
     } catch (err) {
-      res.status(500).json({ error: 'Create failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Create failed'));
     }
   }
 );
@@ -255,8 +256,7 @@ router.post(
 router.patch(
   '/:id',
   auth,
-  [param('id').isUUID(), body('name').optional().trim().isLength({ min: 1, max: 60 }), body('parent_id').optional({ nullable: true })],
-  validate,
+  ...checked('PATCH /:id'),
   async (req, res) => {
     try {
       const e = ent(req);
@@ -270,12 +270,12 @@ router.patch(
       }
       if (req.body.parent_id !== undefined) {
         const par = req.body.parent_id || null;
-        if (par === req.params.id) return res.status(400).json({ error: 'A folder cannot be its own parent' });
+        if (par === req.params.id) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'A folder cannot be its own parent') });
         index++;
         sets.push(`parent_id = $${index}`);
         params.push(par);
       }
-      if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+      if (!sets.length) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Nothing to update') });
       index++;
       const idIdx = index;
       params.push(req.params.id);
@@ -284,16 +284,16 @@ router.patch(
       const r = await withEntity(e, (db) =>
         db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${index} RETURNING folder_id, parent_id, name`, params)
       );
-      if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+      if (!r.rows.length) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found') });
       res.json({ folder: r.rows[0] });
     } catch (err) {
-      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Update failed'));
     }
   }
 );
 
 // DELETE /api/folders/:id — delete a folder (children cascade via FK); UNFILE its chits (folder_id -> NULL) so nothing is lost.
-router.delete('/:id', auth, [param('id').isUUID()], validate, async (req, res) => {
+router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const e = ent(req);
     const deleted = await withEntity(e, async (db) => {
@@ -307,31 +307,27 @@ router.delete('/:id', auth, [param('id').isUUID()], validate, async (req, res) =
     });
     res.json({ deleted });
   } catch (err) {
-    res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Delete failed'));
   }
 });
 
 // POST /api/folders/move — file / redirect a chit into a folder (folder_id=null => unfile). Sets MY copy only.
-router.post('/move', auth, [body('chit_id').isUUID(), body('folder_id').optional({ nullable: true })], validate, async (req, res) => {
+router.post('/move', auth, ...checked('POST /move'), async (req, res) => {
   try {
     const e = ent(req);
     const fid = req.body.folder_id || null;
     /* ⚠️ A VIEW FOLDER IS NOT A PLACE — it shows what its rule matches, so nothing can be moved into it (a system folder or a
        shop's own view). Refused by name: a silent "moved: 0" would read as a filing that happened. */
-    if (fid && INV.byId(fid))
-      return res.status(400).json({
-        error: 'View folder',
-        code: 'FOLDER_IS_VIEW',
-        message: 'That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches.'
-      });
+    if (fid && INV.byId(fid)) {
+      const moveWords = 'That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches.';
+      return problem(req, res, { status: 400, ...said('FOLDER_IS_VIEW', 'View folder', moveWords, 'before') });
+    }
     if (fid) {
       const k = await withEntity(e, (db) =>
         db.query(`SELECT to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [fid, e])
       ).catch(log.orElse('folders: the read failed — answered with none', { rows: [] }));
       if (k.rows[0] && k.rows[0].kind === 'view')
-        return res
-          .status(400)
-          .json({ error: 'View folder', code: 'FOLDER_IS_VIEW', message: 'That folder shows what its rules match — it is not a place to move chits into.' });
+        return problem(req, res, { status: 400, ...said('FOLDER_IS_VIEW', 'View folder', 'That folder shows what its rules match — it is not a place to move chits into.', 'before') });
     }
     const doMove = (scoped) =>
       withEntity(e, async (db) => {
@@ -390,21 +386,19 @@ router.post('/move', auth, [body('chit_id').isUUID(), body('folder_id').optional
     if (result.retryNoScope)
       result = await doMove(false); // FRESH tx — the aborted one serves nothing
     else if (!result.noFolder) SCOPE_OK = true;
-    if (result.noFolder) return res.status(400).json({ error: 'No such folder' });
-    if (result.wrongSide)
-      return res.status(400).json({
-        error: 'Wrong side',
-        message:
-          'That is a ' +
-          (result.wrongSide.folder === 'order' ? 'Order' : 'Task') +
-          ' folder — it holds ' +
-          (result.wrongSide.folder === 'order' ? 'chits you sent' : 'chits that came to you') +
-          '. Task and Order are separate tracks, so a folder belongs to one of them.',
-        code: 'FOLDER_WRONG_SIDE'
-      });
+    if (result.noFolder) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'No such folder') });
+    if (result.wrongSide) {
+      const sideWords =
+        'That is a ' +
+        (result.wrongSide.folder === 'order' ? 'Order' : 'Task') +
+        ' folder — it holds ' +
+        (result.wrongSide.folder === 'order' ? 'chits you sent' : 'chits that came to you') +
+        '. Task and Order are separate tracks, so a folder belongs to one of them.';
+      return problem(req, res, { status: 400, ...said('FOLDER_WRONG_SIDE', 'Wrong side', sideWords, true) });
+    }
     res.json({ moved: result.moved, folder_id: fid, scope: result.scope });
   } catch (err) {
-    res.status(500).json({ error: 'Move failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Move failed'));
   }
 });
 
@@ -413,7 +407,7 @@ router.post('/move', auth, [body('chit_id').isUUID(), body('folder_id').optional
 // mixed BEFORE b133 still holds both, and this list would show them side by side with the wrong actions. The
 // folder's declared scope filters the read too, so the screen is consistent even where the data is not yet.
 // Isolated from the core inbox query on purpose. Lightweight shape for the folder list.
-router.get('/:id/chits', auth, [param('id').isUUID()], validate, async (req, res) => {
+router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) => {
   try {
     const e = ent(req);
     const arch = req.query.archived === '1' || req.query.archived === 'true';
@@ -423,7 +417,7 @@ router.get('/:id/chits', auth, [param('id').isUUID()], validate, async (req, res
      * by · at, and the history of every acceptance). ?state=open (default) | closed | all. An OFF system folder is absent.
      */
     const vf = await viewFolder(e, req.params.id);
-    if (vf === false) return res.status(404).json({ error: 'Not found', message: 'That folder is switched off.' });
+    if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
     if (vf) {
       const m = await views.members(e, vf, { archived: arch, state: req.query.state });
       /* ⚠️ { chits, counts } and nothing else: the web's envelope collapses `chits` to the array and keeps only the siblings it
@@ -454,7 +448,7 @@ router.get('/:id/chits', auth, [param('id').isUUID()], validate, async (req, res
     });
     res.json(PL.pageOut('chits', r.rows, pg, total));
   } catch (err) {
-    res.status(500).json({ error: 'List failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'List failed'));
   }
 });
 
@@ -469,13 +463,13 @@ router.get('/:id/chits', auth, [param('id').isUUID()], validate, async (req, res
  * Read-only, no migration, WITH RLS: withEntity() sets the tenant and the WHERE names it again. A folder is
  * per-COPY — this counts YOUR copies, never a counterparty's.
  */
-router.get('/:id/metrics', auth, [param('id').isUUID()], validate, async (req, res) => {
+router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res) => {
   try {
     const me = ent(req);
     const flags = await policy.get(me); //  is a POLICY, not a constant hidden inside a report
     /* a VIEW folder measures its rule's matches — the same measure, a different set */
     const vf = await viewFolder(me, req.params.id);
-    if (vf === false) return res.status(404).json({ error: 'Not found', message: 'That folder is switched off.' });
+    if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
     if (vf) {
       const vrows = await views.rowsFor(me, await views.whensOf(me, vf), { archived: req.query.archived === '1' });
       return res.json(
@@ -498,15 +492,14 @@ router.get('/:id/metrics', auth, [param('id').isUUID()], validate, async (req, r
     res.json(Object.assign({ folder_id: req.params.id, scope: fscope }, measure.measure(rows, { overdue_days: flags.overdue_days })));
   } catch (err) {
     console.error('folder metrics:', err.message);
-    res.status(500).json({ error: 'Metrics failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Metrics failed'));
   }
 });
 
 /* ── FOLDER RULES (b132) — condition -> file here. The UX Athi asked for lives INSIDE the folder. ────────────── */
 const rules = require('../lib/folder-rules');
-const fail = (res, err, label) => res.status(err.status || 500).json({ error: label, message: err.status ? err.message || safeErr(err) : safeErr(err) });
 
-router.get('/:id/rules', auth, [param('id').isUUID()], validate, async (req, res) => {
+router.get('/:id/rules', auth, ...checked('GET /:id/rules'), async (req, res) => {
   try {
     /* ⭐ a SYSTEM folder's rule is the inventory's, shown and fixed — the Task list leaves out the same documents, so an
        edited rule here would make the folder and the inbox disagree */
@@ -519,46 +512,52 @@ router.get('/:id/rules', auth, [param('id').isUUID()], validate, async (req, res
       });
     res.json(await rules.list(ent(req), req.params.id));
   } catch (err) {
-    fail(res, err, 'Rules list failed');
+    problem(req, res, faultOf(err, req, 'Rules list failed'));
   }
 });
-router.post('/:id/rules', auth, [param('id').isUUID()], validate, async (req, res) => {
+router.post('/:id/rules', auth, ...checked('POST /:id/rules'), async (req, res) => {
   try {
     if (INV.byId(req.params.id))
-      return res.status(400).json({ error: 'Fixed rule', message: "A system folder's rule is part of the folder inventory and cannot be changed here." });
+      return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Fixed rule', "A system folder's rule is part of the folder inventory and cannot be changed here.") });
     res.json(await rules.create(ent(req), req.params.id, req.body || {}));
   } catch (err) {
-    fail(res, err, 'Rule create failed');
+    problem(req, res, faultOf(err, req, 'Rule create failed'));
   }
 });
-router.patch('/rules/:rule_id', auth, [param('rule_id').isUUID()], validate, async (req, res) => {
+router.patch('/rules/:rule_id', auth, ...checked('PATCH /rules/:rule_id'), async (req, res) => {
   try {
     res.json(await rules.update(ent(req), req.params.rule_id, req.body || {}));
   } catch (err) {
-    fail(res, err, 'Rule update failed');
+    problem(req, res, faultOf(err, req, 'Rule update failed'));
   }
 });
-router.delete('/rules/:rule_id', auth, [param('rule_id').isUUID()], validate, async (req, res) => {
+router.delete('/rules/:rule_id', auth, ...checked('DELETE /rules/:rule_id'), async (req, res) => {
   try {
     res.json(await rules.remove(ent(req), req.params.rule_id));
   } catch (err) {
-    fail(res, err, 'Rule delete failed');
+    problem(req, res, faultOf(err, req, 'Rule delete failed'));
   }
 });
 
 /* ⚠️ PREVIEW BEFORE SAVE — the most useful route here. A rule is a promise about the future written by someone
    who cannot see it; running it against chits that already exist turns "I think this catches supplier invoices"
    into a list you can read first. Needs no rules table, so it works before b132 is run. */
-router.post('/rules/preview', auth, async (req, res) => {
+router.post('/rules/preview', auth, ...checked('POST /rules/preview'), async (req, res) => {
   try {
     res.json(await rules.preview(ent(req), (req.body || {}).when, req.body || {}));
   } catch (err) {
-    fail(res, err, 'Preview failed');
+    problem(req, res, faultOf(err, req, 'Preview failed'));
   }
 });
 
 /* The condition vocabulary, served to the UI so the builder cannot offer a term the matcher does not know. */
-router.get('/rules/vocabulary', auth, (req, res) => res.json({ keys: require('../lib/match').KEYS }));
+router.get('/rules/vocabulary', auth, (req, res) => {
+  try {
+    res.json({ keys: require('../lib/match').KEYS });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Failed'));
+  }
+});
 
 /**
  * GET /rules — EVERY rule this entity has, across all folders.
@@ -573,12 +572,12 @@ router.get('/rules/vocabulary', auth, (req, res) => res.json({ keys: require('..
  * ⚠️ NO NEW LIST FUNCTION — rules.list() already treats a missing folder_id as "all", so this is the same query
  * with one argument dropped, not a second implementation that can drift from the first.
  */
-router.get('/rules', auth, async (req, res) => {
+router.get('/rules', auth, ...checked('GET /rules'), async (req, res) => {
   try {
     const found = await rules.list(ent(req), null);
     res.json(Object.assign({}, found, PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
-    fail(res, err, 'Rules list failed');
+    problem(req, res, faultOf(err, req, 'Rules list failed'));
   }
 });
 
@@ -624,7 +623,7 @@ const assign = require('../lib/assign');
  *
  * UNREAD or KEPT — see b156 on why those are two columns and not one flag.
  */
-router.get('/messages', auth, async (req, res) => {
+router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
   try {
     const all = req.query.all === '1' || req.query.all === 'true';
     const isActor = req.identity && req.identity.identity_type === 'actor';
@@ -750,7 +749,7 @@ router.get('/messages', auth, async (req, res) => {
     res.json(Object.assign({ count: rows.length }, PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     console.error('messages inbox:', err);
-    res.status(500).json({ error: 'Failed', message: safeErr ? safeErr(err) : 'error' });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
 
@@ -762,9 +761,9 @@ router.get('/messages', auth, async (req, res) => {
  * vanish from someone else's inbox. Exactly the "server trusts the client's claim about identity" pattern the
  * reviewer named in July, refused up front this time.
  */
-router.post('/messages/:message_id/mark', auth, async (req, res) => {
+router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:message_id/mark'), async (req, res) => {
   const id = String(req.params.message_id || '');
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'Bad request', message: 'message_id must be a uuid' });
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'message_id must be a uuid') });
   const read = 'read' in req.body ? !!req.body.read : null;
   const kept = 'kept' in req.body ? !!req.body.kept : null;
   try {
@@ -772,21 +771,21 @@ router.post('/messages/:message_id/mark', auth, async (req, res) => {
     const touched = (n.rows[0] && Number(n.rows[0].n)) || 0;
     /* 404 rather than a silent 200: a message id that matched nothing of MINE is either not mine or not real,
        and both deserve to be said rather than reported as a successful no-op. */
-    if (!touched) return res.status(404).json({ error: 'Not found', message: 'No such message in your copies.' });
+    if (!touched) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'No such message in your copies.') });
     res.json({ ok: true, updated: touched });
   } catch (err) {
     if (err && err.code === '42883') {
-      return res.status(503).json({ error: 'Not migrated', message: 'Message read state needs b156 on this environment.' });
+      return problem(req, res, { status: 503, ...said('FOLDER_NOT_MIGRATED', 'Not migrated', 'Message read state needs b156 on this environment.') });
     }
     console.error('message mark:', err);
-    res.status(500).json({ error: 'Failed', message: safeErr ? safeErr(err) : 'error' });
+    problem(req, res, failed(err, req, 'Failed'));
   }
 });
 
-router.get('/worklist', auth, async (req, res) => {
+router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
   try {
     const due = String(req.query.due_on || '').trim();
-    if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) return res.status(400).json({ error: 'Bad request', message: 'due_on must be YYYY-MM-DD' });
+    if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
     /**
      * ── ⚠️ AN ACTOR SEES ONLY THEIR OWN WORK, AND IT IS NOT THEIR CHOICE ────────────────────────────────────────
      *
@@ -810,12 +809,12 @@ router.get('/worklist', auth, async (req, res) => {
     );
   } catch (err) {
     console.error('worklist:', err.message);
-    res.status(500).json({ error: 'Worklist failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Worklist failed'));
   }
 });
 
 const groupsum = require('../lib/groupsum');
-router.get('/groupsum', auth, async (req, res) => {
+router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
   try {
     const me = ent(req);
     const flags = await policy.get(me);
@@ -840,7 +839,7 @@ router.get('/groupsum', auth, async (req, res) => {
     );
   } catch (err) {
     console.error('groupsum:', err.message);
-    res.status(500).json({ error: 'Group sum failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Group sum failed'));
   }
 });
 
@@ -864,7 +863,7 @@ router.get('/groupsum', auth, async (req, res) => {
  * its visible branches — so each folder carries `own` (filed directly here) and `tree` (this folder and everything
  * under it). Both are given, because collapsing them loses the ability to check either.
  */
-router.get('/reconcile', auth, async (req, res) => {
+router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) => {
   try {
     const me = ent(req);
     const scope = req.query.scope === 'order' ? 'order' : 'task';
@@ -932,7 +931,7 @@ router.get('/reconcile', auth, async (req, res) => {
       ...(filed === summed ? {} : { discrepancy: { filed, sum_of_folders: summed, missing: filed - summed } })
     });
   } catch (err) {
-    res.status(500).json({ error: 'Reconcile failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Reconcile failed'));
   }
 });
 
@@ -959,7 +958,7 @@ router.get('/reconcile', auth, async (req, res) => {
  * it is measure() over the whole array, so medians and rates are computed across the real population rather
  * than averaged from two halves, which is the classic way a "combined" figure becomes quietly wrong.
  */
-router.get('/mis', auth, async (req, res) => {
+router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
   try {
     const me = ent(req);
     const flags = await policy.get(me);
@@ -990,8 +989,9 @@ router.get('/mis', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('mis:', err.message);
-    res.status(500).json({ error: 'MIS failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'MIS failed'));
   }
 });
 
+router.openapi = { paths: pathsOf(), schemas: {} };
 module.exports = router;
