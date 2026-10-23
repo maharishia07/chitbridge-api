@@ -55,7 +55,9 @@ function skipText(text, at) {
   if (mark === '/' && text[at + 1] === '*') return blockEnd(text, at);
   return at;
 }
+/** index of the end of the line that holds `at` */
 const lineEnd = (text, at) => (text.indexOf('\n', at) < 0 ? text.length : text.indexOf('\n', at));
+/** index of the last character of the block comment that starts at `at` */
 const blockEnd = (text, at) => (text.indexOf('*/', at) < 0 ? text.length : text.indexOf('*/', at) + 1);
 
 /** index of the bracket that closes the one at `start`, skipping strings, template text and comments; -1 when it never closes */
@@ -144,7 +146,9 @@ function mergeNodes(left, right) {
   }
   return { kind: 'opaque', tokens: new Set([...tokensOfNode(left), ...tokensOfNode(right)]), spread: spreadOfNode(left) || spreadOfNode(right) };
 }
+/** every key name written anywhere under a handler node */
 const tokensOfNode = (node) => (node.kind === 'opaque' ? node.tokens : new Set([...node.keys.keys()].concat([...node.keys.values()].flatMap((child) => [...tokensOfNode(child)]))));
+/** whether a spread or a computed key sits anywhere under a handler node */
 const spreadOfNode = (node) => (node.kind === 'opaque' ? node.spread : node.spread || node.computed || [...node.keys.values()].some(spreadOfNode));
 
 /**
@@ -199,19 +203,52 @@ function keysOf(stats, source, where, open) {
     if (source.spread || source.computed) return open(where, source.spread ? 'a spread (...x) adds keys the text does not name' : 'a computed key'), null;
     return [...new Set(seen.concat([...source.keys.keys()]))];
   }
-  if (source && source.kind === 'opaque' && source.tokens.size && !source.spread) return [...new Set(seen.concat([...source.tokens]))];
-  return open(where, source && source.spread ? 'a spread (...x) adds keys the text does not name' : source ? 'a value passed through (' + (source.shorthand ? 'a name' : 'an expression') + ': its keys are not written in the handler)' : 'never seen and not written in the handler'), null;
+  if (namesTokens(source)) return [...new Set(seen.concat([...source.tokens]))];
+  return open(where, whyOpen(source)), null;
+}
+
+/** a passed-through value whose handler text names keys and spreads nothing */
+const namesTokens = (source) => !!source && source.kind === 'opaque' && source.tokens.size > 0 && !source.spread;
+
+/** the reason a node whose keys are not written stays open */
+function whyOpen(source) {
+  if (!source) return 'never seen and not written in the handler';
+  if (source.spread) return 'a spread (...x) adds keys the text does not name';
+  return 'a value passed through (' + (source.shorthand ? 'a name' : 'an expression') + ': its keys are not written in the handler)';
+}
+
+/** an array node: its items closed from the elements seen (and the handler's text there when it is a value passed through) */
+function closeArray(stats, source, where, open) {
+  const nullable = stats.types.has('null') ? ['array', 'null'] : 'array';
+  return { type: nullable, items: closeNode(stats.items, source && source.kind === 'opaque' ? source : null, where + '[]', open) };
 }
 
 /** one node of the schema from the answers seen there (stats) and the handler's text there (source) */
 function closeNode(stats, source, where, open) {
-  const holdsObject = stats && stats.objects > 0;
-  const holdsArray = stats && stats.items;
-  if (source && source.kind === 'object' && !holdsObject && !holdsArray) return closeObject(null, source, where, open);
-  if (holdsObject && !holdsArray) return closeObject(stats, source, where, open);
-  if (holdsArray && !holdsObject) return { type: stats.types.has('null') ? ['array', 'null'] : 'array', items: closeNode(stats.items, source && source.kind === 'opaque' ? source : null, where + '[]', open) };
-  if (holdsObject || holdsArray) return {};
+  const holdsObject = !!stats && stats.objects > 0;
+  const holdsArray = !!stats && !!stats.items;
+  if (holdsObject && holdsArray) return {};
+  if (holdsArray) return closeArray(stats, source, where, open);
+  if (holdsObject || (source && source.kind === 'object')) return closeObject(holdsObject ? stats : null, source, where, open);
   return leafSchema(stats);
+}
+
+/** each named key's own node: from the values seen under it and the handler's text under it */
+function propertiesOf(names, { stats, source, where, open }) {
+  const properties = {};
+  names.forEach((name) => {
+    const child = stats && stats.keys.get(name);
+    const childSource = source && source.kind === 'object' ? source.keys.get(name) : source;
+    properties[name] = closeNode(child ? foldValues(child.values) : null, childSource, (where ? where + '.' : '') + name, open);
+  });
+  return properties;
+}
+
+/** the keys present in every answer seen (and written in the literal, when there is one) */
+function requiredOf(stats, names, source) {
+  if (!stats || !stats.objects) return [];
+  const literal = source && source.kind === 'object';
+  return names.filter((name) => stats.keys.get(name) && stats.keys.get(name).seen === stats.objects && (!literal || source.keys.has(name)));
 }
 
 /** an object node: closed over the keys known, each key's own node below it; open (and listed) when the keys cannot be known */
@@ -219,20 +256,15 @@ function closeObject(stats, source, where, open) {
   const names = keysOf(stats, source, where || '(answer)', open);
   if (!names) return { type: 'object' };
   if (keyedByData(names)) return open(where || '(answer)', 'a map keyed by data (' + names.length + ' keys)'), { type: 'object' };
-  const properties = {};
-  names.forEach((name) => {
-    const child = stats && stats.keys.get(name);
-    const childSource = source && source.kind === 'object' ? source.keys.get(name) : source;
-    properties[name] = closeNode(child ? foldValues(child.values) : null, childSource, (where ? where + '.' : '') + name, open);
-  });
-  const required = stats && stats.objects ? names.filter((name) => stats.keys.get(name) && stats.keys.get(name).seen === stats.objects && (!source || source.kind !== 'object' || source.keys.has(name))) : [];
+  const properties = propertiesOf(names, { stats, source, where, open });
+  const required = requiredOf(stats, names, source);
   return Object.assign({ type: 'object' }, required.length ? { required } : {}, { properties, additionalProperties: false });
 }
 
-/** deriveShape({ samples: [body...], source: node|null }) → { schema, open: [{ path, why }] } */
+/** deriveShape({ samples: [body...], source: node|null }) → { schema, open: [{ path, reason }] } */
 function deriveShape({ samples, source }) {
   const openPaths = [];
-  const open = (where, why) => openPaths.push({ path: where, why });
+  const open = (where, reason) => openPaths.push({ path: where, reason });
   const schema = closeNode(foldValues(samples), source, '', open);
   return { schema, open: openPaths };
 }
@@ -250,9 +282,9 @@ const readJson = (file, fallback) => {
 function samplesOf(captures, routeKey) {
   const byStatus = {};
   captures.forEach((capture) => Object.keys(capture).forEach((key) => {
-    const one = capture[key];
-    if (one.route !== routeKey || one.status < 200 || one.status > 299 || one.body === undefined || one.body === null || typeof one.body !== 'object') return;
-    (byStatus[one.status] = byStatus[one.status] || []).push(one.body);
+    const recorded = capture[key];
+    if (recorded.route !== routeKey || recorded.status < 200 || recorded.status > 299 || recorded.body === undefined || recorded.body === null || typeof recorded.body !== 'object') return;
+    (byStatus[recorded.status] = byStatus[recorded.status] || []).push(recorded.body);
   }));
   return byStatus;
 }
@@ -261,7 +293,7 @@ function samplesOf(captures, routeKey) {
 function exampleOf(captures, routeKey, status) {
   for (const capture of captures) {
     const keys = Object.keys(capture).sort();
-    const found = keys.map((key) => capture[key]).find((one) => one.route === routeKey && String(one.status) === String(status) && one.request && one.request.url);
+    const found = keys.map((key) => capture[key]).find((recorded) => recorded.route === routeKey && String(recorded.status) === String(status) && recorded.request && recorded.request.url);
     if (found) return { example: Object.assign({ url: found.request.url }, found.request.body === undefined ? {} : { body: found.request.body }) };
   }
   return {};
@@ -282,7 +314,7 @@ function deriveFile(file, captures) {
     const status = statuses.includes('200') ? '200' : statuses[0] || '200';
     const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node });
     result.shapes[route.key] = Object.assign({ status, schema: derived.schema, observed: (byStatus[status] || []).length, open: derived.open }, exampleOf(captures, route.key, status));
-    if (derived.open.length) result.listed[route.key] = 'open at ' + derived.open.map((item) => (item.path || '(answer)') + ' — ' + item.why).join('; ');
+    if (derived.open.length) result.listed[route.key] = 'open at ' + derived.open.map((item) => (item.path || '(answer)') + ' — ' + item.reason).join('; ');
   });
   return result;
 }
@@ -290,17 +322,17 @@ function deriveFile(file, captures) {
 /** the keys the web callers read near each call of a route that the shape does not list (a review list, never written into a shape) */
 function webReadsMissing(file, shapes) {
   const callers = require('./endpoint-usage-callers.cjs');
-  const web = process.env.CB_WEB_DIR || path.join(ROOT, '..', 'chitbridge-web');
+  const webDir = process.env.CB_WEB_DIR || path.join(ROOT, '..', 'chitbridge-web');
   const rows = Object.keys(shapes).map((key) => ({ key, method: key.split(' ')[0], full: key.split(' ')[1] }));
-  const { hits } = callers.scanAll(callers.sources(ROOT, web, path.join(ROOT, '..', 'chitbridge-engines')).filter((source) => source.repo === 'web'), rows, []);
+  const { hits } = callers.scanAll(callers.sources(ROOT, webDir, path.join(ROOT, '..', 'chitbridge-engines')).filter((source) => source.repo === 'web'), rows, []);
   const missing = {};
-  hits.forEach((hit) => {
-    const row = rows[hit.route];
+  hits.forEach((found) => {
+    const row = rows[found.route];
     if (!row) return;
-    const lines = fs.readFileSync(hit.src.abs, 'utf8').split('\n');
-    const window = lines.slice(Math.max(0, hit.line - 1), hit.line + 24).join('\n');
+    const lines = fs.readFileSync(found.src.abs, 'utf8').split('\n');
+    const window = lines.slice(Math.max(0, found.line - 1), found.line + 24).join('\n');
     const known = tokensOfNode({ kind: 'opaque', tokens: new Set(Object.keys((shapes[row.key].schema || {}).properties || {})) });
-    for (const match of window.matchAll(/\b(?:r|res|data|d|j|resp|result|body|out|json)\.([a-z_][a-z0-9_]*)\b/g)) if (!known.has(match[1])) (missing[row.key] = missing[row.key] || new Set()).add(match[1] + ' (' + hit.src.relPath + ':' + hit.line + ')');
+    for (const match of window.matchAll(/\b(?:r|res|data|d|j|resp|result|body|out|json)\.([a-z_][a-z0-9_]*)\b/g)) if (!known.has(match[1])) (missing[row.key] = missing[row.key] || new Set()).add(match[1] + ' (' + found.src.relPath + ':' + found.line + ')');
   });
   return Object.fromEntries(Object.entries(missing).map(([key, set]) => [key, [...set]]));
 }
@@ -321,37 +353,52 @@ function checkCaptures(captures) {
   const shapes = readJson(SHAPES_FILE, { routes: {} }).routes;
   const lost = [];
   captures.forEach((capture) => Object.keys(capture).forEach((key) => {
-    const one = capture[key];
-    const shape = shapes[one.route];
-    if (!shape || String(one.status) !== String(shape.status) || !one.body || typeof one.body !== 'object') return;
-    prune(shape.schema, one.body).dropped.forEach((where) => lost.push(key + ' lost ' + where));
+    const recorded = capture[key];
+    const shape = shapes[recorded.route];
+    if (!shape || String(recorded.status) !== String(shape.status) || !recorded.body || typeof recorded.body !== 'object') return;
+    prune(shape.schema, recorded.body).dropped.forEach((where) => lost.push(key + ' lost ' + where));
   }));
   return lost;
 }
 
-function main(argv) {
-  const values = (flag) => argv.reduce((all, arg, at) => (arg === flag && argv[at + 1] ? all.concat(argv[at + 1]) : all), []);
-  const captures = (values('--capture').concat(values('--check'))).map((file) => readJson(file, null)).filter(Boolean);
-  if (argv.includes('--check')) {
-    const lost = checkCaptures(captures);
-    console.log(lost.length ? lost.join('\n') : 'every recorded success answer passes the output allow-list unchanged');
-    return lost.length ? 1 : 0;
-  }
-  const files = values('--file');
-  if (!captures.length || !files.length) return console.log('usage: --capture F [--capture G] --file routes/x.js [--write] [--web]  |  --check F'), 2;
+/** the value after each occurrence of a flag: values(['--capture','a','--capture','b'], '--capture') → ['a','b'] */
+const flagValues = (argv, flag) => argv.reduce((all, arg, at) => (arg === flag && argv[at + 1] ? all.concat(argv[at + 1]) : all), []);
+
+/** the shapes and listed routes of every --file, from the captures */
+function deriveFiles(files, captures) {
   const merged = { shapes: {}, listed: {} };
   files.forEach((file) => {
-    const one = deriveFile(file, captures);
-    Object.assign(merged.shapes, one.shapes);
-    Object.assign(merged.listed, one.listed);
+    const derivedFile = deriveFile(file, captures);
+    Object.assign(merged.shapes, derivedFile.shapes);
+    Object.assign(merged.listed, derivedFile.listed);
   });
-  const closed = Object.keys(merged.shapes).filter((key) => !merged.shapes[key].open.length);
-  console.log('routes ' + (Object.keys(merged.shapes).length + Object.keys(merged.listed).filter((key) => !merged.shapes[key]).length) + ' · shaped ' + Object.keys(merged.shapes).length + ' · fully closed ' + closed.length + ' · open somewhere ' + (Object.keys(merged.shapes).length - closed.length));
+  return merged;
+}
+
+/** print the count line, every LISTED route with its reason, and (with --web) the keys callers read that the shapes lack */
+function report(merged, files, withWeb) {
+  const shaped = Object.keys(merged.shapes);
+  const closed = shaped.filter((key) => !merged.shapes[key].open.length);
+  const unshaped = Object.keys(merged.listed).filter((key) => !merged.shapes[key]);
+  console.log('routes ' + (shaped.length + unshaped.length) + ' · shaped ' + shaped.length + ' · fully closed ' + closed.length + ' · open somewhere ' + (shaped.length - closed.length));
   Object.keys(merged.listed).forEach((key) => console.log('  LISTED ' + key + ': ' + merged.listed[key]));
-  if (argv.includes('--web')) {
-    const missing = webReadsMissing(files[0], merged.shapes);
-    Object.keys(missing).forEach((key) => console.log('  WEB READS (not in the shape, review) ' + key + ': ' + missing[key].join(', ')));
+  if (!withWeb) return;
+  const missing = webReadsMissing(files[0], merged.shapes);
+  Object.keys(missing).forEach((key) => console.log('  WEB READS (not in the shape, review) ' + key + ': ' + missing[key].join(', ')));
+}
+
+/** the command line: --check F | --capture F [--capture G] --file routes/x.js [--write] [--web]; the exit code */
+function main(argv) {
+  const captures = flagValues(argv, '--capture').concat(flagValues(argv, '--check')).map((file) => readJson(file, null)).filter(Boolean);
+  if (argv.includes('--check')) {
+    const lost = checkCaptures(captures);
+    console.log(lost.length ? lost.join(String.fromCharCode(10)) : 'every recorded success answer passes the output allow-list unchanged');
+    return lost.length ? 1 : 0;
   }
+  const files = flagValues(argv, '--file');
+  if (!captures.length || !files.length) return console.log('usage: --capture F [--capture G] --file routes/x.js [--write] [--web]  |  --check F'), 2;
+  const merged = deriveFiles(files, captures);
+  report(merged, files, argv.includes('--web'));
   if (argv.includes('--write')) writeShapes(merged);
   return 0;
 }

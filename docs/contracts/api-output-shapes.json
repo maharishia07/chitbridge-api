@@ -431,7 +431,7 @@
    "open": [
     {
      "path": "(answer)",
-     "why": "a spread (...x) adds keys the text does not name"
+     "reason": "a spread (...x) adds keys the text does not name"
     }
    ],
    "example": {
@@ -463,7 +463,7 @@
    "open": [
     {
      "path": "data[]",
-     "why": "a value passed through (an expression: its keys are not written in the handler)"
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
     }
    ],
    "example": {
@@ -479,7 +479,7 @@
    "open": [
     {
      "path": "(answer)",
-     "why": "a spread (...x) adds keys the text does not name"
+     "reason": "a spread (...x) adds keys the text does not name"
     }
    ],
    "example": {
@@ -627,7 +627,7 @@
    "open": [
     {
      "path": "by_locality[]",
-     "why": "a value passed through (an expression: its keys are not written in the handler)"
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
     }
    ],
    "example": {
@@ -731,7 +731,7 @@
    "open": [
     {
      "path": "regions[]",
-     "why": "a value passed through (an expression: its keys are not written in the handler)"
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
     }
    ],
    "example": {
@@ -747,7 +747,7 @@
    "open": [
     {
      "path": "(answer)",
-     "why": "a spread (...x) adds keys the text does not name"
+     "reason": "a spread (...x) adds keys the text does not name"
     }
    ],
    "example": {
@@ -779,7 +779,7 @@
    "open": [
     {
      "path": "data[]",
-     "why": "a value passed through (an expression: its keys are not written in the handler)"
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
     }
    ],
    "example": {
@@ -947,7 +947,7 @@
    "open": [
     {
      "path": "resolved",
-     "why": "a value passed through (an expression: its keys are not written in the handler)"
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
     }
    ],
    "example": {
@@ -966,7 +966,7 @@
    "open": [
     {
      "path": "(answer)",
-     "why": "a spread (...x) adds keys the text does not name"
+     "reason": "a spread (...x) adds keys the text does not name"
     }
    ],
    "example": {
@@ -983,7 +983,7 @@
    "open": [
     {
      "path": "(answer)",
-     "why": "a spread (...x) adds keys the text does not name"
+     "reason": "a spread (...x) adds keys the text does not name"
     }
    ],
    "example": {
@@ -1115,7 +1115,7 @@
    "open": [
     {
      "path": "(answer)",
-     "why": "a spread (...x) adds keys the text does not name"
+     "reason": "a spread (...x) adds keys the text does not name"
     }
    ],
    "example": {

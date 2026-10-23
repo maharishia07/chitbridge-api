@@ -1,3 +1,4 @@
+// @type: contract
 /**
  * tests/api-allowlist.test.cjs — THE OUTPUT ALLOW-LIST (API-STANDARD S34), AS UNITS: the pruning rule, the filter on res.json, the shape derivation, and the property that makes it safe.
  *
@@ -69,10 +70,10 @@ t('derive: a recorded object closes over the keys seen, required = seen every ti
 t('derive: types follow the values; null widens a type; a nested object is closed over every key any answer had', derived.schema.properties.n.type === 'number' && same(derived.schema.properties.note.type, ['string', 'null']) && same(Object.keys(derived.schema.properties.who.properties), ['name', 'extra']) && derived.schema.properties.who.additionalProperties === false);
 t('derive: a list item is closed over its elements', derive([{ rows: [{ a: 1 }, { a: 2, b: 3 }] }]).schema.properties.rows.items.additionalProperties === false);
 t('derive: a key only the handler\'s literal names (never seen) is in the schema, not required', (() => { const out = derive([{ ok: true }], literal('{ ok: true, maybe: x }')); return 'maybe' in out.schema.properties && !out.schema.required.includes('maybe'); })());
-t('derive: a spread leaves the node OPEN and says why', (() => { const out = derive([{ ok: true, a: 1 }], literal('{ ok: true, ...row }')); return out.schema.additionalProperties === undefined && out.open.length === 1 && /spread/.test(out.open[0].why); })());
+t('derive: a spread leaves the node OPEN and says why', (() => { const out = derive([{ ok: true, a: 1 }], literal('{ ok: true, ...row }')); return out.schema.additionalProperties === undefined && out.open.length === 1 && /spread/.test(out.open[0].reason); })());
 t('derive: a row passed through leaves its node open (listed), the parent stays closed', (() => { const out = derive([{ ok: true, data: [{ id: 1 }] }], literal('{ ok: true, data: rows }')); return out.schema.additionalProperties === false && out.schema.properties.data.items.additionalProperties === undefined && out.open[0].path === 'data[]'; })());
 t('derive: a list made by a map literal is closed over the literal\'s keys', (() => { const out = derive([{ list: [] }], literal('{ list: rows.map((r) => ({ id: r.id, name: r.name })) }')); return !out.open.length && out.schema.properties.list.type === undefined; })());
-t('derive: a map keyed by data (ids, dates) is open, not a record', (() => { const keys = {}; for (let at = 0; at < 6; at++) keys['2026-10-0' + (at + 1)] = at; return derive([{ by_day: keys }], literal('{ by_day: tally({ total: 1 }) }')).open.some((item) => /keyed by data/.test(item.why)); })());
+t('derive: a map keyed by data (ids, dates) is open, not a record', (() => { const keys = {}; for (let at = 0; at < 6; at++) keys['2026-10-0' + (at + 1)] = at; return derive([{ by_day: keys }], literal('{ by_day: tally({ total: 1 }) }')).open.some((item) => /keyed by data/.test(item.reason)); })());
 
 /* ── the property that makes it safe ── */
 const samples = [{ ok: true, d: { a: 1, list: [{ x: 1, y: [1, 2] }] } }, { ok: true, d: { a: 2, list: [] }, extra: 'e' }, { ok: false, d: { a: 3, list: [{ x: 2, z: null }] } }];
