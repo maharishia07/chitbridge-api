@@ -64400,6 +64400,62 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-forms.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 STAGE-2 SWEEP: EVERY REFUSAL OF THE AUTHORITY FORMS ROUTES (ROUTES/FORMS.JS: LIST, ONE FORM, RESOLVE, ISSUE, INSTANCES, ONE INSTANCE, SIGN, ATTACH) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; ANOTHER SHOP'S FORM ID ANSWERS AS AN UNKNOWN ONE; A BODY KEY THE ROUTE NEVER NAMED IS REFUSED.",
+   "claim": "API-4 STAGE-2 SWEEP: EVERY REFUSAL OF THE AUTHORITY FORMS ROUTES (ROUTES/FORMS.JS: LIST, ONE FORM, RESOLVE, ISSUE, INSTANCES, ONE INSTANCE, SIGN, ATTACH) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; ANOTHER SHOP'S FORM ID ANSWERS AS AN UNKNOWN ONE; A BODY KEY THE ROUTE NEVER NAMED IS REFUSED.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 363 lines. Run: node chitbridge-api/tests/api-problem-forms.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 363,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/forms-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "AUTHORITY FORMS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 stage-2 sweep of routes/forms.js).",
+   "claim": "AUTHORITY FORMS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 stage-2 sweep of routes/forms.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 92 lines. Run: node chitbridge-api/tests/forms-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 92,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-entities.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
