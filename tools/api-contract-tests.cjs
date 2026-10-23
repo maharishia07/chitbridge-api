@@ -379,11 +379,17 @@ async function runHardening(app, port, facts) {
     const cases = casesOfRoute(leaf, facts.appliesOf(leaf, operation), leaf.fns.find((fn) => fn && fn.schemaOperation));
     for (const column of Object.keys(cases)) {
       world.keys.clear();
-      const fault = await cases[column](target);
+      const fault = await cases[column](column === 'output_allowlist' ? exampleTarget(target, key) : target);
       (results[key] = results[key] || {})[column] = fault ? { pass: false, why: fault } : { pass: true };
     }
   }
   return { results, evidence: evidenceOf(results) };
+}
+
+/** output_allowlist plays a request known to reach the route's success answer when the derived shape (tools/api-allowlist.cjs → docs/contracts/api-output-shapes.json) holds one: a body of empty fields is often refused by the handler's own rule, which is no answer to look at */
+function exampleTarget(target, key) {
+  const shape = require('../lib/output-allowlist').shapeOf(key);
+  return shape && shape.example ? Object.assign({}, target, { url: shape.example.url, body: shape.example.body }) : target;
 }
 
 /** the routes whose generated cases passed, per column: the only thing docs/contracts/api-hardening-evidence.json may say */
