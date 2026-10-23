@@ -3,8 +3,8 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 598,
-  "partial": 15,
+  "not_started": 592,
+  "partial": 21,
   "meets": 20
  },
  "machine_columns": [
@@ -725,19 +725,23 @@
    "path": "/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 104,
-   "hash": "b449f763bb111e49",
+   "line": 119,
+   "hash": "d9ef786ac86d43eb",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -745,7 +749,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/actors",
@@ -3931,19 +3935,23 @@
    "path": "/api/ctp/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 104,
-   "hash": "b449f763bb111e49",
+   "line": 119,
+   "hash": "d9ef786ac86d43eb",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -3951,7 +3959,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/definitions",
@@ -13486,19 +13494,28 @@
    "path": "/api/ctp/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 115,
-   "hash": "8f0441cf2d1df5fb",
+   "line": 131,
+   "hash": "e66d6e5fbc20dda3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    404,
+    409,
+    500,
+    503
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -13506,7 +13523,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/ctp/query",
@@ -13514,19 +13531,26 @@
    "path": "/api/ctp/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 317,
-   "hash": "f952f4c1f6bda9f1",
+   "line": 333,
+   "hash": "1678af41fa18644b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    409,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -13534,7 +13558,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/definitions",
@@ -17895,19 +17919,28 @@
    "path": "/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 115,
-   "hash": "8f0441cf2d1df5fb",
+   "line": 131,
+   "hash": "e66d6e5fbc20dda3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    404,
+    409,
+    500,
+    503
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -17915,7 +17948,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /query",
@@ -17923,19 +17956,26 @@
    "path": "/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 317,
-   "hash": "f952f4c1f6bda9f1",
+   "line": 333,
+   "hash": "1678af41fa18644b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    409,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -17943,7 +17983,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PUT /api/actors/:id/delegate",

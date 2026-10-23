@@ -306,6 +306,7 @@ const GUARDS = [
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'api-problem.test.cjs', // API-1 slice 1a: the one error body (lib/problem.js), the legacy keys frozen, routes/keys.js + the 404 and error handler answer it
   'api-problem-integrations.test.cjs', // API-1 slice 1c: every refusal of routes/integrations.js is a Problem with its old keys frozen; no 5xx says its cause
+  'api-problem-ctp.test.cjs', // API-1 slice 1d: routes/ctp.js — every answer to another installation a Problem that keeps `accepted`/`ok` and `why`, on both mounts
   'api-contract.test.cjs', // API-1 slice 1b: schemaValidate (ajv) and the contract cases generated from each route's schema
   'api-tools.test.cjs', // API-1 slice 1a: the ratchet rules, the register normaliser, the error-code table, as units
   'web-api-contract.test.cjs', // every route the web reads, called for real (offline), held to docs/contracts/web-api.json: same keys, nesting and types
