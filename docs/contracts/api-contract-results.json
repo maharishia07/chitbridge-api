@@ -50,6 +50,14 @@
     422
    ]
   },
+  "DELETE /api/connectors/:actorId": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "DELETE /api/crm/followups/:id": {
    "cases": 3,
    "failed": 0,
@@ -556,6 +564,30 @@
   },
   "GET /api/connections/pending": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1168,6 +1200,14 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "PATCH /api/connectors/:actorId/connections/:connId": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "PATCH /api/counters/:id": {
@@ -1980,6 +2020,70 @@
   },
   "POST /api/connections/request": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/connections": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/erp-test": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/ping": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/regenerate-key": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/erp-ingest": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/ingest": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/reissue-code": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

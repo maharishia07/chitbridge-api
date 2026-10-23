@@ -2117,7 +2117,7 @@
   "POST /api/connectors": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2127,7 +2127,7 @@
   "POST /api/connectors/ingest": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2141,7 +2141,7 @@
   "POST /api/connectors/erp-ingest": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2165,7 +2165,7 @@
   "POST /api/connectors/:actorId/erp-test": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2195,7 +2195,7 @@
   "POST /api/connectors/reissue-code": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2205,7 +2205,7 @@
   "POST /api/connectors/:actorId/regenerate-key": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2219,7 +2219,7 @@
   "POST /api/connectors/:actorId/ping": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2233,7 +2233,7 @@
   "POST /api/connectors/:actorId/connections": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2257,7 +2257,7 @@
   "PATCH /api/connectors/:actorId/connections/:connId": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,

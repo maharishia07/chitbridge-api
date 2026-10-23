@@ -36,6 +36,14 @@
   409,
   500
  ],
+ "DELETE /api/connectors/:actorId": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "DELETE /api/crm/followups/:id": [
   400,
   401,
@@ -489,6 +497,32 @@
  ],
  "GET /api/connections/pending": [
   401,
+  500
+ ],
+ "GET /api/connectors": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/connectors/:actorId/connections": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/connectors/:actorId/provisioning": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/connectors/:actorId/receipts": [
+  400,
+  401,
+  403,
+  404,
   500
  ],
  "GET /api/counters": [
@@ -1114,6 +1148,13 @@
   503
  ],
  "PATCH /api/books/recurring/:id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/connectors/:actorId/connections/:connId": [
+  400,
   401,
   403,
   404,
@@ -1781,6 +1822,62 @@
   400,
   401,
   404,
+  500
+ ],
+ "POST /api/connectors": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/connectors/:actorId/connections": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/:actorId/erp-test": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/:actorId/ping": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/:actorId/regenerate-key": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/erp-ingest": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/connectors/ingest": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/connectors/reissue-code": [
+  400,
+  401,
+  403,
   500
  ],
  "POST /api/counters": [
