@@ -263,6 +263,7 @@ const GUARDS = [
   'books-fixes.test.cjs', // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
   'books-dates-tz.test.cjs', // ⭐⭐ a date read back from Postgres is the same date under Asia/Kolkata and UTC (it runs itself in both)
   'books-period.test.cjs', // ⭐⭐ v1.14–v1.16: asset register (b280 draft), depreciation, closing stock, GST close + challan, loans, accruals, contra — the engine's lines, once, locked, owner-only
+  'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
