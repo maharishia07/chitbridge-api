@@ -458,6 +458,22 @@
     422
    ]
   },
+  "GET /api/connections/list": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connections/pending": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/facts/:card": {
    "cases": 3,
    "failed": 0,
@@ -592,6 +608,46 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "GET /api/network-design/availability": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/entities/:id/connections": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/entities/lookup": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/place": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "GET /api/products": {
@@ -1394,6 +1450,14 @@
     400
    ]
   },
+  "POST /api/connections/request": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/ctp/deliver": {
    "cases": 4,
    "failed": 0,
@@ -1508,6 +1572,94 @@
   },
   "POST /api/keys": {
    "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network-design/build": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network-design/reissue": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network-design/validate": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/approve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/decline": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/disconnect": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/resume": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/suspend": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/entities": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/entities/:id/claim": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1898,6 +2050,14 @@
     400
    ]
   },
+  "PUT /api/connections/:id/respond": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PUT /api/folders/inventory/:code": {
    "cases": 4,
    "failed": 0,
@@ -1912,6 +2072,14 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "PUT /api/network-design": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "PUT /api/products/:id/availability": {

@@ -44,6 +44,9 @@
   "POST /api/catalogue/network-store/:networkId/order": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PUT /api/connections/:id/respond": {
+   "foreign_id_404": true
   }
  }
 }
