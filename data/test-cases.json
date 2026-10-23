@@ -64400,6 +64400,62 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-identity-docs.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE IDENTITY-DOCUMENT ROUTES (ROUTES/IDENTITY-DOCS.JS: LIST, FILE, ASK FOR A CODE, VERIFY) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED (MASKING, CODE FLOW, STAMP), NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR A FULL DOCUMENT NUMBER; A STATUS A LIBRARY CARRIES IS PASSED ON; AADHAAR IS NEVER STORED; ANOTHER SHOP'S RECORD, AND A PERSON THE OWNER DOES NOT HOLD, ANSWER AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE IDENTITY-DOCUMENT ROUTES (ROUTES/IDENTITY-DOCS.JS: LIST, FILE, ASK FOR A CODE, VERIFY) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED (MASKING, CODE FLOW, STAMP), NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR A FULL DOCUMENT NUMBER; A STATUS A LIBRARY CARRIES IS PASSED ON; AADHAAR IS NEVER STORED; ANOTHER SHOP'S RECORD, AND A PERSON THE OWNER DOES NOT HOLD, ANSWER AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 391 lines. Run: node chitbridge-api/tests/api-problem-identity-docs.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 391,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/identity-docs-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "IDENTITY DOCUMENTS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/identity-docs.js).",
+   "claim": "IDENTITY DOCUMENTS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/identity-docs.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 96 lines. Run: node chitbridge-api/tests/identity-docs-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 96,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-entities.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
