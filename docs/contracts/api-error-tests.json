@@ -1935,6 +1935,7 @@
  "POST /api/folders/:id/rules": [
   400,
   401,
+  404,
   500,
   503
  ],
@@ -2699,6 +2700,7 @@
  "PUT /api/entities/routing": [
   400,
   401,
+  404,
   409,
   500
  ],

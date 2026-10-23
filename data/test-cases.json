@@ -64288,6 +64288,38 @@
    "changed_at": "2026-10-23T08:12:12+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/sec100-folder-fk.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-100: no write puts another shop's folder into a folder foreign key (rules, parent on create and move, routing).",
+   "claim": "SEC-100: no write puts another shop's folder into a folder foreign key (rules, parent on create and move, routing).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · security · 158 lines. Run: node chitbridge-api/tests/sec100-folder-fk.test.cjs",
+   "layer": "engine",
+   "test_type": "security",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/folder-views.js",
+    "lib/folder-rules.js",
+    "routes/folders.js",
+    "routes/entities.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T03:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-governance.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
