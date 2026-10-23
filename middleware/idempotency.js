@@ -9,7 +9,7 @@
 // CARD 28-platform-and-operations/idempotency
 // called by: server.js (app.use('/api', …) after auth-then-parse, before the routers); lib/autoraise sends the header;
 //            routes/catalogue.js mounts requireKey() on the public money doors (order/start, order/confirm).
-// FLOW  key? → scopeOf(token) → fingerprint(body) → store.begin → { existing → answerExisting | claimed → capture res.json → next → store.finalize }
+// FLOW  key? → scopeOf(token) → fingerprint(body) → store.begin → { existing → (bearer door: middleware/auth FIRST) → answerExisting | claimed → capture res.json → next → store.finalize }
 //       store off (table missing · store error · body unfingerprintable) → the SAME flow on memoryStore, every answer marked X-Idempotency: unverified
 //       public door: no key → 422 IDEMPOTENCY_KEY_REQUIRED · shopOf + contactOf → (shop entity, hashed contact + key) → the SAME flow
 //
@@ -19,6 +19,12 @@
 // (lib/logger warn with the request id and the reason) and the request still runs — guarded by a bounded per-process memory
 // keyed (entity, key): a retry gets the recorded answer (X-Idempotent-Replay: true) or 409 IDEMPOTENCY_IN_PROGRESS, never a
 // second execution in this process. The answer carries `X-Idempotency: unverified` so the outbox knows the proof is not durable.
+//
+// ⭐ SEC (2026-10-23, outside review finding 2): A REPLAY ANSWERS ONLY AFTER AUTH. scopeOf checks the token's SIGNATURE only, so a
+// revoked token, a removed device or a deactivated actor used to read a stored answer (a chit, a session) it could not read fresh.
+// Now a held key on a bearer door runs middleware/auth (the route's own: revocation, device, actor, hat-gate) before ANY stored
+// answer, 409 or 422 is sent; auth's refusal is the answer. The public money doors (requireKey) have no bearer and are unchanged.
+// A 401 or 403 is never recorded as the key's answer (a refused token must not poison the key for the real holder).
 // ⚠️ The memory is per process: two api instances could each run a retry once. The store (b109) remains the real guard.
 const crypto = require('crypto');
 const { withEntity } = require('../db');
@@ -37,6 +43,8 @@ const TOKEN_REPLAY_MINUTES = Number(process.env.IDEMPOTENCY_TOKEN_MINUTES || 15)
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
+/** a status that is NOT a settled outcome, so the claim is dropped and a retry may run: a server error, a refused token (401) or a refused role/scope (403: hat-gate, key scope, enrol pending — lifted later by a promotion or an approval) */
+const notSettled = (status) => status >= 500 || status === 401 || status === 403;
 const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — pre-b109, expected rather than alarming */
 
 /**
@@ -115,8 +123,8 @@ const dbStore = {
   },
   async finalize(entity, key, status, body) {
     return withEntity(entity, async (db) => {
-      if (status >= 500) {
-        // a server error is NOT a completed outcome — let a retry re-run it
+      if (notSettled(status)) {
+        // a server error or a refused token is NOT a completed outcome — let a retry re-run it
         await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2 AND state = 'in_progress'`, [entity, key]);
       } else {
         // 2xx/3xx/4xx are settled outcomes — record so replays are consistent
@@ -157,13 +165,19 @@ const memoryStore = {
     const memoryKey = entity + '\n' + key,
       held = unverified.get(memoryKey);
     if (!held) return;
-    if (status >= 500)
+    if (notSettled(status))
       unverified.delete(memoryKey); // not a completed outcome — a retry may run again
     else Object.assign(held, { state: 'done', status, response: body == null ? null : body });
   },
   size: () => unverified.size,
   clear: () => unverified.clear()
 };
+
+/** a key already held on a bearer door: auth first (the route's own), then the answer; auth's refusal is the answer when it refuses */
+function answerAfterAuth(req, res, next, held, claim, isVerified) {
+  if (!claim.needsAuth) return answerExisting(req, res, held, claim.hash, isVerified);
+  return require('./auth')(req, res, (err) => (err ? next(err) : answerExisting(req, res, held, claim.hash, isVerified)));
+}
 
 /** a key already held: the recorded answer (replay), a conflict (another body), or "still running" — never a second execution */
 function answerExisting(req, res, held, hash, isVerified) {
@@ -207,7 +221,7 @@ function runUnverified(req, res, next, claim, why) {
   res.setHeader('X-Idempotency', 'unverified');
   return memoryStore
     .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
-    .then((outcome) => (outcome.existing ? answerExisting(req, res, outcome.existing, claim.hash, false) : runAndRecord(req, res, next, memoryStore, claim)));
+    .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, false) : runAndRecord(req, res, next, memoryStore, claim)));
 }
 
 /** the key is ours to hold: the durable store, or the memory when the store is off */
@@ -215,7 +229,7 @@ function holdKey(req, res, next, claim) {
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
   return dbStore
     .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
-    .then((outcome) => (outcome.existing ? answerExisting(req, res, outcome.existing, claim.hash, true) : runAndRecord(req, res, next, dbStore, claim)))
+    .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, true) : runAndRecord(req, res, next, dbStore, claim)))
     .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
 }
 /** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
@@ -236,7 +250,7 @@ module.exports = function idempotency(req, res, next) {
       log.warn("idempotency: no scope for the key — the route's auth decides", { id: req.id, method: req.method, path: req.path, why: scoped.why });
     return next();
   }
-  return holdKey(req, res, next, { entity: scoped.entity, key: String(key), hash: fingerprint(req), windowHrs: windowHours() });
+  return holdKey(req, res, next, { entity: scoped.entity, key: String(key), hash: fingerprint(req), windowHrs: windowHours(), needsAuth: true });
 };
 
 /* ── ⭐ API-3 S36 · THE PUBLIC MONEY DOORS (laptop1, 23 Oct). A storefront order carries no bearer, so the pass above leaves it
