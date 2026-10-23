@@ -20,5 +20,5 @@ ok(oo.orderOf({ order_details: { channel: 'online', name: 'Priya (test)' } }).na
 ok(oo.orderOf({ order_details: { channel: 'online' } }).name === null, 'M182: no typed name → null (the till falls back to the account name)');
 const src = fs.readFileSync(__dirname + '/../lib/open-orders.js', 'utf8');
 ok(/party: \(orderOf\(h\.summary_json\) \|\| \{\}\)\.name \|\| h\.counterparty_name/.test(src), 'M182: the task party is the typed name, else the account name');
-ok(/_cname = _short\(req\.body && req\.body\.name, 80\)/.test(fs.readFileSync(__dirname + '/../routes/catalogue.js', 'utf8')), 'M182: the storefront stores the typed name in order_details');
+ok(/_cname = _short\(req\.body\.name, 80\)/.test(fs.readFileSync(__dirname + '/../routes/catalogue.js', 'utf8')), 'M182: the storefront stores the typed name in order_details');
 console.log(n + ' passed'); process.exit(0);

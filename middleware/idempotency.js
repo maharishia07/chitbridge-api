@@ -6,10 +6,12 @@
 // so it is safe to deploy before b109 is run. Scoped per entity, WITH RLS (via withEntity).
 //
 // owns: the Idempotency-Key contract (idempotency_key table, b109) and the in-process memory that stands in when the store is off.
-// called by: server.js (app.use('/api', …) after auth-then-parse, before the routers); lib/autoraise sends the header.
+// CARD 28-platform-and-operations/idempotency
+// called by: server.js (app.use('/api', …) after auth-then-parse, before the routers); lib/autoraise sends the header;
+//            routes/catalogue.js mounts requireKey() on the public money doors (order/start, order/confirm).
 // FLOW  key? → scopeOf(token) → fingerprint(body) → store.begin → { existing → answerExisting | claimed → capture res.json → next → store.finalize }
 //       store off (table missing · store error · body unfingerprintable) → the SAME flow on memoryStore, every answer marked X-Idempotency: unverified
-// // CARD 28-platform-and-operations/idempotency
+//       public door: no key → 422 IDEMPOTENCY_KEY_REQUIRED · shopOf + contactOf → (shop entity, hashed contact + key) → the SAME flow
 //
 // ⭐ LIM2 (W1-PLAT, 15 Oct): WHEN IDEMPOTENCY IS OFF, A RETRY WARNS AND IS REFUSED. Before, three silent paths ran a retried
 // mutation A SECOND TIME with no trace: an unreadable token (`catch (_) { return null }`), a body the canon could not
@@ -21,6 +23,7 @@
 const crypto = require('crypto');
 const { withEntity } = require('../db');
 const log = require('../lib/logger');
+const { problem } = require('../lib/problem');
 
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const KEY_MAX_LENGTH = 200;
@@ -28,6 +31,9 @@ const DEFAULT_WINDOW_HOURS = 48;
 /* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
    after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
 const IN_PROGRESS_STALE_MINUTES = Number(process.env.IDEMPOTENCY_STALE_MINUTES || 10);
+/* SEC (laptop1, 23 Oct): a recorded answer that carries a token (order/confirm signs the shopper in) is a session if it is kept.
+   It replays for this many minutes, long enough for a retry after a lost answer; recording a new one sweeps the shop's older ones. */
+const TOKEN_REPLAY_MINUTES = Number(process.env.IDEMPOTENCY_TOKEN_MINUTES || 15);
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
@@ -72,6 +78,14 @@ function fingerprint(req) {
   }
 }
 
+/** carriesToken(body) → true when a recorded answer holds a token, a signed-in session */
+function carriesToken(body) {
+  return Boolean(body && typeof body === 'object' && body.token);
+}
+/* the shop's other token answers past their replay minutes: deleted, so no session is kept in the store */
+const SWEEP_OLD_TOKENS = `DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key <> $2 AND response ? 'token'
+   AND created_at < now() - ($3 || ' minutes')::interval`;
+
 /* ── the durable store: idempotency_key (b109), one row per (entity, key), inside the entity's RLS ── */
 const dbStore = {
   async begin(entity, key, req, hash, windowHrs) {
@@ -79,9 +93,10 @@ const dbStore = {
       const found = await db.query(
         `SELECT idem_key, req_hash, state, status, response,
                 (created_at < now() - ($2 || ' hours')::interval
-                 OR (state = 'in_progress' AND created_at < now() - ($4 || ' minutes')::interval)) AS expired
+                 OR (state = 'in_progress' AND created_at < now() - ($4 || ' minutes')::interval)
+                 OR (response ? 'token' AND created_at < now() - ($5 || ' minutes')::interval)) AS expired
            FROM idempotency_key WHERE entity_id = $1 AND idem_key = $3`,
-        [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES)]
+        [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES), String(TOKEN_REPLAY_MINUTES)]
       );
       if (found.rows[0] && !found.rows[0].expired) return { existing: found.rows[0] };
       if (found.rows[0]) await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [entity, key]); // expired → reclaim
@@ -111,10 +126,20 @@ const dbStore = {
           status,
           JSON.stringify(body == null ? null : body)
         ]);
+        if (carriesToken(body)) await db.query(SWEEP_OLD_TOKENS, [entity, key, String(TOKEN_REPLAY_MINUTES)]);
       }
     });
   }
 };
+
+/** may a key held in memory still answer? Not once its window is over, a crashed request has gone stale, or a token answer is past its minutes */
+function stillAnswers(held, windowHrs) {
+  if (!held) return false;
+  const heldFor = Date.now() - held.at;
+  if (held.state === 'in_progress' && heldFor > IN_PROGRESS_STALE_MINUTES * MINUTE_MS) return false;
+  if (carriesToken(held.response) && heldFor > TOKEN_REPLAY_MINUTES * MINUTE_MS) return false;
+  return heldFor <= windowHrs * HOUR_MS;
+}
 
 /* ── the store-off memory: the same contract, per process, bounded, forgotten after the window ── */
 const unverified = new Map(); /* (entity + '\n' + key) → { at, req_hash, state, status, response } */
@@ -122,8 +147,7 @@ const memoryStore = {
   async begin(entity, key, req, hash, windowHrs) {
     const memoryKey = entity + '\n' + key,
       held = unverified.get(memoryKey);
-    const staleInProgress = held && held.state === 'in_progress' && Date.now() - held.at > IN_PROGRESS_STALE_MINUTES * MINUTE_MS;
-    if (held && !staleInProgress && Date.now() - held.at <= windowHrs * HOUR_MS) return { existing: held };
+    if (stillAnswers(held, windowHrs)) return { existing: held };
     if (held) unverified.delete(memoryKey); // expired → reclaim
     if (unverified.size >= UNVERIFIED_MEMORY_MAX) unverified.delete(unverified.keys().next().value); // the oldest is forgotten
     unverified.set(memoryKey, { at: Date.now(), req_hash: hash, state: 'in_progress', status: null, response: null });
@@ -142,20 +166,18 @@ const memoryStore = {
 };
 
 /** a key already held: the recorded answer (replay), a conflict (another body), or "still running" — never a second execution */
-function answerExisting(res, held, hash, isVerified) {
+function answerExisting(req, res, held, hash, isVerified) {
   if (!isVerified) res.setHeader('X-Idempotency', 'unverified');
   if (held.req_hash && hash && held.req_hash !== hash) {
-    return res
-      .status(422)
-      .json({ code: 'IDEMPOTENCY_CONFLICT', error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' });
+    const legacy = { error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' };
+    return problem(req, res, { status: 422, code: 'IDEMPOTENCY_CONFLICT', detail: legacy.message, legacy });
   }
   if (held.state === 'done') {
     res.setHeader('X-Idempotent-Replay', 'true');
     return res.status(held.status || 200).json(held.response);
   }
-  return res
-    .status(409)
-    .json({ code: 'IDEMPOTENCY_IN_PROGRESS', error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' });
+  const legacy = { error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' };
+  return problem(req, res, { status: 409, code: 'IDEMPOTENCY_IN_PROGRESS', detail: legacy.message, legacy });
 }
 
 /** we own the key: record the handler's JSON answer through the store it was claimed in, then run the route */
@@ -185,10 +207,24 @@ function runUnverified(req, res, next, claim, why) {
   res.setHeader('X-Idempotency', 'unverified');
   return memoryStore
     .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
-    .then((outcome) => (outcome.existing ? answerExisting(res, outcome.existing, claim.hash, false) : runAndRecord(req, res, next, memoryStore, claim)));
+    .then((outcome) => (outcome.existing ? answerExisting(req, res, outcome.existing, claim.hash, false) : runAndRecord(req, res, next, memoryStore, claim)));
 }
 
+/** the key is ours to hold: the durable store, or the memory when the store is off */
+function holdKey(req, res, next, claim) {
+  if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
+  return dbStore
+    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
+    .then((outcome) => (outcome.existing ? answerExisting(req, res, outcome.existing, claim.hash, true) : runAndRecord(req, res, next, dbStore, claim)))
+    .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
+}
+/** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
+const windowHours = () => Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS);
+
 const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotency_key is not migrated (b109)' : 'store error: ' + (e && e.message));
+
+/** the statuses this gate answers itself (409 key in progress, 422 key reused with another body or missing): the API register reads this off any route that mounts the gate */
+const ADDS_STATUSES = [409, 422];
 
 module.exports = function idempotency(req, res, next) {
   const key = req.headers['idempotency-key'];
@@ -200,22 +236,49 @@ module.exports = function idempotency(req, res, next) {
       log.warn("idempotency: no scope for the key — the route's auth decides", { id: req.id, method: req.method, path: req.path, why: scoped.why });
     return next();
   }
-  const claim = {
-    entity: scoped.entity,
-    key: String(key),
-    hash: fingerprint(req),
-    windowHrs: Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS)
-  };
-  if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
-
-  dbStore
-    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
-    .then((outcome) => (outcome.existing ? answerExisting(res, outcome.existing, claim.hash, true) : runAndRecord(req, res, next, dbStore, claim)))
-    .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
+  return holdKey(req, res, next, { entity: scoped.entity, key: String(key), hash: fingerprint(req), windowHrs: windowHours() });
 };
 
+/* ── ⭐ API-3 S36 · THE PUBLIC MONEY DOORS (laptop1, 23 Oct). A storefront order carries no bearer, so the pass above leaves it
+   alone: a double tap on Place order, or a retry after a lost answer, ran twice. These doors REQUIRE the key and scope it
+   themselves: the shop the door is on (its entity, so the row sits inside that shop's RLS) and the contact the shopper typed,
+   hashed, never kept in clear. One shopper's key can never answer for another shopper, or on another shop. ── */
+const KEY_REQUIRED = {
+  error: 'Missing Idempotency-Key',
+  message: 'Send an Idempotency-Key header: one per attempt, the same one when you retry it.'
+};
+/** requireKey({ shopOf, contactOf }) → the gate a public money door mounts; tools/api-register.cjs finds it by its name */
+function requireKey({ shopOf, contactOf }) {
+  /** the gate: no key is refused; otherwise the key is held for (this shop, this contact) and the route runs at most once */
+  async function requireIdempotencyKey(req, res, next) {
+    const key = req.headers['idempotency-key'];
+    if (!key || String(key).length > KEY_MAX_LENGTH)
+      return problem(req, res, { status: 422, code: 'IDEMPOTENCY_KEY_REQUIRED', detail: KEY_REQUIRED.message, legacy: KEY_REQUIRED });
+    let shop = null;
+    try {
+      shop = await shopOf(req);
+    } catch (e) {
+      return next(); /* the route reads the shop again and answers its own 500; nothing ran, so nothing can run twice */
+    }
+    const contact = shop && contactOf(req);
+    if (!contact) return next(); /* no such shop, or no usable contact: the route refuses it before anything is written */
+    const contactHash = crypto.createHash('sha256').update(String(contact)).digest('hex').slice(0, 32);
+    return holdKey(req, res, next, {
+      entity: shop.identity_id,
+      key: 'public ' + contactHash + ' ' + String(key),
+      hash: fingerprint(req),
+      windowHrs: windowHours()
+    });
+  }
+  requireIdempotencyKey.addsStatuses = ADDS_STATUSES;
+  return requireIdempotencyKey;
+}
+
+module.exports.addsStatuses = ADDS_STATUSES;
+module.exports.requireKey = requireKey;
 module.exports._stable = stable;
 module.exports._scope = scope;
 module.exports._memory = memoryStore;
 module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
+module.exports.TOKEN_REPLAY_MINUTES = TOKEN_REPLAY_MINUTES;
 module.exports.UNVERIFIED_MEMORY_MAX = UNVERIFIED_MEMORY_MAX;
