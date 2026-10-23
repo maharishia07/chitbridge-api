@@ -45,7 +45,12 @@ const {
   refused,
   notFound,
   tooLarge,
-  notDeployed,
+  casesNotDeployed,
+  cmdbNotDeployed,
+  noWayBack,
+  noCause,
+  unnamedRelease,
+  emptyRelease,
   notStored,
   notSignedIn,
   notBoardWriter,
@@ -891,13 +896,7 @@ router.post('/cases/seed', auth, ...checked('POST /cases/seed'), async (req, res
        something the person pressing the button can act on, and they must not be left staring at an empty board
        wondering whether they did it wrong. */
     if (!require('fs').existsSync(file)) {
-      return problem(req, res, {
-        status: 500,
-        ...notDeployed(
-          'The documented cases are not on this server',
-          'This API was deployed without data/test-cases.json. Run build-test-cases.cjs and deploy again.'
-        )
-      });
+      return problem(req, res, { status: 500, ...casesNotDeployed() });
     }
     const doc = JSON.parse(require('fs').readFileSync(file, 'utf8'));
     const out = await importCases(testboard.entityFor(auth.entityOf(req)), testerOf(req), doc.cases || []);
@@ -1084,10 +1083,7 @@ router.post('/cmdb/seed', auth, ...checked('POST /cmdb/seed'), async (req, res) 
     if (boardRefused(req, res)) return;
     const fs = require('fs');
     if (!fs.existsSync(CMDB_DIR)) {
-      return problem(req, res, {
-        status: 500,
-        ...notDeployed('The CMDB records are not on this server', 'This API was deployed without data/cmdb/. Deploy again.')
-      });
+      return problem(req, res, { status: 500, ...cmdbNotDeployed() });
     }
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
@@ -3707,16 +3703,8 @@ router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
        A change with no BACKOUT has not been thought through; writing the sentence is the review.
        A change with no SUMMARY is a sha, and a sha is not a record. */
     if (!summary) return problem(req, res, { status: 400, ...badRequest('Nothing recorded', 'Say what the change does.') });
-    if (!backout)
-      return problem(req, res, {
-        status: 400,
-        ...badRequest('No way back', 'How would you undo this? ⚠️ Written before it ships, not after — if the answer is "I am not sure", that is the finding.')
-      });
-    if (!cites || !String(cites.ref || '').trim())
-      return problem(req, res, {
-        status: 400,
-        ...badRequest('No cause', 'Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep.')
-      });
+    if (!backout) return problem(req, res, { status: 400, ...noWayBack() });
+    if (!cites || !String(cites.ref || '').trim()) return problem(req, res, { status: 400, ...noCause() });
 
     const { risk, forced } = riskOf(b);
     const name =
@@ -3852,13 +3840,8 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
     const name = String(b.name || '').trim();
     const ids = Array.isArray(b.changes) ? b.changes.map((x) => String(x).trim()).filter(Boolean) : [];
 
-    if (!name)
-      return problem(req, res, { status: 400, ...badRequest('Unnamed release', 'Give it a tag — it is what a shop will be told its fix arrived in.') });
-    if (!ids.length)
-      return problem(req, res, {
-        status: 400,
-        ...badRequest('Nothing in it', 'A release carries changes. One with none is a tag, and a tag tells nobody anything.')
-      });
+    if (!name) return problem(req, res, { status: 400, ...unnamedRelease() });
+    if (!ids.length) return problem(req, res, { status: 400, ...emptyRelease() });
 
     const carried = await withEntity(entity_id, async (db) => {
       const got = await db.query(

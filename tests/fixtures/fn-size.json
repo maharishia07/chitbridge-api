@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 233,
+  "long_functions": 232,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -471,7 +471,6 @@
       "GET /report",
       "PATCH /incidents/:id",
       "PATCH /requirements/:id",
-      "POST /changes",
       "POST /incidents",
       "POST /releases",
       "POST /requirements",

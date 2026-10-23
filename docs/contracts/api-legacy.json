@@ -22075,6 +22075,1968 @@
     }
    ]
   },
+  "GET /api/governance/boilerplate/:key": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Boilerplate read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Boilerplate read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "no-such-boilerplate",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    }
+   ]
+  },
+  "GET /api/governance/country-setup": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Country setup could not be read",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Country setup could not be read",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Country setup could not be read",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Country setup could not be read",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "country-setup-in-words",
+     "status": 503,
+     "body_keys": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update.",
+      "message": "Country setup arrives after the next update."
+     },
+     "fixture": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update.",
+      "message": "Country setup arrives after the next update."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/entities/:id": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "governance view failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "governance view failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "foreign-entity-id",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "platform-reads-any-unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "entity-without-constitution",
+     "status": 503,
+     "body_keys": {
+      "error": "no active constitution"
+     },
+     "fixture": {
+      "error": "no active constitution"
+     }
+    }
+   ]
+  },
+  "GET /api/governance/readiness/:bridge_id": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entity"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entity"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entity"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entity"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entity"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entity"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entity"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entity"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entity"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entity"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Readiness failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Readiness failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "no-such-supplier-readiness",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entity"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entity"
+     }
+    },
+    {
+     "scenario": "supplier-readiness-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Readiness failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Readiness failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/source/:key": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such source"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such source"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such source"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such source"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such source"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such source"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such source"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such source"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such source"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such source"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such source"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such source"
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Source read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Source read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "no-such-source",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such source"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such source"
+     }
+    }
+   ]
+  },
+  "POST /api/governance/ai-draft": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 400,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "ai-draft-no-skill",
+     "status": 400,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Unknown AI skill \"undefined\"."
+     }
+    },
+    {
+     "scenario": "ai-draft-gated",
+     "status": 402,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "The library said no."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "The library said no."
+     }
+    },
+    {
+     "scenario": "ai-draft-over-the-limit",
+     "status": 429,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "The library said no."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "The library said no."
+     }
+    },
+    {
+     "scenario": "ai-draft-not-connected",
+     "status": 503,
+     "body_keys": {
+      "error": "AI draft failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "AI draft failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/governance/boilerplate/:key/adopt": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Adopt failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Adopt failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "no-such-boilerplate-to-adopt",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such boilerplate"
+     }
+    }
+   ]
+  },
+  "POST /api/governance/compliance": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 400,
+     "body_keys": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "clearance-refused-by-the-library",
+     "status": 400,
+     "body_keys": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gather failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/governance/entities": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "display_name and email required"
+     },
+     "fixture": {
+      "error": "display_name and email required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "governed-entity-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "display_name and email required"
+     },
+     "fixture": {
+      "error": "display_name and email required"
+     }
+    },
+    {
+     "scenario": "no-constitution-to-create-under",
+     "status": 503,
+     "body_keys": {
+      "error": "no active constitution (default-deny)"
+     },
+     "fixture": {
+      "error": "no active constitution (default-deny)"
+     }
+    },
+    {
+     "scenario": "entity-quota-reached",
+     "status": 409,
+     "body_keys": {
+      "error": "entity quota reached",
+      "quota": "5/1"
+     },
+     "fixture": {
+      "error": "entity quota reached",
+      "quota": "5/1"
+     }
+    },
+    {
+     "scenario": "override-widens-the-constitution",
+     "status": 422,
+     "body_keys": {
+      "error": "conformance",
+      "code": "A_INVARIANT",
+      "detail": "caps.catalogue_visibility may only tighten to 'private' — 'public' would widen what the entity may choose"
+     },
+     "fixture": {
+      "error": "conformance",
+      "code": "A_INVARIANT",
+      "detail": "caps.catalogue_visibility may only tighten to 'private' — 'public' would widen what the entity may choose"
+     }
+    },
+    {
+     "scenario": "email-already-governed",
+     "status": 409,
+     "body_keys": {
+      "error": "email already exists"
+     },
+     "fixture": {
+      "error": "email already exists"
+     }
+    },
+    {
+     "scenario": "governed-create-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "governed create failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "governed create failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/governance/entities/:id/reattest": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "no-such-governed-entity",
+     "status": 404,
+     "body_keys": {
+      "error": "entity not found or not governed"
+     },
+     "fixture": {
+      "error": "entity not found or not governed"
+     }
+    },
+    {
+     "scenario": "no-constitution-to-reattest",
+     "status": 503,
+     "body_keys": {
+      "error": "no active constitution"
+     },
+     "fixture": {
+      "error": "no active constitution"
+     }
+    },
+    {
+     "scenario": "stored-override-widens",
+     "status": 422,
+     "body_keys": {
+      "error": "conformance",
+      "code": "A_INVARIANT",
+      "detail": "caps.catalogue_visibility may only tighten to 'private' — 'public' would widen what the entity may choose"
+     },
+     "fixture": {
+      "error": "conformance",
+      "code": "A_INVARIANT",
+      "detail": "caps.catalogue_visibility may only tighten to 'private' — 'public' would widen what the entity may choose"
+     }
+    },
+    {
+     "scenario": "reattest-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "reattest failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "reattest failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/governance/source": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings."
+     }
+    },
+    {
+     "scenario": "source-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "source-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "source-refused-by-the-library",
+     "status": 422,
+     "body_keys": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Register source failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/governance/supplier-acceptance": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     }
+    },
+    {
+     "scenario": "acceptance-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "SRA_NOT_MIGRATED",
+      "message": "Acceptance is not switched on yet."
+     }
+    },
+    {
+     "scenario": "supplier-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Which supplier?"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Which supplier?"
+     }
+    },
+    {
+     "scenario": "no-such-supplier",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such supplier"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such supplier"
+     }
+    },
+    {
+     "scenario": "acceptance-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Acceptance failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Acceptance failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/governance/verify": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 422,
+     "body_keys": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     },
+     "fixture": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     },
+     "fixture": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     },
+     "fixture": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     },
+     "fixture": {
+      "error": "Verification failed",
+      "message": "No value provided.",
+      "verdict": {
+       "ok": false,
+       "reason": "empty",
+       "note": "No value provided."
+      }
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "verify-refused-by-the-library",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/governance/country-setup": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 503,
+     "body_keys": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update. Selling and the rail work meanwhile.",
+      "message": "Country setup arrives after the next update. Selling and the rail work meanwhile."
+     },
+     "fixture": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update. Selling and the rail work meanwhile.",
+      "message": "Country setup arrives after the next update. Selling and the rail work meanwhile."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update. Selling and the rail work meanwhile.",
+      "message": "Country setup arrives after the next update. Selling and the rail work meanwhile."
+     },
+     "fixture": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update. Selling and the rail work meanwhile.",
+      "message": "Country setup arrives after the next update. Selling and the rail work meanwhile."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update. Selling and the rail work meanwhile.",
+      "message": "Country setup arrives after the next update. Selling and the rail work meanwhile."
+     },
+     "fixture": {
+      "code": "COUNTRY_SETUP_NOT_MIGRATED",
+      "error": "Country setup arrives after the next update. Selling and the rail work meanwhile.",
+      "message": "Country setup arrives after the next update. Selling and the rail work meanwhile."
+     }
+    },
+    {
+     "scenario": "country-setup-not-by-the-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "country-setup-refused-in-words",
+     "status": 409,
+     "body_keys": {
+      "code": "COUNTRY_CHANGE",
+      "error": "That is a different country.",
+      "message": "That is a different country."
+     },
+     "fixture": {
+      "code": "COUNTRY_CHANGE",
+      "error": "That is a different country.",
+      "message": "That is a different country."
+     }
+    },
+    {
+     "scenario": "country-setup-said-without-status",
+     "status": 422,
+     "body_keys": {
+      "code": "COUNTRY_NEEDED",
+      "error": "Name the country.",
+      "message": "Name the country."
+     },
+     "fixture": {
+      "code": "COUNTRY_NEEDED",
+      "error": "Name the country.",
+      "message": "Name the country."
+     }
+    },
+    {
+     "scenario": "country-setup-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Country setup could not be saved",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Country setup could not be saved",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/governance/profile": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Save profile failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Save profile failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Save profile failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Save profile failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "profile-refused-by-the-library",
+     "status": 400,
+     "body_keys": {
+      "error": "Save profile failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Save profile failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/governance/profile/vault": {
+   "answers": [
+    {
+     "scenario": "shop-owner",
+     "status": 503,
+     "body_keys": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     },
+     "fixture": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     },
+     "fixture": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "platform-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     },
+     "fixture": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     },
+     "fixture": {
+      "error": "Save vault failed",
+      "message": "Vault encryption not configured — set VAULT_ENC_KEY before storing vault data."
+     }
+    },
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Save vault failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Save vault failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "vault-older-than-the-screen",
+     "status": 409,
+     "body_keys": {
+      "code": "VAULT_VERSION_REQUIRED",
+      "error": "This screen is older than the vault — reload it, then save.",
+      "message": "This screen is older than the vault — reload it, then save."
+     },
+     "fixture": {
+      "code": "VAULT_VERSION_REQUIRED",
+      "error": "This screen is older than the vault — reload it, then save.",
+      "message": "This screen is older than the vault — reload it, then save."
+     }
+    },
+    {
+     "scenario": "vault-changed-meanwhile",
+     "status": 409,
+     "body_keys": {
+      "code": "VAULT_CHANGED",
+      "error": "Changed since you opened it — reload?",
+      "message": "Changed since you opened it — reload?"
+     },
+     "fixture": {
+      "code": "VAULT_CHANGED",
+      "error": "Changed since you opened it — reload?",
+      "message": "Changed since you opened it — reload?"
+     }
+    },
+    {
+     "scenario": "vault-refused-by-the-library",
+     "status": 400,
+     "body_keys": {
+      "error": "Save vault failed",
+      "message": "The library said no."
+     },
+     "fixture": {
+      "error": "Save vault failed",
+      "message": "The library said no."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/ai-skills": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "AI skills failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "AI skills failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/ai-usage": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "AI usage failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "AI usage failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/commerce-standards": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Commerce standards failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Commerce standards failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/instruments": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Instruments failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Instruments failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/journey": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Journey failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Journey failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/lanes": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Lanes failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Lanes failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/profile": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Profile failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Profile failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/profile/path": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Path failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Path failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/profile/readiness": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Profile readiness failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Profile readiness failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/readiness": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Readiness failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Readiness failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/track-record": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Track record failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Track record failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/vault-schema": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Vault schema failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Vault schema failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/governance/conformance": {
+   "answers": [
+    {
+     "scenario": "library-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Conformance check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Conformance check failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/governance/supplier-acceptance/:handle": {
+   "answers": [
+    {
+     "scenario": "acceptance-read-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
   "GET /api/testing/cases": {
    "answers": [
     {
@@ -22762,6 +24724,18 @@
      }
     },
     {
+     "scenario": "close-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
      "scenario": "close-not-a-writer",
      "status": 403,
      "body_keys": {
@@ -22783,18 +24757,6 @@
      },
      "fixture": {
       "error": "Unauthorised"
-     }
-    },
-    {
-     "scenario": "close-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
      }
     }
    ]
@@ -23762,6 +25724,18 @@
      }
     },
     {
+     "scenario": "cmdb-put-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save the record",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save the record",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
      "scenario": "cmdb-put-not-a-writer",
      "status": 403,
      "body_keys": {
@@ -23773,18 +25747,6 @@
       "error": "Not a writer of the shared board",
       "code": "NOT_BOARD_WRITER",
       "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
-     }
-    },
-    {
-     "scenario": "cmdb-put-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Could not save the record",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Could not save the record",
-      "message": "Something went wrong — please try again."
      }
     }
    ]

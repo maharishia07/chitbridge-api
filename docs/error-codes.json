@@ -20,6 +20,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "AI_GATED",
+   "status": "402",
+   "title": "AI not available",
+   "shopkeeper": "AI drafting is not available for your shop right now.",
+   "hint": "Check your AI allowance in Settings.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "AI_LIMIT",
+   "status": "429",
+   "title": "AI limit reached",
+   "shopkeeper": "You have used your AI allowance for now.",
+   "hint": "Try again later.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "AI_PROVIDER",
+   "status": "502",
+   "title": "AI did not answer",
+   "shopkeeper": "The AI did not answer just now.",
+   "hint": "Try again in a moment.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ALL_REFUSED",
    "status": "varies",
    "title": "All refused",
@@ -99,6 +126,15 @@
    "hint": "-",
    "owner_area": "auth",
    "since": "2026-10-22"
+  },
+  {
+   "code": "A_INVARIANT",
+   "status": "422",
+   "title": "Rule would be loosened",
+   "shopkeeper": "That would loosen a rule the platform has set.",
+   "hint": "Only tighten the setting, never loosen it.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
   },
   {
    "code": "BAD_FLAG",
@@ -215,6 +251,15 @@
    "shopkeeper": "The ledger refused that, and the sentence says why.",
    "hint": "Fix what the sentence says and try again.",
    "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "B_CAPABILITY",
+   "status": "422",
+   "title": "More than the plan allows",
+   "shopkeeper": "That is more than this shop's plan allows.",
+   "hint": "Choose from what the plan grants.",
+   "owner_area": "governance",
    "since": "2026-10-23"
   },
   {
@@ -434,6 +479,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CONFORMANCE",
+   "status": "422",
+   "title": "Rule not met",
+   "shopkeeper": "That does not meet the platform's rules.",
+   "hint": "Change it to fit the rules, then try again.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CONNECTOR_HAS_NO_KEY",
    "status": "400",
    "title": "Connector has no key",
@@ -495,6 +549,15 @@
    "hint": "Close it there first, or take it over when asked.",
    "owner_area": "counters",
    "since": "2026-10-22"
+  },
+  {
+   "code": "COUNTRY_SETUP_NOT_MIGRATED",
+   "status": "503",
+   "title": "Country setup not ready",
+   "shopkeeper": "Country setup arrives after the next update. Selling and the rail work meanwhile.",
+   "hint": "Carry on selling; come back after the update.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
   },
   {
    "code": "COUNTRY_SETUP_PENDING",
@@ -830,6 +893,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ENTITY_EMAIL_TAKEN",
+   "status": "409",
+   "title": "Email already used",
+   "shopkeeper": "A shop with that email already exists.",
+   "hint": "Use another email.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ENTITY_QUOTA",
+   "status": "409",
+   "title": "Shop limit reached",
+   "shopkeeper": "This installation cannot add another shop on its plan.",
+   "hint": "Choose a plan with room for more shops.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FOLDER_BAD_REQUEST",
    "status": "400",
    "title": "Folder request not accepted",
@@ -891,6 +972,42 @@
    "hint": "-",
    "owner_area": "forms",
    "since": "2026-10-22"
+  },
+  {
+   "code": "GOV_BAD_REQUEST",
+   "status": "400",
+   "title": "Needs one more answer",
+   "shopkeeper": "Something needed is missing.",
+   "hint": "Read the question shown and answer it.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "GOV_CONFLICT",
+   "status": "409",
+   "title": "Clashes with what is recorded",
+   "shopkeeper": "That clashes with what is already recorded.",
+   "hint": "Reload the page and try again.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "GOV_NOT_AVAILABLE",
+   "status": "503",
+   "title": "Not available yet",
+   "shopkeeper": "That is not available on this installation yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "GOV_REFUSED",
+   "status": "422",
+   "title": "Could not be done as sent",
+   "shopkeeper": "That could not be done as it was sent.",
+   "hint": "Check what was sent and try again.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
   },
   {
    "code": "HANDOFF_STORE_MISSING",
@@ -1386,6 +1503,15 @@
    "hint": "-",
    "owner_area": "marketing-results",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_CONSTITUTION",
+   "status": "503",
+   "title": "No rules in force",
+   "shopkeeper": "This installation has no active rules to govern a shop yet.",
+   "hint": "Tell the platform team.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
   },
   {
    "code": "NO_COUNTRY",
@@ -2029,9 +2155,9 @@
   {
    "code": "SRA_NOT_MIGRATED",
    "status": "503",
-   "title": "Sra not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Acceptance not switched on",
+   "shopkeeper": "Acceptance is not switched on yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "governance",
    "since": "2026-10-22"
   },
@@ -2288,6 +2414,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "VAULT_CHANGED",
+   "status": "409",
+   "title": "Vault changed",
+   "shopkeeper": "Changed since you opened it — reload?",
+   "hint": "Reload the vault, then save again.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
    "code": "VAULT_ENC_UNCONFIGURED",
    "status": "503",
    "title": "Vault enc unconfigured",
@@ -2298,12 +2433,21 @@
   },
   {
    "code": "VAULT_VERSION_REQUIRED",
-   "status": "varies",
+   "status": "409",
    "title": "Vault version required",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This screen is older than the vault — reload it, then save.",
+   "hint": "Reload the screen, then save.",
    "owner_area": "governance",
    "since": "2026-10-22"
+  },
+  {
+   "code": "VERIFICATION_FAILED",
+   "status": "422",
+   "title": "Registry check failed",
+   "shopkeeper": "That registry number could not be confirmed.",
+   "hint": "Check the number and try again.",
+   "owner_area": "governance",
+   "since": "2026-10-23"
   },
   {
    "code": "VIEW_ONLY",

@@ -89575,6 +89575,32 @@
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-10-23T00:00:00Z",
    "needs": []
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-governance.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE GOVERNANCE ROUTES (ROUTES/GOVERNANCE.JS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, A FOREIGN SHOP ID GETS THE UNKNOWN ID'S 404, NO 5XX SAYS ITS CAUSE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE GOVERNANCE ROUTES (ROUTES/GOVERNANCE.JS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, A FOREIGN SHOP ID GETS THE UNKNOWN ID'S 404, NO 5XX SAYS ITS CAUSE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 278 lines. Run: node chitbridge-api/tests/api-problem-governance.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 278,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": []
   }
  ]
 }
