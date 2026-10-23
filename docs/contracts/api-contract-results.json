@@ -1138,6 +1138,22 @@
     400
    ]
   },
+  "POST /api/ctp/deliver": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/ctp/query": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/folders": {
    "cases": 5,
    "failed": 0,
@@ -1264,6 +1280,22 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "POST /deliver": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /query": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {

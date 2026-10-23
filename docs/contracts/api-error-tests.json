@@ -40,6 +40,10 @@
   404,
   500
  ],
+ "GET /.well-known/ctp.json": [
+  200,
+  500
+ ],
  "GET /api/books/accounts": [
   401,
   404,
@@ -329,6 +333,10 @@
  ],
  "GET /api/chits/unread": [
   401,
+  500
+ ],
+ "GET /api/ctp/.well-known/ctp.json": [
+  200,
   500
  ],
  "GET /api/facts/:card": [
@@ -948,6 +956,22 @@
   422,
   500
  ],
+ "POST /api/ctp/deliver": [
+  200,
+  400,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/ctp/query": [
+  200,
+  400,
+  403,
+  409,
+  500
+ ],
  "POST /api/folders": [
   400,
   401,
@@ -1043,6 +1067,22 @@
   400,
   401,
   403,
+  500
+ ],
+ "POST /deliver": [
+  200,
+  400,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /query": [
+  200,
+  400,
+  403,
+  409,
   500
  ],
  "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": [
