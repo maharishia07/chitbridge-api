@@ -22,7 +22,7 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:410 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/groups/:name | crm | routes/crm.js:688 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/parties/:id | crm | routes/crm.js:426 | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/definitions/:id | definitions | routes/definitions.js:439 | yes | yes | yes | yes | yes | yes | yes | partial |
+| DELETE | /api/definitions/:id | definitions | routes/definitions.js:440 | yes | yes | yes | yes | yes | yes | yes | partial |
 | DELETE | /api/folders/:id | folders | routes/folders.js:296 | yes | yes | yes | yes | yes | no | yes | partial |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:534 | yes | yes | yes | yes | yes | no | yes | partial |
 | DELETE | /api/keys/:jti | keys | routes/keys.js:723 | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -142,8 +142,8 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | GET | /api/crm/privacy-requests | crm | routes/crm.js:630 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/crm/segments | crm | routes/crm.js:670 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/ctp/.well-known/ctp.json | ctp | routes/ctp.js:119 | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/definitions | definitions | routes/definitions.js:74 | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/definitions/:id | definitions | routes/definitions.js:215 | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/definitions | definitions | routes/definitions.js:75 | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/definitions/:id | definitions | routes/definitions.js:216 | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/entities/constitutions | entities | routes/entities.js:150 | yes | yes | no | no | yes | no | yes | partial |
 | GET | /api/entities/entitlements | entities | routes/entities.js:2407 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/entities/header | entities | routes/entities.js:316 | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -462,8 +462,8 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | POST | /api/csp-report | csp-report | routes/csp-report.js:80 | no | no | no | no | no | no | no | not started |
 | POST | /api/ctp/deliver | ctp | routes/ctp.js:131 | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/ctp/query | ctp | routes/ctp.js:333 | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/definitions | definitions | routes/definitions.js:260 | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/definitions/freeze | definitions | routes/definitions.js:497 | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/definitions | definitions | routes/definitions.js:261 | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/definitions/freeze | definitions | routes/definitions.js:498 | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/entities/populations | entities | routes/entities.js:1696 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/entities/register | entities | routes/entities.js:139 | no | no | yes | yes | no | no | no | partial |
 | POST | /api/entities/verify | entities | routes/entities.js:140 | no | no | no | no | no | no | no | not started |
@@ -627,7 +627,7 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | PUT | /api/chits/:chit_id/use | chits | routes/chits.js:3992 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6235 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:119 | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PUT | /api/definitions/:id | definitions | routes/definitions.js:328 | yes | yes | yes | yes | yes | yes | yes | partial |
+| PUT | /api/definitions/:id | definitions | routes/definitions.js:329 | yes | yes | yes | yes | yes | yes | yes | partial |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1667 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PUT | /api/entities/routing | entities | routes/entities.js:1573 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PUT | /api/folders/inventory/:code | folders | routes/folders.js:148 | yes | yes | yes | yes | yes | yes | yes | meets standard |

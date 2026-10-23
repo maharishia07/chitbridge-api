@@ -1,6 +1,7 @@
 /* OWNS an entity's own named things: pack models ("Carton of 6"), tax slabs, categories - every edit writes a version
  * CALLED BY server.js (mounted at /api/definitions); the web Definitions workshop (cap-definitions.js)
- * FLOW auth -> ctx(entity) -> definition / definition_version (append-only) -> list adds the governed slabs of the entity's country (or says why there are none)
+ * FLOW auth -> schema check (lib/definitions-contract.js) -> ctx(entity) -> definition / definition_version (append-only) -> list adds the governed slabs of the entity's country (or says why there are none)
+ *      a refusal -> problem(req, res, { status, ...words.x() } | definitionFault(e, req)) -> the old { error, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
  * CARD 07-catalogue-and-pricing/definitions */
 /**
  * routes/definitions.js — an entity's own named things: "Carton of 6", "Diwali 10%", a category list.

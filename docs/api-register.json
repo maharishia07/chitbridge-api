@@ -442,8 +442,8 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 439,
-   "hash": "0c0df6b5b117bc38",
+   "line": 440,
+   "hash": "9dd9ccb2f697fa77",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4518,7 +4518,7 @@
    "path": "/api/definitions",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 74,
+   "line": 75,
    "hash": "5869bb130e940b14",
    "columns": {
     "schema_in": true,
@@ -4553,7 +4553,7 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 215,
+   "line": 216,
    "hash": "12e8a0501e9a6af5",
    "columns": {
     "schema_in": true,
@@ -15398,7 +15398,7 @@
    "path": "/api/definitions",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 260,
+   "line": 261,
    "hash": "d7b52bea8f58f1be",
    "columns": {
     "schema_in": true,
@@ -15435,8 +15435,8 @@
    "path": "/api/definitions/freeze",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 497,
-   "hash": "fe481f7c8d2b6af3",
+   "line": 498,
+   "hash": "8a93e349ff506092",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21039,7 +21039,7 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 328,
+   "line": 329,
    "hash": "782d0b798e64a223",
    "columns": {
     "schema_in": true,
