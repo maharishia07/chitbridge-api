@@ -33,6 +33,7 @@ const TESTS = path.join(__dirname, '..', 'tests');
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses
+  'endpoint-usage.test.cjs', // janitor (23 Oct): the wide endpoint run: a comment is no call, a dynamic segment meets only a :param, a bucket follows its best evidence
   'till-vendor.test.js', // the counter and its vendored engines agree, byte for byte
   't3-fixes.test.cjs', // T3-FIXES: one cost gate on every price write · each received batch its own lot · profile writes the shop · sign-in keeps the constitution
   'till-rcv-batches.test.cjs', // STK-FIX1b: at the till a second scanned batch of the same product is its own receiving line (rcvLineFor), never merged onto line 1
