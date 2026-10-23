@@ -13,6 +13,9 @@
  * GET    /screen-config/default       -> the shop-wide default a new counter starts from
  * PUT    /screen-config/default       { config }
  *
+ * OWNS      the nine Level-1 quick-key routes (/api/quick-keys): the manager's groups, their keys and order, and the shop-wide screen default.
+ * CALLED BY server.js (the mount) · the authoring screen (planned) · tests/api-problem-quick-keys.test.cjs.
+ * CARD      28-platform-and-operations/quick-keys-routes
  * CONTRACT  the operation of each route and the words of its refusals are lib/quick-keys-contract.js (API-4 sweep).
  * FLOW      auth → sessionOnly (a key is refused before anything is looked up) → schema check → handler → res.json | problem(req, res, quickKeyFault(e, req))
  * CALLERS   none yet in the shipped screens (the authoring screen is planned, PM/ENDPOINT-USAGE-2026-10-23.md 5.4 row 6); the e2e spec till-shopgroups.spec.js posts a group and its keys.

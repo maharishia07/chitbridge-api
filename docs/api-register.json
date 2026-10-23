@@ -689,7 +689,7 @@
    "path": "/api/quick-keys/groups/:id",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 73,
+   "line": 76,
    "hash": "5f3a96fb6a3d769c",
    "columns": {
     "schema_in": true,
@@ -726,7 +726,7 @@
    "path": "/api/quick-keys/groups/:id/items/:productId",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 96,
+   "line": 99,
    "hash": "4af779de9be310a2",
    "columns": {
     "schema_in": true,
@@ -7750,7 +7750,7 @@
    "path": "/api/quick-keys/groups",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 43,
+   "line": 46,
    "hash": "8573c67371cda881",
    "columns": {
     "schema_in": true,
@@ -7785,7 +7785,7 @@
    "path": "/api/quick-keys/screen-config/default",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 116,
+   "line": 119,
    "hash": "ca3d95cba7d209bf",
    "columns": {
     "schema_in": true,
@@ -10364,7 +10364,7 @@
    "path": "/api/quick-keys/groups/:id",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 62,
+   "line": 65,
    "hash": "e058b860646a0856",
    "columns": {
     "schema_in": true,
@@ -10401,7 +10401,7 @@
    "path": "/api/quick-keys/groups/:id/items",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 106,
+   "line": 109,
    "hash": "1623b2122806b851",
    "columns": {
     "schema_in": true,
@@ -17839,7 +17839,7 @@
    "path": "/api/quick-keys/groups",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 52,
+   "line": 55,
    "hash": "8b70b48886c1086c",
    "columns": {
     "schema_in": true,
@@ -17875,7 +17875,7 @@
    "path": "/api/quick-keys/groups/:id/items",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 84,
+   "line": 87,
    "hash": "5623f1e65e011218",
    "columns": {
     "schema_in": true,
@@ -21516,7 +21516,7 @@
    "path": "/api/quick-keys/screen-config/default",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 126,
+   "line": 129,
    "hash": "d90329d5b22622e1",
    "columns": {
     "schema_in": true,
