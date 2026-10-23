@@ -158,6 +158,6068 @@
      }
     }
    ]
+  },
+  "DELETE /api/books/recurring/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     }
+    }
+   ]
+  },
+  "GET /api/books/accounts": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/assets": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/bank/rail": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "window-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Too long",
+      "message": "Choose a statement of 400 days or fewer."
+     },
+     "fixture": {
+      "error": "Too long",
+      "message": "Choose a statement of 400 days or fewer."
+     }
+    }
+   ]
+  },
+  "GET /api/books/bs": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/cashflow": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may see the cash position.",
+      "message": "Only the owner may see the cash position."
+     },
+     "fixture": {
+      "error": "Only the owner may see the cash position.",
+      "message": "Only the owner may see the cash position."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may see the cash position.",
+      "message": "Only the owner may see the cash position."
+     },
+     "fixture": {
+      "error": "Only the owner may see the cash position.",
+      "message": "Only the owner may see the cash position."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "cashflow-staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may see the cash position.",
+      "message": "Only the owner may see the cash position."
+     },
+     "fixture": {
+      "error": "Only the owner may see the cash position.",
+      "message": "Only the owner may see the cash position."
+     }
+    }
+   ]
+  },
+  "GET /api/books/cheques": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/compare": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/compare/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Comparing needs a database update (b309) that is still to run.",
+      "message": "Comparing needs a database update (b309) that is still to run."
+     },
+     "fixture": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Comparing needs a database update (b309) that is still to run.",
+      "message": "Comparing needs a database update (b309) that is still to run."
+     }
+    }
+   ]
+  },
+  "GET /api/books/compare/:id/csv": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Comparing needs a database update (b309) that is still to run.",
+      "message": "Comparing needs a database update (b309) that is still to run."
+     },
+     "fixture": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Comparing needs a database update (b309) that is still to run.",
+      "message": "Comparing needs a database update (b309) that is still to run."
+     }
+    }
+   ]
+  },
+  "GET /api/books/daybook": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/dues": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dues-staff-collections",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may see collections.",
+      "message": "Only the owner may see collections."
+     },
+     "fixture": {
+      "error": "Only the owner may see collections.",
+      "message": "Only the owner may see collections."
+     }
+    },
+    {
+     "scenario": "dues-staff-payables",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may see what you owe.",
+      "message": "Only the owner may see what you owe."
+     },
+     "fixture": {
+      "error": "Only the owner may see what you owe.",
+      "message": "Only the owner may see what you owe."
+     }
+    }
+   ]
+  },
+  "GET /api/books/events": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/fx-rates": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/fx-revalue": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     },
+     "fixture": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     }
+    },
+    {
+     "scenario": "which-month-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     },
+     "fixture": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     }
+    }
+   ]
+  },
+  "GET /api/books/health": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/ledger/:account": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such ledger."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such ledger."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such ledger."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such ledger."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such ledger."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such ledger."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such ledger."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such ledger."
+     }
+    }
+   ]
+  },
+  "GET /api/books/move-in/imports": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/packs": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/packs/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "GET /api/books/packs/:id/file": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "pack-built-without-storage",
+     "status": 409,
+     "body_keys": {
+      "error": "This pack was built while storage was not connected — build it again to download it.",
+      "message": "This pack was built while storage was not connected — build it again to download it."
+     },
+     "fixture": {
+      "error": "This pack was built while storage was not connected — build it again to download it.",
+      "message": "This pack was built while storage was not connected — build it again to download it."
+     }
+    }
+   ]
+  },
+  "GET /api/books/party/:id/statement": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/payments/:id/advice": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such payment."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such payment."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such payment."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such payment."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such payment."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such payment."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such payment."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such payment."
+     }
+    }
+   ]
+  },
+  "GET /api/books/periods": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/pl": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/recurring": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/returns": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/status": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/terms": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/todo": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/trial-balance": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/books/year/:fy/status": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "year-not-a-year",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "GET /api/invoice/:chit_id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for invoice / connector"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for invoice / connector"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "GET /api/tax/gstr": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/tax/invoice/:chit_id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "GET /api/tax/ledger": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/books/payments/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     },
+     "fixture": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     },
+     "fixture": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such payment."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such payment."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     },
+     "fixture": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     }
+    },
+    {
+     "scenario": "nothing-to-change",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     },
+     "fixture": {
+      "error": "Nothing to change.",
+      "message": "Nothing to change — advice_chit_id or advice_shared_at."
+     }
+    },
+    {
+     "scenario": "which-advice-chit",
+     "status": 400,
+     "body_keys": {
+      "error": "Which advice chit?",
+      "message": "Which advice chit?"
+     },
+     "fixture": {
+      "error": "Which advice chit?",
+      "message": "Which advice chit?"
+     }
+    },
+    {
+     "scenario": "when-was-it-shared",
+     "status": 400,
+     "body_keys": {
+      "error": "When was it shared?",
+      "message": "When was it shared?"
+     },
+     "fixture": {
+      "error": "When was it shared?",
+      "message": "When was it shared?"
+     }
+    },
+    {
+     "scenario": "advice-already-recorded",
+     "status": 409,
+     "body_keys": {
+      "error": "An advice is already recorded for this payment.",
+      "message": "An advice is already recorded for this payment.",
+      "code": "ADVICE_EXISTS",
+      "advice_chit_id": "99999999-9999-4999-8999-999999999999"
+     },
+     "fixture": {
+      "error": "An advice is already recorded for this payment.",
+      "message": "An advice is already recorded for this payment.",
+      "code": "ADVICE_EXISTS",
+      "advice_chit_id": "99999999-9999-4999-8999-999999999999"
+     }
+    },
+    {
+     "scenario": "advice-not-ready",
+     "status": 503,
+     "body_keys": {
+      "error": "Advice not available yet — the books need an update (b285).",
+      "message": "Advice not available yet — the books need an update (b285).",
+      "code": "BOOKS_NOT_MIGRATED"
+     },
+     "fixture": {
+      "error": "Advice not available yet — the books need an update (b285).",
+      "message": "Advice not available yet — the books need an update (b285).",
+      "code": "BOOKS_NOT_MIGRATED"
+     }
+    }
+   ]
+  },
+  "PATCH /api/books/recurring/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     }
+    }
+   ]
+  },
+  "POST /api/books/accounts": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "Pick the group this ledger belongs under.",
+      "message": "Pick the group this ledger belongs under."
+     },
+     "fixture": {
+      "error": "Pick the group this ledger belongs under.",
+      "message": "Pick the group this ledger belongs under."
+     }
+    }
+   ]
+  },
+  "POST /api/books/accruals": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Give the accrual a reference (e.g. ELEC-2026-09).",
+      "message": "Give the accrual a reference (e.g. ELEC-2026-09)."
+     },
+     "fixture": {
+      "error": "Give the accrual a reference (e.g. ELEC-2026-09).",
+      "message": "Give the accrual a reference (e.g. ELEC-2026-09)."
+     }
+    }
+   ]
+  },
+  "POST /api/books/accruals/:ref/reverse": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No accrual with that reference."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No accrual with that reference."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No accrual with that reference."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No accrual with that reference."
+     }
+    }
+   ]
+  },
+  "POST /api/books/assets": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "What is the asset called?",
+      "message": "What is the asset called?"
+     },
+     "fixture": {
+      "error": "What is the asset called?",
+      "message": "What is the asset called?"
+     }
+    }
+   ]
+  },
+  "POST /api/books/assets/:id/dispose": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such asset."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such asset."
+     }
+    }
+   ]
+  },
+  "POST /api/books/check": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/books/cheques/:id/status": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     },
+     "fixture": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     },
+     "fixture": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     },
+     "fixture": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     }
+    },
+    {
+     "scenario": "cheque-step-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     },
+     "fixture": {
+      "error": "Deposited, cleared or bounced?",
+      "message": "Deposited, cleared or bounced?"
+     }
+    }
+   ]
+  },
+  "POST /api/books/closing-stock": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD."
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD."
+     }
+    }
+   ]
+  },
+  "POST /api/books/compare/preflight": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which of their statements is this — tb, pl, bs or ret?",
+      "message": "Which of their statements is this — tb, pl, bs or ret?"
+     },
+     "fixture": {
+      "error": "Which of their statements is this — tb, pl, bs or ret?",
+      "message": "Which of their statements is this — tb, pl, bs or ret?"
+     }
+    }
+   ]
+  },
+  "POST /api/books/compare/snapshots": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may compare the books.",
+      "message": "Only the owner or the shop's auditor may compare the books."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which of their statements is this — tb, pl, bs or ret?",
+      "message": "Which of their statements is this — tb, pl, bs or ret?"
+     },
+     "fixture": {
+      "error": "Which of their statements is this — tb, pl, bs or ret?",
+      "message": "Which of their statements is this — tb, pl, bs or ret?"
+     }
+    },
+    {
+     "scenario": "snapshot-part-twice",
+     "status": 409,
+     "body_keys": {
+      "error": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+      "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file."
+     },
+     "fixture": {
+      "error": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+      "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file."
+     }
+    }
+   ]
+  },
+  "POST /api/books/contra": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Moved from where, to where? cash, bank, upi or card.",
+      "message": "Moved from where, to where? cash, bank, upi or card."
+     },
+     "fixture": {
+      "error": "Moved from where, to where? cash, bank, upi or card.",
+      "message": "Moved from where, to where? cash, bank, upi or card."
+     }
+    }
+   ]
+  },
+  "POST /api/books/depreciation/run": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which financial year? e.g. 2026-27.",
+      "message": "Which financial year? e.g. 2026-27."
+     },
+     "fixture": {
+      "error": "Which financial year? e.g. 2026-27.",
+      "message": "Which financial year? e.g. 2026-27."
+     }
+    }
+   ]
+  },
+  "POST /api/books/enable": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/books/entries": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "A manual entry needs a narration — what it is for.",
+      "message": "A manual entry needs a narration — what it is for."
+     },
+     "fixture": {
+      "error": "A manual entry needs a narration — what it is for.",
+      "message": "A manual entry needs a narration — what it is for."
+     }
+    }
+   ]
+  },
+  "POST /api/books/entries/:id/reverse": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "A reversal needs a reason.",
+      "message": "A reversal needs a reason."
+     },
+     "fixture": {
+      "error": "A reversal needs a reason.",
+      "message": "A reversal needs a reason."
+     }
+    },
+    {
+     "scenario": "entry-already-reversed",
+     "status": 409,
+     "body_keys": {
+      "code": "ALREADY_REVERSED",
+      "error": "Already reversed",
+      "message": "This entry was already reversed by MJ/1.",
+      "entry_no": "MJ/1",
+      "entry_id": "22222222-2222-4222-8222-222222222222"
+     },
+     "fixture": {
+      "code": "ALREADY_REVERSED",
+      "error": "Already reversed",
+      "message": "This entry was already reversed by MJ/1.",
+      "entry_no": "MJ/1",
+      "entry_id": "22222222-2222-4222-8222-222222222222"
+     }
+    }
+   ]
+  },
+  "POST /api/books/events": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+     },
+     "fixture": {
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+     }
+    }
+   ]
+  },
+  "POST /api/books/fx-rates": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Exchange rates are not set up yet — run migration b391 first.",
+      "message": "Exchange rates are not set up yet — run migration b391 first."
+     },
+     "fixture": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Exchange rates are not set up yet — run migration b391 first.",
+      "message": "Exchange rates are not set up yet — run migration b391 first."
+     }
+    }
+   ]
+  },
+  "POST /api/books/fx-rates/import": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Exchange rates are not set up yet — run migration b391 first.",
+      "message": "Exchange rates are not set up yet — run migration b391 first."
+     },
+     "fixture": {
+      "code": "BOOKS_NOT_MIGRATED",
+      "error": "Exchange rates are not set up yet — run migration b391 first.",
+      "message": "Exchange rates are not set up yet — run migration b391 first."
+     }
+    }
+   ]
+  },
+  "POST /api/books/fx-revalue": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     },
+     "fixture": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     }
+    },
+    {
+     "scenario": "which-month",
+     "status": 400,
+     "body_keys": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     },
+     "fixture": {
+      "error": "Which month? A financial year and a month 1 to 12.",
+      "message": "Which month? A financial year and a month 1 to 12."
+     }
+    }
+   ]
+  },
+  "POST /api/books/gst/close": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which financial year? e.g. 2026-27.",
+      "message": "Which financial year? e.g. 2026-27."
+     },
+     "fixture": {
+      "error": "Which financial year? e.g. 2026-27.",
+      "message": "Which financial year? e.g. 2026-27."
+     }
+    }
+   ]
+  },
+  "POST /api/books/gst/pay": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which financial year? e.g. 2026-27.",
+      "message": "Which financial year? e.g. 2026-27."
+     },
+     "fixture": {
+      "error": "Which financial year? e.g. 2026-27.",
+      "message": "Which financial year? e.g. 2026-27."
+     }
+    }
+   ]
+  },
+  "POST /api/books/loans": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Give the loan a reference you will know it by (the sanction letter or loan number).",
+      "message": "Give the loan a reference you will know it by (the sanction letter or loan number)."
+     },
+     "fixture": {
+      "error": "Give the loan a reference you will know it by (the sanction letter or loan number).",
+      "message": "Give the loan a reference you will know it by (the sanction letter or loan number)."
+     }
+    }
+   ]
+  },
+  "POST /api/books/loans/:ref/emi": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice.",
+      "message": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice."
+     },
+     "fixture": {
+      "error": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice.",
+      "message": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice.",
+      "message": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice."
+     },
+     "fixture": {
+      "error": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice.",
+      "message": "Give this instalment a reference (the month, or the bank's number) so a second tap does not record it twice."
+     }
+    }
+   ]
+  },
+  "POST /api/books/move-in/import": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Not confirmed",
+      "message": "Nothing was imported — this needs an explicit confirmation."
+     },
+     "fixture": {
+      "error": "Not confirmed",
+      "message": "Nothing was imported — this needs an explicit confirmation."
+     }
+    },
+    {
+     "scenario": "import-not-confirmed",
+     "status": 400,
+     "body_keys": {
+      "error": "Not confirmed",
+      "message": "Nothing was imported — this needs an explicit confirmation."
+     },
+     "fixture": {
+      "error": "Not confirmed",
+      "message": "Nothing was imported — this needs an explicit confirmation."
+     }
+    }
+   ]
+  },
+  "POST /api/books/move-in/preflight": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which file is this — accounts, contacts, items, trial_balance, open_bills?",
+      "message": "Which file is this — accounts, contacts, items, trial_balance, open_bills?"
+     },
+     "fixture": {
+      "error": "Which file is this — accounts, contacts, items, trial_balance, open_bills?",
+      "message": "Which file is this — accounts, contacts, items, trial_balance, open_bills?"
+     }
+    }
+   ]
+  },
+  "POST /api/books/move-in/preview": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which file is this — accounts, contacts, items, trial_balance, open_bills?",
+      "message": "Which file is this — accounts, contacts, items, trial_balance, open_bills?"
+     },
+     "fixture": {
+      "error": "Which file is this — accounts, contacts, items, trial_balance, open_bills?",
+      "message": "Which file is this — accounts, contacts, items, trial_balance, open_bills?"
+     }
+    }
+   ]
+  },
+  "POST /api/books/opening": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "No rows.",
+      "message": "No rows."
+     },
+     "fixture": {
+      "error": "No rows.",
+      "message": "No rows."
+     }
+    },
+    {
+     "scenario": "opening-no-rows",
+     "status": 400,
+     "body_keys": {
+      "error": "No rows.",
+      "message": "No rows."
+     },
+     "fixture": {
+      "error": "No rows.",
+      "message": "No rows."
+     }
+    }
+   ]
+  },
+  "POST /api/books/outbox/retry": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/books/packs": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "A pack is a month, a year, or an exit.",
+      "message": "A pack is a month, a year, or an exit."
+     },
+     "fixture": {
+      "error": "A pack is a month, a year, or an exit.",
+      "message": "A pack is a month, a year, or an exit."
+     }
+    }
+   ]
+  },
+  "POST /api/books/packs/:id/ack": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "pack-no-file-to-confirm",
+     "status": 409,
+     "body_keys": {
+      "code": "PACK_NO_FILE",
+      "error": "This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm.",
+      "message": "This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm."
+     },
+     "fixture": {
+      "code": "PACK_NO_FILE",
+      "error": "This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm.",
+      "message": "This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm."
+     }
+    }
+   ]
+  },
+  "POST /api/books/parties/:id/dispute": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     },
+     "fixture": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     },
+     "fixture": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     },
+     "fixture": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     },
+     "fixture": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     }
+    },
+    {
+     "scenario": "dispute-bill-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     },
+     "fixture": {
+      "error": "Which bill?",
+      "message": "Which bill?"
+     }
+    }
+   ]
+  },
+  "POST /api/books/payments": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which party?",
+      "message": "Which party?"
+     },
+     "fixture": {
+      "error": "Which party?",
+      "message": "Which party?"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which party?",
+      "message": "Which party?"
+     },
+     "fixture": {
+      "error": "Which party?",
+      "message": "Which party?"
+     }
+    },
+    {
+     "scenario": "currency-not-the-ledgers",
+     "status": 422,
+     "body_keys": {
+      "error": "This ledger is kept in INR.",
+      "message": "This ledger is kept in INR."
+     },
+     "fixture": {
+      "error": "This ledger is kept in INR.",
+      "message": "This ledger is kept in INR."
+     }
+    }
+   ]
+  },
+  "POST /api/books/payments/:id/confirm": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/books/payments/:id/propose": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "code": "READ_ONLY"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/books/payments/preview": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which party?",
+      "message": "Which party?"
+     },
+     "fixture": {
+      "error": "Which party?",
+      "message": "Which party?"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which party?",
+      "message": "Which party?"
+     },
+     "fixture": {
+      "error": "Which party?",
+      "message": "Which party?"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which party?",
+      "message": "Which party?"
+     },
+     "fixture": {
+      "error": "Which party?",
+      "message": "Which party?"
+     }
+    },
+    {
+     "scenario": "currency-not-the-ledgers",
+     "status": 422,
+     "body_keys": {
+      "error": "This ledger is kept in INR.",
+      "message": "This ledger is kept in INR."
+     },
+     "fixture": {
+      "error": "This ledger is kept in INR.",
+      "message": "This ledger is kept in INR."
+     }
+    }
+   ]
+  },
+  "POST /api/books/periods/:fy/:p/:act": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such month."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such month."
+     }
+    },
+    {
+     "scenario": "period-unknown-action",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/books/preview": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/books/recurring": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "What do you call it? e.g. Shop rent.",
+      "message": "What do you call it? e.g. Shop rent."
+     },
+     "fixture": {
+      "error": "What do you call it? e.g. Shop rent.",
+      "message": "What do you call it? e.g. Shop rent."
+     }
+    }
+   ]
+  },
+  "POST /api/books/recurring/:id/post": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     }
+    }
+   ]
+  },
+  "POST /api/books/recurring/:id/skip": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such recurring entry."
+     }
+    }
+   ]
+  },
+  "POST /api/books/setting": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/books/terms": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "TERMS_NOT_MIGRATED",
+      "error": "Terms arrive after the next update.",
+      "message": "Terms arrive after the next update."
+     },
+     "fixture": {
+      "code": "TERMS_NOT_MIGRATED",
+      "error": "Terms arrive after the next update.",
+      "message": "Terms arrive after the next update."
+     }
+    },
+    {
+     "scenario": "terms-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "TERMS_NOT_MIGRATED",
+      "error": "Terms arrive after the next update.",
+      "message": "Terms arrive after the next update."
+     },
+     "fixture": {
+      "code": "TERMS_NOT_MIGRATED",
+      "error": "Terms arrive after the next update.",
+      "message": "Terms arrive after the next update."
+     }
+    }
+   ]
+  },
+  "POST /api/books/write-off": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which customer?",
+      "message": "Which customer?"
+     },
+     "fixture": {
+      "error": "Which customer?",
+      "message": "Which customer?"
+     }
+    },
+    {
+     "scenario": "write-off-customer-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "Which customer?",
+      "message": "Which customer?"
+     },
+     "fixture": {
+      "error": "Which customer?",
+      "message": "Which customer?"
+     }
+    }
+   ]
+  },
+  "POST /api/books/year/:fy/close": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "fiscal_year": "2026-27",
+      "error": "2026-27 ends on 2027-03-31 — close it once it has ended. Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+      "message": "2026-27 ends on 2027-03-31 — close it once it has ended. Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+      "refusals": [
+       {
+        "name": "year_not_ended",
+        "why": "2026-27 ends on 2027-03-31 — close it once it has ended."
+       },
+       {
+        "name": "months_open",
+        "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
+       }
+      ]
+     },
+     "fixture": {
+      "ok": false,
+      "fiscal_year": "2026-27",
+      "error": "2026-27 ends on 2027-03-31 — close it once it has ended. Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+      "message": "2026-27 ends on 2027-03-31 — close it once it has ended. Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+      "refusals": [
+       {
+        "name": "year_not_ended",
+        "why": "2026-27 ends on 2027-03-31 — close it once it has ended."
+       },
+       {
+        "name": "months_open",
+        "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "POST /api/invoice/build": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for invoice"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for invoice"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required"
+     }
+    },
+    {
+     "scenario": "db-fails-with-lines",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/tax/compute": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for tax"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for tax"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line to compute tax on."
+     }
+    },
+    {
+     "scenario": "db-fails-with-lines",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "code": "TAX_FAILED",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "code": "TAX_FAILED",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "quantity-not-above-zero",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "BAD_QTY",
+      "message": "Line \"tea\" needs a quantity above 0."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "BAD_QTY",
+      "message": "Line \"tea\" needs a quantity above 0."
+     }
+    },
+    {
+     "scenario": "flag-not-true-or-false",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "BAD_FLAG",
+      "message": "priceIncludesTax must be true or false."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "BAD_FLAG",
+      "message": "priceIncludesTax must be true or false."
+     }
+    },
+    {
+     "scenario": "no-country-no-tax",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "NO_COUNTRY",
+      "message": "Set the shop country first. The books never open on a guess."
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "NO_COUNTRY",
+      "message": "Set the shop country first. The books never open on a guess."
+     }
+    }
+   ]
+  },
+  "POST /api/tax/rate": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for tax"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for tax"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "code": "NO_LINES",
+      "message": "Send at least one line."
+     }
+    },
+    {
+     "scenario": "db-fails-with-lines",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "code": "TAX_FAILED",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "code": "TAX_FAILED",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

@@ -3672,7 +3672,13 @@
     "error": "An advice is already recorded for this payment.",
     "message": "An advice is already recorded for this payment.",
     "code": "ADVICE_EXISTS",
-    "advice_chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+    "advice_chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+    "type": "https://chitbridge.com/problems/advice_exists",
+    "title": "Advice already recorded",
+    "status": 409,
+    "detail": "An advice is already recorded for this payment.",
+    "hint": "Open the payment to see it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -3864,7 +3870,13 @@
    "example": {
     "code": "PERIOD_LOCKED",
     "error": "That month is locked. Open it again (with a reason) to record this.",
-    "message": "That month is locked. Open it again (with a reason) to record this."
+    "message": "That month is locked. Open it again (with a reason) to record this.",
+    "type": "https://chitbridge.com/problems/period_locked",
+    "title": "Month locked",
+    "status": 409,
+    "detail": "That month is locked. Open it again (with a reason) to record this.",
+    "hint": "Use a date in an open month, or ask the owner to unlock it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -3952,7 +3964,14 @@
    "status": 409,
    "example": {
     "error": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
-    "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file."
+    "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+    "type": "https://chitbridge.com/problems/books_conflict",
+    "title": "Ledger cannot take that",
+    "status": 409,
+    "code": "BOOKS_CONFLICT",
+    "detail": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+    "hint": "Read the sentence shown, fix it and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4047,7 +4066,13 @@
     "error": "Already reversed",
     "message": "This entry was already reversed by MJ/2026-27/000008.",
     "entry_no": "MJ/2026-27/000008",
-    "entry_id": "00000000-0000-4000-8000-000000000130"
+    "entry_id": "00000000-0000-4000-8000-000000000130",
+    "type": "https://chitbridge.com/problems/already_reversed",
+    "title": "Already reversed",
+    "status": 409,
+    "detail": "This entry was already reversed by MJ/2026-27/000008.",
+    "hint": "Open the reversal to see it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4375,7 +4400,14 @@
    "status": 422,
    "example": {
     "error": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account.",
-    "message": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account."
+    "message": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account.",
+    "type": "https://chitbridge.com/problems/books_refused",
+    "title": "Ledger refused",
+    "status": 422,
+    "code": "BOOKS_REFUSED",
+    "detail": "The trial balance does not balance: debits A$15,230.50, credits A$12,000.00 — the difference is A$3,230.50. Export it again as at the move date, with every account.",
+    "hint": "Fix what the sentence says and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4539,7 +4571,13 @@
    "example": {
     "code": "MOVE_IN_COUNTRY",
     "error": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported.",
-    "message": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported."
+    "message": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported.",
+    "type": "https://chitbridge.com/problems/move_in_country",
+    "title": "Move in country",
+    "status": 422,
+    "detail": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported.",
+    "hint": "Check what was sent and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4686,7 +4724,13 @@
       "code": "excess",
       "words": "₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores."
      }
-    ]
+    ],
+    "type": "https://chitbridge.com/problems/already_paid",
+    "title": "Already paid",
+    "status": 409,
+    "detail": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
+    "hint": "Check the list, then confirm if it is really a new one.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4696,7 +4740,13 @@
    "example": {
     "code": "PERIOD_LOCKED",
     "error": "That month is locked. Open it again (with a reason) to record this.",
-    "message": "That month is locked. Open it again (with a reason) to record this."
+    "message": "That month is locked. Open it again (with a reason) to record this.",
+    "type": "https://chitbridge.com/problems/period_locked",
+    "title": "Month locked",
+    "status": 409,
+    "detail": "That month is locked. Open it again (with a reason) to record this.",
+    "hint": "Use a date in an open month, or ask the owner to unlock it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4892,7 +4942,14 @@
       "name": "months_open",
       "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
      }
-    ]
+    ],
+    "type": "https://chitbridge.com/problems/year_close_refused",
+    "title": "Year cannot close yet",
+    "status": 422,
+    "code": "YEAR_CLOSE_REFUSED",
+    "detail": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+    "hint": "Read the reasons shown and fix each one.",
+    "request_id": null
    },
    "optional": []
   },
@@ -6429,7 +6486,13 @@
    "example": {
     "error": "Bad request",
     "code": "BAD_QTY",
-    "message": "Line \"A\" needs a quantity above 0."
+    "message": "Line \"A\" needs a quantity above 0.",
+    "type": "https://chitbridge.com/problems/bad_qty",
+    "title": "Quantity not above zero",
+    "status": 400,
+    "detail": "Line \"A\" needs a quantity above 0.",
+    "hint": "Send a quantity above 0 on every line.",
+    "request_id": null
    },
    "optional": []
   },
@@ -6439,7 +6502,13 @@
     "error": "Cannot compute",
     "code": "ITEM_NOT_FOUND",
     "message": "Line \"NOPE\" names an item this shop does not sell.",
-    "line": "0"
+    "line": "0",
+    "type": "https://chitbridge.com/problems/item_not_found",
+    "title": "Item not on the shelf",
+    "status": 422,
+    "detail": "Line \"NOPE\" names an item this shop does not sell.",
+    "hint": "Check the item id or code.",
+    "request_id": null
    },
    "optional": []
   }

@@ -12,10 +12,10 @@
  "codes": [
   {
    "code": "ADVICE_EXISTS",
-   "status": "404/409",
-   "title": "Advice exists",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Advice already recorded",
+   "shopkeeper": "An advice is already recorded for this payment.",
+   "hint": "Open the payment to see it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -41,17 +41,26 @@
    "code": "ALREADY_PAID",
    "status": "409",
    "title": "Already paid",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This looks like a payment you already recorded.",
+   "hint": "Check the list, then confirm if it is really a new one.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "ALREADY_RECORDED",
+   "status": "409",
+   "title": "Already recorded",
+   "shopkeeper": "That is already recorded.",
+   "hint": "Refresh the list: it is already there.",
+   "owner_area": "books-contract",
+   "since": "2026-10-23"
   },
   {
    "code": "ALREADY_REVERSED",
    "status": "409",
    "title": "Already reversed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This entry was already reversed.",
+   "hint": "Open the reversal to see it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -92,6 +101,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "BAD_FLAG",
+   "status": "400",
+   "title": "Flag not true or false",
+   "shopkeeper": "priceIncludesTax must be true or false.",
+   "hint": "Send true or false.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
    "code": "BAD_PERIOD",
    "status": "400",
    "title": "Bad period",
@@ -108,6 +126,33 @@
    "hint": "-",
    "owner_area": "counters",
    "since": "2026-10-22"
+  },
+  {
+   "code": "BAD_PRICE",
+   "status": "400",
+   "title": "Price below zero",
+   "shopkeeper": "A line has a price below 0.",
+   "hint": "Send a price of 0 or more.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_QTY",
+   "status": "400",
+   "title": "Quantity not above zero",
+   "shopkeeper": "A line needs a quantity above 0.",
+   "hint": "Send a quantity above 0 on every line.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_RATE",
+   "status": "400",
+   "title": "Tax rate out of range",
+   "shopkeeper": "A line has a tax rate outside 0 to 100 percent.",
+   "hint": "Send a rate from 0 to 100.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
   },
   {
    "code": "BILL_NOT_RECORDED",
@@ -129,21 +174,48 @@
   },
   {
    "code": "BOOKS_BAD_REQUEST",
-   "status": "varies",
-   "title": "Books bad request",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "400",
+   "title": "Ledger needs an answer",
+   "shopkeeper": "The ledger needs one more answer before it can do that.",
+   "hint": "Read the question shown and answer it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
   {
+   "code": "BOOKS_CONFLICT",
+   "status": "409",
+   "title": "Ledger cannot take that",
+   "shopkeeper": "The ledger cannot take that as it stands.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BOOKS_ENGINE",
+   "status": "503",
+   "title": "Ledger calculations unavailable",
+   "shopkeeper": "The ledger calculations are not available yet.",
+   "hint": "Try again later. If it stays, tell us.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
    "code": "BOOKS_NOT_MIGRATED",
-   "status": "404/503",
-   "title": "Books not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "503",
+   "title": "Ledger update pending",
+   "shopkeeper": "This cannot be saved yet: a database update is still to arrive.",
+   "hint": "Try again after the next update.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "BOOKS_REFUSED",
+   "status": "422",
+   "title": "Ledger refused",
+   "shopkeeper": "The ledger refused that, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "CAPABILITY_OFF",
@@ -189,6 +261,24 @@
    "hint": "-",
    "owner_area": "reward-store",
    "since": "2026-10-22"
+  },
+  {
+   "code": "COMMENT_ONLY",
+   "status": "403",
+   "title": "Comment only",
+   "shopkeeper": "Your access is comment-only.",
+   "hint": "Ask the owner for edit access.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMPARE_NOT_ALLOWED",
+   "status": "403",
+   "title": "Compare not allowed",
+   "shopkeeper": "Only the owner or the shop's auditor may compare the books.",
+   "hint": "Ask the owner.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "CONFIRM_REMOVE",
@@ -246,10 +336,10 @@
   },
   {
    "code": "COUNTRY_SETUP_PENDING",
-   "status": "varies",
+   "status": "422",
    "title": "Country setup pending",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Finish the country setup before using the ledger.",
+   "hint": "Open Country setup and complete it.",
    "owner_area": "country-setup",
    "since": "2026-10-22"
   },
@@ -297,6 +387,15 @@
    "hint": "-",
    "owner_area": "govresolve",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CURRENCY_NOT_THE_LEDGERS",
+   "status": "422",
+   "title": "Wrong money for this ledger",
+   "shopkeeper": "This payment is in a different money from the ledger's.",
+   "hint": "Use the ledger's own money.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "DEVICE_MISMATCH",
@@ -408,10 +507,10 @@
   },
   {
    "code": "FX_RATE_MISSING",
-   "status": "varies",
-   "title": "Fx rate missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "422",
+   "title": "Exchange rate missing",
+   "shopkeeper": "There is no exchange rate for that day.",
+   "hint": "Add the rate for that day, then try again.",
    "owner_area": "forms",
    "since": "2026-10-22"
   },
@@ -551,6 +650,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "INVOICE_BAD_REQUEST",
+   "status": "400",
+   "title": "Invoice needs lines",
+   "shopkeeper": "The invoice needs at least one line.",
+   "hint": "Send the lines to invoice.",
+   "owner_area": "invoice",
+   "since": "2026-10-23"
+  },
+  {
    "code": "IN_USE",
    "status": "409",
    "title": "In use",
@@ -558,6 +666,15 @@
    "hint": "-",
    "owner_area": "schemas",
    "since": "2026-10-22"
+  },
+  {
+   "code": "ITEM_NOT_FOUND",
+   "status": "422",
+   "title": "Item not on the shelf",
+   "shopkeeper": "A line names an item this shop does not sell.",
+   "hint": "Check the item id or code.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
   },
   {
    "code": "KEY_CANNOT_MANAGE_KEYS",
@@ -612,6 +729,15 @@
    "hint": "-",
    "owner_area": "crm",
    "since": "2026-10-22"
+  },
+  {
+   "code": "LEDGER_OFF",
+   "status": "404",
+   "title": "Ledger switched off",
+   "shopkeeper": "This shop has not switched the ledger on.",
+   "hint": "The owner can switch it on.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "LOCKED",
@@ -822,19 +948,19 @@
   },
   {
    "code": "NO_COUNTRY",
-   "status": "400/422",
-   "title": "No country",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "422",
+   "title": "No country set",
+   "shopkeeper": "This shop has no country set.",
+   "hint": "Set the country in Country setup.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
   {
    "code": "NO_COUNTRY_PACK",
-   "status": "varies",
-   "title": "No country pack",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "422",
+   "title": "Country not supported yet",
+   "shopkeeper": "We do not have the rules for this shop's country yet.",
+   "hint": "Tell us the country. We add countries one at a time.",
    "owner_area": "country-setup",
    "since": "2026-10-22"
   },
@@ -857,11 +983,20 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_LINES",
+   "status": "400",
+   "title": "No lines sent",
+   "shopkeeper": "Send at least one line.",
+   "hint": "Add a line and send again.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_MONEY",
    "status": "422",
-   "title": "No money",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "No money set",
+   "shopkeeper": "This shop has not said which money its books are kept in.",
+   "hint": "Set the money in Country setup.",
    "owner_area": "catalogue-view",
    "since": "2026-10-22"
   },
@@ -882,6 +1017,15 @@
    "hint": "-",
    "owner_area": "platformroot",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_PRICE",
+   "status": "422",
+   "title": "No price for a line",
+   "shopkeeper": "A line has no price on the shelf and none was sent.",
+   "hint": "Set its price on the shelf, or send one.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
   },
   {
    "code": "NO_SENDS",
@@ -1002,10 +1146,10 @@
   },
   {
    "code": "PACK_NO_FILE",
-   "status": "404/409",
-   "title": "Pack no file",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Pack has no file",
+   "shopkeeper": "This pack has no file to download.",
+   "hint": "Build it again, download it, then confirm.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1030,9 +1174,9 @@
   {
    "code": "PERIOD_LOCKED",
    "status": "409",
-   "title": "Period locked",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Month locked",
+   "shopkeeper": "That month is locked.",
+   "hint": "Use a date in an open month, or ask the owner to unlock it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1082,6 +1226,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "READ_ONLY",
+   "status": "403",
+   "title": "View only",
+   "shopkeeper": "Your access is view-only.",
+   "hint": "Ask the owner for edit access.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
    "code": "REGION_STORE_MISSING",
    "status": "403/404/503",
    "title": "Region store missing",
@@ -1116,6 +1269,15 @@
    "hint": "-",
    "owner_area": "schemas",
    "since": "2026-10-22"
+  },
+  {
+   "code": "RETURN_FROM_RAIL",
+   "status": "422",
+   "title": "Return comes from bills",
+   "shopkeeper": "Your return is made from your bills, not from these books.",
+   "hint": "Use the GST page.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "ROOT_HANDLE_NEEDED",
@@ -1217,6 +1379,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SIGN_IN_FOR_LEDGER",
+   "status": "403",
+   "title": "Sign in as a person",
+   "shopkeeper": "Sign in as a person to use the ledger.",
+   "hint": "A counter or device key cannot use the ledger.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
    "code": "SOURCE_STORE_MISSING",
    "status": "503",
    "title": "Source store missing",
@@ -1256,8 +1427,8 @@
    "code": "SUSPENSE_NOT_NIL",
    "status": "409",
    "title": "Suspense not nil",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "The suspense account must be nil before the year can close.",
+   "hint": "Clear the difference in the opening balances.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1282,9 +1453,9 @@
   {
    "code": "TAX_FAILED",
    "status": "500",
-   "title": "Tax failed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Tax could not be worked out",
+   "shopkeeper": "We could not work out the tax just now.",
+   "hint": "Try again in a moment. If it keeps happening, tell us the request id.",
    "owner_area": "tax",
    "since": "2026-10-22"
   },
@@ -1300,9 +1471,9 @@
   {
    "code": "TERMS_NOT_MIGRATED",
    "status": "503",
-   "title": "Terms not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Terms update pending",
+   "shopkeeper": "Terms arrive after the next update.",
+   "hint": "Try again after the update.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1454,10 +1625,19 @@
    "code": "YEAR_CLOSED",
    "status": "409",
    "title": "Year closed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That financial year is closed.",
+   "hint": "Use a date in the open year.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "YEAR_CLOSE_REFUSED",
+   "status": "422",
+   "title": "Year cannot close yet",
+   "shopkeeper": "The year cannot be closed yet.",
+   "hint": "Read the reasons shown and fix each one.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   }
  ]
 }
