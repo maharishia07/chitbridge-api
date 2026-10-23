@@ -31590,6 +31590,18 @@
       "error": "Not migrated yet",
       "message": "CRM needs migration b276 — not run yet."
      }
+    },
+    {
+     "scenario": "followup-made-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -31720,6 +31732,18 @@
       "error": "Named groups need migration b205 (customer_groups) — not run yet.",
       "message": "Named groups need migration b205 (customer_groups) — not run yet."
      }
+    },
+    {
+     "scenario": "group-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -31849,6 +31873,18 @@
       "code": "LEADS_NOT_MIGRATED",
       "error": "Lead stages arrive after the next update.",
       "message": "Lead stages arrive after the next update."
+     }
+    },
+    {
+     "scenario": "lead-added-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
@@ -31993,6 +32029,18 @@
       "code": "LEADS_NOT_MIGRATED",
       "error": "Lead stages arrive after the next update.",
       "message": "Lead stages arrive after the next update."
+     }
+    },
+    {
+     "scenario": "import-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
@@ -32466,6 +32514,18 @@
       "error": "Not migrated yet",
       "message": "CRM needs migration b276 — not run yet."
      }
+    },
+    {
+     "scenario": "outcome-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -32623,6 +32683,18 @@
       "code": "LEADS_NOT_MIGRATED",
       "error": "Lead stages arrive after the next update.",
       "message": "Lead stages arrive after the next update."
+     }
+    },
+    {
+     "scenario": "lead-moved-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
@@ -33066,6 +33138,18 @@
       "error": "A message to a group is an offer, so it needs their consent for offers.",
       "message": "A message to a group is an offer, so it needs their consent for offers."
      }
+    },
+    {
+     "scenario": "segment-send-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -33153,6 +33237,18 @@
       "code": "BAD_PHONE",
       "error": "Give the phone number they used.",
       "message": "Give the phone number they used."
+     }
+    },
+    {
+     "scenario": "walk-in-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]

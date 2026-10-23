@@ -80,8 +80,12 @@ function prepare(scenario) {
   stub.as(login.entity, { identity: login.identity, key: !!asked.key, signedOut: !!asked.signedOut });
 }
 
-/** the extra modules a scene may swap a function of (none are used by the scenes today) */
-const sources = () => ({});
+/** the modules a scene may swap a function of: a library call that fails like a database (the scene's `patch`) */
+const sources = () => ({
+  local: require(path.join(HERE, 'lib', 'local-identity')),
+  memberships: require(path.join(HERE, 'lib', 'memberships')),
+  leads: require(path.join(HERE, 'lib', 'crm-leads'))
+});
 
 /** lib/crm-contract.js as a unit: the words of a refusal and of a fault, as these routes always said them */
 function checkWords() {
@@ -142,8 +146,8 @@ async function foreignWorld(port) {
     ['POST /api/crm/parties/:id/outcome', 'POST', '/parties/' + S.IDS.lead + '/outcome', { outcome: 'interested' }],
     ['POST /api/crm/parties/:id/stage', 'POST', '/parties/' + S.IDS.lead + '/stage', { stage: 'trial' }],
     ['DELETE /api/crm/parties/:id', 'DELETE', '/parties/' + S.IDS.plain],
-    ['PATCH /api/crm/followups/:id', 'PATCH', '/followups/' + P(21), { done: true }],
-    ['DELETE /api/crm/followups/:id', 'DELETE', '/followups/' + P(21)],
+    ['PATCH /api/crm/followups/:id', 'PATCH', '/followups/' + S.P(21), { done: true }],
+    ['DELETE /api/crm/followups/:id', 'DELETE', '/followups/' + S.P(21)],
     ['DELETE /api/crm/groups/:name', 'DELETE', '/groups/Dealers']
   ];
   const cases = asks.map(([route, method, url, body]) => ({

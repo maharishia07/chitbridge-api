@@ -67,7 +67,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COUNTRY_SETUP_NOT_MIGRATED | 503 | Country setup not ready | Country setup arrives after the next update. Selling and the rail work meanwhile. | Carry on selling; come back after the update. | governance | 2026-10-23 |
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | varies | Cover conflict | PENDING | - | actors | 2026-10-22 |
-| CRM_NOT_MIGRATED | 503 | Crm not migrated | PENDING | - | crm | 2026-10-22 |
+| CRM_NOT_MIGRATED | 503 | Crm not migrated | Follow-ups and call notes are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
 | CTP_CROSSING_REFUSED | 409 | Crossing refused | This business does not take chits from that installation. | The two installations must name each other as peers first. | ctp | 2026-10-23 |
 | CTP_CROSSING_UNCHECKABLE | 503 | Crossing cannot be checked | We could not check whether this chit may cross, so we refused it. | Try again later; nothing was written. | ctp | 2026-10-23 |
 | CTP_ENVELOPE_REFUSED | 409 | Envelope refused | The chit did not open here: its signature or its contents were refused. | Check the sending installation signs with the key it publishes. | ctp | 2026-10-23 |
@@ -143,7 +143,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
 | KEY_UNKNOWN | 401 | Key unknown | PENDING | - | connectors | 2026-10-22 |
 | LAB_CHIT_LIVE_SHOP | 409 | Lab chit on a live shop | A practice chit cannot be sent from a live shop. | Send it from a practice shop, or make a real chit. | chits | 2026-10-23 |
-| LEADS_NOT_MIGRATED | 503 | Leads not migrated | PENDING | - | crm | 2026-10-22 |
+| LEADS_NOT_MIGRATED | 503 | Leads not migrated | Lead stages are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
 | LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |
 | LOCKED | 409 | Locked | PENDING | - | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | varies | Max tasks over entity | PENDING | - | actors | 2026-10-22 |
@@ -176,7 +176,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_ACCOUNT | varies | No account | PENDING | - | signin | 2026-10-22 |
 | NO_ACTOR | 401 | Not signed in as a business | Sign in as a business to use the network. | Sign in as the business itself. | network | 2026-10-23 |
 | NO_BUYERS | varies | No buyers | PENDING | - | marketing-results | 2026-10-22 |
-| NO_CONSENT | varies | No consent | PENDING | - | marketing-results | 2026-10-22 |
+| NO_CONSENT | varies | No consent | They have not agreed to offers from you. | Ask for their consent first. | marketing-results | 2026-10-22 |
 | NO_CONSTITUTION | 503 | No rules in force | This installation has no active rules to govern a shop yet. | Tell the platform team. | governance | 2026-10-23 |
 | NO_COUNTRY | 422 | No country set | This shop has no country set. | Set the country in Country setup. | assist | 2026-10-22 |
 | NO_COUNTRY_PACK | 422 | Country not supported yet | We do not have the rules for this shop's country yet. | Tell us the country. We add countries one at a time. | country-setup | 2026-10-22 |
@@ -247,7 +247,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SESSION_UPGRADE | varies | Session upgrade | PENDING | - | auth | 2026-10-22 |
 | SHOP_REFUSING | varies | Shop refusing | PENDING | - | verdict | 2026-10-22 |
 | SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
-| SIGN_IN | 403 | Sign in | PENDING | - | crm | 2026-10-22 |
+| SIGN_IN | 403 | Sign in | CRM opens only for a signed-in person, not for a key. | Sign in with your own login. | crm | 2026-10-22 |
 | SIGN_IN_FIRST | 401/409 | Sign in first | Sign in at the store to order. | Sign in with your phone or email, then order again. | catalogue | 2026-10-22 |
 | SIGN_IN_FOR_LEDGER | 403 | Sign in as a person | Sign in as a person to use the ledger. | A counter or device key cannot use the ledger. | books | 2026-10-23 |
 | SOURCE_STORE_MISSING | 503 | Source store missing | PENDING | - | assist | 2026-10-22 |
@@ -283,7 +283,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | VAULT_ENC_UNCONFIGURED | 503 | Vault enc unconfigured | PENDING | - | identity-docs | 2026-10-22 |
 | VAULT_VERSION_REQUIRED | 409 | Vault version required | This screen is older than the vault — reload it, then save. | Reload the screen, then save. | governance | 2026-10-22 |
 | VERIFICATION_FAILED | 422 | Registry check failed | That registry number could not be confirmed. | Check the number and try again. | governance | 2026-10-23 |
-| VIEW_ONLY | varies | View only | PENDING | - | crm-groups | 2026-10-22 |
+| VIEW_ONLY | varies | View only | Your login can only view. | Ask the owner for edit access. | crm-groups | 2026-10-22 |
 | VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | This database does not accept network visibility yet. | Apply the pending database update, then build again. | entities | 2026-10-22 |
 | WORKBOOK_CUT | 413 | Workbook cut | This sheet is bigger than we read, so only part of it was read and nothing was imported. | Delete unused columns, or split the sheet, and upload again. | products | 2026-10-22 |
 | WORK_BAD_REQUEST | 400 | Work request not valid | That list request is not valid. | Ask for one view at a time. | work | 2026-10-23 |
@@ -332,4 +332,37 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | disputes_unknown | 503 | Could not check disputes | Could not check for open disputes. | Try again in a moment. | chits | 2026-10-23 |
 | reason_required | 400 | A reason is needed to reject | Say why you are rejecting this bill. | Write the reason and try again. | chits | 2026-10-23 |
 | status_conflict | 409 | Status changed under you | Someone else just changed this chit. | Look at it again, then try once more. | chits | 2026-10-23 |
+| ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
+| BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
+| BAD_ASSIGNEE | 400 | Not on your team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |
+| BAD_BEFORE | 400 | Bad time | Give the time as a date. | Pick a date and try again. | crm | 2026-10-23 |
+| BAD_CHANNEL | 400 | Bad channel | Channel is phone, sms, whatsapp, email or chitbridge. | Pick one of those. | crm | 2026-10-23 |
+| BAD_DUE | 400 | Bad due day | Pick a day from today. | Choose today or a later day. | crm | 2026-10-23 |
+| BAD_GROUP | 400 | Not a stage | That is not one of the stages. | Pick a stage from the list. | crm | 2026-10-23 |
+| BAD_ID | 400 | Not a valid id | That is not a valid id. | Open it again from the list. | crm | 2026-10-23 |
+| BAD_KEY | 400 | Not a segment | That is not a segment or a group. | Pick one from the list. | crm | 2026-10-23 |
+| BAD_KIND | 400 | Unknown grouping | That grouping is not known. | Use the buttons on the screen. | crm | 2026-10-23 |
+| BAD_NAME | 400 | Bad name | Give a name. A group name is up to 40 letters, digits, spaces, - & /. | Check the name and try again. | crm | 2026-10-23 |
+| BAD_OUTCOME | 400 | Bad outcome | Pick what happened on the call. | Tap one of the outcome buttons. | crm | 2026-10-23 |
+| BAD_PURPOSE | 400 | Bad purpose | Purpose is service or marketing. | Pick one of those. | crm | 2026-10-23 |
+| CHANNEL_NOT_SENDABLE | 400 | Channel not sendable | Only WhatsApp can be sent from here today. | Use WhatsApp. | crm | 2026-10-23 |
+| CONSENT_WITHDRAWN | 403 | Consent withdrawn | They took back their consent. | Do not message them on this channel. | crm | 2026-10-23 |
+| CRM_BAD_REQUEST | 400 | Bad request | What was sent is not in the form CRM expects. | Send the fields as one JSON object, each once. | crm | 2026-10-23 |
+| GROUPS_NOT_MIGRATED | 409 | Groups not set up | Named groups are not set up here yet. | Try again after the next update. | crm | 2026-10-23 |
+| HAS_DUES | 409 | Open dues | There are open dues on this party. | Settle the dues first, then remove them. | crm | 2026-10-23 |
+| IS_CUSTOMER | 409 | Already a customer | They are a customer now, so there is no lead stage to move. | Nothing to do. | crm | 2026-10-23 |
+| MINT_REFUSED | varies | Could not add | They could not be added. | Check the name and phone and try again. | crm | 2026-10-23 |
+| NEED_DAY | 400 | Day needed | Say when to follow up. | Pick a day. | crm | 2026-10-23 |
+| NOTHING_TO_DO | 400 | Nothing to do | Say who to add or remove. | Pick at least one customer. | crm | 2026-10-23 |
+| NOT_ASSIGNEE | 403 | Not the assignee | Only the owner or the assignee can hand this on. | Ask the owner or the person it is assigned to. | crm | 2026-10-23 |
+| NO_ROWS | 400 | No rows | There are no rows to import. | Choose a file with at least one lead. | crm | 2026-10-23 |
+| NO_TEXT | 400 | No message | Write the message. | Type the message and send again. | crm | 2026-10-23 |
+| OPTED_OUT | 403 | Opted out | They asked not to be messaged on this channel. | Use another way, or leave them. | crm | 2026-10-23 |
+| PRIVACY_NOT_MIGRATED | 503 | Privacy not set up | Consent and privacy requests are not set up here yet. | Try again after the next update. | crm | 2026-10-23 |
+| PURPOSE_FIXED | 400 | Offers only | A message to a group is an offer, so it needs their consent for offers. | Send only to people who agreed to offers. | crm | 2026-10-23 |
+| REFUSED | varies | Refused | That could not be done as asked. | Read the line shown, change what you sent and try again. | crm | 2026-10-23 |
+| SAID_NO | 403 | Said no | They said no to this. | Leave them be, unless they say yes later. | crm | 2026-10-23 |
+| TOO_LONG | 400 | Message too long | The message is too long. | Shorten it and send again. | crm | 2026-10-23 |
+| TOO_MANY | 400 | Too many | That is too many at a time. | Send fewer, or make a smaller group. | crm | 2026-10-23 |
+| TOO_MANY_GROUPS | 400 | Too many groups | A customer can be in at most 20 groups. | Take them out of one group first. | crm | 2026-10-23 |
 <!-- codes:end -->

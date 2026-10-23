@@ -28,6 +28,27 @@
   409,
   500
  ],
+ "DELETE /api/crm/followups/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "DELETE /api/crm/groups/:name": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "DELETE /api/crm/parties/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "DELETE /api/folders/:id": [
   400,
   401,
@@ -405,6 +426,60 @@
   500
  ],
  "GET /api/counters": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/crm/calls": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/followups": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/parties": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/crm/parties/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/crm/parties/:id/contact-prefs": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/crm/parties/:id/timeline": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/crm/privacy-requests": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/segments": [
   401,
   403,
   500
@@ -912,6 +987,13 @@
   500
  ],
  "PATCH /api/counters/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/crm/followups/:id": [
   400,
   401,
   403,
@@ -1498,6 +1580,96 @@
   401,
   403,
   404,
+  500
+ ],
+ "POST /api/crm/followups": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/groups": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/crm/leads": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/crm/leads/import": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/contact-prefs": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/interactions": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/outcome": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/stage": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/crm/privacy-requests": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/privacy-requests/:id/answer": [
+  400,
+  401,
+  403,
+  409,
+  500,
+  503
+ ],
+ "POST /api/crm/segments/:key/send": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/crm/walk-ins/add": [
+  400,
+  401,
+  403,
   500
  ],
  "POST /api/ctp/deliver": [

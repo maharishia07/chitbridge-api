@@ -41,7 +41,7 @@ function seed(D, W, row) {
   const agro = row({ party_id: IDS.agro, display_name: 'Agro Mills', user_id: 'agromills', party_no: 'P-0001' });
   const abroad = row({ party_id: IDS.foreign, display_name: 'Foreign Farid', user_id: 'farid', party_no: 'P-0009', owner: OTHER_SHOP });
   Object.assign(D, {
-    cust: [cs(chola), cs(lead, { added_via: 'lead', txn_count: 0, groups: [], segment: 'new' }), cs(plain, { txn_count: 0, groups: [] }), cs(abroad)],
+    cust: [cs(chola), cs(lead, { added_via: 'lead', txn_count: 0, groups: [], segment: 'new' }), cs(plain, { txn_count: 0, groups: [] }), cs(abroad, { groups: [] })],
     sup: [ss(agro)],
     walk: [{ owner: SHOP, phone: '+919840012321', points: '120', last_at: '2026-09-29T00:00:00Z' }],
     stored: { customer: { [IDS.chola]: { party_no: 'P-0002', balance_minor: 100000, oldest_due: '2026-09-01' } }, supplier: {} },
@@ -135,6 +135,11 @@ function preOf(D, W, row) {
     return null;
   };
 }
+
+/** a library call that fails the way a database does, with text that must never reach a caller */
+const boom = async () => {
+  throw new Error(SECRET_SQL);
+};
 
 /** every named scene: [id, route, expected status, options]. Options: who, key, signedOut, db ('fail'), world (a change to W), data (a change to D), url, body, patch. */
 function extras() {
@@ -245,6 +250,15 @@ function extras() {
     /* the walk-in */
     X('walk-in-added', 'POST ' + C + '/walk-ins/add', 201, { body: { phone: '+91 98400 55555', name: 'Corner shop' } }),
     X('walk-in-no-phone', 'POST ' + C + '/walk-ins/add', 400, { body: {} }),
+    /* a database that fails under a request that is otherwise fine: a 500 that says nothing of its cause */
+    X('followup-made-db-fails', 'POST ' + C + '/followups', 500, { body: { party_id: A.chola, what: 'x' }, setup: { db: 'fail' } }),
+    X('lead-added-db-fails', 'POST ' + C + '/leads', 500, { body: { name: 'Ravi' }, patch: { local: { addCustomer: boom } } }),
+    X('lead-moved-db-fails', 'POST ' + C + '/parties/:id/stage', 500, { url: C + '/parties/' + A.lead + '/stage', body: { stage: 'trial' }, patch: { memberships: { add: boom } } }),
+    X('outcome-db-fails', 'POST ' + C + '/parties/:id/outcome', 500, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'interested' }, setup: { db: 'fail' } }),
+    X('import-db-fails', 'POST ' + C + '/leads/import', 500, { body: { rows: [{ name: 'Kala Stores' }] }, patch: { leads: { importLeads: boom } } }),
+    X('walk-in-db-fails', 'POST ' + C + '/walk-ins/add', 500, { body: { phone: '+91 98400 55555' }, setup: { db: 'fail' } }),
+    X('group-db-fails', 'POST ' + C + '/groups', 500, { body: { name: 'Dealers', add: [A.plain] }, setup: { db: 'fail' } }),
+    X('segment-send-db-fails', 'POST ' + C + '/segments/:key/send', 500, { url: C + '/segments/regular/send', body: { text: 'x', dry: true }, setup: { db: 'fail' } }),
     /* privacy requests (b307) */
     X('requests-listed', 'GET ' + C + '/privacy-requests', 200),
     X('requests-open-only', 'GET ' + C + '/privacy-requests', 200, at('/privacy-requests?open=1&page=1&limit=5')),
