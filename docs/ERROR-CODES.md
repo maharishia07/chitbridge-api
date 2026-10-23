@@ -390,4 +390,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TOO_LONG | 400 | Message too long | The message is too long. | Shorten it and send again. | crm | 2026-10-23 |
 | TOO_MANY | 400 | Too many | That is too many at a time. | Send fewer, or make a smaller group. | crm | 2026-10-23 |
 | TOO_MANY_GROUPS | 400 | Too many groups | A customer can be in at most 20 groups. | Take them out of one group first. | crm | 2026-10-23 |
+| ADMIN_DISABLED | 503 | Platform approval is off | Platform approval is not switched on here. | Ask the platform operator to set the admin key. | channels | 2026-10-23 |
+| ADMIN_KEY_WRONG | 403 | Platform key not accepted | That platform key is not accepted. | Check the key and try again. | channels | 2026-10-23 |
+| CHANNEL_ADDRESS_TAKEN | 409 | Address already in use | That number or address is already in use. | Use another one, or ask the platform if it is yours. | channels | 2026-10-23 |
+| CHANNEL_BAD_REQUEST | 400 | Channel details not valid | Something in the channel details is missing or not one we know. | Check the details and try again. | channels | 2026-10-23 |
+| CHANNEL_PLATFORM_ONLY | 403 | Only the platform can approve | Only the platform can mark a template approved. | Mark it as waiting; the platform will approve it. | channels | 2026-10-23 |
+| CHANNEL_REFUSED | varies | Channel request refused | The channel request was refused. | Check the details and try again. | channels | 2026-10-23 |
+| CHANNEL_STORE_MISSING | 503 | Channels not ready | Channels are not ready on this system yet. | Try again after the next update. | channels | 2026-10-23 |
 <!-- codes:end -->

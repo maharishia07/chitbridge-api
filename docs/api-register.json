@@ -3,8 +3,8 @@
  "stage": "2",
  "counts": {
   "routes": 633,
-  "not_started": 144,
-  "partial": 488,
+  "not_started": 134,
+  "partial": 498,
   "meets": 1,
   "columns": {
    "strict_input": {
@@ -17,7 +17,7 @@
    },
    "foreign_id_404": {
     "applies": 227,
-    "failing": 119
+    "failing": 118
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -213,16 +213,16 @@
    "path": "/api/channels/:id",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 127,
-   "hash": "7fcc5fb743174e44",
+   "line": 126,
+   "hash": "778bf41a4563c949",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -238,9 +238,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -249,7 +255,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "DELETE /api/chits/:chit_id",
@@ -4329,16 +4335,16 @@
    "path": "/api/channels",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 20,
-   "hash": "7034d681c30030d9",
+   "line": 23,
+   "hash": "e389a37bd24e4dce",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -4354,9 +4360,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -4365,7 +4375,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/channels/outbound",
@@ -4373,16 +4383,16 @@
    "path": "/api/channels/outbound",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 29,
-   "hash": "d02b678e945526ec",
+   "line": 32,
+   "hash": "9138325ce3ddf415",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -4398,9 +4408,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -4409,7 +4424,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/:chit_id",
@@ -18901,16 +18916,16 @@
    "path": "/api/channels",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 73,
-   "hash": "583fefb9c9bfadab",
+   "line": 74,
+   "hash": "6d0ad94f9125f0f7",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18926,9 +18941,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18937,7 +18957,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/channels/:id/approve",
@@ -18945,16 +18965,16 @@
    "path": "/api/channels/:id/approve",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 101,
-   "hash": "c6a2d814df3da71a",
+   "line": 102,
+   "hash": "12aced9feec63a72",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -18970,8 +18990,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    404,
+    500,
+    503
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -18979,7 +19007,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/channels/:id/auto-raise",
@@ -18987,16 +19015,16 @@
    "path": "/api/channels/:id/auto-raise",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 53,
-   "hash": "f79928228c11d87c",
+   "line": 56,
+   "hash": "7e4016ee2a885a9e",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -19012,9 +19040,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -19023,7 +19057,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/channels/:id/provider-ref",
@@ -19031,16 +19065,16 @@
    "path": "/api/channels/:id/provider-ref",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 38,
-   "hash": "cfbcb8ddffaabb57",
+   "line": 41,
+   "hash": "faa5242773b7eb2e",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -19056,9 +19090,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -19067,7 +19107,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/channels/:id/revoke",
@@ -19075,16 +19115,16 @@
    "path": "/api/channels/:id/revoke",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 119,
-   "hash": "87d3a58f2e39f8aa",
+   "line": 118,
+   "hash": "e5e50e4645c07ad3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -19100,51 +19140,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "not started"
-  },
-  {
-   "key": "POST /api/channels/:id/template",
-   "method": "POST",
-   "path": "/api/channels/:id/template",
-   "owner_area": "channels",
-   "file": "routes/channels.js",
-   "line": 61,
-   "hash": "f55f2ad022b63ca3",
-   "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [],
+   "declared": [
+    400,
+    403,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -19153,7 +19157,57 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
+  },
+  {
+   "key": "POST /api/channels/:id/template",
+   "method": "POST",
+   "path": "/api/channels/:id/template",
+   "owner_area": "channels",
+   "file": "routes/channels.js",
+   "line": 64,
+   "hash": "ff5ae1f01272adf7",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": false,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial"
   },
   {
    "key": "POST /api/channels/:id/template-approve",
@@ -19161,16 +19215,16 @@
    "path": "/api/channels/:id/template-approve",
    "owner_area": "channels",
    "file": "routes/channels.js",
-   "line": 109,
-   "hash": "7731ee0704a36103",
+   "line": 110,
+   "hash": "da6f1866586f7e5a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -19186,8 +19240,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    404,
+    500,
+    503
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -19195,7 +19257,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/chits/:chit_id/amend",
