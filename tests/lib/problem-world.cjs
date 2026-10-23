@@ -126,11 +126,11 @@ function harness(options) {
     return generic.concat(named.filter((one) => routes[one.route]));
   }
 
-  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is. `raw` = { headers, text }: the bytes as a provider signs and sends them (a webhook), not JSON */
-  function send(port, method, urlPath, body, raw) {
+  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is. `raw` = { headers, text }: the bytes as a provider signs and sends them (a webhook), not JSON; `extraHeaders` = headers added to a JSON request (a platform key) */
+  function send(port, method, urlPath, body, raw, extraHeaders) {
     return new Promise((resolve) => {
       const data = raw ? raw.text : body === undefined ? null : JSON.stringify(body);
-      const headers = raw ? Object.assign({ 'content-length': Buffer.byteLength(data) }, raw.headers) : data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {};
+      const headers = raw ? Object.assign({ 'content-length': Buffer.byteLength(data) }, raw.headers) : Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {});
       const request = http.request({ port, path: urlPath, method, headers }, (response) => {
         const parts = [];
         response.on('data', (part) => parts.push(part));
@@ -161,13 +161,22 @@ function harness(options) {
     return () => undo.forEach(([owner, name, original]) => (owner[name] = original));
   }
 
+  /** a scenario may switch process variables for its one request (`env`); the ones it set are put back (or removed) afterwards */
+  function setEnv(given) {
+    const before = Object.keys(given || {}).map((name) => [name, process.env[name]]);
+    Object.keys(given || {}).forEach((name) => (given[name] === null ? delete process.env[name] : (process.env[name] = given[name]))); /* null = not set (process.env would store the text "null") */
+    return () => before.forEach(([name, was]) => (was === undefined ? delete process.env[name] : (process.env[name] = was)));
+  }
+
   async function runScenario(port, scenario, modules) {
     Object.assign(world, FRESH, scenario.setup);
     if (options.before) await options.before(scenario); /* a sweep whose world is a stand-in of its own (tests/support/crm-stub.cjs) sets it up here */
     const restore = applyPatch(scenario.patch, modules);
+    const unset = setEnv(scenario.env);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body, scenario.raw);
+    const answer = await send(port, method, scenario.url, body, scenario.raw, scenario.headers);
+    unset();
     restore();
     return answer;
   }

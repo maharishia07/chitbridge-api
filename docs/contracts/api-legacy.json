@@ -35742,6 +35742,4488 @@
      }
     }
    ]
+  },
+  "DELETE /api/actors/:id/pin": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found"
+     },
+     "fixture": {
+      "error": "Actor not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found"
+     },
+     "fixture": {
+      "error": "Actor not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Clear PIN failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Clear PIN failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found"
+     },
+     "fixture": {
+      "error": "Actor not found"
+     }
+    },
+    {
+     "scenario": "pin-reset-sealed-no-mailer",
+     "status": 503,
+     "body_keys": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     },
+     "fixture": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     }
+    },
+    {
+     "scenario": "pin-reset-sealed-needs-an-email",
+     "status": 400,
+     "body_keys": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     },
+     "fixture": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     }
+    },
+    {
+     "scenario": "pin-reset-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Clear PIN failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Clear PIN failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/actors": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list actors",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to list actors",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list actors",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to list actors",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/actors/:id/tasks": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get actor tasks"
+     },
+     "fixture": {
+      "error": "Failed to get actor tasks"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
+     "scenario": "tasks-unknown-person",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
+     "scenario": "tasks-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get actor tasks"
+     },
+     "fixture": {
+      "error": "Failed to get actor tasks"
+     }
+    }
+   ]
+  },
+  "GET /api/actors/access-events": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "events-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/actors/settings": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get settings",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get settings",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "settings-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get settings",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get settings",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/actors/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     }
+    },
+    {
+     "scenario": "edit-nothing-to-change",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs"
+     }
+    },
+    {
+     "scenario": "edit-name-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "edit-over-the-shops-ceiling",
+     "status": 400,
+     "body_keys": {
+      "error": "Over the limit",
+      "code": "MAX_TASKS_OVER_ENTITY",
+      "message": "A person can hold at most 20 tasks, the limit you set in Settings › Work. Raise that first, or give them 20 or fewer."
+     },
+     "fixture": {
+      "error": "Over the limit",
+      "code": "MAX_TASKS_OVER_ENTITY",
+      "message": "A person can hold at most 20 tasks, the limit you set in Settings › Work. Raise that first, or give them 20 or fewer."
+     }
+    },
+    {
+     "scenario": "edit-costs-by-an-actor",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the account owner can change who sees costs and margin."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the account owner can change who sees costs and margin."
+     }
+    },
+    {
+     "scenario": "edit-unknown-person",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found"
+     }
+    },
+    {
+     "scenario": "edit-email-is-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "E-mail in use",
+      "code": "EMAIL_TAKEN",
+      "message": "That e-mail already signs in to another account. Use the person's own e-mail, or leave it empty."
+     },
+     "fixture": {
+      "error": "E-mail in use",
+      "code": "EMAIL_TAKEN",
+      "message": "That e-mail already signs in to another account. Use the person's own e-mail, or leave it empty."
+     }
+    },
+    {
+     "scenario": "edit-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/actors": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-needs-a-name",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-bad-email",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "email",
+        "message": "That e-mail does not look right"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "email",
+        "message": "That e-mail does not look right"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-over-the-shops-ceiling",
+     "status": 400,
+     "body_keys": {
+      "error": "Over the limit",
+      "code": "MAX_TASKS_OVER_ENTITY",
+      "message": "A person can hold at most 20 tasks, the limit you set in Settings › Work. Raise that first, or give them 20 or fewer."
+     },
+     "fixture": {
+      "error": "Over the limit",
+      "code": "MAX_TASKS_OVER_ENTITY",
+      "message": "A person can hold at most 20 tasks, the limit you set in Settings › Work. Raise that first, or give them 20 or fewer."
+     }
+    },
+    {
+     "scenario": "create-key-taken",
+     "status": 400,
+     "body_keys": {
+      "error": "Key taken",
+      "message": "ravik@Test shop is already taken",
+      "login_format": "ravik@Test shop"
+     },
+     "fixture": {
+      "error": "Key taken",
+      "message": "ravik@Test shop is already taken",
+      "login_format": "ravik@Test shop"
+     }
+    },
+    {
+     "scenario": "create-sealed-no-mailer",
+     "status": 503,
+     "body_keys": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     },
+     "fixture": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     }
+    },
+    {
+     "scenario": "create-sealed-needs-an-email",
+     "status": 400,
+     "body_keys": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     },
+     "fixture": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     }
+    },
+    {
+     "scenario": "create-email-is-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "E-mail in use",
+      "code": "EMAIL_TAKEN",
+      "message": "That e-mail already signs in to another account. Use the person's own e-mail, or leave it empty."
+     },
+     "fixture": {
+      "error": "E-mail in use",
+      "code": "EMAIL_TAKEN",
+      "message": "That e-mail already signs in to another account. Use the person's own e-mail, or leave it empty."
+     }
+    },
+    {
+     "scenario": "create-key-is-taken-at-the-insert",
+     "status": 409,
+     "body_keys": {
+      "error": "Key taken",
+      "message": "That key already belongs to someone at this entity — including people who have been removed, because their name stays on the work they recorded. Choose another."
+     },
+     "fixture": {
+      "error": "Key taken",
+      "message": "That key already belongs to someone at this entity — including people who have been removed, because their name stays on the work they recorded. Choose another."
+     }
+    },
+    {
+     "scenario": "create-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Create failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Create failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-staff-is-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/actors/:id/otp": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Actor not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Actor not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Actor not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Actor not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "OTP reset failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "OTP reset failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Actor not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Actor not found"
+     }
+    },
+    {
+     "scenario": "otp-sealed-no-mailer",
+     "status": 503,
+     "body_keys": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     },
+     "fixture": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     }
+    },
+    {
+     "scenario": "otp-sealed-needs-an-email",
+     "status": 400,
+     "body_keys": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     },
+     "fixture": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     }
+    },
+    {
+     "scenario": "otp-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "OTP reset failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "OTP reset failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/actors/check-key": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "check-key-unusable",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actor_key",
+        "message": "Invalid value"
+       },
+       {
+        "field": "actor_key",
+        "message": "Lowercase letters and numbers only — 4 to 12 characters"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "check-key-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Check failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/actors/suggest-key": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "suggest-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Suggest failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Suggest failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/actors/:id/delegate": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delegate update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delegate update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     }
+    },
+    {
+     "scenario": "delegate-bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "delegate_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "delegate_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "delegate-to-themselves",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid delegate",
+      "message": "An actor cannot delegate to themselves."
+     },
+     "fixture": {
+      "error": "Invalid delegate",
+      "message": "An actor cannot delegate to themselves."
+     }
+    },
+    {
+     "scenario": "delegate-not-assignable",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid delegate",
+      "message": "The delegate must be an Act or Manager co-assist of this entity."
+     },
+     "fixture": {
+      "error": "Invalid delegate",
+      "message": "The delegate must be an Act or Manager co-assist of this entity."
+     }
+    },
+    {
+     "scenario": "delegate-unknown-person",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found."
+     }
+    },
+    {
+     "scenario": "delegate-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delegate update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delegate update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "delegate-staff-is-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "PUT /api/actors/:id/status": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "status-unknown-action",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be deactivate remove or reactivate"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "status-bad-confirm",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "confirm",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "confirm",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "status-bad-target-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "target_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "target_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "status-unknown-person",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "status-remove-not-confirmed",
+     "status": 400,
+     "body_keys": {
+      "error": "Confirmation required",
+      "code": "CONFIRM_REMOVE",
+      "message": "Send confirm: REMOVE to permanently remove this actor",
+      "tasks_warning": "Actor has 3 active tasks — route them first"
+     },
+     "fixture": {
+      "error": "Confirmation required",
+      "code": "CONFIRM_REMOVE",
+      "message": "Send confirm: REMOVE to permanently remove this actor",
+      "tasks_warning": "Actor has 3 active tasks — route them first"
+     }
+    },
+    {
+     "scenario": "status-remove-not-confirmed-no-tasks",
+     "status": 400,
+     "body_keys": {
+      "error": "Confirmation required",
+      "code": "CONFIRM_REMOVE",
+      "message": "Send confirm: REMOVE to permanently remove this actor",
+      "tasks_warning": null
+     },
+     "fixture": {
+      "error": "Confirmation required",
+      "code": "CONFIRM_REMOVE",
+      "message": "Send confirm: REMOVE to permanently remove this actor",
+      "tasks_warning": null
+     }
+    },
+    {
+     "scenario": "status-tasks-must-be-routed",
+     "status": 400,
+     "body_keys": {
+      "error": "Tasks must be routed",
+      "code": "TASKS_TO_ROUTE",
+      "message": "Actor has 3 active tasks",
+      "required": "Send task_action: pool (return to entity) or actor (pass to colleague)",
+      "actor_tasks": 3
+     },
+     "fixture": {
+      "error": "Tasks must be routed",
+      "code": "TASKS_TO_ROUTE",
+      "message": "Actor has 3 active tasks",
+      "required": "Send task_action: pool (return to entity) or actor (pass to colleague)",
+      "actor_tasks": 3
+     }
+    },
+    {
+     "scenario": "status-target-required",
+     "status": 400,
+     "body_keys": {
+      "error": "Target actor required"
+     },
+     "fixture": {
+      "error": "Target actor required"
+     }
+    },
+    {
+     "scenario": "status-target-not-active",
+     "status": 400,
+     "body_keys": {
+      "error": "Target actor not found or not active"
+     },
+     "fixture": {
+      "error": "Target actor not found or not active"
+     }
+    },
+    {
+     "scenario": "status-switched-on-sealed-no-mailer",
+     "status": 503,
+     "body_keys": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     },
+     "fixture": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment is sealed and has no e-mail sender set up, so a first code cannot be delivered. Nothing was changed."
+     }
+    },
+    {
+     "scenario": "status-switched-on-sealed-needs-an-email",
+     "status": 400,
+     "body_keys": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     },
+     "fixture": {
+      "error": "E-mail required",
+      "code": "EMPLOYEE_EMAIL_REQUIRED",
+      "message": "Add this employee's e-mail address — the first code is sent there and is never shown on screen."
+     }
+    },
+    {
+     "scenario": "status-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Status change failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Status change failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/actors/:id/tasks/route": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "chit_id and action required"
+     },
+     "fixture": {
+      "error": "chit_id and action required"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "chit_id and action required"
+     },
+     "fixture": {
+      "error": "chit_id and action required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "chit_id and action required"
+     },
+     "fixture": {
+      "error": "chit_id and action required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "chit_id and action required"
+     },
+     "fixture": {
+      "error": "chit_id and action required"
+     }
+    },
+    {
+     "scenario": "route-needs-both",
+     "status": 400,
+     "body_keys": {
+      "error": "chit_id and action required"
+     },
+     "fixture": {
+      "error": "chit_id and action required"
+     }
+    },
+    {
+     "scenario": "route-task-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Task not found"
+     },
+     "fixture": {
+      "error": "Task not found"
+     }
+    },
+    {
+     "scenario": "route-colleague-not-active",
+     "status": 400,
+     "body_keys": {
+      "error": "Target actor not found or not active"
+     },
+     "fixture": {
+      "error": "Target actor not found or not active"
+     }
+    },
+    {
+     "scenario": "route-push-without-a-colleague",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid action"
+     },
+     "fixture": {
+      "error": "Invalid action"
+     }
+    },
+    {
+     "scenario": "route-unknown-action",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid action"
+     },
+     "fixture": {
+      "error": "Invalid action"
+     }
+    },
+    {
+     "scenario": "route-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to route task"
+     },
+     "fixture": {
+      "error": "Failed to route task"
+     }
+    },
+    {
+     "scenario": "route-staff-is-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "PUT /api/actors/assign/:chit_id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "assign-unknown-action",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "action",
+        "message": "Action must be pull push or return"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "assign-bad-target-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "target_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "target_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "assign-chit-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Chit not found"
+     },
+     "fixture": {
+      "error": "Chit not found"
+     }
+    },
+    {
+     "scenario": "assign-pull-already-held",
+     "status": 400,
+     "body_keys": {
+      "error": "Already assigned",
+      "message": "Already assigned to Meena"
+     },
+     "fixture": {
+      "error": "Already assigned",
+      "message": "Already assigned to Meena"
+     }
+    },
+    {
+     "scenario": "assign-push-needs-a-target",
+     "status": 400,
+     "body_keys": {
+      "error": "target_actor_id required for push"
+     },
+     "fixture": {
+      "error": "target_actor_id required for push"
+     }
+    },
+    {
+     "scenario": "assign-push-target-not-active",
+     "status": 400,
+     "body_keys": {
+      "error": "Target actor not found or not active"
+     },
+     "fixture": {
+      "error": "Target actor not found or not active"
+     }
+    },
+    {
+     "scenario": "assign-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Assignment failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Assignment failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/actors/break": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "break-unknown-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "break_type",
+        "message": "break_type must be short_break leave or end_break"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "break-bad-target-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "target_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "target_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "break-name-the-person",
+     "status": 400,
+     "body_keys": {
+      "error": "Name the person",
+      "code": "NAME_THE_PERSON",
+      "message": "Say who is away — pick the person."
+     },
+     "fixture": {
+      "error": "Name the person",
+      "code": "NAME_THE_PERSON",
+      "message": "Say who is away — pick the person."
+     }
+    },
+    {
+     "scenario": "break-person-not-in-the-shop",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "NOT_FOUND",
+      "message": "That person is not in your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "NOT_FOUND",
+      "message": "That person is not in your shop."
+     }
+    },
+    {
+     "scenario": "break-the-owner-names-someone-removed",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "NOT_FOUND",
+      "message": "That person is not in your shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "NOT_FOUND",
+      "message": "That person is not in your shop."
+     }
+    },
+    {
+     "scenario": "break-someone-is-switched-off",
+     "status": 400,
+     "body_keys": {
+      "error": "Switched off",
+      "code": "SWITCHED_OFF",
+      "message": "Ravi Kumar is switched off. Switch them on first."
+     },
+     "fixture": {
+      "error": "Switched off",
+      "code": "SWITCHED_OFF",
+      "message": "Ravi Kumar is switched off. Switch them on first."
+     }
+    },
+    {
+     "scenario": "break-staff-names-someone-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "break-covers-someone-away",
+     "status": 400,
+     "body_keys": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "You're covering Meena subject is away — you can't go off until they're back."
+     },
+     "fixture": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "You're covering Meena subject is away — you can't go off until they're back."
+     }
+    },
+    {
+     "scenario": "break-covers-two-away",
+     "status": 400,
+     "body_keys": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "You're covering Meena, Latha subject are away — you can't go off until they're back."
+     },
+     "fixture": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "You're covering Meena, Latha subject are away — you can't go off until they're back."
+     }
+    },
+    {
+     "scenario": "break-the-owner-puts-someone-away-who-covers",
+     "status": 400,
+     "body_keys": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "Ravi Kumar is covering Meena subject is away — they can't go off until they're back."
+     },
+     "fixture": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "Ravi Kumar is covering Meena subject is away — they can't go off until they're back."
+     }
+    },
+    {
+     "scenario": "break-own-cover-is-away",
+     "status": 400,
+     "body_keys": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "Your leave-cover Meena is also away — both can't be off at once."
+     },
+     "fixture": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "Your leave-cover Meena is also away — both can't be off at once."
+     }
+    },
+    {
+     "scenario": "break-their-cover-is-away",
+     "status": 400,
+     "body_keys": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "Ravi Kumar's leave-cover Meena is also away — both can't be off at once."
+     },
+     "fixture": {
+      "error": "Cover conflict",
+      "code": "COVER_CONFLICT",
+      "message": "Ravi Kumar's leave-cover Meena is also away — both can't be off at once."
+     }
+    },
+    {
+     "scenario": "break-leave-tasks-must-be-routed",
+     "status": 400,
+     "body_keys": {
+      "error": "Route tasks first",
+      "code": "TASKS_TO_ROUTE",
+      "message": "You have 2 active tasks",
+      "required": "Send task_action: pool (return to entity) or actor (pass to colleague)",
+      "task_count": 2
+     },
+     "fixture": {
+      "error": "Route tasks first",
+      "code": "TASKS_TO_ROUTE",
+      "message": "You have 2 active tasks",
+      "required": "Send task_action: pool (return to entity) or actor (pass to colleague)",
+      "task_count": 2
+     }
+    },
+    {
+     "scenario": "break-leave-tasks-must-be-routed-for-someone",
+     "status": 400,
+     "body_keys": {
+      "error": "Route tasks first",
+      "code": "TASKS_TO_ROUTE",
+      "message": "Ravi Kumar has 2 active tasks",
+      "required": "Send task_action: pool (return to entity) or actor (pass to colleague)",
+      "task_count": 2
+     },
+     "fixture": {
+      "error": "Route tasks first",
+      "code": "TASKS_TO_ROUTE",
+      "message": "Ravi Kumar has 2 active tasks",
+      "required": "Send task_action: pool (return to entity) or actor (pass to colleague)",
+      "task_count": 2
+     }
+    },
+    {
+     "scenario": "break-leave-target-required",
+     "status": 400,
+     "body_keys": {
+      "error": "Target actor required"
+     },
+     "fixture": {
+      "error": "Target actor required"
+     }
+    },
+    {
+     "scenario": "break-leave-target-not-active",
+     "status": 400,
+     "body_keys": {
+      "error": "Target actor not found or not active"
+     },
+     "fixture": {
+      "error": "Target actor not found or not active"
+     }
+    },
+    {
+     "scenario": "break-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Break failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Break failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/actors/change-pin": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "change-pin-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "current_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       },
+       {
+        "field": "new_pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "change-pin-not-the-same",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "confirm_pin",
+        "message": "New PINs do not match"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "confirm_pin",
+        "message": "New PINs do not match"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "change-pin-by-the-shop",
+     "status": 400,
+     "body_keys": {
+      "error": "Only actors can change PIN"
+     },
+     "fixture": {
+      "error": "Only actors can change PIN"
+     }
+    },
+    {
+     "scenario": "change-pin-person-gone",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found"
+     },
+     "fixture": {
+      "error": "Actor not found"
+     }
+    },
+    {
+     "scenario": "change-pin-none-set",
+     "status": 400,
+     "body_keys": {
+      "error": "No PIN set",
+      "message": "Set your PIN first via login"
+     },
+     "fixture": {
+      "error": "No PIN set",
+      "message": "Set your PIN first via login"
+     }
+    },
+    {
+     "scenario": "change-pin-wrong-current",
+     "status": 400,
+     "body_keys": {
+      "error": "Incorrect PIN",
+      "message": "Current PIN is incorrect"
+     },
+     "fixture": {
+      "error": "Incorrect PIN",
+      "message": "Current PIN is incorrect"
+     }
+    },
+    {
+     "scenario": "change-pin-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Change PIN failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Change PIN failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/actors/settings": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Settings update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Settings update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "settings-bad-model",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "assignment_model",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "assignment_model",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "settings-bad-ceiling",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "default_max_tasks",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "default_max_tasks",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "settings-bad-assignee-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "default_assignee_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "default_assignee_actor_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "settings-assignee-not-assignable",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid default assignee",
+      "message": "The default assignee must be an Act or Manager co-assist of this entity."
+     },
+     "fixture": {
+      "error": "Invalid default assignee",
+      "message": "The default assignee must be an Act or Manager co-assist of this entity."
+     }
+    },
+    {
+     "scenario": "settings-save-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Settings update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Settings update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "settings-staff-is-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/assist/catalogue-mine": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "mine-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "mine-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/catalogue-source/:key": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "source-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown source."
+     }
+    },
+    {
+     "scenario": "source-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/container/:id": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "container-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "container-read-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/erp-handoffs": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     }
+    },
+    {
+     "scenario": "handoffs-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "HANDOFF_STORE_MISSING",
+      "error": "ERP handoff not enabled yet — apply migration b82."
+     }
+    },
+    {
+     "scenario": "handoffs-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/penetration": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     }
+    },
+    {
+     "scenario": "penetration-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "PENETRATION_STORE_MISSING",
+      "error": "Penetration not enabled yet — apply migration b79."
+     }
+    },
+    {
+     "scenario": "penetration-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/questions": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     }
+    },
+    {
+     "scenario": "questions-unread",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not load assistant questions."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/regions": {
+   "answers": [
+    {
+     "scenario": "regions-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/assist/resolve": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "resolve-needs-a-region",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "NO_COUNTRY",
+      "error": "Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one."
+     }
+    },
+    {
+     "scenario": "resolve-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container or version."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container or version."
+     }
+    },
+    {
+     "scenario": "resolve-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "ask-nothing",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "ask-too-long",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Question is too long."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Question is too long."
+     }
+    },
+    {
+     "scenario": "ask-a-list",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Ask a question."
+     }
+    },
+    {
+     "scenario": "ask-not-configured",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "message": "The assistant model is not configured yet."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "message": "The assistant model is not configured yet."
+     }
+    },
+    {
+     "scenario": "ask-anonymous",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_SIGN_IN",
+      "message": "Sign in for fuller answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_SIGN_IN",
+      "message": "Sign in for fuller answers."
+     }
+    },
+    {
+     "scenario": "ask-empty-answer",
+     "status": 502,
+     "body_keys": {
+      "error": "Assistant error",
+      "message": "No answer produced — try again."
+     },
+     "fixture": {
+      "error": "Assistant error",
+      "message": "No answer produced — try again."
+     }
+    },
+    {
+     "scenario": "ask-wallet-empty",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     }
+    },
+    {
+     "scenario": "ask-rate-held",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     }
+    },
+    {
+     "scenario": "ask-day-cap",
+     "status": 503,
+     "body_keys": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     },
+     "fixture": {
+      "error": "assist_unavailable",
+      "code": "ASSIST_GATED",
+      "message": "The assistant is resting — the help library answers."
+     }
+    },
+    {
+     "scenario": "ask-model-fails",
+     "status": 502,
+     "body_keys": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     },
+     "fixture": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     }
+    },
+    {
+     "scenario": "ask-model-throws",
+     "status": 502,
+     "body_keys": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     },
+     "fixture": {
+      "error": "Assistant upstream error",
+      "message": "The assistant is busy — please try again."
+     }
+    },
+    {
+     "scenario": "ask-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Assistant error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Assistant error",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/catalogue-adopt": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "adopt-unknown-source",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown catalogue source."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown catalogue source."
+     }
+    },
+    {
+     "scenario": "adopt-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CATALOGUE_STORE_MISSING",
+      "error": "Catalogue persistence not enabled yet — apply migration b75."
+     }
+    },
+    {
+     "scenario": "adopt-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/catalogue-structure": {
+   "answers": [
+    {
+     "scenario": "structure-unknown-source",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown catalogue source.",
+      "available": [
+       {
+        "key": "beta-royale-play@v1",
+        "for_entity": "Beta",
+        "title": "Beta Traders — Royale Play designer wall finishes",
+        "item_count": 6,
+        "for_vertical": null
+       }
+      ]
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown catalogue source.",
+      "available": [
+       {
+        "key": "beta-royale-play@v1",
+        "for_entity": "Beta",
+        "title": "Beta Traders — Royale Play designer wall finishes",
+        "item_count": 6,
+        "for_vertical": null
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "structure-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/conform": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "conform-needs-a-standard",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Name the standard to check against."
+     }
+    },
+    {
+     "scenario": "conform-unknown-standard",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown standard.",
+      "available": [
+       {
+        "standard": "food-safety@v1",
+        "title": "Food safety — cold-chain storage",
+        "points": [
+         {
+          "key": "storage_temp_c",
+          "label": "Storage temperature (°C)",
+          "obligation": "must",
+          "rule": {
+           "max": 5
+          }
+         },
+         {
+          "key": "batch_id",
+          "label": "Batch / lot identifier",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "expiry_date",
+          "label": "Expiry date",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "haccp_checked",
+          "label": "HACCP check performed",
+          "obligation": "must",
+          "rule": {
+           "equals": true
+          }
+         }
+        ]
+       }
+      ]
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown standard.",
+      "available": [
+       {
+        "standard": "food-safety@v1",
+        "title": "Food safety — cold-chain storage",
+        "points": [
+         {
+          "key": "storage_temp_c",
+          "label": "Storage temperature (°C)",
+          "obligation": "must",
+          "rule": {
+           "max": 5
+          }
+         },
+         {
+          "key": "batch_id",
+          "label": "Batch / lot identifier",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "expiry_date",
+          "label": "Expiry date",
+          "obligation": "must",
+          "rule": {
+           "present": true
+          }
+         },
+         {
+          "key": "haccp_checked",
+          "label": "HACCP check performed",
+          "obligation": "must",
+          "rule": {
+           "equals": true
+          }
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "conform-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/gap": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "gap-needs-a-question",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Ask a question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Ask a question."
+     }
+    },
+    {
+     "scenario": "gap-too-long",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "Question is too long."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Question is too long."
+     }
+    },
+    {
+     "scenario": "gap-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not note the question."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not note the question."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/publish": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "publish-needs-both",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "question and answer are required."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "question and answer are required."
+     }
+    },
+    {
+     "scenario": "publish-not-a-help-desk",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "Only a help desk can publish to its catalogue.",
+      "why": "not_helpdesk"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Only a help desk can publish to its catalogue.",
+      "why": "not_helpdesk"
+     }
+    },
+    {
+     "scenario": "publish-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Could not publish."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Could not publish."
+     }
+    }
+   ]
+  },
+  "POST /api/assist/resolve": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    },
+    {
+     "scenario": "resolve-retired",
+     "status": 410,
+     "body_keys": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     },
+     "fixture": {
+      "ok": false,
+      "deprecated": true,
+      "error": "Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB."
+     }
+    }
+   ]
+  },
+  "PUT /api/assist/catalogue-source": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "source-needs-a-key",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "source-a-list",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "source_key is required (e.g. royale-play@v1)"
+     }
+    },
+    {
+     "scenario": "source-of-another-brand",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This source is owned by another brand."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This source is owned by another brand."
+     }
+    },
+    {
+     "scenario": "source-of-the-platform",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This source belongs to the platform."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This source belongs to the platform."
+     }
+    },
+    {
+     "scenario": "source-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     }
+    },
+    {
+     "scenario": "source-write-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "SOURCE_STORE_MISSING",
+      "error": "Source authoring not enabled yet — apply migration b78."
+     }
+    },
+    {
+     "scenario": "source-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/assist/container": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "container-needs-an-id",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id is required (e.g. royaleplay/tussar)"
+     }
+    },
+    {
+     "scenario": "container-of-another-brand",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This product container is owned by another brand."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This product container is owned by another brand."
+     }
+    },
+    {
+     "scenario": "container-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "CONTAINER_STORE_MISSING",
+      "error": "Container model not enabled yet — apply migration b80."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "CONTAINER_STORE_MISSING",
+      "error": "Container model not enabled yet — apply migration b80."
+     }
+    },
+    {
+     "scenario": "container-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/assist/region-override": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "region-needs-both",
+     "status": 422,
+     "body_keys": {
+      "ok": false,
+      "error": "container_id and region are required"
+     },
+     "fixture": {
+      "ok": false,
+      "error": "container_id and region are required"
+     }
+    },
+    {
+     "scenario": "region-unknown-container",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "error": "Unknown container."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Unknown container."
+     }
+    },
+    {
+     "scenario": "region-of-another-brand",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "error": "This container is owned by another brand."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "This container is owned by another brand."
+     }
+    },
+    {
+     "scenario": "region-store-missing",
+     "status": 503,
+     "body_keys": {
+      "ok": false,
+      "code": "REGION_STORE_MISSING",
+      "error": "Regional scatter not enabled yet — apply migration b81."
+     },
+     "fixture": {
+      "ok": false,
+      "code": "REGION_STORE_MISSING",
+      "error": "Regional scatter not enabled yet — apply migration b81."
+     }
+    },
+    {
+     "scenario": "region-fault",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "ok": false,
+      "error": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

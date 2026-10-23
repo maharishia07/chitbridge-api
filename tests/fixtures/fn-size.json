@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 230,
+  "long_functions": 228,
   "worst_complexity": 183,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -346,8 +346,6 @@
       "PATCH /:id",
       "POST /",
       "PUT /:id/status",
-      "PUT /assign/:chit_id",
-      "PUT /assign/:chit_id",
       "PUT /break"
     ],
     "routes/adopt.js": [

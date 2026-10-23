@@ -6,7 +6,7 @@
  * OWNS      the proof that each refusal of the nine authenticated intake routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from
  *           the code before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses
  *           each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world for the four routes addressed by a capture id in the path
- *           (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json. Also: no answer outside the statuses the contract declares
+ *           (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence-areas.json. Also: no answer outside the statuses the contract declares
  *           (lib/capture-contract.js), its words as units, and a body scan: no answer of any route, a 200 included, carries the text of a thrown error, a database or a provider.
  *           The THREE WEBHOOKS are an outside contract (Meta, the e-mail provider) and are NOT swept: this file proves they answer exactly as before (every status, content type and body,
  *           signed deliveries over the real route; the always-200, the HMAC check, the verify echo), which the --compare against the capture of the code before holds byte for byte.
@@ -16,7 +16,7 @@
  * CARD      11-crm-and-marketing/capture
  *
  *   node tests/api-problem-capture.test.cjs                    check
- *   node tests/api-problem-capture.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-capture.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-capture.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-capture.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-capture.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -52,7 +52,7 @@ const lab = harness({
 const { check, world } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const STRANGER = { identity_id: scenes.STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' };
 const VALUES = { id: scenes.CAP };
 const WORLDS = [
@@ -300,7 +300,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/capture.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), foreign.proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), foreign.proved);
   }
   check('signed in as another shop: all ' + foreign.asked + ' routes addressed by a capture id held (a foreign id answers exactly as an unknown one)', foreign.failures.length === 0, foreign.failures);
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
