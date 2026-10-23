@@ -678,6 +678,25 @@
   401,
   500
  ],
+ "GET /api/forms": [
+  401,
+  500
+ ],
+ "GET /api/forms/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/forms/instances/:id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/forms/instances/all": [
+  400,
+  401,
+  500
+ ],
  "GET /api/governance/ai-skills": [
   401,
   500
@@ -1953,6 +1972,39 @@
  "POST /api/folders/rules/preview": [
   400,
   401,
+  500
+ ],
+ "POST /api/forms/:key/issue": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/forms/:key/resolve": [
+  401,
+  404,
+  422,
+  500
+ ],
+ "POST /api/forms/instances/:id/attach": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/forms/instances/:id/sign": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
   500
  ],
  "POST /api/governance/ai-draft": [

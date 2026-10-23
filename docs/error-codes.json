@@ -1343,6 +1343,78 @@
    "since": "2026-10-22"
   },
   {
+   "code": "FORMS_ALREADY_SIGNED",
+   "status": "409",
+   "title": "Form already signed",
+   "shopkeeper": "This form is already signed.",
+   "hint": "Open it to see who signed it.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_BAD_CONTEXT",
+   "status": "400",
+   "title": "Not a deal",
+   "shopkeeper": "That is not a deal.",
+   "hint": "Pick the deal from the list.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_BAD_REQUEST",
+   "status": "400",
+   "title": "Form not done",
+   "shopkeeper": "The form could not be filled in or signed as asked.",
+   "hint": "Check what is missing, then try again.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_NOT_FOUND",
+   "status": "404",
+   "title": "Form not found",
+   "shopkeeper": "We could not find that form.",
+   "hint": "Go back to the list of forms and pick again.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_NOT_PARTICIPANT",
+   "status": "403",
+   "title": "Not on this chit",
+   "shopkeeper": "Your shop is not on that chit, so the form cannot be filed there.",
+   "hint": "Pick a chit your shop is on.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_REFUSED",
+   "status": "varies",
+   "title": "Form refused",
+   "shopkeeper": "The form could not be done.",
+   "hint": "Try again, or ask the person who set it up.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_STORE_MISSING",
+   "status": "503",
+   "title": "Forms not set up",
+   "shopkeeper": "Forms are not available here yet.",
+   "hint": "Ask the platform operator to set them up.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORM_NOT_READY",
+   "status": "400",
+   "title": "Form not ready",
+   "shopkeeper": "The form is missing some details it needs.",
+   "hint": "Fill in the fields listed, then try again.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FX_RATE_MISSING",
    "status": "422",
    "title": "Exchange rate missing",
