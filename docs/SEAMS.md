@@ -30,7 +30,7 @@ of file each thing is; this says what already does the job.
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
 | 47 | `again` | `signin-ui.js` |  |
-| 47 | `entry` | `books-store.js` |  |
+| 48 | `entry` | `books-store.js` |  |
 | 47 | `next` | `dayopen.js` | the next thing to do — |
 | 47 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 45 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -81,7 +81,7 @@ of file each thing is; this says what already does the job.
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 25 | `refuse` | `books-pack.js` | const sha = (text) => |
-| 25 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 26 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 25 | `gate` | `country-setup.js` | gate(h, entity): |
 | 25 | `register` | `regulation.js` | register(pack) → the pack — |
 | 24 | `load` | `cap-assist.js` |  |
@@ -166,7 +166,7 @@ of file each thing is; this says what already does the job.
 | 14 | `orders` | `home-facts.js` | the till said 2 — |
 | 14 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 14 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
-| 14 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
+| 15 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
