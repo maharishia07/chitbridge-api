@@ -126,11 +126,12 @@ function harness(options) {
     return generic.concat(named.filter((one) => routes[one.route]));
   }
 
-  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is */
-  function send(port, method, urlPath, body) {
+  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is. `raw` = { headers, text }: the bytes as a provider signs and sends them (a webhook), not JSON */
+  function send(port, method, urlPath, body, raw) {
     return new Promise((resolve) => {
-      const data = body === undefined ? null : JSON.stringify(body);
-      const request = http.request({ port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} }, (response) => {
+      const data = raw ? raw.text : body === undefined ? null : JSON.stringify(body);
+      const headers = raw ? Object.assign({ 'content-length': Buffer.byteLength(data) }, raw.headers) : data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {};
+      const request = http.request({ port, path: urlPath, method, headers }, (response) => {
         const parts = [];
         response.on('data', (part) => parts.push(part));
         response.on('end', () => {
@@ -166,7 +167,7 @@ function harness(options) {
     const restore = applyPatch(scenario.patch, modules);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body);
+    const answer = await send(port, method, scenario.url, body, scenario.raw);
     restore();
     return answer;
   }
