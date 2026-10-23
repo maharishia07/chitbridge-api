@@ -228,8 +228,8 @@ const PURGE_EVERY_MS = 6 * HOUR_MS;
 async function purgeExpired(deps) {
   const query = ((deps && deps.query) || require('../db').query);
   try {
-    const r = await query('SELECT ops.f_idempotency_purge($1, $2, $3) AS purged', [windowHours(), IN_PROGRESS_STALE_MINUTES, TOKEN_REPLAY_MINUTES]);
-    return { purged: Number(r.rows[0].purged) || 0 };
+    const swept = await query('SELECT ops.f_idempotency_purge($1, $2, $3) AS purged', [windowHours(), IN_PROGRESS_STALE_MINUTES, TOKEN_REPLAY_MINUTES]);
+    return { purged: Number(swept.rows[0].purged) || 0 };
   } catch (e) {
     if (e && (e.code === '42883' || e.code === '3F000' || STORE_MISSING_CODES.includes(e.code))) return { purged: 0, notMigrated: true }; /* b780 not run yet */
     throw e;
@@ -241,7 +241,7 @@ function startPurge() {
   if (purgeTimer || process.env.IDEMPOTENCY_PURGE === '0' || require('../lib/dev-otp').isTestRun()) return false;
   const kick = () => {
     purgeExpired()
-      .then((r) => r.notMigrated && log.warn('idempotency purge: ops.f_idempotency_purge is not migrated (b780) — expired keys wait for their shop', {}))
+      .then((outcome) => outcome.notMigrated && log.warn('idempotency purge: ops.f_idempotency_purge is not migrated (b780) — expired keys wait for their shop', {}))
       .catch(log.orElse('idempotency purge: failed — carried on without it'));
   };
   setTimeout(kick, 10 * 60000).unref();

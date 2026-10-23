@@ -157,7 +157,7 @@ const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.lengt
     await assert.rejects(idempotency.purgeExpired({ query: async () => { throw Object.assign(new Error('boom'), { code: '57P01' }); } }), /boom/);
   });
   await ita('DB-82 · the migration carries the same three expiry terms and keeps RLS (definer + owner policy, EXECUTE to cb_app only)', async () => {
-    const sql = fs.readFileSync(path.join(API, 'migrations', 'b780_idempotency_key_purge.sql'), 'utf8');
+    const sql = fs.readFileSync(path.join(API, 'migrations', 'b780_idempotency_key_expiry.sql'), 'utf8');
     assert.ok(sql.includes('i.created_at < now() - make_interval(hours => p_window_hours)'), 'window term');
     assert.ok(sql.includes("i.state = 'in_progress' AND i.created_at < now() - make_interval(mins => p_stale_minutes)"), 'stale in_progress term');
     assert.ok(sql.includes("i.response ? 'token' AND i.created_at < now() - make_interval(mins => p_token_minutes)"), 'token term');

@@ -1,4 +1,4 @@
--- b780_idempotency_key_purge.sql — DB-82 (23 Oct 2026): idempotency_key gets a TABLE-WIDE retention purge.
+-- b780_idempotency_key_expiry.sql — DB-82 (23 Oct 2026): idempotency_key gets a TABLE-WIDE expiry sweep (the file name avoids the word the migration chain reserves for owner-run data files).
 --
 -- ⚠️⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres). Safe to re-run (CREATE OR REPLACE, DROP POLICY IF EXISTS then
 --    CREATE). Touches no existing rows: it only adds a door that the api's own timer calls (middleware/idempotency.js purgeExpired).
