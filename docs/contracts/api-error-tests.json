@@ -5,6 +5,24 @@
   404,
   500
  ],
+ "DELETE /api/chits/:chit_id": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "DELETE /api/chits/:chit_id/payment": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/chits/:chit_id/purge": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "DELETE /api/folders/:id": [
   400,
   401,
@@ -775,6 +793,64 @@
   422,
   500
  ],
+ "POST /api/chits/:chit_id/amend": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/chits/:chit_id/archive": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/assign-lines": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/books-request": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/costs": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/deliver-lines": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/disputes": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/chits/:chit_id/messages": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/chits/:chit_id/payment": [
+  400,
+  401,
+  404,
+  409,
+  422,
+  500
+ ],
  "POST /api/chits/:chit_id/raida": [
   400,
   401,
@@ -792,6 +868,33 @@
   401,
   500,
   503
+ ],
+ "POST /api/chits/:chit_id/reprice": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/chits/:chit_id/restore": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/unarchive": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/:chit_id/unread": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/chits/assign-bulk": [
+  400,
+  401,
+  500
  ],
  "POST /api/chits/register/entries/:raida_id/accept": [
   400,
@@ -835,6 +938,15 @@
   401,
   500,
   503
+ ],
+ "POST /api/chits/send": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
  ],
  "POST /api/folders": [
   400,
@@ -931,6 +1043,53 @@
   400,
   401,
   403,
+  500
+ ],
+ "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/priority": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/priority-flag": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/star": [
+  401,
+  404,
+  500
+ ],
+ "PUT /api/chits/:chit_id/status": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/use": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/chits/:chit_id/void": [
+  400,
+  401,
+  403,
+  404,
+  409,
   500
  ],
  "PUT /api/folders/inventory/:code": [

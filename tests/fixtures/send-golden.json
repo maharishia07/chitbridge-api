@@ -5749,7 +5749,13 @@
    "client_ref": "C1/26-27/0041",
    "till": "C1",
    "taken_by": "C1",
-   "message": "Bill C1/26-27/0041 was already recorded by a different counter that is ALSO called C1. Two counters are numbering from the same series. This counter is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost."
+   "message": "Bill C1/26-27/0041 was already recorded by a different counter that is ALSO called C1. Two counters are numbering from the same series. This counter is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost.",
+   "type": "https://chitbridge.com/problems/till_series_collision",
+   "title": "Bill number already used",
+   "status": 409,
+   "detail": "Bill C1/26-27/0041 was already recorded by a different counter that is ALSO called C1. Two counters are numbering from the same series. This counter is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost.",
+   "hint": "The bill stays on this counter, unsent; it is given its own number next time.",
+   "request_id": null
   },
   "calls": [
    {
@@ -6937,7 +6943,13 @@
   "body": {
    "error": "Forbidden",
    "code": "TILL_SEND_REFUSED",
-   "message": "Not sent: a counter bill can go to one customer only. Counter bills go only to listed customers on ChitBridge."
+   "message": "Not sent: a counter bill can go to one customer only. Counter bills go only to listed customers on ChitBridge.",
+   "type": "https://chitbridge.com/problems/till_send_refused",
+   "title": "Counter bill not sent",
+   "status": 403,
+   "detail": "Not sent: a counter bill can go to one customer only. Counter bills go only to listed customers on ChitBridge.",
+   "hint": "The counter keeps it; send the rest.",
+   "request_id": null
   },
   "calls": [
    {
@@ -7708,7 +7720,13 @@
    "code": "TILL_CLAIM_MISMATCH",
    "field": "device_id",
    "client_ref": null,
-   "message": "This bill was made on another phone. It is kept where it was made — send it from that phone."
+   "message": "This bill was made on another phone. It is kept where it was made — send it from that phone.",
+   "type": "https://chitbridge.com/problems/till_claim_mismatch",
+   "title": "Bill from another phone",
+   "status": 400,
+   "detail": "This bill was made on another phone. It is kept where it was made — send it from that phone.",
+   "hint": "Send it from the phone that made it.",
+   "request_id": null
   },
   "calls": [
    {
@@ -7729,7 +7747,13 @@
    "limit_minor": 1000,
    "owed_minor": 900,
    "after_minor": 1500,
-   "party_id": "CUST"
+   "party_id": "CUST",
+   "type": "https://chitbridge.com/problems/over_limit",
+   "title": "Over the credit limit",
+   "status": 409,
+   "detail": "This sale takes them to 15.00 — over their credit limit of 10.00. Only the owner can allow it.",
+   "hint": "Ask the owner to allow it, or take a payment first.",
+   "request_id": null
   },
   "calls": [
    {
@@ -8735,7 +8759,13 @@
   "body": {
    "error": "Unknown page",
    "code": "PAGE_UNKNOWN",
-   "message": "No detail page is called sale.foo.bar"
+   "message": "No detail page is called sale.foo.bar",
+   "type": "https://chitbridge.com/problems/page_unknown",
+   "title": "Unknown chit page",
+   "status": 400,
+   "detail": "No detail page is called sale.foo.bar",
+   "hint": "Use a page from the list, or none.",
+   "request_id": null
   },
   "calls": [
    {
@@ -8751,7 +8781,14 @@
   "status": 400,
   "body": {
    "error": "Invalid recipient role",
-   "message": "role must be to|cc|for, got \"bcc\""
+   "message": "role must be to|cc|for, got \"bcc\"",
+   "type": "https://chitbridge.com/problems/chit_bad_request",
+   "title": "Chit request not accepted",
+   "status": 400,
+   "code": "CHIT_BAD_REQUEST",
+   "detail": "role must be to|cc|for, got \"bcc\"",
+   "hint": "Read the message, fix what it names and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -8767,7 +8804,14 @@
   "status": 400,
   "body": {
    "error": "Limit exceeded",
-   "message": "Recipient caps — to:5, cc:5, for:1"
+   "message": "Recipient caps — to:5, cc:5, for:1",
+   "type": "https://chitbridge.com/problems/chit_bad_request",
+   "title": "Chit request not accepted",
+   "status": 400,
+   "code": "CHIT_BAD_REQUEST",
+   "detail": "Recipient caps — to:5, cc:5, for:1",
+   "hint": "Read the message, fix what it names and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -8783,7 +8827,14 @@
   "status": 400,
   "body": {
    "error": "Limit exceeded",
-   "message": "Max 50 line items"
+   "message": "Max 50 line items",
+   "type": "https://chitbridge.com/problems/chit_bad_request",
+   "title": "Chit request not accepted",
+   "status": 400,
+   "code": "CHIT_BAD_REQUEST",
+   "detail": "Max 50 line items",
+   "hint": "Read the message, fix what it names and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -8799,7 +8850,14 @@
   "status": 404,
   "body": {
    "error": "Not found",
-   "message": "\"~mayur.sup-0001\" cannot receive chits — that is a local record, not a ChitBridge business."
+   "message": "\"~mayur.sup-0001\" cannot receive chits — that is a local record, not a ChitBridge business.",
+   "type": "https://chitbridge.com/problems/not_found",
+   "title": "Not found",
+   "status": 404,
+   "code": "NOT_FOUND",
+   "detail": "\"~mayur.sup-0001\" cannot receive chits — that is a local record, not a ChitBridge business.",
+   "hint": "Check the address or the name and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -8822,7 +8880,14 @@
   "status": 404,
   "body": {
    "error": "Not found",
-   "message": "Recipient \"Nobody Known\" not found in the platform"
+   "message": "Recipient \"Nobody Known\" not found in the platform",
+   "type": "https://chitbridge.com/problems/not_found",
+   "title": "Not found",
+   "status": 404,
+   "code": "NOT_FOUND",
+   "detail": "Recipient \"Nobody Known\" not found in the platform",
+   "hint": "Check the address or the name and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -8859,7 +8924,14 @@
   "status": 400,
   "body": {
    "error": "Invalid handoff",
-   "message": "Parent chit not co-held by sender: PARENT"
+   "message": "Parent chit not co-held by sender: PARENT",
+   "type": "https://chitbridge.com/problems/chit_bad_request",
+   "title": "Chit request not accepted",
+   "status": 400,
+   "code": "CHIT_BAD_REQUEST",
+   "detail": "Parent chit not co-held by sender: PARENT",
+   "hint": "Read the message, fix what it names and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -9526,7 +9598,14 @@
   "status": 404,
   "body": {
    "error": "Not found",
-   "message": "Draft not found"
+   "message": "Draft not found",
+   "type": "https://chitbridge.com/problems/not_found",
+   "title": "Not found",
+   "status": 404,
+   "code": "NOT_FOUND",
+   "detail": "Draft not found",
+   "hint": "Check the address or the name and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -9602,7 +9681,14 @@
   "status": 400,
   "body": {
    "error": "Not a draft",
-   "message": "This chit has already been sent"
+   "message": "This chit has already been sent",
+   "type": "https://chitbridge.com/problems/chit_bad_request",
+   "title": "Chit request not accepted",
+   "status": 400,
+   "code": "CHIT_BAD_REQUEST",
+   "detail": "This chit has already been sent",
+   "hint": "Read the message, fix what it names and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -10176,7 +10262,14 @@
   "status": 409,
   "body": {
    "error": "no_bridge_id",
-   "message": "This shop has no ChitBridge address yet, so a sale cannot be recorded against it. Open ChitBridge → Settings and set the shop's bridge id, then send this bill again."
+   "message": "This shop has no ChitBridge address yet, so a sale cannot be recorded against it. Open ChitBridge → Settings and set the shop's bridge id, then send this bill again.",
+   "type": "https://chitbridge.com/problems/chit_no_bridge_id",
+   "title": "Shop has no ChitBridge address",
+   "status": 409,
+   "code": "CHIT_NO_BRIDGE_ID",
+   "detail": "This shop has no ChitBridge address yet, so a sale cannot be recorded against it. Open ChitBridge → Settings and set the shop's bridge id, then send this bill again.",
+   "hint": "Open Settings, set the shop address, then send the bill again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -11031,7 +11124,14 @@
   "status": 500,
   "body": {
    "error": "Send failed",
-   "message": "Something went wrong — please try again."
+   "message": "Something went wrong — please try again.",
+   "type": "https://chitbridge.com/problems/internal",
+   "title": "Something went wrong",
+   "status": 500,
+   "code": "INTERNAL",
+   "detail": "Something went wrong on our side.",
+   "hint": "If it keeps happening, tell us the request id.",
+   "request_id": null
   },
   "calls": [
    {

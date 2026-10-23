@@ -54,7 +54,7 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: STAFF_ID, parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', display_name: 'Test staff', bridge_id: 'TESTSHOP' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "chit_header" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false, migrated: false };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false, migrated: false, till: null };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
@@ -104,6 +104,7 @@ function installStubs() {
       req.api_key = { jti: 'j1', scopes: world.keyScopes };
       req.till = holderOf({ kind: 'api_key', jti: 'j1', scopes: world.keyScopes }, {}, null);
     } else req.till = holderOf(Object.assign({ kind: 'session' }, world.who), null, null);
+    if (world.till) Object.assign(req.till, world.till);
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
@@ -158,6 +159,21 @@ const breaking = (pattern) => (sql) => {
   if (pattern.test(sql)) throw new Error(SECRET_SQL);
   return null;
 };
+const SELF_BILL = { recipients: [{ self: true }], purpose: 'order', line_items: [{ particulars: 'Tea', quantity: 1, price: 10 }] };
+/** a counter bill that carries its series number and the till that made it */
+const TILL_BILL = (till) => ({ recipients: [{ self: true }], purpose: 'order', client_ref: 'B-1', business_json: { till: { id: till }, billed_at: '2026-10-23T10:00:00Z' } });
+/** a stand-in db whose insert of the header loses the race on the bill number (the unique index on client_ref) */
+const racing = () => (sql) => {
+  if (/INSERT INTO chit_header/.test(sql)) throw Object.assign(new Error('duplicate key value violates unique constraint (client_ref)'), { code: '23505' });
+  return null;
+};
+/** a lookup that finds nothing the first time and the given row after */
+const firstNothingThen = (row) => {
+  let calls = 0;
+  return async () => (++calls > 1 ? row : null);
+};
+/** the copy a delivery reads: held by this shop, nothing special about it */
+const HELD_COPY = { copyOf: async () => ({ chit_id: PARTY, entity_id: SHOP, current_status: 'delivered', business_json: {} }) };
 const C = MOUNT;
 const COPY_ROW = { entity_id: SHOP, '?column?': 1 };
 const CHIT_ROW = { chit_id: PARTY, all_recipients: [{ entity_id: SHOP, display_name: 'Test shop' }, { entity_id: OTHER, display_name: 'Other shop', role: 'Act' }], purpose: 'order', created_at: '2026-10-01T00:00:00.000Z', role: 'Sent' };
@@ -224,6 +240,140 @@ const EXTRAS = [
   X('chit-entry-close-fails', 'POST ' + C + '/:chit_id/raida/:raida_id/close', 500, { body: { body: 'x' }, patch: { raida: { close: async () => { throw new Error(SECRET_SQL); } } } }),
   X('dispute-link-unknown-entry', 'POST ' + C + '/:chit_id/raida/:raida_id/dispute', 400, { body: { dispute_id: OTHER }, setup: { migrated: true } }),
   X('dispute-link-fails', 'POST ' + C + '/:chit_id/raida/:raida_id/dispute', 500, { body: { dispute_id: OTHER }, setup: { migrated: true, sqlRows: breaking(/raida/) } }),
+  /* ── send ── */
+  X('send-to-self', 'POST ' + C + '/send', 200, { body: SELF_BILL }),
+  X('send-draft-saved', 'POST ' + C + '/send', 200, { body: { is_draft: true, purpose: ' order ' } }),
+  X('send-fails', 'POST ' + C + '/send', 500, { body: SELF_BILL, setup: { db: 'fail' } }),
+  X('send-purpose-not-known', 'POST ' + C + '/send', 400, { body: { recipients: [{ self: true }], purpose: 'nope' } }),
+  X('send-wrong-twice', 'POST ' + C + '/send', 400, { body: { purpose: 'nope', self_copy: 'all', line_items: 'tea', business_json: [] } }),
+  X('send-recipient-names-nobody', 'POST ' + C + '/send', 400, { body: { recipients: [{}] } }),
+  X('send-recipient-is-null', 'POST ' + C + '/send', 400, { body: { recipients: [null] } }),
+  X('send-subject-too-long', 'POST ' + C + '/send', 400, { body: { recipients: [{ self: true }], manual_subject: 'x'.repeat(501) } }),
+  X('send-collision', 'POST ' + C + '/send', 409, { body: TILL_BILL('T-B'), patch: { 'counter-bill': { byRef: async () => ({ chit_id: PARTY, till_id: 'T-A', billed_at: null }) } } }),
+  X('send-replayed', 'POST ' + C + '/send', 200, { body: TILL_BILL('T-A'), patch: { 'counter-bill': { byRef: async () => ({ chit_id: PARTY, till_id: 'T-A', billed_at: null }) } } }),
+  X('send-race-lost-is-a-duplicate', 'POST ' + C + '/send', 200, { body: TILL_BILL('T-A'), setup: { sqlRows: racing() }, patch: { 'counter-bill': { byRef: firstNothingThen({ chit_id: PARTY, till_id: 'T-A', billed_at: null }) } } }),
+  X('send-race-lost-to-another-counter', 'POST ' + C + '/send', 409, { body: TILL_BILL('T-B'), setup: { sqlRows: racing() }, patch: { 'counter-bill': { byRef: firstNothingThen({ chit_id: PARTY, till_id: 'T-A', billed_at: null }) } } }),
+  X('send-across-test-and-live', 'POST ' + C + '/send', 409, { body: SELF_BILL, setup: { sqlRows: (sql) => { if (/INSERT INTO chit_header/.test(sql)) throw Object.assign(new Error('a test entity cannot trade with a live one'), { code: '23514' }); return null; } } }),
+  X('send-shop-has-no-address', 'POST ' + C + '/send', 409, { body: SELF_BILL, setup: { who: { identity_id: SHOP, identity_type: 'entity', display_name: 'Test shop' } } }),
+  X('send-country-not-set', 'POST ' + C + '/send', 422, { body: SELF_BILL, patch: { 'country-setup': { documentRefusal: () => ({ status: 422, code: 'COUNTRY_SETUP_PENDING', message: 'Say your country first.' }) } } }),
+  X('send-lab-chit-on-a-live-shop', 'POST ' + C + '/send', 409, { body: Object.assign({}, SELF_BILL, { business_json: { lab: true } }), setup: { sqlRows: answering(/->>'population'/, [{ population: 'live' }]) } }),
+  X('send-bill-from-another-phone', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { business_json: { till: { device_id: 'D2' } } }), setup: { till: { device_id: 'D1', by: SHOP } } }),
+  X('send-page-not-known', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { business_json: { page: 'nope' } }) }),
+  X('send-over-the-credit-limit', 'POST ' + C + '/send', 409, { body: Object.assign({}, SELF_BILL, { business_json: { customer: { name: 'A' } } }), patch: { 'finance-terms': { creditSaleCheck: async () => ({ over: true, limit_minor: 100, owed_minor: 90, after_minor: 120, party_id: PARTY }), overrideBy: () => null, overSentence: () => 'Over the limit.' } } }),
+  X('send-till-bill-to-a-stranger', 'POST ' + C + '/send', 403, { body: { recipients: [{ entity_id: OTHER }], purpose: 'order' }, setup: { asKey: true, keyScopes: ['till'] } }),
+  X('send-role-not-known', 'POST ' + C + '/send', 400, { body: { recipients: [{ self: true, role: 'zz' }] } }),
+  X('send-too-many-to', 'POST ' + C + '/send', 400, { body: { recipients: [1, 2, 3, 4, 5, 6].map(() => ({ self: true })) } }),
+  X('send-too-many-lines', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { line_items: Array.from({ length: 51 }, () => ({ particulars: 'Tea' })) }) }),
+  X('send-handoff-without-parents', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { trace: { is_origin: false } }) }),
+  X('send-recipient-not-found', 'POST ' + C + '/send', 404, { body: { recipients: [{ entity_id: OTHER }], purpose: 'order' } }),
+  X('send-recipient-is-a-local-record', 'POST ' + C + '/send', 404, { body: { recipients: [{ display_name: '~acmetraders.sup-0001' }], purpose: 'order' } }),
+  X('send-draft-to-promote-not-found', 'POST ' + C + '/send', 404, { body: Object.assign({}, SELF_BILL, { promote_draft_id: PARTY }) }),
+  X('send-draft-already-sent', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { promote_draft_id: PARTY }), setup: { sqlRows: answering(/SELECT role, business_json->>'page' AS page/, [{ role: 'Sent', page: null }]) } }),
+  /* ── the one status writer ── */
+  X('status-chit-not-received', 'PUT ' + C + '/:chit_id/status', 404, { body: { status: ' accepted ' } }),
+  X('status-fails', 'PUT ' + C + '/:chit_id/status', 500, { body: { status: 'accepted' }, setup: { db: 'fail' } }),
+  X('status-note-too-long', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'accepted', note: 'x'.repeat(501) } }),
+  X('status-already-there', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, noop: true, from: 'accepted' }) } } }),
+  X('status-step-not-allowed', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'completed' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'wrong_step', from: 'pending', allowed: ['accepted'] }) } } }),
+  X('status-level-refused', 'PUT ' + C + '/:chit_id/status', 403, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'read_only', from: 'pending' }) } } }),
+  X('status-moved-under-you', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => { throw Object.assign(new Error('Someone else just changed this.'), { code: 'status_conflict' }); } }) } } }),
+  X('status-reject-needs-a-reason', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'rejected' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'folder-inventory': { docOf: () => 'bill_received' } } }),
+  /* ── payment ── */
+  X('payment-chit-not-found', 'POST ' + C + '/:chit_id/payment', 404, { body: { method: 'cash', amount: '12.50', ref: ' R1 ' } }),
+  X('payment-fails', 'POST ' + C + '/:chit_id/payment', 500, { body: { method: 'cash' }, setup: { db: 'fail' } }),
+  X('payment-field-wrong', 'POST ' + C + '/:chit_id/payment', 400, { body: { method: 'cheque', amount: -1, note: 'x'.repeat(241), acknowledge: 'yes', client_ref: 'x'.repeat(81) } }),
+  X('payment-tender-is-on-the-bill', 'POST ' + C + '/:chit_id/payment', 422, { body: { method: 'cash' }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: { payment: { parts: [{}] } } }) } } }),
+  X('payment-above-the-quote', 'POST ' + C + '/:chit_id/payment', 422, { body: { method: 'cash', amount: 500 }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {}, summary_json: { total_value: 100 } }) } } }),
+  X('payment-books-refuse', 'POST ' + C + '/:chit_id/payment', 409, { body: { method: 'cash' }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {} }) }, 'books-hooks': { chitPaid: async () => { throw Object.assign(new Error('That month is locked.'), { code: 'PERIOD_LOCKED' }); } } } }),
+  X('payment-already-paid', 'POST ' + C + '/:chit_id/payment', 409, { body: { method: 'cash' }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {} }) }, 'books-hooks': { chitPaid: async () => { throw Object.assign(new Error('Paid on 1 Oct.'), { code: 'ALREADY_PAID', warnings: [] }); } } } }),
+  X('payment-recorded', 'POST ' + C + '/:chit_id/payment', 200, { body: { method: 'upi', ref: 'U1', client_ref: 'c1' }, setup: { sqlRows: answering(/UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('payment'/, [{ chit_id: PARTY }]) }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {} }) }, 'books-hooks': { chitPaid: async () => ({ payment: {} }) } } }),
+  X('payment-cleared', 'DELETE ' + C + '/:chit_id/payment', 200, { setup: { sqlRows: answering(/- 'payment' WHERE/, [{ chit_id: PARTY }]) } }),
+  X('payment-clear-fails', 'DELETE ' + C + '/:chit_id/payment', 500, { setup: { db: 'fail' } }),
+  X('payment-clear-no-chit', 'DELETE ' + C + '/:chit_id/payment', 404, {}),
+  X('books-request-by-a-key', 'POST ' + C + '/:chit_id/books-request', 403, { setup: { asKey: true } }),
+  X('books-request-no-chit', 'POST ' + C + '/:chit_id/books-request', 404, {}),
+  X('books-request-made', 'POST ' + C + '/:chit_id/books-request', 200, { setup: { sqlRows: answering(/jsonb_build_object\('books_request'/, [{ chit_id: PARTY }]) } }),
+  X('books-request-fails', 'POST ' + C + '/:chit_id/books-request', 500, { setup: { db: 'fail' } }),
+  /* ── messages and disputes ── */
+  X('message-by-a-viewer', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external' }, setup: { who: VIEWER } }),
+  X('message-by-a-non-participant', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external' } }),
+  X('message-fails', 'POST ' + C + '/:chit_id/messages', 500, { body: { message_text: 'hi', thread_type: 'external' }, setup: { db: 'fail' } }),
+  X('message-on-a-dispute-not-mine', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external', is_dispute: 'true', dispute_id: OTHER }, setup: { sqlRows: answering(/SELECT entity_id FROM chit_status/, [COPY_ROW]) } }),
+  X('message-fields-wrong', 'POST ' + C + '/:chit_id/messages', 400, { body: { message_text: '   ', thread_type: 'loud', is_dispute: 'maybe', dispute_id: 'x', line_id: 5 } }),
+  X('message-posted', 'POST ' + C + '/:chit_id/messages', 200, { body: { message_text: '  hello  ', thread_type: 'internal', line_id: null }, setup: { sqlRows: answering(/SELECT entity_id FROM chit_status/, [COPY_ROW]) } }),
+  X('dispute-by-a-non-participant', 'POST ' + C + '/:chit_id/disputes', 403, { body: { category: 'quality', reason: ' The goods were short by two boxes ' } }),
+  X('dispute-fails', 'POST ' + C + '/:chit_id/disputes', 500, { body: { category: 'quality', reason: 'The goods were short by two boxes' }, setup: { db: 'fail' } }),
+  X('dispute-fields-wrong', 'POST ' + C + '/:chit_id/disputes', 400, { body: { category: 'x', reason: 'short', target_entity_id: 'x', participant_entity_ids: 'a', chit_wide: 'maybe', via: 'post' } }),
+  X('dispute-against-myself', 'POST ' + C + '/:chit_id/disputes', 400, { body: { category: 'quality', reason: 'The goods were short by two boxes', target_entity_id: SHOP }, setup: { sqlRows: answering(/SELECT current_status FROM chit_status/, [{ current_status: 'pending' }]) } }),
+  X('dispute-already-open', 'POST ' + C + '/:chit_id/disputes', 400, { body: { category: 'quality', reason: 'The goods were short by two boxes' }, setup: { sqlRows: answeringAll([[/SELECT current_status FROM chit_status/, [{ current_status: 'pending' }]], [/SELECT dispute_id FROM chit_disputes/, [{ dispute_id: OTHER }]]]) } }),
+  X('dispute-table-missing', 'POST ' + C + '/:chit_id/disputes', 500, { body: { category: 'quality', reason: 'The goods were short by two boxes' }, setup: { sqlRows: (sql) => { if (/FROM chit_status/.test(sql)) throw new Error('relation "chit_disputes" does not exist'); return null; } } }),
+  X('resolve-dispute-not-found', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 404, { body: { resolution_note: ' Sorted ' } }),
+  X('resolve-fails', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 500, { body: { resolution_note: 'Sorted' }, setup: { db: 'fail' } }),
+  X('resolve-note-missing', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 400, { body: { resolution_note: ' ', target_entity_id: 'x' } }),
+  X('resolve-already-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 400, { body: { resolution_note: 'Sorted' }, setup: { sqlRows: answering(/SELECT \* FROM chit_disputes/, [{ dispute_id: OTHER, status: 'resolved', raised_by_entity_id: SHOP }]) } }),
+  X('resolve-not-the-raiser', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 403, { body: { resolution_note: 'Sorted' }, setup: { sqlRows: answering(/SELECT \* FROM chit_disputes/, [{ dispute_id: OTHER, status: 'open', raised_by_entity_id: OTHER }]) } }),
+  X('resolve-by-a-viewer', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 403, { body: { resolution_note: 'Sorted' }, setup: { who: VIEWER, sqlRows: answering(/SELECT \* FROM chit_disputes/, [{ dispute_id: OTHER, status: 'open', raised_by_entity_id: SHOP }]) } }),
+  X('resolve-target-is-no-party', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 400, { body: { resolution_note: 'Sorted', target_entity_id: OTHER }, setup: { sqlRows: answering(/SELECT \* FROM chit_disputes/, [{ dispute_id: OTHER, status: 'open', raised_by_entity_id: SHOP }]) } }),
+  /* ── priority, void, assign, housekeeping of my copy ── */
+  X('priority-chit-not-found', 'PUT ' + C + '/:chit_id/priority', 404, { body: { priority: ' high ' } }),
+  X('priority-fails', 'PUT ' + C + '/:chit_id/priority', 500, { body: { priority: 'high' }, setup: { db: 'fail' } }),
+  X('priority-urgent-needs-a-reason', 'PUT ' + C + '/:chit_id/priority', 400, { body: { priority: 'urgent', reason: '   ' } }),
+  X('priority-word-wrong', 'PUT ' + C + '/:chit_id/priority', 400, { body: { priority: 'now', reason: 'x'.repeat(501) } }),
+  X('priority-set', 'PUT ' + C + '/:chit_id/priority', 200, { body: { priority: 'high', reason: null }, setup: { sqlRows: answering(/SELECT current_status FROM chit_status/, [{ current_status: 'pending' }]) } }),
+  X('priority-flag-chit-not-found', 'PUT ' + C + '/:chit_id/priority-flag', 404, { body: { priority: true } }),
+  X('priority-flag-fails', 'PUT ' + C + '/:chit_id/priority-flag', 500, { body: { priority: 'true' }, setup: { db: 'fail' } }),
+  X('priority-flag-already-set', 'PUT ' + C + '/:chit_id/priority-flag', 409, { body: { priority: true }, setup: { sqlRows: answering(/customer_priority_locked FROM chit_status/, [{ customer_priority_locked: true }]) } }),
+  X('priority-flag-word-wrong', 'PUT ' + C + '/:chit_id/priority-flag', 400, { body: { priority: 'maybe' } }),
+  X('priority-flag-set', 'PUT ' + C + '/:chit_id/priority-flag', 200, { body: { priority: 1 }, setup: { sqlRows: answering(/customer_priority_locked FROM chit_status/, [{ customer_priority_locked: false }]) } }),
+  X('void-chit-not-found', 'PUT ' + C + '/:chit_id/void', 404, { body: { reason: ' Mistake ' } }),
+  X('void-not-the-sender', 'PUT ' + C + '/:chit_id/void', 403, { body: { reason: 'Mistake' }, setup: { sqlRows: answering(/SELECT sender_entity_id FROM chit_header/, [{ sender_entity_id: OTHER }]) } }),
+  X('void-fails', 'PUT ' + C + '/:chit_id/void', 500, { body: { reason: 'Mistake' }, setup: { db: 'fail' } }),
+  X('void-reason-missing', 'PUT ' + C + '/:chit_id/void', 400, { body: { reason: '  ' } }),
+  X('void-rail-refuses-the-level', 'PUT ' + C + '/:chit_id/void', 403, { body: { reason: 'Mistake' }, setup: { sqlRows: answering(/SELECT sender_entity_id FROM chit_header/, [{ sender_entity_id: SHOP }]) }, patch: { 'rail-status': { COPIES: ['sent'], statusGate: async () => ({ ok: false, why: 'read_only', from: 'pending' }) } } }),
+  X('void-too-late', 'PUT ' + C + '/:chit_id/void', 409, { body: { reason: 'Mistake' }, setup: { sqlRows: answering(/SELECT sender_entity_id FROM chit_header/, [{ sender_entity_id: SHOP }]) }, patch: { 'rail-status': { COPIES: ['sent'], statusGate: async () => ({ ok: false, why: 'wrong_step', from: 'completed', allowed: [] }) } } }),
+  X('void-books-refuse', 'PUT ' + C + '/:chit_id/void', 409, { body: { reason: 'Mistake' }, setup: { sqlRows: answering(/SELECT sender_entity_id FROM chit_header/, [{ sender_entity_id: SHOP }]) }, patch: { 'rail-status': { COPIES: ['sent'], statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'books-hooks': { isBooksRefusal: () => true, chitWithdrawn: async () => { throw Object.assign(new Error('Every month is locked.'), { code: 'PERIOD_LOCKED' }); } } } }),
+  X('void-withdrawn', 'PUT ' + C + '/:chit_id/void', 200, { body: { reason: 'Mistake' }, setup: { sqlRows: answering(/SELECT sender_entity_id FROM chit_header/, [{ sender_entity_id: SHOP }]) }, patch: { 'rail-status': { COPIES: ['sent'], statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'books-hooks': { chitWithdrawn: async () => ({ none: true }) } } }),
+  X('bulk-target-not-assignable', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER } }),
+  X('bulk-fails', 'POST ' + C + '/assign-bulk', 500, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { db: 'fail' } }),
+  X('bulk-too-many', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: Array.from({ length: 201 }, () => PARTY), target_actor_id: OTHER } }),
+  X('bulk-in-pull-mode', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { sqlRows: answering(/entity_actor_settings/, [{ assignment_model: 'pull' }]) } }),
+  X('bulk-fields-wrong', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [], target_actor_id: 'x' } }),
+  X('delete-chit-not-found', 'DELETE ' + C + '/:chit_id', 404, {}),
+  X('delete-fails', 'DELETE ' + C + '/:chit_id', 500, { setup: { sqlRows: breaking(/FROM chit_status/) } }),
+  X('delete-refused-by-the-rail', 'DELETE ' + C + '/:chit_id', 409, { setup: { sqlRows: answering(/FROM chit_status/, [{ current_status: 'pending', direction: 'sent', role: 'Sent' }]) }, patch: { 'rail-actions': { canHousekeep: () => ({ ok: false, why: 'dispute_open', say: 'A dispute is open on this chit. Resolve it first.' }) } } }),
+  X('archive-chit-not-found', 'POST ' + C + '/:chit_id/archive', 404, {}),
+  X('archive-refused-for-an-unreadable-count', 'POST ' + C + '/:chit_id/archive', 503, { patch: { 'rail-actions': { canHousekeep: () => ({ ok: false, why: 'disputes_unknown', say: 'Could not check for open disputes. Try again in a moment.' }) } } }),
+  X('archive-fails', 'POST ' + C + '/:chit_id/archive', 500, { setup: { sqlRows: breaking(/UPDATE chit_status SET archived_at = NOW/) } }),
+  X('purge-draft-of-another', 'DELETE ' + C + '/:chit_id/purge', 403, { setup: { sqlRows: answering(/SELECT role, created_by_actor_id/, [{ role: 'Draft', created_by_actor_id: OTHER }]) } }),
+  X('purge-not-found', 'DELETE ' + C + '/:chit_id/purge', 404, {}),
+  X('purge-fails', 'DELETE ' + C + '/:chit_id/purge', 500, { setup: { db: 'fail' } }),
+  X('purge-a-sent-chit', 'DELETE ' + C + '/:chit_id/purge', 409, { setup: { sqlRows: answering(/SELECT role, created_by_actor_id/, [{ role: 'Sent', created_by_actor_id: SHOP }]) }, patch: { 'rail-actions': { canHousekeep: () => ({ ok: false, why: 'co_held_record', say: 'This chit is a record both parties hold. Archive it instead.' }) } } }),
+  X('star-toggled', 'PUT ' + C + '/:chit_id/star', 200, { setup: { sqlRows: answering(/SELECT star_flag FROM chit_status/, [{ star_flag: false }]) } }),
+  X('unread-marked', 'POST ' + C + '/:chit_id/unread', 200, { setup: { sqlRows: answering(/SET read_at = NULL/, [{ chit_id: PARTY }]) } }),
+  X('unarchive-done', 'POST ' + C + '/:chit_id/unarchive', 200, { setup: { sqlRows: answering(/SET archived_at = NULL/, [{ chit_id: PARTY }]) } }),
+  X('restore-done', 'POST ' + C + '/:chit_id/restore', 200, { setup: { sqlRows: answering(/SET deleted_at = NULL/, [{ chit_id: PARTY }]) } }),
+  /* ── the rest of the writes ── */
+  X('reprice-by-a-viewer', 'POST ' + C + '/:chit_id/reprice', 403, { body: {}, setup: { who: VIEWER } }),
+  X('reprice-previewed', 'POST ' + C + '/:chit_id/reprice', 200, { body: { preview: true, line_ids: [PARTY] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { reprice: { plan: async () => ({ lines: [] }) } } }),
+  X('reprice-fails', 'POST ' + C + '/:chit_id/reprice', 500, { body: {}, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { reprice: { apply: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('reprice-library-refuses', 'POST ' + C + '/:chit_id/reprice', 409, { body: {}, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { reprice: { apply: async () => { throw Object.assign(new Error('No.'), { status: 409 }); } } } }),
+  X('cost-recorded', 'POST ' + C + '/:chit_id/costs', 200, { body: [{ kind: 'fare', amount: 50 }], setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { cost: { record: async () => ({ recorded: 1 }) } } }),
+  X('cost-refused', 'POST ' + C + '/:chit_id/costs', 400, { body: { rows: [] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { cost: { record: async () => { throw Object.assign(new Error('No rows.'), { status: 400 }); } } } }),
+  X('use-refused', 'PUT ' + C + '/:chit_id/use', 409, { body: { bill: 'resale' }, patch: { 'bill-use': { set: async () => ({ ok: false, status: 409, message: 'Only a bill you received says what its goods are for' }) } } }),
+  X('use-saved', 'PUT ' + C + '/:chit_id/use', 200, { body: { bill: 'resale' }, patch: { 'bill-use': { set: async () => ({ ok: true, use: { bill: 'resale' } }) } } }),
+  X('use-chit-not-found', 'PUT ' + C + '/:chit_id/use', 404, { body: { bill: 'resale' } }),
+  X('use-fails', 'PUT ' + C + '/:chit_id/use', 500, { body: { bill: 'resale' }, patch: { 'bill-use': { set: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('delivery-by-a-viewer', 'POST ' + C + '/:chit_id/deliver-lines', 403, { body: [], setup: { who: VIEWER } }),
+  X('delivery-fails', 'POST ' + C + '/:chit_id/deliver-lines', 500, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw new Error(SECRET_SQL); } }, 'tax-copy': HELD_COPY } }),
+  X('delivery-refused-by-the-recorder', 'POST ' + C + '/:chit_id/deliver-lines', 400, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw Object.assign(new Error('Nothing to record'), { status: 400 }); } }, 'tax-copy': HELD_COPY } }),
+  X('assign-by-a-viewer', 'POST ' + C + '/:chit_id/assign-lines', 403, { body: { edits: [] }, setup: { who: VIEWER } }),
+  X('assign-fails', 'POST ' + C + '/:chit_id/assign-lines', 500, { body: [], setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { assign: { assign: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('assign-done', 'POST ' + C + '/:chit_id/assign-lines', 200, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { assign: { assign: async () => ({ assignments: [] }) } } }),
+  X('amend-a-delivered-line', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('That line has been delivered.'), { code: 'LINE_DELIVERED' }); } } } }),
+  X('amend-a-value-the-database-refuses', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('check'), { code: '23514', constraint: 'amendment_reason_code_check' }); } } } }),
+  X('amend-by-a-viewer', 'POST ' + C + '/:chit_id/amend', 403, { body: { edits: [] }, setup: { who: VIEWER } }),
+  X('amend-fails', 'POST ' + C + '/:chit_id/amend', 500, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('amend-done', 'POST ' + C + '/:chit_id/amend', 200, { body: [], setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => ({ amendments: [] }) } } }),
   X('networks-listed', 'GET ' + C + '/trace/networks', 200, { setup: { sqlRows: answering(/network_id/, [{ network_id: 'net1', is_operator: true, edges: '2' }]) } })
 ];
 
@@ -451,6 +601,132 @@ function checkCodes(recording) {
   check('the codes in lower case are the ones the old body carried, kept as they were (' + lowerCase.join(', ') + ')', lowerCase.every((code) => ['status_conflict', 'reason_required', 'disputes_unknown'].includes(code) || /^[a-z_]+$/.test(code)));
 }
 
+/* ── the schemas against the chains they replaced ────────────────────────────────────────────────────────── */
+/**
+ * the express-validator chains as routes/chits.js had them before the sweep (the oracle: nothing in the routes reads these). Each route: the chains in their order, a body that passes all of them,
+ * and for the send the recipients rule exactly as it was thrown.
+ */
+function oldChains() {
+  const { body } = require('express-validator');
+  const railActions = require(path.join(HERE, 'lib', 'rail-actions'));
+  const recipients = (value, { req }) => {
+    const list = Array.isArray(req.body.recipients) ? req.body.recipients : Array.isArray(req.body.receivers) ? req.body.receivers : [];
+    if (!req.body.is_draft && list.length === 0) throw new Error('At least one recipient required');
+    for (const one of list) if (!one.entity_id && !one.display_name && !one.name && one.self !== true) throw new Error('Each recipient must have entity_id, display_name, name, or self:true');
+    return true;
+  };
+  const purposes = ['order', 'invoice', 'receipt', 'inquiry', 'delivery_note', 'general', 'credit_note', 'expense', 'income', 'subscription'];
+  return {
+    'POST /send': { fine: { recipients: [{ self: true }] }, chains: [body().custom(recipients), body('purpose').optional().trim().isIn(purposes).withMessage('Invalid purpose'), body('manual_subject').optional().trim().isLength({ max: 500 }), body('self_copy').optional().isIn(['both', 'sent', 'received']).withMessage('self_copy must be both|sent|received'), body('line_items').optional().isArray(), body('business_json').optional().isObject()] },
+    'PUT /:chit_id/status': { fine: { status: 'accepted' }, chains: [body('status').trim().isIn(railActions.ASKABLE).withMessage('Invalid status'), body('note').optional().trim().isLength({ max: 500 })] },
+    'POST /:chit_id/payment': { fine: { method: 'cash' }, chains: [body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray(), body('client_ref').optional().trim().isLength({ max: 80 })] },
+    'POST /:chit_id/messages': { fine: { message_text: 'hi', thread_type: 'external' }, chains: [body('message_text').trim().notEmpty().withMessage('Message text required'), body('thread_type').isIn(['external', 'internal']).withMessage('thread_type must be external or internal'), body('is_dispute').optional().isBoolean(), body('dispute_id').optional({ nullable: true }).isUUID(), body('line_id').optional({ nullable: true }).isUUID()] },
+    'POST /:chit_id/disputes': { fine: { category: 'quality', reason: 'The goods were short' }, chains: [body('category').isIn(['quality', 'quantity', 'delivery', 'payment', 'docs', 'other']).withMessage('Invalid category'), body('reason').trim().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'), body('target_entity_id').optional({ nullable: true }).isUUID().withMessage('Bad target'), body('participant_entity_ids').optional().isArray().withMessage('participant_entity_ids must be an array'), body('chit_wide').optional().isBoolean(), body('via').optional().isIn(['chit', 'mailbox'])] },
+    'PUT /:chit_id/disputes/:dispute_id/resolve': { fine: { resolution_note: 'Sorted' }, chains: [body('resolution_note').trim().notEmpty().withMessage('Resolution note required'), body('target_entity_id').optional({ nullable: true }).isUUID()] },
+    'PUT /:chit_id/priority': { fine: { priority: 'high' }, chains: [body('priority').trim().isIn(['normal', 'high', 'urgent']).withMessage('priority must be normal|high|urgent'), body('reason').optional().trim().isLength({ max: 500 })] },
+    'PUT /:chit_id/priority-flag': { fine: { priority: true }, chains: [body('priority').isBoolean().withMessage('priority must be true or false')] },
+    'PUT /:chit_id/void': { fine: { reason: 'Mistake' }, chains: [body('reason').trim().notEmpty().withMessage('A reason is required to void')] },
+    'POST /assign-bulk': { fine: { chit_ids: [PARTY], target_actor_id: OTHER }, chains: [body('chit_ids').isArray({ min: 1 }).withMessage('chit_ids[] required'), body('target_actor_id').isUUID().withMessage('target_actor_id required')] }
+  };
+}
+
+const NEWLINE = String.fromCharCode(10);
+const TAB = String.fromCharCode(9);
+const NBSP = String.fromCharCode(0xa0);
+const SMILE = String.fromCodePoint(0x1f600);
+const E_ACUTE = String.fromCharCode(0xe9);
+/** words and shapes every field is tried with: text of every edge, and what is not text */
+const TEXTS = ['', ' ', 'a', ' a ', 'order', ' order ', 'ORDER', 'high', ' high ', 'accepted', ' accepted ', 'cash', 'both', 'external', 'quality', 'chit', 'true', 'false', '1', '0', '12.5', '-1', '-0', '+5', '5.', '.5', 'e3', '1e3', '5e-3', ' 5', '5 ', 'abc', 'x'.repeat(79), 'x'.repeat(80), 'x'.repeat(81), 'x'.repeat(119), 'x'.repeat(120), 'x'.repeat(121), 'x'.repeat(239), 'x'.repeat(240), 'x'.repeat(241), 'x'.repeat(499), 'x'.repeat(500), 'x'.repeat(501), ' ' + 'x'.repeat(500) + ' ', '  ' + 'x'.repeat(501) + '  ', SMILE.repeat(500), SMILE.repeat(501), E_ACUTE.repeat(500), E_ACUTE.repeat(501), 'a' + TAB + 'b', NEWLINE + ' a ' + NEWLINE, NBSP + 'a' + NBSP, 'short', 'nine char', 'ten chars!', '   ten chars   ', 'The goods were short', '11111111-2222-4333-8444-555555555555', '11111111-2222-3333-4444-555555555555', 'AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE', '11111111222243338444555555555555', '00000000-0000-0000-0000-000000000000', 'nope'];
+/* every word a list of the chains knew, so a word dropped or misspelt in a schema is found */
+TEXTS.push(...['order', 'invoice', 'receipt', 'inquiry', 'delivery_note', 'general', 'credit_note', 'expense', 'income', 'subscription', 'upi', 'cash', 'card', 'bank', 'other', 'quality', 'quantity', 'delivery', 'payment', 'docs', 'mailbox', 'normal', 'urgent', 'internal', 'sent', 'received'], ...require(path.join(HERE, 'lib', 'rail-actions')).ASKABLE);
+const OTHERS = [0, 1, 5, -1, 12.5, true, false, null, [], ['a'], {}, { a: 1 }];
+/** the fields whose chain read a value as TEXT (a number or a boolean was turned into its text before it was asked): the schema asks for text, and these are the values that differ */
+const TEXT_FIELDS = { 'POST /send': ['purpose', 'manual_subject'], 'PUT /:chit_id/status': ['status', 'note'], 'POST /:chit_id/payment': ['ref', 'note', 'client_ref', 'method'], 'POST /:chit_id/messages': ['message_text', 'thread_type', 'dispute_id', 'line_id'], 'POST /:chit_id/disputes': ['category', 'reason', 'target_entity_id', 'via'], 'PUT /:chit_id/disputes/:dispute_id/resolve': ['resolution_note', 'target_entity_id'], 'PUT /:chit_id/priority': ['priority', 'reason'], 'PUT /:chit_id/void': ['reason'], 'POST /assign-bulk': ['target_actor_id'] };
+
+/** run the oracle chains over a request body: the failures as { field, message }, and the body the sanitisers left */
+async function chainOutcome(chains, requestBody) {
+  const { validationResult } = require('express-validator');
+  const request = { body: JSON.parse(JSON.stringify(requestBody === undefined ? {} : requestBody)) };
+  for (const chain of chains) await chain.run(request);
+  return { failures: validationResult(request).array().map((one) => ({ field: one.path, message: one.msg })), body: request.body };
+}
+/** the schema side: the failures of the route's body schema (plus the recipients rule of a send), as the old { field, message } details, and the body after trimmedBody */
+function schemaOutcome(route, requestBody) {
+  const { bodyEngine, bodySchemaOf, errorsOf } = require(path.join(HERE, 'middleware', 'validate'));
+  const contract = require(path.join(HERE, 'lib', 'chits-contract.js'));
+  const input = require(path.join(HERE, 'lib', 'chits-input.js'));
+  const operation = contract.operationFor(route);
+  const failures = errorsOf(bodyEngine.compile(bodySchemaOf(operation)), requestBody === undefined ? {} : requestBody);
+  const fault = route === 'POST /send' ? input.recipientFault(requestBody || {}) : '';
+  const all = (fault ? [{ field: '(body)', code: 'WRONG_VALUE', detail: '(body) ' + fault + '.' }] : []).concat(failures);
+  return { failures: all.length ? input.invalidChit(all, route).details : [] };
+}
+
+async function checkChainsAgree() {
+  console.log('\n-- the schemas agree with the validator chains they replaced --');
+  const input = require(path.join(HERE, 'lib', 'chits-input.js'));
+  const oracle = oldChains();
+  for (const route of Object.keys(oracle)) {
+    const { fine, chains } = oracle[route];
+    const fields = input.CHAINS[route].order.filter((name) => name !== '');
+    const stringsDiffer = [];
+    const othersDiffer = [];
+    const bodies = [{ label: 'a body that is fine', body: fine }, { label: 'nothing sent', body: {} }];
+    fields.forEach((field) => {
+      bodies.push({ label: field + ' left out', body: Object.assign({}, fine, { [field]: undefined }) });
+      TEXTS.forEach((value) => bodies.push({ label: field + ' = ' + JSON.stringify(value).slice(0, 24), body: Object.assign({}, fine, { [field]: value }), text: true, field }));
+      OTHERS.forEach((value) => bodies.push({ label: field + ' = ' + JSON.stringify(value), body: Object.assign({}, fine, { [field]: value }), text: false, field, value }));
+    });
+    if (route === 'POST /send') {
+      [{ is_draft: true }, { receivers: [{ name: 'x' }] }, { receivers: [] }, { recipients: [{}] }, { recipients: [{ self: false }] }, { recipients: 'x' }, { recipients: [], receivers: [{ name: 'x' }] }].forEach((extra) => bodies.push({ label: 'recipients ' + JSON.stringify(extra), body: extra }));
+    }
+    for (const one of bodies) {
+      const old = await chainOutcome(chains, one.body);
+      const now = schemaOutcome(route, one.body);
+      const agree = sameValue(old.failures.length > 0, now.failures.length > 0) && (!old.failures.length || sameValue(dedupeByField(old.failures), now.failures));
+      if (agree) continue;
+      const coerced = one.text === false && ((TEXT_FIELDS[route] || []).includes(one.field) || Array.isArray(one.value)); /* a list is asked of its items, and an empty one has none to refuse */
+      (one.text === true || one.text === undefined ? stringsDiffer : coerced ? othersDiffer : stringsDiffer).push(one.label);
+    }
+    check(route + ': the schema and the chains agree on every text value, every missing field and every recipient shape (' + bodies.length + ' bodies)', stringsDiffer.length === 0, stringsDiffer.slice(0, 6));
+    if (othersDiffer.length) console.log('  note  ' + route + ': ' + othersDiffer.length + ' values that are not text (a number, a boolean, a list) were turned into text by the chain; the schema asks for text');
+  }
+  await checkTrim(oracle);
+}
+/** the details a chain gave, one per field (a field that failed twice was told once), in the order the chain listed them */
+function dedupeByField(failures) {
+  const seen = new Set();
+  return failures.filter((one) => !seen.has(one.field) && seen.add(one.field));
+}
+/** what the handler reads after the trim: the sanitisers of the chains and trimmedBody() leave the same text */
+async function checkTrim(oracle) {
+  const input = require(path.join(HERE, 'lib', 'chits-input.js'));
+  const cases = [['PUT /:chit_id/status', ['status', 'note'], { status: ' accepted ', note: '  hello ' }], ['PUT /:chit_id/priority', ['priority', 'reason'], { priority: ' high ', reason: null }], ['POST /:chit_id/messages', ['message_text'], { message_text: ' hi ', thread_type: 'external' }], ['POST /send', ['purpose', 'manual_subject'], { recipients: [{ self: true }], purpose: ' order ', manual_subject: '   ' }], ['POST /:chit_id/payment', ['ref', 'note', 'client_ref'], { method: 'cash', ref: ' R1 ', note: null }]];
+  for (const [route, fields, sent] of cases) {
+    const old = await chainOutcome(oracle[route].chains, sent);
+    const request = { body: JSON.parse(JSON.stringify(sent)) };
+    input.trimmedBody(fields)(request, {}, () => undefined);
+    check(route + ': the handler reads the same trimmed text as it did after the chain (' + fields.join(', ') + ')', fields.every((name) => sameValue(old.body[name], request.body[name])), { chain: old.body, now: request.body });
+  }
+}
+
+/** lib/chits-input.js as a unit: the old details, in the old order; a refusal never lets a bad body through; the trim; the recipients rule */
+function checkInputs() {
+  console.log('\n-- lib/chits-input.js: the inputs of the chit routes as a unit --');
+  const input = require(path.join(HERE, 'lib', 'chits-input.js'));
+  const details = input.invalidChit([{ field: 'note', code: 'WRONG_VALUE', detail: 'x' }, { field: 'status', code: 'MISSING_FIELD', detail: 'y' }, { field: 'status', code: 'WRONG_VALUE', detail: 'z' }], 'PUT /:chit_id/status').details;
+  check('invalidChit: one detail per field, in the order the chain listed them, with the sentence the chain gave (else "Invalid value")', sameValue(details, [{ field: 'status', message: 'Invalid status' }, { field: 'note', message: 'Invalid value' }]), details);
+  const both = input.invalidChit([{ field: 'purpose', code: 'WRONG_VALUE', detail: 'a' }, { field: '(body)', code: 'WRONG_VALUE', detail: '(body) At least one recipient required.' }], 'POST /send').details;
+  check('invalidChit: the recipients rule is listed first, with its own words and an empty field', sameValue(both, [{ field: '', message: 'At least one recipient required' }, { field: 'purpose', message: 'Invalid purpose' }]), both);
+  check('recipientFault: a send with nobody is refused, a draft is not, and a recipient that names nobody is refused', input.recipientFault({}) === 'At least one recipient required' && input.recipientFault({ is_draft: true }) === '' && /Each recipient/.test(input.recipientFault({ recipients: [{}] })));
+  check('recipientFault: a recipient that is not an object is refused with the engine\'s own sentence, never let through', input.recipientFault({ recipients: [null] }) !== '');
+  const body = { status: ' accepted ', note: null, other: ' keep ' };
+  input.trimmedBody(['status', 'note', 'absent'])({ body }, {}, () => undefined);
+  check('trimmedBody: trims the fields named, reads null as empty, leaves absent fields and other fields alone', body.status === 'accepted' && body.note === '' && body.other === ' keep ' && !('absent' in body), body);
+  check('schemaOptionsFor: a route that had a chain is refused with 400 CHIT_INVALID, a route that had none is not', input.schemaOptionsFor('PUT /:chit_id/void').status === 400 && input.schemaOptionsFor('PUT /:chit_id/star') === undefined);
+  check('the priorities, purposes, methods and categories are listed once, here', input.PRIORITIES.length === 3 && input.PURPOSES.includes('credit_note') && input.PAYMENT_METHODS.includes('upi') && input.DISPUTE_CATEGORIES.includes('docs'));
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
@@ -493,6 +769,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(process.exitCode || 0);
   }
   checkWords();
+  checkInputs();
+  await checkChainsAgree();
   checkCodes(recording);
   const legacy = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
