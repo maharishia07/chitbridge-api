@@ -320,6 +320,7 @@ const GUARDS = [
   'api-problem-products.test.cjs', // API-4 sweep, the catalogue items: every refusal of the 26 routes of routes/products.js is a Problem with its old keys frozen, no success answer moved, the old chains agree with the schemas; no 5xx says its cause
   'api-problem-network.test.cjs', // API-4 sweep, the network: every refusal of src/routes/network.js, routes/network-design.js and routes/connections.js (23 routes) is a Problem with its old keys frozen; no 5xx says its cause; the writes switched off answer 503; another shop's id is asked as an unknown one (S35, findings printed, evidence pinned); the schemas agree with the connections' old validator chains
   'api-problem-catalogue.test.cjs', // API-4 sweep, the rest of the catalogue: the shopper's orders and documents, the product enquiries, the photo read and the catalogue face — every refusal a Problem with its old keys frozen, no success answer moved
+  'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-contract.test.cjs', // API-1 slice 1b: schemaValidate (ajv) and the contract cases generated from each route's schema
   'api-tools.test.cjs', // API-1 slice 1a: the ratchet rules, the register normaliser, the error-code table, as units
   'web-api-contract.test.cjs', // every route the web reads, called for real (offline), held to docs/contracts/web-api.json: same keys, nesting and types
