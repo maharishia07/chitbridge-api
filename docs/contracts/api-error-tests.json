@@ -5,6 +5,17 @@
   404,
   500
  ],
+ "DELETE /api/folders/:id": [
+  400,
+  401,
+  500
+ ],
+ "DELETE /api/folders/rules/:rule_id": [
+  400,
+  401,
+  500,
+  503
+ ],
  "DELETE /api/keys/:jti": [
   401,
   403,
@@ -192,6 +203,71 @@
   404,
   500
  ],
+ "GET /api/facts/:card": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/facts/rail/chits": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/folders": [
+  401,
+  500
+ ],
+ "GET /api/folders/:id/chits": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/folders/:id/metrics": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/folders/:id/rules": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/folders/groupsum": [
+  401,
+  500
+ ],
+ "GET /api/folders/inventory": [
+  401,
+  500
+ ],
+ "GET /api/folders/messages": [
+  401,
+  500
+ ],
+ "GET /api/folders/mis": [
+  401,
+  500
+ ],
+ "GET /api/folders/reconcile": [
+  401,
+  500
+ ],
+ "GET /api/folders/rules": [
+  401,
+  500
+ ],
+ "GET /api/folders/rules/vocabulary": [
+  401,
+  500
+ ],
+ "GET /api/folders/worklist": [
+  400,
+  401,
+  500
+ ],
  "GET /api/integrations/catalogue": [
   401,
   500
@@ -246,6 +322,9 @@
   403,
   500
  ],
+ "GET /api/pricing/kinds": [
+  500
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -273,6 +352,19 @@
   403,
   404,
   500
+ ],
+ "PATCH /api/folders/:id": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/folders/rules/:rule_id": [
+  400,
+  401,
+  404,
+  500,
+  503
  ],
  "POST /api/books/accounts": [
   401,
@@ -573,6 +665,35 @@
   422,
   500
  ],
+ "POST /api/folders": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/folders/:id/rules": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/folders/messages/:message_id/mark": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/folders/move": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/folders/rules/preview": [
+  400,
+  401,
+  500
+ ],
  "POST /api/integrations/:actor_id/approve": [
   400,
   401,
@@ -622,6 +743,12 @@
   403,
   500
  ],
+ "POST /api/pricing/price": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/tax/compute": [
   400,
   401,
@@ -634,6 +761,15 @@
   401,
   403,
   500
+ ],
+ "PUT /api/folders/inventory/:code": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
  ],
  "PUT /api/integrations/streams": [
   400,
