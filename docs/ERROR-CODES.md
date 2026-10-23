@@ -163,7 +163,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
 | NOTIF_DISMISS_NOT_MIGRATED | 503 | Notif dismiss not migrated | PENDING | - | notifications | 2026-10-22 |
 | NOT_ALLOWED | 403 | Not allowed | Only the two businesses on a connection, or the network above it, can do that. | Ask the other business or the network. | network | 2026-10-23 |
-| NOT_BOARD_WRITER | 403 | Not board writer | PENDING | - | testing | 2026-10-22 |
+| NOT_BOARD_WRITER | 403 | Not board writer | Only the board’s own account can change the shared cases and records. | Ask the board’s owner, or record your result instead. | testing | 2026-10-22 |
 | NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
 | NOT_FOUND | 404 | Not found | We could not find that. | Check the address or the name and try again. | api | 2026-10-22 |
 | NOT_PAIRED | varies | Not paired | PENDING | - | verdict | 2026-10-22 |
@@ -260,6 +260,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax id bad | PENDING | - | profile | 2026-10-22 |
 | TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
+| TESTING_BAD_REQUEST | 400 | The test board needs something else | The test board could not take that, and the sentence says why. | Read the sentence shown, fix it and try again. | testing | 2026-10-23 |
+| TESTING_NOT_DEPLOYED | 500 | Test data missing on this server | The test cases or records are not on this server yet. | Tell us: the server needs to be deployed again. | testing | 2026-10-23 |
+| TESTING_NOT_SIGNED_IN | 401 | Not signed in to the test board | Sign in to use the test board. | Sign in, then try again. | testing | 2026-10-23 |
+| TESTING_NOT_STORED | 500 | Screenshot not stored | The screenshot could not be kept. | Try again. If it keeps happening, tell us. | testing | 2026-10-23 |
+| TESTING_REFUSED | 422 | The test board did not record that | The test board understood that but cannot record it as it is, and the sentence says why. | Read the sentence shown, fix it and try again. | testing | 2026-10-23 |
 | TILL_BAD_REQUEST | 400 | Counter request not valid | The counter sent something that is missing or not right. | Check what was entered and try again. | till | 2026-10-23 |
 | TILL_CLAIM_MISMATCH | 400 | Bill from another phone | This bill was made on another phone. | Send it from the phone that made it. | holder | 2026-10-23 |
 | TILL_NO_COUNTER | 403 | Key holds no counter | This key is not holding a counter. | Open the counter on this PC first. | till | 2026-10-23 |
