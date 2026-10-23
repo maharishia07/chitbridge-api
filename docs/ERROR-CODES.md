@@ -27,7 +27,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | A_INVARIANT | 422 | Rule would be loosened | That would loosen a rule the platform has set. | Only tighten the setting, never loosen it. | governance | 2026-10-23 |
 | BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
-| BAD_PHONE | 400 | Bad phone | PENDING | - | counters | 2026-10-22 |
+| BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
 | BAD_PRICE | 400 | Price below zero | A line has a price below 0. | Send a price of 0 or more. | tax | 2026-10-23 |
 | BAD_QTY | 400 | Quantity not above zero | A line needs a quantity above 0. | Send a quantity above 0 on every line. | tax | 2026-10-23 |
 | BAD_RATE | 400 | Tax rate out of range | A line has a tax rate outside 0 to 100 percent. | Send a rate from 0 to 100. | tax | 2026-10-23 |
@@ -59,8 +59,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
 | CONTAINER_STORE_MISSING | 403/503 | Container store missing | PENDING | - | assist | 2026-10-22 |
 | COST_BLIND | varies | Cost blind | Your access does not include cost or price. | Ask the owner to give you Sees costs, or change availability only. | cost | 2026-10-22 |
+| COUNTER_BAD_REQUEST | 400 | Counter request not valid | That counter request is missing something or is not right. | Check the name and try again. | counters | 2026-10-23 |
 | COUNTER_CLOSED | 401 | Counter closed | PENDING | - | auth | 2026-10-22 |
 | COUNTER_HELD | varies | Counter held | That counter is open on another PC. | Close it there first, or take it over when asked. | counters | 2026-10-22 |
+| COUNTER_NOT_MIGRATED | 503 | Counter update pending | Counters cannot be changed yet: a database update is still to arrive. | Try again after the next update. | counters | 2026-10-23 |
+| COUNTER_SESSION_ONLY | 403 | Counters need a person | Counters are managed by a signed-in person, not by a key. | Sign in as the owner to change a counter. | counters | 2026-10-23 |
 | COUNTRY_SETUP_NOT_MIGRATED | 503 | Country setup not ready | Country setup arrives after the next update. Selling and the rail work meanwhile. | Carry on selling; come back after the update. | governance | 2026-10-23 |
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | varies | Cover conflict | PENDING | - | actors | 2026-10-22 |
@@ -221,7 +224,15 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QTY_OK | varies | Qty ok | PENDING | - | line-guard | 2026-10-22 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | REGION_STORE_MISSING | 403/404/503 | Region store missing | PENDING | - | assist | 2026-10-22 |
-| REPEAT_NOT_MIGRATED | varies | Repeat not migrated | PENDING | - | repeat-supply | 2026-10-22 |
+| REPEAT_BAD_REQUEST | 400 | Repeat needs an answer | Repeat supply needs one more answer before it can do that. | Read the question shown and answer it. | repeat-supply | 2026-10-23 |
+| REPEAT_ENDED | 422 | Agreement ended | This agreement has ended. | Start a new agreement from a bill. | repeat-supply | 2026-10-23 |
+| REPEAT_NOT_CUSTOMER | 422 | Customer only | Only the customer this agreement is with may do that. | Ask the customer to do it. | repeat-supply | 2026-10-23 |
+| REPEAT_NOT_DUE | 422 | Run not due | The next run is not due yet. | Try again on or after the next run date. | repeat-supply | 2026-10-23 |
+| REPEAT_NOT_MIGRATED | 503 | Repeat not migrated | Repeat supply arrives after the next update. | Try again after the next update. | repeat-supply | 2026-10-22 |
+| REPEAT_NOT_SELLER | 422 | Seller only | Only the shop that made this agreement may do that. | Ask the shop that made it. | repeat-supply | 2026-10-23 |
+| REPEAT_REASON_NEEDED | 422 | A reason is needed | Say why, so the other side can read it. | Write the reason and try again. | repeat-supply | 2026-10-23 |
+| REPEAT_REFUSED | 422 | Repeat refused | Repeat supply refused that, and the sentence says why. | Fix what the sentence says and try again. | repeat-supply | 2026-10-23 |
+| REPEAT_WRONG_STATE | 422 | Not at that step | This agreement is not at a step where that can be done. | Open the agreement to see what can be done now. | repeat-supply | 2026-10-23 |
 | REQUEST_TIMEOUT | 503 | Request timeout | PENDING | - | limits | 2026-10-22 |
 | REQUIRED | 409 | Required | PENDING | - | schemas | 2026-10-22 |
 | RETURN_FROM_RAIL | 422 | Return comes from bills | Your return is made from your bills, not from these books. | Use the GST page. | books | 2026-10-23 |
@@ -270,6 +281,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | VIEW_ONLY | varies | View only | PENDING | - | crm-groups | 2026-10-22 |
 | VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | This database does not accept network visibility yet. | Apply the pending database update, then build again. | entities | 2026-10-22 |
 | WORKBOOK_CUT | 413 | Workbook cut | This sheet is bigger than we read, so only part of it was read and nothing was imported. | Delete unused columns, or split the sheet, and upload again. | products | 2026-10-22 |
+| WORK_BAD_REQUEST | 400 | Work request not valid | That list request is not valid. | Ask for one view at a time. | work | 2026-10-23 |
+| WORK_STAFF_ONLY | 403 | Staff only | Sign in as staff to see Tasks and Orders. | Sign in with a staff login. | work | 2026-10-23 |
 | WRITER_THREW | varies | Writer threw | PENDING | - | signin-events | 2026-10-22 |
 | WRONG_SCOPE | varies | Wrong scope | PENDING | - | verdict | 2026-10-22 |
 | WRONG_VALUE | 422 | Field not valid | A field has a value of the wrong kind. | Use the kind of value the field asks for. | validate | 2026-10-22 |

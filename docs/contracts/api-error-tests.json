@@ -404,6 +404,11 @@
   401,
   500
  ],
+ "GET /api/counters": [
+  401,
+  403,
+  500
+ ],
  "GET /api/ctp/.well-known/ctp.json": [
   200,
   500
@@ -687,6 +692,17 @@
   401,
   500
  ],
+ "GET /api/repeat": [
+  401,
+  500
+ ],
+ "GET /api/repeat/:id": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -784,6 +800,24 @@
   403,
   500
  ],
+ "GET /api/work/:chit_id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/work/facts": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/work/list": [
+  400,
+  401,
+  403,
+  500
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -794,6 +828,13 @@
   503
  ],
  "PATCH /api/books/recurring/:id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/counters/:id": [
+  400,
   401,
   403,
   404,
@@ -1340,6 +1381,35 @@
   404,
   500
  ],
+ "POST /api/counters": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/counters/:id/assign": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/counters/:id/open": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/counters/:id/release": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/ctp/deliver": [
   200,
   400,
@@ -1647,6 +1717,93 @@
  "POST /api/products/status/bulk": [
   400,
   401,
+  500
+ ],
+ "POST /api/repeat": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/agree": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/counter": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/repeat/:id/decline": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/end": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/pause": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/refuse": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/resume": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/run": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/skip": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/sweep": [
+  401,
+  403,
   500
  ],
  "POST /api/tax/compute": [

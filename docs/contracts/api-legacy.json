@@ -13271,6 +13271,2848 @@
     }
    ]
   },
+  "GET /api/counters": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "counters-key-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    }
+   ]
+  },
+  "GET /api/repeat": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    }
+   ]
+  },
+  "GET /api/repeat/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "one-as-a-stranger",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "one-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "REPEAT_NOT_MIGRATED",
+      "error": "Repeat supply arrives after the next update.",
+      "message": "Repeat supply arrives after the next update."
+     },
+     "fixture": {
+      "code": "REPEAT_NOT_MIGRATED",
+      "error": "Repeat supply arrives after the next update.",
+      "message": "Repeat supply arrives after the next update."
+     }
+    }
+   ]
+  },
+  "GET /api/work/:chit_id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "sheet-not-an-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "sheet-unknown-chit",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    },
+    {
+     "scenario": "sheet-of-another-shop",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access"
+     }
+    }
+   ]
+  },
+  "GET /api/work/facts": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/work/list": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in as staff to see Tasks and Orders."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/counters/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     }
+    },
+    {
+     "scenario": "counter-rename-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "A counter needs a name."
+     }
+    },
+    {
+     "scenario": "counter-rename-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "counter-rename-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/counters": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "counter-none-left",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "There is no counter number left to give."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "There is no counter number left to give."
+     }
+    },
+    {
+     "scenario": "counter-make-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "counter-make-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "validation",
+      "message": "Policy flags are not migrated on this environment (b130)."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Policy flags are not migrated on this environment (b130)."
+     }
+    },
+    {
+     "scenario": "counter-make-as-staff",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-make-by-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    }
+   ]
+  },
+  "POST /api/counters/:id/assign": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "counter-assign-bad-phone",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "code": "BAD_PHONE",
+      "message": "Type the mobile number with its country code — 10 to 15 digits."
+     },
+     "fixture": {
+      "error": "validation",
+      "code": "BAD_PHONE",
+      "message": "Type the mobile number with its country code — 10 to 15 digits."
+     }
+    },
+    {
+     "scenario": "counter-assign-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "counter-assign-as-staff",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can assign a counter.",
+      "message": "Only the owner can assign a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can assign a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-assign-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/counters/:id/open": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "There is no counter NOPE in this shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "There is no counter NOPE in this shop."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "There is no counter C1 in this shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "There is no counter C1 in this shop."
+     }
+    },
+    {
+     "scenario": "counter-open-held",
+     "status": 409,
+     "body_keys": {
+      "error": "Counter already open",
+      "code": "COUNTER_HELD",
+      "counter": {
+       "id": "C1",
+       "name": "Front desk",
+       "created_at": "2026-10-01T00:00:00.000Z",
+       "state": "open",
+       "break_since": null,
+       "break_by": null,
+       "held_by": {
+        "name": "counter C1",
+        "since": "2026-10-02T00:00:00.000Z",
+        "seen": null,
+        "diag": null
+       },
+       "next": null,
+       "period": null,
+       "last_no": null,
+       "last_at": null,
+       "closed_at": null,
+       "assigned": null
+      },
+      "message": "Counter C1 is already open on counter C1. Close it there first — or, if that PC is gone, release it."
+     },
+     "fixture": {
+      "error": "Counter already open",
+      "code": "COUNTER_HELD",
+      "counter": {
+       "id": "C1",
+       "name": "Front desk",
+       "created_at": "2026-10-01T00:00:00.000Z",
+       "state": "open",
+       "break_since": null,
+       "break_by": null,
+       "held_by": {
+        "name": "counter C1",
+        "since": "2026-10-02T00:00:00.000Z",
+        "seen": null,
+        "diag": null
+       },
+       "next": null,
+       "period": null,
+       "last_no": null,
+       "last_at": null,
+       "closed_at": null,
+       "assigned": null
+      },
+      "message": "Counter C1 is already open on counter C1. Close it there first — or, if that PC is gone, release it."
+     }
+    },
+    {
+     "scenario": "counter-open-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "There is no counter C9 in this shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "There is no counter C9 in this shop."
+     }
+    },
+    {
+     "scenario": "counter-open-as-staff",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-open-mint-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "counter-open-mint-refuses",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Too many keys."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Too many keys."
+     }
+    },
+    {
+     "scenario": "counter-open-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
+     }
+    }
+   ]
+  },
+  "POST /api/counters/:id/release": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "counter-release-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "counter-release-as-staff",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change the counters.",
+      "message": "Only the owner can change the counters.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change the counters.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-release-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     },
+     "fixture": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     },
+     "fixture": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     },
+     "fixture": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     },
+     "fixture": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     },
+     "fixture": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     }
+    },
+    {
+     "scenario": "create-no-bill",
+     "status": 400,
+     "body_keys": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     },
+     "fixture": {
+      "error": "Which bill should repeat?",
+      "message": "Which bill should repeat?"
+     }
+    },
+    {
+     "scenario": "create-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "REPEAT_NOT_MIGRATED",
+      "error": "Repeat supply arrives after the next update.",
+      "message": "Repeat supply arrives after the next update."
+     },
+     "fixture": {
+      "code": "REPEAT_NOT_MIGRATED",
+      "error": "Repeat supply arrives after the next update.",
+      "message": "Repeat supply arrives after the next update."
+     }
+    },
+    {
+     "scenario": "create-bad-unit",
+     "status": 400,
+     "body_keys": {
+      "error": "How often? daily, weekly or monthly.",
+      "message": "How often? daily, weekly or monthly."
+     },
+     "fixture": {
+      "error": "How often? daily, weekly or monthly.",
+      "message": "How often? daily, weekly or monthly."
+     }
+    },
+    {
+     "scenario": "create-bill-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "create-not-my-bill",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_REFUSED",
+      "error": "Only a bill you sent can repeat.",
+      "message": "Only a bill you sent can repeat."
+     },
+     "fixture": {
+      "code": "REPEAT_REFUSED",
+      "error": "Only a bill you sent can repeat.",
+      "message": "Only a bill you sent can repeat."
+     }
+    },
+    {
+     "scenario": "create-send-refused",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_REFUSED",
+      "error": "The agreement could not be sent: Not now",
+      "message": "The agreement could not be sent: Not now"
+     },
+     "fixture": {
+      "code": "REPEAT_REFUSED",
+      "error": "The agreement could not be sent: Not now",
+      "message": "The agreement could not be sent: Not now"
+     }
+    },
+    {
+     "scenario": "create-send-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "create-as-viewer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/accept": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "accept-wrong-state",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     },
+     "fixture": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     }
+    },
+    {
+     "scenario": "accept-not-the-customer",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_NOT_CUSTOMER",
+      "error": "Only the customer this agreement is with may do that.",
+      "message": "Only the customer this agreement is with may do that."
+     },
+     "fixture": {
+      "code": "REPEAT_NOT_CUSTOMER",
+      "error": "Only the customer this agreement is with may do that.",
+      "message": "Only the customer this agreement is with may do that."
+     }
+    },
+    {
+     "scenario": "accept-without-the-chit",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "accept-writer-refuses",
+     "status": 409,
+     "body_keys": {
+      "error": "Not allowed",
+      "message": "That step is closed.",
+      "code": "wrong_step"
+     },
+     "fixture": {
+      "error": "Not allowed",
+      "message": "That step is closed.",
+      "code": "wrong_step"
+     }
+    },
+    {
+     "scenario": "accept-writer-refuses-bare",
+     "status": 404,
+     "body_keys": {
+      "error": "Could not accept.",
+      "message": "Could not accept."
+     },
+     "fixture": {
+      "error": "Could not accept.",
+      "message": "Could not accept."
+     }
+    },
+    {
+     "scenario": "accept-as-viewer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/agree": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "agree-wrong-state",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     },
+     "fixture": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/counter": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "counter-as-commenter",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is comment-only. You can reply internally, but not act or answer the other party.",
+      "why": "comment_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is comment-only. You can reply internally, but not act or answer the other party.",
+      "why": "comment_only"
+     }
+    },
+    {
+     "scenario": "counter-says-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "What would you change — a quantity, how often, or from when?",
+      "message": "What would you change — a quantity, how often, or from when?"
+     },
+     "fixture": {
+      "error": "What would you change — a quantity, how often, or from when?",
+      "message": "What would you change — a quantity, how often, or from when?"
+     }
+    },
+    {
+     "scenario": "counter-no-such-line",
+     "status": 400,
+     "body_keys": {
+      "error": "Which line, and how many?",
+      "message": "Which line, and how many?"
+     },
+     "fixture": {
+      "error": "Which line, and how many?",
+      "message": "Which line, and how many?"
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/decline": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "decline-as-viewer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "decline-ended",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_ENDED",
+      "error": "This agreement has ended.",
+      "message": "This agreement has ended."
+     },
+     "fixture": {
+      "code": "REPEAT_ENDED",
+      "error": "This agreement has ended.",
+      "message": "This agreement has ended."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/end": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "end-already-ended",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_ENDED",
+      "error": "This agreement has ended.",
+      "message": "This agreement has ended."
+     },
+     "fixture": {
+      "code": "REPEAT_ENDED",
+      "error": "This agreement has ended.",
+      "message": "This agreement has ended."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/pause": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "pause-wrong-state",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     },
+     "fixture": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     }
+    },
+    {
+     "scenario": "pause-not-the-seller",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "pause-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "REPEAT_NOT_MIGRATED",
+      "error": "Repeat supply arrives after the next update.",
+      "message": "Repeat supply arrives after the next update."
+     },
+     "fixture": {
+      "code": "REPEAT_NOT_MIGRATED",
+      "error": "Repeat supply arrives after the next update.",
+      "message": "Repeat supply arrives after the next update."
+     }
+    },
+    {
+     "scenario": "pause-as-viewer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "pause-as-commenter",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is comment-only. You can reply internally, but not act or answer the other party.",
+      "why": "comment_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is comment-only. You can reply internally, but not act or answer the other party.",
+      "why": "comment_only"
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/refuse": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "refuse-wrong-state",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     },
+     "fixture": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/resume": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "resume-wrong-state",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     },
+     "fixture": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/run": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "run-not-due",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_NOT_DUE",
+      "error": "The next run is not due yet.",
+      "message": "The next run is not due yet."
+     },
+     "fixture": {
+      "code": "REPEAT_NOT_DUE",
+      "error": "The next run is not due yet.",
+      "message": "The next run is not due yet."
+     }
+    },
+    {
+     "scenario": "run-wrong-state",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     },
+     "fixture": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/:id/skip": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "customer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such agreement."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such agreement."
+     }
+    },
+    {
+     "scenario": "skip-wrong-state",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     },
+     "fixture": {
+      "code": "REPEAT_WRONG_STATE",
+      "error": "This agreement is not at a step where that can be done.",
+      "message": "This agreement is not at a step where that can be done."
+     }
+    },
+    {
+     "scenario": "skip-by-customer-needs-a-reason",
+     "status": 422,
+     "body_keys": {
+      "code": "REPEAT_REASON_NEEDED",
+      "error": "Say why — the other side will read it.",
+      "message": "Say why — the other side will read it."
+     },
+     "fixture": {
+      "code": "REPEAT_REASON_NEEDED",
+      "error": "Say why — the other side will read it.",
+      "message": "Say why — the other side will read it."
+     }
+    }
+   ]
+  },
+  "POST /api/repeat/sweep": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "sweep-as-viewer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only"
+     }
+    },
+    {
+     "scenario": "sweep-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Repeat supply could not answer. Try again."
+     }
+    }
+   ]
+  },
   "DELETE /api/products/:id": {
    "answers": [
     {

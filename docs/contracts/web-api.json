@@ -3501,7 +3501,14 @@
    "status": 404,
    "example": {
     "error": "Not found",
-    "message": "Chit not found or you do not have access"
+    "message": "Chit not found or you do not have access",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "code": "NOT_FOUND",
+    "detail": "Chit not found or you do not have access",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5370,7 +5377,13 @@
    "example": {
     "code": "REPEAT_NOT_MIGRATED",
     "error": "Repeat supply arrives after the next update.",
-    "message": "Repeat supply arrives after the next update."
+    "message": "Repeat supply arrives after the next update.",
+    "type": "https://chitbridge.com/problems/repeat_not_migrated",
+    "title": "Repeat not migrated",
+    "status": 503,
+    "detail": "Repeat supply arrives after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5449,7 +5462,13 @@
    "example": {
     "code": "REPEAT_WRONG_STATE",
     "error": "This agreement is not at a step where that can be done.",
-    "message": "This agreement is not at a step where that can be done."
+    "message": "This agreement is not at a step where that can be done.",
+    "type": "https://chitbridge.com/problems/repeat_wrong_state",
+    "title": "Not at that step",
+    "status": 422,
+    "detail": "This agreement is not at a step where that can be done.",
+    "hint": "Open the agreement to see what can be done now.",
+    "request_id": null
    },
    "optional": []
   },

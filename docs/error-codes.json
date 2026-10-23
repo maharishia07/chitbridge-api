@@ -167,8 +167,8 @@
    "code": "BAD_PHONE",
    "status": "400",
    "title": "Bad phone",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Type the mobile number with its country code, 10 to 15 digits.",
+   "hint": "Check the number and try again.",
    "owner_area": "counters",
    "since": "2026-10-22"
   },
@@ -587,6 +587,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "COUNTER_BAD_REQUEST",
+   "status": "400",
+   "title": "Counter request not valid",
+   "shopkeeper": "That counter request is missing something or is not right.",
+   "hint": "Check the name and try again.",
+   "owner_area": "counters",
+   "since": "2026-10-23"
+  },
+  {
    "code": "COUNTER_CLOSED",
    "status": "401",
    "title": "Counter closed",
@@ -603,6 +612,24 @@
    "hint": "Close it there first, or take it over when asked.",
    "owner_area": "counters",
    "since": "2026-10-22"
+  },
+  {
+   "code": "COUNTER_NOT_MIGRATED",
+   "status": "503",
+   "title": "Counter update pending",
+   "shopkeeper": "Counters cannot be changed yet: a database update is still to arrive.",
+   "hint": "Try again after the next update.",
+   "owner_area": "counters",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COUNTER_SESSION_ONLY",
+   "status": "403",
+   "title": "Counters need a person",
+   "shopkeeper": "Counters are managed by a signed-in person, not by a key.",
+   "hint": "Sign in as the owner to change a counter.",
+   "owner_area": "counters",
+   "since": "2026-10-23"
   },
   {
    "code": "COUNTRY_SETUP_NOT_MIGRATED",
@@ -2180,13 +2207,85 @@
    "since": "2026-10-22"
   },
   {
+   "code": "REPEAT_BAD_REQUEST",
+   "status": "400",
+   "title": "Repeat needs an answer",
+   "shopkeeper": "Repeat supply needs one more answer before it can do that.",
+   "hint": "Read the question shown and answer it.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_ENDED",
+   "status": "422",
+   "title": "Agreement ended",
+   "shopkeeper": "This agreement has ended.",
+   "hint": "Start a new agreement from a bill.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_NOT_CUSTOMER",
+   "status": "422",
+   "title": "Customer only",
+   "shopkeeper": "Only the customer this agreement is with may do that.",
+   "hint": "Ask the customer to do it.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_NOT_DUE",
+   "status": "422",
+   "title": "Run not due",
+   "shopkeeper": "The next run is not due yet.",
+   "hint": "Try again on or after the next run date.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
    "code": "REPEAT_NOT_MIGRATED",
-   "status": "varies",
+   "status": "503",
    "title": "Repeat not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Repeat supply arrives after the next update.",
+   "hint": "Try again after the next update.",
    "owner_area": "repeat-supply",
    "since": "2026-10-22"
+  },
+  {
+   "code": "REPEAT_NOT_SELLER",
+   "status": "422",
+   "title": "Seller only",
+   "shopkeeper": "Only the shop that made this agreement may do that.",
+   "hint": "Ask the shop that made it.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_REASON_NEEDED",
+   "status": "422",
+   "title": "A reason is needed",
+   "shopkeeper": "Say why, so the other side can read it.",
+   "hint": "Write the reason and try again.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_REFUSED",
+   "status": "422",
+   "title": "Repeat refused",
+   "shopkeeper": "Repeat supply refused that, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_WRONG_STATE",
+   "status": "422",
+   "title": "Not at that step",
+   "shopkeeper": "This agreement is not at a step where that can be done.",
+   "hint": "Open the agreement to see what can be done now.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
   },
   {
    "code": "REQUEST_TIMEOUT",
@@ -2646,6 +2745,24 @@
    "hint": "Delete unused columns, or split the sheet, and upload again.",
    "owner_area": "products",
    "since": "2026-10-22"
+  },
+  {
+   "code": "WORK_BAD_REQUEST",
+   "status": "400",
+   "title": "Work request not valid",
+   "shopkeeper": "That list request is not valid.",
+   "hint": "Ask for one view at a time.",
+   "owner_area": "work",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "WORK_STAFF_ONLY",
+   "status": "403",
+   "title": "Staff only",
+   "shopkeeper": "Sign in as staff to see Tasks and Orders.",
+   "hint": "Sign in with a staff login.",
+   "owner_area": "work",
+   "since": "2026-10-23"
   },
   {
    "code": "WRITER_THREW",
