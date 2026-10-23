@@ -112,7 +112,7 @@ function checkContractShape(routes) {
   const ids = ['GET', 'PUT', 'DELETE'].map((method) => contract.OPERATIONS[method + ' /api/definitions/:id']);
   check('the three id routes declare a 404; the writes declare the 403, 409 and 422 their handlers write', ids.every((one) => '404' in one.responses) && '403' in ids[1].responses && '409' in ids[2].responses && '422' in contract.OPERATIONS['POST /api/definitions'].responses);
   const router = require(path.join(HERE, 'routes', 'definitions.js'));
-  check('the router publishes its paths (three: the shelf and its create share one, the id routes share one, the freeze)', Object.keys(router.openapi.paths).length === 3 && Object.keys(contract.contract.pathsOf()).length === 3, Object.keys(router.openapi.paths));
+  check('the router publishes its paths (three: the shelf and its create share one, the id routes share one, the freeze)', Object.keys((router.openapi || {}).paths || {}).length === 3 && Object.keys(contract.contract.pathsOf()).length === 3, Object.keys((router.openapi || {}).paths || {}));
 }
 
 /** the two old chains and the schemas that replaced them refuse the same bodies, in the same words */
