@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 159,
-  "partial": 77,
-  "meets": 397
+  "partial": 64,
+  "meets": 410
  },
  "machine_columns": [
   "schema_in",
@@ -1041,13 +1041,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/catalogue-source/:key",
@@ -1175,13 +1175,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/gaps",
@@ -1243,13 +1243,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/questions",
@@ -1276,13 +1276,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/regions",
@@ -1308,13 +1308,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/resolve",
@@ -10935,13 +10935,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/assist/catalogue-adopt",
@@ -10972,13 +10972,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/assist/catalogue-structure",
@@ -11006,13 +11006,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/assist/conform",
@@ -11040,13 +11040,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/assist/gap",
@@ -11073,13 +11073,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/assist/publish",
@@ -11109,13 +11109,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/assist/resolve",
@@ -20710,13 +20710,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/assist/container",
@@ -20747,13 +20747,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/assist/region-override",
