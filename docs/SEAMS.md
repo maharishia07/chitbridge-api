@@ -104,7 +104,6 @@ of file each thing is; this says what already does the job.
 | 21 | `owner` | `books.js` |  |
 | 21 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 20 | `form` | `accounts-shell.js` |  |
-| 20 | `shown` | `cap-settings.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `entries` | `books-store.js` |  |
 | 20 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
@@ -114,6 +113,7 @@ of file each thing is; this says what already does the job.
 | 20 | `checked` | `books.js` | the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gate |
 | 20 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 19 | `renderApp` | `app.html` |  |
+| 19 | `shown` | `cap-settings.js` |  |
 | 19 | `card` | `cap-shop.js` |  |
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `more` | `lab-kit.js` | idKey: |
