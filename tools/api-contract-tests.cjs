@@ -21,9 +21,10 @@ const SAMPLES = { string: 'x', integer: 1, number: 1, boolean: true, array: [], 
 const WRONG = { string: 12345, integer: 'abc', number: 'abc', boolean: 'maybe', array: 'abc', object: 'abc' };
 const NOTHING_SENT = 'nothing sent';
 
-/** a value that fits a schema (the first enum value, else a sample of its type; an object carries every required property) */
+/** a value that fits a schema (its first example, else the first enum value, else a sample of its type; an object carries every required property) */
 function sampleOf(schema) {
   const shape = schema || {};
+  if (Array.isArray(shape.examples) && shape.examples.length) return shape.examples[0]; /* a pattern a bare 'x' cannot meet names its own example */
   if (shape.enum) return shape.enum[0];
   const type = [].concat(shape.type || 'object')[0];
   if (type !== 'object') return SAMPLES[type];

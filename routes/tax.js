@@ -1,12 +1,23 @@
+// OWNS      /api/tax: the invoice for a chit, the month's ledger, the GSTR shapes (read-only; nothing here files) and the tax engine as a service (rate, compute).
+// CALLED BY server.js (mounted at /api/tax), the Tax screens, and a key with scope tax.
+// FLOW      auth → schema check → lib/tax-lines · lib/tax-copy · lib/services → the answer; a refusal → problem(req, res, taxSaid(...))
+// CARD      15-tax-and-country-packs/tax-compute-rate-invoice-tax
 // routes/tax.js — the invoice for a chit, the month's ledger, the GSTR shapes. Read-only; nothing here files.
 'use strict';
 const express = require('express');
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { taxSaid, faultOf, readFault, taxContract: contract } = require('../lib/tax-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
 const ctx = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
 
 /**
  * ⭐⭐ WHY THIS EXISTS. Athi, 2026-09-04: *"as a network entity, we should be able to say, if you use our networking
@@ -19,11 +30,11 @@ const ctx = (req) => auth.entityOf(req);
  */
 
 /** GET /api/tax/invoice/:chit_id — the INV-01 block for MY copy of one chit (frozen, or live + provisional). */
-router.get('/invoice/:chit_id', auth, async (req, res) => {
+router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async (req, res) => {
   try {
     const me = ctx(req);
     const hdr = await C.copyOf(req.params.chit_id, me);
-    if (!hdr) return res.status(404).json({ error: 'Not found' });
+    if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     const e = await C.entryFor(hdr, me);
     res.json({
       chit_id: e.chit_id,
@@ -39,12 +50,12 @@ router.get('/invoice/:chit_id', auth, async (req, res) => {
       heads: T.heads(e.invoice)
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, readFault(err, req));
   }
 });
 
 /** GET /api/tax/ledger?month=YYYY-MM — output · ITC · net for my GSTIN in that month, with the rows behind it. */
-router.get('/ledger', auth, async (req, res) => {
+router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   try {
     const me = ctx(req);
     const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
@@ -75,12 +86,12 @@ router.get('/ledger', auth, async (req, res) => {
       note: 'Computed from chits on the rail. A copy is frozen when it reaches completed; until then its figures are provisional. Off-rail purchases are not here. This is not a filing.'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, readFault(err, req));
   }
 });
 
 /** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON. Validate before filing. */
-router.get('/gstr', auth, async (req, res) => {
+router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
     const me = ctx(req);
     const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
@@ -89,7 +100,7 @@ router.get('/gstr', auth, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${form}-${bounds.period}.json"`);
     res.json(out);
   } catch (err) {
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, readFault(err, req));
   }
 });
 
@@ -103,17 +114,13 @@ router.get('/gstr', auth, async (req, res) => {
 const S = require('../lib/services');
 const tax = require('../lib/tax');
 const regulation = require('../lib/regulation');
-const { known } = require('../lib/knownerr');
 
 /* ⭐ TAX-SRV1 G5: EVERY REFUSAL IS A CODE AND A SENTENCE. A caller branches on `code`, a person reads `message`; the raw error text never
    leaves (it is logged by safeErr). 400 = the request is malformed · 422 = it is well-formed but the shop's facts cannot answer it. */
-const refuse = (res, status, code, message, extra) =>
-  res.status(status).json(Object.assign({ error: status === 400 ? 'Bad request' : 'Cannot compute', code, message }, extra || {}));
-const fault = (res, e) => {
-  const k = known(e);
-  if (k) return res.status(k.status).json(k.body);
-  return res.status(500).json({ error: 'Failed', code: 'TAX_FAILED', message: safeErr(e) });
-};
+/** a refusal in the tax service's words (400 malformed, 422 the shop's facts cannot answer it) */
+function refuse(req, res, status, code, message, extra) {
+  return problem(req, res, taxSaid(status, code, message, extra));
+}
 const nameOf = (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"';
 /** the first malformed line, said — qty above 0, a price that is not negative, a rate 0–100 */
 function badLine(lines) {
@@ -126,10 +133,10 @@ function badLine(lines) {
   return null;
 }
 
-router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
+router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);
-    if (!lines.length) return refuse(res, 400, 'NO_LINES', 'Send at least one line.');
+    if (!lines.length) return refuse(req, res, 400, 'NO_LINES', 'Send at least one line.');
     const sh = await S.shelfOf(auth.entityOf(req));
     const rated = S.rateLines(lines, sh);
     res.json({
@@ -149,7 +156,7 @@ router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
       }))
     });
   } catch (e) {
-    fault(res, e);
+    problem(req, res, faultOf(e, req));
   }
 });
 /**
@@ -163,20 +170,20 @@ router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
  * Who may call: a signed-in session of the shop, or the shop's API key with scope `tax` (or `services`). Trips: 2 (identities, shelf) — the shelf
  * is read only when a line needs a rate or a price.
  */
-router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
+router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /compute'), async (req, res) => {
   try {
     const body = req.body || {};
     const lines = S.normLines(body);
-    if (!lines.length) return refuse(res, 400, 'NO_LINES', 'Send at least one line to compute tax on.');
+    if (!lines.length) return refuse(req, res, 400, 'NO_LINES', 'Send at least one line to compute tax on.');
     const bad = badLine(lines);
-    if (bad) return refuse(res, 400, bad[0], bad[1]);
+    if (bad) return refuse(req, res, 400, bad[0], bad[1]);
     const said = S.saidInclusive(body);
-    if (said === null) return refuse(res, 400, 'BAD_FLAG', 'priceIncludesTax must be true or false.');
+    if (said === null) return refuse(req, res, 400, 'BAD_FLAG', 'priceIncludesTax must be true or false.');
     const entity_id = auth.entityOf(req);
     const shop = await S.shopOf(entity_id);
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
-    if (st.code === 'NO_COUNTRY') return refuse(res, 422, 'NO_COUNTRY', st.why);
+    if (st.code === 'NO_COUNTRY') return refuse(req, res, 422, 'NO_COUNTRY', st.why);
     const needShelf = lines.some((item) => item.gst_rate == null || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
     const priced = [];
@@ -186,11 +193,10 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
         continue;
       }
       const prod = sh && sh.productOf(l);
-      if (!prod) return refuse(res, 422, 'ITEM_NOT_FOUND', 'Line ' + nameOf(l) + ' names an item this shop does not sell.', { line: l.key });
+      if (!prod) return refuse(req, res, 422, 'ITEM_NOT_FOUND', 'Line ' + nameOf(l) + ' names an item this shop does not sell.', { line: l.key });
       const p = S.priceLine(l, prod);
       if (p.unit_price == null)
-        return refuse(
-          res,
+        return refuse(req, res,
           422,
           'NO_PRICE',
           (prod.name ? '"' + String(prod.name).slice(0, 60) + '"' : 'Line ' + nameOf(l)) + ' has no price on the shelf. Set its price, or send one.',
@@ -229,7 +235,7 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
       heads: T.heads(det)
     });
   } catch (e) {
-    fault(res, e);
+    problem(req, res, faultOf(e, req));
   }
 });
 router.openapi = {
@@ -311,4 +317,5 @@ router.openapi = {
   },
   schemas: {}
 };
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

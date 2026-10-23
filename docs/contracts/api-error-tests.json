@@ -1,5 +1,325 @@
 {
+ "DELETE /api/books/recurring/:id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "DELETE /api/folders/:id": [
+  400,
+  401,
+  500
+ ],
+ "DELETE /api/folders/rules/:rule_id": [
+  400,
+  401,
+  500,
+  503
+ ],
  "DELETE /api/keys/:jti": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /.well-known/ctp.json": [
+  200,
+  500
+ ],
+ "GET /api/books/accounts": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/assets": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/bank/rail": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/bs": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/cashflow": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/cheques": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/compare": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/compare/:id": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/books/compare/:id/csv": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/books/daybook": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/dues": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/events": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/fx-rates": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/fx-revalue": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/health": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/ledger/:account": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/move-in/imports": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/packs": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/packs/:id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/packs/:id/file": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "GET /api/books/party/:id/statement": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/payments/:id/advice": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/periods": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/pl": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/recurring": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/returns": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/status": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/books/terms": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/todo": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/trial-balance": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/books/year/:fy/status": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/ctp/.well-known/ctp.json": [
+  200,
+  500
+ ],
+ "GET /api/facts/:card": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/facts/rail/chits": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/folders": [
+  401,
+  500
+ ],
+ "GET /api/folders/:id/chits": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/folders/:id/metrics": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/folders/:id/rules": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/folders/groupsum": [
+  401,
+  500
+ ],
+ "GET /api/folders/inventory": [
+  401,
+  500
+ ],
+ "GET /api/folders/messages": [
+  401,
+  500
+ ],
+ "GET /api/folders/mis": [
+  401,
+  500
+ ],
+ "GET /api/folders/reconcile": [
+  401,
+  500
+ ],
+ "GET /api/folders/rules": [
+  401,
+  500
+ ],
+ "GET /api/folders/rules/vocabulary": [
+  401,
+  500
+ ],
+ "GET /api/folders/worklist": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/integrations/catalogue": [
+  401,
+  500
+ ],
+ "GET /api/integrations/docs/:id": [
+  404,
+  500
+ ],
+ "GET /api/integrations/download/:id": [
+  401,
+  404,
+  409,
+  500
+ ],
+ "GET /api/integrations/kit": [
+  401,
+  500
+ ],
+ "GET /api/integrations/kit/*": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/integrations/profile-map": [
+  401,
+  500
+ ],
+ "GET /api/integrations/reconcile": [
+  401,
+  500
+ ],
+ "GET /api/integrations/status": [
+  401,
+  500
+ ],
+ "GET /api/integrations/stock/:handle": [
+  404,
+  500
+ ],
+ "GET /api/integrations/streams": [
+  401,
+  500
+ ],
+ "GET /api/invoice/:chit_id": [
   401,
   403,
   404,
@@ -10,10 +330,492 @@
   403,
   500
  ],
+ "GET /api/pricing/kinds": [
+  500
+ ],
+ "GET /api/tax/gstr": [
+  401,
+  500
+ ],
+ "GET /api/tax/invoice/:chit_id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/tax/ledger": [
+  401,
+  500
+ ],
+ "PATCH /api/books/payments/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "PATCH /api/books/recurring/:id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/folders/:id": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/folders/rules/:rule_id": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/books/accounts": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/books/accruals": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/accruals/:ref/reverse": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/assets": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/assets/:id/dispose": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/check": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/cheques/:id/status": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/closing-stock": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/compare/preflight": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/compare/snapshots": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/books/contra": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/depreciation/run": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/enable": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/books/entries": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/books/entries/:id/reverse": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/books/events": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/fx-rates": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/books/fx-rates/import": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/books/fx-revalue": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/gst/close": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/gst/pay": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/loans": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/loans/:ref/emi": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/move-in/import": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/move-in/preflight": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/move-in/preview": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/opening": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/outbox/retry": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/packs": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/books/packs/:id/ack": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/books/parties/:id/dispute": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/payments": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/books/payments/:id/confirm": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/payments/:id/propose": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/payments/preview": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/books/periods/:fy/:p/:act": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/preview": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/recurring": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/recurring/:id/post": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/recurring/:id/skip": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/setting": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/terms": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/books/write-off": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/year/:fy/close": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/ctp/deliver": [
+  200,
+  400,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/ctp/query": [
+  200,
+  400,
+  403,
+  409,
+  500
+ ],
+ "POST /api/folders": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/folders/:id/rules": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/folders/messages/:message_id/mark": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/folders/move": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/folders/rules/preview": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/integrations/:actor_id/approve": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/integrations/ask/:handle/stock": [
+  404,
+  500
+ ],
+ "POST /api/integrations/books": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/integrations/books/skip": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/integrations/heartbeat": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/integrations/profile": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/invoice/build": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/keys": [
   400,
   401,
   403,
+  500
+ ],
+ "POST /api/pricing/price": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/tax/compute": [
+  400,
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/tax/rate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /deliver": [
+  200,
+  400,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /query": [
+  200,
+  400,
+  403,
+  409,
+  500
+ ],
+ "PUT /api/folders/inventory/:code": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "PUT /api/integrations/streams": [
+  400,
+  401,
+  403,
+  422,
   500
  ]
 }

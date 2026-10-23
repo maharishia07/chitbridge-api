@@ -204,6 +204,16 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
 const INFRA_LIBS = [
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
   'problem.js',
+  /* API-4 sweep: the contract of the ledger, tax and invoice routes (their OpenAPI operations and the words of their refusals) and the kit that builds an area's operations — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'contract-kit.js',
+  'books-contract.js',
+  'tax-contract.js',
+  /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'folders-contract.js',
+  'facts-contract.js',
+  'pricing-contract.js',
+  /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'integrations-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
   /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
@@ -393,6 +403,7 @@ const INFRA_LIBS = [
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
+  'ctp-contract.js',       // API-1 slice 1d: routes/ctp.js's OpenAPI operations and the old answers a peer reads — a contract, not an engine
   'connector-rows.js',     // SET-35: the checked-in connectors - one statement, one row shape - read by GET /integrations/status and the Connectors Home card
   'match.js',              // matching helpers
   'measure.js',            // unit handling

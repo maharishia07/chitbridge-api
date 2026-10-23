@@ -36,6 +36,7 @@ const GUARDS = [
   'till-vendor.test.js', // the counter and its vendored engines agree, byte for byte
   't3-fixes.test.cjs', // T3-FIXES: one cost gate on every price write · each received batch its own lot · profile writes the shop · sign-in keeps the constitution
   'till-rcv-batches.test.cjs', // STK-FIX1b: at the till a second scanned batch of the same product is its own receiving line (rcvLineFor), never merged onto line 1
+  'governance-entity-own.test.cjs', // SEC (23 Oct): a shop's governance view is its own; another shop's id answers the unknown id's 404
   'shop-clock-guard.test.cjs', // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
   'natdef-guard.test.cjs', // ⭐ T2-NATDEF: zero `|| 'INR'` / `|| 'IN'` (lib · routes · till master); one date reader (books-engines ymd · addDays), NOW labels allow-listed
   'shop-day-tz.test.cjs', // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
@@ -305,6 +306,10 @@ const GUARDS = [
   'crm-sweep.test.cjs', // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'api-problem.test.cjs', // API-1 slice 1a: the one error body (lib/problem.js), the legacy keys frozen, routes/keys.js + the 404 and error handler answer it
+  'api-problem-books.test.cjs', // API-4 sweep, accounts and finance: every refusal of routes/books.js, routes/tax.js and routes/invoice.js is a Problem with its old keys frozen; no 5xx says its cause
+  'api-problem-finance.test.cjs', // API-4 sweep, folders, Home facts and pricing: every refusal of routes/folders.js, routes/facts.js and routes/pricing.js is a Problem with its old keys frozen; no 5xx says its cause
+  'api-problem-integrations.test.cjs', // API-1 slice 1c: every refusal of routes/integrations.js is a Problem with its old keys frozen; no 5xx says its cause
+  'api-problem-ctp.test.cjs', // API-1 slice 1d: routes/ctp.js — every answer to another installation a Problem that keeps `accepted`/`ok` and `why`, on both mounts
   'api-contract.test.cjs', // API-1 slice 1b: schemaValidate (ajv) and the contract cases generated from each route's schema
   'api-tools.test.cjs', // API-1 slice 1a: the ratchet rules, the register normaliser, the error-code table, as units
   'web-api-contract.test.cjs', // every route the web reads, called for real (offline), held to docs/contracts/web-api.json: same keys, nesting and types
