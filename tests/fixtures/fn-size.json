@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 230,
+  "long_functions": 222,
   "worst_complexity": 183,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -473,16 +473,6 @@
       "POST /requirements",
       "importCases",
       "recordResults"
-    ],
-    "routes/till.js": [
-      "GET /bills",
-      "GET /match",
-      "GET /match",
-      "GET /snapshot",
-      "GET /worth-an-offer",
-      "POST /catalogue",
-      "POST /shop",
-      "tillItem"
     ]
   }
 }

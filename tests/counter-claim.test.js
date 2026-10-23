@@ -84,15 +84,14 @@ it('enrol claims, and never mints on its own', () => {
   const at = TILL.indexOf("router.post('/enrol'");
   assert.ok(at > 0, 'the enrol route is gone');
   const body = TILL.slice(at, TILL.indexOf('\n});', at));
-  assert.ok(/counters\.claim\(/.test(body), 'enrol mints without claiming — the registry is bypassed again');
+  assert.ok(/require\('\.\/counters'\)\.claim\(/.test(body), 'enrol mints without claiming — the registry is bypassed again');
   assert.ok(!/keys\.mint\(/.test(body), 'enrol still mints its own key');
   assert.ok(/claimed\.status !== 200/.test(body), 'enrol does not relay the refusal');
 });
 
 it('and it only takes a counter when asked in words', () => {
-  const at = TILL.indexOf("router.post('/enrol'");
-  const body = TILL.slice(at, TILL.indexOf('\n});', at));
-  assert.ok(/takeover: !!\(req\.body && req\.body\.takeover\)/.test(body),
+  const body = TILL.slice(TILL.indexOf('function enrolClaim('), TILL.indexOf("router.post('/pair/claim'"));
+  assert.ok(/takeover: !!given\.takeover/.test(body),
     'enrol can take a held counter without being told to');
 });
 

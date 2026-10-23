@@ -167,10 +167,10 @@ it('⭐⭐ the counter reads the lifecycle from status, never from the quantity 
 
 it('⭐ and the snapshot sends that status, or the flag can never travel', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  assert.ok(src.indexOf('status: itemstatus.statusOf(d)') > 0,
+  assert.ok(src.indexOf('status: itemstatus.statusOf(data)') > 0,
     'the snapshot does not carry the lifecycle status — the counter cannot show what it cannot see');
   /* the row is on the counter at all only because the snapshot stopped filtering to sellable */
-  assert.ok(src.indexOf('onTheCounter') > 0 && /all\s*\.filter\(onTheCounter\)/.test(src),
+  assert.ok(src.indexOf('onTheCounter') > 0 && /\.filter\(onTheCounter\)/.test(src),
     'an item marked off the shelf must stay on the counter, or it can never be put back from there');
 });
 
@@ -1053,8 +1053,8 @@ it('⭐⭐ the till may move one product in or out of one live offer, and may no
   assert.ok(r.indexOf("Object.assign({}, rules, { applies_to:") > 0, 'the whole rules object is rewritten rather than one key');
   assert.ok(r.indexOf('item_ids: next') > 0, 'item_ids is not the field being set');
   /* it refuses anything that is not one LIVE offer */
-  assert.ok(r.indexOf("d.kind !== 'offer'") > 0, 'this route could edit a definition that is not an offer');
-  assert.ok(r.indexOf("d.status !== 'live'") > 0, 'a draft or retired offer can be changed from a till');
+  assert.ok(r.indexOf("offer.kind !== 'offer'") > 0, 'this route could edit a definition that is not an offer');
+  assert.ok(r.indexOf("offer.status !== 'live'") > 0, 'a draft or retired offer can be changed from a till');
   /* ⚠️ and it must never gain the ability to reprice, rename or retire */
   for (const forbidden of ['status =', 'name =', 'sub_kind', 'discount'])
     assert.ok(r.indexOf(forbidden) < 0, 'the offer-item route can write ' + forbidden + ' — a till key must not');
@@ -1218,7 +1218,7 @@ it('⭐⭐ the payment ways are read from where the snapshot writes them', () =>
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   /* the wire puts it inside shop — it is a fact about the shop */
-  const shopBlock = src.slice(src.indexOf('shop: {'), src.indexOf('items, removed, delta'));
+  const shopBlock = src.slice(src.indexOf('function shopBlock('), src.indexOf('function policyBlock('));
   assert.ok(shopBlock.indexOf('pay: cbProfile.payWays(') > 0 || shopBlock.indexOf('pay: require(') > 0,
     'the snapshot does not carry the payment ways inside shop');
   /* and the counter must look there, not at the root */
@@ -1278,9 +1278,9 @@ it('⭐⭐ the shop country is derived once and used by everything that needs it
   /* ⚠️ derived ONCE in the route: two answers about which country a shop is in would eventually mean one screen
      offering a payment method another refuses */
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  assert.ok(src.indexOf('const cbCountry = cbProfile.countryOf(') > 0, 'the route does not derive the country');
-  assert.ok(src.indexOf('country: cbCountry,') > 0, 'the snapshot does not carry the country');
-  assert.ok(src.indexOf('payWays({ country: cbCountry') > 0, 'payWays is not given the same derived country');
+  assert.ok(src.indexOf('const country = cbProfile.countryOf(') > 0, 'the route does not derive the country');
+  assert.ok(/\n\s+country,\n/.test(src), 'the snapshot does not carry the country');
+  assert.ok(src.indexOf('payWays({ country, policy_flags') > 0, 'payWays is not given the same derived country');
   assert.ok(src.indexOf('country: row.country }') < 0, 'payWays is still handed the raw column');
 });
 
@@ -1357,10 +1357,10 @@ it('⭐⭐⭐ goods-in records the tax paid, per line and per consignment', () =
  */
 it('⚠️⚠️ the customer list asks for columns that exist, on the table that has them', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
+  const q = src.slice(src.indexOf('async function readCustomers('), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
   /* ⭐ MOVED 2026-09-29 (M36): the SQL now lives in the snapshot's OWN map, read in one shared transaction; the site
      reads it through ownRead('customers'). The assertions follow the SQL to where it is, and the site must still use it. */
-  const sq = src.slice(src.search(/\n\s+customers: \(db\) =>/), src.search(/\n\s+adoption: \(db\) =>/));
+  const sq = src.slice(src.indexOf('function customersRead('), src.indexOf('function suppliersRead('));
   assert.ok(sq.length > 0 && q.indexOf("ownRead('customers')") > 0, 'the customer read is no longer OWN.customers — find where it went');
   /* the name and the number live on identities; customer_list is the JOIN and carries the relationship */
   assert.ok(sq.indexOf('JOIN identities') > 0, 'the name and phone are read from customer_list, which has neither');
@@ -1370,7 +1370,7 @@ it('⚠️⚠️ the customer list asks for columns that exist, on the table tha
   /* ⚠️ the OUTER catch must bind the error and log it. An inner catch(_) around the LOGGER is correct and stays —
      writing a log line must never be the thing that stops a shop billing. */
   assert.ok(q.indexOf('} catch (e) {') > 0, 'the outer catch does not bind the error, so it cannot report it');
-  assert.ok(q.indexOf("logger').warn('till.customers'") > 0, 'a swallowed failure must leave something behind');
+  assert.ok(/warn\('till\.customers'/.test(q), 'a swallowed failure must leave something behind');
 
   /* the columns it names must be ones the baseline or a migration actually creates */
   const base = fs.readFileSync(path.join(API, 'migrations', 'archive', '000_baseline.sql'), 'utf8');
@@ -1412,8 +1412,8 @@ it('⭐⭐⭐ ONE reader of a balance — the counter and the shop must never qu
 
 it('⚠️ a customer carries the ID points hang from, not just a name', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
-  const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
-  const sq = src.slice(src.search(/\n\s+customers: \(db\) =>/), src.search(/\n\s+adoption: \(db\) =>/));   /* OWN.customers (M36) */
+  const q = src.slice(src.indexOf('async function readCustomers('), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
+  const sq = src.slice(src.indexOf('function customersRead('), src.indexOf('function suppliersRead('));   /* OWN.customers (M36) */
   assert.ok(sq.indexOf('i.identity_id') > 0, 'the query must select identity_id');
   assert.ok(q.indexOf('identity_id: x.identity_id') > 0,
     'the id must reach the counter — a balance addressed by name would eventually be paid to the wrong Kumar');
@@ -1658,15 +1658,10 @@ it('⚠️⚠️ the snapshot reads the shop\'s particulars from invoiceParty, n
  */
 it('⚠️⚠️ every field the counter ACTS on is carried by the snapshot projection', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const at = src.indexOf('const tillItem = (item_id, d) =>');
+  const at = src.indexOf('function tillItem(');
   assert.ok(at > 0, 'tillItem is gone or renamed — this guard is stale');
-  /* the projection object, to its closing brace */
-  let depth = 0, started = false, end = at;
-  for (let i = at; i < src.length; i++) {
-    if (src[i] === '{') { depth++; started = true; }
-    else if (src[i] === '}') { depth--; if (started && depth === 0) { end = i + 1; break; } }
-  }
-  const proj = src.slice(at, end);
+  /* the projection: tillItem and the four runs of fields it is made of, up to the network lines */
+  const proj = src.slice(at, src.indexOf('async function addNetworkLines('));
   /**
    * Each of these is read by an engine in till.html and DECIDES something: whether a dish asks for choices,
    * whether a key can be sold to whoever is standing there, what a meal deal is worth. A field added to this
@@ -1694,7 +1689,7 @@ it('⚠️⚠️ every field the counter ACTS on is carried by the snapshot proj
  */
 it('⚠️⚠️ modifiers is normalized AND filtered before it reaches the wire, never the raw stored array', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const at = src.indexOf('modifiers: (function () {');
+  const at = src.indexOf('function modifiersOf(');
   assert.ok(at > 0, 'the modifiers projection no longer runs through the shape-guard — the raw array is back on the wire');
   const chunk = src.slice(at, at + 300);
   assert.ok(/variantEngine\.normalize\(/.test(chunk), 'a cost price or supplier code on an option can ride through unstripped');
@@ -1908,8 +1903,8 @@ it('⭐ the snapshot carries the master under its own key and no key is written 
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   const at = src.indexOf('category_master: catList.map(');
   assert.ok(at > 0, 'the snapshot no longer carries the category master');
-  const body = src.slice(src.lastIndexOf('const body = {', at), src.indexOf('policy: {', at));
-  const keys = body.split(/\r?\n/).map(function (l) { return (l.match(/^ {6}([a-z_]+):/) || [])[1]; }).filter(Boolean);
+  const body = src.slice(src.lastIndexOf('const body = {', at), src.indexOf('function shopBlock(', at));
+  const keys = body.split(/\r?\n/).map(function (l) { return (l.match(/^ {4}([a-z_]+):/) || [])[1]; }).filter(Boolean);
   const dup = keys.filter(function (k, i) { return keys.indexOf(k) !== i; });
   assert.deepStrictEqual(dup, [], 'a key is written twice in the snapshot answer, so the later silently wins: ' + dup.join(', '));
   assert.ok(keys.includes('categories') && keys.includes('category_master'), 'tax categories and the master must both be present');
