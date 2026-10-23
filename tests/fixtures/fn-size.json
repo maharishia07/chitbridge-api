@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 233,
+  "long_functions": 231,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -383,10 +383,6 @@
       "sendCopyPolicy",
       "sendLegacyReceiverRows",
       "sendLegacySenderRows"
-    ],
-    "routes/connections.js": [
-      "POST /request",
-      "PUT /:id/respond"
     ],
     "routes/connectors.js": [
       "POST /ingest",

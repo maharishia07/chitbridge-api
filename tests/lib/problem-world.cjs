@@ -5,7 +5,8 @@
  *           run over them), every route a router holds x the worlds, the named extras, one request over http, the checks on a Problem body and on the frozen legacy keys,
  *           and the three recordings: --capture (the answers of the code BEFORE the change), --freeze (the refusals of a capture into docs/contracts/api-legacy.json) and
  *           --compare (the answers now, byte for byte against a capture).
- * CALLED BY tests/api-problem-products.test.cjs · tests/api-problem-catalogue.test.cjs. Not a test itself.
+ * CALLED BY tests/api-problem-products.test.cjs · tests/api-problem-catalogue.test.cjs · tests/api-problem-network.test.cjs. Not a test itself.
+ * Options a sweep may add: `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
  * FLOW      harness({ here, mounts, routeFiles, ... }) → installStubs() → scenariosOf(routes) → runScenario() → record / check / compare
  * CARD      qa/offline-guards
  * No database, no network. A scenario that needs a row the stand-in cannot make says so in its own `setup.sqlRows`.
@@ -177,10 +178,10 @@ function harness(options) {
     check(label + ': status in the body equals the HTTP status', answer.json && answer.json.status === answer.status);
   }
 
-  function checkLegacy(label, answer, frozen) {
+  function checkLegacy(label, answer, frozen, givenUp) {
     if (!frozen) return check(label + ': a frozen legacy entry exists in docs/contracts/api-legacy.json', false);
     check(label + ': status equals the frozen status', answer.status === frozen.status, [answer.status, frozen.status]);
-    const missing = Object.keys(frozen.fixture).filter((name) => !sameValue(answer.json[name], frozen.fixture[name]));
+    const missing = Object.keys(frozen.fixture).filter((name) => !(givenUp || []).includes(name) && !sameValue(answer.json[name], frozen.fixture[name]));
     check(label + ': every frozen legacy key is still there, byte for byte', missing.length === 0, missing.map((name) => name + ' -> ' + JSON.stringify(answer.json[name])));
     const extra = Object.keys(answer.json).filter((name) => !PROBLEM_FIELDS.includes(name) && !(name in frozen.fixture));
     check(label + ': no key beyond the frozen ones and the Problem fields', extra.length === 0, extra);
@@ -210,7 +211,7 @@ function harness(options) {
     if (options.inherited(scenario, answer)) return;
     checkProblemBody(label, answer);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT|vault|relation "/.test(answer.text), answer.text);
-    else checkLegacy(label, answer, legacyOf(scenario.route, scenario.id));
+    else if (!scenario.after) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id), options.cannotRide ? options.cannotRide(scenario.route, scenario.id) : []); /* `after`: a refusal the sweep adds, so nothing was frozen */
   }
 
   /** run every scenario; record each answer; in a check run judge it. → the statuses each route was seen to refuse with */

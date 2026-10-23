@@ -1,6 +1,11 @@
 // routes/network-design.js — NETWORK DESIGN persistence: the design-first Network builder's draft, stored
 // per entity so the SAME design follows the user across machines/browsers (was browser-localStorage only).
 // network_design is RLS-protected (b111) -> every query runs inside withEntity(caller). One row per entity.
+// OWNS      /api/network-design: the saved drawing (get · put), the check (validate), the build and re-issue of a claim code, and the two reads of the network (availability · stores).
+// CALLED BY server.js (app.use('/api/network-design', ...))
+// FLOW      auth → schema check (lib/network-contract.js) → lib/network-build-run · lib/network-membership → res.json | problem(req, res, { status, ...words.x() } | failed(e, req, label))
+//           (API-STANDARD S1: every refusal is a Problem that keeps the keys it always had, frozen in docs/contracts/api-legacy.json)
+// CARD      04-network/network-design-builder
 //
 // ── AND THE BUILD ────────────────────────────────────────────────────────────────────────────────────────────────
 // POST /build turns the saved design into real entities. It is the first thing on the platform that MINTS an entity
@@ -10,7 +15,9 @@ const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
 const { query, withEntity } = require('../db');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const contract = require('../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const handleLib = require('../lib/handle');
 const networkBuild = require('../lib/network-build');
@@ -23,6 +30,8 @@ const catalogueView = require('../lib/catalogue-view'); // ONE visibility rule �
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
 
 const ent = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/network-contract.js) */
+const checked = (route) => schemaValidate(contract.design.operationFor(route), contract.schemaOptions.design);
 const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this never becomes a document store
 // Rows returned by the single-query network search (b122). Generous enough that a real search is whole, bounded
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
@@ -35,20 +44,20 @@ router.get('/', auth, async (req, res) => {
     const r = await withEntity(e, (db) => db.query(`SELECT draft, updated_at FROM network_design WHERE entity_id = $1`, [e]));
     res.json({ draft: r.rows.length ? r.rows[0].draft : null, updated_at: r.rows.length ? r.rows[0].updated_at : null });
   } catch (err) {
-    res.status(500).json({ error: 'Load failed', message: safeErr(err) });
+    problem(req, res, contract.failed(err, req, 'Load failed'));
   }
 });
 
 // PUT /api/network-design — upsert the whole design draft { draft: {...} }.
-router.put('/', auth, async (req, res) => {
+router.put('/', auth, checked('PUT /'), async (req, res) => {
   try {
     const e = ent(req);
     const draft = req.body && req.body.draft;
     if (draft === undefined || draft === null || typeof draft !== 'object' || Array.isArray(draft)) {
-      return res.status(400).json({ error: 'Bad request', message: 'draft must be an object' });
+      return problem(req, res, { status: 400, ...contract.words.draftNotObject() });
     }
     if (Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
-      return res.status(413).json({ error: 'Too large', message: 'design exceeds ' + MAX_BYTES + ' bytes' });
+      return problem(req, res, { status: 413, ...contract.words.tooLarge(MAX_BYTES) });
     }
     /**
      * ⚠️ A STALE CLIENT MUST NOT BE ABLE TO UN-RECORD WHAT WAS BUILT.
@@ -95,7 +104,7 @@ router.put('/', auth, async (req, res) => {
     );
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
   } catch (err) {
-    res.status(500).json({ error: 'Save failed', message: safeErr(err) });
+    problem(req, res, contract.failed(err, req, 'Save failed'));
   }
 });
 
@@ -130,17 +139,17 @@ const { newClaimCode, CLAIM_DAYS } = run; // the claim code and its life — one
  * returns handle strings only. No new table, no migration.
  * Trips: sample → 0 · given draft + root_handle → 1 · saved design → 2 (design, taken) + 1 (own user_id when no root_handle).
  */
-router.post('/validate', auth, async (req, res) => {
+router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const body = req.body || {};
     const sample = body.sample === true;
     let draft = body.draft;
     if (draft !== undefined && draft !== null && (typeof draft !== 'object' || Array.isArray(draft))) {
-      return res.status(400).json({ error: 'Bad request', message: 'draft must be an object' });
+      return problem(req, res, { status: 400, ...contract.words.draftNotObject() });
     }
     if (draft && Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
-      return res.status(413).json({ error: 'Too large', message: 'design exceeds ' + MAX_BYTES + ' bytes' });
+      return problem(req, res, { status: 413, ...contract.words.tooLarge(MAX_BYTES) });
     }
     if (!draft && !sample) draft = await run.designOf(me);
     const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
@@ -158,7 +167,7 @@ router.post('/validate', auth, async (req, res) => {
     const ceiling = visibilityCap.RANK[String(body.ceiling || '').toLowerCase()] !== undefined ? String(body.ceiling).toLowerCase() : 'public';
     res.json(Object.assign({ dry_run: true, sample }, networkBuild.validate({ rootHandle, nodes, taken, ceiling })));
   } catch (err) {
-    res.status(500).json({ error: 'Check failed', message: safeErr(err) });
+    problem(req, res, contract.failed(err, req, 'Check failed'));
   }
 });
 
@@ -168,29 +177,29 @@ router.post('/validate', auth, async (req, res) => {
  * `dry_run` answers "what would this do" without doing it, and it is the same code path — a preview computed by
  * different code is a preview that can lie.
  */
-router.post('/build', auth, async (req, res) => {
+router.post('/build', auth, checked('POST /build'), async (req, res) => {
   try {
     // Only the entity itself mints. A co-assist acting under an entity may run the shop; creating new businesses
     // in the owner's name, holding their claim codes, is not a delegated act.
     if (req.identity.parent_entity_id) {
-      return res.status(403).json({ error: 'Not permitted', message: 'Only the business owner can build a network. Sign in as the business itself.' });
+      return problem(req, res, { status: 403, ...contract.words.buildOwnerOnly() });
     }
     const me = req.identity.identity_id;
     const dryRun = req.body && req.body.dry_run === true;
 
     const meRow = await run.meRowOf(me);
-    if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
+    if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     // ── 1 · THE ROOT NAME — every handle in the network is built from it, so it is settled first (run.rootOf)
     const root = await run.rootOf(meRow, req.body && req.body.root_handle);
-    if (root.refuse) return res.status(root.refuse.status).json(root.refuse.body);
+    if (root.refuse) return problem(req, res, contract.relayed(root.refuse)); /* 409 · 400: the build's own refusal (ROOT_HANDLE_*), kept whole */
     const { rootHandle, rootClaimed } = root;
 
     // ── 2 · THE DESIGN
     const draft = await run.designOf(me);
     const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
     if (!nodes.length) {
-      return res.status(400).json({ error: 'Nothing designed', message: 'Draw the network first — add the branches and units you want, then build.' });
+      return problem(req, res, { status: 400, ...contract.words.nothingDesigned() });
     }
     const taken = await run.takenUnder(rootHandle);
     const live = await run.liveOf(nodes);
@@ -250,20 +259,9 @@ router.post('/build', auth, async (req, res) => {
     const result = await run.execute({ me, entity: auth.entityOf(req), meRow, plan, nodes, draft, rootHandle, rootClaimed });
     res.json(networkBuild.answer({ rootHandle, rootClaimed, plan, notes, result, claimDays: run.CLAIM_DAYS }));
   } catch (err) {
-    if (err && err.code === '23505') {
-      return res
-        .status(409)
-        .json({ error: 'Name taken', message: 'One of these names was taken while the network was being built. Nothing was created — try again.' });
-    }
-    if (err && err.code === '23514') {
-      return res.status(409).json({
-        error: 'Migration needed',
-        code: 'VISIBILITY_NOT_MIGRATED',
-        message: 'This database does not accept "network" visibility yet — apply migration b115.'
-      });
-    }
-    console.error('Network build error:', err.message);
-    res.status(500).json({ error: 'Build failed', message: safeErr(err) });
+    if (err && err.code === '23505') return problem(req, res, { status: 409, ...contract.words.nameTaken() });
+    if (err && err.code === '23514') return problem(req, res, { status: 409, ...contract.words.visibilityNotMigrated() });
+    problem(req, res, contract.failed(err, req, 'Build failed'));
   }
 });
 
@@ -277,14 +275,14 @@ router.post('/build', auth, async (req, res) => {
  * Only for stores THIS operator minted: `created_by` is checked, not the tree, because tree membership can be
  * arranged and `created_by` cannot.
  */
-router.post('/reissue', auth, async (req, res) => {
+router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
   try {
     if (req.identity.parent_entity_id) {
-      return res.status(403).json({ error: 'Not permitted', message: 'Only the business owner can re-issue a store code.' });
+      return problem(req, res, { status: 403, ...contract.words.reissueOwnerOnly() });
     }
     const me = req.identity.identity_id;
     const uid = String((req.body && req.body.user_id) || '').trim();
-    if (!uid) return res.status(400).json({ error: 'Bad request', message: 'Which store? Send its handle as user_id.' });
+    if (!uid) return problem(req, res, { status: 400, ...contract.words.noStoreNamed() });
 
     const r = await query(
       `SELECT identity_id, display_name, user_id FROM identities
@@ -292,7 +290,7 @@ router.post('/reissue', auth, async (req, res) => {
       [uid, me]
     );
     if (!r.rows.length) {
-      return res.status(404).json({ error: 'Not found', message: `You did not create a store called "${uid}".` });
+      return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) });
     }
     const claim = newClaimCode();
     const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
@@ -307,8 +305,7 @@ router.post('/reissue', auth, async (req, res) => {
       message: `New code for ${r.rows[0].user_id}. It expires in ${CLAIM_DAYS} days.`
     });
   } catch (err) {
-    console.error('Reissue error:', err.message);
-    res.status(500).json({ error: 'Re-issue failed', message: safeErr(err) });
+    problem(req, res, contract.failed(err, req, 'Re-issue failed'));
   }
 });
 
@@ -403,7 +400,7 @@ router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
-    if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
+    if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     const { visible, truncated } = await visibleStores(meRow);
     if (!visible.length) return res.json({ stores: [], not_in_network: true });
@@ -429,22 +426,22 @@ router.get('/stores', auth, async (req, res) => {
     });
     res.json({ stores, ...(truncated && { truncated }) });
   } catch (err) {
-    if (membership.answerReadFailed(res, err)) return;
-    console.error('Network stores error:', err.message);
-    res.status(500).json({ error: 'Load failed', message: safeErr(err) });
+    const unread = contract.unreadWords(err);
+    if (unread) return problem(req, res, { status: 503, ...unread });
+    problem(req, res, contract.failed(err, req, 'Load failed'));
   }
 });
 
-router.get('/availability', auth, async (req, res) => {
+router.get('/availability', auth, checked('GET /availability'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const text = String(req.query.q || '').trim();
     if (text.length < 2) {
-      return res.status(400).json({ error: 'Bad request', message: 'Search for a product — two characters or more.' });
+      return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     }
 
     const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
-    if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
+    if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
     const members = await membership.treeOf(meRow.bridge_id);
@@ -666,10 +663,12 @@ router.get('/availability', auth, async (req, res) => {
       ...(degraded && { degraded })
     });
   } catch (err) {
-    if (membership.answerReadFailed(res, err)) return;
-    console.error('Availability search error:', err.message);
-    res.status(500).json({ error: 'Search failed', message: safeErr(err) });
+    const unread = contract.unreadWords(err);
+    if (unread) return problem(req, res, { status: 503, ...unread });
+    problem(req, res, contract.failed(err, req, 'Search failed'));
   }
 });
+
+router.openapi = { paths: contract.design.pathsOf(), schemas: {} };
 
 module.exports = router;
