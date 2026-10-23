@@ -16,6 +16,15 @@
       "fired": true,
       "status": 422
     },
+    "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "DELETE /api/channels/:id": {
       "file": "channels.js",
       "trips": 1,
@@ -43,6 +52,15 @@
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "DELETE /api/combo-templates/:id": {
+      "why": "placeholder: measuring",
+      "file": "combo-templates.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "DELETE /api/connectors/:actorId": {
       "file": "connectors.js",
@@ -125,6 +143,24 @@
       "fired": true,
       "status": 200
     },
+    "DELETE /api/quick-keys/groups/:id": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "DELETE /api/quick-keys/groups/:id/items/:productId": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "DELETE /api/relationships/suppliers/:id": {
       "file": "relationships.js",
       "trips": 1,
@@ -139,10 +175,37 @@
       "fired": true,
       "status": 404
     },
+    "GET /.well-known/ctp.json": {
+      "why": "placeholder: measuring",
+      "file": "ctp.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/actors": {
       "file": "actors.js",
       "trips": 2,
       "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/actors/:id/tasks": {
+      "why": "placeholder: measuring",
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/actors/access-events": {
+      "why": "placeholder: measuring",
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 4,
       "fired": true,
       "status": 200,
       "extra": true
@@ -175,6 +238,15 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/assist/catalogue-source/:key": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/assist/catalogue-sources": {
       "file": "assist.js",
       "trips": 1,
@@ -182,12 +254,66 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/assist/container/:id": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/assist/erp-handoffs": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/gaps": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/penetration": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/assist/questions": {
       "file": "assist.js",
       "trips": 1,
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/assist/regions": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/resolve": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "GET /api/assist/standards": {
       "file": "assist.js",
@@ -202,6 +328,15 @@
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/attachments/:id": {
+      "why": "placeholder: measuring",
+      "file": "attachments.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "GET /api/books/accounts": {
       "file": "books.js",
@@ -346,6 +481,15 @@
       "fired": true,
       "status": 422
     },
+    "GET /api/books/packs/:id/file": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "GET /api/books/party/:id/statement": {
       "file": "books.js",
       "trips": 1,
@@ -423,12 +567,39 @@
       "fired": true,
       "status": 422
     },
+    "GET /api/capture/consolidate": {
+      "why": "placeholder: measuring",
+      "file": "capture.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/capture/pending": {
       "file": "capture.js",
       "trips": 1,
       "wire": 4,
       "fired": true,
       "status": 200
+    },
+    "GET /api/capture/stores": {
+      "why": "placeholder: measuring",
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/capture/webhook/whatsapp": {
+      "why": "placeholder: measuring",
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
     },
     "GET /api/catalogue-face": {
       "file": "catalogue-face.js",
@@ -445,7 +616,70 @@
       "status": 404,
       "extra": true
     },
+    "GET /api/catalogue/:bridge_id/capture-fields": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/:bridge_id/my-documents": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/:bridge_id/my-orders": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/:bridge_id/support/preview": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/catalogue/enquiry": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/enquiry/:item_id": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/network-store/:networkId": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/network/:bridge_id": {
+      "why": "placeholder: measuring",
       "file": "catalogue.js",
       "trips": 0,
       "wire": 0,
@@ -474,6 +708,24 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/chits/:chit_id/costs": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/chits/:chit_id/diagnosis": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
     "GET /api/chits/:chit_id/disputes": {
       "file": "chits.js",
       "trips": 1,
@@ -495,6 +747,24 @@
       "wire": 6,
       "fired": true,
       "status": 200
+    },
+    "GET /api/chits/:chit_id/use": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/chits/:id/children": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/chits/:id/trace": {
       "file": "chits.js",
@@ -553,6 +823,15 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/chits/register/templates": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/chits/register/walk/:from": {
       "file": "chits.js",
       "trips": 1,
@@ -588,12 +867,48 @@
       "fired": true,
       "status": 400
     },
+    "GET /api/chits/trace/networks": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/chits/unread": {
       "file": "chits.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 200
+    },
+    "GET /api/combo-templates": {
+      "why": "placeholder: measuring",
+      "file": "combo-templates.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/connections/list": {
+      "why": "placeholder: measuring",
+      "file": "connections.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/connections/pending": {
+      "why": "placeholder: measuring",
+      "file": "connections.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/connectors": {
       "file": "connectors.js",
@@ -686,6 +1001,267 @@
         "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
         "since": "2026-10-13"
       }
+    },
+    "GET /api/ctp/.well-known/ctp.json": {
+      "why": "placeholder: measuring",
+      "file": "ctp.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/entities/entitlements": {
+      "why": "placeholder: measuring",
+      "file": "entities.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/lookup": {
+      "why": "placeholder: measuring",
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "GET /api/facts/:card": {
+      "why": "placeholder: measuring",
+      "file": "facts.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/folders/inventory": {
+      "why": "placeholder: measuring",
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/folders/rules/vocabulary": {
+      "why": "placeholder: measuring",
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/forms": {
+      "why": "placeholder: measuring",
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/forms/:key": {
+      "why": "placeholder: measuring",
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/forms/instances/:id": {
+      "why": "placeholder: measuring",
+      "file": "forms.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/ai-skills": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/ai-usage": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/boilerplate/:key": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/commerce-standards": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/entities/:id": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/journey": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/profile/path": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 8,
+      "wire": 16,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/profile/readiness": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 7,
+      "wire": 15,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/source/:key": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/track-record": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/vault-schema": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/identity/documents": {
+      "why": "placeholder: measuring",
+      "file": "identity-docs.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/integrations/docs/:id": {
+      "why": "placeholder: measuring",
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/integrations/download/:id": {
+      "why": "placeholder: measuring",
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/integrations/kit": {
+      "why": "placeholder: measuring",
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/integrations/kit/*": {
+      "why": "placeholder: measuring",
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/invoice/:chit_id": {
+      "why": "placeholder: measuring",
+      "file": "invoice.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/kyb/position": {
+      "why": "placeholder: measuring",
+      "file": "kyb.js",
+      "trips": 2,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/kyb/risk": {
+      "why": "placeholder: measuring",
+      "file": "kyb.js",
+      "trips": 9,
+      "wire": 24,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/kyb/yourself": {
+      "why": "placeholder: measuring",
+      "file": "kyb.js",
+      "trips": 14,
+      "wire": 34,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/marketing/came-back": {
       "file": "marketing.js",
@@ -1257,10 +1833,46 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/offers/kinds": {
+      "why": "placeholder: measuring",
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/offers/openapi.json": {
+      "why": "placeholder: measuring",
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/openapi.json": {
+      "why": "placeholder: measuring",
+      "file": "openapi.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/people": {
       "file": "people.js",
       "trips": 1,
       "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/pricing/kinds": {
+      "why": "placeholder: measuring",
+      "file": "pricing.js",
+      "trips": 0,
+      "wire": 0,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1291,12 +1903,48 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/products/:id/schedule": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/products/:id/versions": {
       "file": "products.js",
       "trips": 1,
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "GET /api/products/export.csv": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/products/lists": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/products/media/:item_id/:mid": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "GET /api/products/starter-columns": {
       "file": "products.js",
@@ -1311,6 +1959,33 @@
       "wire": 13,
       "fired": true,
       "status": 200
+    },
+    "GET /api/products/workbook.xlsx": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/quick-keys/groups": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/quick-keys/screen-config/default": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/relationships/customers": {
       "file": "relationships.js",
@@ -1332,6 +2007,24 @@
       "wire": 4,
       "fired": true,
       "status": 200
+    },
+    "GET /api/relationships/scorecard": {
+      "why": "placeholder: measuring",
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/relationships/scorecard/:entity_id": {
+      "why": "placeholder: measuring",
+      "file": "relationships.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/relationships/suppliers": {
       "file": "relationships.js",
@@ -1375,6 +2068,15 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/schemas/my": {
+      "why": "placeholder: measuring",
+      "file": "schemas.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/service/:chit_id": {
       "file": "service.js",
       "trips": 1,
@@ -1396,6 +2098,15 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/simulator/content": {
+      "why": "placeholder: measuring",
+      "file": "simulator.js",
+      "trips": 6,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/supplies": {
       "file": "supplies.js",
       "trips": 1,
@@ -1409,6 +2120,15 @@
       "wire": 5,
       "fired": true,
       "status": 200
+    },
+    "GET /api/tax/invoice/:chit_id": {
+      "why": "placeholder: measuring",
+      "file": "tax.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "GET /api/tax/ledger": {
       "file": "tax.js",
@@ -1424,6 +2144,24 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/cases/gherkin": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/changes": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/testing/cmdb": {
       "file": "testing.js",
       "trips": 1,
@@ -1433,6 +2171,15 @@
       "extra": true,
       "why": "W1-SET: paged through readPage (one statement carries the page and its count); called by public/cmdb/record.html outside the registry"
     },
+    "GET /api/testing/cmdb/:ci": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "GET /api/testing/coverage": {
       "file": "testing.js",
       "trips": 2,
@@ -1440,12 +2187,48 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/engine": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/testing/incidents": {
       "file": "testing.js",
       "trips": 1,
       "wire": 5,
       "fired": true,
       "status": 200
+    },
+    "GET /api/testing/releases": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/reliability": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/report": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/testing/requirements": {
       "file": "testing.js",
@@ -1461,6 +2244,15 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/runs": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/testing/stale": {
       "file": "testing.js",
       "trips": 1,
@@ -1475,6 +2267,15 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/vocabulary": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/till/bills": {
       "file": "till.js",
       "trips": 1,
@@ -1483,12 +2284,102 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/till/catalogue/blueprints": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/counters": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/engine/:name": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/till/match": {
       "file": "till.js",
       "trips": 3,
       "wire": 11,
       "fired": true,
       "status": 200
+    },
+    "GET /api/till/quick-keys/groups": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/hidden": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/screen-config": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/state": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "GET /api/till/reward": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "GET /api/till/screens": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/snapshot": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 15,
+      "wire": 46,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/till/stock": {
       "file": "till.js",
@@ -1499,6 +2390,33 @@
       "extra": true
     },
     "GET /api/till/summary": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/tasks": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/verify": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/worth-an-offer": {
+      "why": "placeholder: measuring",
       "file": "till.js",
       "trips": 1,
       "wire": 4,
@@ -1552,6 +2470,15 @@
       "fired": true,
       "status": 422
     },
+    "PATCH /api/combo-templates/:id": {
+      "why": "placeholder: measuring",
+      "file": "combo-templates.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "PATCH /api/connectors/:actorId/connections/:connId": {
       "file": "connectors.js",
       "trips": 1,
@@ -1577,12 +2504,30 @@
       "fired": true,
       "status": 404
     },
+    "PATCH /api/entities/:id/erase": {
+      "why": "placeholder: measuring",
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
     "PATCH /api/entities/me/exposure": {
       "file": "entities.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PATCH /api/entities/me/locale": {
+      "why": "placeholder: measuring",
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "PATCH /api/entities/me/prefs/:kind": {
       "file": "entities.js",
@@ -1627,6 +2572,24 @@
       "fired": true,
       "status": 400
     },
+    "PATCH /api/quick-keys/groups/:id": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "PATCH /api/quick-keys/groups/:id/items": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "PATCH /api/relationships/customers/:id": {
       "file": "relationships.js",
       "trips": 0,
@@ -1654,6 +2617,24 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PATCH /api/schemas/visibility": {
+      "why": "placeholder: measuring",
+      "file": "schemas.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PATCH /api/supplies/:id": {
+      "why": "placeholder: measuring",
+      "file": "supplies.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "PATCH /api/testing/incidents/:id": {
       "file": "testing.js",
@@ -1685,6 +2666,15 @@
       "status": 404,
       "extra": true
     },
+    "POST /api/actors/check-key": {
+      "why": "placeholder: measuring",
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/actors/login": {
       "file": "actors.js",
       "trips": 0,
@@ -1698,6 +2688,15 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/actors/suggest-key": {
+      "why": "placeholder: measuring",
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/adopt/:chit_id": {
       "file": "adopt.js",
@@ -1734,12 +2733,30 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/assist/gap": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/assist/publish": {
       "file": "assist.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 422
+    },
+    "POST /api/assist/resolve": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 410,
+      "extra": true
     },
     "POST /api/attachments": {
       "file": "attachments.js",
@@ -1755,12 +2772,66 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/books/accruals": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/accruals/:ref/reverse": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/assets": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/assets/:id/dispose": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/check": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/books/cheques/:id/status": {
       "file": "books.js",
       "trips": 1,
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/closing-stock": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "POST /api/books/compare/preflight": {
       "file": "books.js",
@@ -1775,6 +2846,24 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/contra": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/depreciation/run": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "POST /api/books/enable": {
       "file": "books.js",
@@ -1796,6 +2885,15 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/events": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "POST /api/books/fx-rates": {
       "file": "books.js",
@@ -1829,6 +2927,42 @@
         "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
         "since": "2026-10-14"
       }
+    },
+    "POST /api/books/gst/close": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/gst/pay": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/loans": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/loans/:ref/emi": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "POST /api/books/move-in/import": {
       "file": "books.js",
@@ -1881,6 +3015,15 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/books/parties/:id/dispute": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/books/payments": {
       "file": "books.js",
       "trips": 1,
@@ -1888,12 +3031,39 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/books/payments/:id/confirm": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/payments/:id/propose": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/books/payments/preview": {
       "file": "books.js",
       "trips": 1,
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/periods/:fy/:p/:act": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "POST /api/books/preview": {
       "file": "books.js",
@@ -1909,6 +3079,24 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/books/recurring/:id/post": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/recurring/:id/skip": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/books/setting": {
       "file": "books.js",
       "trips": 1,
@@ -1922,6 +3110,15 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/write-off": {
+      "why": "placeholder: measuring",
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "POST /api/books/year/:fy/close": {
       "file": "books.js",
@@ -1965,7 +3162,97 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/capture/stores": {
+      "why": "placeholder: measuring",
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/capture/webhook/email": {
+      "why": "placeholder: measuring",
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/capture/webhook/whatsapp": {
+      "why": "placeholder: measuring",
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/catalogue/:bridge_id/login/verify": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/catalogue/:bridge_id/order/confirm": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/catalogue/:bridge_id/order/start": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/catalogue/:bridge_id/support": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/catalogue/:bridge_id/support/start": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/catalogue/network-store/:networkId/order": {
+      "why": "placeholder: measuring",
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/catalogue/photo-extract": {
+      "why": "placeholder: measuring",
       "file": "catalogue.js",
       "trips": 0,
       "wire": 0,
@@ -1986,6 +3273,15 @@
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "POST /api/channels/:id/provider-ref": {
+      "why": "placeholder: measuring",
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "POST /api/channels/:id/template": {
       "file": "channels.js",
@@ -2022,6 +3318,15 @@
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "POST /api/chits/:chit_id/costs": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "POST /api/chits/:chit_id/deliver-lines": {
       "file": "chits.js",
@@ -2066,6 +3371,15 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/chits/:chit_id/reprice": {
       "file": "chits.js",
       "trips": 1,
@@ -2095,6 +3409,15 @@
       "status": 404
     },
     "POST /api/chits/assign-bulk": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/chits/register/entries/:raida_id/accept": {
+      "why": "placeholder: measuring",
       "file": "chits.js",
       "trips": 0,
       "wire": 0,
@@ -2137,6 +3460,15 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/chits/register/templates": {
+      "why": "placeholder: measuring",
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/chits/send": {
       "file": "chits.js",
       "trips": 0,
@@ -2144,12 +3476,30 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/combo-templates": {
+      "why": "placeholder: measuring",
+      "file": "combo-templates.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/combo-templates/:id/push": {
       "file": "combo-templates.js",
       "trips": 1,
       "wire": 4,
       "fired": true,
       "status": 404,
+      "extra": true
+    },
+    "POST /api/connections/request": {
+      "why": "placeholder: measuring",
+      "file": "connections.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
       "extra": true
     },
     "POST /api/connectors": {
@@ -2216,6 +3566,15 @@
       "wire": 8,
       "fired": true,
       "status": 201
+    },
+    "POST /api/counters/:id/assign": {
+      "why": "placeholder: measuring",
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "POST /api/counters/:id/open": {
       "file": "counters.js",
@@ -2335,6 +3694,33 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/csp-report": {
+      "why": "placeholder: measuring",
+      "file": "csp-report.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 204,
+      "extra": true
+    },
+    "POST /api/ctp/deliver": {
+      "why": "placeholder: measuring",
+      "file": "ctp.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/ctp/query": {
+      "why": "placeholder: measuring",
+      "file": "ctp.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/definitions": {
       "file": "definitions.js",
       "trips": 0,
@@ -2414,6 +3800,42 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/forms/:key/issue": {
+      "why": "placeholder: measuring",
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/forms/:key/resolve": {
+      "why": "placeholder: measuring",
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/forms/instances/:id/attach": {
+      "why": "placeholder: measuring",
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/forms/instances/:id/sign": {
+      "why": "placeholder: measuring",
+      "file": "forms.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/governance/ai-draft": {
       "file": "governance.js",
       "trips": 0,
@@ -2421,12 +3843,48 @@
       "fired": true,
       "status": 401
     },
+    "POST /api/governance/boilerplate/:key/adopt": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/governance/compliance": {
       "file": "governance.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400,
+      "extra": true
+    },
+    "POST /api/governance/conformance": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/governance/entities": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/governance/entities/:id/reattest": {
+      "why": "placeholder: measuring",
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
       "extra": true
     },
     "POST /api/governance/source": {
@@ -2453,6 +3911,24 @@
       "status": 422,
       "extra": true
     },
+    "POST /api/identity/documents/:scheme/code": {
+      "why": "placeholder: measuring",
+      "file": "identity-docs.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/identity/documents/:scheme/verify": {
+      "why": "placeholder: measuring",
+      "file": "identity-docs.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/integrations/:actor_id/approve": {
       "file": "integrations.js",
       "trips": 1,
@@ -2468,6 +3944,15 @@
       "status": 404,
       "extra": true
     },
+    "POST /api/integrations/books": {
+      "why": "placeholder: measuring",
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/integrations/books/skip": {
       "file": "integrations.js",
       "trips": 0,
@@ -2475,12 +3960,57 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/integrations/heartbeat": {
+      "why": "placeholder: measuring",
+      "file": "integrations.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/integrations/profile": {
+      "why": "placeholder: measuring",
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/invoice/build": {
+      "why": "placeholder: measuring",
+      "file": "invoice.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/keys": {
       "file": "keys.js",
       "trips": 50,
       "wire": null,
       "fired": false,
       "why": "answered 500 on the stub"
+    },
+    "POST /api/kyb/credential": {
+      "why": "placeholder: measuring",
+      "file": "kyb.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/kyb/field": {
+      "why": "placeholder: measuring",
+      "file": "kyb.js",
+      "trips": 5,
+      "wire": 14,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "POST /api/network-design/build": {
       "file": "network-design.js",
@@ -2559,6 +4089,33 @@
       "fired": true,
       "status": 200
     },
+    "POST /api/offers/evaluate": {
+      "why": "placeholder: measuring",
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/offers/explain": {
+      "why": "placeholder: measuring",
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/pricing/price": {
+      "why": "placeholder: measuring",
+      "file": "pricing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/privacy/me/consent": {
       "file": "privacy.js",
       "trips": 0,
@@ -2597,6 +4154,24 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/products/availability/bulk": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/products/bulk": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/products/bulk-update": {
       "file": "products.js",
       "trips": 0,
@@ -2620,6 +4195,15 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/products/lists/adopt": {
+      "why": "placeholder: measuring",
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/products/starter-columns": {
       "file": "products.js",
       "trips": 0,
@@ -2633,6 +4217,24 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/quick-keys/groups": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/quick-keys/groups/:id/items": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/relationships/customers": {
       "file": "relationships.js",
@@ -2783,12 +4385,75 @@
       "fired": true,
       "status": 404
     },
+    "POST /api/signin/ask": {
+      "why": "placeholder: measuring",
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/signin/logout": {
+      "why": "placeholder: measuring",
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/signin/pin": {
+      "why": "placeholder: measuring",
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/signin/renew": {
+      "why": "placeholder: measuring",
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/signin/sessions/revoke": {
       "file": "signin.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/signin/verify": {
+      "why": "placeholder: measuring",
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/simulator/feedback": {
+      "why": "placeholder: measuring",
+      "file": "simulator.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/simulator/lead": {
+      "why": "placeholder: measuring",
+      "file": "simulator.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/supplies": {
       "file": "supplies.js",
@@ -2819,12 +4484,30 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/tax/rate": {
+      "why": "placeholder: measuring",
+      "file": "tax.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/testing/cases/close": {
       "file": "testing.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/testing/cases/gherkin": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/testing/cases/import": {
       "file": "testing.js",
@@ -2840,6 +4523,15 @@
       "fired": true,
       "status": 200
     },
+    "POST /api/testing/changes": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/testing/evidence": {
       "file": "testing.js",
       "trips": 0,
@@ -2853,6 +4545,15 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/testing/releases": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/testing/requirements": {
       "file": "testing.js",
@@ -2868,12 +4569,93 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/testing/results/junit": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/testing/trace": {
       "file": "testing.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 200
+    },
+    "POST /api/till/alias": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/catalogue": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/close": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/diagnostic": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/enrol": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 2,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/till/flags": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/listen": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/offer-item": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/till/pair": {
       "file": "till.js",
@@ -2882,12 +4664,66 @@
       "fired": true,
       "status": 200
     },
+    "POST /api/till/pair/claim": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/till/price": {
       "file": "till.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400,
+      "extra": true
+    },
+    "POST /api/till/quick-keys/hide": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/till/quick-keys/screen-config": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/till/quick-keys/state": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/till/quick-keys/unhide": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/till/reconcile": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
       "extra": true
     },
     "POST /api/till/reward": {
@@ -2898,6 +4734,87 @@
       "status": 400,
       "extra": true,
       "why": "W2-REW by hand: the empty stub answers 400 (ref required) before any trip. Live, with a programme: + lock + the SERVER'S bill (lib/counter-bill byRef) + balance + writes in one TX; an on_items category rule adds the category master + the catalogue (2)."
+    },
+    "POST /api/till/reward/claim": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/screens/rename": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/screens/revoke": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/shop": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/state": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/stock": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/stock/bulk": {
+      "why": "placeholder: measuring",
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /deliver": {
+      "why": "placeholder: measuring",
+      "file": "ctp.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /query": {
+      "why": "placeholder: measuring",
+      "file": "ctp.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "PUT /api/actors/:id/delegate": {
       "file": "actors.js",
@@ -2952,6 +4869,33 @@
       "wire": 2,
       "fired": true,
       "status": 200,
+      "extra": true
+    },
+    "PUT /api/assist/catalogue-source": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "PUT /api/assist/container": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "PUT /api/assist/region-override": {
+      "why": "placeholder: measuring",
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
       "extra": true
     },
     "PUT /api/catalogue-face": {
@@ -3021,6 +4965,15 @@
       "status": 404,
       "extra": true
     },
+    "PUT /api/connections/:id/respond": {
+      "why": "placeholder: measuring",
+      "file": "connections.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "PUT /api/definitions/:id": {
       "file": "definitions.js",
       "trips": 1,
@@ -3041,6 +4994,15 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/folders/inventory/:code": {
+      "why": "placeholder: measuring",
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "PUT /api/governance/country-setup": {
       "file": "governance.js",
@@ -3064,6 +5026,15 @@
       "fired": false,
       "extra": true,
       "why": "answered 503 on the stub"
+    },
+    "PUT /api/identity/documents/:scheme": {
+      "why": "placeholder: measuring",
+      "file": "identity-docs.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "PUT /api/integrations/streams": {
       "file": "integrations.js",
@@ -3100,6 +5071,15 @@
       "fired": true,
       "status": 400
     },
+    "PUT /api/quick-keys/screen-config/default": {
+      "why": "placeholder: measuring",
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "PUT /api/service/:chit_id": {
       "file": "service.js",
       "trips": 1,
@@ -3113,6 +5093,15 @@
       "wire": 1,
       "fired": true,
       "status": 200,
+      "extra": true
+    },
+    "PUT /api/testing/cmdb/:ci": {
+      "why": "placeholder: measuring",
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
       "extra": true
     }
   }
