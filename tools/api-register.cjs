@@ -144,15 +144,19 @@ function stackFactsOf(leaf, shared) {
 /** a schema is well formed (ajv's own check of it against the JSON Schema meta-schema: no throw) */
 const compiles = (schema) => require('../middleware/validate').bodyEngine.validateSchema(schema) === true;
 
-/** schema_out: a success answer is declared with a JSON schema that compiles (204 needs none) */
+/**
+ * schema_out: every success answer declares at least one media type, and each declared schema compiles (204 needs none).
+ * application/json carries the JSON shape; a text or binary answer (a markdown page, a zip) is a string of its media type,
+ * { type: 'string', contentMediaType: '<type>' } — OpenAPI 3.1, API-STANDARD S9. A media type with no schema still fails.
+ */
 function schemaOutColumn(operation) {
   const responses = (operation && operation.responses) || {};
   const success = Object.keys(responses).filter((status) => SUCCESS_STATUSES.includes(status));
   if (!success.length) return false;
   return success.every((status) => {
     if (status === '204') return true;
-    const content = responses[status].content && responses[status].content['application/json'];
-    return !!(content && content.schema) && compiles(content.schema);
+    const declared = Object.values(responses[status].content || {});
+    return declared.length > 0 && declared.every((content) => !!(content && content.schema) && compiles(content.schema));
   });
 }
 
@@ -335,4 +339,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { buildRegister, renderMarkdown, normalise, check };
+module.exports = { buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
