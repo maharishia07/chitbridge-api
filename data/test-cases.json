@@ -64425,6 +64425,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-assist.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE ASSISTANT ROUTES (ROUTES/ASSIST.JS: THE ASSISTANT, THE CONFORM CHECK, THE CATALOGUE SOURCES, CONTAINERS AND REGIONS, THE HELP DESK) IS A PROBLEM BODY, ITS OLD KEYS FROZEN; THE ASSISTANT'S 503 AND 502 ARE REPLAYED WORD FOR WORD; NO SUCCESS ANSWER MOVED, NO ANSWER SAYS A FAILURE'S CAUSE; ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE ASSISTANT ROUTES (ROUTES/ASSIST.JS: THE ASSISTANT, THE CONFORM CHECK, THE CATALOGUE SOURCES, CONTAINERS AND REGIONS, THE HELP DESK) IS A PROBLEM BODY, ITS OLD KEYS FROZEN; THE ASSISTANT'S 503 AND 502 ARE REPLAYED WORD FOR WORD; NO SUCCESS ANSWER MOVED, NO ANSWER SAYS A FAILURE'S CAUSE; ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 213 lines. Run: node chitbridge-api/tests/api-problem-assist.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 213,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-orders.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
