@@ -416,11 +416,11 @@ console.log('\n\u26A0\uFE0F\u26A0\uFE0F THE QUERY AND THE CHIT MUST AGREE\n');
 const TILL_SRC = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
 let SUMMARY_ROUTE = '';
 const SUMMARY_SQL = (function () {
-  const at = TILL_SRC.indexOf("router.get('/summary'");
+  const at = TILL_SRC.indexOf('async function periodSummary(');
   assert.ok(at > 0, 'GET /api/till/summary is gone — this guard is measuring nothing');
   /* RPT2: the route runs lib/till-summary's statement (the one copy Home's till card also runs) — so the SQL checked is that one */
-  const route = TILL_SRC.slice(at, TILL_SRC.indexOf('res.json({ period', at));
-  assert.ok(/TS\.summaryStatement\(/.test(route), 'the summary route no longer runs lib/till-summary.summaryStatement — which SQL is it running?');
+  const route = TILL_SRC.slice(at, TILL_SRC.indexOf('const BILLS_PAGE', at));
+  assert.ok(/tillSummary\.summaryStatement\(/.test(route), 'the summary route no longer runs lib/till-summary.summaryStatement — which SQL is it running?');
   SUMMARY_ROUTE = route;
   const sql = require('../lib/till-summary').SUMMARY_SQL;
   assert.ok(/FROM chit_header/.test(sql), 'the summary statement no longer queries chit_header');
@@ -476,7 +476,7 @@ it('the query is ordered newest-first, which the fold relies on', () => {
 it('the read goes through withEntity — RLS, not a bare query', () => {
   /* RPT2: the plain read under withEntity in the route; the Trend read under readBatch (entity-scoped, one trip) in lib/till-summary */
   const TS_SRC = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'till-summary.js'), 'utf8');
-  assert.ok(/withEntity\(entity_id/.test(SUMMARY_ROUTE) && /readBatch\(entity, actor/.test(TS_SRC),
+  assert.ok(/[wW]ithEntity\(entity_id/.test(SUMMARY_ROUTE) && /readBatch\(entity, actor/.test(TS_SRC),
     'the summary route reads chit_header without withEntity() — under FORCE RLS it would silently return nothing');
 });
 

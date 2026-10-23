@@ -65,7 +65,7 @@ const fs = require('fs');
   /* ── N4: the year starts where the setting or the pack says ── */
   ok('N4: fyStartOf - the pack\'s month (India 4, Australia 7), null when no country or no pack', CS.fyStartOf('IN') === 4 && CS.fyStartOf('au') === 7 && CS.fyStartOf(null) === null && CS.fyStartOf('ZZ') === null);
   const tillSrc = fs.readFileSync(path.join(API, 'routes/till.js'), 'utf8');
-  ok('N4: the till snapshot carries shop.fy_start_month (the pack\'s), listed for the screen', tillSrc.includes("'money_why', 'fy_start_month']") && /fy_start_month:\s*require\('\.\.\/lib\/country-setup'\)\.fyStartOf\(cbCountry\)/.test(tillSrc));
+  ok('N4: the till snapshot carries shop.fy_start_month (the pack\'s), listed for the screen', tillSrc.includes("'money_why', 'fy_start_month']") && /fy_start_month:\s*countrySetup\.fyStartOf\(country\)/.test(tillSrc));
   const migration = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b764_books_setting_fy_no_default.sql'), 'utf8');
   ok('N4: the migration drops books_setting.fy_start_month DEFAULT (written, not run) and the one writer names the column', /ALTER COLUMN fy_start_month DROP DEFAULT/.test(migration) && /INSERT INTO books_setting \(entity_id, enabled, walkin_grain, fy_start_month/.test(fs.readFileSync(path.join(API, 'lib/books-store.js'), 'utf8')));
 

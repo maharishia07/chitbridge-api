@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 442,
-  "partial": 24,
-  "meets": 167
+  "partial": 63,
+  "meets": 128
  },
  "machine_columns": [
   "schema_in",
@@ -8362,8 +8362,8 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2814,
-   "hash": "3d6b2fc666d0eb0a",
+   "line": 3299,
+   "hash": "c2995c8f6e791e45",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8386,10 +8386,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c2995c8f6e791e45"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/catalogue/blueprints",
@@ -8397,8 +8398,8 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2713,
-   "hash": "d10e6a6e1d2b604c",
+   "line": 3188,
+   "hash": "c04cda3f5828248f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8421,10 +8422,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c04cda3f5828248f"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/counters",
@@ -8432,7 +8434,7 @@
    "path": "/api/till/counters",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1451,
+   "line": 1775,
    "hash": "2076c6a23b42055a",
    "columns": {
     "schema_in": true,
@@ -8467,8 +8469,8 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3244,
-   "hash": "4a422f34f38b13a0",
+   "line": 3826,
+   "hash": "6300606e4b8b2243",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8492,10 +8494,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6300606e4b8b2243"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/match",
@@ -8503,8 +8506,8 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2950,
-   "hash": "be0d9bf2e28e212b",
+   "line": 3463,
+   "hash": "54d1adaaf0e3d3d3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8527,10 +8530,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "54d1adaaf0e3d3d3"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/quick-keys/groups",
@@ -8538,8 +8542,8 @@
    "path": "/api/till/quick-keys/groups",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1460,
-   "hash": "35f7ecacff13de4d",
+   "line": 1784,
+   "hash": "1a8aabca27fb4650",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8562,10 +8566,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1a8aabca27fb4650"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/quick-keys/hidden",
@@ -8573,8 +8578,8 @@
    "path": "/api/till/quick-keys/hidden",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1498,
-   "hash": "58978b2c96355943",
+   "line": 1824,
+   "hash": "b7e780f47d61011d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8597,10 +8602,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b7e780f47d61011d"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/quick-keys/screen-config",
@@ -8608,8 +8614,8 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1542,
-   "hash": "476b78ae0d50a3d6",
+   "line": 1870,
+   "hash": "f0e8ef95c1ca39e7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8632,10 +8638,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f0e8ef95c1ca39e7"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/quick-keys/state",
@@ -8643,8 +8650,8 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1470,
-   "hash": "07c6f23d46074c97",
+   "line": 1794,
+   "hash": "7b13e09bf04e7520",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8668,10 +8675,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7b13e09bf04e7520"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/reward",
@@ -8679,8 +8687,8 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1858,
-   "hash": "e51972ce8a02f1cf",
+   "line": 2225,
+   "hash": "125612d1e9e8a1d4",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8704,10 +8712,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "125612d1e9e8a1d4"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/screens",
@@ -8715,8 +8724,8 @@
    "path": "/api/till/screens",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2166,
-   "hash": "fee1ffe46e308ce3",
+   "line": 2576,
+   "hash": "1709b0f3992b6b32",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8739,10 +8748,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1709b0f3992b6b32"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/snapshot",
@@ -8750,8 +8760,8 @@
    "path": "/api/till/snapshot",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 160,
-   "hash": "b01f9c0d65c7946e",
+   "line": 177,
+   "hash": "4dd2b1958c6e2d28",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8774,10 +8784,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4dd2b1958c6e2d28"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/stock",
@@ -8785,8 +8796,8 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2540,
-   "hash": "e1436d1dbc57b9eb",
+   "line": 2992,
+   "hash": "73a822011366ea93",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8810,10 +8821,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "73a822011366ea93"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/summary",
@@ -8821,8 +8833,8 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2779,
-   "hash": "2da4e820d2a1ee15",
+   "line": 3256,
+   "hash": "29b2acf3dc55714b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8846,10 +8858,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "29b2acf3dc55714b"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/tasks",
@@ -8857,8 +8870,8 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2921,
-   "hash": "3699b1c90b1b4388",
+   "line": 3434,
+   "hash": "cb1b8cb1fb421e25",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8881,10 +8894,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cb1b8cb1fb421e25"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/verify",
@@ -8892,8 +8906,8 @@
    "path": "/api/till/verify",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2325,
-   "hash": "048543cabfe017b6",
+   "line": 2751,
+   "hash": "e4ec99cd20dc9aed",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8916,10 +8930,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e4ec99cd20dc9aed"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/till/worth-an-offer",
@@ -8927,8 +8942,8 @@
    "path": "/api/till/worth-an-offer",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1607,
-   "hash": "16793d611dc5c4c7",
+   "line": 1935,
+   "hash": "6a287901a1fe9e06",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8952,10 +8967,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6a287901a1fe9e06"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/work/:chit_id",
@@ -18009,8 +18025,8 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3135,
-   "hash": "1b393f3ac10694ac",
+   "line": 3699,
+   "hash": "543f5daa2e3e5c3e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18034,10 +18050,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "543f5daa2e3e5c3e"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/catalogue",
@@ -18045,8 +18062,8 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2604,
-   "hash": "0b022d0054a67cb1",
+   "line": 3067,
+   "hash": "6be1d7e9fece38c1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18072,10 +18089,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e1579a69221a00b9"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/close",
@@ -18083,8 +18101,8 @@
    "path": "/api/till/close",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1290,
-   "hash": "220f807a69f0ef45",
+   "line": 1591,
+   "hash": "14a62059394dca76",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18109,10 +18127,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "14a62059394dca76"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/diagnostic",
@@ -18120,8 +18139,8 @@
    "path": "/api/till/diagnostic",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1240,
-   "hash": "b8af7e64143ede8b",
+   "line": 1521,
+   "hash": "b3cf4d96d30e4301",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18146,10 +18165,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b3cf4d96d30e4301"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/enrol",
@@ -18157,8 +18177,8 @@
    "path": "/api/till/enrol",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2067,
-   "hash": "d3d29fb2332f13de",
+   "line": 2471,
+   "hash": "14d37a51c8a5dc8e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18182,10 +18202,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "14d37a51c8a5dc8e"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/flags",
@@ -18193,8 +18214,8 @@
    "path": "/api/till/flags",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1377,
-   "hash": "65214f74263076ca",
+   "line": 1686,
+   "hash": "ee3384f5fc6ce875",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18219,10 +18240,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "04c02cc5835c728c"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/listen",
@@ -18230,8 +18252,8 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3178,
-   "hash": "93504ef849a926a2",
+   "line": 3760,
+   "hash": "6fe02c995147044c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18264,8 +18286,8 @@
    "path": "/api/till/offer-item",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1718,
-   "hash": "d6ad7fcb17c22003",
+   "line": 2061,
+   "hash": "31f469ace2278da9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18290,10 +18312,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "31f469ace2278da9"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/pair",
@@ -18301,8 +18324,8 @@
    "path": "/api/till/pair",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2014,
-   "hash": "b8944df3397c8a0b",
+   "line": 2404,
+   "hash": "6b29c71e829c0e63",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18326,10 +18349,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6b29c71e829c0e63"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/pair/claim",
@@ -18337,8 +18361,8 @@
    "path": "/api/till/pair/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2121,
-   "hash": "62505b6631fc9613",
+   "line": 2513,
+   "hash": "4264c0f547ace985",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18361,10 +18385,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4264c0f547ace985"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/price",
@@ -18372,8 +18397,8 @@
    "path": "/api/till/price",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1778,
-   "hash": "3a149ca9b4b713e5",
+   "line": 2131,
+   "hash": "60eb097e6c5b17b2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18399,10 +18424,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "60eb097e6c5b17b2"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/quick-keys/hide",
@@ -18410,8 +18436,8 @@
    "path": "/api/till/quick-keys/hide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1514,
-   "hash": "c041346835b390b6",
+   "line": 1840,
+   "hash": "112754d8b1e4b123",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18435,10 +18461,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "112754d8b1e4b123"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/quick-keys/screen-config",
@@ -18446,8 +18473,8 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1553,
-   "hash": "7073d24f16ce0ca0",
+   "line": 1881,
+   "hash": "f7331e01a34b5117",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18471,10 +18498,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f7331e01a34b5117"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/quick-keys/state",
@@ -18482,8 +18510,8 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1484,
-   "hash": "668b1080ceb29326",
+   "line": 1808,
+   "hash": "7ef6818bb885ecac",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18507,10 +18535,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7ef6818bb885ecac"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/quick-keys/unhide",
@@ -18518,8 +18547,8 @@
    "path": "/api/till/quick-keys/unhide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1528,
-   "hash": "dbbc8c561f7c33d7",
+   "line": 1856,
+   "hash": "e8ff98c316e7233d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18543,10 +18572,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e8ff98c316e7233d"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/reconcile",
@@ -18554,8 +18584,8 @@
    "path": "/api/till/reconcile",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2286,
-   "hash": "fe056ad1a25bb4e7",
+   "line": 2699,
+   "hash": "2116f90f8478c47f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18579,10 +18609,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2116f90f8478c47f"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/reward",
@@ -18590,8 +18621,8 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1893,
-   "hash": "e0244e6670840cab",
+   "line": 2265,
+   "hash": "1e472cfa43fcfa86",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18616,10 +18647,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1e472cfa43fcfa86"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/reward/claim",
@@ -18627,8 +18659,8 @@
    "path": "/api/till/reward/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1949,
-   "hash": "aa0eb6ceeead07c5",
+   "line": 2337,
+   "hash": "6b6d541e2b4f9ad5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18653,10 +18685,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6b6d541e2b4f9ad5"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/screens/rename",
@@ -18664,8 +18697,8 @@
    "path": "/api/till/screens/rename",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2218,
-   "hash": "035453d24223f376",
+   "line": 2643,
+   "hash": "de8951bf59f36a35",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18690,10 +18723,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "de8951bf59f36a35"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/screens/revoke",
@@ -18701,8 +18735,8 @@
    "path": "/api/till/screens/revoke",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2185,
-   "hash": "a282304c2a83381b",
+   "line": 2623,
+   "hash": "20da526276898d5d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18727,10 +18761,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "20da526276898d5d"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/shop",
@@ -18738,8 +18773,8 @@
    "path": "/api/till/shop",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2415,
-   "hash": "ecbd876fea2f9aed",
+   "line": 2849,
+   "hash": "891c0cd8a84a9524",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18763,10 +18798,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4aabb1291f70959e"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/state",
@@ -18774,8 +18810,8 @@
    "path": "/api/till/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1351,
-   "hash": "4f046894dfe93c93",
+   "line": 1657,
+   "hash": "4a987c2cb3f0cc14",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18799,10 +18835,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4a987c2cb3f0cc14"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/stock",
@@ -18810,8 +18847,8 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1130,
-   "hash": "23ce0464860c30d3",
+   "line": 1390,
+   "hash": "bd437c4ca96d5621",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18836,10 +18873,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bd437c4ca96d5621"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/stock/bulk",
@@ -18847,8 +18885,8 @@
    "path": "/api/till/stock/bulk",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1176,
-   "hash": "241047c4aa9d0ca5",
+   "line": 1448,
+   "hash": "105a4d8ee98e3d52",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18872,10 +18910,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "105a4d8ee98e3d52"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "POST /deliver",
