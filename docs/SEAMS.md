@@ -119,10 +119,10 @@ of file each thing is; this says what already does the job.
 | 19 | `card` | `cap-shop.js` |  |
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `more` | `lab-kit.js` | idKey: |
+| 19 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 18 | `later` | `signin-ui.js` |  |
-| 18 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 18 | `note` | `dbwatch.js` |  |
 | 18 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 17 | `step` | `cart.js` |  |

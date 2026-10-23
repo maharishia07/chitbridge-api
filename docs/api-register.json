@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 229,
-  "partial": 51,
-  "meets": 353
+  "partial": 49,
+  "meets": 355
  },
  "machine_columns": [
   "schema_in",
@@ -18045,13 +18045,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#370",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/repeat/:id/skip",
@@ -18097,7 +18097,7 @@
    "owner_area": "repeat-supply",
    "file": "routes/repeat-supply.js",
    "line": 74,
-   "hash": "9febaba5d0a5cb2a",
+   "hash": "ca664f3a4df462e9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18118,13 +18118,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#370",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/schemas/create-default",
