@@ -29,8 +29,8 @@ function headOf(full) {
   return { text: cutAt < 0 ? full : full.slice(0, cutAt), params: cutAt >= 0 };
 }
 
-/** Was there ever a call-shaped client line for this D route? One git pass over the web's public/ history. */
-function readHistory(webRoot, dRows) {
+/** The web's public/ git history as one patch text, or { error } when git fails or times out. */
+function gitHistoryText(webRoot) {
   const gitLog = spawnSync(
     'git',
     [
@@ -52,8 +52,12 @@ function readHistory(webRoot, dRows) {
     { encoding: 'utf8', maxBuffer: 1 << 30, timeout: 170000 }
   );
   if (gitLog.error || gitLog.status !== 0) return { error: gitLog.error ? gitLog.error.message : 'git exit ' + gitLog.status };
-  const found = new Map();
-  const needles = dRows.map((row) => {
+  return { text: gitLog.stdout };
+}
+
+/** One search pattern pair (path, api keys) per D route. */
+function needlesOf(dRows) {
+  return dRows.map((row) => {
     const head = headOf(row.full);
     const tail = head.params ? '(?:/[\'"`$]|/\\$\\{)' : '[\'"`?#]';
     return {
@@ -62,9 +66,17 @@ function readHistory(webRoot, dRows) {
       keys: (row.keys || []).map((key) => new RegExp('(?:api|testEvery)\\(\\s*[\'"]' + key + '[\'"]'))
     };
   });
+}
+
+/** Was there ever a call-shaped client line for this D route? One git pass over the web's public/ history. */
+function readHistory(webRoot, dRows) {
+  const history = gitHistoryText(webRoot);
+  if (history.error) return history;
+  const found = new Map();
+  const needles = needlesOf(dRows);
   let commit = '';
   let mechanical = false; /* a bulk reformat re-adds every line: it says nothing about when a call was written */
-  for (const line of gitLog.stdout.split('\n')) {
+  for (const line of history.text.split('\n')) {
     if (line.startsWith('CBCOMMIT ')) {
       commit = line.slice(9).split(' ').slice(0, 2).join(' ');
       mechanical = MECHANICAL_COMMIT.test(line);
