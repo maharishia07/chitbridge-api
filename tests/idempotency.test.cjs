@@ -141,6 +141,29 @@ const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.lengt
     const select = stmts.find((q) => /^\s*SELECT/.test(q) && /expired/.test(q));
     assert.ok(/state = 'in_progress' AND created_at < now\(\) - \(\$4 \|\| ' minutes'\)/.test(select), 'stale in_progress is expired');
   });
+  /* ── DB-82: the table-wide purge — expired keys of EVERY shop go on a schedule, not when that shop next orders ── */
+  await ita('DB-82 · purgeExpired asks ops.f_idempotency_purge with the SAME three numbers begin() reads (window · stale · token minutes)', async () => {
+    const asked = [];
+    const r = await idempotency.purgeExpired({ query: async (sql, params) => { asked.push({ sql, params }); return { rows: [{ purged: 3 }] }; } });
+    assert.strictEqual(r.purged, 3);
+    assert.strictEqual(asked.length, 1, 'one statement');
+    assert.ok(asked[0].sql.includes('ops.f_idempotency_purge($1, $2, $3)'), 'the definer function, not a table DELETE (RLS would hide other shops)');
+    assert.deepStrictEqual(asked[0].params, [48, idempotency.IN_PROGRESS_STALE_MINUTES, idempotency.TOKEN_REPLAY_MINUTES]);
+    assert.strictEqual(idempotency.TOKEN_REPLAY_MINUTES, 15, 'the 15-minute customer-token answer (api #341)');
+  });
+  await ita('DB-82 · before b780 is run (function missing) the purge says so and does not throw; any other error is not swallowed', async () => {
+    const missing = await idempotency.purgeExpired({ query: async () => { throw Object.assign(new Error('function ops.f_idempotency_purge does not exist'), { code: '42883' }); } });
+    assert.deepStrictEqual(missing, { purged: 0, notMigrated: true });
+    await assert.rejects(idempotency.purgeExpired({ query: async () => { throw Object.assign(new Error('boom'), { code: '57P01' }); } }), /boom/);
+  });
+  await ita('DB-82 · the migration carries the same three expiry terms and keeps RLS (definer + owner policy, EXECUTE to cb_app only)', async () => {
+    const sql = fs.readFileSync(path.join(API, 'migrations', 'b780_idempotency_key_purge.sql'), 'utf8');
+    assert.ok(sql.includes('i.created_at < now() - make_interval(hours => p_window_hours)'), 'window term');
+    assert.ok(sql.includes("i.state = 'in_progress' AND i.created_at < now() - make_interval(mins => p_stale_minutes)"), 'stale in_progress term');
+    assert.ok(sql.includes("i.response ? 'token' AND i.created_at < now() - make_interval(mins => p_token_minutes)"), 'token term');
+    assert.ok(/SECURITY DEFINER/.test(sql) && /idempotency_key_owner/.test(sql) && /FROM PUBLIC/.test(sql) && /TO cb_app/.test(sql), 'definer + owner policy + grants');
+    assert.ok(!/DISABLE ROW LEVEL SECURITY|NO FORCE/.test(sql), 'RLS stays forced');
+  });
   await ita('no empty catch in middleware/idempotency.js and no console.* — the logger says what the person sees instead', async () => {
     const src = fs.readFileSync(path.join(API, 'middleware', 'idempotency.js'), 'utf8');
     assert.ok(!/catch\s*\(\s*_?\s*\)\s*\{\s*(return[^;]*;)?\s*\}/.test(src), 'an empty catch is back');

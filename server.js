@@ -587,6 +587,12 @@ function startServing() {
     } catch (e) {
       console.warn('books nightly not started:', e.message);
     }
+    /* expired idempotency keys, every shop, every 6 h (middleware/idempotency.js purgeExpired; DB-82; IDEMPOTENCY_PURGE=0 turns it off) */
+    try {
+      require('./middleware/idempotency').startPurge();
+    } catch (e) {
+      console.warn('idempotency purge not started:', e.message);
+    }
     /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
     try {
       require('./lib/crm-followups').start();
