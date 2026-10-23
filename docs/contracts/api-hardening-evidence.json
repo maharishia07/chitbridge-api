@@ -388,9 +388,6 @@
   "GET /api/products/lists": {
    "output_allowlist": true
   },
-  "GET /api/governance/entities/:id": {
-   "output_allowlist": true
-  },
   "POST /api/governance/conformance": {
    "output_allowlist": true
   },
