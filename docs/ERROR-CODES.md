@@ -10,40 +10,69 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 <!-- codes:start -->
 | code | status | title | shopkeeper | hint | owner_area | since |
 |---|---|---|---|---|---|---|
-| ADVICE_EXISTS | 404/409 | Advice exists | PENDING | - | books | 2026-10-22 |
+| ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
 | ALL_REFUSED | varies | All refused | PENDING | - | marketing-results | 2026-10-22 |
 | ALL_SENT | varies | All sent | PENDING | - | verdict | 2026-10-22 |
-| ALREADY_PAID | 409 | Already paid | PENDING | - | books | 2026-10-22 |
-| ALREADY_REVERSED | 409 | Already reversed | PENDING | - | books | 2026-10-22 |
+| ALREADY_PAID | 409 | Already paid | This looks like a payment you already recorded. | Check the list, then confirm if it is really a new one. | books | 2026-10-22 |
+| ALREADY_RECORDED | 409 | Already recorded | That is already recorded. | Refresh the list: it is already there. | books | 2026-10-23 |
+| ALREADY_REVERSED | 409 | Already reversed | This entry was already reversed. | Open the reversal to see it. | books | 2026-10-22 |
 | AMBIGUOUS_NAME | 409 | Ambiguous name | PENDING | - | signin | 2026-10-22 |
 | ASSIST_GATED | varies | Assist gated | PENDING | - | assist | 2026-10-22 |
 | ASSIST_SIGN_IN | 503 | Assist sign in | PENDING | - | assist | 2026-10-22 |
 | AUTO_TOKEN | varies | Auto token | PENDING | - | auth | 2026-10-22 |
+| BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
 | BAD_PERIOD | 400 | Bad period | PENDING | - | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | PENDING | - | counters | 2026-10-22 |
+| BAD_PRICE | 400 | Price below zero | A line has a price below 0. | Send a price of 0 or more. | tax | 2026-10-23 |
+| BAD_QTY | 400 | Quantity not above zero | A line needs a quantity above 0. | Send a quantity above 0 on every line. | tax | 2026-10-23 |
+| BAD_RATE | 400 | Tax rate out of range | A line has a tax rate outside 0 to 100 percent. | Send a rate from 0 to 100. | tax | 2026-10-23 |
 | BILL_NOT_RECORDED | varies | Bill not recorded | PENDING | - | till | 2026-10-22 |
 | BODY_TOO_LARGE | 413 | Too large | What you sent is too big to accept. | Send less at a time. | api | 2026-10-22 |
-| BOOKS_BAD_REQUEST | varies | Books bad request | PENDING | - | books | 2026-10-22 |
-| BOOKS_NOT_MIGRATED | 404/503 | Books not migrated | PENDING | - | books | 2026-10-22 |
+| BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
+| BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
+| BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
+| BOOKS_NOT_MIGRATED | 503 | Ledger update pending | This cannot be saved yet: a database update is still to arrive. | Try again after the next update. | books | 2026-10-22 |
+| BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | CAPABILITY_OFF | varies | Capability off | PENDING | - | connectors | 2026-10-22 |
 | CATALOGUE_STORE_MISSING | 503 | Catalogue store missing | PENDING | - | assist | 2026-10-22 |
 | CHIT_NOT_DELIVERED | 503 | Chit not delivered | PENDING | - | connectors | 2026-10-22 |
 | CHOOSE_IDENTITY | 409 | Choose identity | PENDING | - | signin | 2026-10-22 |
 | CLAIM_RECORDED | 409 | Claim recorded | PENDING | - | reward-store | 2026-10-22 |
 | CODE_NOT_ASKED | 400 | No code asked for | Ask for a code first — none was sent to that phone or email at this shop. | Tap "Send code", then type the code you get. | catalogue | 2026-10-23 |
+| COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
+| COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
 | CONFIRM_REMOVE | 400 | Confirm remove | PENDING | - | actors | 2026-10-22 |
+| CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
 | CONTACT_INVALID | 422 | Phone or email not usable | Enter one phone number or one email — not both, and in a form we can send to. | Check the number or the address and try again. | catalogue | 2026-10-23 |
 | CONTAINER_STORE_MISSING | 403/503 | Container store missing | PENDING | - | assist | 2026-10-22 |
 | COST_BLIND | varies | Cost blind | PENDING | - | cost | 2026-10-22 |
 | COUNTER_CLOSED | 401 | Counter closed | PENDING | - | auth | 2026-10-22 |
 | COUNTER_HELD | varies | Counter held | PENDING | - | counters | 2026-10-22 |
-| COUNTRY_SETUP_PENDING | varies | Country setup pending | PENDING | - | country-setup | 2026-10-22 |
+| COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | varies | Cover conflict | PENDING | - | actors | 2026-10-22 |
 | CRM_NOT_MIGRATED | 503 | Crm not migrated | PENDING | - | crm | 2026-10-22 |
+| CTP_CROSSING_REFUSED | 409 | Crossing refused | This business does not take chits from that installation. | The two installations must name each other as peers first. | ctp | 2026-10-23 |
+| CTP_CROSSING_UNCHECKABLE | 503 | Crossing cannot be checked | We could not check whether this chit may cross, so we refused it. | Try again later; nothing was written. | ctp | 2026-10-23 |
+| CTP_ENVELOPE_REFUSED | 409 | Envelope refused | The chit did not open here: its signature or its contents were refused. | Check the sending installation signs with the key it publishes. | ctp | 2026-10-23 |
+| CTP_MANIFEST_UNAVAILABLE | 500 | Manifest unavailable | This installation could not say who it is just now. | Try again later. | ctp | 2026-10-23 |
+| CTP_NO_INSTALLATION | 400 | No installation named | The message does not say which installation sent it. | Send it from an installation that names itself. | ctp | 2026-10-23 |
+| CTP_NO_RECIPIENT | 400 | No recipient named | The chit does not say which business it is for. | Name the recipient by its bridge id. | ctp | 2026-10-23 |
+| CTP_NO_SENDER | 400 | No sender named | The chit does not say which business sent it. | The sending installation must name its sender. | ctp | 2026-10-23 |
+| CTP_NOT_A_QUERY | 400 | Not a CTP query | This is not a question this door understands. | Send a CTP/1 query. | ctp | 2026-10-23 |
+| CTP_NOT_AN_ENVELOPE | 400 | Not a CTP envelope | This is not a chit this door understands. | Send a CTP/1 envelope. | ctp | 2026-10-23 |
+| CTP_PEER_HOSTED_HERE | 409 | Installation is hosted here | That installation lives on this server, so its chits must not come over the internet. | Deliver it locally. | ctp | 2026-10-23 |
+| CTP_PEER_KEY_UNREADABLE | 403 | Peer's key cannot be read | We could not read the other installation's public key, so we cannot trust the message. | Check the other installation's manifest is reachable. | ctp | 2026-10-23 |
+| CTP_PEER_REFUSED | 403 | Installation not known | We do not deal with that installation. | The owners of both installations must agree to connect first. | ctp | 2026-10-23 |
+| CTP_QUERY_FAILED | 500 | Question failed | This installation could not answer just now. | Try again later. | ctp | 2026-10-23 |
+| CTP_QUERY_REFUSED | 403 | Question refused | The question was not signed by the installation that sent it. | Check the asking installation signs with the key it publishes. | ctp | 2026-10-23 |
+| CTP_RECIPIENT_NOT_HERE | 404 | Recipient not here | There is no active business here with that bridge id. | Check the address of the business. | ctp | 2026-10-23 |
+| CTP_STORE_FAILED | 500 | Could not store the chit | This installation could not store the chit just now. | Try again later; it was not written. | ctp | 2026-10-23 |
+| CTP_UNKNOWN_QUESTION | 400 | Unknown question | This installation does not answer that question. | Ask to resolve a business or for its catalogue. | ctp | 2026-10-23 |
 | CURRENCY_ENTITY_ONLY | 403 | Currency entity only | PENDING | - | entities | 2026-10-22 |
 | CURRENCY_MALFORMED | varies | Currency malformed | PENDING | - | govresolve | 2026-10-22 |
 | CURRENCY_NOT_ALLOWED | varies | Currency not allowed | PENDING | - | govresolve | 2026-10-22 |
+| CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | DEVICE_MISMATCH | 401 | Device mismatch | PENDING | - | auth | 2026-10-22 |
 | DEVICE_REVOKED | 401/403 | Device revoked | PENDING | - | person-session | 2026-10-22 |
 | DEVICE_TO_REFUSED | varies | Device to refused | PENDING | - | connectors | 2026-10-22 |
@@ -54,9 +83,12 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | EMAIL_DELIVERY_NOT_CONFIGURED | varies | Email delivery not configured | PENDING | - | employee-code | 2026-10-22 |
 | EMAIL_TAKEN | varies | Email taken | PENDING | - | actors | 2026-10-22 |
 | EMPLOYEE_EMAIL_REQUIRED | varies | Employee email required | PENDING | - | employee-code | 2026-10-22 |
-| FOLDER_IS_VIEW | 400 | Folder is view | PENDING | - | folders | 2026-10-22 |
-| FOLDER_WRONG_SIDE | varies | Folder wrong side | PENDING | - | folders | 2026-10-22 |
-| FX_RATE_MISSING | varies | Fx rate missing | PENDING | - | forms | 2026-10-22 |
+| FOLDER_BAD_REQUEST | 400 | Folder request not accepted | That folder request could not be done. | Read the message, fix what it names and try again. | folders | 2026-10-23 |
+| FOLDER_INVALID | 400 | Folder details not valid | The folder name or id is missing or not valid. | Give the folder a name of 1 to 60 characters, then try again. | folders | 2026-10-23 |
+| FOLDER_IS_VIEW | 400 | Not a place for chits | That folder shows what its rule matches, so nothing can be moved into it. | Move the chit to a filing folder instead. | folders | 2026-10-22 |
+| FOLDER_NOT_MIGRATED | 503 | Folders update still to run | This part of folders is not ready on this server yet. | Try again after the next update. | folders | 2026-10-23 |
+| FOLDER_WRONG_SIDE | 400 | Folder on the other track | A Task folder holds chits that came to you; an Order folder holds chits you sent. | Pick a folder on the chit's own track. | folders | 2026-10-22 |
+| FX_RATE_MISSING | 422 | Exchange rate missing | There is no exchange rate for that day. | Add the rate for that day, then try again. | forms | 2026-10-22 |
 | FX_RATE_OF_DAY | varies | Fx rate of day | PENDING | - | forms | 2026-10-22 |
 | HANDOFF_STORE_MISSING | 503 | Handoff store missing | PENDING | - | assist | 2026-10-22 |
 | IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
@@ -70,23 +102,29 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | IDOC_NO_CODE | 400 | Idoc no code | PENDING | - | iddoc-verify | 2026-10-22 |
 | IDOC_VALUE_UNAVAILABLE | varies | Idoc value unavailable | PENDING | - | iddoc-verify | 2026-10-22 |
 | INR | varies | Inr | PENDING | - | locale.browser | 2026-10-22 |
+| INTEGRATION_BAD_REQUEST | 400 | Request not usable | Something this needs is missing or not valid. | Check the order or the fields named, then send it again. | integrations | 2026-10-23 |
 | INTERNAL | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | api | 2026-10-22 |
 | INVALID_INPUT | 422 | Input not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send it again. | validate | 2026-10-22 |
 | INVALID_KEY_REQUEST | 400 | Key request not valid | That key cannot be made as asked. | Pick a listed kind, and revoke a key if you have twenty. | keys | 2026-10-22 |
+| INVOICE_BAD_REQUEST | 400 | Invoice needs lines | The invoice needs at least one line. | Send the lines to invoice. | invoice | 2026-10-23 |
 | IN_USE | 409 | In use | PENDING | - | schemas | 2026-10-22 |
+| ITEM_NOT_FOUND | 422 | Item not on the shelf | A line names an item this shop does not sell. | Check the item id or code. | tax | 2026-10-23 |
+| KEY_CANNOT_DECIDE | 403 | A key cannot decide this | A connector cannot decide this on its own. Sign in as a person. | Sign in to the shop and do it there. | integrations | 2026-10-23 |
 | KEY_CANNOT_MANAGE_KEYS | 403 | A key cannot manage keys | A key cannot make or remove keys. Sign in as a person. | Sign in to the shop and do it there. | keys | 2026-10-22 |
+| KEY_CANNOT_SEE_HOME | 403 | A key cannot see Home | Sign in to see the Home figures. | Open the app with your login, not a key. | facts | 2026-10-23 |
 | KEY_CANNOT_SIGN_IN | 403 | Key cannot sign in | PENDING | - | signin | 2026-10-22 |
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
 | KEY_UNKNOWN | 401 | Key unknown | PENDING | - | connectors | 2026-10-22 |
 | LAB_CHIT_LIVE_SHOP | 409 | Lab chit live shop | PENDING | - | chits | 2026-10-22 |
 | LEADS_NOT_MIGRATED | 503 | Leads not migrated | PENDING | - | crm | 2026-10-22 |
+| LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |
 | LOCKED | 409 | Locked | PENDING | - | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | varies | Max tasks over entity | PENDING | - | actors | 2026-10-22 |
 | MIGRATION | 409 | Migration | PENDING | - | schemas | 2026-10-22 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
 | MKT_NOT_MIGRATED | varies | Mkt not migrated | PENDING | - | channels | 2026-10-22 |
-| MSG_ABOVE_CEILING | 409 | Msg above ceiling | PENDING | - | folders | 2026-10-22 |
-| MSG_FIXED | 409 | Msg fixed | PENDING | - | folders | 2026-10-22 |
+| MSG_ABOVE_CEILING | 409 | Messaging level too high | That folder can be kept internal or switched off, but not shared further than its default. | Pick a lower level. | folders | 2026-10-22 |
+| MSG_FIXED | 409 | Messaging level fixed | This folder's messaging level cannot be changed. | Leave it as it is. | folders | 2026-10-22 |
 | NAME_THE_PERSON | 400 | Name the person | PENDING | - | actors | 2026-10-22 |
 | NETWORK_ORDERS_OFF | 403 | Network orders off | Ordering across this network is not switched on here. | Order from the shop itself instead. | catalogue | 2026-10-22 |
 | NETWORK_READ_FAILED | 503 | Network not read | We could not read who is in the network just now. Nothing was changed. | Try again in a minute. | network-membership | 2026-10-23 |
@@ -95,28 +133,30 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_SHOPPER_ACCOUNT | 400 | No account here yet | There is no account with that phone or email at this shop yet. | Place an order first; it makes your account. | catalogue | 2026-10-23 |
 | NOTIF_DISMISS_NOT_MIGRATED | 503 | Notif dismiss not migrated | PENDING | - | notifications | 2026-10-22 |
 | NOT_BOARD_WRITER | 403 | Not board writer | PENDING | - | testing | 2026-10-22 |
-| NOT_FOR_COUNTRY | varies | Not for country | PENDING | - | integrations | 2026-10-22 |
+| NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
 | NOT_FOUND | 404 | Not found | We could not find that. | Check the address or the name and try again. | api | 2026-10-22 |
 | NOT_PAIRED | varies | Not paired | PENDING | - | verdict | 2026-10-22 |
 | NOT_PLATFORM | 403 | Platform only | That kind of key is made by the platform, not by a shop. | Pick one of the kinds listed. | keys | 2026-10-22 |
 | NOT_PLATFORM_ROOT | 403 | Not platform root | PENDING | - | platformroot | 2026-10-22 |
 | NOT_THIS_NETWORK | 403 | Not this network | You are signed in at a store outside this network. | Sign in at this network's store to order. | catalogue | 2026-10-22 |
 | NOT_WRITTEN | varies | Not written | PENDING | - | signin-events | 2026-10-22 |
-| NOT_YET | varies | Not yet | PENDING | - | integrations | 2026-10-22 |
-| NOT_YET_FOR_COUNTRY | varies | Not yet for country | PENDING | - | integrations | 2026-10-22 |
+| NOT_YET | 409 | Not built yet | This connector is not built yet. | Use the File connector (CSV) or the Counter, and ask for it under Help. | integrations | 2026-10-22 |
+| NOT_YET_FOR_COUNTRY | 409 | Not yet for your country | This connector is not ready for your country yet. | Use the File connector (CSV) or the Counter. | integrations | 2026-10-22 |
 | NO_ACCOUNT | varies | No account | PENDING | - | signin | 2026-10-22 |
-| SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
 | NO_BUYERS | varies | No buyers | PENDING | - | marketing-results | 2026-10-22 |
 | NO_CONSENT | varies | No consent | PENDING | - | marketing-results | 2026-10-22 |
-| NO_COUNTRY | 400/422 | No country | PENDING | - | assist | 2026-10-22 |
-| NO_COUNTRY_PACK | varies | No country pack | PENDING | - | country-setup | 2026-10-22 |
+| NO_COUNTRY | 422 | No country set | This shop has no country set. | Set the country in Country setup. | assist | 2026-10-22 |
+| NO_COUNTRY_PACK | 422 | Country not supported yet | We do not have the rules for this shop's country yet. | Tell us the country. We add countries one at a time. | country-setup | 2026-10-22 |
 | NO_DEVICE | 400 | No device | PENDING | - | person-session | 2026-10-22 |
 | NO_KEY | 401 | No key | PENDING | - | connectors | 2026-10-22 |
-| NO_MONEY | 422 | No money | PENDING | - | catalogue-view | 2026-10-22 |
+| NO_LINES | 400 | No lines sent | Send at least one line. | Add a line and send again. | tax | 2026-10-23 |
+| NO_MONEY | 422 | No money set | This shop has not said which money its books are kept in. | Set the money in Country setup. | catalogue-view | 2026-10-22 |
 | NO_PHONE | varies | No phone | PENDING | - | crm-groups | 2026-10-22 |
 | NO_PLATFORM_ROOT | 404 | No platform root | PENDING | - | platformroot | 2026-10-22 |
+| NO_PRICE | 422 | No price for a line | A line has no price on the shelf and none was sent. | Set its price on the shelf, or send one. | tax | 2026-10-23 |
 | NO_SENDS | varies | No sends | PENDING | - | marketing-results | 2026-10-22 |
 | NO_SHOP_COPY | varies | No shop copy | PENDING | - | verdict | 2026-10-22 |
+| NO_STREAM_NAMED | 400 | No stream named | Pick at least one stream to hand over. | Choose who carries products, stock or orders, then save. | integrations | 2026-10-23 |
 | NO_SUCH_NETWORK | 400/404 | No such network | There is no network store by that name. | Check the link you were given. | catalogue | 2026-10-22 |
 | NO_TEMPLATE | varies | No template | PENDING | - | marketing-results | 2026-10-22 |
 | NO_TOKEN | varies | No token | PENDING | - | marketing-results | 2026-10-22 |
@@ -131,19 +171,21 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | OTP_WRONG | 400 | Wrong code | That code is not right. | Check the code and type it again; the message says how many tries are left. | otp | 2026-10-23 |
 | OVER_LIMIT | 409 | Over limit | PENDING | - | chits | 2026-10-22 |
 | OWNER_ONLY | 403 | Owner only | Only the owner can do this. | Ask the owner of the shop to do it. | people | 2026-10-22 |
-| PACK_NO_FILE | 404/409 | Pack no file | PENDING | - | books | 2026-10-22 |
+| PACK_NO_FILE | 409 | Pack has no file | This pack has no file to download. | Build it again, download it, then confirm. | books | 2026-10-22 |
 | PAGE_UNKNOWN | varies | Page unknown | PENDING | - | mint | 2026-10-22 |
 | PENETRATION_STORE_MISSING | 503 | Penetration store missing | PENDING | - | assist | 2026-10-22 |
-| PERIOD_LOCKED | 409 | Period locked | PENDING | - | books | 2026-10-22 |
+| PERIOD_LOCKED | 409 | Month locked | That month is locked. | Use a date in an open month, or ask the owner to unlock it. | books | 2026-10-22 |
 | PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | PENDING | - | iddoc-verify | 2026-10-22 |
 | PIN | varies | Pin | PENDING | - | country | 2026-10-22 |
 | PLATFORM_BOUND | varies | Platform bound | PENDING | - | entities | 2026-10-22 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
 | QTY_OK | varies | Qty ok | PENDING | - | line-guard | 2026-10-22 |
+| READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | REGION_STORE_MISSING | 403/404/503 | Region store missing | PENDING | - | assist | 2026-10-22 |
 | REPEAT_NOT_MIGRATED | varies | Repeat not migrated | PENDING | - | repeat-supply | 2026-10-22 |
 | REQUEST_TIMEOUT | 503 | Request timeout | PENDING | - | limits | 2026-10-22 |
 | REQUIRED | 409 | Required | PENDING | - | schemas | 2026-10-22 |
+| RETURN_FROM_RAIL | 422 | Return comes from bills | Your return is made from your bills, not from these books. | Use the GST page. | books | 2026-10-23 |
 | ROOT_HANDLE_NEEDED | varies | Root handle needed | PENDING | - | network-build-run | 2026-10-22 |
 | ROOT_HANDLE_TAKEN | varies | Root handle taken | PENDING | - | network-build-run | 2026-10-22 |
 | ROOT_HANDLE_UNUSABLE | varies | Root handle unusable | PENDING | - | network-build-run | 2026-10-22 |
@@ -153,20 +195,22 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SESSION_UPGRADE | varies | Session upgrade | PENDING | - | auth | 2026-10-22 |
 | SHOP_CLOSED | 403 | Shop closed | This shop is closed and is not taking orders just now. | Try again when the shop opens. | catalogue | 2026-10-23 |
 | SHOP_REFUSING | varies | Shop refusing | PENDING | - | verdict | 2026-10-22 |
+| SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
 | SIGN_IN | 403 | Sign in | PENDING | - | crm | 2026-10-22 |
 | SIGN_IN_FIRST | 401/409 | Sign in first | Sign in at the store to order. | Sign in with your phone or email, then order again. | catalogue | 2026-10-22 |
+| SIGN_IN_FOR_LEDGER | 403 | Sign in as a person | Sign in as a person to use the ledger. | A counter or device key cannot use the ledger. | books | 2026-10-23 |
 | SOURCE_STORE_MISSING | 503 | Source store missing | PENDING | - | assist | 2026-10-22 |
 | SRA_NOT_MIGRATED | 503 | Sra not migrated | PENDING | - | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | PENDING | - | verdict | 2026-10-22 |
 | SUBMISSION_REJECTED | 422/503 | Form not accepted | The form could not be sent as it is — the reason says what to fix. | Fix what it names and send it again; if it says try again, wait a minute. | catalogue | 2026-10-23 |
 | SUPPORT_NOT_TAKEN | 502 | Report not delivered | Your report did not reach the shop. | Contact the shop another way for now. | catalogue | 2026-10-23 |
-| SUSPENSE_NOT_NIL | 409 | Suspense not nil | PENDING | - | books | 2026-10-22 |
+| SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
 | SWITCHED_OFF | 400/404 | Switched off | PENDING | - | actors | 2026-10-22 |
 | TASKS_TO_ROUTE | 400 | Tasks to route | PENDING | - | actors | 2026-10-22 |
-| TAX_FAILED | 500 | Tax failed | PENDING | - | tax | 2026-10-22 |
+| TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax id bad | PENDING | - | profile | 2026-10-22 |
-| TERMS_NOT_MIGRATED | 503 | Terms not migrated | PENDING | - | books | 2026-10-22 |
+| TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
 | TILL_CLAIM_MISMATCH | varies | Till claim mismatch | PENDING | - | holder | 2026-10-22 |
 | TILL_SEND_REFUSED | 403 | Till send refused | PENDING | - | chits | 2026-10-22 |
 | TILL_SERIES_COLLISION | varies | Till series collision | PENDING | - | chits | 2026-10-22 |
@@ -183,5 +227,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | WRITER_THREW | varies | Writer threw | PENDING | - | signin-events | 2026-10-22 |
 | WRONG_SCOPE | varies | Wrong scope | PENDING | - | verdict | 2026-10-22 |
 | WRONG_VALUE | 422 | Field not valid | A field has a value of the wrong kind. | Use the kind of value the field asks for. | validate | 2026-10-22 |
-| YEAR_CLOSED | 409 | Year closed | PENDING | - | books | 2026-10-22 |
+| YEAR_CLOSED | 409 | Year closed | That financial year is closed. | Use a date in the open year. | books | 2026-10-22 |
+| YEAR_CLOSE_REFUSED | 422 | Year cannot close yet | The year cannot be closed yet. | Read the reasons shown and fix each one. | books | 2026-10-23 |
 <!-- codes:end -->
