@@ -27,9 +27,9 @@ of file each thing is; this says what already does the job.
 | 56 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 54 | `items` | `books-store.js` | PERF1: |
 | 49 | `toast` | `accounts-shell.js` |  |
+| 49 | `entry` | `books-store.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
-| 48 | `entry` | `books-store.js` |  |
 | 48 | `next` | `dayopen.js` | the next thing to do — |
 | 48 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 47 | `again` | `signin-ui.js` |  |
@@ -66,9 +66,9 @@ of file each thing is; this says what already does the job.
 | 29 | `sentence` | `one-person.js` |  |
 | 29 | `facts` | `bill-steps.js` | MY state_log — |
 | 29 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
+| 29 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 28 | `changes` | `books-store.js` |  |
 | 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
-| 28 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 28 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 27 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
@@ -152,6 +152,7 @@ of file each thing is; this says what already does the job.
 | 15 | `label` | `screen-id.js` |  |
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `connectors` | `home-facts.js` | declare (said in words — |
+| 15 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 15 | `fail` | `books.js` | lib/books-contract.js refusalOf maps every typed refusal of the ledger to its status, code and the old {error, |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `control` | `cap-settings.js` |  |
@@ -166,7 +167,6 @@ of file each thing is; this says what already does the job.
 | 14 | `orders` | `home-facts.js` | the till said 2 — |
 | 14 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 14 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
-| 14 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
