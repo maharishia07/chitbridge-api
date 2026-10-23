@@ -1126,7 +1126,7 @@
    "path": "/api/schemas/fields/:field_key",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 187,
+   "line": 188,
    "hash": "f4aecf8e5377f90e",
    "columns": {
     "schema_in": true,
@@ -11585,7 +11585,7 @@
    "path": "/api/schemas/fields",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 89,
+   "line": 90,
    "hash": "5dbd96ff9c6c0242",
    "columns": {
     "schema_in": true,
@@ -11633,7 +11633,7 @@
    "path": "/api/schemas/my",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 28,
+   "line": 29,
    "hash": "6dd58ca2069a7e71",
    "columns": {
     "schema_in": true,
@@ -14921,7 +14921,7 @@
    "path": "/api/schemas/fields/:field_key",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 304,
+   "line": 305,
    "hash": "84b53613eaa652df",
    "columns": {
     "schema_in": true,
@@ -14972,7 +14972,7 @@
    "path": "/api/schemas/fields/order",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 245,
+   "line": 246,
    "hash": "9155d46b461e8a04",
    "columns": {
     "schema_in": true,
@@ -15022,7 +15022,7 @@
    "path": "/api/schemas/visibility",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 405,
+   "line": 406,
    "hash": "37ba44f89405d662",
    "columns": {
     "schema_in": true,
@@ -26174,7 +26174,7 @@
    "path": "/api/schemas/create-default",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 47,
+   "line": 48,
    "hash": "8b88924fcc29e2c1",
    "columns": {
     "schema_in": true,
