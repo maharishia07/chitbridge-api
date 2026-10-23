@@ -17,8 +17,8 @@ of file each thing is; this says what already does the job.
 | 74 | `words` | `variant.browser.js` |  |
 | 72 | `answer` | `availability.js` | from March; then nearest. |
 | 65 | `list` | `cap-settings.js` |  |
+| 64 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 64 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 63 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 63 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 60 | `here` | `screen-id.js` |  |
 | 56 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
@@ -56,8 +56,8 @@ of file each thing is; this says what already does the job.
 | 32 | `shell` | `pick.js` |  |
 | 32 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 32 | `live` | `receivables.js` | the allocations that still count: |
+| 31 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 30 | `ensureCap` | `app.html` |  |
-| 30 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 29 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 29 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 29 | `lines` | `cart.js` |  |
@@ -74,12 +74,12 @@ of file each thing is; this says what already does the job.
 | 26 | `sheet` | `cap-employees.js` |  |
 | 26 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 26 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
+| 26 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 26 | `changes` | `books-store.js` |  |
 | 26 | `gate` | `country-setup.js` | gate(h, entity): |
 | 26 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 26 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
-| 25 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `money` | `cart.js` |  |
 | 24 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
@@ -107,15 +107,16 @@ of file each thing is; this says what already does the job.
 | 20 | `form` | `accounts-shell.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `entries` | `books-store.js` |  |
+| 20 | `register` | `regulation.js` | register(pack) → the pack — |
 | 20 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 20 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
+| 20 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `shown` | `cap-settings.js` |  |
 | 19 | `card` | `cap-shop.js` |  |
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `more` | `lab-kit.js` | idKey: |
 | 19 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
-| 19 | `register` | `regulation.js` | register(pack) → the pack — |
 | 18 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `later` | `signin-ui.js` |  |
@@ -123,7 +124,6 @@ of file each thing is; this says what already does the job.
 | 18 | `note` | `dbwatch.js` |  |
 | 18 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 18 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
-| 18 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 17 | `step` | `cart.js` |  |
 | 17 | `model` | `chit-sheet.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
