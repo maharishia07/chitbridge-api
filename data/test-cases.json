@@ -64450,6 +64450,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-quick-keys.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE 9 QUICK-KEY ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, THE 409 KEEPS CURRENT; ANOTHER SHOP'S GROUP ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE 9 QUICK-KEY ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, THE 409 KEEPS CURRENT; ANOTHER SHOP'S GROUP ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 228 lines. Run: node chitbridge-api/tests/api-problem-quick-keys.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 228,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-products.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

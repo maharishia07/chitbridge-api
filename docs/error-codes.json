@@ -2477,6 +2477,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "QUICK_KEY_CHANGED",
+   "status": "409",
+   "title": "Group changed",
+   "shopkeeper": "Someone changed this group since you opened it.",
+   "hint": "Open the group again and make your change again.",
+   "owner_area": "quick-keys",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "QUICK_KEY_INVALID",
+   "status": "400",
+   "title": "Quick key not valid",
+   "shopkeeper": "A group needs a name, and a key needs a product.",
+   "hint": "Fill in what is missing and try again.",
+   "owner_area": "quick-keys",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "QUICK_KEY_SESSION_ONLY",
+   "status": "403",
+   "title": "Quick keys need a person",
+   "shopkeeper": "Quick-key groups are managed by a signed-in person, not by a key.",
+   "hint": "Sign in as the owner or a manager to change them.",
+   "owner_area": "quick-keys",
+   "since": "2026-10-23"
+  },
+  {
    "code": "READ_ONLY",
    "status": "403",
    "title": "View only",
