@@ -6670,6 +6670,3218 @@
      }
     }
    ]
+  },
+  "DELETE /api/combo-templates/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not delete this combo",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not delete this combo",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "DELETE /api/crm/followups/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "followup-not-there",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "No such follow-up."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "No such follow-up."
+     }
+    }
+   ]
+  },
+  "DELETE /api/crm/groups/:name": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner deletes a group.",
+      "message": "Only the owner deletes a group."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner deletes a group.",
+      "message": "Only the owner deletes a group."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner deletes a group.",
+      "message": "Only the owner deletes a group."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner deletes a group.",
+      "message": "Only the owner deletes a group."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "No group by that name.",
+      "message": "No group by that name."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "No group by that name.",
+      "message": "No group by that name."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "No group by that name.",
+      "message": "No group by that name."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "No group by that name.",
+      "message": "No group by that name."
+     }
+    }
+   ]
+  },
+  "DELETE /api/crm/parties/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner can remove a party.",
+      "message": "Only the owner can remove a party."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner can remove a party.",
+      "message": "Only the owner can remove a party."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner can remove a party.",
+      "message": "Only the owner can remove a party."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner can remove a party.",
+      "message": "Only the owner can remove a party."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    }
+   ]
+  },
+  "GET /api/combo-templates": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read your saved combos",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read your saved combos",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/calls": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/followups": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/parties": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/parties/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/parties/:id/timeline": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not found",
+      "message": "Not your party."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/privacy-requests": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    }
+   ]
+  },
+  "GET /api/crm/segments": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/marketing/came-back": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use Marketing.",
+      "message": "Sign in to use Marketing."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use Marketing.",
+      "message": "Sign in to use Marketing."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/network-offers": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "network-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/combo-templates/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not update this combo",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not update this combo",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "PATCH /api/crm/followups/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "followup-not-there",
+     "status": 404,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Not found",
+      "message": "Not found"
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Not found",
+      "message": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/combo-templates": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails-with-combo",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save this combo",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save this combo",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/combo-templates/:id/push": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not push this combo to your products",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not push this combo to your products",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "saved-combo-has-no-groups",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid combo",
+      "message": "A combo needs at least one group to be worth saving."
+     },
+     "fixture": {
+      "error": "Invalid combo",
+      "message": "A combo needs at least one group to be worth saving."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/followups": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "Which party is it about?",
+      "message": "Which party is it about?"
+     }
+    },
+    {
+     "scenario": "db-fails-with-party",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/groups": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_NAME",
+      "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+      "message": "Name the group: up to 40 letters, digits, spaces, - & /."
+     },
+     "fixture": {
+      "code": "BAD_NAME",
+      "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+      "message": "Name the group: up to 40 letters, digits, spaces, - & /."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     },
+     "fixture": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_NAME",
+      "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+      "message": "Name the group: up to 40 letters, digits, spaces, - & /."
+     },
+     "fixture": {
+      "code": "BAD_NAME",
+      "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+      "message": "Name the group: up to 40 letters, digits, spaces, - & /."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_NAME",
+      "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+      "message": "Name the group: up to 40 letters, digits, spaces, - & /."
+     },
+     "fixture": {
+      "code": "BAD_NAME",
+      "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+      "message": "Name the group: up to 40 letters, digits, spaces, - & /."
+     }
+    },
+    {
+     "scenario": "db-fails-with-group",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/leads": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     },
+     "fixture": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     },
+     "fixture": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     },
+     "fixture": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     },
+     "fixture": {
+      "code": "BAD_NAME",
+      "error": "Give the lead a name.",
+      "message": "Give the lead a name."
+     }
+    },
+    {
+     "scenario": "db-fails-with-lead",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/leads/import": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "NO_ROWS",
+      "error": "Nothing to import.",
+      "message": "Nothing to import."
+     },
+     "fixture": {
+      "code": "NO_ROWS",
+      "error": "Nothing to import.",
+      "message": "Nothing to import."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "VIEW_ONLY",
+      "error": "Only an editor can import leads.",
+      "message": "Only an editor can import leads."
+     },
+     "fixture": {
+      "code": "VIEW_ONLY",
+      "error": "Only an editor can import leads.",
+      "message": "Only an editor can import leads."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "NO_ROWS",
+      "error": "Nothing to import.",
+      "message": "Nothing to import."
+     },
+     "fixture": {
+      "code": "NO_ROWS",
+      "error": "Nothing to import.",
+      "message": "Nothing to import."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "NO_ROWS",
+      "error": "Nothing to import.",
+      "message": "Nothing to import."
+     },
+     "fixture": {
+      "code": "NO_ROWS",
+      "error": "Nothing to import.",
+      "message": "Nothing to import."
+     }
+    },
+    {
+     "scenario": "db-fails-with-rows",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/parties/:id/contact-prefs": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/parties/:id/interactions": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     },
+     "fixture": {
+      "code": "CRM_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "CRM needs migration b276 — not run yet."
+     }
+    },
+    {
+     "scenario": "party-not-yours",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/parties/:id/outcome": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     },
+     "fixture": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     },
+     "fixture": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     },
+     "fixture": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     },
+     "fixture": {
+      "code": "BAD_OUTCOME",
+      "error": "Pick what happened on the call.",
+      "message": "Pick what happened on the call."
+     }
+    },
+    {
+     "scenario": "party-not-yours",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "db-fails-with-outcome",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/parties/:id/stage": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     },
+     "fixture": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     },
+     "fixture": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a party id.",
+      "message": "That is not a party id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     },
+     "fixture": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     },
+     "fixture": {
+      "code": "BAD_GROUP",
+      "error": "That is not one of the stages.",
+      "message": "That is not one of the stages."
+     }
+    },
+    {
+     "scenario": "lead-not-yours",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not one of your leads.",
+      "message": "Not one of your leads."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not one of your leads.",
+      "message": "Not one of your leads."
+     }
+    },
+    {
+     "scenario": "db-fails-with-stage",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/privacy-requests": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/privacy-requests/:id/answer": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner answers a privacy request.",
+      "message": "Only the owner answers a privacy request."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner answers a privacy request.",
+      "message": "Only the owner answers a privacy request."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner answers a privacy request.",
+      "message": "Only the owner answers a privacy request."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Only the owner answers a privacy request.",
+      "message": "Only the owner answers a privacy request."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_ID",
+      "error": "That is not a request id.",
+      "message": "That is not a request id."
+     },
+     "fixture": {
+      "code": "BAD_ID",
+      "error": "That is not a request id.",
+      "message": "That is not a request id."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    },
+    {
+     "scenario": "library-says-not-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "No such request.",
+      "message": "No such request."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "No such request.",
+      "message": "No such request."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/segments/:key/send": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     },
+     "fixture": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     },
+     "fixture": {
+      "code": "VIEW_ONLY",
+      "error": "Your login can only view.",
+      "message": "Your login can only view."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     },
+     "fixture": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     },
+     "fixture": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     },
+     "fixture": {
+      "code": "BAD_KEY",
+      "error": "That is not a segment or a group.",
+      "message": "That is not a segment or a group."
+     }
+    },
+    {
+     "scenario": "library-says-not-found",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "No group by that name.",
+      "message": "No group by that name."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "No group by that name.",
+      "message": "No group by that name."
+     }
+    },
+    {
+     "scenario": "db-fails-with-text",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/crm/walk-ins/add": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use CRM.",
+      "message": "Sign in to use CRM."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     },
+     "fixture": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     },
+     "fixture": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     },
+     "fixture": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     },
+     "fixture": {
+      "code": "BAD_PHONE",
+      "error": "Give the phone number they used.",
+      "message": "Give the phone number they used."
+     }
+    },
+    {
+     "scenario": "db-fails-with-phone",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/:id/choice": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Unknown offer."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Unknown offer."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/:id/release": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "offer-not-live",
+     "status": 409,
+     "body_keys": {
+      "error": "Not live",
+      "message": "Make the offer live before releasing it to your stores."
+     },
+     "fixture": {
+      "error": "Not live",
+      "message": "Make the offer live before releasing it to your stores."
+     }
+    },
+    {
+     "scenario": "ends-before-start",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "The offer would end before it starts."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "The offer would end before it starts."
+     }
+    },
+    {
+     "scenario": "release-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "never-released",
+     "status": 409,
+     "body_keys": {
+      "error": "Not released",
+      "message": "That offer was never released to your stores."
+     },
+     "fixture": {
+      "error": "Not released",
+      "message": "That offer was never released to your stores."
+     }
+    },
+    {
+     "scenario": "withdraw-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     },
+     "fixture": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     },
+     "fixture": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 409,
+     "body_keys": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     },
+     "fixture": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     }
+    },
+    {
+     "scenario": "price-answer-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     },
+     "fixture": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     },
+     "fixture": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     },
+     "fixture": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     }
+    }
+   ]
+  },
+  "POST /api/offers/evaluate": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "engine-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/offers/explain": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "engine-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/network-offers/policy": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     }
+    },
+    {
+     "scenario": "policy-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

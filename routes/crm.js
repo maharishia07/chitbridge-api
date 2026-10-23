@@ -44,7 +44,9 @@ const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity, query } = require('../db');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { SAID, refusalOf, crmContract: contract } = require('../lib/crm-contract'); // the contract (each route's operation) and the CRM's refusal mapper
 const { isOwner } = require('../lib/owner');
 const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
@@ -55,6 +57,11 @@ const PAGE_DEFAULT = 300,
   PAGE_MAX = 1000; /* one page of this file's follow-ups and calls (300 = the queue's old silent cut, now a page with a total) */
 
 const ctx = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/crm-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const UUID = crm.UUID;
 const REMOVE_WHY = 'Only the owner can remove a party.';
@@ -65,18 +72,18 @@ const REMOVE_WHY = 'Only the owner can remove a party.';
  */
 const crmMay = (req) => ({ write: require('../lib/access').mayWrite(req), remove: require('../lib/owner').may(req, REMOVE_WHY) });
 function noKey(req, res, next) {
-  if (req.api_key) return res.status(403).json({ code: 'SIGN_IN', error: 'Sign in to use CRM.', message: 'Sign in to use CRM.' });
+  if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
 }
+/** the 404 of a record that is not this shop's: the Problem fields beside the old { code, error: 'Not found', message } */
+const notFound = (req, res, words) => problem(req, res, { status: 404, code: 'NOT_FOUND', detail: words, legacy: { error: 'Not found', message: words } });
 /** a condition becomes a verdict with a code a screen maps to its own written line — the message is never shown as-is (design rule 1) */
 function fail(res, e) {
-  if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e)))
-    return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CRM needs migration b276 — not run yet.' });
-  if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
-  if (e && e.code === 'LEADS_NOT_MIGRATED') return res.status(503).json({ code: 'LEADS_NOT_MIGRATED', error: e.message, message: e.message });
-  if (e && e.status && e.status < 500)
-    return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
-  return res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  return problem(
+    res.req,
+    res,
+    refusalOf(e, res.req)
+  ); /* lib/crm-contract.js refusalOf: not migrated → 503, a typed refusal → its status and words, anything else → 500 that says nothing of its cause */
 }
 const bad = F.bad;
 const idOf = (req) => {
@@ -86,7 +93,7 @@ const idOf = (req) => {
 };
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
-router.get('/parties', auth, noKey, async (req, res) => {
+router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res) => {
   try {
     const out = await crm.list(ctx(req), {
       actor: byOf(req),
@@ -105,12 +112,12 @@ router.get('/parties', auth, noKey, async (req, res) => {
 });
 
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
-router.get('/parties/:id', auth, noKey, async (req, res) => {
+router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
     const found = await crm.one(owner, id, { stages: true, consent: true });
-    if (!found) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
+    if (!found) return notFound(req, res, SAID.notYourParty);
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
     /* the relationship: select.rows + measure.scorecard, exactly what /relationships/scorecard/:id answers — a local party has no chits */
@@ -163,12 +170,12 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
  */
 const TIMELINE_PAGE = 30,
   TIMELINE_MAX = 100;
-router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
+router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/timeline'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
     const found = await crm.one(owner, id);
-    if (!found) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
+    if (!found) return notFound(req, res, SAID.notYourParty);
     const party = found.party.party_id;
     const limit = PL.limitOf(req.query.limit, TIMELINE_PAGE, TIMELINE_MAX);
     let before = Date.now() + 86400000;
@@ -343,7 +350,7 @@ function contactOf(b) {
 }
 
 /* ── Phase 4: log, follow up, remove, walk-in ───────────────────────────────────────────────────────────────────── */
-router.post('/parties/:id/interactions', auth, noKey, async (req, res) => {
+router.post('/parties/:id/interactions', auth, noKey, ...checked('POST /parties/:id/interactions'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
@@ -365,7 +372,7 @@ router.post('/parties/:id/interactions', auth, noKey, async (req, res) => {
 });
 
 /** ?scope=mine|all&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
-router.get('/followups', auth, noKey, async (req, res) => {
+router.get('/followups', auth, noKey, ...checked('GET /followups'), async (req, res) => {
   try {
     const owner = ctx(req),
       page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
@@ -377,7 +384,7 @@ router.get('/followups', auth, noKey, async (req, res) => {
     fail(res, e);
   }
 });
-router.post('/followups', auth, noKey, async (req, res) => {
+router.post('/followups', auth, noKey, ...checked('POST /followups'), async (req, res) => {
   try {
     const owner = ctx(req),
       b = req.body || {};
@@ -393,7 +400,7 @@ router.post('/followups', auth, noKey, async (req, res) => {
     fail(res, e);
   }
 });
-router.patch('/followups/:id', auth, noKey, async (req, res) => {
+router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
@@ -403,12 +410,12 @@ router.patch('/followups/:id', auth, noKey, async (req, res) => {
     fail(res, e);
   }
 });
-router.delete('/followups/:id', auth, noKey, async (req, res) => {
+router.delete('/followups/:id', auth, noKey, ...checked('DELETE /followups/:id'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
     const gone = await withEntity(owner, (h) => F.remove(h, owner, id));
-    if (!gone) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'No such follow-up.' });
+    if (!gone) return notFound(req, res, SAID.noFollowup);
     res.json({ ok: true });
   } catch (e) {
     fail(res, e);
@@ -419,7 +426,7 @@ router.delete('/followups/:id', auth, noKey, async (req, res) => {
  * "Remove from my parties" (Q10, provisional): the owner only, and only with no open dues (the Ledger's stored net must be 0, or
  * the Ledger off). It HIDES the party — hidden_at on its list rows — and deletes nothing: statements, chits, notes all stay.
  */
-router.delete('/parties/:id', auth, noKey, async (req, res) => {
+router.delete('/parties/:id', auth, noKey, ...checked('DELETE /parties/:id'), async (req, res) => {
   try {
     if (!isOwner(req)) throw bad(REMOVE_WHY, 403, 'OWNER_ONLY'); /* the same sentence GET /parties may.remove.why carried */
     const owner = ctx(req),
@@ -435,7 +442,7 @@ router.delete('/parties/:id', auth, noKey, async (req, res) => {
  * a lead: ONE local party (the one mint, kind 'cus') on the customer list as added_via 'lead', and its first stage — ONE transaction, no second contact list.
  * Body { name, phone?, stage? }. The stage is a memberships row (lib/memberships — the one writer); b297 not run → 503 LEADS_NOT_MIGRATED, nothing created.
  */
-router.post('/leads', auth, noKey, async (req, res) => {
+router.post('/leads', auth, noKey, ...checked('POST /leads'), async (req, res) => {
   try {
     const owner = ctx(req),
       b = req.body || {};
@@ -475,7 +482,7 @@ router.post('/leads', auth, noKey, async (req, res) => {
 });
 
 /* ── L2: the call desk — the table of outcomes is lib/crm-calls (server); the web only labels it ─────────────────── */
-router.get('/calls', auth, noKey, async (req, res) => {
+router.get('/calls', auth, noKey, ...checked('GET /calls'), async (req, res) => {
   try {
     const owner = ctx(req),
       page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
@@ -489,7 +496,7 @@ router.get('/calls', auth, noKey, async (req, res) => {
   }
 });
 /** Body { outcome, after?: today|tomorrow|3days, due_at?: YYYY-MM-DD }. 201 { interaction, followup, stage, suggest } */
-router.post('/parties/:id/outcome', auth, noKey, async (req, res) => {
+router.post('/parties/:id/outcome', auth, noKey, ...checked('POST /parties/:id/outcome'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
@@ -506,19 +513,20 @@ router.post('/parties/:id/outcome', auth, noKey, async (req, res) => {
  * Who may: the owner, or a login whose access level is editor (lib/access.canEdit — the server decides; a viewer or commenter gets 403 in words).
  * Before b297: 503 LEADS_NOT_MIGRATED, nothing created.
  */
-router.post('/leads/import', auth, noKey, async (req, res) => {
+router.post('/leads/import', auth, noKey, ...checked('POST /leads/import'), async (req, res) => {
   try {
     if (!require('../lib/access').canEdit(req.identity)) throw bad('Only an editor can import leads.', 403, 'VIEW_ONLY');
     const b = req.body || {};
     const out = await require('../lib/crm-leads').importLeads(ctx(req), b.rows, { by: byOf(req), dry: !!b.dry });
-    res.status(out.dry ? 200 : 201).json(out);
+    if (out.dry) return res.json(out);
+    res.status(201).json(out);
   } catch (e) {
     fail(res, e);
   }
 });
 
 /** "Move to…": the stage a lead is in now. Body { stage }. A new row — never an update; refused for a party that has traded (they are a customer). */
-router.post('/parties/:id/stage', auth, noKey, async (req, res) => {
+router.post('/parties/:id/stage', auth, noKey, ...checked('POST /parties/:id/stage'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req),
@@ -544,7 +552,7 @@ router.post('/parties/:id/stage', auth, noKey, async (req, res) => {
  * walk-in → party: a phone that holds points becomes a LOCAL customer (lib/local-identity.mint, kind 'cus' — the one mint) and the points
  * move to them by the engine's own claim (rewards.claim: two entries, never an update). Body { phone, name? }.
  */
-router.post('/walk-ins/add', auth, noKey, async (req, res) => {
+router.post('/walk-ins/add', auth, noKey, ...checked('POST /walk-ins/add'), async (req, res) => {
   try {
     const owner = ctx(req),
       b = req.body || {};
@@ -593,7 +601,7 @@ async function mine(h, owner, id) {
   const on = await require('../lib/books-store').partyOn(h, owner, id);
   if (!on.customer && !on.supplier) throw bad('Not your party.', 404, 'NOT_FOUND');
 }
-router.get('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
+router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:id/contact-prefs'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
@@ -609,7 +617,7 @@ router.get('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
     fail(res, e);
   }
 });
-router.post('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
+router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties/:id/contact-prefs'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
@@ -622,7 +630,7 @@ router.post('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
     fail(res, e);
   }
 });
-router.get('/privacy-requests', auth, noKey, async (req, res) => {
+router.get('/privacy-requests', auth, noKey, ...checked('GET /privacy-requests'), async (req, res) => {
   try {
     const owner = ctx(req);
     const out = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1', page: req.query.page, limit: req.query.limit }));
@@ -631,7 +639,7 @@ router.get('/privacy-requests', auth, noKey, async (req, res) => {
     fail(res, e);
   }
 });
-router.post('/privacy-requests', auth, noKey, async (req, res) => {
+router.post('/privacy-requests', auth, noKey, ...checked('POST /privacy-requests'), async (req, res) => {
   try {
     const owner = ctx(req),
       b = req.body || {};
@@ -645,7 +653,7 @@ router.post('/privacy-requests', auth, noKey, async (req, res) => {
     fail(res, e);
   }
 });
-router.post('/privacy-requests/:id/answer', auth, noKey, async (req, res) => {
+router.post('/privacy-requests/:id/answer', auth, noKey, ...checked('POST /privacy-requests/:id/answer'), async (req, res) => {
   try {
     if (!isOwner(req)) throw bad('Only the owner answers a privacy request.', 403, 'OWNER_ONLY');
     const owner = ctx(req),
@@ -662,7 +670,7 @@ router.post('/privacy-requests/:id/answer', auth, noKey, async (req, res) => {
 const CG = require('../lib/crm-groups');
 const whoIs = (req) => ({ owner: isOwner(req), editor: require('../lib/access').canEdit(req.identity) });
 /** who may: anyone signed in to the shop reads it (a viewer sees every action greyed with the server's sentence — `may`) */
-router.get('/segments', auth, noKey, async (req, res) => {
+router.get('/segments', auth, noKey, ...checked('GET /segments'), async (req, res) => {
   try {
     res.json(await CG.overview(ctx(req), whoIs(req)));
   } catch (e) {
@@ -670,7 +678,7 @@ router.get('/segments', auth, noKey, async (req, res) => {
   }
 });
 /** who may: the owner or an editor (hat-gate refuses a viewer first; this is the sentence) — { name, add[], remove[] }, ONE transaction */
-router.post('/groups', auth, noKey, async (req, res) => {
+router.post('/groups', auth, noKey, ...checked('POST /groups'), async (req, res) => {
   try {
     if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
     const owner = ctx(req);
@@ -680,7 +688,7 @@ router.post('/groups', auth, noKey, async (req, res) => {
   }
 });
 /** who may: the owner only — the group leaves every customer; the offers that named it are the warning GET /segments carried */
-router.delete('/groups/:name', auth, noKey, async (req, res) => {
+router.delete('/groups/:name', auth, noKey, ...checked('DELETE /groups/:name'), async (req, res) => {
   try {
     if (!isOwner(req)) throw bad('Only the owner deletes a group.', 403, 'OWNER_ONLY');
     const owner = ctx(req);
@@ -690,7 +698,7 @@ router.delete('/groups/:name', auth, noKey, async (req, res) => {
   }
 });
 /** who may: the owner or an editor — { channel?, purpose?, text, dry? }: dry = the count and who is refused (by code); real = the one sender per allowed member */
-router.post('/segments/:key/send', auth, noKey, async (req, res) => {
+router.post('/segments/:key/send', auth, noKey, ...checked('POST /segments/:key/send'), async (req, res) => {
   try {
     if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
     res.json(await CG.send(ctx(req), req.params.key, req.body));
@@ -699,4 +707,5 @@ router.post('/segments/:key/send', auth, noKey, async (req, res) => {
   }
 });
 
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

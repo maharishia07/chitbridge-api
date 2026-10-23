@@ -74,6 +74,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ANSWERED",
+   "status": "409",
+   "title": "Request already answered",
+   "shopkeeper": "That request is not there, or it was already answered.",
+   "hint": "Refresh the list: an answer is given once.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ASSIST_GATED",
    "status": "varies",
    "title": "Assist gated",
@@ -101,12 +110,111 @@
    "since": "2026-10-22"
   },
   {
+   "code": "BAD_AFTER",
+   "status": "400",
+   "title": "Day not understood",
+   "shopkeeper": "That day is not one the follow-up knows.",
+   "hint": "Pick today, tomorrow, in 3 days or next week.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_ASSIGNEE",
+   "status": "400",
+   "title": "Person not on the team",
+   "shopkeeper": "That person is not on your team.",
+   "hint": "Pick someone from your team.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_BEFORE",
+   "status": "400",
+   "title": "Time not understood",
+   "shopkeeper": "The time to look before is not a time.",
+   "hint": "Send a date and time, or leave it out.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_CHANNEL",
+   "status": "400",
+   "title": "Channel not known",
+   "shopkeeper": "The channel must be phone, sms, whatsapp, email or chitbridge.",
+   "hint": "Pick one of those channels.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_DUE",
+   "status": "400",
+   "title": "Day not a date",
+   "shopkeeper": "The day for the follow-up is not a date.",
+   "hint": "Pick a day on the calendar.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "BAD_FLAG",
    "status": "400",
    "title": "Flag not true or false",
    "shopkeeper": "priceIncludesTax must be true or false.",
    "hint": "Send true or false.",
    "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_GROUP",
+   "status": "400",
+   "title": "Stage not known",
+   "shopkeeper": "That is not one of the stages.",
+   "hint": "Pick a stage from the list.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_ID",
+   "status": "400",
+   "title": "Id not valid",
+   "shopkeeper": "That is not a valid id.",
+   "hint": "Open the record from the list and try again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_KEY",
+   "status": "400",
+   "title": "Segment not known",
+   "shopkeeper": "That is not a segment or a group.",
+   "hint": "Pick a segment or group from the list.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_KIND",
+   "status": "400",
+   "title": "Kind not known",
+   "shopkeeper": "The kind must be call, visit, message or note.",
+   "hint": "Pick one of those kinds.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_NAME",
+   "status": "400",
+   "title": "Name needed",
+   "shopkeeper": "Give it a name.",
+   "hint": "Type a name and save again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_OUTCOME",
+   "status": "400",
+   "title": "Call outcome needed",
+   "shopkeeper": "Pick what happened on the call.",
+   "hint": "Tap one of the outcome buttons.",
+   "owner_area": "crm",
    "since": "2026-10-23"
   },
   {
@@ -134,6 +242,15 @@
    "shopkeeper": "A line has a price below 0.",
    "hint": "Send a price of 0 or more.",
    "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_PURPOSE",
+   "status": "400",
+   "title": "Purpose not known",
+   "shopkeeper": "The purpose must be service or marketing.",
+   "hint": "Pick service or marketing.",
+   "owner_area": "crm",
    "since": "2026-10-23"
   },
   {
@@ -236,6 +353,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CHANNEL_NOT_SENDABLE",
+   "status": "400",
+   "title": "Channel cannot send",
+   "shopkeeper": "We cannot send on that channel yet.",
+   "hint": "Pick a channel that can send.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CHIT_NOT_DELIVERED",
    "status": "503",
    "title": "Chit not delivered",
@@ -261,6 +387,51 @@
    "hint": "-",
    "owner_area": "reward-store",
    "since": "2026-10-22"
+  },
+  {
+   "code": "COMBO_INVALID",
+   "status": "400",
+   "title": "Combo needs groups",
+   "shopkeeper": "A combo needs at least one group, each with a name and options.",
+   "hint": "Add a group with an option and save again.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_NAME_INVALID",
+   "status": "400",
+   "title": "Combo needs a name",
+   "shopkeeper": "A saved combo needs a name of up to 120 characters.",
+   "hint": "Type a name you will look for later.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_PRICE_INVALID",
+   "status": "400",
+   "title": "Combo price not valid",
+   "shopkeeper": "The price must be a number and cannot be negative.",
+   "hint": "Type a price of 0 or more, or leave it empty.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_PRICE_REQUIRED",
+   "status": "400",
+   "title": "Combo price needed",
+   "shopkeeper": "Give this combo a price before pushing it as a new product.",
+   "hint": "Set the price, then push again.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_REFUSED",
+   "status": "400",
+   "title": "Combo refused",
+   "shopkeeper": "This combo cannot be saved as it stands.",
+   "hint": "Read the sentence shown and fix it.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
   },
   {
    "code": "COMMENT_ONLY",
@@ -318,10 +489,10 @@
   },
   {
    "code": "COST_BLIND",
-   "status": "varies",
-   "title": "Cost blind",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "403",
+   "title": "Cost and price hidden from you",
+   "shopkeeper": "Your access does not include cost or price, so you cannot change them.",
+   "hint": "Ask the owner to grant \"Sees costs\".",
    "owner_area": "cost",
    "since": "2026-10-22"
   },
@@ -364,9 +535,9 @@
   {
    "code": "CRM_NOT_MIGRATED",
    "status": "503",
-   "title": "Crm not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Customer list update pending",
+   "shopkeeper": "This part of the customer list is not ready yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "crm",
    "since": "2026-10-22"
   },
@@ -497,6 +668,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "EXISTS",
+   "status": "409",
+   "title": "Already on your list",
+   "shopkeeper": "They are already on your list.",
+   "hint": "Open the existing entry instead.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FOLDER_IS_VIEW",
    "status": "400",
    "title": "Folder is view",
@@ -533,6 +713,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "GROUPS_NOT_MIGRATED",
+   "status": "503",
+   "title": "Groups update pending",
+   "shopkeeper": "Groups are not ready yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "HANDOFF_STORE_MISSING",
    "status": "503",
    "title": "Handoff store missing",
@@ -540,6 +729,15 @@
    "hint": "-",
    "owner_area": "assist",
    "since": "2026-10-22"
+  },
+  {
+   "code": "HAS_DUES",
+   "status": "409",
+   "title": "Open dues",
+   "shopkeeper": "There are open dues on this party, so it cannot be removed.",
+   "hint": "Settle the dues first.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "IDEMPOTENCY_CONFLICT",
@@ -686,6 +884,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "IS_CUSTOMER",
+   "status": "409",
+   "title": "Already a customer",
+   "shopkeeper": "They are a customer now, so they have no lead stage.",
+   "hint": "Leave their stage as it is.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ITEM_NOT_FOUND",
    "status": "422",
    "title": "Item not on the shelf",
@@ -751,9 +958,9 @@
   {
    "code": "LEADS_NOT_MIGRATED",
    "status": "503",
-   "title": "Leads not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Leads update pending",
+   "shopkeeper": "Leads are not ready yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "crm",
    "since": "2026-10-22"
   },
@@ -764,6 +971,15 @@
    "shopkeeper": "This shop has not switched the ledger on.",
    "hint": "The owner can switch it on.",
    "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "LINES_REQUIRED",
+   "status": "400",
+   "title": "Lines needed",
+   "shopkeeper": "Send at least one line with a quantity and a unit price.",
+   "hint": "Add the lines to evaluate and send again.",
+   "owner_area": "offers",
    "since": "2026-10-23"
   },
   {
@@ -794,6 +1010,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MINT_REFUSED",
+   "status": "varies",
+   "title": "Could not add them",
+   "shopkeeper": "They could not be added to your list.",
+   "hint": "Read the sentence shown and fix it.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "MISSING_FIELD",
    "status": "422",
    "title": "Field missing",
@@ -805,9 +1030,9 @@
   {
    "code": "MKT_NOT_MIGRATED",
    "status": "varies",
-   "title": "Mkt not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Who came back update pending",
+   "shopkeeper": "Who came back arrives after the next update.",
+   "hint": "Try again after the next update.",
    "owner_area": "channels",
    "since": "2026-10-22"
   },
@@ -839,6 +1064,42 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NEED_DAY",
+   "status": "400",
+   "title": "Day needed",
+   "shopkeeper": "This outcome needs a day for the next call.",
+   "hint": "Pick a day.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NOTHING_TO_CHANGE",
+   "status": "409",
+   "title": "Stores already up to date",
+   "shopkeeper": "Your stores already have every change.",
+   "hint": "Nothing to publish.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NOTHING_WAITING",
+   "status": "409",
+   "title": "Nothing waiting",
+   "shopkeeper": "Nothing is waiting to be published.",
+   "hint": "Publish a change first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NOT_ADOPTED",
+   "status": "409",
+   "title": "Catalogue not sold here",
+   "shopkeeper": "This store does not sell that catalogue.",
+   "hint": "Join the network catalogue first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NETWORK_ORDERS_OFF",
    "status": "403",
    "title": "Network orders off",
@@ -848,6 +1109,51 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NETWORK_PRICE_MISSING",
+   "status": "409",
+   "title": "No brand price",
+   "shopkeeper": "The brand has no price for that product.",
+   "hint": "Ask the brand to suggest a price.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_READ_FAILED",
+   "status": "503",
+   "title": "Network could not be read",
+   "shopkeeper": "We could not read who is in the network just now. Nothing was changed.",
+   "hint": "Try again in a minute.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_REFUSED",
+   "status": "409",
+   "title": "Network step refused",
+   "shopkeeper": "The network cannot take that step as it stands.",
+   "hint": "Read the sentence shown and fix it.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_REQUEST_INVALID",
+   "status": "400",
+   "title": "Network request not valid",
+   "shopkeeper": "That request is not valid: the sentence says what to change.",
+   "hint": "Fix what the sentence says and send again.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NOTHING_TO_DO",
+   "status": "400",
+   "title": "Nothing to change",
+   "shopkeeper": "Say who to add or remove.",
+   "hint": "Pick at least one customer.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NOTIF_DISMISS_NOT_MIGRATED",
    "status": "503",
    "title": "Notif dismiss not migrated",
@@ -855,6 +1161,15 @@
    "hint": "-",
    "owner_area": "notifications",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_ASSIGNEE",
+   "status": "403",
+   "title": "Only owner or assignee",
+   "shopkeeper": "Only the owner or the person it is given to can hand this on.",
+   "hint": "Ask the owner.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "NOT_BOARD_WRITER",
@@ -966,10 +1281,10 @@
   },
   {
    "code": "NO_CONSENT",
-   "status": "varies",
-   "title": "No consent",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "403",
+   "title": "No consent yet",
+   "shopkeeper": "They have not agreed to offers on that channel.",
+   "hint": "Ask them first.",
    "owner_area": "marketing-results",
    "since": "2026-10-22"
   },
@@ -1055,6 +1370,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NO_ROWS",
+   "status": "400",
+   "title": "Nothing to import",
+   "shopkeeper": "There is nothing to import.",
+   "hint": "Choose a file with at least one row.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_SENDS",
    "status": "varies",
    "title": "No sends",
@@ -1100,6 +1424,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_TEXT",
+   "status": "400",
+   "title": "Message needed",
+   "shopkeeper": "Write the message.",
+   "hint": "Type the message and send again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_TOKEN",
    "status": "varies",
    "title": "No token",
@@ -1118,6 +1451,42 @@
    "since": "2026-10-22"
   },
   {
+   "code": "OFFER_ENDS_BEFORE_START",
+   "status": "400",
+   "title": "Offer ends before it starts",
+   "shopkeeper": "The offer would end before it starts.",
+   "hint": "Pick an end after the start.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_NOT_LIVE",
+   "status": "409",
+   "title": "Offer not live",
+   "shopkeeper": "Make the offer live before releasing it to your stores.",
+   "hint": "Make it live, then release.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_NOT_RELEASED",
+   "status": "409",
+   "title": "Offer never released",
+   "shopkeeper": "That offer was never released to your stores.",
+   "hint": "Release it first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_UNKNOWN",
+   "status": "400",
+   "title": "Offer not known",
+   "shopkeeper": "That is not an offer.",
+   "hint": "Pick an offer from the list.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "OFFLINE",
    "status": "varies",
    "title": "Offline",
@@ -1134,6 +1503,15 @@
    "hint": "-",
    "owner_area": "crm-groups",
    "since": "2026-10-22"
+  },
+  {
+   "code": "OPTED_OUT",
+   "status": "403",
+   "title": "They opted out",
+   "shopkeeper": "They asked not to be messaged on that channel.",
+   "hint": "Do not message them there.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "ORIGIN_NOT_ALLOWED",
@@ -1244,6 +1622,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "POLICY_NOT_VALID",
+   "status": "400",
+   "title": "Policy not known",
+   "shopkeeper": "The policy must be opt_in or opt_out.",
+   "hint": "Pick one of the two.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "POPULATION_BOUNDARY",
    "status": "409",
    "title": "Test and live cannot mix",
@@ -1251,6 +1638,33 @@
    "hint": "Use a test counterparty.",
    "owner_area": "rail",
    "since": "2026-10-22"
+  },
+  {
+   "code": "PRIVACY_NOT_MIGRATED",
+   "status": "503",
+   "title": "Privacy update pending",
+   "shopkeeper": "Privacy requests are not ready yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_INVALID",
+   "status": "400",
+   "title": "Product not valid",
+   "shopkeeper": "The product made from this combo is not valid.",
+   "hint": "Read the sentence shown and fix the combo.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PURPOSE_FIXED",
+   "status": "400",
+   "title": "Purpose fixed",
+   "shopkeeper": "The purpose of this send cannot be changed.",
+   "hint": "Send it for the purpose shown.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "QTY_OK",
@@ -1268,6 +1682,15 @@
    "shopkeeper": "Your access is view-only.",
    "hint": "Ask the owner for edit access.",
    "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REFUSED",
+   "status": "varies",
+   "title": "Refused",
+   "shopkeeper": "That cannot be done as it stands.",
+   "hint": "Read the sentence shown.",
+   "owner_area": "crm",
    "since": "2026-10-23"
   },
   {
@@ -1343,6 +1766,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SAID_NO",
+   "status": "403",
+   "title": "They said no",
+   "shopkeeper": "They said no to offers on that channel.",
+   "hint": "Do not send offers there.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "SENDING",
    "status": "varies",
    "title": "Sending",
@@ -1368,6 +1800,15 @@
    "hint": "-",
    "owner_area": "identity-auth",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SESSION_ONLY",
+   "status": "403",
+   "title": "Sign in as a person",
+   "shopkeeper": "Network offers are managed by a signed-in person.",
+   "hint": "Sign in as a person, not with a key.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
   },
   {
    "code": "SESSION_UPGRADE",
@@ -1399,9 +1840,9 @@
   {
    "code": "SIGN_IN",
    "status": "403",
-   "title": "Sign in",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Sign in as a person",
+   "shopkeeper": "Sign in as a person to use this: a counter key cannot.",
+   "hint": "Sign in and try again.",
    "owner_area": "crm",
    "since": "2026-10-22"
   },
@@ -1550,6 +1991,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "TOO_LONG",
+   "status": "400",
+   "title": "Message too long",
+   "shopkeeper": "The message is too long.",
+   "hint": "Shorten the message.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TOO_MANY",
+   "status": "400",
+   "title": "Too many rows",
+   "shopkeeper": "There are too many rows in one go.",
+   "hint": "Send up to 500 rows at a time.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TOO_MANY_GROUPS",
+   "status": "400",
+   "title": "Too many groups",
+   "shopkeeper": "A customer can be in only a few groups.",
+   "hint": "Take them out of one first.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "USER_ID_ENTITY_ONLY",
    "status": "403",
    "title": "User id entity only",
@@ -1586,6 +2054,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "VALIDATION_FAILED",
+   "status": "400",
+   "title": "Fields not valid",
+   "shopkeeper": "Some of what was sent is missing or not valid.",
+   "hint": "Fix the fields listed and send again.",
+   "owner_area": "validate",
+   "since": "2026-10-23"
+  },
+  {
    "code": "VAULT_ENC_UNCONFIGURED",
    "status": "503",
    "title": "Vault enc unconfigured",
@@ -1605,10 +2082,10 @@
   },
   {
    "code": "VIEW_ONLY",
-   "status": "varies",
+   "status": "403",
    "title": "View only",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Your login can only view.",
+   "hint": "Ask the owner for edit access.",
    "owner_area": "crm-groups",
    "since": "2026-10-22"
   },
@@ -1620,6 +2097,15 @@
    "hint": "-",
    "owner_area": "entities",
    "since": "2026-10-22"
+  },
+  {
+   "code": "WITHDRAWN",
+   "status": "403",
+   "title": "They withdrew consent",
+   "shopkeeper": "They withdrew their consent to offers on that channel.",
+   "hint": "Do not send offers there.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "WORKBOOK_CUT",

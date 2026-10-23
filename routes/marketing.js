@@ -15,21 +15,30 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { SAID, faultOf, marketingContract: contract } = require('../lib/crm-contract'); // the contract (the route's operation) and the read's fault
 const results = require('../lib/marketing-results');
 
 /** a condition becomes a verdict with a code a screen maps to its own line — the message is never shown as-is (design rule 1) */
 function noKey(req, res, next) {
-  if (req.api_key) return res.status(403).json({ code: 'SIGN_IN', error: 'Sign in to use Marketing.', message: 'Sign in to use Marketing.' });
+  if (req.api_key)
+    return problem(req, res, {
+      status: 403,
+      code: 'SIGN_IN',
+      detail: SAID.signInMarketing,
+      legacy: { error: SAID.signInMarketing, message: SAID.signInMarketing }
+    });
   next();
 }
 
-router.get('/came-back', auth, noKey, async (req, res) => {
+router.get('/came-back', auth, noKey, schemaValidate(contract.operationFor('GET /came-back')), async (req, res) => {
   try {
     res.json(await results.cameBack(auth.entityOf(req), { query: req.query }));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req)); /* the status the error names (500 when none), the old { error, message } body */
   }
 });
 
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

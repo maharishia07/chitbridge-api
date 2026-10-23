@@ -5,6 +5,32 @@
   404,
   500
  ],
+ "DELETE /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/crm/followups/:id": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "DELETE /api/crm/groups/:name": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "DELETE /api/crm/parties/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "DELETE /api/keys/:jti": [
   401,
   403,
@@ -192,6 +218,59 @@
   404,
   500
  ],
+ "GET /api/combo-templates": [
+  401,
+  500
+ ],
+ "GET /api/crm/calls": [
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/followups": [
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/parties": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/crm/parties/:id": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/crm/parties/:id/contact-prefs": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/crm/parties/:id/timeline": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/crm/privacy-requests": [
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/crm/segments": [
+  401,
+  403,
+  500
+ ],
  "GET /api/integrations/catalogue": [
   401,
   500
@@ -246,6 +325,23 @@
   403,
   500
  ],
+ "GET /api/marketing/came-back": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/network-offers": [
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/offers/kinds": [
+  500
+ ],
+ "GET /api/offers/openapi.json": [
+  500
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -273,6 +369,19 @@
   403,
   404,
   500
+ ],
+ "PATCH /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/crm/followups/:id": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
  ],
  "POST /api/books/accounts": [
   401,
@@ -573,6 +682,98 @@
   422,
   500
  ],
+ "POST /api/combo-templates": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/combo-templates/:id/push": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/crm/followups": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/crm/groups": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/crm/leads": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/crm/leads/import": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/crm/parties/:id/contact-prefs": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/crm/parties/:id/interactions": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/parties/:id/outcome": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/crm/parties/:id/stage": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/crm/privacy-requests": [
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/crm/privacy-requests/:id/answer": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/crm/segments/:key/send": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/crm/walk-ins/add": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/integrations/:actor_id/approve": [
   400,
   401,
@@ -622,6 +823,57 @@
   403,
   500
  ],
+ "POST /api/network-offers/:id/choice": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/network-offers/:id/release": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/network-offers/:id/withdraw": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/network-offers/catalogue/cancel": [
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/network-offers/catalogue/price": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/network-offers/catalogue/publish": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/offers/evaluate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/offers/explain": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/tax/compute": [
   400,
   401,
@@ -640,6 +892,12 @@
   401,
   403,
   422,
+  500
+ ],
+ "PUT /api/network-offers/policy": [
+  400,
+  401,
+  403,
   500
  ]
 }
