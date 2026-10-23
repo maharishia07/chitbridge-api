@@ -39504,6 +39504,326 @@
      }
     }
    ]
+  },
+  "GET /api/simulator/content": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "content-one-table-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "content-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "content-answer-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/simulator/feedback": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-lead-unknown-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-lead-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-lead-36-hex-digits",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-lead-in-a-list",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-message-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-message-zero",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-rating-decimal",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-rating-too-big-for-the-column",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-answer-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/simulator/lead": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-name-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-name-short-after-trim",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-email-without-an-at-sign",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "lead-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "lead-insert-returns-no-row",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "lead-answer-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

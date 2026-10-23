@@ -2594,6 +2594,22 @@
     400
    ]
   },
+  "POST /api/simulator/feedback": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/simulator/lead": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/tax/compute": {
    "cases": 2,
    "failed": 0,
