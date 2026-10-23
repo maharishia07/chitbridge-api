@@ -24,8 +24,8 @@ of file each thing is; this says what already does the job.
 | 56 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 56 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 55 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 54 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
@@ -102,11 +102,11 @@ of file each thing is; this says what already does the job.
 | 21 | `owner` | `books.js` |  |
 | 21 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 20 | `form` | `accounts-shell.js` |  |
+| 20 | `shown` | `cap-settings.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 20 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 19 | `renderApp` | `app.html` |  |
-| 19 | `shown` | `cap-settings.js` |  |
 | 19 | `card` | `cap-shop.js` |  |
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `more` | `lab-kit.js` | idKey: |
@@ -129,6 +129,7 @@ of file each thing is; this says what already does the job.
 | 17 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 17 | `match` | `itemmatch.js` | actually state. |
 | 17 | `known` | `knownerr.js` | known(err) → { status, body } · null |
+| 17 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 17 | `fail` | `books.js` |  |
 | 16 | `message` | `cap-print.js` | the one message: |
@@ -137,7 +138,6 @@ of file each thing is; this says what already does the job.
 | 16 | `panel` | `sides.js` |  |
 | 16 | `plan` | `crm-leads.js` | `existing`: |
 | 16 | `group` | `identity.js` | again in a different costume. |
-| 16 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
@@ -176,13 +176,13 @@ of file each thing is; this says what already does the job.
 | 13 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 13 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 13 | `report` | `raida.js` | register at the one moment it must not. |
+| 13 | `register` | `regulation.js` | register(pack) → the pack — |
 | 12 | `units` | `cart.js` |  |
 | 12 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 12 | `stored` | `one-person.js` |  |
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `update` | `folder-rules.js` |  |
 | 12 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
-| 12 | `register` | `regulation.js` | register(pack) → the pack — |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
 | 11 | `close` | `avatar.js` |  |
 | 11 | `link` | `chit-sheet.js` |  |

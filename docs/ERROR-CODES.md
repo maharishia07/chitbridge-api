@@ -31,6 +31,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHOOSE_IDENTITY | 409 | Choose identity | PENDING | - | signin | 2026-10-22 |
 | CLAIM_RECORDED | 409 | Claim recorded | PENDING | - | reward-store | 2026-10-22 |
 | CONFIRM_REMOVE | 400 | Confirm remove | PENDING | - | actors | 2026-10-22 |
+| CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
 | CONTAINER_STORE_MISSING | 403/503 | Container store missing | PENDING | - | assist | 2026-10-22 |
 | COST_BLIND | varies | Cost blind | PENDING | - | cost | 2026-10-22 |
@@ -84,10 +85,12 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | IDOC_NO_CODE | 400 | Idoc no code | PENDING | - | iddoc-verify | 2026-10-22 |
 | IDOC_VALUE_UNAVAILABLE | varies | Idoc value unavailable | PENDING | - | iddoc-verify | 2026-10-22 |
 | INR | varies | Inr | PENDING | - | locale.browser | 2026-10-22 |
+| INTEGRATION_BAD_REQUEST | 400 | Request not usable | Something this needs is missing or not valid. | Check the order or the fields named, then send it again. | integrations | 2026-10-23 |
 | INTERNAL | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | api | 2026-10-22 |
 | INVALID_INPUT | 422 | Input not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send it again. | validate | 2026-10-22 |
 | INVALID_KEY_REQUEST | 400 | Key request not valid | That key cannot be made as asked. | Pick a listed kind, and revoke a key if you have twenty. | keys | 2026-10-22 |
 | IN_USE | 409 | In use | PENDING | - | schemas | 2026-10-22 |
+| KEY_CANNOT_DECIDE | 403 | A key cannot decide this | A connector cannot decide this on its own. Sign in as a person. | Sign in to the shop and do it there. | integrations | 2026-10-23 |
 | KEY_CANNOT_MANAGE_KEYS | 403 | A key cannot manage keys | A key cannot make or remove keys. Sign in as a person. | Sign in to the shop and do it there. | keys | 2026-10-22 |
 | KEY_CANNOT_SIGN_IN | 403 | Key cannot sign in | PENDING | - | signin | 2026-10-22 |
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
@@ -105,15 +108,15 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NETWORK_ORDERS_OFF | 403 | Network orders off | PENDING | - | catalogue | 2026-10-22 |
 | NOTIF_DISMISS_NOT_MIGRATED | 503 | Notif dismiss not migrated | PENDING | - | notifications | 2026-10-22 |
 | NOT_BOARD_WRITER | 403 | Not board writer | PENDING | - | testing | 2026-10-22 |
-| NOT_FOR_COUNTRY | varies | Not for country | PENDING | - | integrations | 2026-10-22 |
+| NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
 | NOT_FOUND | 404 | Not found | We could not find that. | Check the address or the name and try again. | api | 2026-10-22 |
 | NOT_PAIRED | varies | Not paired | PENDING | - | verdict | 2026-10-22 |
 | NOT_PLATFORM | 403 | Platform only | That kind of key is made by the platform, not by a shop. | Pick one of the kinds listed. | keys | 2026-10-22 |
 | NOT_PLATFORM_ROOT | 403 | Not platform root | PENDING | - | platformroot | 2026-10-22 |
 | NOT_THIS_NETWORK | 403 | Not this network | PENDING | - | catalogue | 2026-10-22 |
 | NOT_WRITTEN | varies | Not written | PENDING | - | signin-events | 2026-10-22 |
-| NOT_YET | varies | Not yet | PENDING | - | integrations | 2026-10-22 |
-| NOT_YET_FOR_COUNTRY | varies | Not yet for country | PENDING | - | integrations | 2026-10-22 |
+| NOT_YET | 409 | Not built yet | This connector is not built yet. | Use the File connector (CSV) or the Counter, and ask for it under Help. | integrations | 2026-10-22 |
+| NOT_YET_FOR_COUNTRY | 409 | Not yet for your country | This connector is not ready for your country yet. | Use the File connector (CSV) or the Counter. | integrations | 2026-10-22 |
 | NO_ACCOUNT | varies | No account | PENDING | - | signin | 2026-10-22 |
 | SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
 | NO_BUYERS | varies | No buyers | PENDING | - | marketing-results | 2026-10-22 |
@@ -127,6 +130,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_PLATFORM_ROOT | 404 | No platform root | PENDING | - | platformroot | 2026-10-22 |
 | NO_SENDS | varies | No sends | PENDING | - | marketing-results | 2026-10-22 |
 | NO_SHOP_COPY | varies | No shop copy | PENDING | - | verdict | 2026-10-22 |
+| NO_STREAM_NAMED | 400 | No stream named | Pick at least one stream to hand over. | Choose who carries products, stock or orders, then save. | integrations | 2026-10-23 |
 | NO_SUCH_NETWORK | 400/404 | No such network | PENDING | - | catalogue | 2026-10-22 |
 | NO_TEMPLATE | varies | No template | PENDING | - | marketing-results | 2026-10-22 |
 | NO_TOKEN | varies | No token | PENDING | - | marketing-results | 2026-10-22 |

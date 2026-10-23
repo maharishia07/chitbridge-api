@@ -212,9 +212,9 @@ function checkUnits() {
   await checkServerHandlers(recording);
   if (argv.includes('--capture')) fs.writeFileSync(argv[argv.indexOf('--capture') + 1], JSON.stringify(recording, null, 1));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort()]));
-  /* this file owns the rows of the routes it runs; tests/api-problem-ctp.test.cjs owns routes/ctp.js's rows of the same manifest */
+  /* this file owns the routes/keys.js rows; tests/api-problem-integrations.test.cjs owns the /api/integrations rows and tests/api-problem-ctp.test.cjs owns routes/ctp.js's rows of the same manifest */
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
-  const OTHERS = (route) => / (\/api\/ctp)?\/(deliver|query|\.well-known\/ctp\.json)$/.test(route);
+  const OTHERS = (route) => / \/api\/integrations\//.test(route) || / (\/api\/ctp)?\/(deliver|query|\.well-known\/ctp\.json)$/.test(route);
   const mine = Object.fromEntries(Object.keys(onDisk).filter((route) => !OTHERS(route)).map((route) => [route, onDisk[route]]));
   const merged = Object.assign(Object.fromEntries(Object.keys(onDisk).filter(OTHERS).map((route) => [route, onDisk[route]])), coverage);
   if (argv.includes('--write')) fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
