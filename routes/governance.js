@@ -70,14 +70,19 @@ async function countChitsToday(entityId) {
 }
 
 // ── GET /api/governance/entities/:id — read-only view, no PII ──
+/* the one answer for an id this caller may not read and for an id that is not there: the door never says another shop exists */
+const NOT_GOVERNED = { error: 'entity not found or not governed' };
 router.get('/entities/:id', auth, async (req, res) => {
+  /* ⚠️ SEC (23 Oct, found by the generated foreign_id_404 case): a shop's plan, overrides and exceptions are ITS data. A shop reads
+     its own; the platform reads any; another shop's id gets the unknown id's 404. Before, any signed-in shop could read any shop's. */
+  if (String(req.params.id) !== String(auth.entityOf(req)) && !platformroot.isPlatform(req)) return res.status(404).json(NOT_GOVERNED);
   try {
     const { rows } = await query(
       `SELECT constitution_version, params_override, plan
          FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`,
       [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'entity not found or not governed' });
+    if (!rows.length) return res.status(404).json(NOT_GOVERNED);
     const ent = rows[0];
 
     const active = await loadActiveConstitution();
