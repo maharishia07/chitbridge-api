@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: node --check every JS file (excl. node_modules)
         run: |
           set -e
@@ -79,7 +79,7 @@ jobs:
           fetch-depth: 0     # adopt --check verifies against the TAGS the lock pins
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: install (api)
         working-directory: chitbridge-api
         run: npm ci
@@ -118,7 +118,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Twin web branch?
         id: twin
         env:
@@ -149,7 +149,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - run: npm ci
       - name: register equals the code (docs/API-REGISTER.md, api-register.json, ERROR-CODES.md)
         run: node tools/api-register.cjs --check
@@ -183,7 +183,7 @@ jobs:
           path: .side/chitbridge-web
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: The PR body carries the §6 checklist with numbers (bots' dependency PRs and docs-only PRs skip)
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
@@ -223,7 +223,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - run: npm ci
       - name: Bootstrap schema + migrations (MANIFEST order — confirm on first run)
         run: |
@@ -285,7 +285,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - run: npm ci
       - name: ops role that production has by hand (b151 header)
         run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE cb_metrics NOLOGIN"
@@ -315,7 +315,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: npm audit (production dependencies, high and above)
         run: npm audit --omit=dev --audit-level=high
       - name: gitleaks (whole working tree, no history)
