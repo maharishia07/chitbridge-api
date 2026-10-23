@@ -65,6 +65,8 @@ function extras(tools) {
     X('me-found', 'GET ' + at('/me'), 200, { setup: { sqlRows: meRow } }),
     X('me-with-includes', 'GET ' + at('/me'), 200, { url: at('/me?include=nothing,readiness'), setup: { sqlRows: meRow } }),
     X('me-of-staff', 'GET ' + at('/me'), 200, { setup: { who: STAFF, sqlRows: meRow } }),
+    /* SEC-94: the capability read fails with a sentence that names the database: the 200 must not carry it */
+    X('me-capabilities-fail-leaks-nothing', 'GET ' + at('/me'), 200, { setup: { who: STAFF, sqlRows: (sql) => { if (/SELECT capabilities FROM identities/.test(sql)) throw new Error(SECRET_SQL); return meRow(sql); } } }),
     X('me-unknown', 'GET ' + at('/me'), 404, {}),
     X('me-db-fails', 'GET ' + at('/me'), 500, { setup: failing }),
     X('can-see-costs-owner', 'GET ' + at('/me/can-see-costs'), 200, {}),
@@ -165,8 +167,9 @@ function extras(tools) {
     X('desk-set', 'PUT ' + at('/populations/:code/desk'), 200, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: answering(/UPDATE ops\.population SET desk_entity_id/, [{}]) } }),
     X('desk-cleared', 'PUT ' + at('/populations/:code/desk'), 200, { url: at('/populations/live/desk'), body: { desk_entity_id: '' }, setup: { sqlRows: answering(/UPDATE ops\.population SET desk_entity_id/, [{}]) } }),
     X('desk-column-missing', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: raising(/UPDATE ops\.population/, '42703') } }),
-    X('desk-not-for-this-population', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'that business is not in this population', 'Pick one of its own.') } }),
-    X('desk-not-for-this-population-no-hint', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: raising(/UPDATE ops\.population/, '23514') } }),
+    X('desk-not-for-this-population', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'the live desk must itself be in the live population (it is in test)', 'Pick one of its own.') } }),
+    X('desk-not-for-this-population-no-hint', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: when(/UPDATE ops\.population/, sqlState('23514', 'the live desk must be a business, not a person')) } }),
+    X('desk-plain-check-violation', 'PUT ' + at('/populations/:code/desk'), 500, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: when(/UPDATE ops\.population/, sqlState('23514', SECRET_SQL)) } }),
     X('desk-db-fails', 'PUT ' + at('/populations/:code/desk'), 500, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: failing }),
     N('desk-body-a-list', 'PUT ' + at('/populations/:code/desk'), 400, { url: at('/populations/live/desk'), body: [] }),
     X('population-not-root', 'POST ' + at('/populations'), 403, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { who: STRANGER } }),
@@ -183,6 +186,7 @@ function extras(tools) {
     X('mis-not-root', 'GET ' + at('/mis'), 403, { setup: { who: STRANGER } }),
     X('mis-read', 'GET ' + at('/mis'), 200, { setup: { sqlRows: () => ({ rows: [{ n: 1 }], rowCount: 1 }) } }),
     X('mis-counts-unavailable', 'GET ' + at('/mis'), 200, { setup: { sqlRows: (sql) => { if (/f_entity_counts/.test(sql)) throw Object.assign(new Error('permission denied for schema ops'), { code: '42501' }); return /current_user/.test(sql) ? { rows: [{ u: 'cb_app', su: 'off' }], rowCount: 1 } : { rows: [{ n: 1, identity_id: OTHER }], rowCount: 1 }; } } }),
+    X('mis-counts-fail-leaks-nothing', 'GET ' + at('/mis'), 200, { setup: { sqlRows: (sql) => { if (/f_entity_counts/.test(sql)) throw Object.assign(new Error(SECRET_SQL), { code: '42501' }); return /current_user/.test(sql) ? { rows: [{ u: 'secret_role', su: 'off' }], rowCount: 1 } : { rows: [{ n: 1, identity_id: OTHER }], rowCount: 1 }; } } }),
     X('mis-db-fails', 'GET ' + at('/mis'), 500, { setup: failing }),
     X('mis-fails', 'GET ' + at('/mis'), 500, { patch: { platform: { configured: () => { throw new Error(SECRET_SQL); } } } })
   ];
@@ -199,8 +203,9 @@ function extras(tools) {
     X('routing-no-kind', 'PUT ' + at('/routing'), 400, { body: {} }),
     X('routing-saved', 'PUT ' + at('/routing'), 200, { body: { kind: 'incident', folder_id: '', assignee_actor_id: HANDLER, route_to_entity_id: null } }),
     X('routing-table-not-there', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident' }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '42P01') } }),
-    X('routing-team-outside-network', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'that team is outside your network', 'Pick a team of your own network.') } }),
-    X('routing-team-outside-network-no-hint', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '23514') } }),
+    X('routing-team-outside-network', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'work can only be routed inside your own network', 'Pick a team of your own network.') } }),
+    X('routing-plain-check-violation', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: when(/INSERT INTO entity_work_routing/, sqlState('23514', SECRET_SQL)) } }),
+    X('routing-team-outside-network-no-hint', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: when(/INSERT INTO entity_work_routing/, sqlState('23514', 'work can only be routed inside your own network')) } }),
     X('routing-folder-gone', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', folder_id: OTHER }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '23503') } }),
     X('routing-save-fails', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident' }, setup: failing }),
     N('routing-body-a-list', 'PUT ' + at('/routing'), 400, { body: [] })
