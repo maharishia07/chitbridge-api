@@ -209,9 +209,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/integrations/streams | integrations | routes/integrations.js:745 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/invoice/:chit_id | invoice | routes/invoice.js:120 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/keys | keys | routes/keys.js:149 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/kyb/position | kyb | routes/kyb.js:33 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/kyb/risk | kyb | routes/kyb.js:41 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/kyb/yourself | kyb | routes/kyb.js:17 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| GET | /api/kyb/position | kyb | routes/kyb.js:33 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/kyb/risk | kyb | routes/kyb.js:41 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/kyb/yourself | kyb | routes/kyb.js:17 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/marketing/came-back | marketing | routes/marketing.js:27 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/network-design | network-design | routes/network-design.js:41 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/network-design/availability | network-design | routes/network-design.js:435 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -496,8 +496,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/integrations/profile | integrations | routes/integrations.js:994 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/invoice/build | invoice | routes/invoice.js:31 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/keys | keys | routes/keys.js:707 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/kyb/credential | kyb | routes/kyb.js:25 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/kyb/field | kyb | routes/kyb.js:49 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/kyb/credential | kyb | routes/kyb.js:25 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/kyb/field | kyb | routes/kyb.js:49 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/network-design/build | network-design | routes/network-design.js:180 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/network-design/reissue | network-design | routes/network-design.js:278 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/network-design/validate | network-design | routes/network-design.js:142 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |

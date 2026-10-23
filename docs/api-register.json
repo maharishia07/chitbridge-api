@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 617
+    "failing": 622
    },
    "foreign_id_404": {
     "applies": 227,
@@ -9691,7 +9691,7 @@
    "owner_area": "kyb",
    "file": "routes/kyb.js",
    "line": 33,
-   "hash": "c2acfb353faf9019",
+   "hash": "a40e95fbf3571368",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9701,7 +9701,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9740,7 +9740,7 @@
    "owner_area": "kyb",
    "file": "routes/kyb.js",
    "line": 41,
-   "hash": "bf6e7dcaf0323179",
+   "hash": "d7ad04265c3b1442",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9750,7 +9750,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9788,7 +9788,7 @@
    "owner_area": "kyb",
    "file": "routes/kyb.js",
    "line": 17,
-   "hash": "890112a5f02a58af",
+   "hash": "d0cdcbc97fa0e850",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9798,7 +9798,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -23550,7 +23550,7 @@
    "owner_area": "kyb",
    "file": "routes/kyb.js",
    "line": 25,
-   "hash": "976dde317ef747f8",
+   "hash": "7d78bdc43bafb7b7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -23560,7 +23560,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -23600,7 +23600,7 @@
    "owner_area": "kyb",
    "file": "routes/kyb.js",
    "line": 49,
-   "hash": "e2e0cc9c25f0db2e",
+   "hash": "536ceb72970a460d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -23610,7 +23610,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
