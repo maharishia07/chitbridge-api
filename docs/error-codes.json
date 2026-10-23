@@ -11,6 +11,15 @@
  ],
  "codes": [
   {
+   "code": "ACTOR_KEY_TAKEN",
+   "status": "400/409",
+   "title": "Login key taken",
+   "shopkeeper": "That login key is already taken, even by someone who was removed.",
+   "hint": "Pick a different key.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ADVICE_EXISTS",
    "status": "409",
    "title": "Advice already recorded",
@@ -63,6 +72,15 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "ALREADY_ASSIGNED",
+   "status": "400",
+   "title": "Already assigned",
+   "shopkeeper": "Someone already holds this task.",
+   "hint": "Ask them to hand it back first.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
   },
   {
    "code": "ALREADY_CLAIMED",
@@ -524,6 +542,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHIT_AND_ACTION_REQUIRED",
+   "status": "400",
+   "title": "Task and action needed",
+   "shopkeeper": "Say which task and what to do with it.",
+   "hint": "Send the task and the action.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CHIT_BAD_REQUEST",
    "status": "400",
    "title": "Chit request not accepted",
@@ -698,8 +725,8 @@
    "code": "CONFIRM_REMOVE",
    "status": "400",
    "title": "Confirm remove",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Removing a person cannot be undone, so it needs your confirmation.",
+   "hint": "Confirm the removal to go on.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -849,10 +876,10 @@
   },
   {
    "code": "COVER_CONFLICT",
-   "status": "varies",
+   "status": "400",
    "title": "Cover conflict",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Going off would leave someone without cover.",
+   "hint": "Wait until the other person is back, or change who covers.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -1236,28 +1263,28 @@
   },
   {
    "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
-   "status": "varies",
+   "status": "503",
    "title": "Email delivery not configured",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This shop cannot e-mail a first code yet, so nothing was changed.",
+   "hint": "Set up e-mail sending first.",
    "owner_area": "employee-code",
    "since": "2026-10-22"
   },
   {
    "code": "EMAIL_TAKEN",
-   "status": "varies",
+   "status": "409",
    "title": "Email taken",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That e-mail already signs in to another account.",
+   "hint": "Use the person's own e-mail, or leave it empty.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
   {
    "code": "EMPLOYEE_EMAIL_REQUIRED",
-   "status": "varies",
+   "status": "400",
    "title": "Employee email required",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This person needs an e-mail address for the first code.",
+   "hint": "Add their e-mail, then try again.",
    "owner_area": "employee-code",
    "since": "2026-10-22"
   },
@@ -1586,6 +1613,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "INVALID_ACTION",
+   "status": "400",
+   "title": "Action not understood",
+   "shopkeeper": "That is not something this can do.",
+   "hint": "Send pool, or push with a colleague.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "INVALID_ASSIGNEE",
+   "status": "400",
+   "title": "Default person not allowed",
+   "shopkeeper": "The default person must be able to take tasks.",
+   "hint": "Pick a person with Act or Manager access.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "INVALID_DELEGATE",
+   "status": "400",
+   "title": "Cover not allowed",
+   "shopkeeper": "That person cannot cover.",
+   "hint": "Pick someone else who can take tasks.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
    "code": "INVALID_INPUT",
    "status": "422",
    "title": "Input not valid",
@@ -1767,10 +1821,10 @@
   },
   {
    "code": "MAX_TASKS_OVER_ENTITY",
-   "status": "varies",
+   "status": "400",
    "title": "Max tasks over entity",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That is more tasks than the shop allows one person.",
+   "hint": "Raise the limit in Settings first, or give fewer.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -1850,8 +1904,8 @@
    "code": "NAME_THE_PERSON",
    "status": "400",
    "title": "Name the person",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Say who is away.",
+   "hint": "Pick the person.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -1934,6 +1988,15 @@
    "shopkeeper": "Say who to add or remove.",
    "hint": "Pick at least one customer.",
    "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NOTHING_TO_UPDATE",
+   "status": "400",
+   "title": "Nothing to update",
+   "shopkeeper": "Nothing was sent to change.",
+   "hint": "Fill in at least one field.",
+   "owner_area": "actors",
    "since": "2026-10-23"
   },
   {
@@ -2178,6 +2241,15 @@
    "hint": "-",
    "owner_area": "crm-groups",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_PIN_SET",
+   "status": "400",
+   "title": "No PIN set",
+   "shopkeeper": "No PIN is set yet.",
+   "hint": "Set your PIN when you sign in.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
   },
   {
    "code": "NO_PLATFORM_ROOT",
@@ -2475,6 +2547,24 @@
    "hint": "-",
    "owner_area": "country",
    "since": "2026-10-22"
+  },
+  {
+   "code": "PIN_ACTORS_ONLY",
+   "status": "400",
+   "title": "Only a person can change a PIN",
+   "shopkeeper": "Only a person with their own login can change a PIN.",
+   "hint": "Sign in as that person.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PIN_INCORRECT",
+   "status": "400",
+   "title": "Current PIN is wrong",
+   "shopkeeper": "The current PIN is not right.",
+   "hint": "Try again with your current PIN.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
   },
   {
    "code": "PLATFORM_BOUND",
@@ -2957,17 +3047,35 @@
    "code": "SWITCHED_OFF",
    "status": "400/404",
    "title": "Switched off",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This person is switched off.",
+   "hint": "Switch them on first.",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "TARGET_ACTOR_NOT_ACTIVE",
+   "status": "400",
+   "title": "Colleague cannot take tasks",
+   "shopkeeper": "That colleague cannot take tasks right now.",
+   "hint": "Pick someone who is active.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TARGET_ACTOR_REQUIRED",
+   "status": "400",
+   "title": "Colleague needed",
+   "shopkeeper": "Say which colleague gets the tasks.",
+   "hint": "Pick a colleague.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
   },
   {
    "code": "TASKS_TO_ROUTE",
    "status": "400",
    "title": "Tasks to route",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This person still has open tasks.",
+   "hint": "Send them to the pool or to a colleague first.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },

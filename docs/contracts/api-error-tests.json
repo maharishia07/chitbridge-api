@@ -1,4 +1,12 @@
 {
+ "DELETE /api/actors/:id/pin": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
  "DELETE /api/books/recurring/:id": [
   401,
   403,
@@ -91,6 +99,24 @@
  ],
  "GET /.well-known/ctp.json": [
   200,
+  500
+ ],
+ "GET /api/actors": [
+  401,
+  500
+ ],
+ "GET /api/actors/:id/tasks": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/actors/access-events": [
+  401,
+  500
+ ],
+ "GET /api/actors/settings": [
+  401,
   500
  ],
  "GET /api/assist/catalogue-mine": [
@@ -1091,6 +1117,14 @@
   403,
   500
  ],
+ "PATCH /api/actors/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -1187,6 +1221,32 @@
   400,
   401,
   404,
+  500
+ ],
+ "POST /api/actors": [
+  400,
+  401,
+  403,
+  409,
+  500,
+  503
+ ],
+ "POST /api/actors/:id/otp": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/actors/check-key": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/actors/suggest-key": [
+  400,
+  401,
   500
  ],
  "POST /api/assist": [
@@ -2532,6 +2592,53 @@
   400,
   403,
   409,
+  500
+ ],
+ "PUT /api/actors/:id/delegate": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/actors/:id/status": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "PUT /api/actors/:id/tasks/route": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/actors/assign/:chit_id": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/actors/break": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/actors/change-pin": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/actors/settings": [
+  400,
+  401,
+  403,
   500
  ],
  "PUT /api/assist/catalogue-source": [

@@ -13,7 +13,7 @@
  * CARD      28-platform-and-operations/assist
  *
  *   node tests/api-problem-assist.test.cjs                    check
- *   node tests/api-problem-assist.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-assist.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-assist.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-assist.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-assist.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -47,7 +47,7 @@ const lab = harness({
 const { check, world } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const STRANGER = { identity_id: scenes.STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' };
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
@@ -206,7 +206,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/assist.js', sameValue(mine, judged), { onDisk: Object.keys(mine).length, covered: Object.keys(judged).length });
-    check('docs/contracts/api-hardening-evidence.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);

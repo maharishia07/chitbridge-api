@@ -69,7 +69,7 @@ const urlSchemaOf = (operation) => {
 const fieldOf = (failure) => {
   const where = failure.instancePath.split('/').filter(Boolean);
   if (failure.keyword === 'required') where.push(failure.params.missingProperty);
-  if (failure.keyword === 'additionalProperties') where.push(failure.params.additionalProperty);
+  if (failure.keyword === 'additionalProperties') where.push(failure.params.additionalProperty); /* S33: the unknown key is named, not the body */
   return where.join('.') || '(body)';
 };
 

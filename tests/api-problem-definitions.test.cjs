@@ -6,7 +6,7 @@
  * OWNS      the proof that each refusal of these 6 routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), that no answer of any status carries the text of a thrown error (a db
  *           that THROWS a string with SQL in it, and a library that does), this file's rows of docs/contracts/api-error-tests.json, and the "signed in as another shop" world
- *           (API-STANDARD S35, tests/lib/foreign-id-world.cjs) for the three routes addressed by an id, recorded in docs/contracts/api-hardening-evidence.json.
+ *           (API-STANDARD S35, tests/lib/foreign-id-world.cjs) for the three routes addressed by an id, recorded in docs/contracts/api-hardening-evidence-areas.json.
  *           Also: no answer outside the statuses the contract declares (lib/definitions-contract.js), its words as units, and the old express-validator chains run beside the
  *           schemas that replaced them.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs).
@@ -15,7 +15,7 @@
  * CARD      07-catalogue-and-pricing/definitions
  *
  *   node tests/api-problem-definitions.test.cjs                    check
- *   node tests/api-problem-definitions.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-definitions.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-definitions.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-definitions.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-definitions.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -34,7 +34,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/definitions';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const TOOLS = { answering, raising, firstOf, SECRET_SQL };
 const ROUTE_COUNT = 6;
@@ -195,7 +195,7 @@ function settleRecords(tested, proved) {
     return;
   }
   check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/definitions.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-  check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+  check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));

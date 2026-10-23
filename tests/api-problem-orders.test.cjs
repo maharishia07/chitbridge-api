@@ -6,7 +6,7 @@
  *           (docs/contracts/api-legacy.json, recorded from the code before the sweep), this file's rows of docs/contracts/api-error-tests.json (the statuses each
  *           route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world: a record addressed by an id in the path
  *           answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in
- *           docs/contracts/api-hardening-evidence.json. Also: no answer outside the statuses the route's contract declares (lib/orders-contract.js), and its words as units.
+ *           docs/contracts/api-hardening-evidence-areas.json. Also: no answer outside the statuses the route's contract declares (lib/orders-contract.js), and its words as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route files over a stand-in db, auth, repeat store (tests/support/repeat-supply-memory.cjs)
  *           and Tasks & Orders rows (tests/support/work-stub.cjs).
  * FLOW      route list (read from the router itself) x world (signed out, a key, staff, a viewer, a bad id, a failing db, an empty db) + the named extras
@@ -15,7 +15,7 @@
  * CARD      02-tasks-orders-and-workflow/everyones-work
  *
  *   node tests/api-problem-orders.test.cjs                    check
- *   node tests/api-problem-orders.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-orders.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-orders.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-orders.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  */
@@ -31,7 +31,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const MOUNTS = ['/api/repeat', '/api/work', '/api/counters'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/repeat': 'routes/repeat-supply.js', '/api/work': 'routes/work.js', '/api/counters': 'routes/counters.js' };
@@ -568,7 +568,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/repeat-supply.js · routes/work.js · routes/counters.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
   }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
