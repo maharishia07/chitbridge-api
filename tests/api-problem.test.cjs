@@ -212,11 +212,11 @@ function checkUnits() {
   await checkServerHandlers(recording);
   if (argv.includes('--capture')) fs.writeFileSync(argv[argv.indexOf('--capture') + 1], JSON.stringify(recording, null, 1));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort()]));
-  /* this file owns the rows of the routes it runs; tests/api-problem-storefront.test.cjs owns the public storefront rows of the same manifest */
+  /* this file owns the /api/keys rows; tests/api-problem-integrations.test.cjs, tests/api-problem-ctp.test.cjs and each other area's own test file (api-problem-<area>.test.cjs) owns its rows of the same manifest */
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
-  const OTHERS = (route) => / \/api\/catalogue\//.test(route);
-  const mine = Object.fromEntries(Object.keys(onDisk).filter((route) => !OTHERS(route)).map((route) => [route, onDisk[route]]));
-  const merged = Object.assign(Object.fromEntries(Object.keys(onDisk).filter(OTHERS).map((route) => [route, onDisk[route]])), coverage);
+  const OURS = (route) => / \/api\/keys(\/|$)/.test(route);
+  const mine = Object.fromEntries(Object.keys(onDisk).filter(OURS).map((route) => [route, onDisk[route]]));
+  const merged = Object.assign(Object.fromEntries(Object.keys(onDisk).filter((route) => !OURS(route)).map((route) => [route, onDisk[route]])), coverage);
   if (argv.includes('--write')) fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
   else if (!argv.includes('--capture')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover', sameValue(mine, coverage), coverage);
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');

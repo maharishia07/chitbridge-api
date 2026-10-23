@@ -12,10 +12,10 @@
  "codes": [
   {
    "code": "ADVICE_EXISTS",
-   "status": "404/409",
-   "title": "Advice exists",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Advice already recorded",
+   "shopkeeper": "An advice is already recorded for this payment.",
+   "hint": "Open the payment to see it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -41,17 +41,26 @@
    "code": "ALREADY_PAID",
    "status": "409",
    "title": "Already paid",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This looks like a payment you already recorded.",
+   "hint": "Check the list, then confirm if it is really a new one.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "ALREADY_RECORDED",
+   "status": "409",
+   "title": "Already recorded",
+   "shopkeeper": "That is already recorded.",
+   "hint": "Refresh the list: it is already there.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "ALREADY_REVERSED",
    "status": "409",
    "title": "Already reversed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This entry was already reversed.",
+   "hint": "Open the reversal to see it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -92,6 +101,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "BAD_FLAG",
+   "status": "400",
+   "title": "Flag not true or false",
+   "shopkeeper": "priceIncludesTax must be true or false.",
+   "hint": "Send true or false.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
    "code": "BAD_PERIOD",
    "status": "400",
    "title": "Bad period",
@@ -108,6 +126,33 @@
    "hint": "-",
    "owner_area": "counters",
    "since": "2026-10-22"
+  },
+  {
+   "code": "BAD_PRICE",
+   "status": "400",
+   "title": "Price below zero",
+   "shopkeeper": "A line has a price below 0.",
+   "hint": "Send a price of 0 or more.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_QTY",
+   "status": "400",
+   "title": "Quantity not above zero",
+   "shopkeeper": "A line needs a quantity above 0.",
+   "hint": "Send a quantity above 0 on every line.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_RATE",
+   "status": "400",
+   "title": "Tax rate out of range",
+   "shopkeeper": "A line has a tax rate outside 0 to 100 percent.",
+   "hint": "Send a rate from 0 to 100.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
   },
   {
    "code": "BILL_NOT_RECORDED",
@@ -129,21 +174,48 @@
   },
   {
    "code": "BOOKS_BAD_REQUEST",
-   "status": "varies",
-   "title": "Books bad request",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "400",
+   "title": "Ledger needs an answer",
+   "shopkeeper": "The ledger needs one more answer before it can do that.",
+   "hint": "Read the question shown and answer it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
   {
+   "code": "BOOKS_CONFLICT",
+   "status": "409",
+   "title": "Ledger cannot take that",
+   "shopkeeper": "The ledger cannot take that as it stands.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BOOKS_ENGINE",
+   "status": "503",
+   "title": "Ledger calculations unavailable",
+   "shopkeeper": "The ledger calculations are not available yet.",
+   "hint": "Try again later. If it stays, tell us.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
    "code": "BOOKS_NOT_MIGRATED",
-   "status": "404/503",
-   "title": "Books not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "503",
+   "title": "Ledger update pending",
+   "shopkeeper": "This cannot be saved yet: a database update is still to arrive.",
+   "hint": "Try again after the next update.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "BOOKS_REFUSED",
+   "status": "422",
+   "title": "Ledger refused",
+   "shopkeeper": "The ledger refused that, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "CAPABILITY_OFF",
@@ -200,6 +272,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "COMMENT_ONLY",
+   "status": "403",
+   "title": "Comment only",
+   "shopkeeper": "Your access is comment-only.",
+   "hint": "Ask the owner for edit access.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMPARE_NOT_ALLOWED",
+   "status": "403",
+   "title": "Compare not allowed",
+   "shopkeeper": "Only the owner or the shop's auditor may compare the books.",
+   "hint": "Ask the owner.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CONFIRM_REMOVE",
    "status": "400",
    "title": "Confirm remove",
@@ -207,6 +297,15 @@
    "hint": "-",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CONNECTOR_HAS_NO_KEY",
+   "status": "400",
+   "title": "Connector has no key",
+   "shopkeeper": "This connector was set up without a key, so there is nothing to approve.",
+   "hint": "Download the kit again while signed in as the owner.",
+   "owner_area": "integrations",
+   "since": "2026-10-23"
   },
   {
    "code": "CONSENT_UNREADABLE",
@@ -264,10 +363,10 @@
   },
   {
    "code": "COUNTRY_SETUP_PENDING",
-   "status": "varies",
+   "status": "422",
    "title": "Country setup pending",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Finish the country setup before using the ledger.",
+   "hint": "Open Country setup and complete it.",
    "owner_area": "country-setup",
    "since": "2026-10-22"
   },
@@ -288,6 +387,159 @@
    "hint": "-",
    "owner_area": "crm",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CTP_CROSSING_REFUSED",
+   "status": "409",
+   "title": "Crossing refused",
+   "shopkeeper": "This business does not take chits from that installation.",
+   "hint": "The two installations must name each other as peers first.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_CROSSING_UNCHECKABLE",
+   "status": "503",
+   "title": "Crossing cannot be checked",
+   "shopkeeper": "We could not check whether this chit may cross, so we refused it.",
+   "hint": "Try again later; nothing was written.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_ENVELOPE_REFUSED",
+   "status": "409",
+   "title": "Envelope refused",
+   "shopkeeper": "The chit did not open here: its signature or its contents were refused.",
+   "hint": "Check the sending installation signs with the key it publishes.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_MANIFEST_UNAVAILABLE",
+   "status": "500",
+   "title": "Manifest unavailable",
+   "shopkeeper": "This installation could not say who it is just now.",
+   "hint": "Try again later.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NOT_AN_ENVELOPE",
+   "status": "400",
+   "title": "Not a CTP envelope",
+   "shopkeeper": "This is not a chit this door understands.",
+   "hint": "Send a CTP/1 envelope.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NOT_A_QUERY",
+   "status": "400",
+   "title": "Not a CTP query",
+   "shopkeeper": "This is not a question this door understands.",
+   "hint": "Send a CTP/1 query.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NO_INSTALLATION",
+   "status": "400",
+   "title": "No installation named",
+   "shopkeeper": "The message does not say which installation sent it.",
+   "hint": "Send it from an installation that names itself.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NO_RECIPIENT",
+   "status": "400",
+   "title": "No recipient named",
+   "shopkeeper": "The chit does not say which business it is for.",
+   "hint": "Name the recipient by its bridge id.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NO_SENDER",
+   "status": "400",
+   "title": "No sender named",
+   "shopkeeper": "The chit does not say which business sent it.",
+   "hint": "The sending installation must name its sender.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_HOSTED_HERE",
+   "status": "409",
+   "title": "Installation is hosted here",
+   "shopkeeper": "That installation lives on this server, so its chits must not come over the internet.",
+   "hint": "Deliver it locally.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_KEY_UNREADABLE",
+   "status": "403",
+   "title": "Peer's key cannot be read",
+   "shopkeeper": "We could not read the other installation's public key, so we cannot trust the message.",
+   "hint": "Check the other installation's manifest is reachable.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_REFUSED",
+   "status": "403",
+   "title": "Installation not known",
+   "shopkeeper": "We do not deal with that installation.",
+   "hint": "The owners of both installations must agree to connect first.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_QUERY_FAILED",
+   "status": "500",
+   "title": "Question failed",
+   "shopkeeper": "This installation could not answer just now.",
+   "hint": "Try again later.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_QUERY_REFUSED",
+   "status": "403",
+   "title": "Question refused",
+   "shopkeeper": "The question was not signed by the installation that sent it.",
+   "hint": "Check the asking installation signs with the key it publishes.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_RECIPIENT_NOT_HERE",
+   "status": "404",
+   "title": "Recipient not here",
+   "shopkeeper": "There is no active business here with that bridge id.",
+   "hint": "Check the address of the business.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_STORE_FAILED",
+   "status": "500",
+   "title": "Could not store the chit",
+   "shopkeeper": "This installation could not store the chit just now.",
+   "hint": "Try again later; it was not written.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_UNKNOWN_QUESTION",
+   "status": "400",
+   "title": "Unknown question",
+   "shopkeeper": "This installation does not answer that question.",
+   "hint": "Ask to resolve a business or for its catalogue.",
+   "owner_area": "ctp",
+   "since": "2026-10-23"
   },
   {
    "code": "CURRENCY_ENTITY_ONLY",
@@ -315,6 +567,15 @@
    "hint": "-",
    "owner_area": "govresolve",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CURRENCY_NOT_THE_LEDGERS",
+   "status": "422",
+   "title": "Wrong money for this ledger",
+   "shopkeeper": "This payment is in a different money from the ledger's.",
+   "hint": "Use the ledger's own money.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "DEVICE_MISMATCH",
@@ -407,29 +668,56 @@
    "since": "2026-10-22"
   },
   {
+   "code": "FOLDER_BAD_REQUEST",
+   "status": "400",
+   "title": "Folder request not accepted",
+   "shopkeeper": "That folder request could not be done.",
+   "hint": "Read the message, fix what it names and try again.",
+   "owner_area": "folders",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FOLDER_INVALID",
+   "status": "400",
+   "title": "Folder details not valid",
+   "shopkeeper": "The folder name or id is missing or not valid.",
+   "hint": "Give the folder a name of 1 to 60 characters, then try again.",
+   "owner_area": "folders",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FOLDER_IS_VIEW",
    "status": "400",
-   "title": "Folder is view",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not a place for chits",
+   "shopkeeper": "That folder shows what its rule matches, so nothing can be moved into it.",
+   "hint": "Move the chit to a filing folder instead.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },
   {
+   "code": "FOLDER_NOT_MIGRATED",
+   "status": "503",
+   "title": "Folders update still to run",
+   "shopkeeper": "This part of folders is not ready on this server yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "folders",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FOLDER_WRONG_SIDE",
-   "status": "varies",
-   "title": "Folder wrong side",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "400",
+   "title": "Folder on the other track",
+   "shopkeeper": "A Task folder holds chits that came to you; an Order folder holds chits you sent.",
+   "hint": "Pick a folder on the chit's own track.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },
   {
    "code": "FX_RATE_MISSING",
-   "status": "varies",
-   "title": "Fx rate missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "422",
+   "title": "Exchange rate missing",
+   "shopkeeper": "There is no exchange rate for that day.",
+   "hint": "Add the rate for that day, then try again.",
    "owner_area": "forms",
    "since": "2026-10-22"
   },
@@ -542,6 +830,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "INTEGRATION_BAD_REQUEST",
+   "status": "400",
+   "title": "Request not usable",
+   "shopkeeper": "Something this needs is missing or not valid.",
+   "hint": "Check the order or the fields named, then send it again.",
+   "owner_area": "integrations",
+   "since": "2026-10-23"
+  },
+  {
    "code": "INTERNAL",
    "status": "500",
    "title": "Something went wrong",
@@ -569,6 +866,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "INVOICE_BAD_REQUEST",
+   "status": "400",
+   "title": "Invoice needs lines",
+   "shopkeeper": "The invoice needs at least one line.",
+   "hint": "Send the lines to invoice.",
+   "owner_area": "invoice",
+   "since": "2026-10-23"
+  },
+  {
    "code": "IN_USE",
    "status": "409",
    "title": "In use",
@@ -578,6 +884,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ITEM_NOT_FOUND",
+   "status": "422",
+   "title": "Item not on the shelf",
+   "shopkeeper": "A line names an item this shop does not sell.",
+   "hint": "Check the item id or code.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "KEY_CANNOT_DECIDE",
+   "status": "403",
+   "title": "A key cannot decide this",
+   "shopkeeper": "A connector cannot decide this on its own. Sign in as a person.",
+   "hint": "Sign in to the shop and do it there.",
+   "owner_area": "integrations",
+   "since": "2026-10-23"
+  },
+  {
    "code": "KEY_CANNOT_MANAGE_KEYS",
    "status": "403",
    "title": "A key cannot manage keys",
@@ -585,6 +909,15 @@
    "hint": "Sign in to the shop and do it there.",
    "owner_area": "keys",
    "since": "2026-10-22"
+  },
+  {
+   "code": "KEY_CANNOT_SEE_HOME",
+   "status": "403",
+   "title": "A key cannot see Home",
+   "shopkeeper": "Sign in to see the Home figures.",
+   "hint": "Open the app with your login, not a key.",
+   "owner_area": "facts",
+   "since": "2026-10-23"
   },
   {
    "code": "KEY_CANNOT_SIGN_IN",
@@ -630,6 +963,15 @@
    "hint": "-",
    "owner_area": "crm",
    "since": "2026-10-22"
+  },
+  {
+   "code": "LEDGER_OFF",
+   "status": "404",
+   "title": "Ledger switched off",
+   "shopkeeper": "This shop has not switched the ledger on.",
+   "hint": "The owner can switch it on.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "LOCKED",
@@ -679,18 +1021,18 @@
   {
    "code": "MSG_ABOVE_CEILING",
    "status": "409",
-   "title": "Msg above ceiling",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Messaging level too high",
+   "shopkeeper": "That folder can be kept internal or switched off, but not shared further than its default.",
+   "hint": "Pick a lower level.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },
   {
    "code": "MSG_FIXED",
    "status": "409",
-   "title": "Msg fixed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Messaging level fixed",
+   "shopkeeper": "This folder's messaging level cannot be changed.",
+   "hint": "Leave it as it is.",
    "owner_area": "folders",
    "since": "2026-10-22"
   },
@@ -742,9 +1084,9 @@
   {
    "code": "NOT_FOR_COUNTRY",
    "status": "varies",
-   "title": "Not for country",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not for your country",
+   "shopkeeper": "This is not offered for a shop in your country.",
+   "hint": "The message names what to use instead.",
    "owner_area": "integrations",
    "since": "2026-10-22"
   },
@@ -804,19 +1146,19 @@
   },
   {
    "code": "NOT_YET",
-   "status": "varies",
-   "title": "Not yet",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Not built yet",
+   "shopkeeper": "This connector is not built yet.",
+   "hint": "Use the File connector (CSV) or the Counter, and ask for it under Help.",
    "owner_area": "integrations",
    "since": "2026-10-22"
   },
   {
    "code": "NOT_YET_FOR_COUNTRY",
-   "status": "varies",
-   "title": "Not yet for country",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Not yet for your country",
+   "shopkeeper": "This connector is not ready for your country yet.",
+   "hint": "Use the File connector (CSV) or the Counter.",
    "owner_area": "integrations",
    "since": "2026-10-22"
   },
@@ -849,19 +1191,19 @@
   },
   {
    "code": "NO_COUNTRY",
-   "status": "400/422",
-   "title": "No country",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "422",
+   "title": "No country set",
+   "shopkeeper": "This shop has no country set.",
+   "hint": "Set the country in Country setup.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
   {
    "code": "NO_COUNTRY_PACK",
-   "status": "varies",
-   "title": "No country pack",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "422",
+   "title": "Country not supported yet",
+   "shopkeeper": "We do not have the rules for this shop's country yet.",
+   "hint": "Tell us the country. We add countries one at a time.",
    "owner_area": "country-setup",
    "since": "2026-10-22"
   },
@@ -884,6 +1226,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_LINES",
+   "status": "400",
+   "title": "No lines sent",
+   "shopkeeper": "Send at least one line.",
+   "hint": "Add a line and send again.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_MATCHING_PRODUCTS",
    "status": "404",
    "title": "No matching products",
@@ -895,9 +1246,9 @@
   {
    "code": "NO_MONEY",
    "status": "422",
-   "title": "No money",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "No money set",
+   "shopkeeper": "This shop has not said which money its books are kept in.",
+   "hint": "Set the money in Country setup.",
    "owner_area": "catalogue-view",
    "since": "2026-10-22"
   },
@@ -929,6 +1280,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_PRICE",
+   "status": "422",
+   "title": "No price for a line",
+   "shopkeeper": "A line has no price on the shelf and none was sent.",
+   "hint": "Set its price on the shelf, or send one.",
+   "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_SENDS",
    "status": "varies",
    "title": "No sends",
@@ -954,6 +1314,15 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_STREAM_NAMED",
+   "status": "400",
+   "title": "No stream named",
+   "shopkeeper": "Pick at least one stream to hand over.",
+   "hint": "Choose who carries products, stock or orders, then save.",
+   "owner_area": "integrations",
+   "since": "2026-10-23"
   },
   {
    "code": "NO_SUCH_NETWORK",
@@ -1083,10 +1452,10 @@
   },
   {
    "code": "PACK_NO_FILE",
-   "status": "404/409",
-   "title": "Pack no file",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Pack has no file",
+   "shopkeeper": "This pack has no file to download.",
+   "hint": "Build it again, download it, then confirm.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1111,9 +1480,9 @@
   {
    "code": "PERIOD_LOCKED",
    "status": "409",
-   "title": "Period locked",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Month locked",
+   "shopkeeper": "That month is locked.",
+   "hint": "Use a date in an open month, or ask the owner to unlock it.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1163,6 +1532,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "READ_ONLY",
+   "status": "403",
+   "title": "View only",
+   "shopkeeper": "Your access is view-only.",
+   "hint": "Ask the owner for edit access.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
    "code": "REGION_STORE_MISSING",
    "status": "403/404/503",
    "title": "Region store missing",
@@ -1197,6 +1575,15 @@
    "hint": "-",
    "owner_area": "schemas",
    "since": "2026-10-22"
+  },
+  {
+   "code": "RETURN_FROM_RAIL",
+   "status": "422",
+   "title": "Return comes from bills",
+   "shopkeeper": "Your return is made from your bills, not from these books.",
+   "hint": "Use the GST page.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   },
   {
    "code": "ROOT_HANDLE_NEEDED",
@@ -1307,6 +1694,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SIGN_IN_FOR_LEDGER",
+   "status": "403",
+   "title": "Sign in as a person",
+   "shopkeeper": "Sign in as a person to use the ledger.",
+   "hint": "A counter or device key cannot use the ledger.",
+   "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
    "code": "SOURCE_STORE_MISSING",
    "status": "503",
    "title": "Source store missing",
@@ -1364,8 +1760,8 @@
    "code": "SUSPENSE_NOT_NIL",
    "status": "409",
    "title": "Suspense not nil",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "The suspense account must be nil before the year can close.",
+   "hint": "Clear the difference in the opening balances.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1390,9 +1786,9 @@
   {
    "code": "TAX_FAILED",
    "status": "500",
-   "title": "Tax failed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Tax could not be worked out",
+   "shopkeeper": "We could not work out the tax just now.",
+   "hint": "Try again in a moment. If it keeps happening, tell us the request id.",
    "owner_area": "tax",
    "since": "2026-10-22"
   },
@@ -1408,9 +1804,9 @@
   {
    "code": "TERMS_NOT_MIGRATED",
    "status": "503",
-   "title": "Terms not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Terms update pending",
+   "shopkeeper": "Terms arrive after the next update.",
+   "hint": "Try again after the update.",
    "owner_area": "books",
    "since": "2026-10-22"
   },
@@ -1562,10 +1958,19 @@
    "code": "YEAR_CLOSED",
    "status": "409",
    "title": "Year closed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That financial year is closed.",
+   "hint": "Use a date in the open year.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "YEAR_CLOSE_REFUSED",
+   "status": "422",
+   "title": "Year cannot close yet",
+   "shopkeeper": "The year cannot be closed yet.",
+   "hint": "Read the reasons shown and fix each one.",
+   "owner_area": "books",
+   "since": "2026-10-23"
   }
  ]
 }
