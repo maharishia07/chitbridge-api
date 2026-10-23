@@ -12250,7 +12250,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false
+    "status_codes": true
    },
    "declared": [
     400,

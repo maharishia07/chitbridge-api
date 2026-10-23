@@ -394,7 +394,7 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:190 | no | no | no | no | no | no | no | not started |
 | POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1825 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1322 | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1123 | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1123 | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/catalogue/:bridge_id/support | catalogue | routes/catalogue.js:1263 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/catalogue/:bridge_id/support/start | catalogue | routes/catalogue.js:1224 | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2034 | no | no | no | no | no | no | no | not started |

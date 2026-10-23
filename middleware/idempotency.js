@@ -223,6 +223,9 @@ const windowHours = () => Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT
 
 const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotency_key is not migrated (b109)' : 'store error: ' + (e && e.message));
 
+/** the statuses this gate answers itself (409 key in progress, 422 key reused with another body or missing): the API register reads this off any route that mounts the gate */
+const ADDS_STATUSES = [409, 422];
+
 module.exports = function idempotency(req, res, next) {
   const key = req.headers['idempotency-key'];
   if (!key || !MUTATING.includes(req.method) || String(key).length > KEY_MAX_LENGTH) return next();
@@ -247,7 +250,7 @@ const KEY_REQUIRED = {
 /** requireKey({ shopOf, contactOf }) → the gate a public money door mounts; tools/api-register.cjs finds it by its name */
 function requireKey({ shopOf, contactOf }) {
   /** the gate: no key is refused; otherwise the key is held for (this shop, this contact) and the route runs at most once */
-  return async function requireIdempotencyKey(req, res, next) {
+  async function requireIdempotencyKey(req, res, next) {
     const key = req.headers['idempotency-key'];
     if (!key || String(key).length > KEY_MAX_LENGTH)
       return problem(req, res, { status: 422, code: 'IDEMPOTENCY_KEY_REQUIRED', detail: KEY_REQUIRED.message, legacy: KEY_REQUIRED });
@@ -266,9 +269,12 @@ function requireKey({ shopOf, contactOf }) {
       hash: fingerprint(req),
       windowHrs: windowHours()
     });
-  };
+  }
+  requireIdempotencyKey.addsStatuses = ADDS_STATUSES;
+  return requireIdempotencyKey;
 }
 
+module.exports.addsStatuses = ADDS_STATUSES;
 module.exports.requireKey = requireKey;
 module.exports._stable = stable;
 module.exports._scope = scope;
