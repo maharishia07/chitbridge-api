@@ -127,10 +127,10 @@ function harness(options) {
   }
 
   /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is */
-  function send(port, method, urlPath, body) {
+  function send(port, method, urlPath, body, extraHeaders) {
     return new Promise((resolve) => {
       const data = body === undefined ? null : JSON.stringify(body);
-      const request = http.request({ port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} }, (response) => {
+      const request = http.request({ port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {}) }, (response) => {
         const parts = [];
         response.on('data', (part) => parts.push(part));
         response.on('end', () => {
@@ -160,12 +160,21 @@ function harness(options) {
     return () => undo.forEach(([owner, name, original]) => (owner[name] = original));
   }
 
+  /** a scenario may switch process variables for its one request (`env`); the ones it set are put back (or removed) afterwards */
+  function setEnv(given) {
+    const before = Object.keys(given || {}).map((name) => [name, process.env[name]]);
+    Object.keys(given || {}).forEach((name) => (process.env[name] = given[name]));
+    return () => before.forEach(([name, was]) => (was === undefined ? delete process.env[name] : (process.env[name] = was)));
+  }
+
   async function runScenario(port, scenario, modules) {
     Object.assign(world, FRESH, scenario.setup);
     const restore = applyPatch(scenario.patch, modules);
+    const unset = setEnv(scenario.env);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body);
+    const answer = await send(port, method, scenario.url, body, scenario.headers);
+    unset();
     restore();
     return answer;
   }
