@@ -1,0 +1,407 @@
+#!/usr/bin/env node
+/**
+ * api-problem-till.test.cjs — API-4 sweep, till: every refusal of routes/till.js (the counter's 41 routes).
+ *
+ * OWNS      the proof that each refusal of the counter's routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the
+ *           code before the sweep), and this file's rows of docs/contracts/api-error-tests.json (the statuses each route is tested for, which the register's error_tests column reads).
+ *           Also: no answer outside the statuses the route's contract declares (lib/till-contract.js), every code answered is registered, and the contract's words as units.
+ * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/till.js over a stand-in db and auth.
+ * FLOW      route list (read from the router) x world (signed out, a counter key, a key for something else, staff, a bad id, a failing db, an empty db) + the named extras
+ *           → real route → body → Problem fields present · frozen legacy keys equal · no leak on a 5xx · statuses tested → manifest
+ *
+ *   node tests/api-problem-till.test.cjs                    check
+ *   node tests/api-problem-till.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json
+ *   node tests/api-problem-till.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
+ *   node tests/api-problem-till.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
+ */
+'use strict';
+const path = require('path');
+const fs = require('fs');
+const express = require('express');
+const kit = require('./problem-sweep-kit.cjs');
+
+const HERE = path.join(__dirname, '..');
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+process.env.NODE_ENV = 'test';
+const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
+const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const MOUNT = '/api/till';
+const ROUTE_FILE = 'routes/till.js'; /* named in full so the graph links this test to the route file */
+const CONTRACT_FILE = 'lib/till-contract.js';
+const MINE = (route) => route.includes(' ' + MOUNT + '/');
+const argv = process.argv.slice(2);
+const flagValue = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
+const { check, tally } = kit.checker(argv);
+
+/* ── stand-ins: auth and the db ────────────────────────────────────────────────────────────────────────────── */
+const SHOP = '11111111-1111-4111-8111-111111111111';
+const ITEM = '22222222-2222-4222-8222-222222222222';
+const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test shop' };
+const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor' };
+const SECRET_SQL = 'relation "party_secret" does not exist -- SELECT secret FROM vault';
+const FRESH = { realAuth: false, who: OWNER, key: null, db: 'ok', sqlRows: null };
+const world = Object.assign({}, FRESH);
+
+/** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
+function rowsFor(sql) {
+  if (world.sqlRows) {
+    const given = world.sqlRows(String(sql));
+    if (given) return given;
+  }
+  if (world.db === 'fail') throw new Error(SECRET_SQL);
+  return { rows: [], rowCount: 0 };
+}
+const mock = (relative, exported) => {
+  const file = require.resolve(path.join(HERE, relative));
+  require.cache[file] = { id: file, filename: file, loaded: true, exports: exported };
+};
+
+function installStubs() {
+  const realAuth = require(path.join(HERE, 'middleware', 'auth'));
+  const { holderOf } = require(path.join(HERE, 'lib', 'holder'));
+  const stubAuth = (req, res, next) => {
+    if (world.realAuth) return realAuth(req, res, next);
+    req.identity = world.who;
+    if (world.key) {
+      req.api_key = { jti: 'j1', scopes: world.key };
+      req.till = holderOf({ kind: 'api_key', jti: 'j1', scopes: world.key }, null, null);
+    }
+    return next();
+  };
+  mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
+  const client = { query: async (sql) => rowsFor(sql) };
+  const known = {
+    query: async (sql) => rowsFor(sql),
+    withEntity: async (id, run) => run(client),
+    withTransaction: async (run) => run(client),
+    trySavepoint: async (handle, run, fallback) => run().catch(() => fallback),
+    readBatch: async (entity, actor, statements) => {
+      if (world.db === 'fail') throw new Error(SECRET_SQL);
+      return statements.map(() => ({ rows: [], rowCount: 0 }));
+    }
+  };
+  const db = new Proxy(known, {
+    get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 }))
+  });
+  mock('db', db);
+  mock('db/index', db);
+  console.error = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
+  console.warn = () => undefined;
+}
+
+/* ── the scenarios: every route the router holds x the worlds, then the named extras ───────────────────────── */
+const PARAM_VALUES = { name: 'offers' };
+const WORLDS = [
+  { id: 'signed-out', setup: { realAuth: true } },
+  { id: 'counter-key', setup: { key: ['till'] } },
+  { id: 'key-for-something-else', setup: { key: ['connector'] } },
+  { id: 'staff-asks', setup: { who: STAFF } },
+  { id: 'bad-id', setup: {}, badId: true },
+  { id: 'db-fails', setup: { db: 'fail' } },
+  { id: 'nothing-found', setup: {} }
+];
+const X = (id, route, status, extra) => Object.assign({ id, route, expect: status, setup: {} }, extra);
+const THROWS = () => {
+  throw new Error(SECRET_SQL);
+};
+const throwsLater = async () => THROWS();
+/** a refusal a library throws (lib/reward-store): .code and .say */
+const refusal = (code, say) => async () => {
+  throw Object.assign(new Error('internal ' + code), { code, say });
+};
+const COUNTER_KEYS = ['routes/keys.js', 'listOf', async () => [{ jti: 'j1', counter: 'C1', scopes: ['till'] }]];
+const KEYS_NOT_LISTED = ['routes/keys.js', 'listOf', async () => []];
+const KEY_ROWS = (scopes) => (sql) => (/SELECT policy_flags FROM identities/.test(sql) ? { rows: [{ policy_flags: { api_keys: [{ jti: 's1', scopes }] } }], rowCount: 1 } : undefined);
+const SHOP_ROW = (sql) => (/SELECT currency_code, country FROM identities/.test(sql) ? { rows: [{ currency_code: 'INR', country: 'IN' }], rowCount: 1 } : undefined);
+const PROGRAMME = ['lib/reward-store.js', 'programme', async () => ({ name: 'Points', walk_in_earns: true })];
+const OFFER_ROW = (kind, status) => (sql) =>
+  /FROM definition d/.test(sql) ? { rows: [{ definition_id: ITEM, name: 'Spring', current_version: 1, status, kind, rules: {} }], rowCount: 1 } : undefined;
+const PARTY = (country) => ['lib/profile.js', 'invoiceParty', async () => ({ country })];
+/** the extras: an answer the generic worlds cannot reach (a named refusal inside a handler, a fault behind a body the handler accepts) */
+const EXTRAS = [
+  X('snapshot-breaks', 'GET /api/till/snapshot', 500, { patch: [['lib/profile.js', 'countryOf', THROWS]] }),
+  X('stock-no-item', 'POST /api/till/stock', 400, { body: {} }),
+  X('stock-bad-status', 'POST /api/till/stock', 400, { body: { item_id: ITEM, status: 'retired' } }),
+  X('stock-item-not-there', 'POST /api/till/stock', 404, { body: { item_id: ITEM, status: 'unavailable' } }),
+  X('stock-write-breaks', 'POST /api/till/stock', 500, { setup: { db: 'fail' }, body: { item_id: ITEM, status: 'unavailable' } }),
+  X('bulk-no-ids', 'POST /api/till/stock/bulk', 400, { body: {} }),
+  X('bulk-too-many', 'POST /api/till/stock/bulk', 400, { body: { item_ids: Array.from({ length: 501 }, (nothing, index) => 'i' + index), status: 'available' } }),
+  X('bulk-bad-status', 'POST /api/till/stock/bulk', 400, { body: { item_ids: [ITEM], status: 'retired' } }),
+  X('bulk-write-breaks', 'POST /api/till/stock/bulk', 500, { setup: { db: 'fail' }, body: { item_ids: [ITEM], status: 'available' } }),
+  X('diagnostic-by-a-person', 'POST /api/till/diagnostic', 400, { body: { code: 'x' } }),
+  X('diagnostic-key-not-listed', 'POST /api/till/diagnostic', 404, { setup: { key: ['till'] }, body: { code: 'x' }, patch: [['routes/keys.js', 'setDiag', async () => null]] }),
+  X('diagnostic-write-breaks', 'POST /api/till/diagnostic', 500, { setup: { key: ['till'] }, body: { code: 'x' }, patch: [['routes/keys.js', 'setDiag', throwsLater]] }),
+  X('close-by-a-person', 'POST /api/till/close', 400, { body: {} }),
+  X('close-counter-not-listed', 'POST /api/till/close', 404, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
+  X('close-write-breaks', 'POST /api/till/close', 500, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS, ['routes/keys.js', 'patchTill', throwsLater]] }),
+  X('flags-no-item', 'POST /api/till/flags', 400, { body: {} }),
+  X('flags-nothing-to-set', 'POST /api/till/flags', 400, { body: { item_id: ITEM } }),
+  X('flags-item-not-there', 'POST /api/till/flags', 404, { body: { item_id: ITEM, screen: true } }),
+  X('flags-write-breaks', 'POST /api/till/flags', 500, { setup: { db: 'fail' }, body: { item_id: ITEM, screen: true } }),
+  X('qk-no-counter', 'GET /api/till/quick-keys/state', 403, { setup: { key: ['till'] }, patch: [KEYS_NOT_LISTED] }),
+  X('qk-no-date', 'GET /api/till/quick-keys/state', 400, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
+  X('qk-state-no-counter', 'POST /api/till/quick-keys/state', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
+  X('qk-state-no-date', 'POST /api/till/quick-keys/state', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
+  X('qk-hide-no-counter', 'POST /api/till/quick-keys/hide', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
+  X('qk-hide-no-product', 'POST /api/till/quick-keys/hide', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
+  X('qk-unhide-no-counter', 'POST /api/till/quick-keys/unhide', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
+  X('qk-unhide-no-product', 'POST /api/till/quick-keys/unhide', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
+  X('qk-screen-no-counter', 'POST /api/till/quick-keys/screen-config', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
+  X('offer-item-no-ids', 'POST /api/till/offer-item', 400, { body: {} }),
+  X('offer-not-there', 'POST /api/till/offer-item', 404, { body: { offer_id: ITEM, item_id: ITEM, on: true } }),
+  X('not-an-offer', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('reward', 'live') } }),
+  X('offer-not-live', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('offer', 'draft') } }),
+  X('offer-item-write-breaks', 'POST /api/till/offer-item', 500, { setup: { db: 'fail' }, body: { offer_id: ITEM, item_id: ITEM, on: true } }),
+  X('price-no-item', 'POST /api/till/price', 400, { body: {} }),
+  X('price-not-a-number', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: -1 } }),
+  X('price-cost-blind', 'POST /api/till/price', 403, {
+    body: { item_id: ITEM, price: 5 },
+    patch: [['lib/cost.js', 'writeRefusal', async () => ({ error: 'Not permitted', code: 'COST_BLIND', blocked: ['price'], message: 'Your access does not include cost or price.' })]]
+  }),
+  X('price-no-money', 'POST /api/till/price', 422, { body: { item_id: ITEM, price: 5 } }),
+  X('price-item-not-there', 'POST /api/till/price', 404, { body: { item_id: ITEM, price: 5 }, setup: { sqlRows: SHOP_ROW } }),
+  X('price-write-breaks', 'POST /api/till/price', 500, { body: { item_id: ITEM, price: 5 }, setup: { db: 'fail', sqlRows: SHOP_ROW } }),
+  X('alias-no-words', 'POST /api/till/alias', 400, { body: { item_id: ITEM } }),
+  X('alias-too-long', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'x'.repeat(121) } }),
+  X('alias-bad-factor', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'SUNFL OIL', factor: -2 } }),
+  X('alias-product-not-there', 'POST /api/till/alias', 404, { body: { item_id: ITEM, text: 'SUNFL OIL' } }),
+  X('alias-write-breaks', 'POST /api/till/alias', 500, { setup: { db: 'fail' }, body: { item_id: ITEM, text: 'SUNFL OIL' } }),
+  X('reconcile-read-breaks', 'POST /api/till/reconcile', 500, { setup: { db: 'fail' }, body: { bills: [{ no: 'C1/1', at: 'x', chit_id: ITEM }] } }),
+  X('qk-hidden-read-breaks', 'GET /api/till/quick-keys/hidden', 500, { setup: { key: ['till'], db: 'fail' }, patch: [COUNTER_KEYS] }),
+  X('qk-state-read-breaks', 'GET /api/till/quick-keys/state', 500, { url: '/api/till/quick-keys/state?business_date=2026-10-23', setup: { key: ['till'], db: 'fail' }, patch: [COUNTER_KEYS] }),
+  X('qk-state-write-breaks', 'POST /api/till/quick-keys/state', 500, { setup: { key: ['till'], db: 'fail' }, body: { business_date: '2026-10-23' }, patch: [COUNTER_KEYS] }),
+  X('qk-hide-write-breaks', 'POST /api/till/quick-keys/hide', 500, { setup: { key: ['till'], db: 'fail' }, body: { product_id: ITEM }, patch: [COUNTER_KEYS] }),
+  X('qk-unhide-write-breaks', 'POST /api/till/quick-keys/unhide', 500, { setup: { key: ['till'], db: 'fail' }, body: { product_id: ITEM }, patch: [COUNTER_KEYS] }),
+  X('qk-screen-write-breaks', 'POST /api/till/quick-keys/screen-config', 500, { setup: { key: ['till'], db: 'fail' }, body: { config: {} }, patch: [COUNTER_KEYS] }),
+  X('blueprints-break', 'GET /api/till/catalogue/blueprints', 500, { patch: [['lib/catalogue-blueprint.js', 'blueprint', THROWS], ['lib/catalogue-blueprint.js', 'pin', THROWS]] }),
+  X('reward-read-no-holder', 'GET /api/till/reward', 400, {}),
+  X('reward-read-breaks', 'GET /api/till/reward', 500, { url: '/api/till/reward?scheme=phone&value=9840012345', setup: { db: 'fail' } }),
+  X('reward-no-bill-number', 'POST /api/till/reward', 400, { body: {} }),
+  X('reward-bill-not-recorded', 'POST /api/till/reward', 409, {
+    body: { ref: 'C1/1', holder: { scheme: 'phone', value: '9840012345' } },
+    patch: [PROGRAMME, ['lib/reward-store.js', 'settle', refusal('BILL_NOT_RECORDED', 'That bill has not reached the server yet.')]]
+  }),
+  X('reward-write-breaks', 'POST /api/till/reward', 500, {
+    body: { ref: 'C1/1', holder: { scheme: 'phone', value: '9840012345' } },
+    patch: [PROGRAMME, ['lib/reward-store.js', 'settle', throwsLater]]
+  }),
+  X('claim-no-holders', 'POST /api/till/reward/claim', 400, { body: {} }),
+  X('claim-no-programme', 'POST /api/till/reward/claim', 400, { body: { from: { scheme: 'phone', value: '9840012345' }, to: { scheme: 'identity', value: ITEM } } }),
+  X('claim-refused', 'POST /api/till/reward/claim', 400, {
+    body: { from: { scheme: 'phone', value: '9840012345' }, to: { scheme: 'identity', value: ITEM } },
+    patch: [PROGRAMME, ['lib/reward-store.js', 'claim', async () => ({ ok: false, why: 'There is nothing to move.' })]]
+  }),
+  X('claim-already-recorded', 'POST /api/till/reward/claim', 409, {
+    body: { from: { scheme: 'phone', value: '9840012345' }, to: { scheme: 'identity', value: ITEM } },
+    patch: [PROGRAMME, ['lib/reward-store.js', 'claim', refusal('CLAIM_RECORDED', 'That claim is already recorded.')]]
+  }),
+  X('claim-write-breaks', 'POST /api/till/reward/claim', 500, {
+    body: { from: { scheme: 'phone', value: '9840012345' }, to: { scheme: 'identity', value: ITEM } },
+    patch: [PROGRAMME, ['lib/reward-store.js', 'claim', throwsLater]]
+  }),
+  X('pair-by-another-key', 'POST /api/till/pair', 403, { setup: { key: ['screen'] }, body: {} }),
+  X('pair-lookup-breaks', 'POST /api/till/pair', 500, { setup: { db: 'fail' }, body: {} }),
+  X('enrol-counter-held', 'POST /api/till/enrol', 409, {
+    body: { counter: 'C1' },
+    patch: [['routes/counters.js', 'claim', async () => ({ status: 409, body: { error: 'conflict', code: 'COUNTER_HELD', message: 'C1 is open on another PC.' } })]]
+  }),
+  X('enrol-library-says-no', 'POST /api/till/enrol', 400, {
+    body: { counter: 'C1' },
+    patch: [['routes/counters.js', 'claim', async () => { throw Object.assign(new Error('That counter name is not allowed.'), { status: 400 }); }]]
+  }),
+  X('enrol-claim-breaks', 'POST /api/till/enrol', 500, { body: { counter: 'C1' }, patch: [['routes/counters.js', 'claim', throwsLater]] }),
+  X('claim-key-breaks', 'POST /api/till/pair/claim', 500, { body: { code: 'ZZZZZZ' }, patch: [['routes/keys.js', 'mint', throwsLater]], before: 'pair-code' }),
+  X('claim-code-unknown', 'POST /api/till/pair/claim', 404, { body: { code: 'ZZZZZZ' } }),
+  X('claim-code-unknown-again', 'POST /api/till/pair/claim', 404, { body: { code: 'ZZZZZZ' } }),
+  X('too-many-wrong-codes', 'POST /api/till/pair/claim', 429, { body: { code: 'ZZZZZZ' } }),
+  X('revoke-no-screen', 'POST /api/till/screens/revoke', 400, { body: {} }),
+  X('revoke-not-a-screen', 'POST /api/till/screens/revoke', 403, { body: { jti: 's1' }, setup: { sqlRows: KEY_ROWS(['till']) } }),
+  X('revoke-not-paired', 'POST /api/till/screens/revoke', 404, { body: { jti: 's1' } }),
+  X('revoke-breaks', 'POST /api/till/screens/revoke', 500, { body: { jti: 's1' }, setup: { db: 'fail' } }),
+  X('rename-no-screen', 'POST /api/till/screens/rename', 400, { body: {} }),
+  X('rename-not-a-screen', 'POST /api/till/screens/rename', 403, { body: { jti: 's1' }, setup: { sqlRows: KEY_ROWS(['till']) } }),
+  X('rename-not-paired', 'POST /api/till/screens/rename', 404, { body: { jti: 's1' } }),
+  X('rename-breaks', 'POST /api/till/screens/rename', 500, { body: { jti: 's1' }, setup: { db: 'fail' } }),
+  X('shop-no-country', 'POST /api/till/shop', 400, { body: { gstin: '29AAAAA0000A1Z5' } }),
+  X('shop-bad-gstin-in', 'POST /api/till/shop', 400, { body: { gstin: 'not a gstin' }, patch: [PARTY('IN')] }),
+  X('shop-bad-gstin-checksum', 'POST /api/till/shop', 400, { body: { gstin: '29AAAAA0000A1Z0' }, patch: [PARTY('IN')] }),
+  X('shop-bad-tax-id-abroad', 'POST /api/till/shop', 400, { body: { gstin: '1' }, patch: [PARTY('AU')] }),
+  X('shop-write-breaks', 'POST /api/till/shop', 500, { body: { phone: '9876543210' }, patch: [['lib/profile.js', 'applyProfileMap', throwsLater]] }),
+  X('catalogue-not-empty', 'POST /api/till/catalogue', 409, { body: { blueprint: 'veg' }, patch: [['lib/catalogue-write.js', 'countItems', async () => 3]] }),
+  X('catalogue-no-valid-rows', 'POST /api/till/catalogue', 400, { body: { products: [{ colour: 'red' }] } }),
+  X('catalogue-unknown-trade', 'POST /api/till/catalogue', 400, { body: { blueprint: 'nonesuch' } }),
+  X('catalogue-nothing-chosen', 'POST /api/till/catalogue', 400, { body: {} }),
+  X('catalogue-categories-break', 'POST /api/till/catalogue', 500, { body: { blueprint: 'veg' }, patch: [['lib/categories.js', 'ensureCategories', throwsLater]] }),
+  X('catalogue-write-refused', 'POST /api/till/catalogue', 422, {
+    body: { blueprint: 'veg' },
+    patch: [['lib/catalogue-write.js', 'writeItems', async () => ({ ok: false, status: 422, error: 'Invalid products', message: 'One product has no name.', invalid: [{ row: 1 }] })]]
+  }),
+  X('catalogue-write-breaks', 'POST /api/till/catalogue', 500, { body: { blueprint: 'veg' }, patch: [['lib/catalogue-write.js', 'writeItems', throwsLater]] }),
+  X('summary-trend-bad-period', 'GET /api/till/summary', 400, { url: '/api/till/summary?compare=1&period=decade' }),
+  X('summary-trend-no-country', 'GET /api/till/summary', 422, { url: '/api/till/summary?compare=1&period=week' }),
+  X('engine-file-unreadable', 'GET /api/till/engine/:name', 500, { patch: [['fs', 'readFileSync', null]] })
+];
+
+/** a scenario that needs a library function to fail or answer otherwise swaps it, then puts the real one back: [file, 'name' | 'Object.name', function | { get }] */
+function applyPatch(patch) {
+  const undo = [];
+  (patch || []).forEach(([file, dotted, replacement]) => {
+    const parts = dotted.split('.');
+    const target = file === 'fs' ? require('fs') : require(path.join(HERE, file));
+    const owner = parts.slice(0, -1).reduce((one, part) => one[part], target);
+    const name = parts[parts.length - 1];
+    const original = Object.getOwnPropertyDescriptor(owner, name);
+    let swap = replacement;
+    if (file === 'fs') {
+      const real = original.value;
+      swap = function readFileSync(target, ...rest) {
+        if (/offers-engine/.test(String(target))) THROWS();
+        return real.call(this, target, ...rest);
+      };
+    }
+    Object.defineProperty(owner, name, typeof swap === 'function' ? { value: swap, writable: true, configurable: true } : Object.assign({ configurable: true }, swap));
+    undo.push(() => Object.defineProperty(owner, name, original));
+  });
+  return () => undo.reverse().forEach((back) => back());
+}
+
+/** a scenario that needs a live pairing code asks the shop for one first (the codes are kept in memory by the route) */
+async function pairingCode(port) {
+  Object.assign(world, FRESH);
+  const made = await kit.send(port, 'POST', MOUNT + '/pair', {});
+  return made.json && made.json.code;
+}
+
+async function runScenario(port, scenario) {
+  const code = scenario.before === 'pair-code' ? await pairingCode(port) : null;
+  Object.assign(world, FRESH, scenario.setup);
+  const restore = applyPatch(scenario.patch);
+  const method = scenario.route.split(' ')[0];
+  const body = code ? { code } : scenario.body;
+  const answer = await kit.send(port, method, scenario.url, body === undefined && kit.BODY_METHODS.includes(method) ? {} : body);
+  restore();
+  return answer;
+}
+
+/** the sign-in middleware's own 401 and requireScope's 403 are still the old body: tested, not yet a Problem (a follow-up for the auth middleware) */
+const inherited = (scenario, answer) => (answer.status === 401 && scenario.id === 'signed-out') || (answer.status === 403 && scenario.id === 'key-for-something-else');
+
+/** the statuses a test may see from a route, by the contract that owns it */
+function allowedFor() {
+  const contract = require(path.join(HERE, CONTRACT_FILE)).contract;
+  return (route) => contract.allowedStatuses()(route) || [];
+}
+const registeredCodes = () => new Set(JSON.parse(fs.readFileSync(path.join(HERE, 'docs', 'error-codes.json'), 'utf8')).codes.filter((row) => row.shopkeeper !== 'PENDING').map((row) => row.code));
+
+async function checkRoutes(port, scenarios, recording) {
+  const tested = {};
+  const capturing = argv.includes('--capture');
+  const allowed = capturing ? null : allowedFor();
+  const registered = capturing ? null : registeredCodes();
+  for (const scenario of scenarios) {
+    const answer = await runScenario(port, scenario);
+    const label = scenario.route + ' · ' + scenario.id;
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
+    if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
+    if (capturing) continue;
+    check(label + ': answers (not a hang)', answer.status !== 0);
+    if (scenario.extra) check(label + ': answers the status the scenario is for (' + scenario.expect + ')', answer.status === scenario.expect, answer.status);
+    if (answer.status < 400) {
+      check(label + ': a success is not a Problem body', !/problem+json/.test(answer.type), answer.type);
+      continue;
+    }
+    check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
+    if (inherited(scenario, answer)) continue;
+    kit.checkProblemBody(check, label, answer);
+    if (answer.json && answer.json.code) check(label + ': its code ' + answer.json.code + ' is registered with a shopkeeper sentence', registered.has(answer.json.code), answer.json.code);
+    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/party_secret|SELECT|vault|relation/.test(answer.text), answer.text);
+    else kit.checkLegacy(check, label, answer, kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id));
+  }
+  return tested;
+}
+
+/** the words of the contract as units: each helper answers the spec the routes spread into problem() */
+function checkWords() {
+  const words = require(path.join(HERE, CONTRACT_FILE));
+  const bad = words.badRequest('item_id required');
+  check('words: badRequest() keeps the old validation body', JSON.stringify(bad.legacy) === JSON.stringify({ error: 'validation', message: 'item_id required' }) && bad.detail === 'item_id required', bad);
+  const gone = words.notFound();
+  check('words: notFound() keeps the bare "Not found"', JSON.stringify(gone.legacy) === JSON.stringify({ error: 'Not found' }) && gone.code === 'NOT_FOUND', gone);
+  const relayed = words.relayed({ error: 'conflict', code: 'COUNTER_HELD', message: 'C1 is open elsewhere.' });
+  check('words: relayed() keeps the code and the words of a body a library made', relayed.code === 'COUNTER_HELD' && relayed.detail === 'C1 is open elsewhere.' && relayed.legacy.error === 'conflict', relayed);
+  const plain = words.relayed({ error: 'Not found' });
+  check('words: relayed() without a code or message still has both', plain.code === 'TILL_REFUSED' && plain.detail === 'Not found', plain);
+  const fault = words.failed(new Error(SECRET_SQL), { id: 'r1' });
+  check('words: failed() is a 500 that says nothing of its cause', fault.status === 500 && !/party_secret/.test(JSON.stringify(fault)), fault);
+  const refusalOfLibrary = words.refusalOf(Object.assign(new Error('That counter name is not allowed.'), { status: 400 }), { id: 'r1' });
+  check('words: a library refusal of 400 keeps its own words', refusalOfLibrary.status === 400 && refusalOfLibrary.detail === 'That counter name is not allowed.', refusalOfLibrary);
+  const schemaWords = words.schemaOptions.legacy([{ detail: 'Some of what was sent is missing or not valid.' }]);
+  check('words: a body the schema refuses is answered at 400 in the old validation shape', words.schemaOptions.status === 400 && schemaWords.error === 'validation', schemaWords);
+}
+
+process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
+(async () => {
+  if (flagValue('--freeze')) {
+    console.log('froze ' + kit.freeze(flagValue('--freeze'), LEGACY_FILE, MINE) + ' routes');
+    return;
+  }
+  installStubs();
+  const router = require(path.join(HERE, ROUTE_FILE));
+  const routes = kit.routesOf(router, MOUNT);
+  const app = express();
+  app.use((req, res, next) => {
+    req.id = 'req-test';
+    next();
+  });
+  app.use(express.json());
+  app.use(MOUNT, router);
+  const server = app.listen(0);
+  const recording = {};
+  const tested = await checkRoutes(server.address().port, kit.scenariosOf(routes, WORLDS, EXTRAS, PARAM_VALUES), recording);
+  server.close();
+  if (flagValue('--capture')) {
+    fs.writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
+    console.log('captured ' + Object.keys(recording).length + ' answers over ' + Object.keys(routes).length + ' routes');
+    process.exit(0);
+  }
+  checkWords();
+  const coverage = Object.fromEntries(
+    Object.keys(tested)
+      .sort()
+      .map((route) => [route, [...tested[route]].sort((a, b) => a - b)])
+  );
+  const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
+  if (argv.includes('--write')) {
+    const others = Object.fromEntries(
+      Object.keys(onDisk)
+        .filter((route) => !MINE(route))
+        .map((route) => [route, onDisk[route]])
+    );
+    const merged = Object.assign(others, coverage);
+    fs.writeFileSync(
+      TESTED_FILE,
+      JSON.stringify(
+        Object.fromEntries(
+          Object.keys(merged)
+            .sort()
+            .map((route) => [route, merged[route]])
+        ),
+        null,
+        1
+      ) + '\n'
+    );
+  } else {
+    const mine = Object.fromEntries(
+      Object.keys(onDisk)
+        .filter(MINE)
+        .sort()
+        .map((route) => [route, onDisk[route]])
+    );
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for the counter routes', kit.sameValue(mine, coverage), {
+      onDisk: Object.keys(mine).length,
+      covered: Object.keys(coverage).length
+    });
+  }
+  console.log('\n  ' + tally.passed + ' checks, ' + tally.failed + ' failed');
+  process.exit(tally.failed ? 1 : 0);
+})();

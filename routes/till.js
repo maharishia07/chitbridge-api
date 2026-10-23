@@ -23,6 +23,8 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a pa
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { said, badRequest, notFound, noCounter, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
 const {
   round: roundMoney
@@ -155,7 +157,7 @@ async function holdsStockOf(entity_id) {
     return null;
   }
 }
-router.get('/snapshot', auth, async (req, res) => {
+router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
   try {
     /**
      * ⚠️⚠️ [REV-16] "the delta cursor is stamped after the read, so edits vanish permanently." Taken HERE, before
@@ -1096,7 +1098,7 @@ router.get('/snapshot', auth, async (req, res) => {
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
     res.json(screen ? screenView(body) : body);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1125,27 +1127,27 @@ router.get('/snapshot', auth, async (req, res) => {
  * ⚠️ THE STAMP IS THE CATALOGUE'S OWN (itemstatus.stamp), so a status set at the counter is indistinguishable in shape from one
  * set on the product page — one status model, not a counter dialect of it.
  */
-router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/stock', auth, auth.requireScope('till'), ...checked('POST /stock'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const item_id = String((req.body && req.body.item_id) || '');
     const status = String((req.body && req.body.status) || '').toLowerCase();
-    if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
+    if (!item_id) return problem(req, res, { status: 400, ...badRequest('item_id required') });
     /* ⚠️ available and unavailable ONLY. 'retired' and 'redundant' carry an argument — what replaced it, until when — and nobody
        makes that call standing at a till with a customer waiting. The same two the bulk screen offers, for the same reason. */
     if (['available', 'unavailable'].indexOf(status) < 0)
-      return res.status(400).json({ error: 'validation', message: "status must be 'available' or 'unavailable'" });
+      return problem(req, res, { status: 400, ...badRequest("status must be 'available' or 'unavailable'") });
     const rec = itemstatus.stamp(
       { status, until: (req.body && req.body.until) || undefined, note: (req.body && req.body.note) || undefined },
       { actor_name: (req.body && req.body.by) || 'the counter' }
     );
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id, merge: rec }], { returning: 'item_id, item_data' }));
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...notFound() });
     shopChanged(entity_id, 'stock ' + status);
     const d = r.rows[0].item_data || {};
     res.json({ ok: true, item_id, name: d.name || null, status });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1171,18 +1173,18 @@ router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
  * when it is not. [[feedback-silence-is-the-bug]]
  */
 const STOCK_BULK_MAX = 500;
-router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/stock/bulk', auth, auth.requireScope('till'), ...checked('POST /stock/bulk'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body && typeof req.body === 'object' ? req.body : {};
     const ids = Array.isArray(b.item_ids) ? b.item_ids.map((x) => String(x || '')).filter(Boolean) : [];
     const status = String(b.status || '').toLowerCase();
-    if (!ids.length) return res.status(400).json({ error: 'validation', message: 'item_ids required' });
+    if (!ids.length) return problem(req, res, { status: 400, ...badRequest('item_ids required') });
     if (ids.length > STOCK_BULK_MAX) {
-      return res.status(400).json({ error: 'Too many', message: 'At most ' + STOCK_BULK_MAX + ' products in one change.' });
+      return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + STOCK_BULK_MAX + ' products in one change.') });
     }
     if (['available', 'unavailable'].indexOf(status) < 0)
-      return res.status(400).json({ error: 'validation', message: "status must be 'available' or 'unavailable'" });
+      return problem(req, res, { status: 400, ...badRequest("status must be 'available' or 'unavailable'") });
 
     const rec = itemstatus.stamp({ status, note: b.note || undefined }, { actor_name: b.by || 'the counter' });
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids, merge: rec }));
@@ -1203,7 +1205,7 @@ router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => 
         '.'
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1235,11 +1237,11 @@ router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => 
  * ⚠️ IT ACCEPTS FACTS, NOT PROSE. Counts, flags, reasons and bill numbers — capped, and never a customer name, a
  * phone number or a line item, because a shop's sales are not ours to collect on a support call.
  */
-router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/diagnostic', auth, auth.requireScope('till'), ...checked('POST /diagnostic'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const jti = req.till && req.till.key && req.till.key.jti;
-    if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can report itself.' });
+    if (!jti) return problem(req, res, { status: 400, ...badRequest('Only a paired counter can report itself.') });
     const b = req.body || {};
     const num = (v, cap) => Math.max(0, Math.min(Number(v) || 0, cap || 100000));
     const str = (v, n) => (v == null ? null : String(v).slice(0, n || 200));
@@ -1265,10 +1267,10 @@ router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => 
       agent: str(req.headers['user-agent'], 160)
     };
     const diag = await require('./keys').setDiag(entity_id, jti, patch);
-    if (!diag) return res.status(404).json({ error: 'Not found', message: 'This key is not listed for the shop.' });
+    if (!diag) return problem(req, res, { status: 404, ...notFound('This key is not listed for the shop.') });
     res.json({ ok: true, code: diag.code, at: diag.at });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 /**
@@ -1285,15 +1287,15 @@ router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => 
  * ⚠️ A TILL KEY MAY CLOSE ONLY ITSELF. Keys still cannot manage keys; ending your own is the one exception, and it
  * can only ever make a leaked key less useful.
  */
-router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/close', auth, auth.requireScope('till'), ...checked('POST /close'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const jti = req.till && req.till.key && req.till.key.jti;
-    if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can close itself.' });
+    if (!jti) return problem(req, res, { status: 400, ...badRequest('Only a paired counter can close itself.') });
     const b = req.body || {};
     const list = await keys.listOf(entity_id);
     const me = list.find((item) => item && String(item.jti) === String(jti));
-    if (!me) return res.status(404).json({ error: 'Not found', message: 'This counter is not listed for the shop.' });
+    if (!me) return problem(req, res, { status: 404, ...notFound('This counter is not listed for the shop.') });
     const till = Object.assign({}, me.till || {}, {
       closed_at: new Date().toISOString(),
       closed_ip: String(req.ip || '').slice(0, 45) || null,
@@ -1337,7 +1339,7 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
     }
     res.json({ ok: true, closed_at: till.closed_at, prefix: till.id || null });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 /**
@@ -1346,7 +1348,7 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
  * can take the series while unsent bills may still be here. This only tells the shop's Counters screen what it would
  * see if it walked over. Best effort — a break never waits for the line.
  */
-router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/state', auth, auth.requireScope('till'), ...checked('POST /state'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const jti = req.till && req.till.key && req.till.key.jti;
@@ -1369,20 +1371,20 @@ router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
     });
     res.json({ ok: true, recorded: true, state });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
-router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/flags', auth, auth.requireScope('till'), ...checked('POST /flags'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const item_id = String(b.item_id || '');
-    if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
+    if (!item_id) return problem(req, res, { status: 400, ...badRequest('item_id required') });
 
     let merge;
     if (b.offer_id != null) merge = null; /* the list is read under the row lock below */
     else if (b.screen !== undefined) merge = { screen: b.screen === true || b.screen === 'true' };
-    else return res.status(400).json({ error: 'validation', message: 'nothing to set — pass screen, or offer_id with excluded' });
+    else return problem(req, res, { status: 400, ...badRequest('nothing to set — pass screen, or offer_id with excluded') });
 
     const r = await withEntity(entity_id, async (db) => {
       if (b.offer_id != null) {
@@ -1401,7 +1403,7 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
       }
       return catwrite.patchItems(db, entity_id, [{ item_id, merge }], { returning: 'item_id, item_data' });
     });
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...notFound() });
     const d = r.rows[0].item_data || {};
     /* ⭐ the shop screen and every open counter hear about it on the same bell a price change rides */
     shopChanged(entity_id, b.offer_id != null ? 'offer opt-out' : 'screen pick');
@@ -1413,7 +1415,7 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
       screen: d.screen === true
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1446,54 +1448,54 @@ const qk = require('../lib/quick-keys');
  * offered "Front desk, Take-away" to the person standing at Front desk). The key knows, because the register
  * binds it; so the server says, and the page filters on `me` rather than guessing at its own name.
  */
-router.get('/counters', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/counters', auth, auth.requireScope('till'), ...checked('GET /counters'), async (req, res) => {
   try {
     const counters = await require('./counters').listNarrow(auth.entityOf(req));
     res.json({ counters, me: await counterOfReq(req) });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.get('/quick-keys/groups', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/quick-keys/groups', auth, auth.requireScope('till'), ...checked('GET /quick-keys/groups'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const groups = await withEntity(entity_id, (db) => qk.listGroups(db, entity_id));
     res.json({ groups });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.get('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/quick-keys/state', auth, auth.requireScope('till'), ...checked('GET /quick-keys/state'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
-    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    if (!counter_id) return problem(req, res, { status: 403, ...noCounter() });
     const business_date = String(req.query.business_date || '').trim();
-    if (!business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
+    if (!business_date) return problem(req, res, { status: 400, ...badRequest('business_date required') });
     const state = await withEntity(entity_id, (db) => qk.getActiveGroups(db, entity_id, counter_id, business_date));
     res.json(state);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.post('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/quick-keys/state', auth, auth.requireScope('till'), ...checked('POST /quick-keys/state'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
-    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    if (!counter_id) return problem(req, res, { status: 403, ...noCounter() });
     const b = req.body || {};
-    if (!b.business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
+    if (!b.business_date) return problem(req, res, { status: 400, ...badRequest('business_date required') });
     const state = await withEntity(entity_id, (db) => qk.setActiveGroups(db, entity_id, counter_id, b.business_date, b.shift_id, b.active_group_ids));
     res.json(state);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/quick-keys/hidden', auth, auth.requireScope('till'), ...checked('GET /quick-keys/hidden'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
@@ -1502,61 +1504,61 @@ router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, re
     const hidden = await withEntity(entity_id, (db) => qk.listHidden(db, entity_id, counter_id));
     res.json({ hidden });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
 /* ⚠️ IDEMPOTENT ON PURPOSE — a queued offline write can replay, and re-hiding an already-hidden item must be a
    no-op, never a conflict. also_counters (decision 3): the OTHER counters a person chose in the "also mark sold
    out on...?" prompt; this counter itself is always included. */
-router.post('/quick-keys/hide', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/quick-keys/hide', auth, auth.requireScope('till'), ...checked('POST /quick-keys/hide'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
-    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    if (!counter_id) return problem(req, res, { status: 403, ...noCounter() });
     const b = req.body || {};
-    if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
+    if (!b.product_id) return problem(req, res, { status: 400, ...badRequest('product_id required') });
     const rows = await withEntity(entity_id, (db) => qk.hideItem(db, entity_id, counter_id, b.product_id, b.shift_id, b.by || null, b.also_counters));
     res.json({ hidden: rows });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.post('/quick-keys/unhide', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/quick-keys/unhide', auth, auth.requireScope('till'), ...checked('POST /quick-keys/unhide'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
-    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    if (!counter_id) return problem(req, res, { status: 403, ...noCounter() });
     const b = req.body || {};
-    if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
+    if (!b.product_id) return problem(req, res, { status: 400, ...badRequest('product_id required') });
     const r = await withEntity(entity_id, (db) => qk.unhideItem(db, entity_id, counter_id, b.product_id, b.also_counters));
     res.json(r);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), ...checked('GET /quick-keys/screen-config'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
     const cfg = await withEntity(entity_id, (db) => qk.getScreenConfig(db, entity_id, counter_id));
     res.json(cfg);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), ...checked('POST /quick-keys/screen-config'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
-    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    if (!counter_id) return problem(req, res, { status: 403, ...noCounter() });
     const cfg = await withEntity(entity_id, (db) => qk.setScreenConfig(db, entity_id, counter_id, (req.body || {}).config, null));
     res.json(cfg);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1602,7 +1604,7 @@ router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), async 
  * ⚠️ AND IT NEVER INVENTS AN URGENCY. "Soon" is not one number — milk is hours, biscuits are weeks — so the caller
  * passes the window and the counter takes it from the shop's own sector, the same place lotfields reads.
  */
-router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/worth-an-offer', auth, auth.requireScope('till'), ...checked('GET /worth-an-offer'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.max(1, Math.min(180, Number(req.query.days) || 14));
@@ -1709,18 +1711,18 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
       basis: 'expiry recorded at goods-in, and the last time each product was on a bill'
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /offer-item'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const offer_id = String(b.offer_id || '');
     const item_id = String(b.item_id || '');
     const on = b.on === true || b.on === 'true';
-    if (!offer_id || !item_id) return res.status(400).json({ error: 'validation', message: 'offer_id and item_id required' });
+    if (!offer_id || !item_id) return problem(req, res, { status: 400, ...badRequest('offer_id and item_id required') });
 
     const out = await withEntity(entity_id, async (db) => {
       const cur = await db.query(
@@ -1764,31 +1766,31 @@ router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => 
       return { ok: true, name: d.name, version };
     });
 
-    if (out.missing) return res.status(404).json({ error: 'Not found' });
-    if (out.refused) return res.status(400).json({ error: 'validation', message: out.refused });
+    if (out.missing) return problem(req, res, { status: 404, ...notFound() });
+    if (out.refused) return problem(req, res, { status: 400, ...badRequest(out.refused) });
     shopChanged(entity_id, 'offer ' + (on ? 'added to' : 'removed from') + ' a product');
     res.json(Object.assign({ ok: true, offer_id, item_id, on }, out));
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const item_id = String((req.body && req.body.item_id) || '');
     const price = Number(req.body && req.body.price);
-    if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
-    if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'validation', message: 'price must be a number, zero or more' });
+    if (!item_id) return problem(req, res, { status: 400, ...badRequest('item_id required') });
+    if (!Number.isFinite(price) || price < 0) return problem(req, res, { status: 400, ...badRequest('price must be a number, zero or more') });
     /* [OFFR-04] a price typed at the counter is the same write as PATCH /products — the same gate (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['price']);
-    if (refused) return res.status(403).json(refused);
+    if (refused) return problem(req, res, { status: 403, ...relayed(refused) });
     /* W1-TILL: the shop's money through the ONE reader (country-setup.shopMoney — its own, else its pack's; as /snapshot and connectors read it).
        A shop nobody gave money is REFUSED with the one sentence (NO_MONEY) — never INR written into a price by name. One identities read, as before. */
     const shopRow = await query('SELECT currency_code, country FROM identities WHERE identity_id = $1', [entity_id]);
     const shop = shopRow.rows[0] || {};
     const currency = countrySetup.shopMoney(shop.currency_code, shop.country);
-    if (!currency) return res.status(422).json({ error: 'refused', code: 'NO_MONEY', message: countrySetup.MONEY_UNSTATED });
+    if (!currency) return problem(req, res, { status: 422, ...said('NO_MONEY', 'refused', countrySetup.MONEY_UNSTATED) });
     /**
      * ⚠️ A PRICE IS MONEY, NOT A NUMBER — the catalogue stores { amount, currency }, and reading only the bare figure once gave a
      * counter a shelf of zeroes ([TILL-01]). It is written in the shape it is read in.
@@ -1809,11 +1811,11 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
       const u = await catwrite.patchItems(db, entity_id, [{ item_id, merge: patch }], { returning: 'item_data' });
       return { was, now: price, name: (u.rows[0].item_data || {}).name || null };
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return problem(req, res, { status: 404, ...notFound() });
     shopChanged(entity_id, 'price changed');
     res.json({ ok: true, item_id, name: out.name, was: out.was, now: out.now, currency });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1853,11 +1855,11 @@ const holderFrom = store.holderFrom;
  * the number a customer is quoted is the number the till can spend, always — and the entries it produces are
  * written the next time that balance is touched, so the ledger catches up on use rather than on a timer.
  */
-router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/reward', auth, auth.requireScope('till'), ...checked('GET /reward'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const holder = holderFrom({ scheme: req.query.scheme, value: req.query.value });
-    if (!holder) return res.status(400).json({ error: 'validation', message: 'scheme (identity|phone) and value required' });
+    if (!holder) return problem(req, res, { status: 400, ...badRequest('scheme (identity|phone) and value required') });
     const prog = await progOf(entity_id);
     if (!prog) return res.json({ ok: true, holder, programme: null, points: 0, entries: [] });
     /* the balance is the SUM of every entry (lib/reward-store.balanceOn), never a fold of the newest page */
@@ -1874,7 +1876,7 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
       entries: bal.entries
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1888,14 +1890,14 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
  * → 409 { code: 'BILL_NOT_RECORDED', message } when the server holds no such bill yet — the shop-PC queue retries it after
  *   the bill lands; the web counter had the bill answered before it asked. Nothing is written on a refusal.
  */
-router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/reward', auth, auth.requireScope('till'), ...checked('POST /reward'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const body = req.body || {};
     const ref = String(body.ref || '')
       .trim()
       .slice(0, 64);
-    if (!ref) return res.status(400).json({ error: 'validation', message: 'ref (the bill number) required' });
+    if (!ref) return problem(req, res, { status: 400, ...badRequest('ref (the bill number) required') });
     const holder = holderFrom(body.holder || body.customer);
     /* ⚠️ NOT AN ERROR. A walk-in who gave no number is the commonest bill in the shop; it earns nothing and the
        counter says so in one line. Returning 400 here would put a red box on an ordinary sale. */
@@ -1931,8 +1933,8 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
       says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {})
     });
   } catch (e) {
-    if (e && e.code === 'BILL_NOT_RECORDED') return res.status(409).json({ error: 'conflict', code: e.code, message: e.say });
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    if (e && e.code === 'BILL_NOT_RECORDED') return problem(req, res, { status: 409, ...said(e.code, 'conflict', e.say) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -1944,23 +1946,23 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
  * ⚠️ SOMEBODY AT THE COUNTER HAS TO ASK FOR IT. A phone number is not proof of identity, and an automatic merge
  * on a matching number would hand one person's balance to another who typed the same digits.
  */
-router.post('/reward/claim', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/reward/claim', auth, auth.requireScope('till'), ...checked('POST /reward/claim'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const from = holderFrom(b.from),
       to = holderFrom(b.to);
-    if (!from || !to) return res.status(400).json({ error: 'validation', message: 'from and to holders required' });
+    if (!from || !to) return problem(req, res, { status: 400, ...badRequest('from and to holders required') });
     const prog = await progOf(entity_id);
-    if (!prog) return res.status(400).json({ error: 'validation', message: 'this shop runs no programme' });
+    if (!prog) return problem(req, res, { status: 400, ...badRequest('this shop runs no programme') });
     const ref = String(b.ref || 'claim-' + Date.now()).slice(0, 64);
     /* ⭐ ALL OR NOTHING (lib/reward-store.claim): both holders locked, the balance read, both halves written in ONE transaction */
     const c = await store.claim(entity_id, from, to, ref, prog, withEntity);
-    if (!c.ok) return res.status(400).json({ error: 'validation', message: c.why });
+    if (!c.ok) return problem(req, res, { status: 400, ...badRequest(c.why) });
     res.json({ ok: true, moved: c.points, from: from, to: to });
   } catch (e) {
-    if (e && e.code === 'CLAIM_RECORDED') return res.status(409).json({ error: 'conflict', code: e.code, message: e.say });
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    if (e && e.code === 'CLAIM_RECORDED') return problem(req, res, { status: 409, ...said(e.code, 'conflict', e.say) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2009,7 +2011,7 @@ function pairCode() {
 }
 
 /** the shop asks for a code — one per screen, so two televisions can be revoked apart */
-router.post('/pair', auth, async (req, res) => {
+router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
   try {
     pairSweep();
     /* ⚠️ A KEY MAY NOT MINT A KEY. Pairing hands out authority, so it is gated to a signed-in person exactly as authoring a
@@ -2028,7 +2030,7 @@ router.post('/pair', auth, async (req, res) => {
      */
     const tk = req.till && req.till.key; /* M04 — the holder, not req.api_key (middleware/auth holderOf) */
     const viaCounter = !!(tk && tk.scopes.includes('till'));
-    if (!req.identity || (tk && !viaCounter)) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to pair a screen.' });
+    if (!req.identity || (tk && !viaCounter)) return problem(req, res, { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.') });
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
@@ -2036,7 +2038,7 @@ router.post('/pair', auth, async (req, res) => {
     PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires, parent: viaCounter ? tk.jti : null });
     res.json({ code, expires_at: new Date(expires).toISOString(), minutes: Math.round(PAIR_TTL_MS / 60000) });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2062,10 +2064,10 @@ router.post('/pair', auth, async (req, res) => {
  * `bridge_id: null`. The counter names its own data folder from the bridge_id inside its key ([TILL-120]) so it
  * can tell one shop from another with no network at all — a key without one falls back to an unreadable hash.
  */
-router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), async (req, res) => {
+router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), ...checked('POST /enrol'), async (req, res) => {
   /* SEC-FIX3 S9 */
   try {
-    if (!req.identity || req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to connect a counter.' });
+    if (!req.identity || req.api_key) return problem(req, res, { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to connect a counter.') });
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
     const id = me.rows[0] || {};
@@ -2097,7 +2099,7 @@ router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), 
       /* ⚠️ ONLY WHEN ASKED IN WORDS. The counter shows who holds it and what taking it costs them first. */
       takeover: !!(req.body && req.body.takeover)
     });
-    if (claimed.status !== 200) return res.status(claimed.status).json(claimed.body);
+    if (claimed.status !== 200) return problem(req, res, { status: claimed.status, ...relayed(claimed.body) });
     const minted = { key: claimed.key };
     res.json({
       key: minted.key,
@@ -2111,18 +2113,18 @@ router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), 
       shop: { entity_id, bridge_id: id.bridge_id || null, name: id.display_name || null }
     });
   } catch (e) {
-    res.status(e && e.status === 400 ? 400 : 500).json({ error: 'Failed', message: String(e && e.message) });
+    problem(req, res, refusalOf(e, req));
   }
 });
 
 /** the screen exchanges it — no key, because it does not have one yet; that is the entire point */
-router.post('/pair/claim', async (req, res) => {
+router.post('/pair/claim', ...checked('POST /pair/claim'), async (req, res) => {
   try {
     pairSweep();
     const ip = String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || 'unknown').trim();
     const miss = PAIR_MISSES.get(ip);
     if (miss && miss.n >= 8 && miss.until > Date.now())
-      return res.status(429).json({ error: 'Too many', message: 'Too many wrong codes. Wait a minute and try again.' });
+      return problem(req, res, { status: 429, ...said('PAIR_TOO_MANY_TRIES', 'Too many', 'Too many wrong codes. Wait a minute and try again.') });
 
     const code = String((req.body && req.body.code) || '')
       .toUpperCase()
@@ -2133,7 +2135,7 @@ router.post('/pair/claim', async (req, res) => {
       m.n += 1;
       m.until = Date.now() + 60000;
       PAIR_MISSES.set(ip, m);
-      return res.status(404).json({ error: 'No such code', message: 'That code is wrong or has expired. Ask ChitBridge for a new one.' });
+      return problem(req, res, { status: 404, ...said('PAIR_CODE_UNKNOWN', 'No such code', 'That code is wrong or has expired. Ask ChitBridge for a new one.') });
     }
     /* ⚠️ SPENT THE MOMENT IT IS READ, before the key is even minted — if minting fails the code is still gone, which is the
        safe way round: a code that survives a failure is a code somebody can retry. */
@@ -2147,7 +2149,7 @@ router.post('/pair/claim', async (req, res) => {
     PAIR_MISSES.delete(ip);
     res.json({ key: minted.key, shop: { entity_id: got.entity_id, name: got.name } });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2161,7 +2163,7 @@ router.post('/pair/claim', async (req, res) => {
  * nor revocable here, so a counter can never see or switch off another counter or a connector.
  * ⚠️ The key itself is never returned — only its name, dates and last four characters, as the keys screen shows.
  */
-router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/screens', auth, auth.requireScope('till'), ...checked('GET /screens'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const list = await keys.listOf(entity_id);
@@ -2177,14 +2179,14 @@ router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
     }));
     res.json({ screens, count: screens.length, limit: 20, keys_used: list.filter((item) => !(item && item.till && item.till.closed_at)).length });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
-router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/screens/revoke', auth, auth.requireScope('till'), ...checked('POST /screens/revoke'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const jti = String((req.body && req.body.jti) || '');
-    if (!jti) return res.status(400).json({ error: 'validation', message: 'Which screen?' });
+    if (!jti) return problem(req, res, { status: 400, ...badRequest('Which screen?') });
     let found = false,
       refused = false;
     await require('../db').withTransaction(async (db) => {
@@ -2200,12 +2202,12 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res)
       found = true;
       await policy.patchKey(db, entity_id, [], { api_keys: list.filter((x) => String(x.jti) !== jti) }, { op: 'merge' });
     });
-    if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be switched off from the counter.' });
-    if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
+    if (refused) return problem(req, res, { status: 403, ...said('TILL_SCREEN_ONLY', 'Forbidden', 'Only a shop screen can be switched off from the counter.') });
+    if (!found) return problem(req, res, { status: 404, ...notFound('That screen is no longer paired.') });
     auth.forgetKey(jti);
     res.json({ ok: true, jti, message: 'That screen is switched off. It stops showing the sign within a minute.' });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2213,14 +2215,14 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res)
  * POST /api/till/screens/rename — { jti, name }: give a paired screen its own name (M151). Screen keys only, like revoke;
  * one transaction, one lock + one write on the shop row. An empty name puts the default ("Screen 1/2…", said by the till) back.
  */
-router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/screens/rename', auth, auth.requireScope('till'), ...checked('POST /screens/rename'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const jti = String((req.body && req.body.jti) || '');
     const name = String((req.body && req.body.name) || '')
       .trim()
       .slice(0, 40);
-    if (!jti) return res.status(400).json({ error: 'validation', message: 'Which screen?' });
+    if (!jti) return problem(req, res, { status: 400, ...badRequest('Which screen?') });
     let found = false,
       refused = false;
     await require('../db').withTransaction(async (db) => {
@@ -2237,12 +2239,12 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
       const next = list.map((x) => (String(x.jti) === jti ? Object.assign({}, x, { name: name || null }) : x));
       await policy.patchKey(db, entity_id, [], { api_keys: next }, { op: 'merge' });
     });
-    if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be renamed from the counter.' });
-    if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
+    if (refused) return problem(req, res, { status: 403, ...said('TILL_SCREEN_ONLY', 'Forbidden', 'Only a shop screen can be renamed from the counter.') });
+    if (!found) return problem(req, res, { status: 404, ...notFound('That screen is no longer paired.') });
     auth.forgetKey(jti);
     res.json({ ok: true, jti, name: name || null });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2281,7 +2283,7 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
  *
  * ⚠️ ONE QUERY for the whole batch. ⚠️ Read-only: it answers, the counter decides and re-sends.
  */
-router.post('/reconcile', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/reconcile', auth, auth.requireScope('till'), ...checked('POST /reconcile'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const list = (Array.isArray(req.body && req.body.bills) ? req.body.bills : [])
@@ -2316,11 +2318,11 @@ router.post('/reconcile', auth, auth.requireScope('till'), async (req, res) => {
     });
     res.json({ checked: out.length, bills: out });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/verify', auth, auth.requireScope('till'), ...checked('GET /verify'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
@@ -2361,7 +2363,7 @@ router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
     });
     res.json({ total, at: new Date().toISOString(), shop: { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null }, sample });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2410,7 +2412,7 @@ const TILL_SHOP_REFUSED = {
   currency: 'the currency belongs to the whole installation, not to a counter — changing it here would relabel every price rather than convert it',
   reg_type: 'regular or composition is a registration held with the tax authority, and it decides whether tax is charged at all'
 };
-router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
+router.post('/shop', auth, auth.requireScope('till'), ...checked('POST /shop'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body && typeof req.body === 'object' ? req.body : {};
@@ -2452,27 +2454,22 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
       const cc = String(before.country || '').toUpperCase();
       /* GOV-AU1: a shop with no country has no tax number check to run — it is asked, never checked as India's */
       if (!cc)
-        return res.status(400).json({
-          error: 'validation',
-          field: 'gstin',
-          code: 'NO_COUNTRY',
-          message: 'Set the shop\u2019s country first (Country setup) — the tax number is checked by its law.'
+        return problem(req, res, {
+          status: 400,
+          ...said('NO_COUNTRY', 'validation', 'Set the shop\u2019s country first (Country setup) — the tax number is checked by its law.', { field: 'gstin' })
         });
       if (cc !== 'IN') {
         const id = require('../lib/country').taxId(cc); /* R5: the registry's check — AU/AE adapters, a new country's own taxId */
         const ck = id.check ? id.check(g) : { ok: true };
-        if (!ck.ok) return res.status(400).json({ error: 'validation', field: 'gstin', message: ck.why || 'That tax number does not check out.' });
+        if (!ck.ok) return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'validation', ck.why || 'That tax number does not check out.', { field: 'gstin' }) });
       } else {
         const chk = require('../lib/profile-map').gstinChecksum(g);
         if (!chk.ok) {
-          return res.status(400).json({
-            error: 'validation',
-            field: 'gstin',
-            message:
-              chk.reason === 'format'
-                ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
-                : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.'
-          });
+          const words =
+            chk.reason === 'format'
+              ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
+              : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.';
+          return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'validation', words, { field: 'gstin' }) });
         }
       }
       b.gstin = g; /* stored upper-cased, the one form every reader already assumes */
@@ -2522,7 +2519,7 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
     const after = (await cbProfile.invoiceParty(entity_id)) || {};
     res.json({ ok: true, changed: changed, refused: refused, shop: after, by: source, at: as_of });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2540,7 +2537,7 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
  * everything else `lib/stock-store.js` already says about v1. A tracked product's balance is still the sum
  * across its batches, which is exactly what "total qty" asks for.
  */
-router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const stockStore = require('../lib/stock-store');
@@ -2578,7 +2575,7 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
     res.json({ balances: out, at: new Date().toISOString() });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2604,7 +2601,7 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
  * connect."* The counter's offline job stays what [TILL-106] proved: selling what it already holds.
  */
 /* ⚠️ a whole starter catalogue, or a whole uploaded list — a bulk door, and limited as one ([TILL-112]) */
-router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter, async (req, res) => {
+router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter, ...checked('POST /catalogue'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const text = req.body && typeof req.body === 'object' ? req.body : {};
@@ -2618,12 +2615,8 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
      */
     const have = await nestedCatwrite.countItems(entity_id);
     if (have > 0 && text.replace !== true) {
-      return res.status(409).json({
-        error: 'not empty',
-        message:
-          'This shop already has ' + have + ' product' + (have === 1 ? '' : 's') + '.' + ' Starting a catalogue again would add a second copy of each one.',
-        have: have
-      });
+      const words = 'This shop already has ' + have + ' product' + (have === 1 ? '' : 's') + '.' + ' Starting a catalogue again would add a second copy of each one.';
+      return problem(req, res, { status: 409, ...said('CATALOGUE_NOT_EMPTY', 'not empty', words, { have: have }) });
     }
 
     const existing = await nestedCatwrite.codesInUse(entity_id);
@@ -2639,21 +2632,17 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
       refused = out.refused;
       from = 'file';
       if (!items.length) {
-        return res.status(400).json({ error: 'nothing to add', message: 'Not one row had both a name and a price.', refused: refused });
+        return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'nothing to add', 'Not one row had both a name and a price.', { refused: refused }) });
       }
     } else {
       const bp = BP.blueprint(text.blueprint);
       if (bp.key === 'general' && text.blueprint) {
-        return res.status(400).json({
-          error: 'unknown trade',
-          message: 'There is no product list called "' + String(text.blueprint).slice(0, 40) + '".',
-          choices: Object.keys(BP.BLUEPRINTS)
-        });
+        const words = 'There is no product list called "' + String(text.blueprint).slice(0, 40) + '".';
+        return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'unknown trade', words, { choices: Object.keys(BP.BLUEPRINTS) }) });
       }
       if (!bp.starter.length) {
-        return res
-          .status(400)
-          .json({ error: 'nothing to mint', message: 'Choose a product list, or send the products you want added.', choices: Object.keys(BP.BLUEPRINTS) });
+        const words = 'Choose a product list, or send the products you want added.';
+        return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'nothing to mint', words, { choices: Object.keys(BP.BLUEPRINTS) }) });
       }
       items = BP.mint(bp.key, existing);
       from = 'blueprint:' + BP.pin(bp);
@@ -2678,9 +2667,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
       } catch (e) {
         /* ⚠⚠ SAID, NOT SWALLOWED. Without ids the products would be written uncategorised, and a shop would
            find a flat wall of goods with nothing to say why. */
-        return res
-          .status(500)
-          .json({ error: 'Failed', message: 'Your categories could not be set up, so nothing was added. ' + String(e && e.message).slice(0, 120) });
+        return problem(req, res, categoriesFailed(e, req));
       }
     }
     items = items.map((item) => {
@@ -2694,7 +2681,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
     });
 
     const w = await nestedCatwrite.writeItems({ entity_id, items: items });
-    if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
+    if (!w.ok) return problem(req, res, { status: w.status || 400, ...said('TILL_BAD_REQUEST', w.error, w.message, { invalid: w.invalid }) });
 
     /* ⭐ the shop screen and every open counter hear it on the same bell a price change rides */
     try {
@@ -2718,12 +2705,12 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
         (refused.length ? ', and ' + refused.length + ' row' + (refused.length === 1 ? '' : 's') + ' could not be' : '')
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
 /** ⭐ what a counter may start from — the trades, their outcomes, and what the axiom actually is */
-router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req, res) => {
+router.get('/catalogue/blueprints', auth, auth.requireScope('till'), ...checked('GET /catalogue/blueprints'), async (req, res) => {
   try {
     const BP = require('../lib/catalogue-blueprint');
     const nestedCatwrite = require('../lib/catalogue-write');
@@ -2753,7 +2740,7 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
       })
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2789,14 +2776,15 @@ const SUMMARY_BILLS = 60,
  * the shop's year + the summaries). 422 NO_COUNTRY / NO_MONEY with the one sentence when the shop's country, money or year is unstated.
  * Who may call: the shop's own session or key (auth, own entity, RLS through readBatch). Without compare=1 the answer is unchanged.
  */
-router.get('/summary', auth, async (req, res) => {
+router.get('/summary', auth, ...checked('GET /summary'), async (req, res) => {
   try {
     const rollup = require('../lib/rollup'),
       TS = require('../lib/till-summary');
     const entity_id = auth.entityOf(req);
     if (req.query.compare === '1') {
       const out = await TS.trend(entity_id, req.identity && req.identity.identity_id, { period: req.query.period, n: req.query.n, now: Date.now() });
-      return res.status(out.status).json(out.body);
+      if (out.status !== 200) return problem(req, res, { status: out.status, ...relayed(out.body) }); // the trend's refusals (400 BAD_PERIOD, 422 NO_COUNTRY / NO_MONEY) keep its own codes and words
+      return res.json(out.body);
     }
     const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
     const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX); /* the one clamp */
@@ -2817,13 +2805,13 @@ router.get('/summary', auth, async (req, res) => {
       counters: Array.from(new Set(r.rows.map((x) => (((x.business_json || {}).summary || {}).till || {}).id).filter(Boolean))).sort()
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
 const BILLS_PAGE = 100,
   BILLS_MAX = 500; /* the day report's bills: the statement always cuts at the page */
-router.get('/bills', auth, async (req, res) => {
+router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
@@ -2908,7 +2896,7 @@ router.get('/bills', auth, async (req, res) => {
       .filter((x) => x.no && (!by || (x.by && x.by.id === by)));
     res.json(Object.assign({ days, count: rows.length }, PL.pageOut('bills', rows, pg, rows.length)));
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2930,7 +2918,7 @@ const select = require('../lib/select'); /* ⭐ the shared selector: one definit
 const { sideOf } = require('../lib/open-orders'); /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
 const TASKS_PAGE = 40,
   TASKS_MAX = 100; /* the counter's open-order tasks */
-router.get('/tasks', auth, async (req, res) => {
+router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
@@ -2938,7 +2926,7 @@ router.get('/tasks', auth, async (req, res) => {
     const out = await require('../lib/open-orders').tasks(entity_id, kind, limit);
     res.json({ kind, count: out.length, tasks: out, total: out.length, page: 1, limit });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -2959,7 +2947,7 @@ router.get('/tasks', auth, async (req, res) => {
  * ⚠️ RECEIVED comes from lib/deliverline (events, never a stored total), so a part delivery, a correction, or the counterparty's own
  * claim are all already in it.
  */
-router.get('/match', auth, async (req, res) => {
+router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '90', 10) || 90, 1), 365);
@@ -3126,7 +3114,7 @@ router.get('/match', auth, async (req, res) => {
       );
     res.json(Object.assign({ days, count: out.length }, PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -3144,19 +3132,19 @@ router.get('/match', auth, async (req, res) => {
  * ⚠️ THE NARROWEST POSSIBLE WRITE. A till key cannot touch products; this endpoint can append an alias and do nothing else, which is
  * why it exists rather than widening the scope to PATCH /api/products.
  */
-router.post('/alias', auth, async (req, res) => {
+router.post('/alias', auth, ...checked('POST /alias'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const item_id = String(b.item_id || '').trim();
     const text = String(b.text || '').trim();
     const by = String(b.by || '').trim();
-    if (!item_id || !text) return res.status(400).json({ error: 'an alias needs an item and the words the supplier uses' });
-    if (text.length > 120 || by.length > 120) return res.status(400).json({ error: 'too long' });
+    if (!item_id || !text) return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'an alias needs an item and the words the supplier uses') });
+    if (text.length > 120 || by.length > 120) return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'too long') });
     const unit = b.unit ? String(b.unit).trim().slice(0, 24) : null;
     const factor = b.factor == null || b.factor === '' ? null : Number(b.factor);
     if (factor != null && (!Number.isFinite(factor) || factor <= 0 || factor > 100000))
-      return res.status(400).json({ error: 'a pack conversion is a positive number' });
+      return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'a pack conversion is a positive number') });
 
     const out = await withEntity(entity_id, async (db) => {
       const r = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2', [entity_id, item_id]);
@@ -3169,10 +3157,10 @@ router.post('/alias', auth, async (req, res) => {
       await catwrite.patchItems(db, entity_id, [{ item_id, merge: { aliases: kept } }]);
       return kept;
     });
-    if (!out) return res.status(404).json({ error: 'no such product' });
+    if (!out) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'no such product') });
     res.json({ ok: true, aliases: out });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
@@ -3187,7 +3175,7 @@ router.post('/alias', auth, async (req, res) => {
  * recogniser — a microphone must never be the reason a sale stops.
  * ⚠️ AND IT IS RATE-LIMITED BY SIZE, not by a counter: two megabytes is about a minute, and a counter says three seconds at a time.
  */
-router.post('/listen', auth, async (req, res) => {
+router.post('/listen', auth, ...checked('POST /listen'), async (req, res) => {
   try {
     const b = req.body || {};
     const raw = String(b.audio || '');
@@ -3253,9 +3241,9 @@ const ENGINES = {
   verdict: '../lib/verdict.js' /* ADOPTED — one file for node and the page */,
   qr: '../node_modules/qrcode-generator/qrcode.js'
 };
-router.get('/engine/:name', auth, (req, res) => {
+router.get('/engine/:name', auth, ...checked('GET /engine/:name'), (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
-  if (!rel) return res.status(404).json({ error: 'Not found' });
+  if (!rel) return problem(req, res, { status: 404, ...notFound() });
   try {
     const p = require('path').join(__dirname, rel);
     const body = require('fs').readFileSync(p, 'utf8');
@@ -3263,22 +3251,10 @@ router.get('/engine/:name', auth, (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.send(body);
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, failed(e, req));
   }
 });
 
-router.openapi = {
-  paths: {
-    '/api/till/snapshot': {
-      get: {
-        summary: 'Everything a counter needs to bill offline, in one call',
-        tags: ['till'],
-        security: [{ apiKey: [] }],
-        responses: { 200: { description: 'the shop, its items, offers, slabs and customers' } }
-      }
-    }
-  },
-  schemas: {}
-};
+router.openapi = { paths: pathsOf(), schemas: {} };
 
 module.exports = router;
