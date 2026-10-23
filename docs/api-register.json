@@ -97,7 +97,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents/:id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1922,
+   "line": 1924,
    "hash": "1b34207b0a69660c",
    "columns": {
     "schema_in": false,
@@ -2609,7 +2609,7 @@
    "path": "/api/catalogue/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1093,
+   "line": 1095,
    "hash": "baa5a1ee9cdc5a82",
    "columns": {
     "schema_in": true,
@@ -2642,7 +2642,7 @@
    "path": "/api/catalogue/:bridge_id/capture-fields",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1111,
+   "line": 1113,
    "hash": "d607d6f62eb7d0de",
    "columns": {
     "schema_in": true,
@@ -2675,7 +2675,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1901,
+   "line": 1903,
    "hash": "a016ada3fe93aabf",
    "columns": {
     "schema_in": false,
@@ -2703,7 +2703,7 @@
    "path": "/api/catalogue/:bridge_id/my-orders",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1875,
+   "line": 1877,
    "hash": "722b6a6522934dfd",
    "columns": {
     "schema_in": false,
@@ -2731,7 +2731,7 @@
    "path": "/api/catalogue/:bridge_id/support/preview",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1186,
+   "line": 1188,
    "hash": "e92723610f98cd45",
    "columns": {
     "schema_in": true,
@@ -2764,7 +2764,7 @@
    "path": "/api/catalogue/enquiry",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1048,
+   "line": 1050,
    "hash": "62f3cf03cfa45494",
    "columns": {
     "schema_in": false,
@@ -2794,7 +2794,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2011,
+   "line": 2013,
    "hash": "909446b9f8a2c3b5",
    "columns": {
     "schema_in": false,
@@ -2858,7 +2858,7 @@
    "path": "/api/catalogue/network/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 887,
+   "line": 889,
    "hash": "7e516fd50beb91fc",
    "columns": {
     "schema_in": true,
@@ -12258,7 +12258,7 @@
    "path": "/api/catalogue/:bridge_id/login/verify",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1825,
+   "line": 1827,
    "hash": "9d34219e5166cb7b",
    "columns": {
     "schema_in": true,
@@ -12293,7 +12293,7 @@
    "path": "/api/catalogue/:bridge_id/order/confirm",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1322,
+   "line": 1324,
    "hash": "060fac9633f19490",
    "columns": {
     "schema_in": true,
@@ -12331,7 +12331,7 @@
    "path": "/api/catalogue/:bridge_id/order/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1123,
+   "line": 1125,
    "hash": "622c83d3ce290ba1",
    "columns": {
     "schema_in": true,
@@ -12368,7 +12368,7 @@
    "path": "/api/catalogue/:bridge_id/support",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1263,
+   "line": 1265,
    "hash": "81696fd76afddafd",
    "columns": {
     "schema_in": true,
@@ -12404,7 +12404,7 @@
    "path": "/api/catalogue/:bridge_id/support/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1224,
+   "line": 1226,
    "hash": "7d9d4681880be122",
    "columns": {
     "schema_in": true,
@@ -12439,7 +12439,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2034,
+   "line": 2036,
    "hash": "e762f4cf80197ac2",
    "columns": {
     "schema_in": false,
@@ -12469,7 +12469,7 @@
    "path": "/api/catalogue/network-store/:networkId/order",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 749,
+   "line": 751,
    "hash": "dec4bb854d252554",
    "columns": {
     "schema_in": true,
@@ -12506,7 +12506,7 @@
    "path": "/api/catalogue/photo-extract",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1943,
+   "line": 1945,
    "hash": "213dfb21eec3556c",
    "columns": {
     "schema_in": false,

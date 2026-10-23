@@ -133,7 +133,7 @@ of file each thing is; this says what already does the job.
 | 17 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 17 | `group` | `identity.js` | again in a different costume. |
 | 17 | `match` | `itemmatch.js` | actually state. |
-| 17 | `known` | `knownerr.js` | known(err) → { status, body } · null |
+| 17 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `head` | `list-ctl.js` |  |
