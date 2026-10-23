@@ -310,6 +310,9 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/actors/suggest-key": {
+   "output_allowlist": true
+  },
   "GET /api/actors/check-login": {
    "output_allowlist": true
   },
@@ -319,6 +322,12 @@
   },
   "POST /api/actors/:id/otp": {
    "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "PUT /api/actors/:id/status": {
+   "foreign_id_404": true
+  },
+  "PUT /api/actors/assign/:chit_id": {
    "foreign_id_404": true
   },
   "PUT /api/actors/:id/delegate": {
