@@ -496,7 +496,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/integrations/profile | integrations | routes/integrations.js:994 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/invoice/build | invoice | routes/invoice.js:31 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/keys | keys | routes/keys.js:707 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/kyb/credential | kyb | routes/kyb.js:25 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/kyb/credential | kyb | routes/kyb.js:25 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/kyb/field | kyb | routes/kyb.js:49 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/network-design/build | network-design | routes/network-design.js:180 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/network-design/reissue | network-design | routes/network-design.js:278 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |

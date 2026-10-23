@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 618
+    "failing": 617
    },
    "foreign_id_404": {
     "applies": 227,
@@ -23550,7 +23550,7 @@
    "owner_area": "kyb",
    "file": "routes/kyb.js",
    "line": 25,
-   "hash": "7b1720826895f588",
+   "hash": "976dde317ef747f8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -23560,7 +23560,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,

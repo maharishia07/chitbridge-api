@@ -58,7 +58,14 @@ const WORLDS = [
   { id: 'nothing-found', setup: {} }
 ];
 const sources = () => ({ kyb: require(path.join(HERE, 'lib', 'kyb')), readiness: require(path.join(HERE, 'lib', 'readiness')) });
-const contractModule = () => require(path.join(HERE, 'lib', 'kyb-contract.js'));
+/** the contract, or null when the code has none (the untouched base: the checks then FAIL by name instead of the run dying on a missing file) */
+const contractModule = () => {
+  try {
+    return require(path.join(HERE, 'lib', 'kyb-contract.js'));
+  } catch (failure) {
+    return null;
+  }
+};
 const labelOf = (route) => LABELS[route.replace(/^\w+ \/api\/kyb/, '')];
 const legacyRoutes = () => JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
 
@@ -66,6 +73,8 @@ const legacyRoutes = () => JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).r
 function checkWords() {
   console.log('\n-- lib/kyb-contract.js: the kyb refusals as a unit --');
   const words = contractModule();
+  check('lib/kyb-contract.js exists and words the faults', !!words);
+  if (!words) return;
   const req = { id: 'r1' };
   const refused = words.credentialFault(Object.assign(new Error('a title or standard_key is required'), { status: 400 }), req);
   check('credentialFault: a 400 keeps its status, its own sentence under "Add credential failed", and the code KYB_BAD_REQUEST', refused.status === 400 && refused.code === 'KYB_BAD_REQUEST' && sameValue(refused.legacy, { error: 'Add credential failed', message: 'a title or standard_key is required' }), refused);
@@ -86,16 +95,21 @@ function checkWords() {
 /** every code the words answer under is a row of docs/ERROR-CODES.md with its sentence written */
 function checkCodesRegistered() {
   console.log('\n-- the codes the kyb routes answer under are in the register --');
-  const codes = contractModule().CODES;
+  const words = contractModule();
+  if (!words) return;
+  const codes = words.CODES;
   const known = new Set(JSON.parse(fs.readFileSync(REGISTER_FILE, 'utf8')).codes.filter((item) => item.shopkeeper !== 'PENDING').map((item) => item.code));
   const missing = codes.filter((code) => !known.has(code));
   check('every code the kyb words answer under (' + codes.length + ' codes) is a register row with its sentence written', missing.length === 0, missing);
 }
 
 /** the contract in front of the router: every route has a row, and a row has a route; no body is narrowed, no query value is refused */
-function checkContractShape(routes) {
+function checkContractShape(routes, router) {
   console.log('\n-- the contract and the router agree --');
   const contract = contractModule();
+  const published = router.openapi && router.openapi.paths ? Object.keys(router.openapi.paths) : [];
+  check('the router publishes its operations: router.openapi.paths names the routes (' + published.length + ' paths)', !!contract && published.length === ROUTE_COUNT, published);
+  if (!contract) return;
   const operations = Object.keys(contract.OPERATIONS);
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
   const bodies = Object.values(contract.OPERATIONS).filter((one) => one.requestBody).map((one) => one.requestBody.content['application/json'].schema);
@@ -244,7 +258,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const port = server.address().port;
   const recording = {};
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');
-  const allowed = capturing ? () => [] : contractModule().allowedStatuses();
+  const words = contractModule();
+  const allowed = capturing ? () => [] : words ? words.allowedStatuses() : () => [];
   const scenes = S.extras(tools);
   const all = lab.scenariosOf(routes, WORLDS, scenes, {});
   const ordinary = capturing ? all : all.filter((one) => !one.synthetic);
@@ -262,7 +277,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   }
   checkWords();
   checkCodesRegistered();
-  checkContractShape(routes);
+  checkContractShape(routes, router);
   const synthetic = all.filter((one) => one.synthetic);
   await checkCarriedStatus(port, synthetic);
   checkFrozen5xx(recording);

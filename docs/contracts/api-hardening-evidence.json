@@ -640,6 +640,9 @@
   "GET /api/kyb/yourself": {
    "output_allowlist": true
   },
+  "POST /api/kyb/credential": {
+   "output_allowlist": true
+  },
   "GET /api/kyb/position": {
    "output_allowlist": true
   },
