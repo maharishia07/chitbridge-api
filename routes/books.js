@@ -7,7 +7,9 @@
 // @stage-note sheet) and its few writes (payments, manual entries, reversals, month locks, opening, packs). 404 while off.
 'use strict';
 const CLOCK = require('../lib/shop-clock');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { refusalOf, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper
 const logger = require('../lib/logger');
 /**
  * routes/books.js — SPEC-books-v2 §5, in the shapes the Ledger screen reads (chitbridge-web public/app/cap-books.js).
@@ -36,6 +38,11 @@ const E = require('../lib/books-engines');
 const S = require('../lib/books-store');
 
 const ctx = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
 const { isOwner } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -66,54 +73,41 @@ const WORD = {
   reversal: 'Reversal'
 };
 
-/** W2-BOOKS: a refusal that carries its own code (PERIOD_NOT_ENDED · RCM_NETTING_NOT_BUILT · NOT_FOR_COUNTRY …) says it — a screen branches on the code, never on the prose */
-function refusalBody(e) {
-  const coded = e.code && e.code !== 'BOOKS_REFUSED';
-  return coded ? { code: e.code, error: e.message, message: e.message } : { error: e.message, message: e.message };
-}
+/**
+ * WHAT A REFUSAL OF THE LEDGER MEANS (the mapping itself is lib/books-contract.js refusalOf, first match wins; each answer keeps the {error, message} keys it always had):
+ *  - PERIOD_LOCKED · YEAR_CLOSED · SUSPENSE_NOT_NIL     409 WITH the code the web's friendlyErr maps (and its exact sentence): a typed date in a locked month.
+ *  - BOOKS_NOT_FOUND                                    404 "Not found" with the sentence.
+ *  - FX_RATE_MISSING                                    422 WITH the code, so a screen offers "Add rate" beside the sentence (FX1).
+ *  - NO_COUNTRY_PACK · NO_COUNTRY · COUNTRY_SETUP_PENDING · NO_MONEY    422 WITH the code and sentence, never the quiet 404 (CS1: the country gate).
+ *  - RETURN_FROM_RAIL                                   422 WITH the code: an Indian shop asking GET /returns reads its GSTR from the rail (BAS1).
+ *  - BOOKS_ENGINE · BOOKS_NOT_MIGRATED                  503: missing tables are the server's state, and this is read BEFORE the 422 ("not migrated" is thrown as a refusal too).
+ *  - BOOKS_BAD_REQUEST                                  400: a question the owner can answer (a missing field, a date that is not a date).
+ *  - STOCK_* (refused)                                  422 WITH the code and the products, so a screen offers Count / Enter by hand (T1-INV).
+ *  - any other refusal                                  422 (with its own code when it carries one), or the status 409 / 422 it names.
+ *  - a terms sentence (e.say, 400/404) · 23505          400/404 in the sentence the owner can fix · 409 "That is already recorded."
+ *  - 42501 / insert-only                                503 BOOKS_NOT_MIGRATED in words (M30-2: the books are insert-only, b273; b295 not run) — never a bare 500.
+ *  - anything else                                      500 that says nothing of its cause; the real error is logged with the request id (silence is the bug).
+ */
+/** W2-BOOKS: a refusal that carries its own code (PERIOD_NOT_ENDED · RCM_NETTING_NOT_BUILT · NOT_FOR_COUNTRY …) says it — a screen branches on the code, never on the prose.
+ *  lib/books-contract.js refusalOf maps every typed refusal of the ledger to its status, code and the old {error, message} keys; this wrapper is the door routes/chits.js (drift D1) uses. */
 function fail(res, e) {
-  /* ⭐ a typed date in a locked month: 409 with a code the web's friendlyErr maps (and its exact sentence) */
-  if (e && e.code === 'PERIOD_LOCKED') return res.status(409).json({ code: 'PERIOD_LOCKED', error: e.message, message: e.message });
-  if (e && e.code === 'YEAR_CLOSED') return res.status(409).json({ code: 'YEAR_CLOSED', error: e.message, message: e.message });
-  if (e && e.code === 'SUSPENSE_NOT_NIL') return res.status(409).json({ code: 'SUSPENSE_NOT_NIL', error: e.message, message: e.message });
-  if (e && e.code === 'BOOKS_NOT_FOUND') return res.status(404).json({ error: 'Not found', message: e.message });
-  /* FX1: a foreign entry whose day has no rate — 422 WITH the code, so a screen offers "Add rate" beside the sentence */
-  if (e && e.code === 'FX_RATE_MISSING') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
-  /* ⭐ CS1: the country gate — a pack-less country, no country, or the setup still to do: 422 WITH its code and sentence (never the quiet 404) */
-  if (e && (e.code === 'NO_COUNTRY_PACK' || e.code === 'NO_COUNTRY' || e.code === 'COUNTRY_SETUP_PENDING' || e.code === 'NO_MONEY'))
-    return res.status(422).json({ code: e.code, error: e.message, message: e.message });
-  /* BAS1: an Indian shop asking GET /returns — its GSTR is read from the rail, not the ledgers: 422 WITH the code, so the GST screen paints the GSTR close instead */
-  if (e && e.code === 'RETURN_FROM_RAIL') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
-  /* ⚠️ before the 422: "not migrated" is thrown as a refusal too, and read as 422 — missing tables are the server's state, 503 */
-  if (e && (e.code === 'BOOKS_ENGINE' || e.code === 'BOOKS_NOT_MIGRATED')) return res.status(503).json({ code: e.code, error: e.message, message: e.message });
-  /* a question the owner can answer (a missing field, a date that is not a date): 400, in words */
-  if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
-  /* T1-INV: closing stock from the ledger refused for a NAMED reason — the code and the products, so a screen offers Count / Enter by hand */
-  if (e && e.refused && /^STOCK_/.test(String(e.code || '')))
-    return res.status(422).json({ code: e.code, items: e.items || [], error: e.message, message: e.message });
-  if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json(refusalBody(e));
-  if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
-  /* a terms field the owner can fix (lib/finance-terms): 400/404 in a sentence */
-  if (e && e.say && (e.status === 400 || e.status === 404)) return res.status(e.status).json({ error: e.say, message: e.say });
-  if (e && e.code === '23505') return res.status(409).json({ error: 'That is already recorded.', message: 'That is already recorded.' });
-  /* ⭐ M30-2: the books are insert-only (b273: trigger + no UPDATE grant); a write the database refuses for that reason is the server's state (b295 not run), 503 in words — never a bare 500 */
-  if (e && (e.code === '42501' || /insert-only/.test(String(e.message || '')))) {
-    console.error('books route refused by the database:', e.code || '', String(e.message || e).slice(0, 300));
-    return res
-      .status(503)
-      .json({ code: 'BOOKS_NOT_MIGRATED', error: 'Not available yet.', message: 'This cannot be saved yet — a database update (b295) is still to run.' });
-  }
-  /* silence is the bug: the 500 used to leave nothing in the Railway log */
-  console.error('books route failed:', (e && e.stack) || e);
-  return res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  return problem(res.req, res, refusalOf(e, res.req));
+}
+/** one refusal in the ledger's words: the Problem body with the old {error, message} keys beside it (API-STANDARD S2: the Ledger screen reads those keys) */
+function refuse(req, res, status, code, error, message) {
+  return problem(req, res, { status, code, detail: message === undefined ? error : message, legacy: message === undefined ? { error } : { error, message } });
+}
+/** the payment quote's own refusal: its status and words ride on q.refuse (a currency that is not the ledger's is a 422, the rest are questions) */
+function refuseQuote(req, res, refusal) {
+  return refuse(req, res, refusal.status, refusal.status === 422 ? 'CURRENCY_NOT_THE_LEDGERS' : 'BOOKS_BAD_REQUEST', refusal.words, refusal.words);
 }
 /** a key-bearer (a counter, a TV, a connector) has no business in the ledger — the second fence behind KEY_ROUTES */
 function noKey(req, res, next) {
-  if (req.api_key) return res.status(403).json({ error: 'Sign in to use the ledger.', message: 'Sign in to use the ledger.' });
+  if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
 }
 function owner(req, res, next) {
-  if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
+  if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } });
   next();
 }
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
@@ -123,7 +117,7 @@ function editor(req, res, next) {
   const text = require('../lib/rail').byLevel(levelOf(req), 'amend');
   if (text) {
     const say = require('../lib/rail').say(text);
-    return res.status(403).json({ error: say, message: say, why: text, code: text.toUpperCase() });
+    return problem(req, res, { status: 403, code: text.toUpperCase(), detail: say, legacy: { error: say, message: say, why: text } });
   }
   next();
 }
@@ -142,18 +136,18 @@ async function on(req, res, next) {
       st = await CS.gate(h, e);
       return B.settingOf(h, e);
     });
-    if (!s || !s.enabled) return res.status(404).json({ error: 'Not found' });
+    if (!s || !s.enabled) return problem(req, res, { status: 404, code: 'LEDGER_OFF', detail: 'This shop has not switched the ledger on.', legacy: { error: SAID.notFound } });
     req.books = s;
     req.booksCountry = st || null;
     next();
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 }
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
-router.get('/status', auth, owner, async (req, res) => {
+router.get('/status', auth, owner, ...checked('GET /status'), async (req, res) => {
   try {
     const e = ctx(req);
     /* ⭐ CS1: `country` says whether the books MAY open here — { books, code, why, required, country } — so the switch is greyed WITH its sentence */
@@ -161,10 +155,10 @@ router.get('/status', auth, owner, async (req, res) => {
     const s = r.s;
     res.json({ migrated: s !== null, enabled: !!(s && s.enabled), walkin_grain: s ? s.walkin_grain : null, engines: E.status(), country: r.country });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/enable', auth, owner, async (req, res) => {
+router.post('/enable', auth, owner, ...checked('POST /enable'), async (req, res) => {
   try {
     const b = req.body || {};
     /* ⭐ CS1: the switch itself is refused for a pack-less country — the server decides, in the same sentence the screen shows */
@@ -174,10 +168,10 @@ router.post('/enable', auth, owner, async (req, res) => {
     require('../lib/books-hooks').forget(ctx(req));
     res.json(r);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/setting', auth, owner, on, async (req, res) => {
+router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
@@ -193,7 +187,7 @@ router.post('/setting', auth, owner, on, async (req, res) => {
     require('../lib/books-hooks').forget(e);
     res.json({ ok: true, enabled, walkin_grain: grain });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -203,7 +197,7 @@ router.post('/setting', auth, owner, on, async (req, res) => {
  * Before b298 runs: terms_migrated false, the party's own days/limit still answered. POST /terms (owner) sets — { party_id?, side?, credit_days,
  * credit_limit_minor, interest: { on, rate_pct, grace_days }|null, early: { pct, within_days }|null } — one change event per changed key; 503 TERMS_NOT_MIGRATED before b298.
  */
-router.get('/terms', auth, noKey, on, async (req, res) => {
+router.get('/terms', auth, noKey, on, ...checked('GET /terms'), async (req, res) => {
   try {
     const e = ctx(req),
       T = require('../lib/finance-terms'),
@@ -241,10 +235,10 @@ router.get('/terms', auth, noKey, on, async (req, res) => {
       events: out.events
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/terms', auth, owner, on, async (req, res) => {
+router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, res) => {
   try {
     const e = ctx(req),
       T = require('../lib/finance-terms'),
@@ -252,11 +246,11 @@ router.post('/terms', auth, owner, on, async (req, res) => {
       pid = b.party_id ? String(b.party_id) : null,
       side = b.side === 'supplier' ? 'supplier' : 'customer';
     if (!(await T.migrated()))
-      return res.status(503).json({ code: 'TERMS_NOT_MIGRATED', error: 'Terms arrive after the next update.', message: 'Terms arrive after the next update.' });
+      return problem(req, res, { status: 503, code: 'TERMS_NOT_MIGRATED', detail: SAID.termsNotMigrated, legacy: { error: SAID.termsNotMigrated, message: SAID.termsNotMigrated } });
     const out = await withEntity(e, (h) => (pid ? T.saveParty(h, e, pid, side, b, byOf(req)) : T.saveShop(h, e, b, byOf(req))));
     res.json({ ok: true, terms: out });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -265,7 +259,7 @@ router.post('/terms', auth, owner, on, async (req, res) => {
  * — the web's probe (404 = off) and the to-do list: `waiting` is every post that failed or was parked, least-tried first,
  * each with the `reason` it could not post (lib/books-hooks waitingRow; POST /outbox/retry tries them again).
  */
-router.get('/health', auth, on, async (req, res) => {
+router.get('/health', auth, on, ...checked('GET /health'), async (req, res) => {
   try {
     const e = ctx(req);
     /* STD1: the waiting list is a PAGE (50, least-tried first) with its total; `todo` is the ONE count by what each row asks (books-store
@@ -293,27 +287,27 @@ router.get('/health', auth, on, async (req, res) => {
       todo: { accept: counts.accept, add_supplier: counts.add_supplier, record: counts.record }
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/check', auth, owner, on, async (req, res) => {
+router.post('/check', auth, owner, on, ...checked('POST /check'), async (req, res) => {
   try {
     res.json(await require('../lib/books-nightly').check(ctx(req)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/outbox/retry', auth, owner, on, async (req, res) => {
+router.post('/outbox/retry', auth, owner, on, ...checked('POST /outbox/retry'), async (req, res) => {
   try {
     res.json(await require('../lib/books-hooks').retryOutbox(ctx(req), 100));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
 /* ── the chart ──────────────────────────────────────────────────────────────────────────────────────────────── */
 /** GET /accounts → { accounts: [{ account_id, code, name, is_group, tally_group, nature, role, parent_code }] } */
-router.get('/accounts', auth, on, async (req, res) => {
+router.get('/accounts', auth, on, ...checked('GET /accounts'), async (req, res) => {
   try {
     const e = ctx(req);
     const chart = await withEntity(e, (h) => S.accounts(h, e));
@@ -337,12 +331,12 @@ router.get('/accounts', auth, on, async (req, res) => {
         }))
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /accounts { name, parent_code | parent_id, source_code? } → { account: { code, account_id, name, source_code?, source_code_written? } } — the code is the system's (engines nextCode, role null); one typed here is refused (422).
  *  IM1: `source_code` = the code the ledger had in Xero / QuickBooks, kept beside ours (b302); one another ledger already holds is refused (422, a code clash). */
-router.post('/accounts', auth, owner, on, async (req, res) => {
+router.post('/accounts', auth, owner, on, ...checked('POST /accounts'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {};
@@ -364,7 +358,7 @@ router.post('/accounts', auth, owner, on, async (req, res) => {
       )
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
@@ -510,7 +504,7 @@ const cursorOf = (nx) => (nx ? nx.date + '|' + nx.no : null);
 
 /** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
-router.get('/daybook', auth, on, async (req, res) => {
+router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) => {
   try {
     const e = ctx(req),
       from = dateQ(req.query.from, today(req)),
@@ -576,13 +570,13 @@ router.get('/daybook', auth, on, async (req, res) => {
       : {};
     res.json(Object.assign({ currency: curOf(req), from, to, entries: out, count: out.length }, page));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
 /** GET /ledger/:account?party&from&to — :account is the code (1300), the role (debtors) or the id →
  *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
-router.get('/ledger/:account', auth, on, async (req, res) => {
+router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), async (req, res) => {
   try {
     const e = ctx(req),
       to = dateQ(req.query.to, today(req)),
@@ -645,10 +639,10 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
           })
         : base;
     });
-    if (!out) return res.status(404).json({ error: 'Not found', message: 'No such ledger.' });
+    if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such ledger.');
     res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
@@ -658,11 +652,11 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
  *  items once, so each payment's unapplied part is the engine's `outstanding` (the figure the preview and the outcome already use).
  *  M30: `advice` = { chit_id, state: none·sent·delivered·shared·disputed, shared_at } from the payments' b285 columns (one read) and my copy's chit status
  *  (one read) — 'none' for every line while b285 has not run (books-store adviceReady), never a 42703. */
-router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
+router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/statement'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
-    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const to = dateQ(req.query.to, today(req)),
       from = dateQ(req.query.from, fyStart(req, to));
     const out = await withEntity(e, async (h) => {
@@ -724,7 +718,7 @@ router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
     });
     res.json(Object.assign({ currency: curOf(req), party_id: id, from, to }, out));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 async function statementInput(h, e, party, from, to) {
@@ -747,7 +741,7 @@ async function statementInput(h, e, party, from, to) {
  *   beside the parties — the bills are F3's own (books-cashflow.datedSide 'out'), so the total IS the cash view's outgoing dues. Owner only, as Collections.
  *   Trips added: cheques 1 · Udyam ids 1 · supplier terms 1 (+ the terms-column check, cached). Nothing per party.
  */
-router.get('/dues', auth, noKey, on, async (req, res) => {
+router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
@@ -755,7 +749,7 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
     const fin = req.query.finance === '1';
     if (fin && !isOwner(req)) {
       const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.';
-      return res.status(403).json({ error: no, message: no });
+      return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: no, legacy: { error: no, message: no } });
     }
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
@@ -903,7 +897,7 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
       )
     );
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
@@ -918,21 +912,21 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
  * Owner only — the server decides (403 with the sentence); 404 while the ledger is off (`on`), like every books read. Reads only; one query per source.
  */
 const CASH_OWNER_ONLY = 'Only the owner may see the cash position.';
-router.get('/cashflow', auth, noKey, on, async (req, res) => {
+router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req, res) => {
   try {
-    if (!isOwner(req)) return res.status(403).json({ error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY });
+    if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: CASH_OWNER_ONLY, legacy: { error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY } });
     const e = ctx(req),
       CF = require('../lib/books-cashflow');
     const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
       asOf = dateQ(req.query.asOf, today(req));
     res.json(await withEntity(e, (h) => CF.read(h, e, req.books, { asOf, days })));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
 /** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced } */
-router.get('/trial-balance', auth, on, async (req, res) => {
+router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
@@ -946,7 +940,7 @@ router.get('/trial-balance', auth, on, async (req, res) => {
       balanced: tb.balanced
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** Schedule III lines → the flat ledger rows a screen lists ({ code, name, amount_minor, line }) */
@@ -958,7 +952,7 @@ function flat(lines) {
   return out;
 }
 /** GET /pl?from&to → { currency, income: [{ code, name, amount_minor }], expense: [...], profit_minor } (inside one financial year) */
-router.get('/pl', auth, on, async (req, res) => {
+router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
   try {
     const e = ctx(req),
       to = dateQ(req.query.to, today(req)),
@@ -976,7 +970,7 @@ router.get('/pl', auth, on, async (req, res) => {
       by_line: { income: pl.income, expense: pl.expenses }
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1012,7 +1006,7 @@ function sched3(bs, order) {
 }
 /** GET /bs?asOf → { currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
-router.get('/bs', auth, on, async (req, res) => {
+router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
   try {
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
@@ -1034,7 +1028,7 @@ router.get('/bs', auth, on, async (req, res) => {
     });
     res.json(Object.assign({ currency: curOf(req), asOf }, out));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
@@ -1077,7 +1071,9 @@ async function meName(req, h, e) {
   return req.identity && req.identity.identity_type === 'entity' && req.identity.display_name ? req.identity.display_name : (await S.shopName(h, e)) || 'We';
 }
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
-const alreadyPaid = (res, err) => res.status(409).json({ code: 'ALREADY_PAID', error: 'Already paid?', message: err.message, warnings: err.warnings || [] });
+function alreadyPaid(res, err) {
+  return problem(res.req, res, { status: 409, code: 'ALREADY_PAID', detail: err.message, legacy: { error: 'Already paid?', message: err.message, warnings: err.warnings || [] } });
+}
 
 /**
  * POST /payments/preview { party_id, direction, amount_minor, currency, allocate?: 'oldest_first'|'none' } — NO WRITE (M26, SPEC-payments §4.1)
@@ -1086,11 +1082,11 @@ const alreadyPaid = (res, err) => res.status(409).json({ code: 'ALREADY_PAID', e
  * The proposal is B.proposeFor (the one function /propose and the one-call record use); the warnings are the duplicate rule
  * (PAY D5: W1–W4, 24 h). The web paints them; it composes none of the words.
  */
-router.post('/payments/preview', auth, noKey, on, async (req, res) => {
+router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/preview'), async (req, res) => {
   try {
     const e = ctx(req),
       q = paymentQuestion(req, false);
-    if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
+    if (q.refuse) return refuseQuote(req, res, q.refuse);
     const out = await withEntity(e, async (h) => {
       const who = await partyOf(h, e, q.party),
         name = who.name;
@@ -1118,7 +1114,7 @@ router.post('/payments/preview', auth, noKey, on, async (req, res) => {
     });
     res.json(out);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1136,12 +1132,12 @@ router.post('/payments/preview', auth, noKey, on, async (req, res) => {
  * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
  * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
  */
-router.post('/payments', auth, noKey, editor, on, async (req, res) => {
+router.post('/payments', auth, noKey, editor, on, ...checked('POST /payments'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
       q = paymentQuestion(req, true);
-    if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
+    if (q.refuse) return refuseQuote(req, res, q.refuse);
     const { party, direction, amount_minor, cur, mode, allocate } = q;
     const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
@@ -1228,7 +1224,7 @@ router.post('/payments', auth, noKey, editor, on, async (req, res) => {
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
     if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err);
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1238,20 +1234,20 @@ router.post('/payments', auth, noKey, editor, on, async (req, res) => {
  *   to grey it by — the same B.adviceMay the PATCH enforces. The web sends the chit (`body`, client_ref 'advice:pay:<id>' — /send dedupes) and then PATCHes
  *   advice_chit_id. Before b285 runs: state 'none', may.*.why 'not_available' with its words — never a 500.
  */
-router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
+router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:id/advice'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
-    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such payment.');
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
       return B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
     });
-    if (!out) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
+    if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such payment.');
     res.json(Object.assign({ currency: curOf(req) }, out));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1263,14 +1259,14 @@ router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
  *   (bank-recon railPayments · explain) does it on the device. `may.ask` is the rail ladder (lib/rail byLevel) — POST /api/chits/send decides again.
  *   Who may call: any login of the shop with the Ledger on (a viewer reads; its Ask is greyed with the sentence). A key (counter) may not (noKey).
  */
-router.get('/bank/rail', auth, noKey, on, async (req, res) => {
+router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (req, res) => {
   try {
     const e = ctx(req),
       to = dateQ(req.query.to, today(req)),
       from0 = dateQ(req.query.from, to);
     const from = from0 > to ? to : from0;
     if ((Date.parse(to) - Date.parse(from)) / 86400000 > 400)
-      return res.status(400).json({ error: 'Too long', message: 'Choose a statement of 400 days or fewer.' });
+      return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Too long', 'Choose a statement of 400 days or fewer.');
     const out = await withEntity(e, async (h) => {
       const rows = await S.bankRailChits(h, e, from, to, 500);
       const names = await partyNames(h, e);
@@ -1301,7 +1297,7 @@ router.get('/bank/rail', auth, noKey, on, async (req, res) => {
     /* ⚠️ `rail_chits`, never `chits`: the web's api() collapses a `chits` array and would drop parties / may (core.js unwrap) */
     res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1311,22 +1307,22 @@ router.get('/bank/rail', auth, noKey, on, async (req, res) => {
  * ⭐ THE SAME RULE THE READ PAINTS (B.adviceMay): a viewer / commenter → 403 with the rail engine's sentence; reversed · a held cheque · not posted · off rail (send) /
  *   on rail (share) → 409 with the words. Before b285 runs → 503 BOOKS_NOT_MIGRATED "Advice not available yet…". Co-assist allowed (as record is).
  */
-router.patch('/payments/:id', auth, noKey, on, async (req, res) => {
+router.patch('/payments/:id', auth, noKey, on, ...checked('PATCH /payments/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
       b = req.body || {};
-    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such payment.');
     const chit = b.advice_chit_id != null ? String(b.advice_chit_id) : null;
-    if (chit && !UUID.test(chit)) return res.status(400).json({ error: 'Which advice chit?', message: 'Which advice chit?' });
+    if (chit && !UUID.test(chit)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which advice chit?', 'Which advice chit?');
     let shared = null;
     if (b.advice_shared_at === true) shared = CLOCK.now().toISOString();
     else if (b.advice_shared_at != null) {
       const t = Date.parse(String(b.advice_shared_at));
-      if (!Number.isFinite(t)) return res.status(400).json({ error: 'When was it shared?', message: 'When was it shared?' });
+      if (!Number.isFinite(t)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'When was it shared?', 'When was it shared?');
       shared = new Date(t).toISOString();
     }
-    if (!chit && !shared) return res.status(400).json({ error: 'Nothing to change.', message: 'Nothing to change — advice_chit_id or advice_shared_at.' });
+    if (!chit && !shared) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Nothing to change.', 'Nothing to change — advice_chit_id or advice_shared_at.');
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return { status: 404, error: 'Not found', words: 'No such payment.' };
@@ -1356,28 +1352,22 @@ router.patch('/payments/:id', auth, noKey, on, async (req, res) => {
         }
       };
     });
-    if (out.status !== 200)
-      return res
-        .status(out.status)
-        .json(
-          Object.assign(
-            { error: out.error || out.words, message: out.words },
-            out.code ? { code: out.code } : {},
-            out.why ? { why: out.why } : {},
-            out.advice_chit_id ? { advice_chit_id: out.advice_chit_id } : {}
-          )
-        );
+    if (out.status !== 200) {
+      /* the old body, key for key: error, message, and the code, why and advice_chit_id only when there is one */
+      const legacy = Object.assign({ error: out.error || out.words, message: out.words }, out.why ? { why: out.why } : {}, out.advice_chit_id ? { advice_chit_id: out.advice_chit_id } : {});
+      return problem(req, res, { status: out.status, code: out.code || 'NOT_FOUND', detail: out.words, legacy });
+    }
     res.json(out.body);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
-router.post('/payments/:id/propose', auth, noKey, editor, on, async (req, res) => {
+router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /payments/:id/propose'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
-    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
@@ -1397,18 +1387,18 @@ router.post('/payments/:id/propose', auth, noKey, editor, on, async (req, res) =
         why: prop.why
       };
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     res.json(Object.assign({ payment_id: id }, out));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open) */
-router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) => {
+router.post('/payments/:id/confirm', auth, noKey, editor, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
-    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const list = Array.isArray((req.body || {}).allocations) ? req.body.allocations : [];
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
@@ -1424,7 +1414,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) =
         by: byOf(req)
       });
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     /* ⭐ a payment against a BILL is a step of R-1400 — written at its messaging level (lib/bill-privacy): my history, and the
        other party's too while R-1400 is external (a remittance advice). After the posting committed; never able to undo it. */
     try {
@@ -1435,7 +1425,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) =
     }
     res.json(out);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1450,7 +1440,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) =
  *   read from the shop's stored terms (lib/finance-terms pdcRemind: books_setting.terms.pdc_remind, set through POST /terms); absent = on, 7 days ahead, as
  *   before. `on` false → pdc_reminders is [] (the engine answers null). One more statement in the SAME transaction (shopTerms), only once b298 has run.
  */
-router.get('/cheques', auth, noKey, on, async (req, res) => {
+router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, res) => {
   try {
     const e = ctx(req),
       all = String(req.query.all || '') === '1',
@@ -1504,8 +1494,8 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
           try {
             R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day);
             return true;
-          } catch (problem) {
-            logger.fellBack('books cheques: not a next step for this cheque — not offered', problem, 'debug');
+          } catch (notNext) {
+            logger.fellBack('books cheques: not a next step for this cheque — not offered', notNext, 'debug');
             return false;
           }
         });
@@ -1543,7 +1533,7 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
       }
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1553,26 +1543,26 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
  *   bounced   → { ok, status: 'bounced', items: 1 }  (a cheque that never cleared never counted: no entry)
  * Out of order (received → deposited → cleared | bounced) → 422 with the engine's sentence; not a cheque → 404.
  */
-router.post('/cheques/:id/status', auth, editor, on, async (req, res) => {
+router.post('/cheques/:id/status', auth, editor, on, ...checked('POST /cheques/:id/status'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
       b = req.body || {};
-    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const to = ['deposited', 'cleared', 'bounced'].indexOf(b.status) >= 0 ? b.status : null;
-    if (!to) return res.status(400).json({ error: 'Deposited, cleared or bounced?', message: 'Deposited, cleared or bounced?' });
+    if (!to) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Deposited, cleared or bounced?', 'Deposited, cleared or bounced?');
     res.json(await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today(req)), strict_date: true, by: byOf(req) }));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } — a disputed bill cannot take a payment (C4) */
-router.post('/parties/:id/dispute', auth, editor, on, async (req, res) => {
+router.post('/parties/:id/dispute', auth, editor, on, ...checked('POST /parties/:id/dispute'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
       b = req.body || {};
-    if (!UUID.test(id) || !b.against_ref) return res.status(400).json({ error: 'Which bill?', message: 'Which bill?' });
+    if (!UUID.test(id) || !b.against_ref) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which bill?', 'Which bill?');
     res.json(
       await B.postEntry(null, e, {
         type: 'party_status',
@@ -1586,43 +1576,43 @@ router.post('/parties/:id/dispute', auth, editor, on, async (req, res) => {
       })
     );
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
 /* ── the "＋ Entry" door: the grid, the preview, the everyday events ───────────────────────────────────────────── */
 const M = () => require('../lib/books-manual');
 /** GET /events → { events: [{ kind, words, icon, band, voucher, fields, ledger_group, preview, post | route }], picks, pending, golden } — the grid; the screen holds no rules */
-router.get('/events', auth, noKey, on, (req, res) => {
+router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => {
   try {
     res.json(M().catalogue(req.books));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
  * POST /preview { event: { kind, …fields } } (or { event: 'kind', …fields }) → { ok, voucher: { series, type }, lines: [{ code, ledger, dr_minor, cr_minor, type, rule }], balanced, refusals, … }
  * Composed by lib/books.js composeEntry — the writer's own function. Writes nothing, takes no counter. A co-assist may preview; only the owner posts.
  */
-router.post('/preview', auth, noKey, on, async (req, res) => {
+router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req, res) => {
   try {
     res.json(await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) }));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
-router.post('/events', auth, noKey, owner, on, async (req, res) => {
+router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async (req, res) => {
   try {
     res.json(await M().post(ctx(req), req.books, req.body || {}, byOf(req)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list) => require('../lib/books-manual').givenLines(list); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
-router.post('/entries', auth, owner, on, async (req, res) => {
+router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req, res) => {
   try {
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
@@ -1643,30 +1633,30 @@ router.post('/entries', auth, owner, on, async (req, res) => {
       })
     );
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /entries/:id/reverse { reason } → the mirror entry (never an edit) and, in the SAME transaction, the party rows that reopen the bills it had settled:
  *  { ok, entry_id, entry_no, posting_date, moved, reverses, reverses_entry_id, items, reopened: [{ against_ref, bill_no }], words }.
  *  M29: an entry already reversed answers 409 ALREADY_REVERSED naming the reversal (a second Reverse is not a replay — it would be a second correction). */
-router.post('/entries/:id/reverse', auth, owner, on, async (req, res) => {
+router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:id/reverse'), async (req, res) => {
   try {
-    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });
     if (r && r.duplicate) {
       const m = 'This entry was already reversed by ' + r.entry_no + '.';
-      return res.status(409).json({ code: 'ALREADY_REVERSED', error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id });
+      return problem(req, res, { status: 409, code: 'ALREADY_REVERSED', detail: m, legacy: { error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id } });
     }
     res.json(r);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/write-off', auth, owner, on, async (req, res) => {
+router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async (req, res) => {
   try {
     const b = req.body || {};
     const party = String(b.party_id || b.party || '');
-    if (!UUID.test(party)) return res.status(400).json({ error: 'Which customer?', message: 'Which customer?' });
+    if (!UUID.test(party)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which customer?', 'Which customer?');
     /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
     const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
@@ -1687,7 +1677,7 @@ router.post('/write-off', auth, owner, on, async (req, res) => {
       })
     );
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -1695,26 +1685,23 @@ router.post('/write-off', auth, owner, on, async (req, res) => {
  * ONE entry, period 0 (is_opening). A party row names its bill (bill_ref) so dues are bill-wise from day one; any
  * difference goes to Suspense 2900, which must be nil before the year can close (Tally, ERPNext opening entry).
  */
-router.post('/opening', auth, owner, on, async (req, res) => {
+router.post('/opening', auth, owner, on, ...checked('POST /opening'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
       cur = curOf(req);
     const rows = Array.isArray(b.rows) ? b.rows : [];
-    if (!rows.length) return res.status(400).json({ error: 'No rows.', message: 'No rows.' });
+    if (!rows.length) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'No rows.', 'No rows.');
     const bad = rows.map((item, index) => (Number(item.dr_minor) > 0 === Number(item.cr_minor) > 0 ? index + 1 : 0)).filter(Boolean);
     if (bad.length)
-      return res.status(400).json({
-        error: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.',
-        message: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.'
-      });
+      return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.');
     /* ⭐ IM1: the entry itself is lib/books postOpening — the move-in importer posts a trial balance and the open bills through the same door */
     const out = await withEntity(e, (h) =>
       B.postOpening(h, e, { rows, date: dateQ(b.date, fyStart(req, today(req))), currency: cur, client_ref: b.client_ref, by: byOf(req) })
     );
     res.json(out);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /* ── MOVE IN FROM XERO / QUICKBOOKS (IM1) — three doors, owner only, the ledger on: the columns guessed, the dry run, the import (lib/move-in) ── */
@@ -1748,7 +1735,7 @@ function moveInOrigin(body) {
   return { source_country: sized(body.source_country, 60), source_company: sized(body.source_company, 80) };
 }
 /** POST /move-in/preflight { kind, source, csv | xlsx, sheet?, header_row? } → { kind, source, headers, fields, guess: [{ incoming, field, how, confidence, why }], missing, ready, rows_total, sample, sheet, sheets, header_row } — reads nothing of the shop; nothing is written */
-router.post('/move-in/preflight', auth, owner, on, async (req, res) => {
+router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/preflight'), async (req, res) => {
   try {
     const { kind, source, parsed } = moveInBody(req);
     const g = MI.guess(kind, parsed.headers);
@@ -1762,7 +1749,7 @@ router.post('/move-in/preflight', auth, owner, on, async (req, res) => {
       })
     );
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** the plan for a confirmed file: the world read once (chart · parties · tax ids · phones · products), then the pure dry run */
@@ -1786,20 +1773,20 @@ async function moveInPlan(req, h) {
   return { m, pl, w };
 }
 /** POST /move-in/preview { kind, source, source_country, source_company?, csv | xlsx, decisions: [{ incoming, field }], side?, as_at? } → { kind, source, side, as_at, counts: { add, merge, skip, hold }, rows: [{ line, what, action, why, data, code? }], refusal, notes, country: { shop, source, how }, company_id, tax_codes? } — the DRY RUN; nothing is written. A country refusal: 422 { code: MOVE_IN_COUNTRY · _UNSTATED · _WORD · MOVE_IN_FOREIGN · MOVE_IN_COMPANY } */
-router.post('/move-in/preview', auth, owner, on, async (req, res) => {
+router.post('/move-in/preview', auth, owner, on, ...checked('POST /move-in/preview'), async (req, res) => {
   try {
     const { m, pl } = await withEntity(ctx(req), (h) => moveInPlan(req, h));
     res.json(Object.assign({ kind: m.kind, source: m.source, side: m.side, as_at: m.as_at }, pl));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /move-in/import { …as preview, confirm: true } → { kind, source, side, as_at, added, merged, skipped, held, rows: [the skipped and the held, with why (+ code)], notes, entry?,
  *  source_code_written?, proof, proof_stored, import_id } — ONE transaction; a refusal writes nothing (422 with the code and the sentence) */
-router.post('/move-in/import', auth, owner, on, async (req, res) => {
+router.post('/move-in/import', auth, owner, on, ...checked('POST /move-in/import'), async (req, res) => {
   try {
     if ((req.body || {}).confirm !== true)
-      return res.status(400).json({ error: 'Not confirmed', message: 'Nothing was imported — this needs an explicit confirmation.' });
+      return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Not confirmed', 'Nothing was imported — this needs an explicit confirmation.');
     const e = ctx(req);
     const out = await withEntity(e, async (h) => {
       const { m, pl, w } = await moveInPlan(req, h);
@@ -1809,17 +1796,17 @@ router.post('/move-in/import', auth, owner, on, async (req, res) => {
     MI.afterCommit(e, out); /* committed: only now the items are metered (a refusal above threw, so a rolled-back move-in meters nothing) */
     res.json(out);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** GET /move-in/imports → { ready, why, imports: [{ import_id, source, company_id, source_country, country_how, kind, side, as_at, counts, proof, created_at }] } —
  *  the latest 20 imports with their MATCH PROOF (W1.10, b765), read back. Owner only. Before b765: ready false with the sentence. One transaction. */
-router.get('/move-in/imports', auth, owner, on, async (req, res) => {
+router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports'), async (req, res) => {
   try {
     const e = ctx(req);
     res.json(await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /* ── PARALLEL RUN (PR1) — an auditor's Tally / Xero / QBO period beside ours, line by line (lib/parallel-run). Their figures are a SNAPSHOT: read from export
@@ -1836,10 +1823,10 @@ async function compareMay(req, e) {
 async function comparer(req, res, next) {
   try {
     const m = await compareMay(req, ctx(req));
-    if (!m.may) return res.status(403).json({ error: m.why, message: m.why });
+    if (!m.may) return problem(req, res, { status: 403, code: 'COMPARE_NOT_ALLOWED', detail: m.why, legacy: { error: m.why, message: m.why } });
     next();
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 }
 const notMigrated = () => {
@@ -1848,7 +1835,7 @@ const notMigrated = () => {
   return x;
 };
 /** GET /compare → { currency, ready, why, may: { load: { may, why } }, snapshots: [{ snapshot_id, label, source, period_from, period_to, currency, parts, lines, created_at }] } — one transaction */
-router.get('/compare', auth, noKey, on, comparer, async (req, res) => {
+router.get('/compare', auth, noKey, on, comparer, ...checked('GET /compare'), async (req, res) => {
   try {
     const e = ctx(req);
     const out = await withEntity(e, async (h) => {
@@ -1865,11 +1852,11 @@ router.get('/compare', auth, noKey, on, comparer, async (req, res) => {
       snapshots: out.snapshots
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /compare/preflight { part, source, csv | xlsx | xml, sheet?, header_row? } → { part, source, format: table | tally_xml, headers, fields, guess, missing, ready, rows_total, sample } — nothing is read of the shop, nothing written */
-router.post('/compare/preflight', auth, noKey, on, comparer, async (req, res) => {
+router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /compare/preflight'), async (req, res) => {
   try {
     const b = req.body || {},
       part = PR.partOf(b.part),
@@ -1880,12 +1867,12 @@ router.post('/compare/preflight', auth, noKey, on, comparer, async (req, res) =>
       });
     res.json(Object.assign({ part, source }, PR.preflight(b, part, curOf(req))));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /compare/snapshots { snapshot_id?, label, source, part, period_from?, period_to, file_name?, csv | xlsx | xml, decisions? } → { snapshot_id, part, label, source, period_from, period_to, rows, skipped }
  *  A new snapshot with its first part, or one more part on a snapshot (its label, source and period are kept). Insert-only: a part it already has → 409. One transaction. */
-router.post('/compare/snapshots', auth, noKey, on, comparer, async (req, res) => {
+router.post('/compare/snapshots', auth, noKey, on, comparer, ...checked('POST /compare/snapshots'), async (req, res) => {
   try {
     const b = req.body || {},
       e = ctx(req),
@@ -1938,7 +1925,7 @@ router.post('/compare/snapshots', auth, noKey, on, comparer, async (req, res) =>
     });
     res.json(out);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** the compare for one snapshot: its parts and our figures for its period in ONE transaction (chart · the period's entry lines · TB / P&L / BS · the BAS / VAT201);
@@ -2017,53 +2004,53 @@ async function compareRead(req) {
 }
 /** GET /compare/:id → { currency, snapshot, parts: { tb|pl|bs|ret: { part, title, from, to, file_name, lines: [{ key, status, name, their_name, their_code, their_line, our_codes, theirs_minor,
  *  ours_minor, diff_minor, cause, why, entries: [{ entry_id, entry_no, date, amount_minor, chit_id, ref, kind, rail }], entries_n, open }], counts, error } }, counts, effort } — differences first */
-router.get('/compare/:id', auth, noKey, on, comparer, async (req, res) => {
+router.get('/compare/:id', auth, noKey, on, comparer, ...checked('GET /compare/:id'), async (req, res) => {
   try {
     res.json(await compareRead(req));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** GET /compare/:id/csv → the same compare as a .csv for the auditor's file */
-router.get('/compare/:id/csv', auth, noKey, on, comparer, async (req, res) => {
+router.get('/compare/:id/csv', auth, noKey, on, comparer, ...checked('GET /compare/:id/csv'), async (req, res) => {
   try {
     const r = await compareRead(req);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="parallel-run-' + r.snapshot.period_to + '.csv"');
     res.send(PR.csv(r, r.currency));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /periods/:fy/:p/lock { reason, hard } · /unlock { reason } → { period: { fiscal_year, period, status } } */
-router.post('/periods/:fy/:p/:act', auth, owner, on, async (req, res) => {
+router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:fy/:p/:act'), async (req, res) => {
   try {
     const { fy, p, act } = req.params;
-    if (!/^\d{4}(-\d{2})?$/.test(fy) || !/^\d{1,2}$/.test(p) || ['lock', 'unlock'].indexOf(act) < 0) return res.status(404).json({ error: 'Not found' });
+    if (!/^\d{4}(-\d{2})?$/.test(fy) || !/^\d{1,2}$/.test(p) || ['lock', 'unlock'].indexOf(act) < 0) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const b = req.body || {};
     const status = act === 'unlock' ? 'open' : b.hard === true ? 'hard_locked' : 'soft_locked';
     const r = await B.setPeriod(null, ctx(req), fy, Number(p), status, byOf(req), b.reason);
     res.json({ ok: true, period: { fiscal_year: r.fiscal_year, period: r.period, status: r.status } });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /year/:fy/close → { ok, fiscal_year, next, locked, opening } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
-router.post('/year/:fy/close', auth, owner, on, async (req, res) => {
+router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close'), async (req, res) => {
   try {
-    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return res.status(404).json({ error: 'Not found' });
+    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req));
     if (r.ok) return res.json(r);
     const message = r.refusals.map((x) => x.why).join(' ');
-    res.status(422).json({ ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals });
+    problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy: { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals } });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** GET /year/:fy/status → { fiscal_year, closed, can_close, refusals, months, next } — what a close would say, nothing written */
-router.get('/year/:fy/status', auth, on, async (req, res) => {
+router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
-    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return res.status(404).json({ error: 'Not found' });
+    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const e = ctx(req);
     const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy));
     res.json({
@@ -2075,10 +2062,10 @@ router.get('/year/:fy/status', auth, on, async (req, res) => {
       next: st.next
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.get('/periods', auth, on, async (req, res) => {
+router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
@@ -2094,7 +2081,7 @@ router.get('/periods', auth, on, async (req, res) => {
       periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting)).filter((item) => !fy || item.fiscal_year === fy)
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
@@ -2112,7 +2099,7 @@ function manifestView(m) {
     controls: { counts: x.counts || null, totals: x.totals || null, checks: x.checks || null }
   });
 }
-router.get('/packs', auth, owner, on, async (req, res) => {
+router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res) => {
   try {
     const e = ctx(req);
     const rows = await withEntity(e, (h) => S.packs(h, e));
@@ -2131,16 +2118,16 @@ router.get('/packs', auth, owner, on, async (req, res) => {
       }))
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/packs', auth, owner, on, async (req, res) => {
+router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, res) => {
   try {
     const b = req.body || {};
     const r = await require('../lib/books-pack').build(ctx(req), { kind: b.kind, fiscal_year: b.fiscal_year, period: b.period, by: byOf(req) });
     res.json({ ok: true, pack: { pack_id: r.pack_id, sha256: r.sha256, stored: r.stored, bytes: r.bytes }, manifest: manifestView(r.manifest) });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -2150,13 +2137,13 @@ router.post('/packs', auth, owner, on, async (req, res) => {
  *             the web saved this JSON as "the pack" and then acknowledged it)
  *   download  the same path, or null when has_file is false (kept for the first web build)
  */
-router.get('/packs/:id', auth, owner, on, async (req, res) => {
+router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
-    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const p = await withEntity(e, (h) => S.pack(h, e, id));
-    if (!p) return res.status(404).json({ error: 'Not found' });
+    if (!p) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     res.json({
       pack: {
         pack_id: p.pack_id,
@@ -2176,19 +2163,16 @@ router.get('/packs/:id', auth, owner, on, async (req, res) => {
       download: p.storage_path ? '/api/books/packs/' + id + '/file' : null
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.get('/packs/:id/file', auth, owner, on, async (req, res) => {
+router.get('/packs/:id/file', auth, owner, on, ...checked('GET /packs/:id/file'), async (req, res) => {
   try {
-    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await require('../lib/books-pack').download(ctx(req), String(req.params.id));
-    if (!r.found) return res.status(404).json({ error: 'Not found' });
+    if (!r.found) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     if (!r.stored)
-      return res.status(409).json({
-        error: 'This pack was built while storage was not connected — build it again to download it.',
-        message: 'This pack was built while storage was not connected — build it again to download it.'
-      });
+      return problem(req, res, { status: 409, code: 'PACK_NO_FILE', detail: PACK_NO_FILE_BUILT, legacy: { error: PACK_NO_FILE_BUILT, message: PACK_NO_FILE_BUILT } });
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader(
       'Content-Disposition',
@@ -2202,7 +2186,7 @@ router.get('/packs/:id/file', auth, owner, on, async (req, res) => {
     res.setHeader('X-Pack-SHA256', r.pack.sha256);
     res.end(r.bytes);
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /**
@@ -2210,11 +2194,12 @@ router.get('/packs/:id/file', auth, owner, on, async (req, res) => {
  * ⚠️⚠️ REFUSED FOR A PACK WITH NO STORED FILE (critic M10): 409 { code: 'PACK_NO_FILE', error } — there is nothing the shop
  *   could have downloaded, so there is nothing to acknowledge. Build it again once storage is connected.
  */
+const PACK_NO_FILE_BUILT = 'This pack was built while storage was not connected — build it again to download it.';
 const PACK_NO_FILE = 'This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm.';
-router.post('/packs/:id/ack', auth, owner, on, async (req, res) => {
+router.post('/packs/:id/ack', auth, owner, on, ...checked('POST /packs/:id/ack'), async (req, res) => {
   try {
     const e = ctx(req);
-    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await withEntity(e, async (h) => {
       const p = await S.pack(h, e, String(req.params.id));
       if (!p) return null;
@@ -2223,73 +2208,73 @@ router.post('/packs/:id/ack', auth, owner, on, async (req, res) => {
       if (x) await S.logChange(h, e, { by: byOf(req), table_name: 'books_pack', row_id: req.params.id, field: 'acknowledged', new: 'yes' });
       return x;
     });
-    if (!r) return res.status(404).json({ error: 'Not found' });
-    if (r.no_file) return res.status(409).json({ code: 'PACK_NO_FILE', error: PACK_NO_FILE, message: PACK_NO_FILE });
+    if (!r) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    if (r.no_file) return problem(req, res, { status: 409, code: 'PACK_NO_FILE', detail: PACK_NO_FILE, legacy: { error: PACK_NO_FILE, message: PACK_NO_FILE } });
     res.json({ ok: true, acknowledged_at: r.acknowledged_at });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
 /* ── recurring entries (b281, DRAFT) and the To-do ─────────────────────────────────────────────────────────── */
 const RC = () => require('../lib/books-recurring');
 /** GET /recurring → { recurring: [{ recurring_id, name, event, frequency, next_on, end_on, auto, active, last_done_on, due }] } · 503 BOOKS_NOT_MIGRATED until b281 runs */
-router.get('/recurring', auth, owner, on, async (req, res) => {
+router.get('/recurring', auth, owner, on, ...checked('GET /recurring'), async (req, res) => {
   try {
     res.json({ recurring: await RC().list(ctx(req)) });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /recurring { name, event: { kind, …fields as POST /events, no date }, frequency: monthly|quarterly|yearly, next_on, end_on?, auto? } */
-router.post('/recurring', auth, owner, on, async (req, res) => {
+router.post('/recurring', auth, owner, on, ...checked('POST /recurring'), async (req, res) => {
   try {
     res.json(await RC().create(ctx(req), req.books, req.body || {}, byOf(req)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** PATCH /recurring/:id — a merge-patch: only the fields sent change */
-router.patch('/recurring/:id', auth, owner, on, async (req, res) => {
+router.patch('/recurring/:id', auth, owner, on, ...checked('PATCH /recurring/:id'), async (req, res) => {
   try {
-    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     res.json(await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** DELETE /recurring/:id — stops it (active: false); nothing is deleted, and what it posted stays */
-router.delete('/recurring/:id', auth, owner, on, async (req, res) => {
+router.delete('/recurring/:id', auth, owner, on, ...checked('DELETE /recurring/:id'), async (req, res) => {
   try {
-    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     res.json(await RC().stop(ctx(req), String(req.params.id)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /recurring/:id/post — accept the proposal: posts the due day as an MJ entry (client_ref = template + date) and moves it on · POST /recurring/:id/skip — let it pass */
-router.post('/recurring/:id/post', auth, owner, on, async (req, res) => {
+router.post('/recurring/:id/post', auth, owner, on, ...checked('POST /recurring/:id/post'), async (req, res) => {
   try {
-    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     res.json(await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
-router.post('/recurring/:id/skip', auth, owner, on, async (req, res) => {
+router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/:id/skip'), async (req, res) => {
   try {
-    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     res.json(await RC().skip(ctx(req), String(req.params.id)));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
-router.get('/todo', auth, noKey, on, async (req, res) => {
+router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
     res.json(await require('../lib/books-todo').todo(ctx(req), req.books));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
@@ -2299,19 +2284,19 @@ module.exports = router;
    The asset ones answer 503 BOOKS_NOT_MIGRATED until b280 (DRAFT) is run. */
 const P = () => require('../lib/books-period');
 const route = (method, p, fn) =>
-  router[method](p, auth, owner, on, async (req, res) => {
+  router[method](p, auth, owner, on, ...checked(method.toUpperCase() + ' ' + p), async (req, res) => {
     try {
       res.json(await fn(req, ctx(req), req.books, req.body || {}, byOf(req)));
     } catch (err) {
-      fail(res, err);
+      problem(req, res, refusalOf(err, req));
     }
   });
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
-router.get('/assets', auth, owner, on, async (req, res) => {
+router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, res) => {
   try {
     res.json(await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req))));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /assets { name, class, cost, date, put_to_use?, how | party_id, client_ref } → the purchase entry (MJ) and the register row */
@@ -2337,7 +2322,7 @@ route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
  *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
 /* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
-router.get('/returns', auth, owner, on, async (req, res) => {
+router.get('/returns', auth, owner, on, ...checked('GET /returns'), async (req, res) => {
   try {
     res.json(await P().taxReturn(ctx(req), req.books, req.query || {}));
   } catch (err) {
@@ -2351,7 +2336,7 @@ router.get('/returns', auth, owner, on, async (req, res) => {
         rail: pack === 'IN' ? '/api/tax/gstr' : null
       });
     }
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /loans { ref, lender, amount, into, rate?, kind? } · POST /loans/:ref/emi { principal, interest, from?, date, client_ref } */
@@ -2373,7 +2358,7 @@ function fxMay(req, ready) {
   return isOwner(req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
 }
 /** GET /fx-rates?from=USD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from, to, rate, source, source_ref, created_at }] } — one transaction */
-router.get('/fx-rates', auth, noKey, on, async (req, res) => {
+router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req, res) => {
   try {
     const e = ctx(req),
       ready = await FXR.ready(),
@@ -2389,26 +2374,26 @@ router.get('/fx-rates', auth, noKey, on, async (req, res) => {
       rates
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /fx-rates { date, currency, rate, source?, source_ref? } → { rate } — owner; insert-only (a correction is a newer row for the same day). One transaction. */
-router.post('/fx-rates', auth, noKey, on, owner, async (req, res) => {
+router.post('/fx-rates', auth, noKey, on, owner, ...checked('POST /fx-rates'), async (req, res) => {
   try {
     const e = ctx(req);
     res.status(201).json({ rate: await withEntity(e, (h) => FXR.add(h, e, req.books, req.body || {}, byOf(req))) });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /fx-rates/import { csv, file_name? } → { added, refused: [{ line, why }], rates } — owner; the good rows in ONE insert, source 'import'. One transaction. */
-router.post('/fx-rates/import', auth, noKey, on, owner, async (req, res) => {
+router.post('/fx-rates/import', auth, noKey, on, owner, ...checked('POST /fx-rates/import'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {};
     res.json(await withEntity(e, (h) => FXR.importCsv(h, e, req.books, b.csv, b.file_name ? String(b.file_name).slice(0, 120) : null, byOf(req))));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 const fxPeriod = (q) => {
@@ -2419,7 +2404,7 @@ const fxPeriod = (q) => {
   return { fy, p };
 };
 /** GET /fx-revalue?fiscal_year&period → { ready, why, may: { post }, date, reverses_on, functional, rows, missing, gain_minor, posted } — Month lock's foreign-balances line. Owner (it shows what parties owe). One transaction. */
-router.get('/fx-revalue', auth, noKey, on, owner, async (req, res) => {
+router.get('/fx-revalue', auth, noKey, on, owner, ...checked('GET /fx-revalue'), async (req, res) => {
   try {
     const e = ctx(req),
       { fy, p } = fxPeriod(req.query || {});
@@ -2442,20 +2427,21 @@ router.get('/fx-revalue', auth, noKey, on, owner, async (req, res) => {
       posted: v.posted
     });
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 /** POST /fx-revalue { fiscal_year, period } → { ok, entry_no, reversal_no, gain_minor, date, reverses_on } — owner; the revaluation and its reversal in ONE transaction; idempotent */
-router.post('/fx-revalue', auth, noKey, on, owner, async (req, res) => {
+router.post('/fx-revalue', auth, noKey, on, owner, ...checked('POST /fx-revalue'), async (req, res) => {
   try {
     const e = ctx(req),
       { fy, p } = fxPeriod(req.body || {});
     res.json(await withEntity(e, (h) => FXR.revalue(h, e, req.books, fy, p, byOf(req))));
   } catch (err) {
-    fail(res, err);
+    problem(req, res, refusalOf(err, req));
   }
 });
 
+router.openapi = { paths: pathsOf(), schemas: {} };
 module.exports = router;
 module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
