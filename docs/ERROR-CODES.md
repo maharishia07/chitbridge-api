@@ -243,6 +243,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PRODUCT_REFUSED | varies | Refused by a catalogue rule | A rule of the catalogue refused that, and the sentence says why. | Fix what the sentence says and try again. | products | 2026-10-23 |
 | PRODUCT_TOO_LARGE | 413 | Too large for this door | What you sent is too big for this door. | Send less at a time: split the file, or use a smaller picture. | products | 2026-10-23 |
 | QTY_OK | varies | Qty ok | PENDING | - | line-guard | 2026-10-22 |
+| QUICK_KEY_CHANGED | 409 | Group changed | Someone changed this group since you opened it. | Open the group again and make your change again. | quick-keys | 2026-10-23 |
+| QUICK_KEY_INVALID | 400 | Quick key not valid | A group needs a name, and a key needs a product. | Fill in what is missing and try again. | quick-keys | 2026-10-23 |
+| QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | REGION_STORE_MISSING | 503 | Regions not ready | Regional overrides are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | REG_KIND_NOT_OFFERED | 400 | Registration kind not offered | That kind of tax registration is not offered in your country. | Pick one of the kinds listed. | policy | 2026-10-23 |
