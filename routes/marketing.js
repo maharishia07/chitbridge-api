@@ -17,7 +17,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { SAID, faultOf, marketingContract: contract } = require('../lib/crm-contract'); // the contract (the route's operation) and the read's fault
+const { SAID, faultOf, marketingContract: contract } = require('../lib/marketing-contract'); // the contract (the route's operation) and the read's fault
 const results = require('../lib/marketing-results');
 
 /** a condition becomes a verdict with a code a screen maps to its own line — the message is never shown as-is (design rule 1) */

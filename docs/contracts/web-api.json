@@ -357,7 +357,7 @@
     "title": "Open dues",
     "status": 409,
     "detail": "There are open dues on this party.",
-    "hint": "Settle the dues first.",
+    "hint": "Settle the dues first, then remove them.",
     "request_id": null
    },
    "optional": []
@@ -3519,7 +3519,14 @@
    "status": 404,
    "example": {
     "error": "Not found",
-    "message": "Chit not found or you do not have access"
+    "message": "Chit not found or you do not have access",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "code": "NOT_FOUND",
+    "detail": "Chit not found or you do not have access",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5027,11 +5034,11 @@
    "example": {
     "code": "CRM_NOT_MIGRATED",
     "error": "Not migrated yet",
-    "message": "CB CRM needs migration b276 — not run yet.",
+    "message": "CRM needs migration b276 — not run yet.",
     "type": "https://chitbridge.com/problems/crm_not_migrated",
-    "title": "Customer list update pending",
+    "title": "Crm not migrated",
     "status": 503,
-    "detail": "CB CRM needs migration b276 — not run yet.",
+    "detail": "CRM needs migration b276 — not run yet.",
     "hint": "Try again after the next update.",
     "request_id": null
    },
@@ -5054,10 +5061,10 @@
     "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
     "message": "Name the group: up to 40 letters, digits, spaces, - & /.",
     "type": "https://chitbridge.com/problems/bad_name",
-    "title": "Name needed",
+    "title": "Bad name",
     "status": 400,
     "detail": "Name the group: up to 40 letters, digits, spaces, - & /.",
-    "hint": "Type a name and save again.",
+    "hint": "Check the name and try again.",
     "request_id": null
    },
    "optional": []
@@ -5069,7 +5076,7 @@
     "error": "Lead stages arrive after the next update.",
     "message": "Lead stages arrive after the next update.",
     "type": "https://chitbridge.com/problems/leads_not_migrated",
-    "title": "Leads update pending",
+    "title": "Leads not migrated",
     "status": 503,
     "detail": "Lead stages arrive after the next update.",
     "hint": "Try again after the next update.",
@@ -5155,10 +5162,10 @@
     "error": "Import up to 500 leads at a time. Split the file.",
     "message": "Import up to 500 leads at a time. Split the file.",
     "type": "https://chitbridge.com/problems/too_many",
-    "title": "Too many rows",
+    "title": "Too many",
     "status": 400,
     "detail": "Import up to 500 leads at a time. Split the file.",
-    "hint": "Send up to 500 rows at a time.",
+    "hint": "Send fewer, or make a smaller group.",
     "request_id": null
    },
    "optional": []
@@ -5226,7 +5233,7 @@
     "error": "Pick what happened on the call.",
     "message": "Pick what happened on the call.",
     "type": "https://chitbridge.com/problems/bad_outcome",
-    "title": "Call outcome needed",
+    "title": "Bad outcome",
     "status": 400,
     "detail": "Pick what happened on the call.",
     "hint": "Tap one of the outcome buttons.",
@@ -5241,7 +5248,7 @@
     "error": "Lead stages arrive after the next update.",
     "message": "Lead stages arrive after the next update.",
     "type": "https://chitbridge.com/problems/leads_not_migrated",
-    "title": "Leads update pending",
+    "title": "Leads not migrated",
     "status": 503,
     "detail": "Lead stages arrive after the next update.",
     "hint": "Try again after the next update.",
@@ -5319,10 +5326,10 @@
     "error": "That is not a segment or a group.",
     "message": "That is not a segment or a group.",
     "type": "https://chitbridge.com/problems/bad_key",
-    "title": "Segment not known",
+    "title": "Not a segment",
     "status": 400,
     "detail": "That is not a segment or a group.",
-    "hint": "Pick a segment or group from the list.",
+    "hint": "Pick one from the list.",
     "request_id": null
    },
    "optional": []
@@ -5436,7 +5443,13 @@
    "example": {
     "code": "REPEAT_NOT_MIGRATED",
     "error": "Repeat supply arrives after the next update.",
-    "message": "Repeat supply arrives after the next update."
+    "message": "Repeat supply arrives after the next update.",
+    "type": "https://chitbridge.com/problems/repeat_not_migrated",
+    "title": "Repeat not migrated",
+    "status": 503,
+    "detail": "Repeat supply arrives after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5515,7 +5528,13 @@
    "example": {
     "code": "REPEAT_WRONG_STATE",
     "error": "This agreement is not at a step where that can be done.",
-    "message": "This agreement is not at a step where that can be done."
+    "message": "This agreement is not at a step where that can be done.",
+    "type": "https://chitbridge.com/problems/repeat_wrong_state",
+    "title": "Not at that step",
+    "status": 422,
+    "detail": "This agreement is not at a step where that can be done.",
+    "hint": "Open the agreement to see what can be done now.",
+    "request_id": null
    },
    "optional": []
   },

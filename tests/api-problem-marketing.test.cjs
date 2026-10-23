@@ -27,8 +27,8 @@ const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 /** the five routers: mount, route file (named in full so the graph links this test to each), and the contract module that declares its statuses */
 const AREAS = [
-  { mount: '/api/crm', file: 'routes/crm.js', contract: 'lib/crm-contract.js', export: 'crmContract' },
-  { mount: '/api/marketing', file: 'routes/marketing.js', contract: 'lib/crm-contract.js', export: 'marketingContract' },
+  { mount: '/api/crm', file: 'routes/crm.js', contract: 'lib/crm-contract.js', export: 'contract' },
+  { mount: '/api/marketing', file: 'routes/marketing.js', contract: 'lib/marketing-contract.js', export: 'marketingContract' },
   { mount: '/api/offers', file: 'routes/offers.js', contract: 'lib/offers-contract.js', export: 'contract' },
   { mount: '/api/network-offers', file: 'routes/network-offers.js', contract: 'lib/network-offers-contract.js', export: 'contract' },
   { mount: '/api/combo-templates', file: 'routes/combo-templates.js', contract: 'lib/combo-templates-contract.js', export: 'contract' }

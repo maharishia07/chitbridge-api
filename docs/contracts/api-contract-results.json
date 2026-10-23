@@ -55,7 +55,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "DELETE /api/crm/groups/:name": {
@@ -63,7 +63,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "DELETE /api/crm/parties/:id": {
@@ -71,7 +71,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "DELETE /api/folders/:id": {
@@ -498,12 +498,28 @@
     400
    ]
   },
+  "GET /api/connections/list": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connections/pending": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/crm/calls": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "GET /api/crm/followups": {
@@ -511,7 +527,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "GET /api/crm/parties": {
@@ -519,7 +535,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "GET /api/crm/parties/:id": {
@@ -527,7 +543,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "GET /api/crm/parties/:id/contact-prefs": {
@@ -535,7 +551,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "GET /api/crm/parties/:id/timeline": {
@@ -543,7 +559,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "GET /api/crm/privacy-requests": {
@@ -551,7 +567,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "GET /api/facts/:card": {
@@ -770,6 +786,46 @@
     422
    ]
   },
+  "GET /api/network-design/availability": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/entities/:id/connections": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/entities/lookup": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/network/place": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/products": {
    "cases": 2,
    "failed": 0,
@@ -810,6 +866,14 @@
     400
    ]
   },
+  "GET /api/repeat/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/tax/gstr": {
    "cases": 2,
    "failed": 0,
@@ -832,6 +896,110 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "GET /api/testing/cases": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/cases/gherkin": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/changes": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/cmdb": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/cmdb/:ci": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/coverage": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/incidents": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/releases": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/reliability": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/report": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/requirements": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/results": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/testing/runs": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "GET /api/till/bills": {
@@ -914,6 +1082,30 @@
     400
    ]
   },
+  "GET /api/work/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/work/facts": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/work/list": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PATCH /api/books/payments/:id": {
    "cases": 4,
    "failed": 0,
@@ -938,12 +1130,68 @@
     400
    ]
   },
+  "PATCH /api/counters/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PATCH /api/crm/followups/:id": {
    "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
+   ]
+  },
+  "PATCH /api/entities/:id/erase": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/entities/me/exposure": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/entities/me/locale": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/entities/me/prefs/:kind": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/entities/policy": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/entities/profile": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "PATCH /api/folders/:id": {
@@ -964,6 +1212,22 @@
   },
   "PATCH /api/products/:id": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/testing/incidents/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/testing/requirements/:id": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1602,12 +1866,52 @@
     400
    ]
   },
+  "POST /api/connections/request": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/counters": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/counters/:id/assign": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/counters/:id/open": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/counters/:id/release": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/crm/followups": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/groups": {
@@ -1615,7 +1919,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/leads": {
@@ -1623,7 +1927,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/leads/import": {
@@ -1631,7 +1935,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/parties/:id/contact-prefs": {
@@ -1639,7 +1943,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/parties/:id/interactions": {
@@ -1647,7 +1951,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/parties/:id/outcome": {
@@ -1655,7 +1959,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/parties/:id/stage": {
@@ -1663,7 +1967,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/privacy-requests": {
@@ -1671,7 +1975,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/privacy-requests/:id/answer": {
@@ -1679,7 +1983,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/segments/:key/send": {
@@ -1687,7 +1991,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/crm/walk-ins/add": {
@@ -1695,7 +1999,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/ctp/deliver": {
@@ -1708,6 +2012,14 @@
   },
   "POST /api/ctp/query": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/entities/populations": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1890,6 +2202,30 @@
     400
    ]
   },
+  "POST /api/network-design/build": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network-design/reissue": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network-design/validate": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/network-offers/:id/choice": {
    "cases": 4,
    "failed": 0,
@@ -1936,6 +2272,70 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "POST /api/network/connections": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/approve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/decline": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/disconnect": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/resume": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/connections/:id/suspend": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/entities": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/entities/:id/claim": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "POST /api/offers/evaluate": {
@@ -2050,6 +2450,102 @@
     400
    ]
   },
+  "POST /api/repeat": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/accept": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/agree": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/counter": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/decline": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/end": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/pause": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/refuse": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/resume": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/run": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/:id/skip": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/repeat/sweep": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/tax/compute": {
    "cases": 2,
    "failed": 0,
@@ -2064,6 +2560,110 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "POST /api/testing/cases/close": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/cases/gherkin": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/cases/import": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/cases/seed": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/changes": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/cmdb/seed": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/evidence": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/incidents": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/releases": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/requirements": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/results": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/results/junit": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/testing/trace": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "POST /api/till/alias": {
@@ -2338,6 +2938,30 @@
     400
    ]
   },
+  "PUT /api/connections/:id/respond": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PUT /api/entities/populations/:code/desk": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PUT /api/entities/routing": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PUT /api/folders/inventory/:code": {
    "cases": 4,
    "failed": 0,
@@ -2378,6 +3002,14 @@
     422
    ]
   },
+  "PUT /api/network-design": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PUT /api/network-offers/policy": {
    "cases": 2,
    "failed": 0,
@@ -2396,6 +3028,14 @@
   },
   "PUT /api/products/:id/status": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
