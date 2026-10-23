@@ -46,5 +46,6 @@ const t = (name, cond, extra) => { if (cond) { pass++; console.log('  ok   ' + n
     t('brand: a member by its account name, two offers, the catalogue half', rec.brand.body && rec.brand.body.brand.members[0].name === 'Shop One' && rec.brand.body.brand.offers.length === 2 && Array.isArray(rec.brand.body.brand.catalogue));
   }
   console.log(`\n  trips: store ${used.store} · brand ${used.brand}\n  ${pass} checks · ${fail} failed\n`);
-  process.exit(fail ? 1 : 0);
+  /* exitCode, not exit(): exit() while the helper's server socket is mid-close aborts Node 24 on Windows (UV_HANDLE_CLOSING, src/win/async.c:94) after all 7 checks passed (QA-82) */
+  process.exitCode = fail ? 1 : 0;
 })();
