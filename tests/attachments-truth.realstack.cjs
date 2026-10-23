@@ -12,7 +12,7 @@
  *
  * Shares tests/lib/truth-harness.cjs (one harness). Run: node tests/attachments-truth.realstack.cjs   (one at a time on :3100; the S41 job picks every *-truth.realstack.cjs up). Written, not run on the laptop (no Docker).
  * ⚠️ Writes go through routes; the database is read with SELECT only.
- * CARD 01-rail-core-the-chit/attachments
+ * CARD 01-rail-core-the-chit/README
  */
 const { Client } = require('pg');
 const crypto = require('crypto');

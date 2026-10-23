@@ -20,7 +20,7 @@
  * FLOW       POST: sign-in → schema check (lib/attachments-contract.js) → my copy of the chit's header (the roster) → [the message's audience] → bytes → storage.putForParticipants → { id, name, mime, size }.
  *            GET:  sign-in → storage.getBlob (my own copy only, by RLS) → the bytes with the S2 headers. A refusal → problem(req, res, ...), the old { error, message } kept beside the Problem fields
  *            (docs/contracts/api-legacy.json); a thrown error → faultOf: a 500 with the screen's label and the one generic sentence.
- * CARD       01-rail-core-the-chit/attachments
+ * CARD       01-rail-core-the-chit/README
  *
  * @stage tested
  */

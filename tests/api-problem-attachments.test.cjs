@@ -13,7 +13,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file and the real storage library over a stand-in db and sign-in (tests/lib/problem-world.cjs, scenes in tests/lib/attachments-scenes.cjs).
  * FLOW      route list (read from the router) x world (signed out, staff, a bad id, a failing db, an empty db) + the named extras (tests/lib/attachments-scenes.cjs) → real route →
  *           body → Problem fields present · frozen legacy keys equal · no leak · statuses tested → manifest; then the checks of the fan-out, the headers and the foreign-id world
- * CARD      01-rail-core-the-chit/attachments
+ * CARD      01-rail-core-the-chit/README
  *
  *   node tests/api-problem-attachments.test.cjs                    check
  *   node tests/api-problem-attachments.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

@@ -6,7 +6,7 @@
  *           as RLS `rls_entity` on cb_attachment and chit_messages decides) and the stand-in's two type checks that Postgres makes (a uuid column refuses 'nope', an integer column refuses NaN).
  * CALLED BY tests/api-problem-attachments.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who, db }, body, url, patch }] → the harness runs each one against the real route
- * CARD      01-rail-core-the-chit/attachments
+ * CARD      01-rail-core-the-chit/README
  * Every name below is an obviously made-up file ("receipt.png"); there is no person's data in this file. The bytes are a few made-up characters.
  */
 'use strict';
