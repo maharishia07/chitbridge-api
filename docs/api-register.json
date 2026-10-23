@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 180,
-  "partial": 60,
-  "meets": 393
+  "partial": 56,
+  "meets": 397
  },
  "machine_columns": [
   "schema_in",
@@ -4570,7 +4570,7 @@
    "path": "/api/entities/constitutions",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 149,
+   "line": 150,
    "hash": "90d643c3f36f275a",
    "columns": {
     "schema_in": true,
@@ -4600,7 +4600,7 @@
    "path": "/api/entities/entitlements",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 2406,
+   "line": 2407,
    "hash": "49d996ff5c656145",
    "columns": {
     "schema_in": true,
@@ -4634,7 +4634,7 @@
    "path": "/api/entities/header",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 315,
+   "line": 316,
    "hash": "3ae3d5630359c01f",
    "columns": {
     "schema_in": true,
@@ -4668,7 +4668,7 @@
    "path": "/api/entities/lookup",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 902,
+   "line": 903,
    "hash": "4fa9ad17575badb4",
    "columns": {
     "schema_in": true,
@@ -4704,8 +4704,8 @@
    "path": "/api/entities/me",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 338,
-   "hash": "79f6663a7db027c9",
+   "line": 339,
+   "hash": "0821fc7bb18cde9b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4725,13 +4725,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/me/can-see-costs",
@@ -4739,7 +4739,7 @@
    "path": "/api/entities/me/can-see-costs",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 885,
+   "line": 886,
    "hash": "219ee8eb8cdb9428",
    "columns": {
     "schema_in": true,
@@ -4773,8 +4773,8 @@
    "path": "/api/entities/mis",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1721,
-   "hash": "f838644e82146956",
+   "line": 1722,
+   "hash": "3911ad98eab24dfa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4795,13 +4795,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/policy",
@@ -4809,7 +4809,7 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 286,
+   "line": 287,
    "hash": "5aeb90e77e8a43e3",
    "columns": {
     "schema_in": true,
@@ -4843,7 +4843,7 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1611,
+   "line": 1612,
    "hash": "386d6272740a5072",
    "columns": {
     "schema_in": true,
@@ -4879,7 +4879,7 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1492,
+   "line": 1493,
    "hash": "cd54d77895b144b2",
    "columns": {
     "schema_in": true,
@@ -4913,7 +4913,7 @@
    "path": "/api/entities/routing/preview",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1476,
+   "line": 1477,
    "hash": "c0ac046521b15eac",
    "columns": {
     "schema_in": true,
@@ -4946,7 +4946,7 @@
    "path": "/api/entities/search",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 169,
+   "line": 170,
    "hash": "ebc90f56bb0a7114",
    "columns": {
     "schema_in": true,
@@ -4981,7 +4981,7 @@
    "path": "/api/entities/sides",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 329,
+   "line": 330,
    "hash": "8c9d2c5f400475c4",
    "columns": {
     "schema_in": true,
@@ -5015,7 +5015,7 @@
    "path": "/api/entities/usage",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1299,
+   "line": 1300,
    "hash": "4b70911dad3abcd6",
    "columns": {
     "schema_in": true,
@@ -10015,7 +10015,7 @@
    "path": "/api/entities/:id/erase",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1271,
+   "line": 1272,
    "hash": "e0c040a82e4ebfc4",
    "columns": {
     "schema_in": true,
@@ -10052,7 +10052,7 @@
    "path": "/api/entities/me/exposure",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 858,
+   "line": 859,
    "hash": "7d19b7065fef8cc8",
    "columns": {
     "schema_in": true,
@@ -10087,7 +10087,7 @@
    "path": "/api/entities/me/locale",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 898,
+   "line": 899,
    "hash": "e55ea05cc2141a4a",
    "columns": {
     "schema_in": true,
@@ -10122,7 +10122,7 @@
    "path": "/api/entities/me/prefs/:kind",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 852,
+   "line": 853,
    "hash": "3a7c9f99a608bfbf",
    "columns": {
     "schema_in": true,
@@ -10158,7 +10158,7 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 297,
+   "line": 298,
    "hash": "e190a37baf2cd8ee",
    "columns": {
     "schema_in": true,
@@ -10194,7 +10194,7 @@
    "path": "/api/entities/profile",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 950,
+   "line": 951,
    "hash": "21b4715aa77e270e",
    "columns": {
     "schema_in": true,
@@ -15439,7 +15439,7 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1695,
+   "line": 1696,
    "hash": "c303d29a52083779",
    "columns": {
     "schema_in": true,
@@ -15477,7 +15477,7 @@
    "path": "/api/entities/register",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 138,
+   "line": 139,
    "hash": "353129a910091984",
    "columns": {
     "schema_in": false,
@@ -15505,7 +15505,7 @@
    "path": "/api/entities/verify",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 139,
+   "line": 140,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -21038,8 +21038,8 @@
    "path": "/api/entities/populations/:code/desk",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1666,
-   "hash": "26e79d27c74a48b6",
+   "line": 1667,
+   "hash": "bcdf0a12050562df",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21062,13 +21062,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/entities/routing",
@@ -21076,8 +21076,8 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1572,
-   "hash": "4edc83012e071cd8",
+   "line": 1573,
+   "hash": "21b29d7baf9e4c1e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21098,13 +21098,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/folders/inventory/:code",
