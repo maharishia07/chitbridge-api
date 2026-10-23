@@ -21,6 +21,15 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/repeat/:id": {
+   "foreign_id_404": true
+  },
+  "GET /api/work/:chit_id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/counters/:id": {
+   "foreign_id_404": true
+  },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -43,6 +52,45 @@
   },
   "POST /api/catalogue/network-store/:networkId/order": {
    "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/counters/:id/assign": {
+   "foreign_id_404": true
+  },
+  "POST /api/counters/:id/open": {
+   "foreign_id_404": true
+  },
+  "POST /api/counters/:id/release": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/accept": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/agree": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/counter": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/decline": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/end": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/pause": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/refuse": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/resume": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/run": {
+   "foreign_id_404": true
+  },
+  "POST /api/repeat/:id/skip": {
    "foreign_id_404": true
   }
  }

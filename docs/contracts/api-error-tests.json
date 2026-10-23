@@ -396,6 +396,11 @@
   401,
   500
  ],
+ "GET /api/counters": [
+  401,
+  403,
+  500
+ ],
  "GET /api/ctp/.well-known/ctp.json": [
   200,
   500
@@ -462,6 +467,84 @@
  ],
  "GET /api/folders/worklist": [
   400,
+  401,
+  500
+ ],
+ "GET /api/governance/ai-skills": [
+  401,
+  500
+ ],
+ "GET /api/governance/ai-usage": [
+  401,
+  500
+ ],
+ "GET /api/governance/boilerplate/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/commerce-standards": [
+  401,
+  500
+ ],
+ "GET /api/governance/country-setup": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/governance/entities/:id": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/governance/instruments": [
+  401,
+  500
+ ],
+ "GET /api/governance/journey": [
+  401,
+  500
+ ],
+ "GET /api/governance/lanes": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile/path": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile/readiness": [
+  401,
+  500
+ ],
+ "GET /api/governance/readiness": [
+  401,
+  500
+ ],
+ "GET /api/governance/readiness/:bridge_id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/source/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/supplier-acceptance/:handle": [
+  401,
+  500
+ ],
+ "GET /api/governance/track-record": [
+  401,
+  500
+ ],
+ "GET /api/governance/vault-schema": [
   401,
   500
  ],
@@ -563,6 +646,17 @@
   401,
   500
  ],
+ "GET /api/repeat": [
+  401,
+  500
+ ],
+ "GET /api/repeat/:id": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -660,6 +754,24 @@
   403,
   500
  ],
+ "GET /api/work/:chit_id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/work/facts": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/work/list": [
+  400,
+  401,
+  403,
+  500
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -670,6 +782,13 @@
   503
  ],
  "PATCH /api/books/recurring/:id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/counters/:id": [
+  400,
   401,
   403,
   404,
@@ -1210,6 +1329,35 @@
   422,
   500
  ],
+ "POST /api/counters": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/counters/:id/assign": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/counters/:id/open": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/counters/:id/release": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/ctp/deliver": [
   200,
   400,
@@ -1253,6 +1401,68 @@
  "POST /api/folders/rules/preview": [
   400,
   401,
+  500
+ ],
+ "POST /api/governance/ai-draft": [
+  400,
+  401,
+  402,
+  429,
+  500,
+  503
+ ],
+ "POST /api/governance/boilerplate/:key/adopt": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/governance/compliance": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/governance/conformance": [
+  401,
+  500
+ ],
+ "POST /api/governance/entities": [
+  400,
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/governance/entities/:id/reattest": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/governance/source": [
+  400,
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/governance/supplier-acceptance": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/governance/verify": [
+  400,
+  401,
+  403,
+  422,
   500
  ],
  "POST /api/integrations/:actor_id/approve": [
@@ -1372,6 +1582,93 @@
  "POST /api/products/status/bulk": [
   400,
   401,
+  500
+ ],
+ "POST /api/repeat": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/agree": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/counter": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/repeat/:id/decline": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/end": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/pause": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/refuse": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/resume": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/run": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/skip": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/sweep": [
+  401,
+  403,
   500
  ],
  "POST /api/tax/compute": [
@@ -1613,6 +1910,28 @@
   401,
   403,
   404,
+  409,
+  500,
+  503
+ ],
+ "PUT /api/governance/country-setup": [
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/governance/profile": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "PUT /api/governance/profile/vault": [
+  400,
+  401,
+  403,
   409,
   500,
   503

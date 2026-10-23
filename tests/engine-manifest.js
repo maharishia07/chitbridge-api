@@ -208,6 +208,8 @@ const INFRA_LIBS = [
   'contract-kit.js',
   'books-contract.js',
   'tax-contract.js',
+  /* API-4 sweep: the contract of the governance routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'governance-contract.js',
   /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
   'till-contract.js',
   /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
@@ -217,6 +219,8 @@ const INFRA_LIBS = [
   /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
   'chits-contract.js',
   'chits-input.js',
+  /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'orders-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
   'integrations-contract.js',
   /* API-4 sweep, the catalogue items: the contract of routes/products.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
