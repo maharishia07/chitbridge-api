@@ -64500,6 +64500,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-marketing.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE CRM, MARKETING, OFFER-SERVICE, NETWORK-OFFERS AND COMBO-TEMPLATES ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE CRM, MARKETING, OFFER-SERVICE, NETWORK-OFFERS AND COMBO-TEMPLATES ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 327 lines. Run: node chitbridge-api/tests/api-problem-marketing.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 327,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-products.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -71768,6 +71793,31 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-14T05:12:37Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/offers-published-contract.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE OFFER SERVICE'S PUBLISHED OPENAPI IS TYPED (BODY, REQUIRED, 429) WHILE THE ENFORCED SCHEMA STAYS LOOSE.",
+   "claim": "THE OFFER SERVICE'S PUBLISHED OPENAPI IS TYPED (BODY, REQUIRED, 429) WHILE THE ENFORCED SCHEMA STAYS LOOSE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 65 lines. Run: node chitbridge-api/tests/offers-published-contract.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 65,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
   },
   {
    "case_key": "chitbridge-api/tests/offr04-cost-gate.test.cjs",

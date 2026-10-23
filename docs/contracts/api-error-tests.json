@@ -36,6 +36,11 @@
   409,
   500
  ],
+ "DELETE /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
  "DELETE /api/crm/followups/:id": [
   400,
   401,
@@ -483,6 +488,10 @@
   401,
   500
  ],
+ "GET /api/combo-templates": [
+  401,
+  500
+ ],
  "GET /api/connections/list": [
   401,
   500
@@ -810,6 +819,11 @@
   403,
   500
  ],
+ "GET /api/marketing/came-back": [
+  401,
+  403,
+  500
+ ],
  "GET /api/network-design": [
   401,
   500
@@ -846,6 +860,12 @@
  ],
  "GET /api/network/place": [
   401,
+  500
+ ],
+ "GET /api/offers/kinds": [
+  500
+ ],
+ "GET /api/offers/openapi.json": [
   500
  ],
  "GET /api/pricing/kinds": [
@@ -1116,6 +1136,11 @@
  "PATCH /api/books/recurring/:id": [
   401,
   403,
+  404,
+  500
+ ],
+ "PATCH /api/combo-templates/:id": [
+  401,
   404,
   500
  ],
@@ -1777,6 +1802,18 @@
   422,
   500
  ],
+ "POST /api/combo-templates": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/combo-templates/:id/push": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/connections/request": [
   400,
   401,
@@ -2148,6 +2185,18 @@
   409,
   500,
   503
+ ],
+ "POST /api/offers/evaluate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/offers/explain": [
+  400,
+  401,
+  403,
+  500
  ],
  "POST /api/pricing/price": [
   400,
