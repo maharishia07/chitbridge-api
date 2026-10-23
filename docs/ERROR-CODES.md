@@ -390,4 +390,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TOO_LONG | 400 | Message too long | The message is too long. | Shorten it and send again. | crm | 2026-10-23 |
 | TOO_MANY | 400 | Too many | That is too many at a time. | Send fewer, or make a smaller group. | crm | 2026-10-23 |
 | TOO_MANY_GROUPS | 400 | Too many groups | A customer can be in at most 20 groups. | Take them out of one group first. | crm | 2026-10-23 |
+| ATTACHMENT_EMPTY | 400 | File is empty | That file has nothing in it. | Choose a file that is not empty. | attachments | 2026-10-23 |
+| ATTACHMENT_FIELDS_MISSING | 400 | File details missing | The chit, the file's name or the file itself was left out. | Choose the chit and the file again, then send. | attachments | 2026-10-23 |
+| ATTACHMENT_NOT_A_PARTICIPANT | 403 | Not on this chit | You are not on this chit, so you cannot put a file on it. | Open a chit you are part of and try again. | attachments | 2026-10-23 |
 <!-- codes:end -->

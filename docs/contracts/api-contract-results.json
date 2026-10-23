@@ -178,6 +178,14 @@
     422
    ]
   },
+  "GET /api/attachments/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/assets": {
    "cases": 2,
    "failed": 0,
@@ -1355,6 +1363,14 @@
    ]
   },
   "POST /api/assist/resolve": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/attachments": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
