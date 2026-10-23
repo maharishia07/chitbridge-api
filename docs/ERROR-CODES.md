@@ -98,6 +98,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NOT_YET | varies | Not yet | PENDING | - | integrations | 2026-10-22 |
 | NOT_YET_FOR_COUNTRY | varies | Not yet for country | PENDING | - | integrations | 2026-10-22 |
 | NO_ACCOUNT | varies | No account | PENDING | - | signin | 2026-10-22 |
+| SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
 | NO_BUYERS | varies | No buyers | PENDING | - | marketing-results | 2026-10-22 |
 | NO_CONSENT | varies | No consent | PENDING | - | marketing-results | 2026-10-22 |
 | NO_COUNTRY | 400/422 | No country | PENDING | - | assist | 2026-10-22 |
