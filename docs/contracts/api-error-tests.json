@@ -150,6 +150,11 @@
  "GET /api/assist/whoami": [
   401
  ],
+ "GET /api/attachments/:id": [
+  401,
+  404,
+  500
+ ],
  "GET /api/books/accounts": [
   401,
   404,
@@ -1262,6 +1267,13 @@
  "POST /api/assist/resolve": [
   401,
   410
+ ],
+ "POST /api/attachments": [
+  400,
+  401,
+  403,
+  413,
+  500
  ],
  "POST /api/books/accounts": [
   401,
