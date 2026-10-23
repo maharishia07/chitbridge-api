@@ -133,6 +133,23 @@ function checkContractShape(routes) {
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
 }
 
+/**
+ * the harness judges a 5xx as "says nothing of its cause" and replays no frozen body for it; a 503 here is a deliberate refusal ("not migrated yet", in the words a screen maps
+ * to its own line), so each frozen 503 is replayed here: the same status and every old key, byte for byte and in order
+ */
+function checkFrozen503(recording) {
+  console.log('\n-- the frozen 503 answers (a migration not run) are replayed --');
+  const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
+  let replayed = 0;
+  Object.keys(legacy).filter(lab.mine).forEach((route) => legacy[route].answers.filter((frozen) => frozen.status === 503).forEach((frozen) => {
+    const now = recording[route + '|' + frozen.scenario];
+    const order = Object.keys(frozen.fixture);
+    replayed++;
+    check(route + ' · ' + frozen.scenario + ': the frozen 503 body is kept, key by key and in order', !!now && now.status === 503 && sameValue(order.map((name) => now.body[name]), order.map((name) => frozen.fixture[name])) && sameValue(Object.keys(now.body).slice(0, order.length), order), now && now.body);
+  }));
+  check('at least ten 503 answers were frozen and replayed (' + replayed + ')', replayed >= 10, replayed);
+}
+
 /** the "signed in as another shop" world: every route addressed by an id or a name in its path (API-STANDARD S35) */
 async function foreignWorld(port) {
   console.log('\n-- the 9th world: signed in as another shop --');
@@ -194,6 +211,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkWords();
   checkCodesRegistered();
   checkContractShape(routes);
+  checkFrozen503(recording);
   const proved = await foreignWorld(port);
   server.close();
   stub.close();
