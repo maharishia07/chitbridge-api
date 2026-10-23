@@ -3,8 +3,8 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 180,
-  "partial": 56,
+  "not_started": 174,
+  "partial": 62,
   "meets": 397
  },
  "machine_columns": [
@@ -442,20 +442,28 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 447,
-   "hash": "3196698bcd79d5fa",
+   "line": 439,
+   "hash": "0c0df6b5b117bc38",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -464,7 +472,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "DELETE /api/folders/:id",
@@ -4510,20 +4518,25 @@
    "path": "/api/definitions",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 70,
-   "hash": "105fd127724d2cba",
+   "line": 74,
+   "hash": "5869bb130e940b14",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -4532,7 +4545,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/definitions/:id",
@@ -4540,20 +4553,26 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 212,
-   "hash": "0ddaa5756ba5174f",
+   "line": 215,
+   "hash": "12e8a0501e9a6af5",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -4562,7 +4581,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/entities/constitutions",
@@ -15379,20 +15398,27 @@
    "path": "/api/definitions",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 258,
-   "hash": "408b44fbe93dd45c",
+   "line": 260,
+   "hash": "d7b52bea8f58f1be",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -15401,7 +15427,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/definitions/freeze",
@@ -15409,20 +15435,25 @@
    "path": "/api/definitions/freeze",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 503,
-   "hash": "20e0cba3421722d6",
+   "line": 497,
+   "hash": "fe481f7c8d2b6af3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -15431,7 +15462,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/entities/populations",
@@ -21008,20 +21039,29 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 334,
-   "hash": "dd07ed26ef38ce82",
+   "line": 328,
+   "hash": "782d0b798e64a223",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -21030,7 +21070,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PUT /api/entities/populations/:code/desk",

@@ -1010,6 +1010,69 @@
    "since": "2026-10-23"
   },
   {
+   "code": "DEFINITIONS_NOT_MIGRATED",
+   "status": "503",
+   "title": "Definitions not set up",
+   "shopkeeper": "Your saved offers, slabs and models are not set up here yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "definitions",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DEFINITION_CITED",
+   "status": "409",
+   "title": "Slab still in use",
+   "shopkeeper": "Products or categories still use this slab.",
+   "hint": "Choose the slab that takes over, then retire this one.",
+   "owner_area": "definitions",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DEFINITION_GOVERNED",
+   "status": "403",
+   "title": "Set by the country",
+   "shopkeeper": "This slab is set by your country and cannot be changed here.",
+   "hint": "To differ from it, add a slab of your own.",
+   "owner_area": "definitions",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DEFINITION_INCOMPLETE",
+   "status": "422",
+   "title": "Rule has no value",
+   "shopkeeper": "This rule has no value yet, so it would do nothing.",
+   "hint": "Fill in the value, then save again.",
+   "owner_area": "definitions",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DEFINITION_NAME_TAKEN",
+   "status": "409",
+   "title": "Name already used",
+   "shopkeeper": "You already have one of this kind with that name.",
+   "hint": "Choose another name.",
+   "owner_area": "definitions",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DEFINITION_TAKEOVER_NOT_LIVE",
+   "status": "400",
+   "title": "Slab cannot take over",
+   "shopkeeper": "The slab chosen to take over is not a live slab here.",
+   "hint": "Choose one of your live slabs.",
+   "owner_area": "definitions",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DEFINITION_TAKEOVER_SAME",
+   "status": "400",
+   "title": "Same slab chosen",
+   "shopkeeper": "The slab chosen to take over is the one being retired.",
+   "hint": "Choose a different slab.",
+   "owner_area": "definitions",
+   "since": "2026-10-23"
+  },
+  {
    "code": "DEVICE_MISMATCH",
    "status": "401",
    "title": "Device mismatch",
@@ -2147,8 +2210,8 @@
    "code": "OFFER_CLASH",
    "status": "409",
    "title": "Offer clash",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Another live offer already covers some of the same items.",
+   "hint": "Pause the other offer, or take those items out of this one.",
    "owner_area": "offer-clash",
    "since": "2026-10-22"
   },

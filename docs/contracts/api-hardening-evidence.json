@@ -10,6 +10,9 @@
   "DELETE /api/crm/parties/:id": {
    "foreign_id_404": true
   },
+  "DELETE /api/definitions/:id": {
+   "foreign_id_404": true
+  },
   "GET /api/catalogue/:bridge_id": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -37,6 +40,9 @@
    "foreign_id_404": true
   },
   "GET /api/crm/parties/:id/timeline": {
+   "foreign_id_404": true
+  },
+  "GET /api/definitions/:id": {
    "foreign_id_404": true
   },
   "GET /api/repeat/:id": {
@@ -136,6 +142,9 @@
    "foreign_id_404": true
   },
   "PUT /api/connections/:id/respond": {
+   "foreign_id_404": true
+  },
+  "PUT /api/definitions/:id": {
    "foreign_id_404": true
   }
  }

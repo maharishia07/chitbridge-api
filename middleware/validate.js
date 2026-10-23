@@ -100,7 +100,7 @@ function errorsOf(validator, value) {
 /**
  * schemaValidate(operation, options?) — express middleware. operation = the route's OpenAPI operation (requestBody + parameters).
  * options.status/code/legacy keep an outward route on its old refusal (S2: 400 and its frozen body) until its next major; default is S4's 422 INVALID_INPUT.
- * options.legacy(errors) → the frozen body for the first failure.
+ * options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that counts what was sent, as definitions' two chains did).
  */
 function schemaValidate(operation, options) {
   const choice = options || {};
@@ -117,7 +117,7 @@ function schemaValidate(operation, options) {
       detail: failures.length === 1 ? failures[0].detail : BODY_SENTENCE,
       field: failures[0].field,
       errors: failures,
-      legacy: choice.legacy ? choice.legacy(failures) : undefined
+      legacy: choice.legacy ? choice.legacy(failures, req) : undefined
     });
   };
   /* the register and the contract-test generator find a route's schema check by these two properties */

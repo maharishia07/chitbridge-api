@@ -21,7 +21,14 @@ const OFFER = { kind: 'offer', sub_kind: 'percent_off', name: 'Diwali 10%' };
 const INDIA = { jurisdiction: { tax: { scheme: 'GST', slabs: [{ id: GOVERNED, name: 'GST 18%', rate: 18 }] } }, region_code: 'IN', currency: 'INR' };
 
 function extras(tools) {
-  const { answering, raising, firstOf } = tools;
+  const { answering, raising, firstOf, SECRET_SQL } = tools;
+  /** a library that THROWS a string with SQL in it: nothing of it may reach any answer */
+  const boom = async () => {
+    throw new Error(SECRET_SQL);
+  };
+  const boomNow = () => {
+    throw new Error(SECRET_SQL);
+  };
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
   const withRows = (answer) => ({ sqlRows: answer });
   const failing = { db: 'fail' };
@@ -48,6 +55,9 @@ function extras(tools) {
     X('list-read-batch-fails-then-the-plain-read-answers', 'GET ' + D, 200, { setup: withRows(firstOf(raising(/FROM region_layer WHERE region_code IN/, '57014'), country('in'), oneLayer, listed)) }),
     X('list-no-country-says-why', 'GET ' + D, 200, { setup: withRows(firstOf(raising(/FROM region_layer WHERE region_code IN/, '57014'), country(null), listed)) }),
     X('list-not-migrated', 'GET ' + D, 503, { setup: withRows(migrated(/FROM definition d/)) }),
+    X('list-kind-given-twice', 'GET ' + D, 400, { url: D + '?kind=offer&kind=tax', after: true }),
+    X('list-governed-read-throws', 'GET ' + D, 500, { setup: withRows(firstOf(raising(/FROM region_layer WHERE region_code IN/, '57014'), country('in'), listed)), patch: { gov: { governedSlabsFor: boom } } }),
+    X('list-release-stamp-throws', 'GET ' + D, 200, { url: D + '?kind=offer', setup: withRows(listed), patch: { net: { stampReleases: boomNow } } }),
     /* GET /:id */
     X('read-one', 'GET ' + D + '/:id', 200, { setup: withRows(firstOf(found(), answering(/FROM definition_version/, [{ version: 1, rules: { qty: 6 }, note: null, created_at: '2026-10-01T00:00:00.000Z', created_by: SHOP }]), answering(/definition_status_log/, [{ status: 'live', changed_at: '2026-10-02T00:00:00.000Z', changed_by: SHOP, changed_by_name: 'Test shop' }]))) }),
     X('read-one-not-migrated', 'GET ' + D + '/:id', 503, { setup: withRows(migrated(/SELECT \* FROM definition WHERE/)) }),
@@ -69,6 +79,8 @@ function extras(tools) {
     X('create-name-taken', 'POST ' + D, 409, { body: { kind: 'pricing', name: 'Carton of 6' }, setup: withRows(raising(/INSERT INTO definition \(/, '23505')) }),
     X('create-not-migrated', 'POST ' + D, 503, { body: { kind: 'pricing', name: 'Carton of 6' }, setup: withRows(migrated(/INSERT INTO definition \(/)) }),
     X('create-db-fails', 'POST ' + D, 500, { body: { kind: 'pricing', name: 'Carton of 6' }, setup: failing }),
+    X('create-clash-check-throws', 'POST ' + D, 500, { body: Object.assign({ status: 'live', rules: { percent: 10 } }, OFFER), patch: { clash: { check: boom } } }),
+    X('create-rule-check-throws', 'POST ' + D, 500, { body: { kind: 'pricing', name: 'Carton of 6' }, patch: { check: { missingValue: boomNow } } }),
     X('create-version-write-fails', 'POST ' + D, 500, { body: { kind: 'pricing', name: 'Carton of 6' }, setup: withRows(firstOf(inserted(), raising(/INSERT INTO definition_version/, '08006'))) }),
     /* PUT /:id */
     X('save-a-governed-slab', 'PUT ' + D + '/:id', 403, { url: D + '/' + GOVERNED, body: { name: 'x' } }),
@@ -84,6 +96,7 @@ function extras(tools) {
     X('save-not-migrated', 'PUT ' + D + '/:id', 503, { body: { name: 'Box' }, setup: withRows(migrated(/SELECT \* FROM definition WHERE/)) }),
     X('save-id-is-not-a-uuid', 'PUT ' + D + '/:id', 500, { url: D + '/' + NOT_AN_ID, body: { name: 'Box' }, setup: withRows(raising(/SELECT \* FROM definition WHERE/, '22P02')) }),
     X('save-update-fails', 'PUT ' + D + '/:id', 500, { body: { name: 'Box' }, setup: withRows(firstOf(found(), raising(/UPDATE definition\s+SET name/, '08006'))) }),
+    X('save-clash-check-throws', 'PUT ' + D + '/:id', 500, { body: { status: 'live', rules: { percent: 10 } }, setup: withRows(found(OFFER)), patch: { clash: { check: boom } } }),
     X('save-body-is-a-list', 'PUT ' + D + '/:id', 400, { body: [], after: true, setup: withRows(firstOf(found(), updated())) }),
     /* DELETE /:id */
     X('retire-a-governed-slab', 'DELETE ' + D + '/:id', 403, { url: D + '/' + GOVERNED }),
@@ -95,6 +108,8 @@ function extras(tools) {
     X('retire-takeover-is-not-a-live-slab', 'DELETE ' + D + '/:id', 400, { url: D + '/' + DEF + '?takeover=' + SLAB_B, setup: withRows(firstOf(kindAndStatus(tax), cited)) }),
     X('retire-a-slab-with-a-takeover', 'DELETE ' + D + '/:id', 200, { url: D + '/' + DEF + '?takeover=' + SLAB_B, setup: withRows(firstOf(kindAndStatus(tax), cited, takeoverTarget)) }),
     X('retire-a-slab-with-a-governed-takeover', 'DELETE ' + D + '/:id', 200, { url: D + '/' + DEF + '?takeover=' + GOVERNED, setup: withRows(firstOf(kindAndStatus(tax), cited, country('in'), oneLayer)) }),
+    X('retire-takeover-given-twice', 'DELETE ' + D + '/:id', 400, { url: D + '/' + DEF + '?takeover=' + DEF + '&takeover=' + SLAB_B, after: true, setup: withRows(firstOf(kindAndStatus(tax), cited)) }),
+    X('retire-guard-throws', 'DELETE ' + D + '/:id', 500, { setup: withRows(kindAndStatus(tax)), patch: { slab: { guard: boom } } }),
     X('retire-not-migrated', 'DELETE ' + D + '/:id', 503, { setup: withRows(migrated(/SELECT kind, status FROM definition/)) }),
     X('retire-id-is-not-a-uuid', 'DELETE ' + D + '/:id', 500, { url: D + '/' + NOT_AN_ID, setup: withRows(raising(/SELECT kind, status FROM definition/, '22P02')) }),
     X('retire-update-fails', 'DELETE ' + D + '/:id', 500, { setup: withRows(firstOf(kindAndStatus(), raising(/UPDATE definition SET status = 'retired'/, '08006'))) }),
@@ -108,10 +123,22 @@ function extras(tools) {
     X('freeze-one', 'POST ' + D + '/freeze', 200, { body: { definition_ids: [DEF] }, setup: withRows(answering(/JOIN definition_version v/, [{ definition_id: DEF, kind: 'pricing', sub_kind: null, name: 'Carton of 6', status: 'retired', version: 3, rules: { qty: 6 } }])) }),
     X('freeze-one-and-one-unknown', 'POST ' + D + '/freeze', 200, { body: { definition_ids: [DEF, SLAB_B] }, setup: withRows(answering(/JOIN definition_version v/, [{ definition_id: DEF, kind: 'pricing', sub_kind: null, name: 'Carton of 6', status: 'live', version: 1, rules: {} }])) }),
     X('freeze-a-governed-slab', 'POST ' + D + '/freeze', 200, { body: { definition_ids: [GOVERNED, 'IN-GST-99'] }, setup: withRows(firstOf(country('in'), oneLayer)) }),
+    X('freeze-governed-read-throws', 'POST ' + D + '/freeze', 500, { body: { definition_ids: [GOVERNED] }, patch: { gov: { governedSlabsFor: boom } } }),
     X('freeze-not-migrated', 'POST ' + D + '/freeze', 503, { body: { definition_ids: [DEF] }, setup: withRows(migrated(/JOIN definition_version v/)) }),
     X('freeze-id-is-not-a-uuid', 'POST ' + D + '/freeze', 500, { body: { definition_ids: [NOT_AN_ID] }, setup: withRows(raising(/JOIN definition_version v/, '22P02')) }),
     X('freeze-db-fails', 'POST ' + D + '/freeze', 500, { body: { definition_ids: [DEF] }, setup: failing })
   ];
 }
 
-module.exports = { extras, rowOf, DEF, SHOP, OTHER_SHOP, GOVERNED, NOT_AN_ID, SLAB_B, OFFER, D };
+/**
+ * the stand-in rows of the "signed in as another shop" world: shop A's definition is there for shop A and for nobody else (what row-level security and the entity setting do),
+ * and `planted` false is a database that never held it. → the sqlRows function of a scenario, or null when the caller sees nothing
+ */
+function visibleTo(who, planted, tools) {
+  const { answering, firstOf } = tools;
+  const entity = who.parent_entity_id || who.identity_id;
+  if (!planted || entity !== SHOP) return null;
+  return firstOf(answering(/SELECT \* FROM definition WHERE/, [rowOf()]), answering(/SELECT kind, status FROM definition WHERE/, [{ kind: 'pricing', status: 'live' }]), answering(/UPDATE definition\s+SET name/, [rowOf()]));
+}
+
+module.exports = { extras, visibleTo, rowOf, DEF, SHOP, OTHER_SHOP, GOVERNED, NOT_AN_ID, SLAB_B, OFFER, D };

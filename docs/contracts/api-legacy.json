@@ -35144,6 +35144,30 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "retire-takeover-given-twice",
+     "status": 400,
+     "body_keys": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     },
+     "fixture": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     }
+    },
+    {
+     "scenario": "retire-guard-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -35171,6 +35195,18 @@
      "fixture": {
       "error": "Not provisioned",
       "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "list-governed-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
@@ -35700,6 +35736,30 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "create-clash-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-rule-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -35872,6 +35932,18 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "freeze-governed-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -35999,6 +36071,18 @@
     },
     {
      "scenario": "save-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "save-clash-check-throws",
      "status": 500,
      "body_keys": {
       "error": "Failed",
