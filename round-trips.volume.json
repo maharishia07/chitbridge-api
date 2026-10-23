@@ -1,0 +1,3795 @@
+{
+ "_doc": "SPD-17: round-trip cost WITH DATA. Per GET route the web calls: trips and p50/p95 ms at 0 / 1,000 / 10,000 extra rows per main table (scripts/seed-volume.cjs, local scratch DB). p95_ceiling = p95 x 1.5 (at least +50 ms). grows:true = trips rise with rows (an SPD-n backlog line each). Lower with node tools/round-trips-volume.cjs --write; never raise without the reason in the commit.",
+ "levels": [
+  0,
+  1000,
+  10000
+ ],
+ "measured_on": "2026-10-22",
+ "unmeasured": [
+  "GET /api/folders/groupsum",
+  "GET /api/keys"
+ ],
+ "routes": {
+  "GET /api/actors": {
+   "0": {
+    "trips": 2,
+    "p50": 4.8,
+    "p95": 5.2,
+    "p95_ceiling": 55.2
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 4.6,
+    "p95": 4.9,
+    "p95_ceiling": 54.9
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 5,
+    "p95": 17.7,
+    "p95_ceiling": 67.7
+   },
+   "grows": false
+  },
+  "GET /api/actors/check-login": {
+   "0": {
+    "trips": 0,
+    "p50": 0.9,
+    "p95": 1.3,
+    "p95_ceiling": 51.3
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.7,
+    "p95": 0.8,
+    "p95_ceiling": 50.8
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.7,
+    "p95": 0.7,
+    "p95_ceiling": 50.7
+   },
+   "grows": false
+  },
+  "GET /api/actors/settings": {
+   "0": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "grows": false
+  },
+  "GET /api/adopt/:chit_id": {
+   "0": {
+    "trips": 4,
+    "p50": 17.7,
+    "p95": 22.8,
+    "p95_ceiling": 72.8
+   },
+   "1000": {
+    "trips": 4,
+    "p50": 20.3,
+    "p95": 26.8,
+    "p95_ceiling": 76.8
+   },
+   "10000": {
+    "trips": 4,
+    "p50": 21.8,
+    "p95": 24.2,
+    "p95_ceiling": 74.2
+   },
+   "grows": false
+  },
+  "GET /api/assist/catalogue-mine": {
+   "0": {
+    "trips": 1,
+    "p50": 2.2,
+    "p95": 2.4,
+    "p95_ceiling": 52.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.4,
+    "p95": 3.5,
+    "p95_ceiling": 53.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.8,
+    "p95": 3.5,
+    "p95_ceiling": 53.5
+   },
+   "grows": false
+  },
+  "GET /api/assist/catalogue-sources": {
+   "0": {
+    "trips": 1,
+    "p50": 2.3,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.3,
+    "p95": 2.8,
+    "p95_ceiling": 52.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.8,
+    "p95": 4.3,
+    "p95_ceiling": 54.3
+   },
+   "grows": false
+  },
+  "GET /api/assist/questions": {
+   "0": {
+    "trips": 1,
+    "p50": 3,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.3,
+    "p95_ceiling": 52.3
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "grows": false
+  },
+  "GET /api/assist/standards": {
+   "0": {
+    "trips": 0,
+    "p50": 1.1,
+    "p95": 1.7,
+    "p95_ceiling": 51.7
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.6,
+    "p95": 0.9,
+    "p95_ceiling": 50.9
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.8,
+    "p95": 3.6,
+    "p95_ceiling": 53.6
+   },
+   "grows": false
+  },
+  "GET /api/assist/whoami": {
+   "0": {
+    "trips": 1,
+    "p50": 2.3,
+    "p95": 3.3,
+    "p95_ceiling": 53.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.6,
+    "p95_ceiling": 52.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.2,
+    "p95_ceiling": 52.2
+   },
+   "grows": false
+  },
+  "GET /api/books/accounts": {
+   "0": {
+    "trips": 2,
+    "p50": 9.6,
+    "p95": 11.7,
+    "p95_ceiling": 61.7
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 8.8,
+    "p95": 9.1,
+    "p95_ceiling": 59.1
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 8.7,
+    "p95": 10.7,
+    "p95_ceiling": 60.7
+   },
+   "grows": false
+  },
+  "GET /api/books/assets": {
+   "0": {
+    "trips": 2,
+    "p50": 26.1,
+    "p95": 37.8,
+    "p95_ceiling": 87.8
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 19.3,
+    "p95": 26,
+    "p95_ceiling": 76
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 41.7,
+    "p95": 44.3,
+    "p95_ceiling": 94.3
+   },
+   "grows": false
+  },
+  "GET /api/books/bank/rail": {
+   "0": {
+    "trips": 2,
+    "p50": 12.1,
+    "p95": 12.5,
+    "p95_ceiling": 62.5
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 17.8,
+    "p95": 20.1,
+    "p95_ceiling": 70.1
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 50.6,
+    "p95": 58,
+    "p95_ceiling": 108
+   },
+   "grows": false
+  },
+  "GET /api/books/bs": {
+   "0": {
+    "trips": 2,
+    "p50": 16.1,
+    "p95": 20.6,
+    "p95_ceiling": 70.6
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 16.8,
+    "p95": 18.4,
+    "p95_ceiling": 68.4
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 34.9,
+    "p95": 40.2,
+    "p95_ceiling": 90.2
+   },
+   "grows": false
+  },
+  "GET /api/books/cashflow": {
+   "0": {
+    "trips": 2,
+    "p50": 22.8,
+    "p95": 24,
+    "p95_ceiling": 74
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 30.1,
+    "p95": 33,
+    "p95_ceiling": 83
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 86.2,
+    "p95": 95.4,
+    "p95_ceiling": 145.4
+   },
+   "grows": false
+  },
+  "GET /api/books/cheques": {
+   "0": {
+    "trips": 2,
+    "p50": 11.7,
+    "p95": 13,
+    "p95_ceiling": 63
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 12.1,
+    "p95": 14,
+    "p95_ceiling": 64
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 13.2,
+    "p95": 14.2,
+    "p95_ceiling": 64.2
+   },
+   "grows": false
+  },
+  "GET /api/books/compare": {
+   "0": {
+    "trips": 2,
+    "p50": 7.3,
+    "p95": 8.7,
+    "p95_ceiling": 58.7
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 7.2,
+    "p95": 7.9,
+    "p95_ceiling": 57.9
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 9.4,
+    "p95": 12.3,
+    "p95_ceiling": 62.3
+   },
+   "grows": false
+  },
+  "GET /api/books/compare/:id": {
+   "0": {
+    "trips": 2,
+    "p50": 7.4,
+    "p95": 9.2,
+    "p95_ceiling": 59.2
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 6.6,
+    "p95": 7,
+    "p95_ceiling": 57
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 7.6,
+    "p95": 14.3,
+    "p95_ceiling": 64.3
+   },
+   "grows": false
+  },
+  "GET /api/books/compare/:id/csv": {
+   "0": {
+    "trips": 2,
+    "p50": 7.1,
+    "p95": 10,
+    "p95_ceiling": 60
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 7,
+    "p95": 7.7,
+    "p95_ceiling": 57.7
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 7.5,
+    "p95": 8.1,
+    "p95_ceiling": 58.1
+   },
+   "grows": false
+  },
+  "GET /api/books/daybook": {
+   "0": {
+    "trips": 2,
+    "p50": 8.4,
+    "p95": 9.3,
+    "p95_ceiling": 59.3
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 10.2,
+    "p95": 39.3,
+    "p95_ceiling": 89.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 9,
+    "p95": 11.1,
+    "p95_ceiling": 61.1
+   },
+   "grows": false
+  },
+  "GET /api/books/dues": {
+   "0": {
+    "trips": 2,
+    "p50": 12.9,
+    "p95": 13.6,
+    "p95_ceiling": 63.6
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 13,
+    "p95": 17.5,
+    "p95_ceiling": 67.5
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 13.5,
+    "p95": 14.7,
+    "p95_ceiling": 64.7
+   },
+   "grows": false
+  },
+  "GET /api/books/events": {
+   "0": {
+    "trips": 1,
+    "p50": 4.7,
+    "p95": 5.4,
+    "p95_ceiling": 55.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.7,
+    "p95": 4.9,
+    "p95_ceiling": 54.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5,
+    "p95": 6.1,
+    "p95_ceiling": 56.1
+   },
+   "grows": false
+  },
+  "GET /api/books/fx-rates": {
+   "0": {
+    "trips": 2,
+    "p50": 6.9,
+    "p95": 8.2,
+    "p95_ceiling": 58.2
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 7,
+    "p95": 7.5,
+    "p95_ceiling": 57.5
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 6.8,
+    "p95": 7.3,
+    "p95_ceiling": 57.3
+   },
+   "grows": false
+  },
+  "GET /api/books/fx-revalue": {
+   "0": {
+    "trips": 1,
+    "p50": 4.9,
+    "p95": 5.6,
+    "p95_ceiling": 55.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 5.6,
+    "p95": 9.6,
+    "p95_ceiling": 59.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.3,
+    "p95": 4.8,
+    "p95_ceiling": 54.8
+   },
+   "grows": false
+  },
+  "GET /api/books/health": {
+   "0": {
+    "trips": 2,
+    "p50": 8.2,
+    "p95": 9,
+    "p95_ceiling": 59
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 13.6,
+    "p95": 18.5,
+    "p95_ceiling": 68.5
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 7.4,
+    "p95": 10.3,
+    "p95_ceiling": 60.3
+   },
+   "grows": false
+  },
+  "GET /api/books/ledger/:account": {
+   "0": {
+    "trips": 2,
+    "p50": 8,
+    "p95": 8.5,
+    "p95_ceiling": 58.5
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 9.7,
+    "p95": 15.9,
+    "p95_ceiling": 65.9
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 8.6,
+    "p95": 9.6,
+    "p95_ceiling": 59.6
+   },
+   "grows": false
+  },
+  "GET /api/books/move-in/imports": {
+   "0": {
+    "trips": 2,
+    "p50": 7.6,
+    "p95": 8.1,
+    "p95_ceiling": 58.1
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 6.8,
+    "p95": 7.8,
+    "p95_ceiling": 57.8
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 6.3,
+    "p95": 6.7,
+    "p95_ceiling": 56.7
+   },
+   "grows": false
+  },
+  "GET /api/books/packs": {
+   "0": {
+    "trips": 2,
+    "p50": 7,
+    "p95": 8,
+    "p95_ceiling": 58
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 6.7,
+    "p95": 6.9,
+    "p95_ceiling": 56.9
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 6.1,
+    "p95": 7,
+    "p95_ceiling": 57
+   },
+   "grows": false
+  },
+  "GET /api/books/packs/:id": {
+   "0": {
+    "trips": 2,
+    "p50": 6.5,
+    "p95": 7,
+    "p95_ceiling": 57
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 8.4,
+    "p95": 9.2,
+    "p95_ceiling": 59.2
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 6,
+    "p95": 7.1,
+    "p95_ceiling": 57.1
+   },
+   "grows": false
+  },
+  "GET /api/books/party/:id/statement": {
+   "0": {
+    "trips": 2,
+    "p50": 24.1,
+    "p95": 41.4,
+    "p95_ceiling": 91.4
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 15.5,
+    "p95": 18.2,
+    "p95_ceiling": 68.2
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 14.6,
+    "p95": 15.2,
+    "p95_ceiling": 65.2
+   },
+   "grows": false
+  },
+  "GET /api/books/payments/:id/advice": {
+   "0": {
+    "trips": 2,
+    "p50": 9.6,
+    "p95": 11,
+    "p95_ceiling": 61
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 8.8,
+    "p95": 9.3,
+    "p95_ceiling": 59.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 7.7,
+    "p95": 9.3,
+    "p95_ceiling": 59.3
+   },
+   "grows": false
+  },
+  "GET /api/books/periods": {
+   "0": {
+    "trips": 2,
+    "p50": 11.9,
+    "p95": 12.3,
+    "p95_ceiling": 62.3
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 10.6,
+    "p95": 11.8,
+    "p95_ceiling": 61.8
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 10.4,
+    "p95": 11.4,
+    "p95_ceiling": 61.4
+   },
+   "grows": false
+  },
+  "GET /api/books/pl": {
+   "0": {
+    "trips": 2,
+    "p50": 17.8,
+    "p95": 22.3,
+    "p95_ceiling": 72.3
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 14.7,
+    "p95": 18.5,
+    "p95_ceiling": 68.5
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 27.1,
+    "p95": 30.5,
+    "p95_ceiling": 80.5
+   },
+   "grows": false
+  },
+  "GET /api/books/recurring": {
+   "0": {
+    "trips": 2,
+    "p50": 7,
+    "p95": 7.6,
+    "p95_ceiling": 57.6
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 7.2,
+    "p95": 8.1,
+    "p95_ceiling": 58.1
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 10.2,
+    "p95": 13,
+    "p95_ceiling": 63
+   },
+   "grows": false
+  },
+  "GET /api/books/returns": {
+   "0": {
+    "trips": 1,
+    "p50": 5.5,
+    "p95": 7.8,
+    "p95_ceiling": 57.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.7,
+    "p95": 5.2,
+    "p95_ceiling": 55.2
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.7,
+    "p95": 9.1,
+    "p95_ceiling": 59.1
+   },
+   "grows": false
+  },
+  "GET /api/books/status": {
+   "0": {
+    "trips": 1,
+    "p50": 5.3,
+    "p95": 6.4,
+    "p95_ceiling": 56.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 6.1,
+    "p95": 6.7,
+    "p95_ceiling": 56.7
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.5,
+    "p95": 8.6,
+    "p95_ceiling": 58.6
+   },
+   "grows": false
+  },
+  "GET /api/books/terms": {
+   "0": {
+    "trips": 2,
+    "p50": 8.8,
+    "p95": 10.8,
+    "p95_ceiling": 60.8
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 9.5,
+    "p95": 10.1,
+    "p95_ceiling": 60.1
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 8.9,
+    "p95": 10.2,
+    "p95_ceiling": 60.2
+   },
+   "grows": false
+  },
+  "GET /api/books/todo": {
+   "0": {
+    "trips": 5,
+    "p50": 45.6,
+    "p95": 70.2,
+    "p95_ceiling": 120.2
+   },
+   "1000": {
+    "trips": 5,
+    "p50": 36,
+    "p95": 41.4,
+    "p95_ceiling": 91.4
+   },
+   "10000": {
+    "trips": 5,
+    "p50": 112.1,
+    "p95": 126.3,
+    "p95_ceiling": 189.5
+   },
+   "grows": false
+  },
+  "GET /api/books/trial-balance": {
+   "0": {
+    "trips": 2,
+    "p50": 14.7,
+    "p95": 16.1,
+    "p95_ceiling": 66.1
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 18,
+    "p95": 19.3,
+    "p95_ceiling": 69.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 34.8,
+    "p95": 36.4,
+    "p95_ceiling": 86.4
+   },
+   "grows": false
+  },
+  "GET /api/books/year/:fy/status": {
+   "0": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 5.2,
+    "p95_ceiling": 55.2
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.7,
+    "p95": 7.3,
+    "p95_ceiling": 57.3
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.5,
+    "p95": 5.2,
+    "p95_ceiling": 55.2
+   },
+   "grows": false
+  },
+  "GET /api/capture/pending": {
+   "0": {
+    "trips": 1,
+    "p50": 4.9,
+    "p95": 5.3,
+    "p95_ceiling": 55.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 3.6,
+    "p95_ceiling": 53.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.1,
+    "p95": 3.3,
+    "p95_ceiling": 53.3
+   },
+   "grows": false
+  },
+  "GET /api/catalogue-face": {
+   "0": {
+    "trips": 1,
+    "p50": 4.3,
+    "p95": 5.1,
+    "p95_ceiling": 55.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 3.5,
+    "p95_ceiling": 53.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.5,
+    "p95": 3.8,
+    "p95_ceiling": 53.8
+   },
+   "grows": false
+  },
+  "GET /api/catalogue/:bridge_id": {
+   "0": {
+    "trips": 0,
+    "p50": 0.6,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "grows": false
+  },
+  "GET /api/catalogue/enquiry": {
+   "0": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.5,
+    "p95_ceiling": 50.5
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "grows": false
+  },
+  "GET /api/channels": {
+   "0": {
+    "trips": 1,
+    "p50": 1.7,
+    "p95": 1.8,
+    "p95_ceiling": 51.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.7,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2.2,
+    "p95_ceiling": 52.2
+   },
+   "grows": false
+  },
+  "GET /api/channels/outbound": {
+   "0": {
+    "trips": 1,
+    "p50": 3.9,
+    "p95": 4.7,
+    "p95_ceiling": 54.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.7,
+    "p95": 5.4,
+    "p95_ceiling": 55.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.3,
+    "p95": 7.3,
+    "p95_ceiling": 57.3
+   },
+   "grows": false
+  },
+  "GET /api/chits/:chit_id": {
+   "0": {
+    "trips": 2,
+    "p50": 12.1,
+    "p95": 14,
+    "p95_ceiling": 64
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 29.7,
+    "p95": 31.5,
+    "p95_ceiling": 81.5
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 86.9,
+    "p95": 95.2,
+    "p95_ceiling": 145.2
+   },
+   "grows": false
+  },
+  "GET /api/chits/:chit_id/catalogue-overlay": {
+   "0": {
+    "trips": 2,
+    "p50": 5.3,
+    "p95": 6.3,
+    "p95_ceiling": 56.3
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 16.2,
+    "p95": 35.9,
+    "p95_ceiling": 85.9
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 94.5,
+    "p95": 107.5,
+    "p95_ceiling": 161.3
+   },
+   "grows": false
+  },
+  "GET /api/chits/:chit_id/disputes": {
+   "0": {
+    "trips": 2,
+    "p50": 5.9,
+    "p95": 9,
+    "p95_ceiling": 59
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 6.6,
+    "p95": 8.5,
+    "p95_ceiling": 58.5
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 8.2,
+    "p95": 10.9,
+    "p95_ceiling": 60.9
+   },
+   "grows": false
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "0": {
+    "trips": 2,
+    "p50": 6.3,
+    "p95": 6.8,
+    "p95_ceiling": 56.8
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 6.7,
+    "p95": 7.9,
+    "p95_ceiling": 57.9
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 9.4,
+    "p95": 19,
+    "p95_ceiling": 69
+   },
+   "grows": false
+  },
+  "GET /api/chits/:chit_id/raida": {
+   "0": {
+    "trips": 1,
+    "p50": 4.1,
+    "p95": 5.2,
+    "p95_ceiling": 55.2
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.3,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5.7,
+    "p95": 7.6,
+    "p95_ceiling": 57.6
+   },
+   "grows": false
+  },
+  "GET /api/chits/:id/trace": {
+   "0": {
+    "trips": 2,
+    "p50": 7.8,
+    "p95": 9.6,
+    "p95_ceiling": 59.6
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 9.1,
+    "p95": 11.4,
+    "p95_ceiling": 61.4
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 15.7,
+    "p95": 16.7,
+    "p95_ceiling": 66.7
+   },
+   "grows": false
+  },
+  "GET /api/chits/disputes/queue": {
+   "0": {
+    "trips": 2,
+    "p50": 6,
+    "p95": 7,
+    "p95_ceiling": 57
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 6.3,
+    "p95": 7.7,
+    "p95_ceiling": 57.7
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 7.5,
+    "p95": 9.1,
+    "p95_ceiling": 59.1
+   },
+   "grows": false
+  },
+  "GET /api/chits/folder": {
+   "0": {
+    "trips": 1,
+    "p50": 4.7,
+    "p95": 6.1,
+    "p95_ceiling": 56.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 5.7,
+    "p95": 6.5,
+    "p95_ceiling": 56.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 14.7,
+    "p95": 17.5,
+    "p95_ceiling": 67.5
+   },
+   "grows": false
+  },
+  "GET /api/chits/inbox": {
+   "0": {
+    "trips": 1,
+    "p50": 9,
+    "p95": 10.9,
+    "p95_ceiling": 60.9
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 16.2,
+    "p95": 16.8,
+    "p95_ceiling": 66.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 85.9,
+    "p95": 91.4,
+    "p95_ceiling": 141.4
+   },
+   "grows": false
+  },
+  "GET /api/chits/pulse": {
+   "0": {
+    "trips": 1,
+    "p50": 8.1,
+    "p95": 18.4,
+    "p95_ceiling": 68.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 5.8,
+    "p95_ceiling": 55.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.8,
+    "p95": 8.5,
+    "p95_ceiling": 58.5
+   },
+   "grows": false
+  },
+  "GET /api/chits/raida/report": {
+   "0": {
+    "trips": 1,
+    "p50": 5.5,
+    "p95": 8.6,
+    "p95_ceiling": 58.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 7.4,
+    "p95": 7.6,
+    "p95_ceiling": 57.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.9,
+    "p95": 6.7,
+    "p95_ceiling": 56.7
+   },
+   "grows": false
+  },
+  "GET /api/chits/register/attachables": {
+   "0": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.7,
+    "p95_ceiling": 54.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 5.4,
+    "p95": 6.6,
+    "p95_ceiling": 56.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.8,
+    "p95_ceiling": 54.8
+   },
+   "grows": false
+  },
+  "GET /api/chits/register/subjects": {
+   "0": {
+    "trips": 1,
+    "p50": 4.1,
+    "p95": 4.9,
+    "p95_ceiling": 54.9
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 4.4,
+    "p95_ceiling": 54.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "grows": false
+  },
+  "GET /api/chits/register/walk/:from": {
+   "0": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 5.1,
+    "p95_ceiling": 55.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.6,
+    "p95": 4.1,
+    "p95_ceiling": 54.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "grows": false
+  },
+  "GET /api/chits/rollup": {
+   "0": {
+    "trips": 1,
+    "p50": 6.2,
+    "p95": 7.2,
+    "p95_ceiling": 57.2
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 6.2,
+    "p95": 6.6,
+    "p95_ceiling": 56.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 16.3,
+    "p95": 17.8,
+    "p95_ceiling": 67.8
+   },
+   "grows": false
+  },
+  "GET /api/chits/sent": {
+   "0": {
+    "trips": 1,
+    "p50": 6.8,
+    "p95": 7.4,
+    "p95_ceiling": 57.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 6.2,
+    "p95": 6.8,
+    "p95_ceiling": 56.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 10.2,
+    "p95": 13,
+    "p95_ceiling": 63
+   },
+   "grows": false
+  },
+  "GET /api/chits/trace/batches": {
+   "0": {
+    "trips": 1,
+    "p50": 6.5,
+    "p95": 7.1,
+    "p95_ceiling": 57.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.9,
+    "p95": 5,
+    "p95_ceiling": 55
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 9.7,
+    "p95": 11.5,
+    "p95_ceiling": 61.5
+   },
+   "grows": false
+  },
+  "GET /api/chits/trace/by-batch": {
+   "0": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.5,
+    "p95_ceiling": 50.5
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.7,
+    "p95_ceiling": 50.7
+   },
+   "grows": false
+  },
+  "GET /api/chits/unread": {
+   "0": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "grows": false
+  },
+  "GET /api/connectors": {
+   "0": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.3,
+    "p95_ceiling": 52.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.6,
+    "p95": 2.8,
+    "p95_ceiling": 52.8
+   },
+   "grows": false
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "0": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 1.6,
+    "p95_ceiling": 51.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.2,
+    "p95": 3.4,
+    "p95_ceiling": 53.4
+   },
+   "grows": false
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "0": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.2,
+    "p95_ceiling": 52.2
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.5,
+    "p95": 1.6,
+    "p95_ceiling": 51.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.4,
+    "p95": 6.8,
+    "p95_ceiling": 56.8
+   },
+   "grows": false
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "0": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "grows": false
+  },
+  "GET /api/counters": {
+   "0": {
+    "trips": 1,
+    "p50": 5.7,
+    "p95": 10.3,
+    "p95_ceiling": 60.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.4,
+    "p95": 5.2,
+    "p95_ceiling": 55.2
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5.3,
+    "p95": 5.6,
+    "p95_ceiling": 55.6
+   },
+   "grows": false
+  },
+  "GET /api/crm/calls": {
+   "0": {
+    "trips": 1,
+    "p50": 8.2,
+    "p95": 8.7,
+    "p95_ceiling": 58.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.7,
+    "p95": 5.4,
+    "p95_ceiling": 55.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.3,
+    "p95": 7.4,
+    "p95_ceiling": 57.4
+   },
+   "grows": false
+  },
+  "GET /api/crm/followups": {
+   "0": {
+    "trips": 1,
+    "p50": 5,
+    "p95": 5.7,
+    "p95_ceiling": 55.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 4.4,
+    "p95_ceiling": 54.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.9,
+    "p95": 12,
+    "p95_ceiling": 62
+   },
+   "grows": false
+  },
+  "GET /api/crm/parties": {
+   "0": {
+    "trips": 5,
+    "p50": 47,
+    "p95": 55.7,
+    "p95_ceiling": 105.7
+   },
+   "1000": {
+    "trips": 5,
+    "p50": 341.2,
+    "p95": 374.9,
+    "p95_ceiling": 562.3
+   },
+   "10000": {
+    "trips": 4,
+    "p50": 1712.6,
+    "p95": 1857.6,
+    "p95_ceiling": 2786.4
+   },
+   "grows": false
+  },
+  "GET /api/crm/parties/:id": {
+   "0": {
+    "trips": 6,
+    "p50": 42,
+    "p95": 45.3,
+    "p95_ceiling": 95.3
+   },
+   "1000": {
+    "trips": 6,
+    "p50": 35.9,
+    "p95": 40.6,
+    "p95_ceiling": 90.6
+   },
+   "10000": {
+    "trips": 6,
+    "p50": 48.5,
+    "p95": 54.4,
+    "p95_ceiling": 104.4
+   },
+   "grows": false
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "0": {
+    "trips": 1,
+    "p50": 6.5,
+    "p95": 7.3,
+    "p95_ceiling": 57.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 6,
+    "p95": 7.3,
+    "p95_ceiling": 57.3
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.9,
+    "p95": 8.9,
+    "p95_ceiling": 58.9
+   },
+   "grows": false
+  },
+  "GET /api/crm/parties/:id/timeline": {
+   "0": {
+    "trips": 5,
+    "p50": 33.3,
+    "p95": 35.4,
+    "p95_ceiling": 85.4
+   },
+   "1000": {
+    "trips": 5,
+    "p50": 44.4,
+    "p95": 50.8,
+    "p95_ceiling": 100.8
+   },
+   "10000": {
+    "trips": 5,
+    "p50": 47.3,
+    "p95": 59.9,
+    "p95_ceiling": 109.9
+   },
+   "grows": false
+  },
+  "GET /api/crm/privacy-requests": {
+   "0": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.6,
+    "p95": 4.3,
+    "p95_ceiling": 54.3
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.4,
+    "p95": 4.1,
+    "p95_ceiling": 54.1
+   },
+   "grows": false
+  },
+  "GET /api/crm/segments": {
+   "0": {
+    "trips": 7,
+    "p50": 68.7,
+    "p95": 89.5,
+    "p95_ceiling": 139.5
+   },
+   "1000": {
+    "trips": 7,
+    "p50": 354.9,
+    "p95": 365.8,
+    "p95_ceiling": 548.7
+   },
+   "10000": {
+    "trips": 6,
+    "p50": 1473.9,
+    "p95": 1536.9,
+    "p95_ceiling": 2305.4
+   },
+   "grows": false
+  },
+  "GET /api/definitions": {
+   "0": {
+    "trips": 1,
+    "p50": 3.2,
+    "p95": 3.8,
+    "p95_ceiling": 53.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.9,
+    "p95_ceiling": 54.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.4,
+    "p95": 4,
+    "p95_ceiling": 54
+   },
+   "grows": false
+  },
+  "GET /api/definitions/:id": {
+   "0": {
+    "trips": 1,
+    "p50": 3.2,
+    "p95": 4.3,
+    "p95_ceiling": 54.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.8,
+    "p95_ceiling": 54.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.8,
+    "p95": 3.2,
+    "p95_ceiling": 53.2
+   },
+   "grows": false
+  },
+  "GET /api/entities/constitutions": {
+   "0": {
+    "trips": 1,
+    "p50": 1.7,
+    "p95": 2.3,
+    "p95_ceiling": 52.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.2,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 1.8,
+    "p95_ceiling": 51.8
+   },
+   "grows": false
+  },
+  "GET /api/entities/header": {
+   "0": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.3,
+    "p95": 3.2,
+    "p95_ceiling": 53.2
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.2,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "grows": false
+  },
+  "GET /api/entities/me": {
+   "0": {
+    "trips": 4,
+    "p50": 7.2,
+    "p95": 7.8,
+    "p95_ceiling": 57.8
+   },
+   "1000": {
+    "trips": 4,
+    "p50": 7.6,
+    "p95": 8.8,
+    "p95_ceiling": 58.8
+   },
+   "10000": {
+    "trips": 4,
+    "p50": 7.7,
+    "p95": 9.9,
+    "p95_ceiling": 59.9
+   },
+   "grows": false
+  },
+  "GET /api/entities/me/can-see-costs": {
+   "0": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.7,
+    "p95_ceiling": 50.7
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "grows": false
+  },
+  "GET /api/entities/mis": {
+   "0": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.7,
+    "p95_ceiling": 50.7
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "grows": false
+  },
+  "GET /api/entities/policy": {
+   "0": {
+    "trips": 1,
+    "p50": 2.4,
+    "p95": 3.5,
+    "p95_ceiling": 53.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.3,
+    "p95_ceiling": 52.3
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "grows": false
+  },
+  "GET /api/entities/populations": {
+   "0": {
+    "trips": 0,
+    "p50": 0.7,
+    "p95": 1.1,
+    "p95_ceiling": 51.1
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.3,
+    "p95_ceiling": 50.3
+   },
+   "grows": false
+  },
+  "GET /api/entities/routing": {
+   "0": {
+    "trips": 2,
+    "p50": 9,
+    "p95": 11.3,
+    "p95_ceiling": 61.3
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 6.6,
+    "p95": 9,
+    "p95_ceiling": 59
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 7.2,
+    "p95": 7.9,
+    "p95_ceiling": 57.9
+   },
+   "grows": false
+  },
+  "GET /api/entities/routing/preview": {
+   "0": {
+    "trips": 1,
+    "p50": 2.4,
+    "p95": 2.8,
+    "p95_ceiling": 52.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.5,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.5,
+    "p95": 1.7,
+    "p95_ceiling": 51.7
+   },
+   "grows": false
+  },
+  "GET /api/entities/search": {
+   "0": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.7,
+    "p95_ceiling": 50.7
+   },
+   "grows": false
+  },
+  "GET /api/entities/sides": {
+   "0": {
+    "trips": 6,
+    "p50": 24.1,
+    "p95": 38.8,
+    "p95_ceiling": 88.8
+   },
+   "1000": {
+    "trips": 6,
+    "p50": 237.6,
+    "p95": 275.4,
+    "p95_ceiling": 413.1
+   },
+   "10000": {
+    "trips": 6,
+    "p50": 1125.4,
+    "p95": 1183.1,
+    "p95_ceiling": 1774.7
+   },
+   "grows": false
+  },
+  "GET /api/entities/usage": {
+   "0": {
+    "trips": 1,
+    "p50": 6.1,
+    "p95": 8.2,
+    "p95_ceiling": 58.2
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 6.6,
+    "p95": 7.9,
+    "p95_ceiling": 57.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.1,
+    "p95": 7.1,
+    "p95_ceiling": 57.1
+   },
+   "grows": false
+  },
+  "GET /api/events/stats": {
+   "0": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.7,
+    "p95_ceiling": 50.7
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "grows": false
+  },
+  "GET /api/events/stream": {
+   "0": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.3,
+    "p95_ceiling": 50.3
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.8,
+    "p95_ceiling": 50.8
+   },
+   "grows": false
+  },
+  "GET /api/facts/account": {
+   "0": {
+    "trips": 1,
+    "p50": 2.2,
+    "p95": 16.8,
+    "p95_ceiling": 66.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 3.3,
+    "p95_ceiling": 53.3
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.2,
+    "p95": 2.9,
+    "p95_ceiling": 52.9
+   },
+   "grows": false
+  },
+  "GET /api/facts/accounts": {
+   "0": {
+    "trips": 1,
+    "p50": 5.2,
+    "p95": 9,
+    "p95_ceiling": 59
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 6.5,
+    "p95": 7.2,
+    "p95_ceiling": 57.2
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6,
+    "p95": 11.6,
+    "p95_ceiling": 61.6
+   },
+   "grows": false
+  },
+  "GET /api/facts/assist": {
+   "0": {
+    "trips": 1,
+    "p50": 1.3,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2.4,
+    "p95_ceiling": 52.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.5,
+    "p95": 1.7,
+    "p95_ceiling": 51.7
+   },
+   "grows": false
+  },
+  "GET /api/facts/combo-lab": {
+   "0": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 1.8,
+    "p95_ceiling": 51.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "grows": false
+  },
+  "GET /api/facts/connectors": {
+   "0": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2.4,
+    "p95_ceiling": 52.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 1.7,
+    "p95_ceiling": 51.7
+   },
+   "grows": false
+  },
+  "GET /api/facts/counters": {
+   "0": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.2,
+    "p95": 3.4,
+    "p95_ceiling": 53.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "grows": false
+  },
+  "GET /api/facts/disputes": {
+   "0": {
+    "trips": 1,
+    "p50": 3,
+    "p95": 3.4,
+    "p95_ceiling": 53.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.4,
+    "p95": 4,
+    "p95_ceiling": 54
+   },
+   "grows": false
+  },
+  "GET /api/facts/finance": {
+   "0": {
+    "trips": 1,
+    "p50": 5.9,
+    "p95": 6.2,
+    "p95_ceiling": 56.2
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 7.1,
+    "p95": 8.5,
+    "p95_ceiling": 58.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 7.1,
+    "p95": 8.6,
+    "p95_ceiling": 58.6
+   },
+   "grows": false
+  },
+  "GET /api/facts/governance": {
+   "0": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 1.7,
+    "p95_ceiling": 51.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 1.8,
+    "p95_ceiling": 51.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.7,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "grows": false
+  },
+  "GET /api/facts/marketing": {
+   "0": {
+    "trips": 1,
+    "p50": 3.7,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 4.1,
+    "p95_ceiling": 54.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.6,
+    "p95": 3.9,
+    "p95_ceiling": 53.9
+   },
+   "grows": false
+  },
+  "GET /api/facts/offer-lab": {
+   "0": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "grows": false
+  },
+  "GET /api/facts/operations": {
+   "0": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.2,
+    "p95_ceiling": 54.2
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.7,
+    "p95": 3.8,
+    "p95_ceiling": 53.8
+   },
+   "grows": false
+  },
+  "GET /api/facts/orders": {
+   "0": {
+    "trips": 2,
+    "p50": 12.3,
+    "p95": 13.7,
+    "p95_ceiling": 63.7
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 31.1,
+    "p95": 41.7,
+    "p95_ceiling": 91.7
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 181.7,
+    "p95": 204.6,
+    "p95_ceiling": 306.9
+   },
+   "grows": false
+  },
+  "GET /api/facts/people": {
+   "0": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.4,
+    "p95": 2.6,
+    "p95_ceiling": 52.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2,
+    "p95": 2.6,
+    "p95_ceiling": 52.6
+   },
+   "grows": false
+  },
+  "GET /api/facts/plan": {
+   "0": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.2,
+    "p95": 2.8,
+    "p95_ceiling": 52.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 7.5,
+    "p95": 8.1,
+    "p95_ceiling": 58.1
+   },
+   "grows": false
+  },
+  "GET /api/facts/product-lab": {
+   "0": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.4,
+    "p95_ceiling": 52.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.4,
+    "p95_ceiling": 52.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.4,
+    "p95": 4.8,
+    "p95_ceiling": 54.8
+   },
+   "grows": false
+  },
+  "GET /api/facts/rail": {
+   "0": {
+    "trips": 3,
+    "p50": 18.8,
+    "p95": 21.2,
+    "p95_ceiling": 71.2
+   },
+   "1000": {
+    "trips": 3,
+    "p50": 264.9,
+    "p95": 338,
+    "p95_ceiling": 507
+   },
+   "10000": {
+    "trips": 3,
+    "p50": 1200.4,
+    "p95": 1288.4,
+    "p95_ceiling": 1932.6
+   },
+   "grows": false
+  },
+  "GET /api/facts/rail/chits": {
+   "0": {
+    "trips": 4,
+    "p50": 17.9,
+    "p95": 22,
+    "p95_ceiling": 72
+   },
+   "1000": {
+    "trips": 4,
+    "p50": 104.9,
+    "p95": 109.5,
+    "p95_ceiling": 164.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 338.7,
+    "p95": 370.9,
+    "p95_ceiling": 556.3
+   },
+   "grows": false
+  },
+  "GET /api/facts/reports": {
+   "0": {
+    "trips": 2,
+    "p50": 8.6,
+    "p95": 9.5,
+    "p95_ceiling": 59.5
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 74.8,
+    "p95": 77.8,
+    "p95_ceiling": 127.8
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 356.4,
+    "p95": 388,
+    "p95_ceiling": 582
+   },
+   "grows": false
+  },
+  "GET /api/facts/tax-lab": {
+   "0": {
+    "trips": 5,
+    "p50": 9.2,
+    "p95": 11.2,
+    "p95_ceiling": 61.2
+   },
+   "1000": {
+    "trips": 5,
+    "p50": 19.3,
+    "p95": 22,
+    "p95_ceiling": 72
+   },
+   "10000": {
+    "trips": 5,
+    "p50": 88.9,
+    "p95": 98.7,
+    "p95_ceiling": 148.7
+   },
+   "grows": false
+  },
+  "GET /api/facts/till": {
+   "0": {
+    "trips": 1,
+    "p50": 2.7,
+    "p95": 3,
+    "p95_ceiling": 53
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 5.8,
+    "p95": 7.6,
+    "p95_ceiling": 57.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 21.8,
+    "p95": 27.9,
+    "p95_ceiling": 77.9
+   },
+   "grows": false
+  },
+  "GET /api/folders": {
+   "0": {
+    "trips": 11,
+    "p50": 44.8,
+    "p95": 105.1,
+    "p95_ceiling": 157.6
+   },
+   "1000": {
+    "trips": 11,
+    "p50": 116.9,
+    "p95": 127.8,
+    "p95_ceiling": 191.7
+   },
+   "10000": {
+    "trips": 11,
+    "p50": 372.5,
+    "p95": 436,
+    "p95_ceiling": 654
+   },
+   "grows": false
+  },
+  "GET /api/folders/:id/chits": {
+   "0": {
+    "trips": 2,
+    "p50": 6.4,
+    "p95": 9.6,
+    "p95_ceiling": 59.6
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 7.6,
+    "p95": 9.3,
+    "p95_ceiling": 59.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 6.5,
+    "p95": 8.7,
+    "p95_ceiling": 58.7
+   },
+   "grows": false
+  },
+  "GET /api/folders/:id/metrics": {
+   "0": {
+    "trips": 4,
+    "p50": 10.3,
+    "p95": 10.8,
+    "p95_ceiling": 60.8
+   },
+   "1000": {
+    "trips": 4,
+    "p50": 12,
+    "p95": 18.6,
+    "p95_ceiling": 68.6
+   },
+   "10000": {
+    "trips": 4,
+    "p50": 9,
+    "p95": 9.8,
+    "p95_ceiling": 59.8
+   },
+   "grows": false
+  },
+  "GET /api/folders/:id/rules": {
+   "0": {
+    "trips": 1,
+    "p50": 3.1,
+    "p95": 3.8,
+    "p95_ceiling": 53.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.7,
+    "p95_ceiling": 54.7
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "grows": false
+  },
+  "GET /api/folders/messages": {
+   "0": {
+    "trips": 1,
+    "p50": 4.4,
+    "p95": 4.9,
+    "p95_ceiling": 54.9
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.1,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 7,
+    "p95": 8.2,
+    "p95_ceiling": 58.2
+   },
+   "grows": false
+  },
+  "GET /api/folders/mis": {
+   "0": {
+    "trips": 2,
+    "p50": 11.6,
+    "p95": 13.2,
+    "p95_ceiling": 63.2
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 81.9,
+    "p95": 90.2,
+    "p95_ceiling": 140.2
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 370.1,
+    "p95": 409.3,
+    "p95_ceiling": 614
+   },
+   "grows": false
+  },
+  "GET /api/folders/reconcile": {
+   "0": {
+    "trips": 3,
+    "p50": 12.9,
+    "p95": 16.3,
+    "p95_ceiling": 66.3
+   },
+   "1000": {
+    "trips": 3,
+    "p50": 72.2,
+    "p95": 76.4,
+    "p95_ceiling": 126.4
+   },
+   "10000": {
+    "trips": 3,
+    "p50": 371,
+    "p95": 410.6,
+    "p95_ceiling": 615.9
+   },
+   "grows": false
+  },
+  "GET /api/folders/rules": {
+   "0": {
+    "trips": 1,
+    "p50": 3.1,
+    "p95": 3.4,
+    "p95_ceiling": 53.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.8,
+    "p95": 3,
+    "p95_ceiling": 53
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 7.1,
+    "p95": 23.6,
+    "p95_ceiling": 73.6
+   },
+   "grows": false
+  },
+  "GET /api/folders/worklist": {
+   "0": {
+    "trips": 1,
+    "p50": 5.5,
+    "p95": 5.6,
+    "p95_ceiling": 55.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 22.7,
+    "p95": 26.5,
+    "p95_ceiling": 76.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 209.5,
+    "p95": 229.2,
+    "p95_ceiling": 343.8
+   },
+   "grows": false
+  },
+  "GET /api/forms/instances/all": {
+   "0": {
+    "trips": 1,
+    "p50": 2.9,
+    "p95": 3.3,
+    "p95_ceiling": 53.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 5.3,
+    "p95_ceiling": 55.3
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 5.4,
+    "p95_ceiling": 55.4
+   },
+   "grows": false
+  },
+  "GET /api/governance/country-setup": {
+   "0": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 5.3,
+    "p95_ceiling": 55.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 6.7,
+    "p95": 10.8,
+    "p95_ceiling": 60.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 7.3,
+    "p95": 8.1,
+    "p95_ceiling": 58.1
+   },
+   "grows": false
+  },
+  "GET /api/governance/instruments": {
+   "0": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 4.2,
+    "p95_ceiling": 54.2
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.6,
+    "p95": 0.7,
+    "p95_ceiling": 50.7
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 1.4,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "grows": false
+  },
+  "GET /api/governance/lanes": {
+   "0": {
+    "trips": 6,
+    "p50": 8.2,
+    "p95": 10.9,
+    "p95_ceiling": 60.9
+   },
+   "1000": {
+    "trips": 6,
+    "p50": 10.3,
+    "p95": 16.6,
+    "p95_ceiling": 66.6
+   },
+   "10000": {
+    "trips": 6,
+    "p50": 14.6,
+    "p95": 21.4,
+    "p95_ceiling": 71.4
+   },
+   "grows": false
+  },
+  "GET /api/governance/profile": {
+   "0": {
+    "trips": 4,
+    "p50": 8.3,
+    "p95": 8.7,
+    "p95_ceiling": 58.7
+   },
+   "1000": {
+    "trips": 4,
+    "p50": 7.9,
+    "p95": 8.3,
+    "p95_ceiling": 58.3
+   },
+   "10000": {
+    "trips": 4,
+    "p50": 13,
+    "p95": 18.9,
+    "p95_ceiling": 68.9
+   },
+   "grows": false
+  },
+  "GET /api/governance/readiness": {
+   "0": {
+    "trips": 10,
+    "p50": 14.9,
+    "p95": 18.3,
+    "p95_ceiling": 68.3
+   },
+   "1000": {
+    "trips": 10,
+    "p50": 19.6,
+    "p95": 24.4,
+    "p95_ceiling": 74.4
+   },
+   "10000": {
+    "trips": 10,
+    "p50": 20.9,
+    "p95": 22,
+    "p95_ceiling": 72
+   },
+   "grows": false
+  },
+  "GET /api/governance/readiness/:bridge_id": {
+   "0": {
+    "trips": 1,
+    "p50": 1.5,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.7,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.1,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "grows": false
+  },
+  "GET /api/governance/supplier-acceptance/:handle": {
+   "0": {
+    "trips": 1,
+    "p50": 1.3,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.7,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 4.2,
+    "p95_ceiling": 54.2
+   },
+   "grows": false
+  },
+  "GET /api/integrations/catalogue": {
+   "0": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.5,
+    "p95_ceiling": 50.5
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 1.5,
+    "p95": 2,
+    "p95_ceiling": 52
+   },
+   "grows": false
+  },
+  "GET /api/integrations/profile-map": {
+   "0": {
+    "trips": 2,
+    "p50": 3.5,
+    "p95": 3.8,
+    "p95_ceiling": 53.8
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 4.1,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 6.8,
+    "p95": 8,
+    "p95_ceiling": 58
+   },
+   "grows": false
+  },
+  "GET /api/integrations/reconcile": {
+   "0": {
+    "trips": 3,
+    "p50": 6.5,
+    "p95": 8.2,
+    "p95_ceiling": 58.2
+   },
+   "1000": {
+    "trips": 3,
+    "p50": 9,
+    "p95": 10.4,
+    "p95_ceiling": 60.4
+   },
+   "10000": {
+    "trips": 3,
+    "p50": 21.2,
+    "p95": 48.3,
+    "p95_ceiling": 98.3
+   },
+   "grows": false
+  },
+  "GET /api/integrations/status": {
+   "0": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.3,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "grows": false
+  },
+  "GET /api/integrations/stock/:handle": {
+   "0": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 1.6,
+    "p95_ceiling": 51.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.4,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.9,
+    "p95": 4.3,
+    "p95_ceiling": 54.3
+   },
+   "grows": false
+  },
+  "GET /api/integrations/streams": {
+   "0": {
+    "trips": 2,
+    "p50": 2.2,
+    "p95": 3,
+    "p95_ceiling": 53
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 2,
+    "p95": 2.3,
+    "p95_ceiling": 52.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 3.1,
+    "p95": 3.5,
+    "p95_ceiling": 53.5
+   },
+   "grows": false
+  },
+  "GET /api/marketing/came-back": {
+   "0": {
+    "trips": 2,
+    "p50": 5.6,
+    "p95": 6.9,
+    "p95_ceiling": 56.9
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 4.8,
+    "p95": 6.3,
+    "p95_ceiling": 56.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 6.7,
+    "p95": 7.4,
+    "p95_ceiling": 57.4
+   },
+   "grows": false
+  },
+  "GET /api/network-design": {
+   "0": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 4.6,
+    "p95_ceiling": 54.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 9.7,
+    "p95_ceiling": 59.7
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5.2,
+    "p95": 6,
+    "p95_ceiling": 56
+   },
+   "grows": false
+  },
+  "GET /api/network-design/availability": {
+   "0": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 1.2,
+    "p95": 1.5,
+    "p95_ceiling": 51.5
+   },
+   "grows": false
+  },
+  "GET /api/network-design/stores": {
+   "0": {
+    "trips": 2,
+    "p50": 2.9,
+    "p95": 3.7,
+    "p95_ceiling": 53.7
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 2.8,
+    "p95": 3.1,
+    "p95_ceiling": 53.1
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 3.5,
+    "p95": 3.7,
+    "p95_ceiling": 53.7
+   },
+   "grows": false
+  },
+  "GET /api/network-offers": {
+   "0": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 5.8,
+    "p95_ceiling": 55.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 5.4,
+    "p95_ceiling": 55.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.6,
+    "p95": 6,
+    "p95_ceiling": 56
+   },
+   "grows": false
+  },
+  "GET /api/notifications": {
+   "0": {
+    "trips": 3,
+    "p50": 8.6,
+    "p95": 10,
+    "p95_ceiling": 60
+   },
+   "1000": {
+    "trips": 3,
+    "p50": 10.5,
+    "p95": 11.7,
+    "p95_ceiling": 61.7
+   },
+   "10000": {
+    "trips": 3,
+    "p50": 14.3,
+    "p95": 17.5,
+    "p95_ceiling": 67.5
+   },
+   "grows": false
+  },
+  "GET /api/people": {
+   "0": {
+    "trips": 1,
+    "p50": 1.8,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.9,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 3.6,
+    "p95": 4.2,
+    "p95_ceiling": 54.2
+   },
+   "grows": false
+  },
+  "GET /api/privacy/facts": {
+   "0": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.5,
+    "p95_ceiling": 50.5
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 1.6,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "grows": false
+  },
+  "GET /api/privacy/me": {
+   "0": {
+    "trips": 0,
+    "p50": 0.5,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 1.5,
+    "p95": 2.1,
+    "p95_ceiling": 52.1
+   },
+   "grows": false
+  },
+  "GET /api/products": {
+   "0": {
+    "trips": 1,
+    "p50": 2.5,
+    "p95": 2.7,
+    "p95_ceiling": 52.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 15.1,
+    "p95": 17.4,
+    "p95_ceiling": 67.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 38.8,
+    "p95": 41,
+    "p95_ceiling": 91
+   },
+   "grows": false
+  },
+  "GET /api/products/:id/versions": {
+   "0": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 5.1,
+    "p95": 6.1,
+    "p95_ceiling": 56.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 8.4,
+    "p95": 12.3,
+    "p95_ceiling": 62.3
+   },
+   "grows": false
+  },
+  "GET /api/products/starter-columns": {
+   "0": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.5,
+    "p95_ceiling": 50.5
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 2,
+    "p95": 2.5,
+    "p95_ceiling": 52.5
+   },
+   "grows": false
+  },
+  "GET /api/products/template": {
+   "0": {
+    "trips": 5,
+    "p50": 8.9,
+    "p95": 10.4,
+    "p95_ceiling": 60.4
+   },
+   "1000": {
+    "trips": 5,
+    "p50": 19.5,
+    "p95": 23,
+    "p95_ceiling": 73
+   },
+   "10000": {
+    "trips": 5,
+    "p50": 107.2,
+    "p95": 154.4,
+    "p95_ceiling": 231.6
+   },
+   "grows": false
+  },
+  "GET /api/relationships/customers": {
+   "0": {
+    "trips": 2,
+    "p50": 14.3,
+    "p95": 16.8,
+    "p95_ceiling": 66.8
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 41.2,
+    "p95": 50.6,
+    "p95_ceiling": 100.6
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 245.7,
+    "p95": 266.2,
+    "p95_ceiling": 399.3
+   },
+   "grows": false
+  },
+  "GET /api/relationships/customers/:id/rewards": {
+   "0": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 3.6,
+    "p95_ceiling": 53.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.7,
+    "p95_ceiling": 54.7
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5.3,
+    "p95": 5.7,
+    "p95_ceiling": 55.7
+   },
+   "grows": false
+  },
+  "GET /api/relationships/customers/groups": {
+   "0": {
+    "trips": 1,
+    "p50": 3.1,
+    "p95": 3.6,
+    "p95_ceiling": 53.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.2,
+    "p95": 4,
+    "p95_ceiling": 54
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.7,
+    "p95": 8.7,
+    "p95_ceiling": 58.7
+   },
+   "grows": false
+  },
+  "GET /api/relationships/suppliers": {
+   "0": {
+    "trips": 4,
+    "p50": 20.9,
+    "p95": 42.6,
+    "p95_ceiling": 92.6
+   },
+   "1000": {
+    "trips": 4,
+    "p50": 20.7,
+    "p95": 29.7,
+    "p95_ceiling": 79.7
+   },
+   "10000": {
+    "trips": 4,
+    "p50": 24.8,
+    "p95": 31.7,
+    "p95_ceiling": 81.7
+   },
+   "grows": false
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "0": {
+    "trips": 2,
+    "p50": 2.6,
+    "p95": 2.9,
+    "p95_ceiling": 52.9
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 3.4,
+    "p95": 4.2,
+    "p95_ceiling": 54.2
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 5.2,
+    "p95": 5.7,
+    "p95_ceiling": 55.7
+   },
+   "grows": false
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "0": {
+    "trips": 0,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 1.4,
+    "p95": 1.6,
+    "p95_ceiling": 51.6
+   },
+   "grows": false
+  },
+  "GET /api/repeat": {
+   "0": {
+    "trips": 2,
+    "p50": 7.2,
+    "p95": 10.8,
+    "p95_ceiling": 60.8
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 7.4,
+    "p95": 8.3,
+    "p95_ceiling": 58.3
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 7.4,
+    "p95": 10.2,
+    "p95_ceiling": 60.2
+   },
+   "grows": false
+  },
+  "GET /api/repeat/:id": {
+   "0": {
+    "trips": 1,
+    "p50": 3.5,
+    "p95": 4,
+    "p95_ceiling": 54
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.9,
+    "p95": 7.8,
+    "p95_ceiling": 57.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5,
+    "p95": 6,
+    "p95_ceiling": 56
+   },
+   "grows": false
+  },
+  "GET /api/schemas/fields": {
+   "0": {
+    "trips": 4,
+    "p50": 5.9,
+    "p95": 7,
+    "p95_ceiling": 57
+   },
+   "1000": {
+    "trips": 4,
+    "p50": 11.8,
+    "p95": 14,
+    "p95_ceiling": 64
+   },
+   "10000": {
+    "trips": 4,
+    "p50": 52.5,
+    "p95": 62,
+    "p95_ceiling": 112
+   },
+   "grows": false
+  },
+  "GET /api/service/:chit_id": {
+   "0": {
+    "trips": 1,
+    "p50": 5.5,
+    "p95": 6.4,
+    "p95_ceiling": 56.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 5.1,
+    "p95": 6.1,
+    "p95_ceiling": 56.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5.6,
+    "p95": 6.5,
+    "p95_ceiling": 56.5
+   },
+   "grows": false
+  },
+  "GET /api/signin/devices": {
+   "0": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 1.8,
+    "p95_ceiling": 51.8
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.6,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.5,
+    "p95": 2.7,
+    "p95_ceiling": 52.7
+   },
+   "grows": false
+  },
+  "GET /api/signin/sessions": {
+   "0": {
+    "trips": 1,
+    "p50": 1.5,
+    "p95": 1.9,
+    "p95_ceiling": 51.9
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 1.7,
+    "p95": 1.8,
+    "p95_ceiling": 51.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 2.5,
+    "p95": 2.7,
+    "p95_ceiling": 52.7
+   },
+   "grows": false
+  },
+  "GET /api/supplies": {
+   "0": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.9,
+    "p95_ceiling": 54.9
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 2.9,
+    "p95": 3.2,
+    "p95_ceiling": 53.2
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.5,
+    "p95": 5.3,
+    "p95_ceiling": 55.3
+   },
+   "grows": false
+  },
+  "GET /api/tax/gstr": {
+   "0": {
+    "trips": 60,
+    "p50": 72.3,
+    "p95": 95.6,
+    "p95_ceiling": 145.6
+   },
+   "1000": {
+    "trips": 120,
+    "p50": 126.4,
+    "p95": 136.7,
+    "p95_ceiling": 205.1
+   },
+   "10000": {
+    "trips": 662,
+    "p50": 639.6,
+    "p95": 710.9,
+    "p95_ceiling": 1066.4
+   },
+   "grows": true
+  },
+  "GET /api/tax/ledger": {
+   "0": {
+    "trips": 60,
+    "p50": 74.9,
+    "p95": 92.3,
+    "p95_ceiling": 142.3
+   },
+   "1000": {
+    "trips": 120,
+    "p50": 148.8,
+    "p95": 198.8,
+    "p95_ceiling": 298.2
+   },
+   "10000": {
+    "trips": 662,
+    "p50": 674.1,
+    "p95": 750.8,
+    "p95_ceiling": 1126.2
+   },
+   "grows": true
+  },
+  "GET /api/testing/cases": {
+   "0": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 3.5,
+    "p95_ceiling": 53.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.3,
+    "p95": 6.1,
+    "p95_ceiling": 56.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5,
+    "p95": 5.9,
+    "p95_ceiling": 55.9
+   },
+   "grows": false
+  },
+  "GET /api/testing/cmdb": {
+   "0": {
+    "trips": 1,
+    "p50": 3.2,
+    "p95": 3.7,
+    "p95_ceiling": 53.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.9,
+    "p95": 5.2,
+    "p95_ceiling": 55.2
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.9,
+    "p95": 5.8,
+    "p95_ceiling": 55.8
+   },
+   "grows": false
+  },
+  "GET /api/testing/coverage": {
+   "0": {
+    "trips": 2,
+    "p50": 8.3,
+    "p95": 8.9,
+    "p95_ceiling": 58.9
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 8,
+    "p95": 8.1,
+    "p95_ceiling": 58.1
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 11,
+    "p95": 18.5,
+    "p95_ceiling": 68.5
+   },
+   "grows": false
+  },
+  "GET /api/testing/incidents": {
+   "0": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.7,
+    "p95": 3.8,
+    "p95_ceiling": 53.8
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 6.8,
+    "p95": 7.2,
+    "p95_ceiling": 57.2
+   },
+   "grows": false
+  },
+  "GET /api/testing/requirements": {
+   "0": {
+    "trips": 1,
+    "p50": 4,
+    "p95": 4.3,
+    "p95_ceiling": 54.3
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.5,
+    "p95_ceiling": 54.5
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5.6,
+    "p95": 5.8,
+    "p95_ceiling": 55.8
+   },
+   "grows": false
+  },
+  "GET /api/testing/results": {
+   "0": {
+    "trips": 1,
+    "p50": 3,
+    "p95": 3.2,
+    "p95_ceiling": 53.2
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.2,
+    "p95": 6.4,
+    "p95_ceiling": 56.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.5,
+    "p95": 5,
+    "p95_ceiling": 55
+   },
+   "grows": false
+  },
+  "GET /api/testing/stale": {
+   "0": {
+    "trips": 1,
+    "p50": 3.1,
+    "p95": 3.4,
+    "p95_ceiling": 53.4
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 4.3,
+    "p95": 5.1,
+    "p95_ceiling": 55.1
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 5.1,
+    "p95": 5.4,
+    "p95_ceiling": 55.4
+   },
+   "grows": false
+  },
+  "GET /api/testing/trace": {
+   "0": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.6,
+    "p95_ceiling": 50.6
+   },
+   "1000": {
+    "trips": 0,
+    "p50": 0.4,
+    "p95": 0.4,
+    "p95_ceiling": 50.4
+   },
+   "10000": {
+    "trips": 0,
+    "p50": 1.3,
+    "p95": 1.7,
+    "p95_ceiling": 51.7
+   },
+   "grows": false
+  },
+  "GET /api/till/bills": {
+   "0": {
+    "trips": 1,
+    "p50": 8.1,
+    "p95": 9.6,
+    "p95_ceiling": 59.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 13,
+    "p95": 20.6,
+    "p95_ceiling": 70.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 16,
+    "p95": 22.1,
+    "p95_ceiling": 72.1
+   },
+   "grows": false
+  },
+  "GET /api/till/match": {
+   "0": {
+    "trips": 3,
+    "p50": 19.7,
+    "p95": 22.2,
+    "p95_ceiling": 72.2
+   },
+   "1000": {
+    "trips": 3,
+    "p50": 59.8,
+    "p95": 65.9,
+    "p95_ceiling": 115.9
+   },
+   "10000": {
+    "trips": 3,
+    "p50": 95.1,
+    "p95": 97.5,
+    "p95_ceiling": 147.5
+   },
+   "grows": false
+  },
+  "GET /api/till/stock": {
+   "0": {
+    "trips": 1,
+    "p50": 3.2,
+    "p95": 3.7,
+    "p95_ceiling": 53.7
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 3.8,
+    "p95": 4.4,
+    "p95_ceiling": 54.4
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 4.8,
+    "p95": 6.5,
+    "p95_ceiling": 56.5
+   },
+   "grows": false
+  },
+  "GET /api/till/summary": {
+   "0": {
+    "trips": 1,
+    "p50": 3.3,
+    "p95": 3.6,
+    "p95_ceiling": 53.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 8.6,
+    "p95": 10,
+    "p95_ceiling": 60
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 31.7,
+    "p95": 33.4,
+    "p95_ceiling": 83.4
+   },
+   "grows": false
+  },
+  "GET /api/work/:chit_id": {
+   "0": {
+    "trips": 2,
+    "p50": 6.6,
+    "p95": 7.5,
+    "p95_ceiling": 57.5
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 20.5,
+    "p95": 24,
+    "p95_ceiling": 74
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 142.4,
+    "p95": 152.9,
+    "p95_ceiling": 229.4
+   },
+   "grows": false
+  },
+  "GET /api/work/facts": {
+   "0": {
+    "trips": 1,
+    "p50": 7.4,
+    "p95": 7.6,
+    "p95_ceiling": 57.6
+   },
+   "1000": {
+    "trips": 1,
+    "p50": 82.2,
+    "p95": 97.6,
+    "p95_ceiling": 147.6
+   },
+   "10000": {
+    "trips": 1,
+    "p50": 355.7,
+    "p95": 448.7,
+    "p95_ceiling": 673.1
+   },
+   "grows": false
+  },
+  "GET /api/work/list": {
+   "0": {
+    "trips": 2,
+    "p50": 11.5,
+    "p95": 15.6,
+    "p95_ceiling": 65.6
+   },
+   "1000": {
+    "trips": 2,
+    "p50": 102.7,
+    "p95": 120.9,
+    "p95_ceiling": 181.4
+   },
+   "10000": {
+    "trips": 2,
+    "p50": 519,
+    "p95": 541.2,
+    "p95_ceiling": 811.8
+   },
+   "grows": false
+  }
+ }
+}

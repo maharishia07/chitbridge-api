@@ -10,6 +10,8 @@
     "test:jest": "jest",
     "test:integration": "node tests/run-tests.js",
     "check:trips": "node tools/round-trips.cjs --check",
+    "check:trips:volume": "node tools/round-trips-volume.cjs --check",
+    "baseline:trips:volume": "node tools/round-trips-volume.cjs --write",
     "guards": "node scripts/guards.cjs",
     "sql": "node scripts/sql.cjs",
     "db:role": "node scripts/check-db-role.js",

@@ -21,6 +21,12 @@
  *    tools/endpoint-usage.cjs --json); without it the budget file's own list is what is fired, and that is said.
  *
  * Run: node tests/round-trips-all.test.cjs [--write] · no DB, no network.
+ *
+ * ⭐ SPD-17 (2026-10-23) · WITH DATA: `--volume --out <file>` fires the same called GET routes against a REAL local database (the scratch
+ *    database tools/round-trips-volume.cjs seeds at 0 / 1,000 / 10,000 rows) instead of the stub, and writes trips + p50/p95 ms per route to
+ *    <file>. The stub stays the empty-shop floor; this is the same list, the same mounts, the same X-DB-Trips header, with rows behind them.
+ *    It never checks the budget and never writes round-trips.budget.json; tools/round-trips-volume.cjs judges the three levels together.
+ *    Refuses any database that is not 127.0.0.1 / cb_volume. Writes (POST/PUT/DELETE) are not fired: they would change the data being measured.
  */
 const path = require('path');
 const fs = require('fs');
@@ -28,11 +34,17 @@ const { spawnSync } = require('child_process');
 const API = path.join(__dirname, '..');
 const BUDGET_FILE = path.join(API, 'round-trips.budget.json');
 const WRITE = process.argv.includes('--write');
+const VOLUME = process.argv.includes('--volume');
+const argAfter = (flag) => { const i = process.argv.indexOf(flag); return i > 0 ? process.argv[i + 1] : undefined; };
+const VOL_OUT = argAfter('--out');
+const VOL_RUNS = Number(argAfter('--runs') || 8);   /* timed calls per route, after 2 warm-ups */
+const VOL_DB = /^postgres:\/\/[^@]+@127\.0\.0\.1:\d+\/cb_volume$/;
+if (VOLUME && !VOL_DB.test(process.env.CB_VOLUME_URL || '')) { console.error('REFUSED: --volume only runs against the local scratch database (CB_VOLUME_URL=postgres://…@127.0.0.1:<port>/cb_volume)'); process.exit(3); }
 const UNFIRED_CEILING = 50;
 
 process.env.CB_TRIPS = '1';
 process.env.RLS_GUARD = 'off';
-process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://u:p@127.0.0.1:5432/x';
+process.env.DATABASE_URL = VOLUME ? process.env.CB_VOLUME_URL : (process.env.DATABASE_URL || 'postgres://u:p@127.0.0.1:5432/x');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.DB_BOOT_WAIT_MS = '2000';
 
@@ -85,7 +97,7 @@ class FakePool {
     return Promise.resolve(client);
   }
 }
-require('pg').Pool = FakePool;
+if (!VOLUME) require('pg').Pool = FakePool;
 
 /* no network: whatever a route tries to fetch fails fast (this file keeps the real one for its own requests) */
 const realFetch = global.fetch;
@@ -93,7 +105,7 @@ global.fetch = () => Promise.reject(new Error('offline test'));
 
 const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: Object.assign(
-  (req, res, next) => { req.identity = { identity_id: 'e1', identity_type: 'entity', entity_id: 'e1' }; next(); },
+  (req, res, next) => { const e = VOLUME ? process.env.CB_VOLUME_ENTITY : 'e1'; req.identity = { identity_id: e, identity_type: 'entity', entity_id: e }; next(); },
   { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
     requireScope: () => (req, res, next) => next(), userOf: (req) => req.identity, forgetKey: () => {}, keyAlive: async () => true }) };
 
@@ -147,9 +159,18 @@ for (const f of [...new Set(called.map((r) => r.file))].sort()) {
 for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !called.some((r) => r.route === k)) called.push({ route: k, file: budget.routes[k].file });
 
 const ID = '00000000-0000-4000-8000-000000000001';
+/** VOLUME: a path parameter is filled with a real id of the kind the path names (a chit, a party, an item, a journal entry), else the all-zero id. */
+let realIds = {};
+function idFor(route) {
+  if (/\/chits?\b|:chit_id/.test(route)) return realIds.chit || ID;
+  if (/\/(parties|party|customers|suppliers|crm)\b/.test(route)) return realIds.party || ID;
+  if (/\/(catalogue|products|items|stock|inventory)\b/.test(route)) return realIds.item || ID;
+  if (/\/(journal|entries|books|ledger)\b/.test(route)) return realIds.entry || ID;
+  return ID;
+}
 async function fire(port, route) {
   const sp = route.indexOf(' ');
-  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID);
+  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, VOLUME ? idFor(route) : ID);
   wire = 0;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 6000);
@@ -164,7 +185,41 @@ async function fire(port, route) {
   finally { clearTimeout(timer); }
 }
 
+/** VOLUME: the GET routes, each warmed twice then timed VOL_RUNS times; trips = the header of the last call (it is the same every call). p50/p95 in ms. */
+async function volumeRun(port) {
+  const { Pool } = require('pg');
+  const pool = new Pool({ connectionString: process.env.CB_VOLUME_URL });
+  const E = process.env.CB_VOLUME_ENTITY;
+  const one = async (sql) => { const r = await pool.query(sql, [E]); return r.rows[0] && Object.values(r.rows[0])[0]; };
+  /* the demo shop's OWN rows (never a clone), lowest id first, so the same row answers at every level and the trips are comparable */
+  realIds = { chit: await one("SELECT chit_id FROM chit_header WHERE entity_id=$1 AND chit_id NOT IN (SELECT chit_id FROM volume_seed_chit) ORDER BY chit_id LIMIT 1"),
+    party: await one("SELECT customer_identity_id FROM customer_list WHERE owner_entity_id=$1 AND customer_identity_id NOT IN (SELECT identity_id FROM identities WHERE bridge_id LIKE 'VOL%') ORDER BY customer_identity_id LIMIT 1"),
+    item: await one("SELECT item_id FROM catalogue_items WHERE entity_id=$1 AND NOT (item_data ? 'volume_seed') ORDER BY item_id LIMIT 1"),
+    entry: await one("SELECT entry_id FROM journal_entry WHERE entity_id=$1 AND entry_no NOT LIKE 'VOL-%' ORDER BY entry_id LIMIT 1") };
+  await pool.end();
+  const pick = (a, p) => a[Math.min(a.length - 1, Math.floor(p * a.length))];
+  const out = { runs: VOL_RUNS, routes: {}, skipped: [] };
+  for (const r of called.slice().sort((a, b) => a.route.localeCompare(b.route))) {
+    if (!/^GET /.test(r.route)) { out.skipped.push(r.route); continue; }
+    if (!mountedFiles.has(r.file)) { out.routes[r.route] = { error: mountErr[r.file] || 'no mount' }; continue; }
+    const ms = []; let last = null;
+    for (let i = 0; i < 2 + VOL_RUNS; i++) {
+      const t0 = process.hrtime.bigint(); last = await fire(port, r.route); const dt = Number(process.hrtime.bigint() - t0) / 1e6;
+      if (last.error) break;
+      if (i >= 2) ms.push(dt);
+    }
+    if (last.error || last.trips === null) { out.routes[r.route] = { error: last.error || 'no X-DB-Trips header' }; continue; }
+    if (last.status >= 500) { out.routes[r.route] = { error: 'answered ' + last.status + ' with the demo shop identity' }; continue; }
+    ms.sort((a, b) => a - b);
+    out.routes[r.route] = { status: last.status, trips: last.trips, p50: Math.round(pick(ms, 0.5) * 10) / 10, p95: Math.round(pick(ms, 0.95) * 10) / 10 };
+  }
+  fs.writeFileSync(VOL_OUT, JSON.stringify(out, null, 1));
+  console.log('  volume run: ' + Object.keys(out.routes).length + ' GET routes timed, ' + out.skipped.length + ' writes not fired -> ' + VOL_OUT);
+  process.exit(0);
+}
+
 const srv = app.listen(0, '127.0.0.1', async () => {
+  if (VOLUME) return volumeRun(srv.address().port).catch((e) => { console.error(e && e.stack); process.exit(1); });
   const fired = [], shallow = [], notFired = [];
   const next = { _doc: budget._doc, routes: {} };
   try {
