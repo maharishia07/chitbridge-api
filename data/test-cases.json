@@ -542,6 +542,56 @@
    "key": "S2HOME",
    "name": "Stage 2 · Home: every number opens what it counts",
    "count": 2
+  },
+  {
+   "key": "RV-MKT",
+   "name": "Reviewer cycle - Marketing",
+   "count": 6
+  },
+  {
+   "key": "RV-OLB",
+   "name": "Reviewer cycle - Offer Lab",
+   "count": 13
+  },
+  {
+   "key": "RV-LAB",
+   "name": "Reviewer cycle - the other labs",
+   "count": 3
+  },
+  {
+   "key": "RV-CLB",
+   "name": "Reviewer cycle - Country Lab",
+   "count": 6
+  },
+  {
+   "key": "RV-BKS",
+   "name": "Reviewer cycle - Accounts",
+   "count": 21
+  },
+  {
+   "key": "RV-FIN",
+   "name": "Reviewer cycle - Finance",
+   "count": 7
+  },
+  {
+   "key": "RV-CRM",
+   "name": "Reviewer cycle - CRM",
+   "count": 7
+  },
+  {
+   "key": "RV-CAT",
+   "name": "Reviewer cycle - Catalogue and shop",
+   "count": 3
+  },
+  {
+   "key": "RV-OPS",
+   "name": "Reviewer cycle - Orders, stock, people",
+   "count": 7
+  },
+  {
+   "key": "RV-SET",
+   "name": "Reviewer cycle - Settings, Network, Trade",
+   "count": 14
   }
  ],
  "engine": {
@@ -89444,6 +89494,3106 @@
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-10-23T00:00:00Z",
    "needs": []
+  },
+  {
+   "case_key": "RV-MKT-01",
+   "module_key": "RV-MKT",
+   "module_name": "Reviewer cycle - Marketing",
+   "intro": "The reviewer cycle of 24 Oct 2026, Marketing. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Leads (MKT001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html?app=marketing#/leads.",
+   "data": "Add a lead: Meena Iyer, 9000000003, source \"walked in\", note \"catering for 40 people on Diwali\".",
+   "steps": [
+    [
+     "Open Marketing, then Leads.",
+     "The Leads list opens under the Marketing name, with its five tabs."
+    ],
+    [
+     "Add the lead with the data above and Save.",
+     "Meena Iyer appears in the list as a lead (not a customer) with her note."
+    ],
+    [
+     "Open her row.",
+     "Her record opens; Cancel closes it and keeps the list as it was."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 40,
+   "step": "40",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "MKT001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-MKT-02",
+   "module_key": "RV-MKT",
+   "module_name": "Reviewer cycle - Marketing",
+   "intro": "The reviewer cycle of 24 Oct 2026, Marketing. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Groups & segments (MKT002)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html?app=marketing#/groups.",
+   "data": "New group \"Diwali regulars\"; add Priya Nair (9000000001) and Ravi Kumar (9000000002) by hand. Look at the built-in groups (High value, Inactive, Regular).",
+   "steps": [
+    [
+     "Create the group and add the two people.",
+     "The group shows 2 members."
+    ],
+    [
+     "Look at the built-in groups after at least five counter bills exist.",
+     "The numbers are not all 0; they match the bills you made."
+    ],
+    [
+     "Try Send on the group.",
+     "A confirm popup opens (see MKT003); nothing is sent before you agree."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: CRM-5 open: till bills may not feed the built-in groups, so they can read 0. Record what you see; do not fail the group you created by hand. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 40,
+   "step": "40",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "MKT002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-MKT-03",
+   "module_key": "RV-MKT",
+   "module_name": "Reviewer cycle - Marketing",
+   "intro": "The reviewer cycle of 24 Oct 2026, Marketing. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Offers sent (MKT003)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html?app=marketing#/sent.",
+   "data": "From Diwali regulars, send \"10 percent off Filter Coffee this week\". Read the confirm sentence before agreeing.",
+   "steps": [
+    [
+     "Send the offer to Diwali regulars.",
+     "The confirm popup says what is promised, to how many people, from when. Cancel sends nothing."
+    ],
+    [
+     "Agree, then open Offers sent.",
+     "One row per person: sent, or not sent with a plain reason (for example no consent, no mobile). No code words."
+    ],
+    [
+     "Open a row.",
+     "It shows the offer words and the date."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow L2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 40,
+   "step": "40",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "MKT003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-MKT-04",
+   "module_key": "RV-MKT",
+   "module_name": "Reviewer cycle - Marketing",
+   "intro": "The reviewer cycle of 24 Oct 2026, Marketing. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Who came back (MKT004)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html?app=marketing#/results.",
+   "data": "After MKT003: at the counter bill Priya Nair 2 Filter Coffee (Rs 60) by her mobile.",
+   "steps": [
+    [
+     "Open Who came back before the bill.",
+     "It says nobody has come back yet, with the reason, not a bare 0."
+    ],
+    [
+     "Make the Priya bill at the counter, then reopen.",
+     "Priya Nair is listed with the days since the offer and Rs 60.00; the amount is in rupees."
+    ],
+    [
+     "Open her bills.",
+     "The bill opens as a chit sheet."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 40,
+   "step": "40",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "MKT004",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-MKT-05",
+   "module_key": "RV-MKT",
+   "module_name": "Reviewer cycle - Marketing",
+   "intro": "The reviewer cycle of 24 Oct 2026, Marketing. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Shop window (MKT005)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html?app=marketing#/showcase.",
+   "data": "Pick the Gallery look, preview it with your five items, then share the link.",
+   "steps": [
+    [
+     "Open Shop window.",
+     "The looks are shown as pictures with a short \"best for\"."
+    ],
+    [
+     "Choose a look and preview.",
+     "The preview uses your items; items with no photo show a tidy placeholder."
+    ],
+    [
+     "Open the shop link in a second tab.",
+     "The shop shows the look you chose."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: MKT-6 open (W21): the live shop page may still show a plain list instead of the chosen look. Mark the last step as known, not as a new fault. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 40,
+   "step": "40",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "MKT005",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-MKT-06",
+   "module_key": "RV-MKT",
+   "module_name": "Reviewer cycle - Marketing",
+   "intro": "The reviewer cycle of 24 Oct 2026, Marketing. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Party (from Leads) (MKT006)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html?app=marketing#/leads then a row.",
+   "data": "Open Meena Iyer; add the tag \"catering\" and a note; Cancel once, Save once.",
+   "steps": [
+    [
+     "Open her record from Leads.",
+     "Name, mobile, stage and note show."
+    ],
+    [
+     "Edit the note and press Cancel.",
+     "The old note stays."
+    ],
+    [
+     "Edit again and Save.",
+     "The new note stays after reopening."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 40,
+   "step": "40",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "MKT006",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-01",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Offer Lab trial (not signed in) (OLB001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html in a private window.",
+   "data": "Do not sign in. Read the landing. Press Add to your offers once, then \"Use my catalogue\".",
+   "steps": [
+    [
+     "Open the lab signed out.",
+     "A sample shop with sample items; the left menu lists the 8 offer types in 4 groups; no other lab names there."
+    ],
+    [
+     "Add one offer to your offers.",
+     "It lands in the cart on the right as a draft, with a plain name (not a code like percent_off)."
+    ],
+    [
+     "Press Use my catalogue.",
+     "It asks you to sign in; it does not pretend to load your items."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "OLB001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-02",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "A percentage off (OLB001-1)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 1.",
+   "data": "Filter Coffee, 10 percent off. Loyalty bonus left as you find it. Then try 150 and -5.",
+   "steps": [
+    [
+     "Open the type.",
+     "Nothing is chosen for you: no items, no category, no loyalty bonus pre-set."
+    ],
+    [
+     "Press Work it out before choosing items.",
+     "It is greyed with the sentence \"Choose what it applies to first.\""
+    ],
+    [
+     "Choose Filter Coffee, take off 10.",
+     "The sheet shows price Rs 30 to Rs 27, your margin, and one sentence of the promise."
+    ],
+    [
+     "Type 150, then -5.",
+     "Both are refused with a sentence; they do not stay in the box."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: Fixed by web #358 (22 Oct) but never re-walked. Treat the W21-W48 list in docs/walks/WALK-2026-10-21.md as the expected behaviour. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-03",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Rupees off (OLB001-2)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 2.",
+   "data": "Masala Dosa, Rs 5 off.",
+   "steps": [
+    [
+     "Choose Masala Dosa and Rs 5.",
+     "Rs 80 becomes Rs 75; the promise sentence says so in words."
+    ],
+    [
+     "Type Rs 100 off on an Rs 80 item.",
+     "Refused: an offer cannot cost more than the item."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-04",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Cheaper when they buy more (OLB001-3)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 3.",
+   "data": "Filter Coffee: 1 to 2 cups Rs 30, 3 or more Rs 27.",
+   "steps": [
+    [
+     "Fill the two steps.",
+     "Both steps are visible on the form and editable there (not only after Work it out)."
+    ],
+    [
+     "Work it out.",
+     "The sheet shows each step with its margin."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-05",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Something free (OLB001-4)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 4.",
+   "data": "Buy any Masala Dosa, get one Filter Coffee free.",
+   "steps": [
+    [
+     "Open the type.",
+     "No shape and no gift are pre-picked."
+    ],
+    [
+     "Pick the shape, Masala Dosa, gift Filter Coffee.",
+     "The sentence says every dosa bill gets a free coffee and what it costs you."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-06",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Two things at one price (OLB001-5)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 5.",
+   "data": "Idli (2 pc) Rs 40 plus Filter Coffee Rs 30 together for Rs 60.",
+   "steps": [
+    [
+     "Open the type.",
+     "Both pickers say Choose... and the price box is empty."
+    ],
+    [
+     "Pick both and type 60.",
+     "Rs 70 becomes Rs 60; the saving is Rs 10."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-07",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Bill size: reach an amount and give back (OLB001-6)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 6.",
+   "data": "When the bill reaches Rs 500, give Rs 50 back.",
+   "steps": [
+    [
+     "Fill the two numbers.",
+     "The promise reads \"spend Rs 500, get Rs 50 back\" in words."
+    ],
+    [
+     "Work it out.",
+     "It shows the effective percent back on a Rs 500 bill."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: WAIT: an invoice built with an order-level (bill-size) offer is not safe yet (money review). Build the offer and read the sentence; do not bill with it. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-08",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Delivery cost (OLB001-7)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 7.",
+   "data": "Delivery Rs 40, free above Rs 400, the customer pays the rest.",
+   "steps": [
+    [
+     "Fill delivery cost and the free-above amount.",
+     "The sentence names both amounts in rupees."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-09",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Smallest and largest bill (OLB001-8)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html left menu 8.",
+   "data": "Smallest Rs 5,000 and largest Rs 100 (a mistake on purpose), then smallest Rs 100 and largest Rs 5,000.",
+   "steps": [
+    [
+     "Type the mistake.",
+     "Refused with a sentence: the smallest cannot be above the largest."
+    ],
+    [
+     "Type the right pair.",
+     "The promise sentence names both limits."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-10",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Make it live (a money promise) (OLB001-9)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html the cart on the right.",
+   "data": "Attach the Filter Coffee 10 percent offer. Try for everyone, then for the group Diwali regulars.",
+   "steps": [
+    [
+     "Press Make live.",
+     "A confirm opens naming what, to whom, on how many items, from when. Cancel changes nothing."
+    ],
+    [
+     "Pick Only for a group and the group.",
+     "No group is pre-selected. The confirm names the group (the member count may say \"not shown here\": known)."
+    ],
+    [
+     "Agree once.",
+     "The row says Live with its reach in words; the title is no longer \"draft\"."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow L2C. KNOWN: UX-111 open: the group member count is not shown. UX-110 open: the workshop (app.html) Definitions can still set live with no confirm; do not use that route. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-11",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Saved offers: Approve, Go live, Retire, Delete (OLB001-10)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html All saved offers.",
+   "data": "With one draft and one live offer.",
+   "steps": [
+    [
+     "Press Retire on the live offer.",
+     "A confirm says it withdraws a live promise."
+    ],
+    [
+     "Press Delete on a draft.",
+     "A confirm says it cannot be undone."
+    ],
+    [
+     "Add the same offer twice.",
+     "The second is refused or flagged as a duplicate; no silent twin."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-12",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Work it out sheet and settings at 390 wide, Cream and Dark (OLB001-11)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html (narrow window).",
+   "data": "Open the sheet at 390 px in Cream, then Dark. Use Cream via the app Appearance control, not a stored value.",
+   "steps": [
+    [
+     "Open the sheet at 390.",
+     "It fits; the close button is reachable; nothing is cut at either side."
+    ],
+    [
+     "Switch to Dark and read the chips.",
+     "Every chip and line is readable (4.5 to 1 contrast); words sit next to every icon."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OLB-13",
+   "module_key": "RV-OLB",
+   "module_name": "Reviewer cycle - Offer Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Offer Lab and Combo Lab. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Combo Lab (OLB002)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /offer-lab-next.html?mode=combo.",
+   "data": "Combo \"Breakfast set\": Masala Dosa + Filter Coffee for Rs 100 (was Rs 110).",
+   "steps": [
+    [
+     "Open Combo Lab.",
+     "It opens on its own mode with the lab frame, and says it is the combo mode."
+    ],
+    [
+     "Build the combo and make it a draft.",
+     "The cart shows the combo with its saving of Rs 10 and the margin."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 41,
+   "step": "41",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "OLB002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-LAB-01",
+   "module_key": "RV-LAB",
+   "module_name": "Reviewer cycle - the other labs",
+   "intro": "The reviewer cycle of 24 Oct 2026, Price, Conversion and Network Labs. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Price Lab (PLB001)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /product-lab.html.",
+   "data": "Masala Dosa: cost Rs 32, selling price Rs 80. Then Filter Coffee: cost Rs 9, price Rs 30.",
+   "steps": [
+    [
+     "Type the cost and price for the dosa.",
+     "Margin shows as Rs 48 and 60 percent; no rounding surprises."
+    ],
+    [
+     "Change the price to Rs 70.",
+     "The margin updates at once and says it is only a trial; the catalogue is not changed."
+    ],
+    [
+     "Open the filters at the top (veg, egg...).",
+     "They sit in the left menu, not across the top."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: W18 (filters to the left menu) was a wish on 22 Oct; if they are still on top, record it once and move on. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 42,
+   "step": "42",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "PLB001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-LAB-02",
+   "module_key": "RV-LAB",
+   "module_name": "Reviewer cycle - the other labs",
+   "intro": "The reviewer cycle of 24 Oct 2026, Price, Conversion and Network Labs. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Conversion Lab (CVL001)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /conversion-lab.html.",
+   "data": "One 15 kg tin of ghee costs Rs 9,000; pack it into 500 g packets.",
+   "steps": [
+    [
+     "Enter 15 kg, Rs 9,000, 500 g packs.",
+     "It shows 30 packets and Rs 300 each before packing and loss."
+    ],
+    [
+     "Enter a unit that does not fit (pieces to litres).",
+     "It refuses with a sentence; it does not convert by guessing."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 42,
+   "step": "42",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CVL001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-LAB-03",
+   "module_key": "RV-LAB",
+   "module_name": "Reviewer cycle - the other labs",
+   "intro": "The reviewer cycle of 24 Oct 2026, Price, Conversion and Network Labs. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Network Lab (NLB001)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /network-design.html.",
+   "data": "Draw a small network: brand Kaveri Tiffins with two stores, Mylapore and Adyar.",
+   "steps": [
+    [
+     "Open the lab and add the brand and two stores.",
+     "The picture shows one brand over two stores with their roles in words."
+    ],
+    [
+     "Change a price rule at brand level.",
+     "The stores show it as inherited; a store cannot change it silently."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: No Test board case existed for the Network Lab page; this is the first. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 42,
+   "step": "42",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "NLB001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CLB-01",
+   "module_key": "RV-CLB",
+   "module_name": "Reviewer cycle - Country Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Country Lab, Compatibility, Print setup. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Countries (pick which show) (CLB003)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /country-lab.html.",
+   "data": "Tick India and UAE only. Reload the page.",
+   "steps": [
+    [
+     "Tick the two countries.",
+     "Only those two show in the lists."
+    ],
+    [
+     "Reload.",
+     "The choice is remembered for you; the default is your own country first."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 43,
+   "step": "43",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CLB003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CLB-02",
+   "module_key": "RV-CLB",
+   "module_name": "Reviewer cycle - Country Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Country Lab, Compatibility, Print setup. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "All countries (CLB004)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /country-lab.html (All countries).",
+   "data": "Read India and Australia rows. Look for words you do not understand.",
+   "steps": [
+    [
+     "Read the depreciation, voucher and ways-to-pay rows.",
+     "Plain words only: no \"div40\", \"schedule_ii\", \"{series}/{fy}/{n:6}\"."
+    ],
+    [
+     "Look for the word \"contd\".",
+     "A long list shows 3 and \"and N more\", which opens the full list."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 43,
+   "step": "43",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CLB004",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CLB-03",
+   "module_key": "RV-CLB",
+   "module_name": "Reviewer cycle - Country Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Country Lab, Compatibility, Print setup. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Side by side (CLB001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /country-lab.html (Side by side).",
+   "data": "Compare India and Australia for one sale: 2 Masala Dosa at Rs 80 and its Australian equivalent.",
+   "steps": [
+    [
+     "Open Side by side with India and Australia.",
+     "Two real invoices side by side, built by the invoice engine, with one line saying what differs."
+    ],
+    [
+     "Read the tax lines.",
+     "India shows CGST and SGST; Australia shows GST; GST-free items are not mixed into taxable."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: Web #382 (Same / Changes by parts) is open and not merged: this tab may change in the morning batch. Walk it after the batch, or note the commit you saw. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 43,
+   "step": "43",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CLB001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CLB-04",
+   "module_key": "RV-CLB",
+   "module_name": "Reviewer cycle - Country Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Country Lab, Compatibility, Print setup. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Where we are (CLB002)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /country-lab.html (Where we are).",
+   "data": "Read how far each area is for India and for Australia.",
+   "steps": [
+    [
+     "Open the tab.",
+     "Each area has a plain status; there is no wall of warning triangles."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 43,
+   "step": "43",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CLB002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CLB-05",
+   "module_key": "RV-CLB",
+   "module_name": "Reviewer cycle - Country Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Country Lab, Compatibility, Print setup. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Compatibility (STD002)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /standards.html#compared-with.",
+   "data": "India: read the rows for Tally, Zoho Books and the exchange files.",
+   "steps": [
+    [
+     "Open Compatibility.",
+     "For India it names Tally and Zoho first, what works with them and what does not, in plain words."
+    ],
+    [
+     "Look for dates.",
+     "Each claim shows when it was last checked (or says it has not been)."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: Web #384 (Country Lab and Compatibility Lab on Home) is open: until it lands, reach this by its address, not from the Labs tile. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 43,
+   "step": "43",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "STD002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CLB-06",
+   "module_key": "RV-CLB",
+   "module_name": "Reviewer cycle - Country Lab",
+   "intro": "The reviewer cycle of 24 Oct 2026, Country Lab, Compatibility, Print setup. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Print setup (SET009)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html (Print setup).",
+   "data": "Show GSTIN on; logo off; footer \"Thank you, visit again\"; press Save.",
+   "steps": [
+    [
+     "Open Print setup.",
+     "The shop name and GSTIN are shown as read-only with \"change in Your business\"."
+    ],
+    [
+     "Change the footer, press Save.",
+     "A visible Save, then a confirmation line. Reload: the footer stays."
+    ],
+    [
+     "Read the sample bill.",
+     "Your own shop name (Kaveri Tiffins), rupees, Indian grouping."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: PRINT-1 open: four different bill renderers exist, so the preview may differ from the till slip and the Standards page. Judge Save and the settings; list preview differences, do not retest them. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 43,
+   "step": "43",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET009",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-01",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Opening balances (do first) (BKS022)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#opening.",
+   "data": "Cash Rs 10,000.00; HDFC current account Rs 50,000.00; Capital Rs 60,000.00.",
+   "steps": [
+    [
+     "Enter the three amounts.",
+     "The screen shows debits equal credits (Rs 60,000.00 each side) before Save."
+    ],
+    [
+     "Change capital to Rs 59,000 and Save.",
+     "Refused with a sentence: the two sides must match; nothing is posted."
+    ],
+    [
+     "Fix it and Save.",
+     "Saved; the Day book shows one opening entry; Trial balance agrees."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. KNOWN: KNOWN: do not re-send a free journal entry by hand: a retry may post twice unless the screen sends client_ref. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS022",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-02",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Shop ledgers (chart of accounts) (BKS023)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#accounts.",
+   "data": "Add the ledger \"Gas cylinders\" under expenses. Try to add the same name again.",
+   "steps": [
+    [
+     "Add Gas cylinders.",
+     "It appears under Expenses with the next code."
+    ],
+    [
+     "Add it again.",
+     "Refused: the name already exists."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS023",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-03",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Move in (BKS024)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#movein.",
+   "data": "Skip unless you have a file. If you do: a 3-row CSV of customers with one bad row (no name).",
+   "steps": [
+    [
+     "Choose the file.",
+     "It reads 3 rows; 2 are accepted, 1 skipped with a reason; \"Download skipped rows\" works."
+    ],
+    [
+     "Open the Customers list.",
+     "The 2 people are there once."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. KNOWN: Needs a file you make yourself; first 2 lines of any CSV with name and mobile will do. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS024",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-04",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Ledgers (BKS003)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#ledgers.",
+   "data": "Open Sales, Cash, and Sri Ganesh Provisions.",
+   "steps": [
+    [
+     "Open the Cash ledger.",
+     "Opening Rs 10,000.00 Dr then each cash bill; the balance runs and ends in the Dr/Cr words the app uses."
+    ],
+    [
+     "Open the supplier ledger.",
+     "The Rs 2,940 bill shows as owed to them."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-05",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Trial balance (BKS004)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#tb.",
+   "data": "Read the totals after the entries above.",
+   "steps": [
+    [
+     "Open Trial balance.",
+     "Debit total equals credit total to the paisa, and says so."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS004",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-06",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "P&L (BKS005)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#pl.",
+   "data": "Month to date.",
+   "steps": [
+    [
+     "Open P&L.",
+     "Sales from the counter bills; purchases and expenses below; profit equals sales minus costs by hand-check."
+    ],
+    [
+     "Change the period.",
+     "Figures change; headings use plain words."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS005",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-07",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Balance sheet (BKS006)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#bs.",
+   "data": "As of today.",
+   "steps": [
+    [
+     "Open Balance sheet.",
+     "Assets equal liabilities plus capital plus profit; the same profit as P&L."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS006",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-08",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Payables (BKS009)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#payables.",
+   "data": "The Sri Ganesh Provisions bill Rs 2,940: pay Rs 2,940 by bank.",
+   "steps": [
+    [
+     "Open Payables.",
+     "Rs 2,940 is shown as owed, with its due date."
+    ],
+    [
+     "Record the payment from HDFC.",
+     "Confirm first; then Payables shows nothing owed and the bank ledger is Rs 2,940 lower."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow P2P. KNOWN: FIN-14 open: a payment made in Finance may not show on an open Accounts page. Reload before judging. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS009",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-09",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Unpaid bills (BKS011)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#bills.",
+   "data": "Read the list against Receivables and Payables.",
+   "steps": [
+    [
+     "Open Unpaid bills.",
+     "It lists the unpaid sale and the unpaid purchase bills."
+    ],
+    [
+     "Compare with Receivables and Payables.",
+     "A bill that is on one is on the other, or the screen says why not (waiting to be accepted, disputed)."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS011",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-10",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "To do (BKS001)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#todo.",
+   "data": "Open it after the entries above.",
+   "steps": [
+    [
+     "Open To do.",
+     "It lists what needs you (dues, waiting bills) in plain words; each item opens its screen."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-11",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Dues (BKS010)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#todo then a dues item.",
+   "data": "Open one dues item (Venkat Traders).",
+   "steps": [
+    [
+     "Open the dues item.",
+     "It shows the bill, the amount and the age; the action buttons are shown, and a refused one is greyed with a sentence."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS010",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-12",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Cheques (BKS012)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#cheques.",
+   "data": "Receive cheque 000123 for Rs 4,000 from Venkat Traders, dated 5 days ahead.",
+   "steps": [
+    [
+     "Add the cheque.",
+     "It shows as received, not yet banked, with the date."
+    ],
+    [
+     "Mark it banked on the due date, then cleared.",
+     "Venkat Traders owes Rs 4,400 only after clearing; before it, the debt is unchanged."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS012",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-13",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Bank (BKS014)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#bank.",
+   "data": "Bank statement lines: Rs 2,940 out to Sri Ganesh; Rs 4,000 in from Venkat; Rs 150 bank charges.",
+   "steps": [
+    [
+     "Enter or load the three lines.",
+     "The two that match the books are paired; the charges line is \"missing in your books\"."
+    ],
+    [
+     "Add the charges as an expense.",
+     "It now pairs; nothing is left unmatched."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. KNOWN: KNOWN: do not re-send the journal entry or a write-off by hand: a retry may post twice unless the screen sends client_ref. If a Save looks stuck, reload and read the Day book first. ALSO: FIN-27 open: one-to-one bank screen not built yet. Pairing still works; the layout may be dense. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS014",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-14",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Rates (BKS025)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#rates.",
+   "data": "Add a USD rate: 1 USD = Rs 83.20 for today. Revalue.",
+   "steps": [
+    [
+     "Add the rate.",
+     "It is listed with its date."
+    ],
+    [
+     "Press Revalue.",
+     "It says what it did, or that there was nothing in USD to revalue."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS025",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-15",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Accruals & recurring (BKS018)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#accruals.",
+   "data": "Monthly shop rent Rs 25,000 as a recurring entry from the 1st.",
+   "steps": [
+    [
+     "Add the recurring entry.",
+     "It shows the next run date and amount."
+    ],
+    [
+     "Run it for this month.",
+     "One entry is posted once; running again does not double it."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS018",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-16",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Assets & depreciation (BKS017)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#assets.",
+   "data": "Add a grinder: Rs 36,000, bought today, 5 years straight line.",
+   "steps": [
+    [
+     "Add the asset.",
+     "It shows a yearly depreciation of Rs 7,200."
+    ],
+    [
+     "Run depreciation for the month.",
+     "Rs 600 posts once; the asset value falls by Rs 600."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS017",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-17",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Closing stock (BKS016)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#closingstock.",
+   "data": "Enter closing stock value Rs 18,500 for the month.",
+   "steps": [
+    [
+     "Enter the value.",
+     "P&L cost of goods changes by the stock difference; it says so."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS016",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-18",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Tax close & pay (BKS019)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#gstclose.",
+   "data": "India, this month: read GST collected on sales and paid on purchases. Do not pay.",
+   "steps": [
+    [
+     "Open the screen.",
+     "Output GST from the counter bills (CGST, SGST), input GST from the supplier bill, and the net to pay, in rupees."
+    ],
+    [
+     "Open the returns on Finance (FIN007) and compare.",
+     "The same totals appear there."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. KNOWN: SKIP: the India GST ledger and GSTR figures disagree with GST close (money review). Read the screen; do not rely on its totals. ALSO: ACC-2 / ACC-4 open: GST 2.0 rate menu and the missing-rate rule are not finished; GST figures can be zero for items with no rate. Enter the 5 percent rate on every item first. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS019",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-19",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Year close (BKS020)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#yearclose.",
+   "data": "Read it. Do not close (a test shop has no full year).",
+   "steps": [
+    [
+     "Open Year close.",
+     "It lists what is checked first and shows nothing as closed; Close the year asks before doing anything."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS020",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-20",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Packs (BKS021)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#packs.",
+   "data": "Make a pack for the current month.",
+   "steps": [
+    [
+     "Press Make a pack.",
+     "A download or page with the day book, ledgers, trial balance and the GST summary for the month."
+    ],
+    [
+     "Open it.",
+     "Rupees, Indian grouping, the shop name and GSTIN on top."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS021",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-BKS-21",
+   "module_key": "RV-BKS",
+   "module_name": "Reviewer cycle - Accounts",
+   "intro": "The reviewer cycle of 24 Oct 2026, Accounts (the books). Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Parallel run (BKS007)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /accounts.html#compare.",
+   "data": "If you have Tally figures: enter the closing cash and sales total. Otherwise only open it.",
+   "steps": [
+    [
+     "Open Parallel run.",
+     "Two columns: ours and theirs; a difference is shown in rupees with an Open the ledger link."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. KNOWN: WAIT: Compare \"ret\" (returns) for India disagrees with GST close; walk the other Compare lines only. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 44,
+   "step": "44",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "BKS007",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-FIN-01",
+   "module_key": "RV-FIN",
+   "module_name": "Reviewer cycle - Finance",
+   "intro": "The reviewer cycle of 24 Oct 2026, Finance. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Collections (FIN001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /finance.html#/collections.",
+   "data": "Venkat Traders owes Rs 8,400 (credit sale). Press Remind for Priya Nair if she owes anything.",
+   "steps": [
+    [
+     "Open Collections.",
+     "Venkat Traders is first with Rs 8,400 and the age in days."
+    ],
+    [
+     "Press Remind.",
+     "A confirm names who gets what message and by which channel; nothing is sent before you agree."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. KNOWN: KNOWN: foreign-currency payments through Finance are refused today; take rupee payments only. ALSO: FIN-15 open: a customer whose net is 0 but who has a disputed bill and an advance can be hidden. Also reload after a payment (FIN-14). Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 45,
+   "step": "45",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "FIN001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-FIN-02",
+   "module_key": "RV-FIN",
+   "module_name": "Reviewer cycle - Finance",
+   "intro": "The reviewer cycle of 24 Oct 2026, Finance. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Payables (FIN002)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /finance.html#/payables.",
+   "data": "The Sri Ganesh Rs 2,940 bill, due in 7 days.",
+   "steps": [
+    [
+     "Open Payables.",
+     "The bill is under Coming due (not Overdue) with its date."
+    ],
+    [
+     "Set the due date to yesterday.",
+     "It moves to Overdue."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow P2P. KNOWN: KNOWN: foreign-currency payments through Finance are refused today; pay in rupees only. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 45,
+   "step": "45",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "FIN002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-FIN-03",
+   "module_key": "RV-FIN",
+   "module_name": "Reviewer cycle - Finance",
+   "intro": "The reviewer cycle of 24 Oct 2026, Finance. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Cash (FIN003)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /finance.html#/cash.",
+   "data": "After opening cash Rs 10,000 and bank Rs 50,000.",
+   "steps": [
+    [
+     "Open Cash.",
+     "Cash and bank are shown separately, and together Rs 60,000; plain words, not \"Dr\"."
+    ],
+    [
+     "Look at the chart.",
+     "The coming bills and money in show on dates; good news is not marked with a warning."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. KNOWN: W9/W32 (accountant words like DR on this screen) were open on 18 Oct. Record once if still there. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 45,
+   "step": "45",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "FIN003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-FIN-04",
+   "module_key": "RV-FIN",
+   "module_name": "Reviewer cycle - Finance",
+   "intro": "The reviewer cycle of 24 Oct 2026, Finance. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Terms (FIN004)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /finance.html#/terms.",
+   "data": "Venkat Traders: pay in 15 days; early-pay discount 2 percent if paid in 7 days.",
+   "steps": [
+    [
+     "Set the terms and Save.",
+     "Saved; a new Venkat sale shows the due date 15 days out."
+    ],
+    [
+     "Record a payment on day 5.",
+     "The discount is offered and the amount is worked out in rupees."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. KNOWN: FIN-30 open: the interest/early-pay day-count (12 x 30-day months) may not match your hand figure. Record the difference. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 45,
+   "step": "45",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "FIN004",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-FIN-05",
+   "module_key": "RV-FIN",
+   "module_name": "Reviewer cycle - Finance",
+   "intro": "The reviewer cycle of 24 Oct 2026, Finance. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Cheques (FIN006)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /finance.html#/cheques.",
+   "data": "The cheque 000123 from BKS012.",
+   "steps": [
+    [
+     "Open Cheques.",
+     "The same cheque is listed with the same state as in Accounts."
+    ],
+    [
+     "Press Reminders.",
+     "It lists cheques due to bank in the next days."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 45,
+   "step": "45",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "FIN006",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-FIN-06",
+   "module_key": "RV-FIN",
+   "module_name": "Reviewer cycle - Finance",
+   "intro": "The reviewer cycle of 24 Oct 2026, Finance. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Returns (FIN007)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /finance.html#/returns.",
+   "data": "GST returns for this month: open the GSTR-1 file.",
+   "steps": [
+    [
+     "Open Returns.",
+     "The GSTR-1 file shows B2B (Venkat, with GSTIN), B2C (counter) and totals that match Tax close & pay."
+    ],
+    [
+     "Look at a document number.",
+     "No number is over 16 characters; if one is, the issue is refused earlier with a sentence."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. KNOWN: SKIP: the India GSTR file and tax ledger disagree with GST close (money review). Open it, record what you see, do not compare totals. ALSO: ACC-10 open: numbers over 16 characters are refused at issue only after that fix lands. A long number here is a finding. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 45,
+   "step": "45",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "FIN007",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-FIN-07",
+   "module_key": "RV-FIN",
+   "module_name": "Reviewer cycle - Finance",
+   "intro": "The reviewer cycle of 24 Oct 2026, Finance. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Reports and Trend (FIN008)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /finance.html#/reports then #/reports/trend.",
+   "data": "Sales this month; then Trend: 52 weeks, 12 months, quarters, years.",
+   "steps": [
+    [
+     "Open Reports.",
+     "Numbers open what they count."
+    ],
+    [
+     "Open Trend and switch the four views.",
+     "Each view draws; with little history it says so instead of an empty chart."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 45,
+   "step": "45",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "FIN008",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CRM-01",
+   "module_key": "RV-CRM",
+   "module_name": "Reviewer cycle - CRM",
+   "intro": "The reviewer cycle of 24 Oct 2026, CRM. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Parties (do first) (CRM001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html#/parties.",
+   "data": "Add customers Priya Nair (9000000001, priya@local.test), Ravi Kumar (9000000002), and Venkat Traders (GSTIN 29AAECV4321M1Z0, Bengaluru, Karnataka). Add supplier Sri Ganesh Provisions (GSTIN 33AABCS9999E1ZW) in Operations and add it only once.",
+   "steps": [
+    [
+     "Add the three customers.",
+     "Each appears once with the right type; the GSTIN is accepted (its check character is valid)."
+    ],
+    [
+     "Add Venkat Traders again with the same GSTIN.",
+     "The duplicate is refused or flagged."
+    ],
+    [
+     "Look for Sri Ganesh Provisions.",
+     "One record, not two (P-00001 and P-00002)."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. KNOWN: CRM-1 open: a network connect plus a manual add can make two Sri Ganesh records. Add the supplier ONE way only. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 46,
+   "step": "46",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CRM001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CRM-02",
+   "module_key": "RV-CRM",
+   "module_name": "Reviewer cycle - CRM",
+   "intro": "The reviewer cycle of 24 Oct 2026, CRM. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Chits (CRM002)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html#/chits.",
+   "data": "After the sales above.",
+   "steps": [
+    [
+     "Open Chits.",
+     "The sale and purchase chits are listed with party, amount, status."
+    ],
+    [
+     "Open one.",
+     "It opens the same bill sheet as everywhere (Open page)."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 46,
+   "step": "46",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CRM002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CRM-03",
+   "module_key": "RV-CRM",
+   "module_name": "Reviewer cycle - CRM",
+   "intro": "The reviewer cycle of 24 Oct 2026, CRM. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Follow-ups (CRM003)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html#/followups.",
+   "data": "A follow-up for Venkat Traders: \"ask about the cheque\" for tomorrow.",
+   "steps": [
+    [
+     "Add the follow-up.",
+     "It is listed with its date; when the date passes it shows as due."
+    ],
+    [
+     "Mark done.",
+     "It leaves the due list."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow L2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 46,
+   "step": "46",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CRM003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CRM-04",
+   "module_key": "RV-CRM",
+   "module_name": "Reviewer cycle - CRM",
+   "intro": "The reviewer cycle of 24 Oct 2026, CRM. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Calls (CRM005)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html#/parties then Calls.",
+   "data": "Log a call with Priya Nair: \"asked about catering\", outcome \"will visit Saturday\".",
+   "steps": [
+    [
+     "Log the call.",
+     "It is listed with time, person, outcome."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow L2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 46,
+   "step": "46",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CRM005",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CRM-05",
+   "module_key": "RV-CRM",
+   "module_name": "Reviewer cycle - CRM",
+   "intro": "The reviewer cycle of 24 Oct 2026, CRM. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Party (customer record) (CRM006)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html#/parties then a row.",
+   "data": "Open Priya Nair after she has two bills.",
+   "steps": [
+    [
+     "Open her record.",
+     "Last visit, number of visits, total spent, average bill and favourite item show, from her real bills."
+    ],
+    [
+     "Edit her note and Save, then Cancel once.",
+     "Save keeps it; Cancel keeps the old note."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow L2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 46,
+   "step": "46",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CRM006",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CRM-06",
+   "module_key": "RV-CRM",
+   "module_name": "Reviewer cycle - CRM",
+   "intro": "The reviewer cycle of 24 Oct 2026, CRM. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Chit page (CRM007)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html a bill sheet then Open page.",
+   "data": "Open one counter bill, then Open page.",
+   "steps": [
+    [
+     "Open the bill from Chits then Open page.",
+     "A full page of the same bill, with a way back; amounts match the Day book."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 46,
+   "step": "46",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CRM007",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CRM-07",
+   "module_key": "RV-CRM",
+   "module_name": "Reviewer cycle - CRM",
+   "intro": "The reviewer cycle of 24 Oct 2026, CRM. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Privacy (consent) (CRM010)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /crm.html#/privacy.",
+   "data": "Priya Nair has said STOP to marketing messages; Ravi has agreed.",
+   "steps": [
+    [
+     "Record the two consents.",
+     "Each shows with its date and how it was given."
+    ],
+    [
+     "Try to send an offer to Priya.",
+     "It is not sent and Offers sent says the reason in words."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow L2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 46,
+   "step": "46",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CRM010",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CAT-01",
+   "module_key": "RV-CAT",
+   "module_name": "Reviewer cycle - Catalogue and shop",
+   "intro": "The reviewer cycle of 24 Oct 2026, Catalogue and the online shop. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Catalogue: Items (do first) (CTG001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /catalogue.html#/items.",
+   "data": "Add 5 items with Indian rates: Masala Dosa Rs 80, Idli (2 pc) Rs 40, Filter Coffee Rs 30, Veg Meals Rs 120, Ghee 500 g Rs 330. Tax rate 5 percent on each. Add one with no price.",
+   "steps": [
+    [
+     "Add the five items.",
+     "Each appears once with its price in rupees and its tax rate; the list sorts and resizes."
+    ],
+    [
+     "Add an item with no price.",
+     "It says a price is missing; it does not sell at the counter at Rs 0."
+    ],
+    [
+     "Change a price and leave without saving.",
+     "It asks before discarding."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. KNOWN: ACC-4 open: leaving the tax rate empty used to print a TAX INVOICE with no GST lines. Always set the rate. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 48,
+   "step": "48",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CTG001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CAT-02",
+   "module_key": "RV-CAT",
+   "module_name": "Reviewer cycle - Catalogue and shop",
+   "intro": "The reviewer cycle of 24 Oct 2026, Catalogue and the online shop. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Catalogue: Categories (CTG002)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /catalogue.html#/categories.",
+   "data": "Categories Tiffin, Drinks, Meals, Packed. Put each item in one. Retire \"Packed\" while Ghee is in it.",
+   "steps": [
+    [
+     "Create and assign.",
+     "Each item shows under its category."
+    ],
+    [
+     "Retire a category that still holds an item.",
+     "The screen warns first or refuses; the item does not vanish from the shop."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 48,
+   "step": "48",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CTG002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-CAT-03",
+   "module_key": "RV-CAT",
+   "module_name": "Reviewer cycle - Catalogue and shop",
+   "intro": "The reviewer cycle of 24 Oct 2026, Catalogue and the online shop. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Catalogue: Import (CTG003)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /catalogue.html#/import.",
+   "data": "A 5-row CSV of items with one row with a negative price.",
+   "steps": [
+    [
+     "Choose the file.",
+     "It reads 5 rows, accepts 4, skips 1 with the reason, and downloads the skipped rows."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 48,
+   "step": "48",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "CTG003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OPS-01",
+   "module_key": "RV-OPS",
+   "module_name": "Reviewer cycle - Orders, stock, people",
+   "intro": "The reviewer cycle of 24 Oct 2026, Tasks and orders, Operations, People. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Orders in (TSK001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /tasks.html.",
+   "data": "The online order from SHP001 (Priya, 2 Masala Dosa).",
+   "steps": [
+    [
+     "Open Orders in.",
+     "The order is there with the buyer, lines, total, address and note."
+    ],
+    [
+     "Accept it and assign a line to Asha Devi.",
+     "The line shows its holder; the status changes once."
+    ],
+    [
+     "Deliver it.",
+     "It moves to Done; a bill exists; nothing is posted twice."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. KNOWN: WAIT: ORD-65 (api #346, landing now): a network order with no operator money must be refused in words. Walk the shop order from SHP001 only; leave network orders until it lands. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 49,
+   "step": "49",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "TSK001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OPS-02",
+   "module_key": "RV-OPS",
+   "module_name": "Reviewer cycle - Orders, stock, people",
+   "intro": "The reviewer cycle of 24 Oct 2026, Tasks and orders, Operations, People. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Orders out (TSK002)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /tasks.html (Orders out).",
+   "data": "A purchase order to Sri Ganesh Provisions: 25 kg rice, 10 kg toor dal.",
+   "steps": [
+    [
+     "Create and send the order.",
+     "It shows in Orders out as sent; a supplier not on ChitBridge cannot be sent anything and the screen says so."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow P2P. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 49,
+   "step": "49",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "TSK002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OPS-03",
+   "module_key": "RV-OPS",
+   "module_name": "Reviewer cycle - Orders, stock, people",
+   "intro": "The reviewer cycle of 24 Oct 2026, Tasks and orders, Operations, People. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Tasks (TSK003)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /tasks.html (Tasks).",
+   "data": "Task for Asha Devi: \"clean the grinder\", due tomorrow.",
+   "steps": [
+    [
+     "Add the task.",
+     "It is listed for Asha with the due date."
+    ],
+    [
+     "Sign in as Asha.",
+     "She sees only her own work."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 49,
+   "step": "49",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "TSK003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OPS-04",
+   "module_key": "RV-OPS",
+   "module_name": "Reviewer cycle - Orders, stock, people",
+   "intro": "The reviewer cycle of 24 Oct 2026, Tasks and orders, Operations, People. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Done (TSK004)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /tasks.html (Done).",
+   "data": "The delivered order and the finished task.",
+   "steps": [
+    [
+     "Open Done.",
+     "Both appear with the finish time; nothing finished is in the open lists."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 49,
+   "step": "49",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "TSK004",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OPS-05",
+   "module_key": "RV-OPS",
+   "module_name": "Reviewer cycle - Orders, stock, people",
+   "intro": "The reviewer cycle of 24 Oct 2026, Tasks and orders, Operations, People. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Assist (TSK007)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /tasks.html?view=assist.",
+   "data": "Ask Assist: \"how much did I sell today\".",
+   "steps": [
+    [
+     "Open Assist and ask.",
+     "An answer from your real bills with the figure and where it came from; it never changes data by itself."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow O2C. KNOWN: Needs the AI service on the local stack; if it says unavailable, record that sentence only. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 49,
+   "step": "49",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "TSK007",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OPS-06",
+   "module_key": "RV-OPS",
+   "module_name": "Reviewer cycle - Orders, stock, people",
+   "intro": "The reviewer cycle of 24 Oct 2026, Tasks and orders, Operations, People. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Supplier bill to the books (P2P step 4)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /operations.html then /accounts.html.",
+   "data": "Supplier bill SG/2610/044 for Rs 2,940 (rice 25 kg Rs 1,250, toor dal 10 kg Rs 1,500, 5 percent GST included), dated today.",
+   "steps": [
+    [
+     "Receive the goods against the bill.",
+     "Stock rises; the bill is listed as waiting to be accepted."
+    ],
+    [
+     "Accept the bill.",
+     "It appears once in Payables with Rs 2,940 and input GST; it appears once in the Day book."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow P2P. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 49,
+   "step": "49",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-OPS-07",
+   "module_key": "RV-OPS",
+   "module_name": "Reviewer cycle - Orders, stock, people",
+   "intro": "The reviewer cycle of 24 Oct 2026, Tasks and orders, Operations, People. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "People (employees) (EMP001)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /employees.html.",
+   "data": "Add Asha Devi, mobile 9000000004, role counter staff, monthly pay Rs 12,000. Give her a counter PIN.",
+   "steps": [
+    [
+     "Add her.",
+     "She appears once with role and pay in rupees."
+    ],
+    [
+     "Sign in as her and try to open Settings and the Day book.",
+     "What she may not do is greyed with a sentence; the server decides, not the screen."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow H2P. KNOWN: Payroll posting is not part of this walk (PEOPLE backlog). Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 49,
+   "step": "49",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "EMP001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-01",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Your business (SET001)",
+   "priority": "High",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html#/shop.",
+   "data": "Fill address 12 Mada Street, Mylapore, Chennai 600004; GSTIN 33AAAPL1234C1ZL; state Tamil Nadu. Try GSTIN 33AAAPL1234C1ZX (wrong check letter).",
+   "steps": [
+    [
+     "Enter the wrong GSTIN.",
+     "Refused with a sentence about the check character."
+    ],
+    [
+     "Enter the right one and Save.",
+     "A visible Save and a confirm line; reload keeps it. No autosave."
+    ],
+    [
+     "Open Remove this detail and Cancel.",
+     "Nothing is removed."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Setup. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-02",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Country (SET002)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html#/country.",
+   "data": "Check country India, currency Rs, year starts April.",
+   "steps": [
+    [
+     "Open Country.",
+     "India, rupees, April to March; the country is fixed after registering and says so."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Setup. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-03",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Counters (SET004)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html#/counters.",
+   "data": "Add counter C2 \"Takeaway\".",
+   "steps": [
+    [
+     "Add it.",
+     "C2 is listed; a counter key is created; pairing steps in plain words."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Setup. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET004",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-04",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Connectors (SET005)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html#/connectors.",
+   "data": "Read the Tally and Zoho cards. Do not connect.",
+   "steps": [
+    [
+     "Open Connectors.",
+     "Each connector states what it does and what it needs; not connected is a clear state, not an error."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow R2R. KNOWN: Real Tally or Zoho is not reachable from the local stack: read-only walk. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET005",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-05",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Policy (SET006)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html#/policy.",
+   "data": "Change one policy (for example the month lock default), Save, reload.",
+   "steps": [
+    [
+     "Change and Save.",
+     "A visible Save, a confirm, and the value after reload; Cancel keeps the old value."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Setup. KNOWN: Api #352 (governance sweep) is red and open; this screen may change when it lands. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET006",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-06",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Plan & usage (SET007)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html#/plan.",
+   "data": "Read the plan and usage bars.",
+   "steps": [
+    [
+     "Open Plan & usage.",
+     "The plan name and the limits in plain numbers; nothing asks for payment."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Setup. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET007",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-07",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Account (SET008)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /settings.html#/account.",
+   "data": "Sign out and sign in; change the display name to \"Kaveri R\".",
+   "steps": [
+    [
+     "Change the name and Save.",
+     "Visible Save and confirm; the header shows the new name."
+    ],
+    [
+     "Sign out.",
+     "You land on the sign-in window; Back does not return you signed in."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Setup. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "SET008",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-08",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Network: My network (NET001)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /network.html.",
+   "data": "Invite Sri Ganesh Provisions to connect (do not actually send to a real address; use priya@local.test as the contact).",
+   "steps": [
+    [
+     "Open My network and invite.",
+     "A confirm names who gets the invitation; pending shows as pending."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Network. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "NET001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-09",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Network: Offers (NET002)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /network.html (Offers).",
+   "data": "Read the list; make no offer.",
+   "steps": [
+    [
+     "Open Offers.",
+     "Empty with a sentence about what appears here, or the offers brought by a brand."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Network. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "NET002",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-10",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Network: Design (NET003)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /network.html (Design).",
+   "data": "Open Design; compare with the Network Lab (NLB001).",
+   "steps": [
+    [
+     "Open Design.",
+     "It opens a design and states how it differs from the lab, or links to it."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Network. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "NET003",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-11",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Know your business (KYB001)",
+   "priority": "Medium",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /know-your-business.html.",
+   "data": "Enter the shop GSTIN and PAN AAAPL1234C. Press Verify at source only on live (skip locally).",
+   "steps": [
+    [
+     "Enter GSTIN and PAN.",
+     "The PAN part of the GSTIN is checked against the PAN you typed; a mismatch is explained."
+    ],
+    [
+     "Read the result.",
+     "It gathers; it does not claim anything it has not verified."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Trade. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "KYB001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-12",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Documents (authority forms) (DOC001)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /authority-forms.html.",
+   "data": "Open the forms list for India.",
+   "steps": [
+    [
+     "Open Documents.",
+     "The forms for India are listed in plain words; opening one fills in the shop details already known."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Trade. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "DOC001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-13",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Standards (STD001)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /standards.html.",
+   "data": "Read Invoicing for India; note the invoice example.",
+   "steps": [
+    [
+     "Open Standards.",
+     "India rules with status and evidence; the sample invoice shows CGST and SGST and a 16-character number rule."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Trade. KNOWN: PRINT-1: this sample is one of four bill renderers. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "STD001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "RV-SET-14",
+   "module_key": "RV-SET",
+   "module_name": "Reviewer cycle - Settings, Network, Trade",
+   "intro": "The reviewer cycle of 24 Oct 2026, Settings, Network, Trade. Realistic shop data for an India shop (Kaveri Tiffins); see PM/REVIEWER-CYCLE-2026-10-24.md.",
+   "title": "Network shop and Store (customer links) (NSH001)",
+   "priority": "Low",
+   "pre": "Signed in as the owner of Kaveri Tiffins on the LOCAL stack (web :8124, api :3100), never production. Open: /network-shop.html?bridge=<network> and /store.html?net=<network>.",
+   "data": "Only if the network from NET001 exists; otherwise skip.",
+   "steps": [
+    [
+     "Open the network shop link.",
+     "The brand and its stores are shown to a customer, with prices in rupees."
+    ]
+   ],
+   "note": "Reviewer cycle 24 Oct 2026. Process flow Network. KNOWN: WAIT: ORD-65 (api #346, landing now): network orders with no currency. ALSO: Needs a connected network first (NET001 accepted). Skip if none. Record Pass only if every expected line was seen; otherwise Fail with the line that was not.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 50,
+   "step": "50",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": "NSH001",
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
   }
  ]
 }
