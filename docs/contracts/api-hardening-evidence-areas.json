@@ -63,6 +63,12 @@
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true
   },
+  "PATCH /api/folders/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/folders/rules/:rule_id": {
+   "foreign_id_404": true
+  },
   "PATCH /api/testing/incidents/:id": {
    "foreign_id_404": true
   },
@@ -115,6 +121,9 @@
    "foreign_id_404": true
   },
   "POST /api/crm/parties/:id/stage": {
+   "foreign_id_404": true
+  },
+  "POST /api/folders/messages/:message_id/mark": {
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/accept": {
