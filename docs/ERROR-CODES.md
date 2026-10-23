@@ -21,12 +21,12 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ASSIST_SIGN_IN | 503 | Assist sign in | PENDING | - | assist | 2026-10-22 |
 | AUTO_TOKEN | varies | Auto token | PENDING | - | auth | 2026-10-22 |
 | BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
-| BAD_PERIOD | 400 | Bad period | PENDING | - | till-summary | 2026-10-22 |
+| BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | PENDING | - | counters | 2026-10-22 |
 | BAD_PRICE | 400 | Price below zero | A line has a price below 0. | Send a price of 0 or more. | tax | 2026-10-23 |
 | BAD_QTY | 400 | Quantity not above zero | A line needs a quantity above 0. | Send a quantity above 0 on every line. | tax | 2026-10-23 |
 | BAD_RATE | 400 | Tax rate out of range | A line has a tax rate outside 0 to 100 percent. | Send a rate from 0 to 100. | tax | 2026-10-23 |
-| BILL_NOT_RECORDED | varies | Bill not recorded | PENDING | - | till | 2026-10-22 |
+| BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
 | BODY_TOO_LARGE | 413 | Too large | What you sent is too big to accept. | Send less at a time. | api | 2026-10-22 |
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
@@ -34,21 +34,21 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | This cannot be saved yet: a database update is still to arrive. | Try again after the next update. | books | 2026-10-22 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | CAPABILITY_OFF | varies | Capability off | PENDING | - | connectors | 2026-10-22 |
+| CATALOGUE_NOT_EMPTY | 409 | Shop already has products | This shop already has products. | Start a starter list only on an empty shop. | till | 2026-10-23 |
 | CATALOGUE_STORE_MISSING | 503 | Catalogue store missing | PENDING | - | assist | 2026-10-22 |
+| CATEGORIES_NOT_SET_UP | 500 | Categories not set up | Your categories could not be set up, so nothing was added. | Try again in a moment. | till | 2026-10-23 |
 | CHIT_NOT_DELIVERED | 503 | Chit not delivered | PENDING | - | connectors | 2026-10-22 |
 | CHOOSE_IDENTITY | 409 | Choose identity | PENDING | - | signin | 2026-10-22 |
-| CLAIM_RECORDED | 409 | Claim recorded | PENDING | - | reward-store | 2026-10-22 |
-| CODE_NOT_ASKED | 400 | No code asked for | Ask for a code first — none was sent to that phone or email at this shop. | Tap "Send code", then type the code you get. | catalogue | 2026-10-23 |
+| CLAIM_RECORDED | 409 | Claim recorded | That claim is already recorded. | Nothing more to do: the points were moved. | reward-store | 2026-10-22 |
 | COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
 | CONFIRM_REMOVE | 400 | Confirm remove | PENDING | - | actors | 2026-10-22 |
 | CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
-| CONTACT_INVALID | 422 | Phone or email not usable | Enter one phone number or one email — not both, and in a form we can send to. | Check the number or the address and try again. | catalogue | 2026-10-23 |
 | CONTAINER_STORE_MISSING | 403/503 | Container store missing | PENDING | - | assist | 2026-10-22 |
-| COST_BLIND | varies | Cost blind | PENDING | - | cost | 2026-10-22 |
+| COST_BLIND | varies | Cost blind | Your access does not include cost or price. | Ask the owner to give you Sees costs, or change availability only. | cost | 2026-10-22 |
 | COUNTER_CLOSED | 401 | Counter closed | PENDING | - | auth | 2026-10-22 |
-| COUNTER_HELD | varies | Counter held | PENDING | - | counters | 2026-10-22 |
+| COUNTER_HELD | varies | Counter held | That counter is open on another PC. | Close it there first, or take it over when asked. | counters | 2026-10-22 |
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | varies | Cover conflict | PENDING | - | actors | 2026-10-22 |
 | CRM_NOT_MIGRATED | 503 | Crm not migrated | PENDING | - | crm | 2026-10-22 |
@@ -91,8 +91,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FX_RATE_MISSING | 422 | Exchange rate missing | There is no exchange rate for that day. | Add the rate for that day, then try again. | forms | 2026-10-22 |
 | FX_RATE_OF_DAY | varies | Fx rate of day | PENDING | - | forms | 2026-10-22 |
 | HANDOFF_STORE_MISSING | 503 | Handoff store missing | PENDING | - | assist | 2026-10-22 |
-| IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | PENDING | - | idempotency | 2026-10-22 |
-| IDEMPOTENCY_IN_PROGRESS | 409 | Idempotency in progress | PENDING | - | idempotency | 2026-10-22 |
+| IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
+| IDEMPOTENCY_IN_PROGRESS | 409 | Idempotency in progress | The same request is still being handled. | Wait a moment and look before sending it again. | idempotency | 2026-10-22 |
 | IDOC_CONSENT_REQUIRED | 400 | Idoc consent required | PENDING | - | identity-docs | 2026-10-22 |
 | IDOC_EMPLOYER_ONLY | 403 | Idoc employer only | PENDING | - | identity-docs | 2026-10-22 |
 | IDOC_NOT_CODE_VERIFIED | varies | Idoc not code verified | PENDING | - | iddoc-verify | 2026-10-22 |
@@ -126,10 +126,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MSG_FIXED | 409 | Messaging level fixed | This folder's messaging level cannot be changed. | Leave it as it is. | folders | 2026-10-22 |
 | NAME_THE_PERSON | 400 | Name the person | PENDING | - | actors | 2026-10-22 |
 | NETWORK_ORDERS_OFF | 403 | Network orders off | Ordering across this network is not switched on here. | Order from the shop itself instead. | catalogue | 2026-10-22 |
-| NETWORK_READ_FAILED | 503 | Network not read | We could not read who is in the network just now. Nothing was changed. | Try again in a minute. | network-membership | 2026-10-23 |
-| NO_MATCHING_PRODUCTS | 404 | No matching products | None of those products is sold in this network. | Go back to the store and choose again. | catalogue | 2026-10-23 |
-| NO_OPERATOR | 409 | Network has no operator | This network has nobody to take the order just now. | Tell the store; try again later. | catalogue | 2026-10-23 |
-| NO_SHOPPER_ACCOUNT | 400 | No account here yet | There is no account with that phone or email at this shop yet. | Place an order first; it makes your account. | catalogue | 2026-10-23 |
 | NOTIF_DISMISS_NOT_MIGRATED | 503 | Notif dismiss not migrated | PENDING | - | notifications | 2026-10-22 |
 | NOT_BOARD_WRITER | 403 | Not board writer | PENDING | - | testing | 2026-10-22 |
 | NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
@@ -162,16 +158,15 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | OFFER_CLASH | 409 | Offer clash | PENDING | - | offer-clash | 2026-10-22 |
 | OFFLINE | varies | Offline | PENDING | - | verdict | 2026-10-22 |
 | OK | varies | Ok | PENDING | - | crm-groups | 2026-10-22 |
-| ORDER_EMPTY | 400 | Order is empty | The order has nothing in it. | Add something to the cart and send it again. | catalogue | 2026-10-23 |
-| ORDER_REJECTED | 409/422 | Order not accepted | The shop could not take this order as it is — the reason says which item. | Change that item and send the order again. | catalogue | 2026-10-23 |
 | ORIGIN_NOT_ALLOWED | 403 | Origin not allowed | This address is not allowed to call the service. | Use the shop app, or ask us to allow your address. | platform | 2026-10-22 |
 | OTP_EXPIRED | 400/429 | Otp expired | That code has expired. | Ask for a new code. | iddoc-verify | 2026-10-22 |
 | OTP_LOCKED | 400/429 | Otp locked | Too many wrong codes were typed. | Ask for a new code. | iddoc-verify | 2026-10-22 |
-| OTP_WRONG | 400 | Wrong code | That code is not right. | Check the code and type it again; the message says how many tries are left. | otp | 2026-10-23 |
 | OVER_LIMIT | 409 | Over limit | PENDING | - | chits | 2026-10-22 |
 | OWNER_ONLY | 403 | Owner only | Only the owner can do this. | Ask the owner of the shop to do it. | people | 2026-10-22 |
 | PACK_NO_FILE | 409 | Pack has no file | This pack has no file to download. | Build it again, download it, then confirm. | books | 2026-10-22 |
 | PAGE_UNKNOWN | varies | Page unknown | PENDING | - | mint | 2026-10-22 |
+| PAIR_CODE_UNKNOWN | 404 | Pairing code not known | That code is wrong or has expired. | Ask ChitBridge for a new code. | till | 2026-10-23 |
+| PAIR_TOO_MANY_TRIES | 429 | Too many wrong codes | Too many wrong codes were tried. | Wait a minute, then ask for a new code. | till | 2026-10-23 |
 | PENETRATION_STORE_MISSING | 503 | Penetration store missing | PENDING | - | assist | 2026-10-22 |
 | PERIOD_LOCKED | 409 | Month locked | That month is locked. | Use a date in an open month, or ask the owner to unlock it. | books | 2026-10-22 |
 | PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | PENDING | - | iddoc-verify | 2026-10-22 |
@@ -192,7 +187,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SESSION_EXPIRED | 401 | Session expired | PENDING | - | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | PENDING | - | identity-auth | 2026-10-22 |
 | SESSION_UPGRADE | varies | Session upgrade | PENDING | - | auth | 2026-10-22 |
-| SHOP_CLOSED | 403 | Shop closed | This shop is closed and is not taking orders just now. | Try again when the shop opens. | catalogue | 2026-10-23 |
 | SHOP_REFUSING | varies | Shop refusing | PENDING | - | verdict | 2026-10-22 |
 | SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
 | SIGN_IN | 403 | Sign in | PENDING | - | crm | 2026-10-22 |
@@ -202,17 +196,20 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SRA_NOT_MIGRATED | 503 | Sra not migrated | PENDING | - | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | PENDING | - | verdict | 2026-10-22 |
-| SUBMISSION_REJECTED | 422/503 | Form not accepted | The form could not be sent as it is — the reason says what to fix. | Fix what it names and send it again; if it says try again, wait a minute. | catalogue | 2026-10-23 |
-| SUPPORT_NOT_TAKEN | 502 | Report not delivered | Your report did not reach the shop. | Contact the shop another way for now. | catalogue | 2026-10-23 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
 | SWITCHED_OFF | 400/404 | Switched off | PENDING | - | actors | 2026-10-22 |
 | TASKS_TO_ROUTE | 400 | Tasks to route | PENDING | - | actors | 2026-10-22 |
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax id bad | PENDING | - | profile | 2026-10-22 |
 | TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
+| TILL_BAD_REQUEST | 400 | Counter request not valid | The counter sent something that is missing or not right. | Check what was entered and try again. | till | 2026-10-23 |
 | TILL_CLAIM_MISMATCH | varies | Till claim mismatch | PENDING | - | holder | 2026-10-22 |
+| TILL_NO_COUNTER | 403 | Key holds no counter | This key is not holding a counter. | Open the counter on this PC first. | till | 2026-10-23 |
+| TILL_REFUSED | varies | Counter request refused | ChitBridge could not do that. | Read the sentence beside it, then try again. | till | 2026-10-23 |
+| TILL_SCREEN_ONLY | 403 | Shop screens only | Only a shop screen can be changed from the counter. | Pick one of the paired screens. | till | 2026-10-23 |
 | TILL_SEND_REFUSED | 403 | Till send refused | PENDING | - | chits | 2026-10-22 |
 | TILL_SERIES_COLLISION | varies | Till series collision | PENDING | - | chits | 2026-10-22 |
+| TILL_SIGN_IN_FIRST | 403 | Sign in first | Sign in as the shop to do this. | Sign in, then try again. | till | 2026-10-23 |
 | TOKEN_INVALID | 401 | Token invalid | PENDING | - | auth | 2026-10-22 |
 | USER_ID_ENTITY_ONLY | 403 | User id entity only | PENDING | - | entities | 2026-10-22 |
 | USER_ID_IMMUTABLE | 409 | User id immutable | PENDING | - | entities | 2026-10-22 |
@@ -228,4 +225,16 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | WRONG_VALUE | 422 | Field not valid | A field has a value of the wrong kind. | Use the kind of value the field asks for. | validate | 2026-10-22 |
 | YEAR_CLOSED | 409 | Year closed | That financial year is closed. | Use a date in the open year. | books | 2026-10-22 |
 | YEAR_CLOSE_REFUSED | 422 | Year cannot close yet | The year cannot be closed yet. | Read the reasons shown and fix each one. | books | 2026-10-23 |
+| CODE_NOT_ASKED | 400 | No code asked for | Ask for a code first — none was sent to that phone or email at this shop. | Tap "Send code", then type the code you get. | catalogue | 2026-10-23 |
+| CONTACT_INVALID | 422 | Phone or email not usable | Enter one phone number or one email — not both, and in a form we can send to. | Check the number or the address and try again. | catalogue | 2026-10-23 |
+| IDEMPOTENCY_KEY_REQUIRED | 422 | Idempotency key required | The order came without its one-time mark, so nothing was sent. | Reload the shop page and try again. | idempotency | 2026-10-23 |
+| NETWORK_READ_FAILED | 503 | Network not read | We could not read who is in the network just now. Nothing was changed. | Try again in a minute. | network-membership | 2026-10-23 |
+| NO_MATCHING_PRODUCTS | 404 | No matching products | None of those products is sold in this network. | Go back to the store and choose again. | catalogue | 2026-10-23 |
+| NO_OPERATOR | 409 | Network has no operator | This network has nobody to take the order just now. | Tell the store; try again later. | catalogue | 2026-10-23 |
+| ORDER_EMPTY | 400 | Order is empty | The order has nothing in it. | Add something to the cart and send it again. | catalogue | 2026-10-23 |
+| ORDER_REJECTED | 409/422 | Order not accepted | The shop could not take this order as it is — the reason says which item. | Change that item and send the order again. | catalogue | 2026-10-23 |
+| OTP_WRONG | 400 | Wrong code | That code is not right. | Check the code and type it again; the message says how many tries are left. | otp | 2026-10-23 |
+| SHOP_CLOSED | 403 | Shop closed | This shop is closed and is not taking orders just now. | Try again when the shop opens. | catalogue | 2026-10-23 |
+| SUBMISSION_REJECTED | 422/503 | Form not accepted | The form could not be sent as it is — the reason says what to fix. | Fix what it names and send it again; if it says try again, wait a minute. | catalogue | 2026-10-23 |
+| SUPPORT_NOT_TAKEN | 502 | Report not delivered | Your report did not reach the shop. | Contact the shop another way for now. | catalogue | 2026-10-23 |
 <!-- codes:end -->

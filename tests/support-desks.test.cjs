@@ -191,7 +191,8 @@ ok('a storefront buyer has a door at all',
 
 ok('it reuses the ORDER path’s identity, not a second anonymous sender',
   /crHandle\(c0\.channel, c0\.raw, entity\)/.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1))
-    && /verifyOtp\(query, c, req\.body\.otp[,)]/.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1)),
+    && /codeHolds\(c, req\.body\.otp, /.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1)) /* SEC-81c: the one code check of the public doors */
+    && /async function codeHolds\(row, typed, names\) \{[\s\S]{0,80}verifyOtp\(query, row, typed, /.test(cat),
   'a second mechanism for who a shopper is ends up with two different answers');
 
 ok('the code is SPENT, so one code is one ticket',

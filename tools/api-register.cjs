@@ -120,7 +120,7 @@ function impliedStatuses(leaf, hasValidation, usesAuth) {
 /** the status_codes column: declared statuses against the res.status() literals in the handler */
 function statusColumn(declared, used, leaf, stackFacts) {
   const { implied, takesInput } = impliedStatuses(leaf, stackFacts.hasValidation, stackFacts.usesAuth);
-  const allowedExtra = stackFacts.hasGate ? [401, 403] : [];
+  const allowedExtra = (stackFacts.hasGate ? [401, 403] : []).concat(stackFacts.gateStatuses);
   if (!declared.length) return false;
   const covers = used.concat(implied).every((status) => declared.includes(status));
   const inputAnswered = !takesInput || declared.includes(400) || declared.includes(422);
@@ -135,6 +135,8 @@ function stackFactsOf(leaf, shared) {
   const usesAuth = everyone.some((fn) => fn && fn.name === 'auth' && shared.has(fn));
   return {
     usesAuth,
+    /* a gate declares the statuses it answers itself in fn.addsStatuses (middleware/idempotency.js ADDS_STATUSES) */
+    gateStatuses: everyone.flatMap((fn) => (fn && Array.isArray(fn.addsStatuses) ? fn.addsStatuses : [])),
     hasValidation: route.some(isValidationChain),
     hasSchemaCheck: route.some((fn) => !!(fn && fn.schemaOperation)),
     hasGate: route.some((fn) => typeof fn === 'function' && !isValidationChain(fn))
