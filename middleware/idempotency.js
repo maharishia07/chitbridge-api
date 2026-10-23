@@ -28,6 +28,9 @@ const DEFAULT_WINDOW_HOURS = 48;
 /* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
    after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
 const IN_PROGRESS_STALE_MINUTES = Number(process.env.IDEMPOTENCY_STALE_MINUTES || 10);
+/* SEC (laptop1, 23 Oct): a recorded answer that carries a token (order/confirm signs the shopper in) is a session if it is kept.
+   It replays for this many minutes, long enough for a retry after a lost answer; recording a new one sweeps the shop's older ones. */
+const TOKEN_REPLAY_MINUTES = Number(process.env.IDEMPOTENCY_TOKEN_MINUTES || 15);
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
@@ -188,6 +191,9 @@ function runUnverified(req, res, next, claim, why) {
     .then((outcome) => (outcome.existing ? answerExisting(res, outcome.existing, claim.hash, false) : runAndRecord(req, res, next, memoryStore, claim)));
 }
 
+/** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
+const windowHours = () => Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS);
+
 const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotency_key is not migrated (b109)' : 'store error: ' + (e && e.message));
 
 module.exports = function idempotency(req, res, next) {
@@ -204,7 +210,7 @@ module.exports = function idempotency(req, res, next) {
     entity: scoped.entity,
     key: String(key),
     hash: fingerprint(req),
-    windowHrs: Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS)
+    windowHrs: windowHours()
   };
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
 
@@ -214,6 +220,38 @@ module.exports = function idempotency(req, res, next) {
     .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
 };
 
+/* ── ⭐ DB-82 · THE TABLE-WIDE PURGE (23 Oct). begin() only reclaims a key when the SAME shop sends the SAME key again, so a shop that
+   never ordered again kept its last answer (a customer-token answer is a session). ops.f_idempotency_purge (b780) deletes every expired
+   row of every shop with the SAME three terms begin() reads — the numbers are passed from here, so there is ONE set. Before b780 is run
+   the call says so once and the timer goes on (a missing function is expected, never a crash). */
+const PURGE_EVERY_MS = 6 * HOUR_MS;
+async function purgeExpired(deps) {
+  const query = ((deps && deps.query) || require('../db').query);
+  try {
+    const swept = await query('SELECT ops.f_idempotency_purge($1, $2, $3) AS purged', [windowHours(), IN_PROGRESS_STALE_MINUTES, TOKEN_REPLAY_MINUTES]);
+    return { purged: Number(swept.rows[0].purged) || 0 };
+  } catch (e) {
+    if (e && (e.code === '42883' || e.code === '3F000' || STORE_MISSING_CODES.includes(e.code))) return { purged: 0, notMigrated: true }; /* b780 not run yet */
+    throw e;
+  }
+}
+let purgeTimer = null;
+/** in-process, every 6 hours (first run 10 minutes after start); IDEMPOTENCY_PURGE=0 turns it off; off in a test run */
+function startPurge() {
+  if (purgeTimer || process.env.IDEMPOTENCY_PURGE === '0' || require('../lib/dev-otp').isTestRun()) return false;
+  const kick = () => {
+    purgeExpired()
+      .then((outcome) => outcome.notMigrated && log.warn('idempotency purge: ops.f_idempotency_purge is not migrated (b780) — expired keys wait for their shop', {}))
+      .catch(log.orElse('idempotency purge: failed — carried on without it'));
+  };
+  setTimeout(kick, 10 * 60000).unref();
+  purgeTimer = setInterval(kick, PURGE_EVERY_MS);
+  purgeTimer.unref();
+  return true;
+}
+module.exports.purgeExpired = purgeExpired;
+module.exports.startPurge = startPurge;
+module.exports.TOKEN_REPLAY_MINUTES = TOKEN_REPLAY_MINUTES;
 module.exports._stable = stable;
 module.exports._scope = scope;
 module.exports._memory = memoryStore;
