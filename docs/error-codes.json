@@ -65,6 +65,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ALREADY_CLAIMED",
+   "status": "409",
+   "title": "Already claimed",
+   "shopkeeper": "This business has already been claimed.",
+   "hint": "Sign in with its claim code, or ask the network for a new one.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ALREADY_PAID",
    "status": "409",
    "title": "Already paid",
@@ -99,6 +108,15 @@
    "hint": "-",
    "owner_area": "signin",
    "since": "2026-10-22"
+  },
+  {
+   "code": "ANSWERED",
+   "status": "409",
+   "title": "Already answered",
+   "shopkeeper": "Not found, or already answered: an answer is given once.",
+   "hint": "Refresh the list.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "ASSIST_GATED",
@@ -137,12 +155,111 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_AFTER",
+   "status": "400",
+   "title": "Bad day word",
+   "shopkeeper": "Pick one of the days offered.",
+   "hint": "Choose a day from the list.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_ASSIGNEE",
+   "status": "400",
+   "title": "Not on your team",
+   "shopkeeper": "That person is not on your team.",
+   "hint": "Pick someone from your team.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_BEFORE",
+   "status": "400",
+   "title": "Bad time",
+   "shopkeeper": "Give the time as a date.",
+   "hint": "Pick a date and try again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_CHANNEL",
+   "status": "400",
+   "title": "Bad channel",
+   "shopkeeper": "Channel is phone, sms, whatsapp, email or chitbridge.",
+   "hint": "Pick one of those.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_DUE",
+   "status": "400",
+   "title": "Bad due day",
+   "shopkeeper": "Pick a day from today.",
+   "hint": "Choose today or a later day.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "BAD_FLAG",
    "status": "400",
    "title": "Flag not true or false",
    "shopkeeper": "priceIncludesTax must be true or false.",
    "hint": "Send true or false.",
    "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_GROUP",
+   "status": "400",
+   "title": "Not a stage",
+   "shopkeeper": "That is not one of the stages.",
+   "hint": "Pick a stage from the list.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_ID",
+   "status": "400",
+   "title": "Not a valid id",
+   "shopkeeper": "That is not a valid id.",
+   "hint": "Open it again from the list.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_KEY",
+   "status": "400",
+   "title": "Not a segment",
+   "shopkeeper": "That is not a segment or a group.",
+   "hint": "Pick one from the list.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_KIND",
+   "status": "400",
+   "title": "Unknown grouping",
+   "shopkeeper": "That grouping is not known.",
+   "hint": "Use the buttons on the screen.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_NAME",
+   "status": "400",
+   "title": "Bad name",
+   "shopkeeper": "Give a name. A group name is up to 40 letters, digits, spaces, - & /.",
+   "hint": "Check the name and try again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_OUTCOME",
+   "status": "400",
+   "title": "Bad outcome",
+   "shopkeeper": "Pick what happened on the call.",
+   "hint": "Tap one of the outcome buttons.",
+   "owner_area": "crm",
    "since": "2026-10-23"
   },
   {
@@ -173,6 +290,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_PURPOSE",
+   "status": "400",
+   "title": "Bad purpose",
+   "shopkeeper": "Purpose is service or marketing.",
+   "hint": "Pick one of those.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "BAD_QTY",
    "status": "400",
    "title": "Quantity not above zero",
@@ -188,6 +314,24 @@
    "shopkeeper": "A line has a tax rate outside 0 to 100 percent.",
    "hint": "Send a rate from 0 to 100.",
    "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_STATE",
+   "status": "409",
+   "title": "Not in that state",
+   "shopkeeper": "This connection is not in a state where that can be done.",
+   "hint": "Refresh the list and look at where it stands.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_TYPE",
+   "status": "400",
+   "title": "Unknown connection type",
+   "shopkeeper": "A connection is either governance or commercial.",
+   "hint": "Send one of those two words.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -296,6 +440,24 @@
    "shopkeeper": "Your categories could not be set up, so nothing was added.",
    "hint": "Try again in a moment.",
    "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHANNEL_NOT_SENDABLE",
+   "status": "400",
+   "title": "Channel not sendable",
+   "shopkeeper": "Only WhatsApp can be sent from here today.",
+   "hint": "Use WhatsApp.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHILD_NOT_FOUND",
+   "status": "404",
+   "title": "Business not found",
+   "shopkeeper": "We could not find that business.",
+   "hint": "Check its handle and try again.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -488,6 +650,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CONNECTION_BAD_REQUEST",
+   "status": "400",
+   "title": "Cannot connect to yourself",
+   "shopkeeper": "You cannot connect to your own business.",
+   "hint": "Choose another business.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTION_EXISTS",
+   "status": "400",
+   "title": "Already connected",
+   "shopkeeper": "A connection with this business already exists.",
+   "hint": "Open your connections to see where it stands.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CONNECTOR_HAS_NO_KEY",
    "status": "400",
    "title": "Connector has no key",
@@ -504,6 +684,15 @@
    "hint": "-",
    "owner_area": "whatsapp-out",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CONSENT_WITHDRAWN",
+   "status": "403",
+   "title": "Consent withdrawn",
+   "shopkeeper": "They took back their consent.",
+   "hint": "Do not message them on this channel.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "CONTACT_INVALID",
@@ -605,11 +794,20 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CRM_BAD_REQUEST",
+   "status": "400",
+   "title": "Bad request",
+   "shopkeeper": "What was sent is not in the form CRM expects.",
+   "hint": "Send the fields as one JSON object, each once.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CRM_NOT_MIGRATED",
    "status": "503",
    "title": "Crm not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Follow-ups and call notes are not set up here yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "crm",
    "since": "2026-10-22"
   },
@@ -769,27 +967,27 @@
   {
    "code": "CURRENCY_ENTITY_ONLY",
    "status": "403",
-   "title": "Currency entity only",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Currency is the business’s",
+   "shopkeeper": "The currency your prices are written in belongs to the business.",
+   "hint": "Ask whoever runs the account to change it in Settings.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "CURRENCY_MALFORMED",
    "status": "varies",
-   "title": "Currency malformed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not a currency code",
+   "shopkeeper": "That is not a currency code.",
+   "hint": "Use the three-letter code, like SGD.",
    "owner_area": "govresolve",
    "since": "2026-10-22"
   },
   {
    "code": "CURRENCY_NOT_ALLOWED",
    "status": "varies",
-   "title": "Currency not allowed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Currency not available",
+   "shopkeeper": "That currency is not available for this business.",
+   "hint": "Choose one of the currencies listed.",
    "owner_area": "govresolve",
    "since": "2026-10-22"
   },
@@ -800,6 +998,15 @@
    "shopkeeper": "This payment is in a different money from the ledger's.",
    "hint": "Use the ledger's own money.",
    "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CYCLE",
+   "status": "409",
+   "title": "Would loop",
+   "shopkeeper": "A network cannot sit under one of its own members.",
+   "hint": "Choose a different network to join.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -893,6 +1100,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "EDGE_NOT_FOUND",
+   "status": "404",
+   "title": "Connection not found",
+   "shopkeeper": "We could not find that connection.",
+   "hint": "Refresh the list; it may have been removed.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
    "status": "varies",
    "title": "Email delivery not configured",
@@ -920,6 +1136,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ENTITY_BAD_REQUEST",
+   "status": "400",
+   "title": "Request not usable",
+   "shopkeeper": "What was sent is missing something or cannot be used.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ENTITY_CLASH",
+   "status": "409",
+   "title": "Clashes with what is recorded",
+   "shopkeeper": "That clashes with what is already recorded.",
+   "hint": "Read the sentence shown, then pick another.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ENTITY_EMAIL_TAKEN",
    "status": "409",
    "title": "Email already used",
@@ -929,12 +1163,48 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ENTITY_NOT_MIGRATED",
+   "status": "varies",
+   "title": "Update still to run",
+   "shopkeeper": "This part is not ready on this server yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ENTITY_QUOTA",
    "status": "409",
    "title": "Shop limit reached",
    "shopkeeper": "This installation cannot add another shop on its plan.",
    "hint": "Choose a plan with room for more shops.",
    "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ENTITY_SEALED",
+   "status": "403",
+   "title": "Protected business",
+   "shopkeeper": "This business is protected and cannot be erased.",
+   "hint": "Nothing to do: protected businesses stay.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ERR",
+   "status": "500",
+   "title": "Something went wrong",
+   "shopkeeper": "Something went wrong on our side. Try again in a moment.",
+   "hint": "If it keeps happening, tell us the request id.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "EXISTS",
+   "status": "409",
+   "title": "Already asked or connected",
+   "shopkeeper": "You have already asked, or are already connected.",
+   "hint": "Open the connection to see where it stands.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -1037,6 +1307,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "GROUPS_NOT_MIGRATED",
+   "status": "409",
+   "title": "Groups not set up",
+   "shopkeeper": "Named groups are not set up here yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "HANDOFF_STORE_MISSING",
    "status": "503",
    "title": "Handoff store missing",
@@ -1044,6 +1323,24 @@
    "hint": "-",
    "owner_area": "assist",
    "since": "2026-10-22"
+  },
+  {
+   "code": "HAS_DUES",
+   "status": "409",
+   "title": "Open dues",
+   "shopkeeper": "There are open dues on this party.",
+   "hint": "Settle the dues first, then remove them.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "HAS_PARENT",
+   "status": "409",
+   "title": "Already in a network",
+   "shopkeeper": "That business is already in a network, and a business can be in one at a time.",
+   "hint": "Remove it from that network first.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "IDEMPOTENCY_CONFLICT",
@@ -1190,6 +1487,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "IN_FLIGHT",
+   "status": "409",
+   "title": "Open chit on the connection",
+   "shopkeeper": "A chit is still open on this connection.",
+   "hint": "Settle it first, or disconnect and settle together.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "IN_USE",
    "status": "409",
    "title": "In use",
@@ -1197,6 +1503,15 @@
    "hint": "-",
    "owner_area": "schemas",
    "since": "2026-10-22"
+  },
+  {
+   "code": "IS_CUSTOMER",
+   "status": "409",
+   "title": "Already a customer",
+   "shopkeeper": "They are a customer now, so there is no lead stage to move.",
+   "hint": "Nothing to do.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "ITEM_NOT_FOUND",
@@ -1274,8 +1589,8 @@
    "code": "LEADS_NOT_MIGRATED",
    "status": "503",
    "title": "Leads not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Lead stages are not set up here yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "crm",
    "since": "2026-10-22"
   },
@@ -1343,6 +1658,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MINT_FAILED",
+   "status": "500",
+   "title": "Could not make an id",
+   "shopkeeper": "We could not make an id for this business just now.",
+   "hint": "Try again in a moment.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "MINT_REFUSED",
+   "status": "varies",
+   "title": "Could not add",
+   "shopkeeper": "They could not be added.",
+   "hint": "Check the name and phone and try again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "MISSING_FIELD",
    "status": "422",
    "title": "Field missing",
@@ -1379,6 +1712,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NAME_REQUIRED",
+   "status": "400",
+   "title": "Name needed",
+   "shopkeeper": "A business needs a name.",
+   "hint": "Send a name.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NAME_THE_PERSON",
    "status": "400",
    "title": "Name the person",
@@ -1386,6 +1728,33 @@
    "hint": "-",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NEED_DAY",
+   "status": "400",
+   "title": "Day needed",
+   "shopkeeper": "Say when to follow up.",
+   "hint": "Pick a day.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_BAD_REQUEST",
+   "status": "400",
+   "title": "Network request not usable",
+   "shopkeeper": "What was sent to the network is missing something or cannot be used.",
+   "hint": "Read the sentence, fix it and try again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NAME_TAKEN",
+   "status": "409",
+   "title": "Network name taken",
+   "shopkeeper": "One of these names was taken while the network was being built. Nothing was created.",
+   "hint": "Try again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "NETWORK_ORDERS_OFF",
@@ -1397,12 +1766,48 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NETWORK_OWNER_ONLY",
+   "status": "403",
+   "title": "Owner only",
+   "shopkeeper": "Only the business owner can do this.",
+   "hint": "Sign in as the business itself.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NETWORK_READ_FAILED",
    "status": "503",
    "title": "Network not read",
    "shopkeeper": "We could not read who is in the network just now. Nothing was changed.",
    "hint": "Try again in a minute.",
    "owner_area": "network-membership",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_TOO_LARGE",
+   "status": "413",
+   "title": "Drawing too large",
+   "shopkeeper": "The drawing is too big to save.",
+   "hint": "Take some of it out and save again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NET_WRITE_DISABLED",
+   "status": "503",
+   "title": "Network editing is off",
+   "shopkeeper": "Network changes aren't available yet.",
+   "hint": "Try again later.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NOTHING_TO_DO",
+   "status": "400",
+   "title": "Nothing to do",
+   "shopkeeper": "Say who to add or remove.",
+   "hint": "Pick at least one customer.",
+   "owner_area": "crm",
    "since": "2026-10-23"
   },
   {
@@ -1415,11 +1820,29 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NOT_ALLOWED",
+   "status": "403",
+   "title": "Not allowed",
+   "shopkeeper": "Only the two businesses on a connection, or the network above it, can do that.",
+   "hint": "Ask the other business or the network.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NOT_ASSIGNEE",
+   "status": "403",
+   "title": "Not the assignee",
+   "shopkeeper": "Only the owner or the assignee can hand this on.",
+   "hint": "Ask the owner or the person it is assigned to.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NOT_BOARD_WRITER",
    "status": "403",
    "title": "Not board writer",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Only the board’s own account can change the shared cases and records.",
+   "hint": "Ask the board’s owner, or record your result instead.",
    "owner_area": "testing",
    "since": "2026-10-22"
   },
@@ -1462,9 +1885,9 @@
   {
    "code": "NOT_PLATFORM_ROOT",
    "status": "403",
-   "title": "Not platform root",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Platform operator only",
+   "shopkeeper": "This is for the platform operator only.",
+   "hint": "Ask the platform operator.",
    "owner_area": "platformroot",
    "since": "2026-10-22"
   },
@@ -1514,6 +1937,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_ACTOR",
+   "status": "401",
+   "title": "Not signed in as a business",
+   "shopkeeper": "Sign in as a business to use the network.",
+   "hint": "Sign in as the business itself.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_BUYERS",
    "status": "varies",
    "title": "No buyers",
@@ -1526,8 +1958,8 @@
    "code": "NO_CONSENT",
    "status": "varies",
    "title": "No consent",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "They have not agreed to offers from you.",
+   "hint": "Ask for their consent first.",
    "owner_area": "marketing-results",
    "since": "2026-10-22"
   },
@@ -1624,9 +2056,9 @@
   {
    "code": "NO_PLATFORM_ROOT",
    "status": "404",
-   "title": "No platform root",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "No platform operator",
+   "shopkeeper": "This installation has no platform operator set up.",
+   "hint": "Only the platform operator can use this.",
    "owner_area": "platformroot",
    "since": "2026-10-22"
   },
@@ -1637,6 +2069,15 @@
    "shopkeeper": "A line has no price on the shelf and none was sent.",
    "hint": "Set its price on the shelf, or send one.",
    "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NO_ROWS",
+   "status": "400",
+   "title": "No rows",
+   "shopkeeper": "There are no rows to import.",
+   "hint": "Choose a file with at least one lead.",
+   "owner_area": "crm",
    "since": "2026-10-23"
   },
   {
@@ -1685,6 +2126,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_TEXT",
+   "status": "400",
+   "title": "No message",
+   "shopkeeper": "Write the message.",
+   "hint": "Type the message and send again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_TOKEN",
    "status": "varies",
    "title": "No token",
@@ -1719,6 +2169,15 @@
    "hint": "-",
    "owner_area": "crm-groups",
    "since": "2026-10-22"
+  },
+  {
+   "code": "OPTED_OUT",
+   "status": "403",
+   "title": "Opted out",
+   "shopkeeper": "They asked not to be messaged on this channel.",
+   "hint": "Use another way, or leave them.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "ORDER_EMPTY",
@@ -1829,6 +2288,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "PARENT_NOT_FOUND",
+   "status": "404",
+   "title": "Network not found",
+   "shopkeeper": "We could not find that network.",
+   "hint": "Check its handle and try again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "PAYMENT_ABOVE_QUOTE",
    "status": "422",
    "title": "Above the quoted amount",
@@ -1885,9 +2353,9 @@
   {
    "code": "PLATFORM_BOUND",
    "status": "varies",
-   "title": "Platform bound",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Set by the platform",
+   "shopkeeper": "The platform sets this for every shop.",
+   "hint": "It cannot be changed here.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
@@ -1899,6 +2367,15 @@
    "hint": "Use a test counterparty.",
    "owner_area": "rail",
    "since": "2026-10-22"
+  },
+  {
+   "code": "PRIVACY_NOT_MIGRATED",
+   "status": "503",
+   "title": "Privacy not set up",
+   "shopkeeper": "Consent and privacy requests are not set up here yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "PRODUCT_BAD_REQUEST",
@@ -1982,6 +2459,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "PURPOSE_FIXED",
+   "status": "400",
+   "title": "Offers only",
+   "shopkeeper": "A message to a group is an offer, so it needs their consent for offers.",
+   "hint": "Send only to people who agreed to offers.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "QTY_OK",
    "status": "varies",
    "title": "Qty ok",
@@ -2000,6 +2486,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "REFUSED",
+   "status": "varies",
+   "title": "Refused",
+   "shopkeeper": "That could not be done as asked.",
+   "hint": "Read the line shown, change what you sent and try again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
    "code": "REGION_STORE_MISSING",
    "status": "403/404/503",
    "title": "Region store missing",
@@ -2007,6 +2502,15 @@
    "hint": "-",
    "owner_area": "assist",
    "since": "2026-10-22"
+  },
+  {
+   "code": "REG_KIND_NOT_OFFERED",
+   "status": "400",
+   "title": "Registration kind not offered",
+   "shopkeeper": "That kind of tax registration is not offered in your country.",
+   "hint": "Pick one of the kinds listed.",
+   "owner_area": "policy",
+   "since": "2026-10-23"
   },
   {
    "code": "REPEAT_BAD_REQUEST",
@@ -2119,29 +2623,47 @@
   {
    "code": "ROOT_HANDLE_NEEDED",
    "status": "varies",
-   "title": "Root handle needed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Network name needed",
+   "shopkeeper": "Set your User ID, or choose a network name, before building.",
+   "hint": "Set it in your profile, or send a network name.",
    "owner_area": "network-build-run",
    "since": "2026-10-22"
   },
   {
    "code": "ROOT_HANDLE_TAKEN",
    "status": "varies",
-   "title": "Root handle taken",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Network name taken",
+   "shopkeeper": "That network name is already taken.",
+   "hint": "Choose another network name.",
    "owner_area": "network-build-run",
    "since": "2026-10-22"
   },
   {
    "code": "ROOT_HANDLE_UNUSABLE",
    "status": "varies",
-   "title": "Root handle unusable",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Network name unusable",
+   "shopkeeper": "Your User ID cannot be a network name.",
+   "hint": "Change your User ID in Settings first.",
    "owner_area": "network-build-run",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SAID_NO",
+   "status": "403",
+   "title": "Said no",
+   "shopkeeper": "They said no to this.",
+   "hint": "Leave them be, unless they say yes later.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SELF",
+   "status": "400",
+   "title": "Cannot connect to itself",
+   "shopkeeper": "A business cannot connect to itself.",
+   "hint": "Choose another business.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "SENDING",
@@ -2219,8 +2741,8 @@
    "code": "SIGN_IN",
    "status": "403",
    "title": "Sign in",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "CRM opens only for a signed-in person, not for a key.",
+   "hint": "Sign in with your own login.",
    "owner_area": "crm",
    "since": "2026-10-22"
   },
@@ -2335,9 +2857,9 @@
   {
    "code": "TAX_ID_BAD",
    "status": "varies",
-   "title": "Tax id bad",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Tax number not accepted",
+   "shopkeeper": "That tax number is not accepted for your country.",
+   "hint": "Check the number and try again.",
    "owner_area": "profile",
    "since": "2026-10-22"
   },
@@ -2349,6 +2871,51 @@
    "hint": "Try again after the update.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "TESTING_BAD_REQUEST",
+   "status": "400",
+   "title": "The test board needs something else",
+   "shopkeeper": "The test board could not take that, and the sentence says why.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_NOT_DEPLOYED",
+   "status": "500",
+   "title": "Test data missing on this server",
+   "shopkeeper": "The test cases or records are not on this server yet.",
+   "hint": "Tell us: the server needs to be deployed again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_NOT_SIGNED_IN",
+   "status": "401",
+   "title": "Not signed in to the test board",
+   "shopkeeper": "Sign in to use the test board.",
+   "hint": "Sign in, then try again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_NOT_STORED",
+   "status": "500",
+   "title": "Screenshot not stored",
+   "shopkeeper": "The screenshot could not be kept.",
+   "hint": "Try again. If it keeps happening, tell us.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_REFUSED",
+   "status": "422",
+   "title": "The test board did not record that",
+   "shopkeeper": "The test board understood that but cannot record it as it is, and the sentence says why.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
   },
   {
    "code": "TILL_BAD_REQUEST",
@@ -2432,38 +2999,74 @@
    "since": "2026-10-22"
   },
   {
+   "code": "TOO_LONG",
+   "status": "400",
+   "title": "Message too long",
+   "shopkeeper": "The message is too long.",
+   "hint": "Shorten it and send again.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TOO_MANY",
+   "status": "400",
+   "title": "Too many",
+   "shopkeeper": "That is too many at a time.",
+   "hint": "Send fewer, or make a smaller group.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TOO_MANY_GROUPS",
+   "status": "400",
+   "title": "Too many groups",
+   "shopkeeper": "A customer can be in at most 20 groups.",
+   "hint": "Take them out of one group first.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "UNCLAIMED",
+   "status": "409",
+   "title": "Not claimed yet",
+   "shopkeeper": "That business has not claimed its place yet, so it cannot say yes.",
+   "hint": "Ask it to claim its place first.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "USER_ID_ENTITY_ONLY",
    "status": "403",
-   "title": "User id entity only",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID is the business’s",
+   "shopkeeper": "A User ID belongs to the business, not to a person.",
+   "hint": "You sign in as key@business; that cannot be changed here.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "USER_ID_IMMUTABLE",
    "status": "409",
-   "title": "User id immutable",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID cannot change",
+   "shopkeeper": "A User ID cannot be changed once it is set.",
+   "hint": "Change the business name instead; the User ID stays.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "USER_ID_INVALID",
    "status": "400",
-   "title": "User id invalid",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID not usable",
+   "shopkeeper": "Choose a User ID that can be used.",
+   "hint": "Read the sentence shown and try another.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "USER_ID_TAKEN",
    "status": "409",
-   "title": "User id taken",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID taken",
+   "shopkeeper": "That User ID is already taken.",
+   "hint": "Choose another; it cannot be changed later.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
@@ -2507,17 +3110,26 @@
    "code": "VIEW_ONLY",
    "status": "varies",
    "title": "View only",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Your login can only view.",
+   "hint": "Ask the owner for edit access.",
    "owner_area": "crm-groups",
    "since": "2026-10-22"
+  },
+  {
+   "code": "VISIBILITY_CAPPED",
+   "status": "403",
+   "title": "Catalogue visibility closed",
+   "shopkeeper": "The catalogue cannot be that open for this business.",
+   "hint": "The sentence names who closed it; ask them.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
   },
   {
    "code": "VISIBILITY_NOT_MIGRATED",
    "status": "409",
    "title": "Visibility not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This database does not accept network visibility yet.",
+   "hint": "Apply the pending database update, then build again.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },

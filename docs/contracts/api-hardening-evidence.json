@@ -1,6 +1,15 @@
 {
  "about": "Evidence for the two columns a static read cannot prove (API-STANDARD S34, S35). routes['METHOD /path'] = { output_allowlist: true } once a contract test has shown the answer holds only schema_out fields; { foreign_id_404: true } once a test has shown another shop's id gets the same 404 as an unknown id. Written by the area's test, never by hand. Empty today.",
  "routes": {
+  "DELETE /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/crm/groups/:name": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/crm/parties/:id": {
+   "foreign_id_404": true
+  },
   "GET /api/catalogue/:bridge_id": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -21,13 +30,34 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/crm/parties/:id": {
+   "foreign_id_404": true
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "foreign_id_404": true
+  },
+  "GET /api/crm/parties/:id/timeline": {
+   "foreign_id_404": true
+  },
   "GET /api/repeat/:id": {
+   "foreign_id_404": true
+  },
+  "GET /api/testing/cmdb/:ci": {
    "foreign_id_404": true
   },
   "GET /api/work/:chit_id": {
    "foreign_id_404": true
   },
   "PATCH /api/counters/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/testing/incidents/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/testing/requirements/:id": {
    "foreign_id_404": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
@@ -63,6 +93,18 @@
   "POST /api/counters/:id/release": {
    "foreign_id_404": true
   },
+  "POST /api/crm/parties/:id/contact-prefs": {
+   "foreign_id_404": true
+  },
+  "POST /api/crm/parties/:id/interactions": {
+   "foreign_id_404": true
+  },
+  "POST /api/crm/parties/:id/outcome": {
+   "foreign_id_404": true
+  },
+  "POST /api/crm/parties/:id/stage": {
+   "foreign_id_404": true
+  },
   "POST /api/repeat/:id/accept": {
    "foreign_id_404": true
   },
@@ -91,6 +133,9 @@
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/skip": {
+   "foreign_id_404": true
+  },
+  "PUT /api/connections/:id/respond": {
    "foreign_id_404": true
   }
  }

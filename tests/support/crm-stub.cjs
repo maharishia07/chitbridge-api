@@ -141,7 +141,7 @@ function make() {
   const ref = { entity: 'E1', identity: null, api_key: false, gate: false };
   /* as(entity, { identity, gate: true }) runs the REAL hat gate (middleware/hat-gate.js) after the identity is set — what middleware/auth.js does
      on every protected route — so a test can prove which writes a viewer's row reaches (FX-L2C). Off by default: the other tests are about the routes. */
-  const authFn = (req, res, next) => { req.identity = ref.identity || { identity_id: ref.entity }; if (ref.api_key) req.api_key = true; if (ref.gate) return require(path.join(API, 'middleware', 'hat-gate'))(req, res, next); next(); };
+  const authFn = (req, res, next) => { if (ref.signedOut) return res.status(401).json({ error: 'Unauthorised', message: 'No token provided' }); /* the real middleware's first refusal */ req.identity = ref.identity || { identity_id: ref.entity }; if (ref.api_key) req.api_key = true; if (ref.gate) return require(path.join(API, 'middleware', 'hat-gate'))(req, res, next); next(); };
   authFn.entityOf = () => ref.entity;
   stub('middleware/auth', authFn);
 
@@ -158,7 +158,7 @@ function make() {
   }
   return {
     data, port, close: () => srv.close(), uid,
-    as(entity, o) { ref.entity = entity; ref.api_key = !!(o && o.key); ref.identity = (o && o.identity) || { identity_id: entity }; ref.gate = !!(o && o.gate); },
+    as(entity, o) { ref.entity = entity; ref.api_key = !!(o && o.key); ref.identity = (o && o.identity) || { identity_id: entity }; ref.gate = !!(o && o.gate); ref.signedOut = !!(o && o.signedOut); },
     get: (p) => call('GET', p), post: (p, b) => call('POST', p, b || {}), patch: (p, b) => call('PATCH', p, b || {}), del: (p) => call('DELETE', p),
   };
 }

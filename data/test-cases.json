@@ -64350,6 +64350,56 @@
    "changed_at": "2026-10-23T02:35:14+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-network.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE NETWORK ROUTES (SRC/ROUTES/NETWORK.JS, ROUTES/NETWORK-DESIGN.JS, ROUTES/CONNECTIONS.JS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE, ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE NETWORK ROUTES (SRC/ROUTES/NETWORK.JS, ROUTES/NETWORK-DESIGN.JS, ROUTES/CONNECTIONS.JS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE, ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 250 lines. Run: node chitbridge-api/tests/api-problem-network.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 250,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-entities.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE ENTITIES ROUTES (ROUTES/ENTITIES.JS: THE PROFILE, POLICY, PREFERENCES, ROUTING, POPULATIONS, ERASURE) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE; SIGN-IN IS RECORDED BYTE FOR BYTE; ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE ENTITIES ROUTES (ROUTES/ENTITIES.JS: THE PROFILE, POLICY, PREFERENCES, ROUTING, POPULATIONS, ERASURE) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE; SIGN-IN IS RECORDED BYTE FOR BYTE; ANOTHER SHOP'S ID IS ASKED AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 209 lines. Run: node chitbridge-api/tests/api-problem-entities.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 209,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-orders.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -64366,6 +64416,31 @@
    "group": "test.guard",
    "automated": true,
    "seq": 575,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-crm.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE 24 CRM ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE 24 CRM ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 237 lines. Run: node chitbridge-api/tests/api-problem-crm.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 237,
    "step": "",
    "areas": [
     "api"
@@ -64440,6 +64515,31 @@
    "needs": [
     "a database"
    ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-testing.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE TEST BOARD ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE TEST BOARD ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 178 lines. Run: node chitbridge-api/tests/api-problem-testing.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 178,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
   },
   {
    "case_key": "chitbridge-api/tests/api-problem-till.test.cjs",
