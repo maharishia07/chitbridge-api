@@ -7249,6 +7249,1848 @@
     }
    ]
   },
+  "DELETE /api/folders/:id": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "DELETE /api/folders/rules/:rule_id": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Rule delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Rule delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "rules-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Rule delete failed",
+      "message": "Folder rules are not migrated on this environment (b132)."
+     },
+     "fixture": {
+      "error": "Rule delete failed",
+      "message": "Folder rules are not migrated on this environment (b132)."
+     }
+    },
+    {
+     "scenario": "rule-id-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "GET /api/facts/:card": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "There is no Home card called \"nope\"."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "There is no Home card called \"nope\"."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "no-such-card",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "There is no Home card called \"nope\"."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "There is no Home card called \"nope\"."
+     }
+    },
+    {
+     "scenario": "prototype-name-is-no-card",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "There is no Home card called \"constructor\"."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "There is no Home card called \"constructor\"."
+     }
+    },
+    {
+     "scenario": "key-sees-no-figures",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     }
+    },
+    {
+     "scenario": "card-builder-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/facts/rail/chits": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "key-sees-no-rail",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in to see the Home figures."
+     }
+    },
+    {
+     "scenario": "rail-builder-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/:id/chits": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "switched-off-folder",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That folder is switched off."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That folder is switched off."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/:id/metrics": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Metrics failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Metrics failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "switched-off-folder",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That folder is switched off."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That folder is switched off."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/:id/rules": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Rules list failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Rules list failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/groupsum": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Group sum failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Group sum failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/inventory": {
+   "answers": [
+    {
+     "scenario": "inventory-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Inventory failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Inventory failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/messages": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/mis": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "MIS failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "MIS failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/reconcile": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Reconcile failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Reconcile failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/rules": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Rules list failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Rules list failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/folders/worklist": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Worklist failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Worklist failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "due-date-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "due_on must be YYYY-MM-DD"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "due_on must be YYYY-MM-DD"
+     }
+    }
+   ]
+  },
+  "PATCH /api/folders/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "db-fails-with-a-name",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "folder-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "nothing-to-update",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "own-parent",
+     "status": 400,
+     "body_keys": {
+      "error": "A folder cannot be its own parent"
+     },
+     "fixture": {
+      "error": "A folder cannot be its own parent"
+     }
+    },
+    {
+     "scenario": "name-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "PATCH /api/folders/rules/:rule_id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "db-fails-with-a-change",
+     "status": 500,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "rule-nothing-to-update",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Nothing to update"
+     }
+    },
+    {
+     "scenario": "rule-condition-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Unknown condition: nonsense. Allowed: from, subject, text, purpose, direction, status, channel, min_amount, max_amount, has_dispute, unread, older_than_days, doc"
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Unknown condition: nonsense. Allowed: from, subject, text, purpose, direction, status, channel, min_amount, max_amount, has_dispute, unread, older_than_days, doc"
+     }
+    },
+    {
+     "scenario": "rule-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Rule not found"
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Rule not found"
+     }
+    },
+    {
+     "scenario": "rule-update-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Rule update failed",
+      "message": "Folder rules are not migrated on this environment (b132)."
+     },
+     "fixture": {
+      "error": "Rule update failed",
+      "message": "Folder rules are not migrated on this environment (b132)."
+     }
+    },
+    {
+     "scenario": "rule-id-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "rule_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "POST /api/folders": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "name-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "name-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails-with-a-name",
+     "status": 500,
+     "body_keys": {
+      "error": "Create failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Create failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "parent-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "parent_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "parent_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "parent-not-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad parent",
+      "message": "Parent folder not found."
+     },
+     "fixture": {
+      "error": "Bad parent",
+      "message": "Parent folder not found."
+     }
+    },
+    {
+     "scenario": "view-folder-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "View folders need b275 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "View folders need b275 on this environment."
+     }
+    }
+   ]
+  },
+  "POST /api/folders/:id/rules": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Rule create failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "system-rule-is-fixed",
+     "status": 400,
+     "body_keys": {
+      "error": "Fixed rule",
+      "message": "A system folder's rule is part of the folder inventory and cannot be changed here."
+     },
+     "fixture": {
+      "error": "Fixed rule",
+      "message": "A system folder's rule is part of the folder inventory and cannot be changed here."
+     }
+    },
+    {
+     "scenario": "db-fails-with-a-rule",
+     "status": 500,
+     "body_keys": {
+      "error": "Rule create failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Rule create failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "condition-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Rule create failed",
+      "message": "Unknown condition: nonsense. Allowed: from, subject, text, purpose, direction, status, channel, min_amount, max_amount, has_dispute, unread, older_than_days, doc"
+     },
+     "fixture": {
+      "error": "Rule create failed",
+      "message": "Unknown condition: nonsense. Allowed: from, subject, text, purpose, direction, status, channel, min_amount, max_amount, has_dispute, unread, older_than_days, doc"
+     }
+    },
+    {
+     "scenario": "rules-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Rule create failed",
+      "message": "Folder rules are not migrated on this environment (b132)."
+     },
+     "fixture": {
+      "error": "Rule create failed",
+      "message": "Folder rules are not migrated on this environment (b132)."
+     }
+    }
+   ]
+  },
+  "POST /api/folders/messages/:message_id/mark": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "message_id must be a uuid"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "message_id must be a uuid"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     }
+    },
+    {
+     "scenario": "message-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "message_id must be a uuid"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "message_id must be a uuid"
+     }
+    },
+    {
+     "scenario": "message-not-mine",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such message in your copies."
+     }
+    },
+    {
+     "scenario": "read-state-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Message read state needs b156 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Message read state needs b156 on this environment."
+     }
+    }
+   ]
+  },
+  "POST /api/folders/move": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails-with-a-chit",
+     "status": 500,
+     "body_keys": {
+      "error": "Move failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Move failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "chit-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "chit-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "chit_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "into-a-system-folder",
+     "status": 400,
+     "body_keys": {
+      "error": "View folder",
+      "code": "FOLDER_IS_VIEW",
+      "message": "That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches."
+     },
+     "fixture": {
+      "error": "View folder",
+      "code": "FOLDER_IS_VIEW",
+      "message": "That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches."
+     }
+    },
+    {
+     "scenario": "into-a-shops-view-folder",
+     "status": 400,
+     "body_keys": {
+      "error": "View folder",
+      "code": "FOLDER_IS_VIEW",
+      "message": "That folder shows what its rules match — it is not a place to move chits into."
+     },
+     "fixture": {
+      "error": "View folder",
+      "code": "FOLDER_IS_VIEW",
+      "message": "That folder shows what its rules match — it is not a place to move chits into."
+     }
+    },
+    {
+     "scenario": "folder-not-found",
+     "status": 400,
+     "body_keys": {
+      "error": "No such folder"
+     },
+     "fixture": {
+      "error": "No such folder"
+     }
+    },
+    {
+     "scenario": "wrong-side",
+     "status": 400,
+     "body_keys": {
+      "error": "Wrong side",
+      "message": "That is a Task folder — it holds chits that came to you. Task and Order are separate tracks, so a folder belongs to one of them.",
+      "code": "FOLDER_WRONG_SIDE"
+     },
+     "fixture": {
+      "error": "Wrong side",
+      "message": "That is a Task folder — it holds chits that came to you. Task and Order are separate tracks, so a folder belongs to one of them.",
+      "code": "FOLDER_WRONG_SIDE"
+     }
+    },
+    {
+     "scenario": "move-retried-without-scope",
+     "status": 400,
+     "body_keys": {
+      "error": "No such folder"
+     },
+     "fixture": {
+      "error": "No such folder"
+     }
+    }
+   ]
+  },
+  "POST /api/folders/rules/preview": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     },
+     "fixture": {
+      "error": "Preview failed",
+      "message": "A condition must be an object"
+     }
+    },
+    {
+     "scenario": "preview-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Preview failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Preview failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "preview-condition-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Preview failed",
+      "message": "Unknown condition: nonsense. Allowed: from, subject, text, purpose, direction, status, channel, min_amount, max_amount, has_dispute, unread, older_than_days, doc"
+     },
+     "fixture": {
+      "error": "Preview failed",
+      "message": "Unknown condition: nonsense. Allowed: from, subject, text, purpose, direction, status, channel, min_amount, max_amount, has_dispute, unread, older_than_days, doc"
+     }
+    }
+   ]
+  },
+  "POST /api/pricing/price": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     }
+    },
+    {
+     "scenario": "no-lines",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     }
+    },
+    {
+     "scenario": "lines-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     }
+    },
+    {
+     "scenario": "key-has-pricing-scope",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { item_id|code, qty, listPrice?, pricing? }"
+     }
+    },
+    {
+     "scenario": "shelf-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/folders/inventory/:code": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "No such folder",
+      "message": "There is no folder nope in the inventory."
+     },
+     "fixture": {
+      "error": "No such folder",
+      "message": "There is no folder nope in the inventory."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Send on (true or false) or msg (external, internal or none)."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Send on (true or false) or msg (external, internal or none)."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Send on (true or false) or msg (external, internal or none)."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Send on (true or false) or msg (external, internal or none)."
+     }
+    },
+    {
+     "scenario": "not-the-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this."
+     }
+    },
+    {
+     "scenario": "no-such-code",
+     "status": 404,
+     "body_keys": {
+      "error": "No such folder",
+      "message": "There is no folder nope in the inventory."
+     },
+     "fixture": {
+      "error": "No such folder",
+      "message": "There is no folder nope in the inventory."
+     }
+    },
+    {
+     "scenario": "nothing-to-switch",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Send on (true or false) or msg (external, internal or none)."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Send on (true or false) or msg (external, internal or none)."
+     }
+    },
+    {
+     "scenario": "on-not-true-or-false",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "on must be true or false"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "on must be true or false"
+     }
+    },
+    {
+     "scenario": "track-always-on",
+     "status": 400,
+     "body_keys": {
+      "error": "Always on",
+      "message": "Tasks is always on — it cannot be switched off."
+     },
+     "fixture": {
+      "error": "Always on",
+      "message": "Tasks is always on — it cannot be switched off."
+     }
+    },
+    {
+     "scenario": "level-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "msg must be external, internal or none."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "msg must be external, internal or none."
+     }
+    },
+    {
+     "scenario": "track-has-no-level",
+     "status": 409,
+     "body_keys": {
+      "error": "Fixed",
+      "code": "MSG_FIXED",
+      "message": "Tasks has no messaging level of its own."
+     },
+     "fixture": {
+      "error": "Fixed",
+      "code": "MSG_FIXED",
+      "message": "Tasks has no messaging level of its own."
+     }
+    },
+    {
+     "scenario": "dispute-level-fixed",
+     "status": 409,
+     "body_keys": {
+      "error": "Fixed",
+      "code": "MSG_FIXED",
+      "message": "Disputes are always shared with the other party — that cannot be changed."
+     },
+     "fixture": {
+      "error": "Fixed",
+      "code": "MSG_FIXED",
+      "message": "Disputes are always shared with the other party — that cannot be changed."
+     }
+    },
+    {
+     "scenario": "level-above-ceiling",
+     "status": 409,
+     "body_keys": {
+      "error": "Above the default",
+      "code": "MSG_ABOVE_CEILING",
+      "message": "Returns can be kept internal or switched off, but not shared beyond the default."
+     },
+     "fixture": {
+      "error": "Above the default",
+      "code": "MSG_ABOVE_CEILING",
+      "message": "Returns can be kept internal or switched off, but not shared beyond the default."
+     }
+    },
+    {
+     "scenario": "policy-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Switch failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Switch failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "policy-refuses",
+     "status": 400,
+     "body_keys": {
+      "error": "Switch failed",
+      "message": "Policy refuses that."
+     },
+     "fixture": {
+      "error": "Switch failed",
+      "message": "Policy refuses that."
+     }
+    },
+    {
+     "scenario": "policy-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Switch failed",
+      "message": "Policy flags are not migrated on this environment (b130)."
+     },
+     "fixture": {
+      "error": "Switch failed",
+      "message": "Policy flags are not migrated on this environment (b130)."
+     }
+    }
+   ]
+  },
   "GET /api/governance/boilerplate/:key": {
    "answers": [
     {
