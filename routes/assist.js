@@ -19,7 +19,9 @@ const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const contract = require('../lib/assist-contract'); // the contract (each route's operation) and the words of a refusal
+const { failed, FAULTS, words, PUBLISH_NO } = contract;
 const log = require('../lib/logger');
 const { query, withEntity, readBatch } = require('../db'); // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth = require('../middleware/auth'); // review endpoints are auth-gated (tighten to platform-scope later)
@@ -72,12 +74,12 @@ function softIdentity(req) {
   }
 }
 
-router.post('/', async (req, res) => {
+router.post('/', ...contract.checked('POST /'), async (req, res) => {
   try {
     const q = req.body && typeof req.body.q === 'string' ? req.body.q.trim() : '';
     const context = req.body && typeof req.body.context === 'string' ? req.body.context.slice(0, 64) : '';
-    if (!q) return res.status(422).json({ error: 'Bad request', message: 'Ask a question.' });
-    if (q.length > 500) return res.status(422).json({ error: 'Bad request', message: 'Question is too long.' });
+    if (!q) return problem(req, res, { status: 422, ...words.askNothing() });
+    if (q.length > 500) return problem(req, res, { status: 422, ...words.askTooLong() });
 
     const identity = softIdentity(req); // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
 
@@ -89,11 +91,11 @@ router.post('/', async (req, res) => {
     if (!assistOn()) {
       // Not configured (the default/held state). Expected, not an error — tell the client to use its floor.
       log.info('assist not configured — client falls through to library floor', { id: req.id, context, auth: !!identity });
-      return res.status(503).json({ error: 'assist_unavailable', message: 'The assistant model is not configured yet.' });
+      return problem(req, res, { status: 503, ...words.assistOff() });
     }
     if (!identity) {
       // Anonymous (welcome/login): nobody to meter the call to → the library floor answers (lib/ai.js S1).
-      return res.status(503).json({ error: 'assist_unavailable', code: 'ASSIST_SIGN_IN', message: 'Sign in for fuller answers.' });
+      return problem(req, res, { status: 503, ...words.assistSignIn() });
     }
 
     try {
@@ -107,7 +109,7 @@ router.post('/', async (req, res) => {
       const answer = String(out.draft || '').trim();
       if (!answer) {
         log.warn('assist: empty model answer', { id: req.id, model: out.model });
-        return res.status(502).json({ error: 'Assistant error', message: 'No answer produced — try again.' });
+        return problem(req, res, { status: 502, ...words.assistEmpty() });
       }
       log.info('assist answered', { id: req.id, model: out.model, context, in: out.usage.input_tokens, out: out.usage.output_tokens });
       return res.json({ answer }); // shape: { answer } (fit/media can be added later); client wraps it like a lib entry
@@ -116,16 +118,10 @@ router.post('/', async (req, res) => {
       // falls through to its deterministic library floor.
       log.error('assist: model call failed', { id: req.id, err: mErr.message, status: mErr.status });
       const gated = mErr.status === 402 || mErr.status === 429 || mErr.status === 503;
-      return res
-        .status(gated ? 503 : 502)
-        .json(
-          gated
-            ? { error: 'assist_unavailable', code: 'ASSIST_GATED', message: 'The assistant is resting — the help library answers.' }
-            : { error: 'Assistant upstream error', message: 'The assistant is busy — please try again.' }
-        );
+      return problem(req, res, gated ? { status: 503, ...words.assistGated() } : { status: 502, ...words.assistBusy() });
     }
   } catch (err) {
-    res.status(500).json({ error: 'Assistant error', message: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.assistant));
   }
 });
 
@@ -134,14 +130,14 @@ router.post('/', async (req, res) => {
 // not a model opinion. THEN, only if a model is configured, adds a rung-2 SUMMARISE narrative ("what's wrong + what
 // to do"). Self-healing: no key / SDK / model failure → the deterministic verdict still returns (narrative: null).
 // Returns the Crux-2 `acted_by` deputy stamp so a caller can carry it onto a chit on send (not persisted here yet).
-router.post('/conform', async (req, res) => {
+router.post('/conform', ...contract.checked('POST /conform'), async (req, res) => {
   try {
     const standard = req.body && typeof req.body.standard === 'string' ? req.body.standard.trim() : '';
     const payload = req.body && req.body.payload && typeof req.body.payload === 'object' ? req.body.payload : {};
-    if (!standard) return res.status(422).json({ ok: false, error: 'Name the standard to check against.' });
+    if (!standard) return problem(req, res, { status: 422, ...words.standardNeeded() });
 
     const tpl = compliance.getTemplate(standard);
-    if (!tpl) return res.status(404).json({ ok: false, error: 'Unknown standard.', available: compliance.listTemplates() });
+    if (!tpl) return problem(req, res, { status: 404, ...words.unknownStandard(compliance.listTemplates()) });
 
     const verdict = compliance.evaluate(tpl, payload); // ← deterministic floor; ALWAYS the source of truth
     const identity = softIdentity(req);
@@ -184,7 +180,7 @@ router.post('/conform', async (req, res) => {
     res.json({ ok: true, ...verdict, narrative, acted_by });
   } catch (err) {
     log.error('assist/conform failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
@@ -198,11 +194,11 @@ router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: 
 // DETERMINISTIC structured PROPOSAL (schema + coloured items — the AI handler's "interpret once" output), plus a
 // model-drafted designer INTRO when configured (best-effort; degrades to no intro). Returns the `acted_by` deputy
 // stamp. Does NOT persist to a catalogue yet — this is the draft the business confirms before publishing.
-router.post('/catalogue-structure', async (req, res) => {
+router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structure'), async (req, res) => {
   try {
     const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
     const built = await catalogueBuild.build(source);
-    if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.', available: await catalogueBuild.listSources() });
+    if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource(await catalogueBuild.listSources()) });
 
     const identity = softIdentity(req);
     const principal = identity ? 'entity:' + (identity.parent_entity_id || identity.identity_id) : 'anon';
@@ -244,7 +240,7 @@ router.post('/catalogue-structure', async (req, res) => {
     res.json({ ok: true, ...rest, finishes, intro, acted_by });
   } catch (err) {
     log.error('assist/catalogue-structure failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
@@ -253,12 +249,12 @@ router.post('/catalogue-structure', async (req, res) => {
 // human CONFIRM/publish of the catalogue-structure slot. Self-healing: if b75 isn't applied, returns 503 (not 500).
 /* ⭐ SEC-FIX2 M3: a WRITE runs the real sign-in (middleware/auth — removed/deactivated, revoked session, device binding, key scope and
    the View-only hat gate), not softIdentity, which checks only the signature. The entity is auth's (entityOf). */
-router.post('/catalogue-adopt', auth, async (req, res) => {
+router.post('/catalogue-adopt', auth, ...contract.checked('POST /catalogue-adopt'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
     const built = await catalogueBuild.build(source);
-    if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.' });
+    if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource() });
     // STAMP the adoption's commercials. This is the SECOND price home — `{ "Tussar": { price, unit, … } }` — and the
     // one the seed scripts mostly use, so missing it would leave half the catalogue unstamped while looking done.
     let commercialsIn = req.body && req.body.commercials && typeof req.body.commercials === 'object' ? req.body.commercials : {};
@@ -285,7 +281,7 @@ router.post('/catalogue-adopt', auth, async (req, res) => {
       );
     } catch (dbErr) {
       log.warn('catalogue-adopt: store missing (run b75)', { id: req.id, err: dbErr.message });
-      return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
+      return problem(req, res, { status: 503, ...words.catalogueStoreMissing() });
     }
     log.info('catalogue adopted (reference + commercials)', { id: req.id, source, items_priced: Object.keys(commercials).length });
     /**
@@ -326,13 +322,13 @@ router.post('/catalogue-adopt', auth, async (req, res) => {
     });
   } catch (err) {
     log.error('assist/catalogue-adopt failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // GET /api/assist/catalogue-mine — the entity's PERSISTED catalogue(s): its adoption rows (WITH RLS) RESOLVED against
 // the shared source (design/colour by reference) + its commercials overlay. Self-healing (503 if b75 not applied).
-router.get('/catalogue-mine', auth, async (req, res) => {
+router.get('/catalogue-mine', auth, ...contract.checked('GET /catalogue-mine'), async (req, res) => {
   /* M3: the same real sign-in as the write it mirrors */
   try {
     const entity = auth.entityOf(req);
@@ -359,7 +355,7 @@ router.get('/catalogue-mine', auth, async (req, res) => {
       }
       rows = r.rows || [];
     } catch (dbErr) {
-      return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
+      return problem(req, res, { status: 503, ...words.catalogueStoreMissing() });
     }
     const catalogues = (
       await Promise.all(
@@ -375,34 +371,34 @@ router.get('/catalogue-mine', auth, async (req, res) => {
     res.json(Object.assign({ ok: true, count: catalogues.length }, PL.pageOut('catalogues', catalogues, pg)));
   } catch (err) {
     log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // PUT /api/assist/catalogue-source — SOURCE-AS-ENTITY: a brand entity AUTHORS/updates its OWN catalogue source
 // (content + the customer-EXPERIENCE blueprint that cascades). Owner-only. catalogue_source is WITHOUT RLS, so
 // ownership is enforced HERE (app-side) by owner_entity_id. Self-healing: 503 if b78 isn't applied yet.
-/** why this caller may not rewrite the source row (or null): owned by another brand; or an unowned platform seed and the caller is not the root (SEC-FIX3 S11) */
+/** the words of why this caller may not rewrite the source row (or null): owned by another brand; or an unowned platform seed and the caller is not the root (SEC-FIX3 S11) */
 function sourceRefusal(row, owner) {
   if (!row) return null;
-  if (row.owner_entity_id) return String(row.owner_entity_id) === String(owner) ? null : { ok: false, error: 'This source is owned by another brand.' };
-  return require('../lib/platformroot').isRoot(String(owner)) ? null : { ok: false, error: 'This source belongs to the platform.' };
+  if (row.owner_entity_id) return String(row.owner_entity_id) === String(owner) ? null : words.sourceOfAnother();
+  return require('../lib/platformroot').isRoot(String(owner)) ? null : words.sourceOfThePlatform();
 }
 
-router.put('/catalogue-source', auth, async (req, res) => {
+router.put('/catalogue-source', auth, ...contract.checked('PUT /catalogue-source'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
     const source_key = typeof b.source_key === 'string' && b.source_key.trim() ? b.source_key.trim() : '';
-    if (!source_key) return res.status(422).json({ ok: false, error: 'source_key is required (e.g. royale-play@v1)' });
+    if (!source_key) return problem(req, res, { status: 422, ...words.sourceKeyNeeded() });
     let exists;
     try {
       exists = await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source_key]);
     } catch (dbErr) {
-      return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' });
+      return problem(req, res, { status: 503, ...words.sourceStoreMissing() });
     }
     const refusal = sourceRefusal(exists.rows[0], owner);
-    if (refusal) return res.status(403).json(refusal);
+    if (refusal) return problem(req, res, { status: 403, ...refusal });
     const schema = b.schema && typeof b.schema === 'object' ? b.schema : {};
     const items = Array.isArray(b.items) ? b.items : [];
     const commercials_fields = Array.isArray(b.commercials_fields) ? b.commercials_fields : [];
@@ -432,7 +428,7 @@ router.put('/catalogue-source', auth, async (req, res) => {
         ]
       );
     } catch (dbErr) {
-      return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' });
+      return problem(req, res, { status: 503, ...words.sourceStoreMissing() });
     }
     // WIRING (stone 5): mirror each item to a CONTAINER (create/enhance, change-detected). Best-effort, self-healing.
     let containers = 0;
@@ -445,18 +441,18 @@ router.put('/catalogue-source', auth, async (req, res) => {
     res.json({ ok: true, source_key, owner_entity_id: owner, authored: true, containers });
   } catch (err) {
     log.error('assist/catalogue-source PUT failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // PUT /api/assist/container — CONTAINER MODEL (stone 5): author (v1) or ENHANCE (mint the next IMMUTABLE version + move
 // the pointer) a product container. Owner-only. An enhancement never mutates a version → past chits stay verifiable.
-router.put('/container', auth, async (req, res) => {
+router.put('/container', auth, ...contract.checked('PUT /container'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
     const container_id = typeof b.container_id === 'string' && b.container_id.trim() ? b.container_id.trim() : '';
-    if (!container_id) return res.status(422).json({ ok: false, error: 'container_id is required (e.g. royaleplay/tussar)' });
+    if (!container_id) return problem(req, res, { status: 422, ...words.containerIdNeeded() });
     let out;
     try {
       out = await container.authorContainer(owner, {
@@ -468,32 +464,32 @@ router.put('/container', auth, async (req, res) => {
         schema_version: b.schema_version
       });
     } catch (e) {
-      if (e.status === 403) return res.status(403).json({ ok: false, error: e.message });
-      return res.status(503).json({ ok: false, code: 'CONTAINER_STORE_MISSING', error: 'Container model not enabled yet — apply migration b80.' });
+      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/container.js:29 — a fixed sentence */
+      return problem(req, res, { status: 503, ...words.containerStoreMissing() });
     }
     log.info('container authored', { id: req.id, container_id, version: out.version, is_new: out.is_new_container });
     res.json({ ok: true, ...out, owner_entity_id: owner });
   } catch (err) {
     log.error('assist/container PUT failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // GET /api/assist/container/:id — resolve the CURRENT version (the pointer, auto-latest) or ?version=N (the EXACT
 // immutable version a chit pinned — verification). Public read (the catalogue/experience is shared reference).
-router.get('/container/:id', async (req, res) => {
+router.get('/container/:id', ...contract.checked('GET /container/:id'), async (req, res) => {
   try {
     const r = await container.resolveContainer(req.params.id, req.query.version);
-    if (!r) return res.status(404).json({ ok: false, error: 'Unknown container or version.' });
+    if (!r) return problem(req, res, { status: 404, ...words.unknownContainerOrVersion() });
     res.json({ ok: true, ...r });
   } catch (err) {
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // GET /api/assist/erp-handoffs — 6b: the DISTRIBUTOR's ERP handoff receipts (refs + routing + hash — process-then-
 // forget; the ERP consumes these and does the routing/fulfillment). Per-entity, WITH RLS (b82). Self-healing (503).
-router.get('/erp-handoffs', auth, async (req, res) => {
+router.get('/erp-handoffs', auth, ...contract.checked('GET /erp-handoffs'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
@@ -507,37 +503,37 @@ router.get('/erp-handoffs', auth, async (req, res) => {
       );
       rows = r.rows || [];
     } catch (dbErr) {
-      return res.status(503).json({ ok: false, code: 'HANDOFF_STORE_MISSING', error: 'ERP handoff not enabled yet — apply migration b82.' });
+      return problem(req, res, { status: 503, ...words.handoffStoreMissing() });
     }
     res.json(Object.assign({ ok: true, count: rows.length }, PL.pageOut('handoffs', rows, pg)));
   } catch (err) {
     log.error('assist/erp-handoffs failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // PUT /api/assist/region-override — 6a: the source authors a per-REGION override on its OWN container (owner-gated).
 // Hybrid: most of "per region" auto-cascades (currency/units/language); this is the genuinely-local delta (colour
 // names, compliance labels, regional combinations). Self-healing: 503 if b81 isn't applied.
-router.put('/region-override', auth, async (req, res) => {
+router.put('/region-override', auth, ...contract.checked('PUT /region-override'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
     const container_id = typeof b.container_id === 'string' && b.container_id.trim() ? b.container_id.trim() : '';
     const region = typeof b.region === 'string' && b.region.trim() ? b.region.trim() : '';
-    if (!container_id || !region) return res.status(422).json({ ok: false, error: 'container_id and region are required' });
+    if (!container_id || !region) return problem(req, res, { status: 422, ...words.containerAndRegionNeeded() });
     const overrides = b.overrides && typeof b.overrides === 'object' ? b.overrides : {};
     try {
       await regional.setRegionOverride(owner, container_id, region, overrides);
     } catch (e) {
-      if (e.status === 403) return res.status(403).json({ ok: false, error: e.message });
-      if (e.status === 404) return res.status(404).json({ ok: false, error: e.message });
-      return res.status(503).json({ ok: false, code: 'REGION_STORE_MISSING', error: 'Regional scatter not enabled yet — apply migration b81.' });
+      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/regional.js:39 — a fixed sentence */
+      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer(e.message) }); /* lib/regional.js:34 — a fixed sentence */
+      return problem(req, res, { status: 503, ...words.regionStoreMissing() });
     }
     res.json({ ok: true, container_id, region });
   } catch (err) {
     log.error('assist/region-override failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
@@ -553,32 +549,29 @@ router.get('/regions', async (req, res) => {
     }
     res.json({ ok: true, regions: rows });
   } catch (err) {
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // GET /api/assist/resolve?container=&version=&region= — SPIN THE GLOBE: the product's presentation + governance
 // RESOLVED for a region (global content + regional override + auto-cascaded basics), SEALED + cached. Public read.
-router.get('/resolve', async (req, res) => {
+router.get('/resolve', ...contract.checked('GET /resolve'), async (req, res) => {
   try {
     const region = (req.query.region && String(req.query.region).trim()) || null;
     /* T2-NATDEF: a product is resolved FOR a region the caller names — never India by default */
-    if (!region)
-      return res
-        .status(400)
-        .json({ ok: false, code: 'NO_COUNTRY', error: 'Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one.' });
+    if (!region) return problem(req, res, { status: 400, ...words.regionNeeded() });
     const r = await regional.resolveRegional(req.query.container, req.query.version, region);
-    if (!r) return res.status(404).json({ ok: false, error: 'Unknown container or version.' });
+    if (!r) return problem(req, res, { status: 404, ...words.unknownContainerOrVersion() });
     res.json({ ok: true, ...r });
   } catch (err) {
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // GET /api/assist/penetration — STONE 4: the BRAND's aggregated penetration for the sources IT owns (heatmap data).
 // AGGREGATE-ONLY: order counts + distributor coverage by locality — NO per-customer PII (the ledger has no customer id).
 // Owner-gated (only your own sources). Self-healing: 503 if b79 isn't applied.
-router.get('/penetration', auth, async (req, res) => {
+router.get('/penetration', auth, ...contract.checked('GET /penetration'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     let rows = [];
@@ -596,34 +589,34 @@ router.get('/penetration', auth, async (req, res) => {
       );
       rows = r.rows;
     } catch (dbErr) {
-      return res.status(503).json({ ok: false, code: 'PENETRATION_STORE_MISSING', error: 'Penetration not enabled yet — apply migration b79.' });
+      return problem(req, res, { status: 503, ...words.penetrationStoreMissing() });
     }
     const total_orders = rows.reduce((total, x) => total + x.orders, 0);
     const localities = Array.from(new Set(rows.map((x) => x.locality)));
     res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows });
   } catch (err) {
     log.error('assist/penetration failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // GET /api/assist/catalogue-source/:key — read a source (content + EXPERIENCE + formatting). `finishes` not `items`
 // so the client unwrap() doesn't strip the object.
-router.get('/catalogue-source/:key', async (req, res) => {
+router.get('/catalogue-source/:key', ...contract.checked('GET /catalogue-source/:key'), async (req, res) => {
   try {
     const built = await catalogueBuild.build(req.params.key);
-    if (!built) return res.status(404).json({ ok: false, error: 'Unknown source.' });
+    if (!built) return problem(req, res, { status: 404, ...words.unknownSource() });
     const { items, ...rest } = built;
     res.json({ ok: true, ...rest, finishes: items });
   } catch (err) {
-    res.status(500).json({ ok: false, error: safeErr(err) });
+    problem(req, res, failed(err, req, FAULTS.plain));
   }
 });
 
 // GET /api/assist/questions?context=<screen> — the assistant Q&A library, served FROM THE DB (single source of
 // truth; also the grounding feed for the model). PUBLIC (works pre-auth on welcome/login/register). Returns
 // entries whose context matches the screen OR '*'; no context -> all active. Shape: {ok:true, data:[{id,q,a,...}]}.
-router.get('/questions', async (req, res) => {
+router.get('/questions', ...contract.checked('GET /questions'), async (req, res) => {
   try {
     // context may be a CHAIN (comma-list: fine → parent → nav) so a sub-page ADDS its specific Q&A without losing the
     // broader curated set. Match if the entry's context array OVERLAPS any of them, or is universal ('*').
@@ -649,7 +642,7 @@ router.get('/questions', async (req, res) => {
     res.json(Object.assign({ ok: true }, PL.pageOut('data', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     log.error('assist/questions failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: 'Could not load assistant questions.' });
+    problem(req, res, failed(err, req, FAULTS.questions));
   }
 });
 
@@ -659,38 +652,36 @@ router.get('/questions', async (req, res) => {
 // client's "Send to help desk" (askHelpDesk → POST /chits/send) lands the question in GOV-01-Help's Task inbox,
 // where it is answered and Published to the KB. Kept as a no-op ack (so the old fire-and-forget caller doesn't
 // error) that only LOGS the unanswered question as an analytics signal — it writes nothing.
-router.post('/gap', async (req, res) => {
+router.post('/gap', ...contract.checked('POST /gap'), async (req, res) => {
   try {
     const question = req.body && typeof req.body.q === 'string' ? req.body.q.trim() : '';
     const context = req.body && typeof req.body.context === 'string' ? req.body.context.slice(0, 64) : '';
-    if (!question || question.length < 3) return res.status(422).json({ ok: false, error: 'Ask a question.' });
-    if (question.length > 400) return res.status(422).json({ ok: false, error: 'Question is too long.' });
+    if (!question || question.length < 3) return problem(req, res, { status: 422, ...words.questionNeeded() });
+    if (question.length > 400) return problem(req, res, { status: 422, ...words.questionTooLong() });
     // No catalogue write. Real capture is the chit flow (Send to help desk → a chit in GOV-01-Help's Task inbox).
     log.info('assist gap (deprecated — capture is now the chit flow)', { id: req.id, context, len: question.length });
     res.json({ ok: true, noted: true, via: 'chit' });
   } catch (err) {
     log.error('assist/gap failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: 'Could not note the question.' });
+    problem(req, res, failed(err, req, FAULTS.gap));
   }
 });
 
-/** the one sentence for "you may not publish" — POST /publish's 403 and GET /whoami's actions.publish say the same */
-const PUBLISH_NO = 'Only a help desk can publish to its catalogue.';
 // POST /api/assist/publish — the help desk publishes a resolved Q&A to ITS catalogue => the projection trigger
 // serves it live. Auth; the caller MUST be the Help entity itself (only it edits its own knowledge base).
-router.post('/publish', auth, async (req, res) => {
+router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, res) => {
   try {
     const b = req.body || {};
     const question = typeof b.question === 'string' ? b.question.trim() : '';
     const answer = typeof b.answer === 'string' ? b.answer.trim() : '';
-    if (!question || !answer) return res.status(422).json({ ok: false, error: 'question and answer are required.' });
+    if (!question || !answer) return problem(req, res, { status: 422, ...words.answerNeeded() });
     const context = Array.isArray(b.context) ? b.context.filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim()) : [];
 
     // Generalised (blueprint): the CALLER must be a helpdesk (carries the 'Assistant Q&A' schema); it publishes to
     // ITS OWN catalogue. GOV-01-Help carries that schema -> backward compatible.
     const sender = auth.entityOf(req);
     const hd = await query(`SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [sender]);
-    if (!hd.rows.length) return res.status(403).json({ ok: false, error: PUBLISH_NO, why: 'not_helpdesk' });
+    if (!hd.rows.length) return problem(req, res, { status: 403, ...words.notAHelpDesk() });
     const helpId = sender;
 
     // Refine an existing answer when qa_id is supplied and found; else publish new.
@@ -724,7 +715,7 @@ router.post('/publish', auth, async (req, res) => {
     res.json({ ok: true, qa_id: qaId });
   } catch (err) {
     log.error('assist/publish failed', { id: req.id, err: err.message });
-    res.status(500).json({ ok: false, error: 'Could not publish.' });
+    problem(req, res, failed(err, req, FAULTS.publish));
   }
 });
 
@@ -733,22 +724,20 @@ router.post('/publish', auth, async (req, res) => {
 // GET /api/assist/gaps — DEPRECATED under B1 RLS. The gap-review flow is superseded by chit→Task: questions arrive
 // as CHITS in GOV-01-Help's Task inbox (not as catalogue drafts), so there are no catalogue "gaps" to list. Returns
 // empty and reads nothing (the cross-read of the help catalogue is no longer needed).
-router.get('/gaps', auth, async (req, res) => {
+router.get('/gaps', auth, ...contract.checked('GET /gaps'), async (req, res) => {
   res.json({ ok: true, data: [], deprecated: true });
 });
 
 // POST /api/assist/resolve — DEPRECATED under B1 RLS. It updated the HELP entity's catalogue from an outside caller
 // (a cross-entity write, now forbidden). Answering is done on the question's CHIT in GOV-01-Help's Task inbox, then
 // Published via POST /api/assist/publish (own catalogue). This endpoint writes nothing.
-router.post('/resolve', auth, async (req, res) => {
-  res
-    .status(410)
-    .json({ ok: false, deprecated: true, error: 'Gap review is superseded — answer the question on its chit (Task inbox), then Publish to the KB.' });
+router.post('/resolve', auth, ...contract.checked('POST /resolve'), async (req, res) => {
+  problem(req, res, { status: 410, ...words.reviewRetired() });
 });
 
 // GET /api/assist/whoami — is the logged-in entity a helpdesk instance? Drives the helpdesk business-layer gate
 // (generalises off the hardcoded 'GOV-01-Help' name). Never throws.
-router.get('/whoami', auth, async (req, res) => {
+router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     const r = await query(`SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
@@ -760,5 +749,7 @@ router.get('/whoami', auth, async (req, res) => {
     res.json({ ok: true, is_helpdesk: false, actions: { publish: { ok: false, why: 'not_read', say: 'Could not check who may publish. Try again.' } } });
   }
 });
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
 module.exports = router;

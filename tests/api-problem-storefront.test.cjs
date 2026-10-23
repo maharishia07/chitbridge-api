@@ -29,7 +29,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const EVIDENCE_ABOUT =
   "Evidence for the two columns a static read cannot prove (API-STANDARD S34, S35). routes['METHOD /path'] = { output_allowlist: true } once a contract test has shown the answer holds only schema_out fields; { foreign_id_404: true } once a test has shown another shop's id gets the same 404 as an unknown id. Written by the area's test, never by hand. Empty today.";
 /* what this run proved, per route: every 200 it saw was closed (output_allowlist), a hidden shop answered as an unknown one (foreign_id_404) */
@@ -1077,7 +1077,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkContract();
-  /* the hardening evidence: this file owns its routes' rows of docs/contracts/api-hardening-evidence.json, and writes only what it proved */
+  /* the hardening evidence: this file owns its routes' rows of docs/contracts/api-hardening-evidence-areas.json, and writes only what it proved */
   const evidenceOnDisk = fs.existsSync(EVIDENCE_FILE) ? JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')) : { about: EVIDENCE_ABOUT, routes: {} };
   const evidence = Object.fromEntries(
     Object.keys(proved)
@@ -1107,7 +1107,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     );
     fs.writeFileSync(EVIDENCE_FILE, JSON.stringify({ about: evidenceOnDisk.about || EVIDENCE_ABOUT, routes: ordered }, null, 1) + '\n');
   } else
-    check('docs/contracts/api-hardening-evidence.json holds exactly what these scenarios proved for the public storefront', sameValue(evidenceMine, evidence), {
+    check('docs/contracts/api-hardening-evidence-areas.json holds exactly what these scenarios proved for the public storefront', sameValue(evidenceMine, evidence), {
       onDisk: evidenceMine,
       proved: evidence
     });

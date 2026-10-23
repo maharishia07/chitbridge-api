@@ -7,7 +7,7 @@
  * OWNS      the proof that each refusal of the relationship routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses each
  *           route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world for the routes addressed by a list row in the path (API-STANDARD S35,
- *           tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json. Also: no answer outside the statuses the contract declares (lib/relationships-contract.js),
+ *           tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence-areas.json. Also: no answer outside the statuses the contract declares (lib/relationships-contract.js),
  *           its words as units, and a body scan over EVERY answer, 200 included, for the text of a thrown error (a 200 may not carry it any more than a 500).
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs), the rows of tests/lib/relationships-scenes.cjs.
  * FLOW      route list (read from the router) x world (signed out, staff, a bad id, a failing db, an empty db) + the named scenes → real route → body → Problem fields present · frozen legacy keys
@@ -15,7 +15,7 @@
  * CARD      11-crm-and-marketing/relationships-routes
  *
  *   node tests/api-problem-relationships.test.cjs                    check
- *   node tests/api-problem-relationships.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-relationships.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-relationships.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-relationships.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-relationships.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -44,7 +44,7 @@ const lab = harness({
 const { check, world } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const STRANGER = { identity_id: scenes.STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' };
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
@@ -268,7 +268,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/relationships.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }
   check('the foreign-id world: no id of another shop answered a 403, the record or a different body (' + foreign.failures.length + ' failures)', foreign.failures.length === 0, foreign.failures);
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
