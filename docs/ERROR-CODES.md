@@ -207,6 +207,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_PLATFORM_ROOT | 404 | No platform operator | This installation has no platform operator set up. | Only the platform operator can use this. | platformroot | 2026-10-22 |
 | NO_PRICE | 422 | No price for a line | A line has no price on the shelf and none was sent. | Set its price on the shelf, or send one. | tax | 2026-10-23 |
 | NO_SENDS | varies | No sends | PENDING | - | marketing-results | 2026-10-22 |
+| NO_SHOP | 403 | Not tied to a shop | This sign-in is not tied to a shop, so there is nothing to show or change. | Sign in again at the shop's page. | privacy | 2026-10-24 |
 | NO_SHOP_COPY | varies | No shop copy | PENDING | - | verdict | 2026-10-22 |
 | NO_STREAM_NAMED | 400 | No stream named | Pick at least one stream to hand over. | Choose who carries products, stock or orders, then save. | integrations | 2026-10-23 |
 | NO_SUCH_NETWORK | 400/404 | No such network | There is no network store by that name. | Check the link you were given. | catalogue | 2026-10-22 |

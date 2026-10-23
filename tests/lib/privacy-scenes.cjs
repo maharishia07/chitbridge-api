@@ -26,7 +26,7 @@ Object.assign(CUSTOMER, { shop_entity_id: SHOP });
 const ME_ROW = { identity_id: ME, display_name: 'Test customer', phone: '0000000000', email: 'nobody@example.test', otp_contact: '0000000000', country: null };
 const SHOP_ROW = { identity_id: SHOP, display_name: 'Test shop', phone: null, email: null, otp_contact: null, country: 'IN' };
 /** another shopper's people and values: none of these may ever be in an answer of ME */
-const OTHERS = { name: 'Other Person', phone: '1111111111', email: 'other@example.test', note: 'other-answer' };
+const OTHERS = { name: 'Other Person', phone: '+00 00000 00003', email: 'other@example.test', note: 'other-answer' };
 const OTHER_ROW = { identity_id: OTHER, display_name: OTHERS.name, phone: OTHERS.phone, email: OTHERS.email, otp_contact: OTHERS.phone, country: null };
 const RELAYED = 'A relayed sentence.';
 const STAMP = '2026-10-01T00:00:00.000Z';
@@ -106,7 +106,9 @@ function facts() {
     scene('facts-default', F, '/facts', 200, { setup: asks({}) }),
     scene('facts-notice-and-contact', F, '/facts', 200, { setup: asks({}), env: { PRIVACY_NOTICE_VERSION: 'v0-test', PRIVACY_CONTACT: 'privacy@example.test' } }),
     scene('facts-every-provider-on', F, '/facts', 200, { setup: asks({}), env: { RESEND_API_KEY: 'not-a-key', WHATSAPP_TOKEN: 'not-a-key', ANTHROPIC_API_KEY: 'not-a-key', OPENAI_API_KEY: 'not-a-key', RAILWAY_REGION: 'test-region-1' } }),
-    scene('facts-asked-with-a-query', F, '/facts?anything=1&anything=2', 200, { setup: asks({}) })
+    scene('facts-asked-with-a-query', F, '/facts?anything=1&anything=2', 200, { setup: asks({}) }),
+    /* the library throws: this route has no catch of its own, so server.js's one error handler answers (the test app ends with the same call) */
+    scene('facts-library-throws', F, '/facts', 500, { setup: asks({}), patch: { pv: { facts: () => { throw new Error(SECRET_SQL); } } } })
   ];
 }
 

@@ -184,7 +184,7 @@ function checkFrozen5xx(recording) {
     replayed++;
     check(route + ' · ' + frozen.scenario + ': the frozen ' + frozen.status + ' body is kept, key by key and in order', now.status === frozen.status && sameValue(order.map((name) => now.body[name]), order.map((name) => frozen.fixture[name])) && sameValue(Object.keys(now.body).slice(0, order.length), order), now.body);
   }));
-  check('at least thirty 5xx answers were frozen and replayed, a thrown 502 and 503 per relay mode among them (' + replayed + ')', replayed >= 30, replayed);
+  check('at least twenty 5xx answers were frozen and replayed here (' + replayed + '); the thrown 5xx of every relay mode (502, 503, 503 not migrated) are replayed one by one in the carried-status checks', replayed >= 20, replayed);
 }
 
 /** a 2xx is never a Problem, and no answer of any status carries the text of a thrown error or another shopper's data */
@@ -198,11 +198,13 @@ function checkNoLeakAnywhere(recording) {
   check('no answer of any status, a 200 and a 4xx included, carries the database text (' + keys.length + ' answers scanned)', leaking.length === 0, leaking);
   const foreign = keys.filter((key) => OTHERS_VALUES.some((value) => text(key).includes(value)));
   check('no answer of any status carries another shopper\'s or another shop\'s name, phone, e-mail, id or note (' + keys.length + ' answers scanned, ' + OTHERS_VALUES.length + ' values)', foreign.length === 0, foreign);
-  const faults = keys.filter((key) => recording[key].status === 500);
-  check('every plain fault says only the generic sentence (' + faults.length + ' answers)', faults.every((key) => recording[key].body && recording[key].body.message === SAFE), faults.filter((key) => !recording[key].body || recording[key].body.message !== SAFE));
+  const thrown = KEYS.FACTS + '|facts-library-throws';
+  const faults = keys.filter((key) => recording[key].status === 500 && key !== thrown);
+  check('GET /facts has no catch: when its library throws, the server one error handler (server.js) answers a Problem 500 with its own generic words and none of the cause', recording[thrown].status === 500 && recording[thrown].body.message === 'Something went wrong' && recording[thrown].body.code === 'INTERNAL' && !LEAK.test(recording[thrown].text || JSON.stringify(recording[thrown].body)), recording[thrown]);
+  check('every plain fault of a shopper route says only the generic sentence (' + faults.length + ' answers)', faults.every((key) => recording[key].body && recording[key].body.message === SAFE), faults.filter((key) => !recording[key].body || recording[key].body.message !== SAFE));
   const signedOut = keys.filter((key) => key.endsWith('|signed-out'));
   check('a caller who is not signed in is refused with 401 on the three shopper routes, and GET /facts answers anyone', signedOut.length === ROUTE_COUNT && signedOut.filter((key) => !key.startsWith(KEYS.FACTS)).every((key) => recording[key].status === 401) && recording[KEYS.FACTS + '|signed-out'].status === 200);
-  const facts = keys.filter((key) => key.startsWith(KEYS.FACTS));
+  const facts = keys.filter((key) => key.startsWith(KEYS.FACTS) && key !== thrown);
   check('GET /facts answers 200 whether or not the database is up: it reads none (' + facts.length + ' answers)', facts.every((key) => recording[key].status === 200));
 }
 
@@ -297,7 +299,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const router = require(path.join(HERE, 'routes', 'privacy.js'));
   const routes = lab.routesOf(router, MOUNT);
   check('premise: the router holds the four privacy routes (' + Object.keys(routes).length + ')', Object.keys(routes).length === ROUTE_COUNT && sameValue(Object.keys(routes).sort(), Object.values(KEYS).sort()), Object.keys(routes));
-  const server = lab.appOf([{ mount: MOUNT, router }]).listen(0);
+  const app = lab.appOf([{ mount: MOUNT, router }]);
+  app.use((err, req, res, next) => require(path.join(HERE, 'lib', 'problem')).fromError(req, res, err, { error: 'Server error', message: 'Something went wrong' })); /* the call server.js ends with (its error handler, :527-542): GET /facts has no catch of its own */
+  const server = app.listen(0);
   const port = server.address().port;
   const recording = {};
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');

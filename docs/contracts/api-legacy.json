@@ -39505,6 +39505,36 @@
     }
    ]
   },
+  "GET /api/privacy/facts": {
+   "answers": [
+    {
+     "scenario": "facts-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
   "GET /api/privacy/me": {
    "answers": [
     {
