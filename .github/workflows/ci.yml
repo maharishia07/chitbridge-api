@@ -259,6 +259,20 @@ jobs:
           S41_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/isolation-s41.test.cjs
+      - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          TRUTH_DB: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: |
+          failed=0
+          for f in tests/*-truth.realstack.cjs; do
+            echo "::group::$f"
+            if node "$f"; then echo "PASS $f"; else echo "FAIL $f"; failed=$((failed+1)); fi
+            echo "::endgroup::"
+          done
+          echo "$failed realstack file(s) failed"
+          test "$failed" -eq 0
       - name: api log (on failure)
         if: failure()
         run: tail -n 80 api.log || true
