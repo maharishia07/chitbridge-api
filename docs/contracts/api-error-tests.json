@@ -22,6 +22,20 @@
   404,
   500
  ],
+ "DELETE /api/products/:id": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/products/:id/media/:mid": [
+  401,
+  404,
+  500
+ ],
+ "DELETE /api/products/:id/schedule/:sid": [
+  401,
+  500
+ ],
  "GET /.well-known/ctp.json": [
   200,
   500
@@ -355,6 +369,47 @@
  "GET /api/pricing/kinds": [
   500
  ],
+ "GET /api/products": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/products/:id/schedule": [
+  401,
+  500
+ ],
+ "GET /api/products/:id/versions": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/products/export.csv": [
+  401,
+  500
+ ],
+ "GET /api/products/lists": [
+  401,
+  500
+ ],
+ "GET /api/products/media/:item_id/:mid": [
+  404,
+  500,
+  503
+ ],
+ "GET /api/products/starter-columns": [
+  401,
+  500
+ ],
+ "GET /api/products/template": [
+  401,
+  500
+ ],
+ "GET /api/products/workbook.xlsx": [
+  401,
+  500
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -395,6 +450,14 @@
   404,
   500,
   503
+ ],
+ "PATCH /api/products/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
  ],
  "POST /api/books/accounts": [
   401,
@@ -841,6 +904,70 @@
   403,
   500
  ],
+ "POST /api/products": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "POST /api/products/:id/media": [
+  400,
+  401,
+  404,
+  413,
+  500,
+  503
+ ],
+ "POST /api/products/:id/schedule": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/products/availability/bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/bulk": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/bulk-update": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/import": [
+  400,
+  401,
+  409,
+  413,
+  500
+ ],
+ "POST /api/products/import/preflight": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/lists/adopt": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/starter-columns": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/products/status/bulk": [
+  400,
+  401,
+  500
+ ],
  "POST /api/tax/compute": [
   400,
   401,
@@ -884,6 +1011,18 @@
   401,
   403,
   422,
+  500
+ ],
+ "PUT /api/products/:id/availability": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/products/:id/status": [
+  400,
+  401,
+  404,
   500
  ]
 }

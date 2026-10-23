@@ -89396,6 +89396,32 @@
    "changed_at": "2026-10-13T06:13:10Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-products.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE CATALOGUE ITEMS (ROUTES/PRODUCTS.JS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE CATALOGUE ITEMS (ROUTES/PRODUCTS.JS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 177 lines. Run: node chitbridge-api/tests/api-problem-products.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 177,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-storefront.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
