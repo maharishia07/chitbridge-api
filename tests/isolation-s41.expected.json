@@ -1,0 +1,8 @@
+{
+  "about": "S41 known cross-shop gaps, found by tests/isolation-s41.test.cjs against real RLS on 23 Oct 2026. The job is green only for these; each is reported as a P1 (see the PR body for the evidence). A gap that heals must leave this list (the job fails until it does). Never add a line without a filed item.",
+  "gaps": {
+    "LEAK GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "P1 - queries identities by id with no tenant filter (identities has no RLS): shop B gets display_name and bridge_id of a party record shop A created (parent_entity_id = A), instead of the unknown-id answer. Owner: cb-network / cb-rail. Fix is not in this PR.",
+    "WORDS GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "Same route, a shop id: its public storefront identity is returned by design (route comment: the anonymous storefront payload) but it differs from an unknown id, so S35 as written is not met. Owner decides: accept as public, or answer the same.",
+    "WORDS GET /api/governance/readiness/:bridge_id": "P1 - shop B reads shop A's readiness (user id, display name, country, tax facts, standards) from A's bridge id; an unknown bridge id answers 404. Owner: cb-compliance / cb-country."
+  }
+}
