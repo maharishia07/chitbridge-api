@@ -1748,6 +1748,87 @@
    "since": "2026-10-22"
   },
   {
+   "code": "PRODUCT_BAD_REQUEST",
+   "status": "400",
+   "title": "The catalogue needs something else",
+   "shopkeeper": "The catalogue could not take that request, and the sentence says why.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_CLASH",
+   "status": "409",
+   "title": "Clashes with the catalogue",
+   "shopkeeper": "That clashes with how this catalogue is set up.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_FILE_UNREADABLE",
+   "status": "400",
+   "title": "File could not be read",
+   "shopkeeper": "That file could not be read.",
+   "hint": "Save it again as a spreadsheet or a CSV and upload it again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_IMPORT_BLOCKED",
+   "status": "409",
+   "title": "The file has problems",
+   "shopkeeper": "The file has rows that must be fixed first, so nothing was imported.",
+   "hint": "Fix the rows listed and upload the file again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_INVALID",
+   "status": "400",
+   "title": "Product refused",
+   "shopkeeper": "The catalogue refused that product, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_NOT_READY",
+   "status": "503",
+   "title": "Not set up on this system yet",
+   "shopkeeper": "This is not set up on this system yet.",
+   "hint": "Try again later. If it stays, tell us.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_NO_DEFINITION",
+   "status": "500",
+   "title": "No catalogue definition",
+   "shopkeeper": "Your catalogue has no definition to add columns to.",
+   "hint": "Set up the catalogue first, then try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_REFUSED",
+   "status": "varies",
+   "title": "Refused by a catalogue rule",
+   "shopkeeper": "A rule of the catalogue refused that, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_TOO_LARGE",
+   "status": "413",
+   "title": "Too large for this door",
+   "shopkeeper": "What you sent is too big for this door.",
+   "hint": "Send less at a time: split the file, or use a smaller picture.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
    "code": "QTY_OK",
    "status": "varies",
    "title": "Qty ok",
@@ -1845,6 +1926,15 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SERVER_OWNED",
+   "status": "400",
+   "title": "Pictures come from Media",
+   "shopkeeper": "Pictures and video are added from the product's Media, not by editing the product.",
+   "hint": "Open the product's Media to add or remove them.",
+   "owner_area": "products",
+   "since": "2026-10-23"
   },
   {
    "code": "SESSION_EXPIRED",
@@ -2190,10 +2280,10 @@
   },
   {
    "code": "WORKBOOK_CUT",
-   "status": "varies",
+   "status": "413",
    "title": "Workbook cut",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This sheet is bigger than we read, so only part of it was read and nothing was imported.",
+   "hint": "Delete unused columns, or split the sheet, and upload again.",
    "owner_area": "products",
    "since": "2026-10-22"
   },
