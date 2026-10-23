@@ -1,7 +1,16 @@
+/*
+ * OWNS      /api/network: the tree of businesses and the edges between them (register · look up · place · subtree · connections · claim · request · approve · decline · suspend · resume · disconnect).
+ * CALLED BY server.js (app.use('/api/network', ...))
+ * FLOW      auth → write switch (gateWrite) → schema check (lib/network-contract.js) → src/services/network.js → res.json | problem(req, res, netFault(e, req))
+ *           (API-STANDARD S1: every refusal is a Problem that keeps the keys it always had, frozen in docs/contracts/api-legacy.json)
+ * CARD      04-network/connections-and-invitations
+ */
 const router = require('express').Router();
 const net = require('../services/network');
 const auth = require('../../middleware/auth'); // require a valid JWT on every network route
-const { safeErr } = require('../../lib/respond'); // generic client error + server-side log (C3)
+const { problem } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../../middleware/validate'); // S9: the request is checked against the route's own schema
+const contract = require('../../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
 // authority from the request body (`actingEntityId`) — there is no cb_entity<->identities bridge yet to verify
 // that the caller actually owns the entity/edge they are acting on. Until that bridge lands (Track B / ATH-86:
@@ -14,29 +23,29 @@ const WRITES_ENABLED = process.env.NETWORK_WRITE_ENABLED !== 'false';
 const auth_ = require('../../middleware/auth');
 /** the signed-in business's node — made a root the first time it takes part */
 const actorOf = (req) => net.nodeOf(auth_.entityOf(req), { ensure: true });
-const gateWrite = (req, res, next) =>
-  WRITES_ENABLED
-    ? next()
-    : res.status(503).json({ error: 'Network editing disabled', message: "Network changes aren't available yet.", code: 'NET_WRITE_DISABLED' });
+const gateWrite = (req, res, next) => (WRITES_ENABLED ? next() : problem(req, res, { status: 503, ...contract.words.writesOff() }));
+/** the schema check of one route (its own operation in lib/network-contract.js) */
+const checked = (route) => schemaValidate(contract.network.operationFor(route), contract.schemaOptions.network);
 const h = (fn) => async (req, res) => {
   try {
     res.json(await fn(req));
   } catch (e) {
-    // C3: deliberate service errors (err(status,msg,code)) carry a safe message; anything else is unexpected —
-    // log it server-side + return a generic message so we never leak err.message (DB/stack) to the client.
-    if (e.status) return res.status(e.status).json({ error: e.message, code: e.code || 'ERR' });
-    res.status(500).json({ error: safeErr(e), code: 'ERR' });
+    // C3: deliberate service errors (err(status,msg,code)) carry a safe message and keep it; anything else is unexpected —
+    // logged server-side with the request id, and the caller gets the generic sentence, never err.message (netFault).
+    problem(req, res, contract.netFault(e, req));
   }
 };
 router.post(
   '/entities',
   auth,
   gateWrite,
+  checked('POST /entities'),
   h((req) => net.register(req.body))
 );
 router.get(
   '/entities/lookup',
   auth,
+  checked('GET /entities/lookup'),
   h(async (req) => {
     const c = await net.lookup(req.query.bridgeId || '');
     return c ? { found: true, entity: c } : { found: false };
@@ -46,6 +55,7 @@ router.post(
   '/entities/:id/claim',
   auth,
   gateWrite,
+  checked('POST /entities/:id/claim'),
   h((req) => net.claim(req.params.id, auth_.entityOf(req)))
 );
 /**
@@ -68,6 +78,7 @@ router.post(
 router.get(
   '/place',
   auth,
+  checked('GET /place'),
   h(async (req) => {
     const card = await net.lookup(req.query.bridgeId || '');
     if (!card) return { found: false };
@@ -112,17 +123,20 @@ router.get(
 router.get(
   '/entities/:id/subtree',
   auth,
+  checked('GET /entities/:id/subtree'),
   h(async (req) => net.subtree(req.params.id, await actorOf(req)))
 );
 router.get(
   '/entities/:id/connections',
   auth,
+  checked('GET /entities/:id/connections'),
   h(async (req) => net.connections(req.params.id, await actorOf(req)))
 );
 router.post(
   '/connections',
   auth,
   gateWrite,
+  checked('POST /connections'),
   h(async (req) => {
     const b = req.body || {};
     const out = await net.requestConnect(
@@ -137,30 +151,35 @@ router.post(
   '/connections/:id/approve',
   auth,
   gateWrite,
+  checked('POST /connections/:id/approve'),
   h(async (req) => _told(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
 );
 router.post(
   '/connections/:id/decline',
   auth,
   gateWrite,
+  checked('POST /connections/:id/decline'),
   h(async (req) => _told(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
 );
 router.post(
   '/connections/:id/suspend',
   auth,
   gateWrite,
+  checked('POST /connections/:id/suspend'),
   h(async (req) => _told(await net.suspend(req.params.id, await actorOf(req))))
 );
 router.post(
   '/connections/:id/resume',
   auth,
   gateWrite,
+  checked('POST /connections/:id/resume'),
   h(async (req) => _told(await net.resume(req.params.id, await actorOf(req))))
 );
 router.post(
   '/connections/:id/disconnect',
   auth,
   gateWrite,
+  checked('POST /connections/:id/disconnect'),
   h(async (req) => _told(await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req))))
 );
 /** ⭐ both businesses on an edge hear that it moved — a store's counters re-read when it joins, is suspended or removed */
@@ -180,4 +199,6 @@ function _told(edge) {
     .catch(() => {});
   return edge;
 }
+router.openapi = { paths: contract.network.pathsOf(), schemas: {} };
+
 module.exports = router;

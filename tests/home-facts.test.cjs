@@ -76,6 +76,7 @@ function answer(text, params) {
   if (/connector_type IS NOT NULL/.test(sql)) return { rows: F.connectors ? [
     { identity_id: 'k1', display_name: 'Tally on OFFICE-PC', site: 'OFFICE-PC', last_seen: new Date(Date.now() - 60000).toISOString(), connector_type: 'erp', connector_config: { kit_id: 'tally@OFFICE-PC', adapter: 'tally' }, status: 'active' },
     { identity_id: 'k2', display_name: 'CSV folder', site: 'BACK-PC', last_seen: new Date(Date.now() - 3 * DAYS).toISOString(), connector_type: 'erp', connector_config: { kit_id: 'csv@BACK-PC', adapter: 'csv' }, status: 'active' }] : [] };
+  if (/SELECT country FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: F.country === undefined ? 'AU' : F.country }] };
   if (/SELECT plan FROM identities/.test(sql)) return { rows: F.plan === null ? [] : [{ plan: F.plan || 'free' }] };
   if (/FROM platform_constitution pc/.test(sql)) return { rows: F.noMenu ? [] : [{ version: 2, params: {}, plan_menu: { free: { max_entities: 5, chits_per_day: 10, max_networks: 1, public_facing: false } }, root_id: 'r1' }] };
   if (/count\(\*\)::int AS n FROM chit_header/.test(sql)) return { rows: [{ n: F.chitsToday == null ? 4 : F.chitsToday }] };
@@ -284,6 +285,14 @@ const get = (port, p) => new Promise((ok) => {
   WHO = GRANTED; r = await g('product-lab');
   t('product-lab: an actor WITH can_see_costs gets the no-cost line', r.json.lines.length, 2);
   WHO = OWNER;
+
+  /* country-lab (CTRY-1): the shop's own pack and the registry's counts, read from the engines, one trip */
+  r = await g('country-lab');
+  t('country-lab: the shop pack is named from the registry', /^Australia · GST pack \d/.test(r.json.lines[0].text), true);
+  t('country-lab: the counts are the registry list', r.json.figures.packs >= 3 && r.json.figures.checked <= r.json.figures.packs, true);
+  t('country-lab: 1 trip', r.trips, 1);
+  F.country = 'SA'; r = await g('country-lab'); F.country = undefined;
+  t('country-lab: a country with no pack is SAID, never a pack of another country', [r.json.lines[0].text, r.json.lines[0].tone, r.json.figures.shop_pack], ['No pack for SA yet', 'dn', null]);
 
   /* combo-lab · offer-lab */
   r = await g('combo-lab');

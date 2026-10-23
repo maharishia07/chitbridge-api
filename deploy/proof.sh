@@ -5,7 +5,7 @@
 #   HX1 adds: the api's object store IS MinIO (SigV4, tests/storage-s3-live.test.cjs + a put/get from inside the api container), the
 #   migrate job run twice records every file once and runs nothing the second time, /.well-known/ctp.json answers on the api and is
 #   NEVER index.html on the web, and the web's /config.js names CB_API_BASE.
-# Needs: docker compose, node 20+, this repo's node_modules (npm ci), the web checkout beside it with e2e/node_modules + chromium.
+# Needs: docker compose, node 22, this repo's node_modules (npm ci), the web checkout beside it with e2e/node_modules + chromium.
 # A throwaway deploy/.env is written when none exists (random secrets, the mail sink as Resend) — never use it for a real host.
 #   bash deploy/proof.sh            KEEP=1 bash deploy/proof.sh  (leave it running)
 set -euo pipefail
