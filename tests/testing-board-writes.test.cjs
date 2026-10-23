@@ -58,7 +58,10 @@ it('no GET asks the gate — reading the board was always the point', () => {
   HANDLERS.filter((h) => h.verb === 'GET').forEach((h) => assert.ok(h.body.indexOf('boardRefused(') < 0, 'GET ' + h.route + ' asks the write gate'));
 });
 it('the refusal carries a CODE the screen can branch on, and the sentence', () => {
-  assert.ok(/code: 'NOT_BOARD_WRITER'/.test(SRC) && /Not a writer of the shared board/.test(SRC));
+  /* API-4 sweep: the words moved to lib/testing-contract.js (notBoardWriter) and the route answers them through problem(), status 403 */
+  const WORDS = fs.readFileSync(path.join(API, 'lib', 'testing-contract.js'), 'utf8');
+  assert.ok(/code: 'NOT_BOARD_WRITER'/.test(WORDS) && /Not a writer of the shared board/.test(WORDS));
+  assert.ok(/status: 403, ...notBoardWriter()/.test(SRC), 'boardRefused no longer answers 403 with the board writer words');
 });
 it('cmdbRefused is gone — one gate, one name', () => { assert.ok(!/cmdbRefused/.test(CODE)); });
 
