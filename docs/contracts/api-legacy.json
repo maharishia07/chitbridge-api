@@ -22074,6 +22074,1696 @@
      }
     }
    ]
+  },
+  "GET /api/testing/cases": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the test cases",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the test cases",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/cases/gherkin": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not export",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not export",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "gherkin-export-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not export",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not export",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/changes": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list changes"
+     },
+     "fixture": {
+      "error": "Failed to list changes"
+     }
+    },
+    {
+     "scenario": "changes-list-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list changes"
+     },
+     "fixture": {
+      "error": "Failed to list changes"
+     }
+    }
+   ]
+  },
+  "GET /api/testing/cmdb": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the CMDB",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the CMDB",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/cmdb/:ci": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "No such record",
+      "message": "Nothing in the CMDB is called CAP-SIGNIN."
+     },
+     "fixture": {
+      "error": "No such record",
+      "message": "Nothing in the CMDB is called CAP-SIGNIN."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the record",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the record",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "No such record",
+      "message": "Nothing in the CMDB is called CAP-SIGNIN."
+     },
+     "fixture": {
+      "error": "No such record",
+      "message": "Nothing in the CMDB is called CAP-SIGNIN."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a CI id",
+      "message": "A CI id looks like CAP-SIGNIN."
+     },
+     "fixture": {
+      "error": "Not a CI id",
+      "message": "A CI id looks like CAP-SIGNIN."
+     }
+    },
+    {
+     "scenario": "cmdb-one-not-a-ci",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a CI id",
+      "message": "A CI id looks like CAP-SIGNIN."
+     },
+     "fixture": {
+      "error": "Not a CI id",
+      "message": "A CI id looks like CAP-SIGNIN."
+     }
+    },
+    {
+     "scenario": "cmdb-one-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "No such record",
+      "message": "Nothing in the CMDB is called CAP-SIGNIN."
+     },
+     "fixture": {
+      "error": "No such record",
+      "message": "Nothing in the CMDB is called CAP-SIGNIN."
+     }
+    },
+    {
+     "scenario": "cmdb-one-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the record",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the record",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/coverage": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the coverage",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the coverage",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "coverage-project-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     },
+     "fixture": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/engine": {
+   "answers": [
+    {
+     "scenario": "engine-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the engine manifest"
+     },
+     "fixture": {
+      "error": "Could not read the engine manifest"
+     }
+    }
+   ]
+  },
+  "GET /api/testing/incidents": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read them",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read them",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/releases": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list releases"
+     },
+     "fixture": {
+      "error": "Failed to list releases"
+     }
+    },
+    {
+     "scenario": "releases-list-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list releases"
+     },
+     "fixture": {
+      "error": "Failed to list releases"
+     }
+    }
+   ]
+  },
+  "GET /api/testing/reliability": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the history",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the history",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/report": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "report-project-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     },
+     "fixture": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/requirements": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read them",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read them",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/results": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the results",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the results",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "results-project-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     },
+     "fixture": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/runs": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the runs",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the runs",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "runs-project-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     },
+     "fixture": {
+      "error": "Not read",
+      "message": "The project name is longer than 80 characters."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/stale": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read that",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read that",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/testing/trace": {
+   "answers": [
+    {
+     "scenario": "trace-state-no-entity",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised"
+     },
+     "fixture": {
+      "error": "Unauthorised"
+     }
+    },
+    {
+     "scenario": "trace-state-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/testing/incidents/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     }
+    },
+    {
+     "scenario": "incident-not-a-state",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · investigating · resolved · closed"
+     }
+    },
+    {
+     "scenario": "incident-resolve-no-change",
+     "status": 400,
+     "body_keys": {
+      "error": "Say what changed",
+      "message": "Cite the commit that fixed it, or say why nothing needed to change."
+     },
+     "fixture": {
+      "error": "Say what changed",
+      "message": "Cite the commit that fixed it, or say why nothing needed to change."
+     }
+    },
+    {
+     "scenario": "incident-close-no-why",
+     "status": 400,
+     "body_keys": {
+      "error": "Say why",
+      "message": "Closing is a decision — record it, or the next person reopens the same thing."
+     },
+     "fixture": {
+      "error": "Say why",
+      "message": "Closing is a decision — record it, or the next person reopens the same thing."
+     }
+    },
+    {
+     "scenario": "incident-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No incident with that id."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No incident with that id."
+     }
+    },
+    {
+     "scenario": "incident-patch-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not set it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not set it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/testing/requirements/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     }
+    },
+    {
+     "scenario": "requirement-not-a-state",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     },
+     "fixture": {
+      "error": "Not a state",
+      "message": "One of: raised · accepted · implemented · rejected"
+     }
+    },
+    {
+     "scenario": "requirement-reject-no-why",
+     "status": 400,
+     "body_keys": {
+      "error": "Say why",
+      "message": "A rejected requirement needs its reason, or the next tester raises it again."
+     },
+     "fixture": {
+      "error": "Say why",
+      "message": "A rejected requirement needs its reason, or the next tester raises it again."
+     }
+    },
+    {
+     "scenario": "requirement-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No requirement with that id."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No requirement with that id."
+     }
+    },
+    {
+     "scenario": "requirement-patch-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not set it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not set it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/cases/close": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "which case?"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "which case?"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "which case?"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "which case?"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "which case?"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "which case?"
+     }
+    },
+    {
+     "scenario": "close-no-case",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "which case?"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "which case?"
+     }
+    },
+    {
+     "scenario": "close-unknown-case",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "no case called CTR-05"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "no case called CTR-05"
+     }
+    },
+    {
+     "scenario": "close-not-a-writer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     },
+     "fixture": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     }
+    },
+    {
+     "scenario": "close-no-entity",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised"
+     },
+     "fixture": {
+      "error": "Unauthorised"
+     }
+    }
+   ]
+  },
+  "POST /api/testing/cases/gherkin": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     }
+    },
+    {
+     "scenario": "gherkin-import-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { text: \"Feature: …\" }."
+     }
+    },
+    {
+     "scenario": "gherkin-import-no-feature",
+     "status": 422,
+     "body_keys": {
+      "error": "Not a feature file",
+      "message": "No \"Feature:\" line was found. A .feature file starts with one."
+     },
+     "fixture": {
+      "error": "Not a feature file",
+      "message": "No \"Feature:\" line was found. A .feature file starts with one."
+     }
+    },
+    {
+     "scenario": "gherkin-import-not-a-writer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     },
+     "fixture": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     }
+    },
+    {
+     "scenario": "gherkin-import-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not import",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not import",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/cases/import": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     }
+    },
+    {
+     "scenario": "import-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     },
+     "fixture": {
+      "error": "Nothing to import",
+      "message": "Send { cases: [...] }."
+     }
+    },
+    {
+     "scenario": "import-not-a-writer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     },
+     "fixture": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     }
+    },
+    {
+     "scenario": "import-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Import failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Import failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/cases/seed": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not load the documented cases",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not load the documented cases",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "seed-not-a-writer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     },
+     "fixture": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     }
+    },
+    {
+     "scenario": "seed-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not load the documented cases",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not load the documented cases",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/changes": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     }
+    },
+    {
+     "scenario": "change-no-summary",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what the change does."
+     }
+    },
+    {
+     "scenario": "change-no-backout",
+     "status": 400,
+     "body_keys": {
+      "error": "No way back",
+      "message": "How would you undo this? ⚠️ Written before it ships, not after — if the answer is \"I am not sure\", that is the finding."
+     },
+     "fixture": {
+      "error": "No way back",
+      "message": "How would you undo this? ⚠️ Written before it ships, not after — if the answer is \"I am not sure\", that is the finding."
+     }
+    },
+    {
+     "scenario": "change-no-cause",
+     "status": 400,
+     "body_keys": {
+      "error": "No cause",
+      "message": "Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep."
+     },
+     "fixture": {
+      "error": "No cause",
+      "message": "Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep."
+     }
+    },
+    {
+     "scenario": "change-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to record the change",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to record the change",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/cmdb/seed": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "cmdb-seed-not-a-writer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     },
+     "fixture": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     }
+    },
+    {
+     "scenario": "cmdb-seed-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not load the CMDB records",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/evidence": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     },
+     "fixture": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     },
+     "fixture": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     },
+     "fixture": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     }
+    },
+    {
+     "scenario": "evidence-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     },
+     "fixture": {
+      "error": "Nothing to attach",
+      "message": "Send data_base64."
+     }
+    },
+    {
+     "scenario": "evidence-not-an-image",
+     "status": 400,
+     "body_keys": {
+      "error": "Not an image",
+      "message": "A screenshot, please — png, jpg, gif, webp or bmp."
+     },
+     "fixture": {
+      "error": "Not an image",
+      "message": "A screenshot, please — png, jpg, gif, webp or bmp."
+     }
+    },
+    {
+     "scenario": "evidence-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "Empty",
+      "message": "That decoded to nothing."
+     },
+     "fixture": {
+      "error": "Empty",
+      "message": "That decoded to nothing."
+     }
+    },
+    {
+     "scenario": "evidence-too-large",
+     "status": 413,
+     "body_keys": {
+      "error": "Too large",
+      "message": "Screenshots are capped at 4 MB — crop it, or grab the part that matters."
+     },
+     "fixture": {
+      "error": "Too large",
+      "message": "Screenshots are capped at 4 MB — crop it, or grab the part that matters."
+     }
+    },
+    {
+     "scenario": "evidence-not-stored",
+     "status": 500,
+     "body_keys": {
+      "error": "Not stored",
+      "message": "The attachment store returned nothing."
+     },
+     "fixture": {
+      "error": "Not stored",
+      "message": "The attachment store returned nothing."
+     }
+    },
+    {
+     "scenario": "evidence-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not attach it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not attach it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/incidents": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     }
+    },
+    {
+     "scenario": "incident-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     },
+     "fixture": {
+      "error": "Nothing recorded",
+      "message": "Say what happened."
+     }
+    },
+    {
+     "scenario": "incident-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/releases": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     },
+     "fixture": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     },
+     "fixture": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     },
+     "fixture": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     }
+    },
+    {
+     "scenario": "release-unnamed",
+     "status": 400,
+     "body_keys": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     },
+     "fixture": {
+      "error": "Unnamed release",
+      "message": "Give it a tag — it is what a shop will be told its fix arrived in."
+     }
+    },
+    {
+     "scenario": "release-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing in it",
+      "message": "A release carries changes. One with none is a tag, and a tag tells nobody anything."
+     },
+     "fixture": {
+      "error": "Nothing in it",
+      "message": "A release carries changes. One with none is a tag, and a tag tells nobody anything."
+     }
+    },
+    {
+     "scenario": "release-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to cut the release",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to cut the release",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/requirements": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     },
+     "fixture": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     },
+     "fixture": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     },
+     "fixture": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     }
+    },
+    {
+     "scenario": "requirement-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     },
+     "fixture": {
+      "error": "Nothing to raise",
+      "message": "Say what must be true."
+     }
+    },
+    {
+     "scenario": "requirement-no-evidence",
+     "status": 400,
+     "body_keys": {
+      "error": "No evidence",
+      "message": "Say what you saw happen."
+     },
+     "fixture": {
+      "error": "No evidence",
+      "message": "Say what you saw happen."
+     }
+    },
+    {
+     "scenario": "requirement-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not raise it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not raise it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/results": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     },
+     "fixture": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     },
+     "fixture": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     },
+     "fixture": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     }
+    },
+    {
+     "scenario": "result-not-recorded",
+     "status": 422,
+     "body_keys": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     },
+     "fixture": {
+      "error": "Not recorded",
+      "message": "a result must name the case it is about"
+     }
+    },
+    {
+     "scenario": "result-blocked-no-note",
+     "status": 422,
+     "body_keys": {
+      "error": "Not recorded",
+      "message": "a blocked case must say what blocked it — otherwise it reads the same as one nobody reached"
+     },
+     "fixture": {
+      "error": "Not recorded",
+      "message": "a blocked case must say what blocked it — otherwise it reads the same as one nobody reached"
+     }
+    },
+    {
+     "scenario": "result-project-too-long",
+     "status": 422,
+     "body_keys": {
+      "error": "Not recorded",
+      "message": "The project name is longer than 80 characters."
+     },
+     "fixture": {
+      "error": "Not recorded",
+      "message": "The project name is longer than 80 characters."
+     }
+    },
+    {
+     "scenario": "result-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record the result",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record the result",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/results/junit": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     },
+     "fixture": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     },
+     "fixture": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     },
+     "fixture": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     }
+    },
+    {
+     "scenario": "junit-no-report",
+     "status": 400,
+     "body_keys": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     },
+     "fixture": {
+      "error": "No report",
+      "message": "Send { xml: \"<testsuites>…\" }."
+     }
+    },
+    {
+     "scenario": "junit-not-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Not read",
+      "message": "key_from \"file\" needs key_prefix, a repo path such as chitbridge-web/e2e/tests"
+     },
+     "fixture": {
+      "error": "Not read",
+      "message": "key_from \"file\" needs key_prefix, a repo path such as chitbridge-web/e2e/tests"
+     }
+    },
+    {
+     "scenario": "junit-nothing-recognisable",
+     "status": 422,
+     "body_keys": {
+      "error": "Nothing recognisable",
+      "unmatched": [
+       "nothing here"
+      ],
+      "message": "No test in that report carries a case key in brackets, e.g. \"[CTR-05] a single click chooses\"."
+     },
+     "fixture": {
+      "error": "Nothing recognisable",
+      "unmatched": [
+       "nothing here"
+      ],
+      "message": "No test in that report carries a case key in brackets, e.g. \"[CTR-05] a single click chooses\"."
+     }
+    },
+    {
+     "scenario": "junit-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read that report",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read that report",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/testing/trace": {
+   "answers": [
+    {
+     "scenario": "trace-no-entity",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised"
+     },
+     "fixture": {
+      "error": "Unauthorised"
+     }
+    },
+    {
+     "scenario": "trace-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     },
+     "fixture": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     },
+     "fixture": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     },
+     "fixture": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "That record does not fit",
+      "message": "ci must look like CAP-SIGNIN (capitals, digits, hyphens)"
+     },
+     "fixture": {
+      "error": "That record does not fit",
+      "message": "ci must look like CAP-SIGNIN (capitals, digits, hyphens)"
+     }
+    },
+    {
+     "scenario": "cmdb-put-does-not-fit",
+     "status": 400,
+     "body_keys": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     },
+     "fixture": {
+      "error": "That record does not fit",
+      "message": "title is required, at most 120 characters"
+     }
+    },
+    {
+     "scenario": "cmdb-put-not-a-writer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     },
+     "fixture": {
+      "error": "Not a writer of the shared board",
+      "code": "NOT_BOARD_WRITER",
+      "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     }
+    }
+   ]
   }
  },
  "global": {
