@@ -29,14 +29,14 @@ of file each thing is; this says what already does the job.
 | 49 | `toast` | `accounts-shell.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
+| 48 | `entry` | `books-store.js` |  |
+| 48 | `next` | `dayopen.js` | the next thing to do — |
 | 48 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 47 | `again` | `signin-ui.js` |  |
 | 47 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 47 | `entry` | `books-store.js` |  |
-| 47 | `next` | `dayopen.js` | the next thing to do — |
+| 46 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 45 | `pack` | `books-store.js` |  |
 | 43 | `read` | `cap-print.js` |  |
-| 42 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 40 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 39 | `view` | `books-payables.js` | group: |
 | 39 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
@@ -47,10 +47,10 @@ of file each thing is; this says what already does the job.
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
 | 35 | `rules` | `docnumber.js` | the rule set for a country — |
+| 35 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 35 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
-| 34 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 34 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
@@ -58,8 +58,8 @@ of file each thing is; this says what already does the job.
 | 32 | `shell` | `pick.js` |  |
 | 32 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 32 | `live` | `receivables.js` | the allocations that still count: |
+| 31 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 30 | `ensureCap` | `app.html` |  |
-| 30 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 29 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 29 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 29 | `lines` | `cart.js` |  |
@@ -67,40 +67,40 @@ of file each thing is; this says what already does the job.
 | 29 | `facts` | `bill-steps.js` | MY state_log — |
 | 29 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
+| 28 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 28 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 27 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 27 | `changes` | `books-store.js` |  |
 | 27 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
+| 27 | `register` | `regulation.js` | register(pack) → the pack — |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 26 | `sheet` | `cap-employees.js` |  |
 | 26 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
+| 26 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 26 | `refuse` | `books-pack.js` | const sha = (text) => |
-| 26 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
-| 26 | `register` | `regulation.js` | register(pack) → the pack — |
 | 26 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
-| 25 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 25 | `gate` | `country-setup.js` | gate(h, entity): |
+| 25 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `money` | `cart.js` |  |
 | 24 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 24 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
-| 24 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
 | 23 | `call` | `cap-assist.js` |  |
 | 23 | `opts` | `cap-stock.js` |  |
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `rate` | `convert.js` | A rate, with its evidence. |
 | 23 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `account` | `home-facts.js` | OMITTED: |
 | 22 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 22 | `hold` | `orders.js` |  |
 | 21 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
-| 21 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 21 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
@@ -141,6 +141,7 @@ of file each thing is; this says what already does the job.
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
 | 16 | `panel` | `sides.js` |  |
 | 16 | `plan` | `crm-leads.js` | `existing`: |
+| 16 | `governance` | `home-facts.js` |  |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
@@ -151,7 +152,6 @@ of file each thing is; this says what already does the job.
 | 15 | `label` | `screen-id.js` |  |
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `connectors` | `home-facts.js` | declare (said in words — |
-| 15 | `governance` | `home-facts.js` |  |
 | 15 | `fail` | `books.js` | lib/books-contract.js refusalOf maps every typed refusal of the ledger to its status, code and the old {error, |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `control` | `cap-settings.js` |  |
@@ -199,13 +199,13 @@ of file each thing is; this says what already does the job.
 | 11 | `actions` | `workflow.js` | actions(chit, me) — |
 | 11 | `patch` | `books-recurring.js` |  |
 | 11 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
+| 11 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 11 | `format` | `ctpaddress.js` | Render one. |
 | 11 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 11 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
+| 11 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 10 | `start` | `app.html` |  |
 | 10 | `show` | `cap-catalogue.js` |  |
 | 10 | `reload` | `cap-employees.js` |  |
 | 10 | `when` | `cap-settings.js` |  |
 | 10 | `confirm` | `lab-kit.js` | opts: |
-| 10 | `evidence` | `test-menu-tree.js` | something; nobody has yet written what it should do. |
-| 10 | `payment` | `books-store.js` |  |

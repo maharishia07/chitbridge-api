@@ -473,6 +473,84 @@
   401,
   500
  ],
+ "GET /api/governance/ai-skills": [
+  401,
+  500
+ ],
+ "GET /api/governance/ai-usage": [
+  401,
+  500
+ ],
+ "GET /api/governance/boilerplate/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/commerce-standards": [
+  401,
+  500
+ ],
+ "GET /api/governance/country-setup": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/governance/entities/:id": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/governance/instruments": [
+  401,
+  500
+ ],
+ "GET /api/governance/journey": [
+  401,
+  500
+ ],
+ "GET /api/governance/lanes": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile/path": [
+  401,
+  500
+ ],
+ "GET /api/governance/profile/readiness": [
+  401,
+  500
+ ],
+ "GET /api/governance/readiness": [
+  401,
+  500
+ ],
+ "GET /api/governance/readiness/:bridge_id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/source/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/governance/supplier-acceptance/:handle": [
+  401,
+  500
+ ],
+ "GET /api/governance/track-record": [
+  401,
+  500
+ ],
+ "GET /api/governance/vault-schema": [
+  401,
+  500
+ ],
  "GET /api/integrations/catalogue": [
   401,
   500
@@ -1307,6 +1385,68 @@
   401,
   500
  ],
+ "POST /api/governance/ai-draft": [
+  400,
+  401,
+  402,
+  429,
+  500,
+  503
+ ],
+ "POST /api/governance/boilerplate/:key/adopt": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/governance/compliance": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/governance/conformance": [
+  401,
+  500
+ ],
+ "POST /api/governance/entities": [
+  400,
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/governance/entities/:id/reattest": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/governance/source": [
+  400,
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/governance/supplier-acceptance": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/governance/verify": [
+  400,
+  401,
+  403,
+  422,
+  500
+ ],
  "POST /api/integrations/:actor_id/approve": [
   400,
   401,
@@ -1754,6 +1894,28 @@
   401,
   403,
   404,
+  409,
+  500,
+  503
+ ],
+ "PUT /api/governance/country-setup": [
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/governance/profile": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "PUT /api/governance/profile/vault": [
+  400,
+  401,
+  403,
   409,
   500,
   503
