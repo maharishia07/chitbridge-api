@@ -396,6 +396,14 @@
   401,
   500
  ],
+ "GET /api/connections/list": [
+  401,
+  500
+ ],
+ "GET /api/connections/pending": [
+  401,
+  500
+ ],
  "GET /api/counters": [
   401,
   403,
@@ -600,6 +608,44 @@
  "GET /api/keys": [
   401,
   403,
+  500
+ ],
+ "GET /api/network-design": [
+  401,
+  500
+ ],
+ "GET /api/network-design/availability": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/network-design/stores": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/network/entities/:id/connections": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/network/entities/:id/subtree": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/network/entities/lookup": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/network/place": [
+  401,
   500
  ],
  "GET /api/pricing/kinds": [
@@ -1329,6 +1375,12 @@
   422,
   500
  ],
+ "POST /api/connections/request": [
+  400,
+  401,
+  404,
+  500
+ ],
  "POST /api/counters": [
   400,
   401,
@@ -1513,6 +1565,89 @@
   401,
   403,
   500
+ ],
+ "POST /api/network-design/build": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/network-design/reissue": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/network-design/validate": [
+  400,
+  401,
+  413,
+  500
+ ],
+ "POST /api/network/connections": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/approve": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/decline": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/disconnect": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/resume": [
+  401,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/suspend": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/entities": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/network/entities/:id/claim": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
  ],
  "POST /api/pricing/price": [
   400,
@@ -1905,6 +2040,12 @@
   409,
   500
  ],
+ "PUT /api/connections/:id/respond": [
+  400,
+  401,
+  404,
+  500
+ ],
  "PUT /api/folders/inventory/:code": [
   400,
   401,
@@ -1941,6 +2082,12 @@
   401,
   403,
   422,
+  500
+ ],
+ "PUT /api/network-design": [
+  400,
+  401,
+  413,
   500
  ],
  "PUT /api/products/:id/availability": [
