@@ -235,7 +235,7 @@ const sawSql = (re) => SQL.some((x) => re.test(x.s));
   t('production-like (remote DB), TESTER_NAMES empty → the door is SHUT to everyone (SEC finding 3: fail closed)', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false);
   t('…and boot says so at WARN: set TESTER_NAMES (the door is shut)', devOtp.testerNotices().some((n) => n.level === 'warn' && /set TESTER_NAMES/.test(n.msg)));
   process.env.TESTER_NAMES = '*'; devOtp = freshDevOtp();
-  t('TESTER_NAMES * = every account, explicit, with its own WARN', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === true && devOtp.testerNotices().some((n) => n.level === 'warn' && /TESTER_NAMES is \*/.test(n.msg)));
+  t('TESTER_NAMES * on a remote DB (NODE_ENV " development") is REFUSED, with its own WARN', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false && devOtp.testerNotices().some((n) => n.level === 'warn' && /TESTER_NAMES \* is refused/.test(n.msg)));
   process.env.TESTER_NAMES = 'qa-*'; devOtp = freshDevOtp();
   t('…with TESTER_NAMES set, a listed name passes and another does not', devOtp.testerCodeOk('tester-code-12345', ['qa-one']) === true && devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false);
   delete process.env.TESTER_NAMES; process.env.DATABASE_URL = 'postgres://cb@localhost:5432/cb'; process.env.NODE_ENV = 'development'; devOtp = freshDevOtp();

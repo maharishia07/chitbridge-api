@@ -24,7 +24,7 @@
 // revoked token, a removed device or a deactivated actor used to read a stored answer (a chit, a session) it could not read fresh.
 // Now a held key on a bearer door runs middleware/auth (the route's own: revocation, device, actor, hat-gate) before ANY stored
 // answer, 409 or 422 is sent; auth's refusal is the answer. The public money doors (requireKey) have no bearer and are unchanged.
-// A 401 is never recorded as the key's answer (a refused token must not poison the key for the real holder).
+// A 401 or 403 is never recorded as the key's answer (a refused token must not poison the key for the real holder).
 // ⚠️ The memory is per process: two api instances could each run a retry once. The store (b109) remains the real guard.
 const crypto = require('crypto');
 const { withEntity } = require('../db');
@@ -43,8 +43,8 @@ const TOKEN_REPLAY_MINUTES = Number(process.env.IDEMPOTENCY_TOKEN_MINUTES || 15)
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
-/** a status that is NOT a settled outcome, so the claim is dropped and a retry may run: a server error, or a refused token (401) */
-const notSettled = (status) => status >= 500 || status === 401;
+/** a status that is NOT a settled outcome, so the claim is dropped and a retry may run: a server error, a refused token (401) or a refused role/scope (403: hat-gate, key scope, enrol pending — lifted later by a promotion or an approval) */
+const notSettled = (status) => status >= 500 || status === 401 || status === 403;
 const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — pre-b109, expected rather than alarming */
 
 /**

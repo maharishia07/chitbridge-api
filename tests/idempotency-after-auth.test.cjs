@@ -143,6 +143,17 @@ const revokeSession = (who) => { devices = {}; sessions.forget(who.jti); };
     assert.ok(retry.ran && retry.status === 201, 'the key was poisoned by the 401: ' + retry.status);
   });
 
+  await ita('a 403 (viewer refused) is never recorded: after promotion the same key runs the route', async () => {
+    reset(); const me = person('actor');
+    actorRow = { break_status: 'active', hat: 'view_only' };
+    const refused = await send(me, { key: 'k8' });
+    assert.strictEqual(refused.status, 403, 'the viewer was not refused: ' + refused.status);
+    actorRow = { break_status: 'active', hat: 'act' };
+    const after = await send(me, { key: 'k8' });
+    assert.ok(after.ran && after.status === 201, 'the key replayed the old 403: ' + after.status);
+    assert.strictEqual(after.headers['X-Idempotent-Replay'], undefined);
+  });
+
   await ita('a stranger with no token and a key is untouched: no claim, the route\'s auth answers its own 401', async () => {
     reset();
     const req = { id: 'x', method: 'POST', path: '/api/chits', body: {}, headers: { 'idempotency-key': 'k7' } };
