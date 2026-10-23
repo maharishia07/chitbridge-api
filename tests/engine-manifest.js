@@ -208,6 +208,8 @@ const INFRA_LIBS = [
   'contract-kit.js',
   'books-contract.js',
   'tax-contract.js',
+  /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'till-contract.js',
   /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'folders-contract.js',
   'facts-contract.js',
@@ -407,6 +409,7 @@ const INFRA_LIBS = [
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
   'ctp-contract.js',       // API-1 slice 1d: routes/ctp.js's OpenAPI operations and the old answers a peer reads — a contract, not an engine
+  'storefront-contract.js', // API-1 slice 1e: the public storefront doors' OpenAPI operations and the old answers shop.html reads — a contract, not an engine
   'connector-rows.js',     // SET-35: the checked-in connectors - one statement, one row shape - read by GET /integrations/status and the Connectors Home card
   'match.js',              // matching helpers
   'measure.js',            // unit handling

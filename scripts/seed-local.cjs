@@ -62,10 +62,12 @@ const MENU = [
 const PHOTOS = { 'Masala Dosa': [222, 160, 60], 'Veg Meals': [90, 160, 70], 'Filter Coffee': [110, 70, 40], 'Gulab Jamun (2 pc)': [150, 50, 40] };
 
 const step = (s) => console.log('  · ' + s);
+/** one call to the api; an unsigned write is a public door, each call its own attempt with its own Idempotency-Key (API-3 S36) */
 async function j(path, { method = 'GET', token, body } = {}) {
+  const once = !token && method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {};
   const reply = await fetch(API + path, {
     method,
-    headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}),
+    headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once),
     body: body ? JSON.stringify(body) : undefined
   });
   let b = null;

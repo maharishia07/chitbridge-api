@@ -9091,6 +9091,4186 @@
     }
    ]
   },
+  "GET /api/till/bills": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/catalogue/blueprints": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "blueprints-break",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/counters": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/engine/:name": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "engine-file-unreadable",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/match": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/quick-keys/groups": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/quick-keys/hidden": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "qk-hidden-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/quick-keys/screen-config": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/quick-keys/state": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-no-counter",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-no-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "business_date required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "business_date required"
+     }
+    },
+    {
+     "scenario": "qk-state-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/reward": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     }
+    },
+    {
+     "scenario": "reward-read-no-holder",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required"
+     }
+    },
+    {
+     "scenario": "reward-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/screens": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/snapshot": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "snapshot-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/stock": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/summary": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "summary-trend-bad-period",
+     "status": 400,
+     "body_keys": {
+      "code": "BAD_PERIOD",
+      "error": "Ask for week, month, quarter or year."
+     },
+     "fixture": {
+      "code": "BAD_PERIOD",
+      "error": "Ask for week, month, quarter or year."
+     }
+    },
+    {
+     "scenario": "summary-trend-no-country",
+     "status": 422,
+     "body_keys": {
+      "error": "Set the shop country first. The books never open on a guess.",
+      "code": "NO_COUNTRY",
+      "message": "Set the shop country first. The books never open on a guess."
+     },
+     "fixture": {
+      "error": "Set the shop country first. The books never open on a guess.",
+      "code": "NO_COUNTRY",
+      "message": "Set the shop country first. The books never open on a guess."
+     }
+    }
+   ]
+  },
+  "GET /api/till/tasks": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/verify": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/till/worth-an-offer": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/alias": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses"
+     }
+    },
+    {
+     "scenario": "alias-no-words",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses"
+     }
+    },
+    {
+     "scenario": "alias-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "too long"
+     },
+     "fixture": {
+      "error": "too long"
+     }
+    },
+    {
+     "scenario": "alias-bad-factor",
+     "status": 400,
+     "body_keys": {
+      "error": "a pack conversion is a positive number"
+     },
+     "fixture": {
+      "error": "a pack conversion is a positive number"
+     }
+    },
+    {
+     "scenario": "alias-product-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "no such product"
+     },
+     "fixture": {
+      "error": "no such product"
+     }
+    },
+    {
+     "scenario": "alias-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/catalogue": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     },
+     "fixture": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     },
+     "fixture": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     },
+     "fixture": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     }
+    },
+    {
+     "scenario": "catalogue-not-empty",
+     "status": 409,
+     "body_keys": {
+      "error": "not empty",
+      "message": "This shop already has 3 products. Starting a catalogue again would add a second copy of each one.",
+      "have": 3
+     },
+     "fixture": {
+      "error": "not empty",
+      "message": "This shop already has 3 products. Starting a catalogue again would add a second copy of each one.",
+      "have": 3
+     }
+    },
+    {
+     "scenario": "catalogue-no-valid-rows",
+     "status": 400,
+     "body_keys": {
+      "error": "nothing to add",
+      "message": "Not one row had both a name and a price.",
+      "refused": [
+       {
+        "row": 1,
+        "why": "no name and no price",
+        "had": {
+         "colour": "red"
+        }
+       }
+      ]
+     },
+     "fixture": {
+      "error": "nothing to add",
+      "message": "Not one row had both a name and a price.",
+      "refused": [
+       {
+        "row": 1,
+        "why": "no name and no price",
+        "had": {
+         "colour": "red"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "catalogue-unknown-trade",
+     "status": 400,
+     "body_keys": {
+      "error": "unknown trade",
+      "message": "There is no product list called \"nonesuch\".",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     },
+     "fixture": {
+      "error": "unknown trade",
+      "message": "There is no product list called \"nonesuch\".",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     }
+    },
+    {
+     "scenario": "catalogue-nothing-chosen",
+     "status": 400,
+     "body_keys": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     },
+     "fixture": {
+      "error": "nothing to mint",
+      "message": "Choose a product list, or send the products you want added.",
+      "choices": [
+       "veg",
+       "egg",
+       "chicken",
+       "fish",
+       "meat",
+       "hotel"
+      ]
+     }
+    },
+    {
+     "scenario": "catalogue-categories-break",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Your categories could not be set up, so nothing was added. relation \"party_secret\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Your categories could not be set up, so nothing was added. relation \"party_secret\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "catalogue-write-refused",
+     "status": 422,
+     "body_keys": {
+      "error": "Invalid products",
+      "message": "One product has no name.",
+      "invalid": [
+       {
+        "row": 1
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Invalid products",
+      "message": "One product has no name.",
+      "invalid": [
+       {
+        "row": 1
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "catalogue-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/close": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "This counter is not listed for the shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "This counter is not listed for the shop."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     }
+    },
+    {
+     "scenario": "close-by-a-person",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself."
+     }
+    },
+    {
+     "scenario": "close-counter-not-listed",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "This counter is not listed for the shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "This counter is not listed for the shop."
+     }
+    },
+    {
+     "scenario": "close-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/diagnostic": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "This key is not listed for the shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "This key is not listed for the shop."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     }
+    },
+    {
+     "scenario": "diagnostic-by-a-person",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself."
+     }
+    },
+    {
+     "scenario": "diagnostic-key-not-listed",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "This key is not listed for the shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "This key is not listed for the shop."
+     }
+    },
+    {
+     "scenario": "diagnostic-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/enrol": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can connect a counter.",
+      "message": "Only the owner can connect a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can connect a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can connect a counter.",
+      "message": "Only the owner can connect a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can connect a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can connect a counter.",
+      "message": "Only the owner can connect a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can connect a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can connect a counter.",
+      "message": "Only the owner can connect a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can connect a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can connect a counter.",
+      "message": "Only the owner can connect a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can connect a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can connect a counter.",
+      "message": "Only the owner can connect a counter.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can connect a counter.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "relation \"party_secret\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "relation \"party_secret\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "There is no counter C1 in this shop."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "There is no counter C1 in this shop."
+     }
+    },
+    {
+     "scenario": "enrol-counter-held",
+     "status": 409,
+     "body_keys": {
+      "error": "conflict",
+      "code": "COUNTER_HELD",
+      "message": "C1 is open on another PC."
+     },
+     "fixture": {
+      "error": "conflict",
+      "code": "COUNTER_HELD",
+      "message": "C1 is open on another PC."
+     }
+    },
+    {
+     "scenario": "enrol-library-says-no",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed",
+      "message": "That counter name is not allowed."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "That counter name is not allowed."
+     }
+    },
+    {
+     "scenario": "enrol-claim-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "relation \"party_secret\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "relation \"party_secret\" does not exist -- SELECT secret FROM vault"
+     }
+    }
+   ]
+  },
+  "POST /api/till/flags": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "flags-no-item",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "flags-nothing-to-set",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "nothing to set — pass screen, or offer_id with excluded"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "nothing to set — pass screen, or offer_id with excluded"
+     }
+    },
+    {
+     "scenario": "flags-item-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "flags-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/offer-item": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     }
+    },
+    {
+     "scenario": "offer-item-no-ids",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required"
+     }
+    },
+    {
+     "scenario": "offer-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "not-an-offer",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "that is not an offer"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "that is not an offer"
+     }
+    },
+    {
+     "scenario": "offer-not-live",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "that offer is not live"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "that offer is not live"
+     }
+    },
+    {
+     "scenario": "offer-item-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/pair": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in to pair a screen."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in to pair a screen."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "pair-by-another-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in to pair a screen."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in to pair a screen."
+     }
+    },
+    {
+     "scenario": "pair-lookup-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/pair/claim": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "counter-key",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "claim-key-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "claim-code-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "claim-code-unknown-again",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
+     }
+    },
+    {
+     "scenario": "too-many-wrong-codes",
+     "status": 429,
+     "body_keys": {
+      "error": "Too many",
+      "message": "Too many wrong codes. Wait a minute and try again."
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "Too many wrong codes. Wait a minute and try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/price": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "price-no-item",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "price-not-a-number",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "price must be a number, zero or more"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "price must be a number, zero or more"
+     }
+    },
+    {
+     "scenario": "price-cost-blind",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price."
+     }
+    },
+    {
+     "scenario": "price-no-money",
+     "status": 422,
+     "body_keys": {
+      "error": "refused",
+      "code": "NO_MONEY",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     },
+     "fixture": {
+      "error": "refused",
+      "code": "NO_MONEY",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     }
+    },
+    {
+     "scenario": "price-item-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "price-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/hide": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-hide-no-counter",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-hide-no-product",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "product_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "product_id required"
+     }
+    },
+    {
+     "scenario": "qk-hide-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/screen-config": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-screen-no-counter",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-screen-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/state": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-state-no-counter",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-state-no-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "business_date required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "business_date required"
+     }
+    },
+    {
+     "scenario": "qk-state-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-unhide-no-counter",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter."
+     }
+    },
+    {
+     "scenario": "qk-unhide-no-product",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "product_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "product_id required"
+     }
+    },
+    {
+     "scenario": "qk-unhide-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/reconcile": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "reconcile-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/reward": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     }
+    },
+    {
+     "scenario": "reward-no-bill-number",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required"
+     }
+    },
+    {
+     "scenario": "reward-bill-not-recorded",
+     "status": 409,
+     "body_keys": {
+      "error": "conflict",
+      "code": "BILL_NOT_RECORDED",
+      "message": "That bill has not reached the server yet."
+     },
+     "fixture": {
+      "error": "conflict",
+      "code": "BILL_NOT_RECORDED",
+      "message": "That bill has not reached the server yet."
+     }
+    },
+    {
+     "scenario": "reward-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/reward/claim": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required"
+     }
+    },
+    {
+     "scenario": "claim-no-holders",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required"
+     }
+    },
+    {
+     "scenario": "claim-no-programme",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "this shop runs no programme"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "this shop runs no programme"
+     }
+    },
+    {
+     "scenario": "claim-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "There is nothing to move."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "There is nothing to move."
+     }
+    },
+    {
+     "scenario": "claim-already-recorded",
+     "status": 409,
+     "body_keys": {
+      "error": "conflict",
+      "code": "CLAIM_RECORDED",
+      "message": "That claim is already recorded."
+     },
+     "fixture": {
+      "error": "conflict",
+      "code": "CLAIM_RECORDED",
+      "message": "That claim is already recorded."
+     }
+    },
+    {
+     "scenario": "claim-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/screens/rename": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "rename-no-screen",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "rename-not-a-screen",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only a shop screen can be renamed from the counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only a shop screen can be renamed from the counter."
+     }
+    },
+    {
+     "scenario": "rename-not-paired",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That screen is no longer paired."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That screen is no longer paired."
+     }
+    },
+    {
+     "scenario": "rename-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/screens/revoke": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "revoke-no-screen",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?"
+     }
+    },
+    {
+     "scenario": "revoke-not-a-screen",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only a shop screen can be switched off from the counter."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only a shop screen can be switched off from the counter."
+     }
+    },
+    {
+     "scenario": "revoke-not-paired",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That screen is no longer paired."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That screen is no longer paired."
+     }
+    },
+    {
+     "scenario": "revoke-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/shop": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "shop-no-country",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "field": "gstin",
+      "code": "NO_COUNTRY",
+      "message": "Set the shop’s country first (Country setup) — the tax number is checked by its law."
+     },
+     "fixture": {
+      "error": "validation",
+      "field": "gstin",
+      "code": "NO_COUNTRY",
+      "message": "Set the shop’s country first (Country setup) — the tax number is checked by its law."
+     }
+    },
+    {
+     "scenario": "shop-bad-gstin-in",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "field": "gstin",
+      "message": "That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more."
+     },
+     "fixture": {
+      "error": "validation",
+      "field": "gstin",
+      "message": "That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more."
+     }
+    },
+    {
+     "scenario": "shop-bad-gstin-checksum",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "field": "gstin",
+      "message": "That GSTIN’s last character does not match the rest of it, so one character is mistyped."
+     },
+     "fixture": {
+      "error": "validation",
+      "field": "gstin",
+      "message": "That GSTIN’s last character does not match the rest of it, so one character is mistyped."
+     }
+    },
+    {
+     "scenario": "shop-bad-tax-id-abroad",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "field": "gstin",
+      "message": "An ABN is 11 digits."
+     },
+     "fixture": {
+      "error": "validation",
+      "field": "gstin",
+      "message": "An ABN is 11 digits."
+     }
+    },
+    {
+     "scenario": "shop-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/state": {
+   "answers": [
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/stock": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "stock-no-item",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required"
+     }
+    },
+    {
+     "scenario": "stock-bad-status",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "status must be 'available' or 'unavailable'"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "status must be 'available' or 'unavailable'"
+     }
+    },
+    {
+     "scenario": "stock-item-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "stock-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/stock/bulk": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required"
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for till"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required"
+     }
+    },
+    {
+     "scenario": "bulk-no-ids",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required"
+     }
+    },
+    {
+     "scenario": "bulk-too-many",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "At most 500 products in one change."
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "At most 500 products in one change."
+     }
+    },
+    {
+     "scenario": "bulk-bad-status",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "status must be 'available' or 'unavailable'"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "status must be 'available' or 'unavailable'"
+     }
+    },
+    {
+     "scenario": "bulk-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "answers": [
+    {
+     "scenario": "nstore-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     }
+    },
+    {
+     "scenario": "nstore-read-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "nstore-items-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Storefront failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Storefront failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/network-store/:networkId/order": {
+   "answers": [
+    {
+     "scenario": "norder-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Disabled",
+      "code": "NETWORK_ORDERS_OFF",
+      "may": false,
+      "why": "Network ordering is not switched on here.",
+      "message": "Network ordering is not switched on here."
+     },
+     "fixture": {
+      "error": "Disabled",
+      "code": "NETWORK_ORDERS_OFF",
+      "may": false,
+      "why": "Network ordering is not switched on here.",
+      "message": "Network ordering is not switched on here."
+     }
+    },
+    {
+     "scenario": "norder-no-shopper",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "code": "SIGN_IN_FIRST",
+      "message": "Sign in at the store to order."
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "code": "SIGN_IN_FIRST",
+      "message": "Sign in at the store to order."
+     }
+    },
+    {
+     "scenario": "norder-no-items",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "items required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "items required"
+     }
+    },
+    {
+     "scenario": "norder-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "NO_SUCH_NETWORK",
+      "message": "There is no network store by that name."
+     }
+    },
+    {
+     "scenario": "norder-other-network",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "NOT_THIS_NETWORK",
+      "message": "Your sign-in belongs to another store. Sign in at this network's store to order."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "NOT_THIS_NETWORK",
+      "message": "Your sign-in belongs to another store. Sign in at this network's store to order."
+     }
+    },
+    {
+     "scenario": "norder-no-products",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No matching products in this network"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No matching products in this network"
+     }
+    },
+    {
+     "scenario": "norder-no-operator",
+     "status": 409,
+     "body_keys": {
+      "error": "No operator",
+      "message": "Operator not found"
+     },
+     "fixture": {
+      "error": "No operator",
+      "message": "Operator not found"
+     }
+    },
+    {
+     "scenario": "norder-no-currency",
+     "status": 422,
+     "body_keys": {
+      "error": "No money",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     },
+     "fixture": {
+      "error": "No money",
+      "message": "Set the shop’s money and the month its year starts (Country setup) — nothing is billed or booked on a guess."
+     },
+     "note": "ORD-65 (2026-10-23): new answer. Before, deliverEdge called NO_CURRENCY_SAYS() on a string and the operator with no currency got a 500."
+    },
+    {
+     "scenario": "norder-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "norder-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "total",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "total",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    }
+   ]
+  },
+  "GET /api/catalogue/network/:bridge_id": {
+   "answers": [
+    {
+     "scenario": "network-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "network-no-members",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "network-no-departments",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "network-read-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "network-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Network storefront failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Network storefront failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id": {
+   "answers": [
+    {
+     "scenario": "shop-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "shop-private",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "shop-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Catalogue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Catalogue failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "answers": [
+    {
+     "scenario": "fields-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "fields-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Capture fields failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Capture fields failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/order/start": {
+   "answers": [
+    {
+     "scenario": "start-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "start-closed",
+     "status": 403,
+     "body_keys": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     },
+     "fixture": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     }
+    },
+    {
+     "scenario": "start-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "start-send-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order start failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order start failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "start-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "coupon",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "coupon",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "start-no-key",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "note": "new with public idempotency (API-3 S36): before, a request without an Idempotency-Key ran, so a double tap or a retry after a lost answer ran twice. public/shop.html sends one key per attempt (web twin, landed first)."
+    },
+    {
+     "scenario": "start-key-in-progress",
+     "status": 409,
+     "body_keys": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "fixture": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
+    },
+    {
+     "scenario": "start-key-other-body",
+     "status": 422,
+     "body_keys": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "fixture": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/support/preview": {
+   "answers": [
+    {
+     "scenario": "preview-unknown",
+     "status": 404,
+     "body_keys": {
+      "ok": false,
+      "why": "This shop could not be found."
+     },
+     "fixture": {
+      "ok": false,
+      "why": "This shop could not be found."
+     },
+     "note": "before slice 1e this answered 200 with `ok: false`; since 1e it is the 404 every other door gives an unknown shop, with `ok` and `why` unchanged. public/shop.html reads the body whatever the status."
+    },
+    {
+     "scenario": "preview-fails",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "why": "Could not check where this would go."
+     },
+     "fixture": {
+      "ok": false,
+      "why": "Could not check where this would go."
+     },
+     "note": "before slice 1e a failure answered 200 with `ok: false`; since 1e it is a 500 with `ok` and `why` unchanged. public/shop.html reads the body whatever the status."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/support/start": {
+   "answers": [
+    {
+     "scenario": "sstart-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "sstart-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Give just one — a phone OR an email, not both."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Give just one — a phone OR an email, not both."
+     }
+    },
+    {
+     "scenario": "sstart-send-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not send the code",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not send the code",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "sstart-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "role",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "role",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/support": {
+   "answers": [
+    {
+     "scenario": "support-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "observed",
+        "message": "Say what went wrong"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "observed",
+        "message": "Say what went wrong"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "support-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "support-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "support-no-code-asked",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "support-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "support-locked",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "support-not-raised",
+     "status": 502,
+     "body_keys": {
+      "error": "Could not send it",
+      "message": "Nobody at the shop takes these yet."
+     },
+     "fixture": {
+      "error": "Could not send it",
+      "message": "Nobody at the shop takes these yet."
+     }
+    },
+    {
+     "scenario": "support-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not send it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not send it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "support-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_bridge_id",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "to_bridge_id",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "support-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/order/confirm": {
+   "answers": [
+    {
+     "scenario": "confirm-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       },
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "confirm-empty-order",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "line_items",
+        "message": "Order is empty"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "confirm-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "confirm-closed",
+     "status": 403,
+     "body_keys": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     },
+     "fixture": {
+      "error": "Shop closed",
+      "message": "This shop is currently closed and not accepting orders."
+     }
+    },
+    {
+     "scenario": "confirm-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "confirm-not-started",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "confirm-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "confirm-locked",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "confirm-not-in-catalogue",
+     "status": 422,
+     "body_keys": {
+      "error": "Order rejected",
+      "message": "\"Nothing here\" is not available in this shop's catalogue"
+     },
+     "fixture": {
+      "error": "Order rejected",
+      "message": "\"Nothing here\" is not available in this shop's catalogue"
+     }
+    },
+    {
+     "scenario": "confirm-reprice-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order rejected",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order rejected",
+      "message": "Something went wrong — please try again."
+     },
+     "note": "before slice 1e an unexpected failure while pricing the order answered 422 with the raw error text as `message` (a database message, shown to the shopper); since 1e it is a 500 with the safe sentence. The deliberate refusals of the pricing (an item not in the catalogue, no price, out of stock, mixed currencies) keep their 422/409 and their words. public/shop.html reads only `message` on any non-200."
+    },
+    {
+     "scenario": "confirm-too-many-forms",
+     "status": 422,
+     "body_keys": {
+      "error": "Submission rejected",
+      "message": "At most 5 forms in one submission"
+     },
+     "fixture": {
+      "error": "Submission rejected",
+      "message": "At most 5 forms in one submission"
+     }
+    },
+    {
+     "scenario": "confirm-template-unread",
+     "status": 503,
+     "body_keys": {
+      "error": "Submission rejected",
+      "message": "Could not resolve the template for \"Form A\" — please retry"
+     },
+     "fixture": {
+      "error": "Submission rejected",
+      "message": "Could not resolve the template for \"Form A\" — please retry"
+     }
+    },
+    {
+     "scenario": "confirm-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Order failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "confirm-already-sent",
+     "status": 409,
+     "body_keys": {
+      "error": "Already sent",
+      "message": "This order was already sent — check My orders before sending it again.",
+      "code": "code_already_used"
+     },
+     "fixture": {
+      "error": "Already sent",
+      "message": "This order was already sent — check My orders before sending it again.",
+      "code": "code_already_used"
+     }
+    },
+    {
+     "scenario": "confirm-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "delivery_address",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "delivery_address",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "confirm-no-key",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "note": "new with public idempotency (API-3 S36): before, a request without an Idempotency-Key ran, so a double tap or a retry after a lost answer ran twice. public/shop.html sends one key per attempt (web twin, landed first)."
+    },
+    {
+     "scenario": "confirm-key-in-progress",
+     "status": 409,
+     "body_keys": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "fixture": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
+    },
+    {
+     "scenario": "confirm-key-other-body",
+     "status": 422,
+     "body_keys": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "fixture": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
+    },
+    {
+     "scenario": "confirm-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/login/verify": {
+   "answers": [
+    {
+     "scenario": "login-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "identity_type",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "identity_type",
+        "message": "Not accepted here"
+       }
+      ]
+     },
+     "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "login-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "login-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Shop not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Shop not found"
+     }
+    },
+    {
+     "scenario": "login-no-contact",
+     "status": 422,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "Enter a phone number or an email."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "Enter a phone number or an email."
+     }
+    },
+    {
+     "scenario": "login-no-account",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "login-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "login-locked",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    },
+    {
+     "scenario": "login-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "login-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
+    }
+   ]
+  },
   "DELETE /api/chits/:chit_id": {
    "answers": [
     {

@@ -3934,7 +3934,11 @@ router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (
    different endings and a flag cannot tell them apart. */
 router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
   try {
-    res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id, { body: req.body.body, by_name: req.identity.display_name }));
+    /* RAIL-93: the ending's disposition (and where a carried-forward one goes, and its evidence) reach raida.close — without
+       them every close of a full register answered 400 "An ending needs a disposition" (cap-worklist sends { body, disposition }) */
+    const { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash } = req.body || {};
+    res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id,
+      { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash, by_name: req.identity.display_name }));
   } catch (err) {
     console.error('Raida close error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));

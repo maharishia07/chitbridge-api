@@ -3,9 +3,9 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 421,
-  "partial": 43,
-  "meets": 169
+  "not_started": 371,
+  "partial": 42,
+  "meets": 220
  },
  "machine_columns": [
   "schema_in",
@@ -97,7 +97,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents/:id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1911,
+   "line": 1924,
    "hash": "1b34207b0a69660c",
    "columns": {
     "schema_in": false,
@@ -155,7 +155,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5925,
+   "line": 5929,
    "hash": "b1621a61d6a1f385",
    "columns": {
     "schema_in": true,
@@ -191,7 +191,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4541,
+   "line": 4545,
    "hash": "f1e5c5ac7a0e6422",
    "columns": {
     "schema_in": true,
@@ -227,7 +227,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6186,
+   "line": 6190,
    "hash": "045463184137e6f1",
    "columns": {
     "schema_in": true,
@@ -2628,27 +2628,32 @@
    "path": "/api/catalogue/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1084,
-   "hash": "906df8f26ac331fb",
+   "line": 1095,
+   "hash": "baa5a1ee9cdc5a82",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    404,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/:bridge_id/capture-fields",
@@ -2656,27 +2661,32 @@
    "path": "/api/catalogue/:bridge_id/capture-fields",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1103,
-   "hash": "89a401eca674817a",
+   "line": 1113,
+   "hash": "d607d6f62eb7d0de",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    404,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/:bridge_id/my-documents",
@@ -2684,7 +2694,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1890,
+   "line": 1903,
    "hash": "a016ada3fe93aabf",
    "columns": {
     "schema_in": false,
@@ -2712,7 +2722,7 @@
    "path": "/api/catalogue/:bridge_id/my-orders",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1864,
+   "line": 1877,
    "hash": "722b6a6522934dfd",
    "columns": {
     "schema_in": false,
@@ -2740,27 +2750,32 @@
    "path": "/api/catalogue/:bridge_id/support/preview",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1179,
-   "hash": "c2d3703af1da7077",
+   "line": 1188,
+   "hash": "e92723610f98cd45",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    404,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/enquiry",
@@ -2768,7 +2783,7 @@
    "path": "/api/catalogue/enquiry",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1039,
+   "line": 1050,
    "hash": "62f3cf03cfa45494",
    "columns": {
     "schema_in": false,
@@ -2798,7 +2813,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2000,
+   "line": 2013,
    "hash": "909446b9f8a2c3b5",
    "columns": {
     "schema_in": false,
@@ -2828,27 +2843,33 @@
    "path": "/api/catalogue/network-store/:networkId",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 599,
-   "hash": "e630e7906c062f46",
+   "line": 617,
+   "hash": "985e2513117c90be",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    404,
+    500,
+    503
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/network/:bridge_id",
@@ -2856,27 +2877,33 @@
    "path": "/api/catalogue/network/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 879,
-   "hash": "a6ac76076c464956",
+   "line": 889,
+   "hash": "7e516fd50beb91fc",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    404,
+    500,
+    503
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/channels",
@@ -2980,7 +3007,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4354,
+   "line": 4358,
    "hash": "336f23691ee01d37",
    "columns": {
     "schema_in": true,
@@ -3052,7 +3079,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5610,
+   "line": 5614,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -3089,7 +3116,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5564,
+   "line": 5568,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -3126,7 +3153,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5241,
+   "line": 5245,
    "hash": "670ecd88a1125b2d",
    "columns": {
     "schema_in": true,
@@ -3199,7 +3226,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3970,
+   "line": 3974,
    "hash": "be91d2bc805731af",
    "columns": {
     "schema_in": true,
@@ -3236,7 +3263,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6485,
+   "line": 6489,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -3273,7 +3300,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6512,
+   "line": 6516,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -3310,7 +3337,7 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5830,
+   "line": 5834,
    "hash": "46daea8f32caa803",
    "columns": {
     "schema_in": true,
@@ -3692,7 +3719,7 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6712,
+   "line": 6716,
    "hash": "6f3dc35905e3296e",
    "columns": {
     "schema_in": true,
@@ -3727,7 +3754,7 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6753,
+   "line": 6757,
    "hash": "7fd343a2fc790048",
    "columns": {
     "schema_in": true,
@@ -3763,7 +3790,7 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6934,
+   "line": 6938,
    "hash": "fb7da6818f541830",
    "columns": {
     "schema_in": true,
@@ -8518,29 +8545,34 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2826,
-   "hash": "ef26f8f08a6d4579",
+   "line": 2814,
+   "hash": "3d6b2fc666d0eb0a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/catalogue/blueprints",
@@ -8548,29 +8580,34 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2726,
-   "hash": "5998520b673bca7e",
+   "line": 2713,
+   "hash": "d10e6a6e1d2b604c",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/counters",
@@ -8578,29 +8615,34 @@
    "path": "/api/till/counters",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1449,
-   "hash": "5e70e3d9db947973",
+   "line": 1451,
+   "hash": "2076c6a23b42055a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/engine/:name",
@@ -8608,29 +8650,35 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3256,
-   "hash": "f47b608582a33d39",
+   "line": 3244,
+   "hash": "4a422f34f38b13a0",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/match",
@@ -8638,29 +8686,34 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2962,
-   "hash": "b7f969c9ecae57c6",
+   "line": 2950,
+   "hash": "be0d9bf2e28e212b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/groups",
@@ -8668,29 +8721,34 @@
    "path": "/api/till/quick-keys/groups",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1458,
-   "hash": "bdf73245305e48e3",
+   "line": 1460,
+   "hash": "35f7ecacff13de4d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/hidden",
@@ -8698,29 +8756,34 @@
    "path": "/api/till/quick-keys/hidden",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1496,
-   "hash": "fff8dea9a6d217b7",
+   "line": 1498,
+   "hash": "58978b2c96355943",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/screen-config",
@@ -8728,29 +8791,34 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1540,
-   "hash": "c056302f734377aa",
+   "line": 1542,
+   "hash": "476b78ae0d50a3d6",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/state",
@@ -8758,29 +8826,35 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1468,
-   "hash": "4b2fdbd75ebf3581",
+   "line": 1470,
+   "hash": "07c6f23d46074c97",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/reward",
@@ -8788,29 +8862,35 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1856,
-   "hash": "f3924c0d4aec92a0",
+   "line": 1858,
+   "hash": "e51972ce8a02f1cf",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/screens",
@@ -8818,29 +8898,34 @@
    "path": "/api/till/screens",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2164,
-   "hash": "9afb2825a22d5f79",
+   "line": 2166,
+   "hash": "fee1ffe46e308ce3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/snapshot",
@@ -8848,29 +8933,34 @@
    "path": "/api/till/snapshot",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 158,
-   "hash": "3ef78cd618892add",
+   "line": 160,
+   "hash": "b01f9c0d65c7946e",
    "columns": {
     "schema_in": true,
-    "schema_out": false,
+    "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/stock",
@@ -8878,29 +8968,35 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2543,
-   "hash": "fed17597809c9011",
+   "line": 2540,
+   "hash": "e1436d1dbc57b9eb",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/summary",
@@ -8908,29 +9004,35 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2792,
-   "hash": "da33ed44c14daac6",
+   "line": 2779,
+   "hash": "2da4e820d2a1ee15",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/tasks",
@@ -8938,29 +9040,34 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2933,
-   "hash": "3f6db4bfe136ad50",
+   "line": 2921,
+   "hash": "3699b1c90b1b4388",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/verify",
@@ -8968,29 +9075,34 @@
    "path": "/api/till/verify",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2323,
-   "hash": "7db48aed5b3dc16a",
+   "line": 2325,
+   "hash": "048543cabfe017b6",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/worth-an-offer",
@@ -8998,29 +9110,35 @@
    "path": "/api/till/worth-an-offer",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1605,
-   "hash": "694843f97da91fd5",
+   "line": 1607,
+   "hash": "16793d611dc5c4c7",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/work/:chit_id",
@@ -12296,27 +12414,34 @@
    "path": "/api/catalogue/:bridge_id/login/verify",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1813,
-   "hash": "4f3bf97472f380f2",
+   "line": 1827,
+   "hash": "9d34219e5166cb7b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/order/confirm",
@@ -12324,27 +12449,37 @@
    "path": "/api/catalogue/:bridge_id/order/confirm",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1319,
-   "hash": "7489c8c0c2c8c474",
+   "line": 1324,
+   "hash": "060fac9633f19490",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    404,
+    409,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/order/start",
@@ -12352,27 +12487,36 @@
    "path": "/api/catalogue/:bridge_id/order/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1115,
-   "hash": "8507e0c6d6b91d49",
+   "line": 1125,
+   "hash": "622c83d3ce290ba1",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/support",
@@ -12380,27 +12524,35 @@
    "path": "/api/catalogue/:bridge_id/support",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1257,
-   "hash": "d10c62c7ba586a51",
+   "line": 1265,
+   "hash": "81696fd76afddafd",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    404,
+    422,
+    500,
+    502
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/support/start",
@@ -12408,27 +12560,34 @@
    "path": "/api/catalogue/:bridge_id/support/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1217,
-   "hash": "43c86cc35203569e",
+   "line": 1226,
+   "hash": "7d9d4681880be122",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/enquiry/:item_id",
@@ -12436,7 +12595,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2023,
+   "line": 2036,
    "hash": "e762f4cf80197ac2",
    "columns": {
     "schema_in": false,
@@ -12466,27 +12625,36 @@
    "path": "/api/catalogue/network-store/:networkId/order",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 729,
-   "hash": "4353c0c3351a8a2b",
+   "line": 751,
+   "hash": "dec4bb854d252554",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/photo-extract",
@@ -12494,7 +12662,7 @@
    "path": "/api/catalogue/photo-extract",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1932,
+   "line": 1945,
    "hash": "213dfb21eec3556c",
    "columns": {
     "schema_in": false,
@@ -12728,7 +12896,7 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4244,
+   "line": 4248,
    "hash": "a9675c91b063f337",
    "columns": {
     "schema_in": true,
@@ -12765,7 +12933,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6078,
+   "line": 6082,
    "hash": "bb57518baa5d6aee",
    "columns": {
     "schema_in": true,
@@ -12801,7 +12969,7 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4189,
+   "line": 4193,
    "hash": "033ba1833edc157a",
    "columns": {
     "schema_in": true,
@@ -12837,7 +13005,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4592,
+   "line": 4596,
    "hash": "f1261716ab50b218",
    "columns": {
     "schema_in": true,
@@ -12910,7 +13078,7 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3998,
+   "line": 4002,
    "hash": "7c6fe581bbb94181",
    "columns": {
     "schema_in": true,
@@ -12946,7 +13114,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5326,
+   "line": 5330,
    "hash": "b751da3f4c8f8917",
    "columns": {
     "schema_in": true,
@@ -12983,7 +13151,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5064,
+   "line": 5068,
    "hash": "caeca2235a33877a",
    "columns": {
     "schema_in": true,
@@ -13020,7 +13188,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4499,
+   "line": 4503,
    "hash": "e01c8002cbcabc9c",
    "columns": {
     "schema_in": true,
@@ -13094,7 +13262,7 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 3935,
-   "hash": "e6e83d46deac771b",
+   "hash": "91cf212eca7f8069",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13129,7 +13297,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3950,
+   "line": 3954,
    "hash": "1a2adac71f1176a0",
    "columns": {
     "schema_in": true,
@@ -13201,7 +13369,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6157,
+   "line": 6161,
    "hash": "bff670d16c1973fc",
    "columns": {
     "schema_in": true,
@@ -13237,7 +13405,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6136,
+   "line": 6140,
    "hash": "53214e1f816dbb5d",
    "columns": {
     "schema_in": true,
@@ -13273,7 +13441,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6118,
+   "line": 6122,
    "hash": "cc6a9bccb319682e",
    "columns": {
     "schema_in": true,
@@ -13309,7 +13477,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6388,
+   "line": 6392,
    "hash": "a5ce4d89eefc0a51",
    "columns": {
     "schema_in": true,
@@ -14023,7 +14191,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false
    },
@@ -14038,7 +14206,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/counters/:id/release",
@@ -18226,29 +18394,35 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3147,
-   "hash": "a140d05b88d8528e",
+   "line": 3135,
+   "hash": "1b393f3ac10694ac",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/catalogue",
@@ -18256,29 +18430,37 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2607,
-   "hash": "a4e4f60b1183b102",
+   "line": 2604,
+   "hash": "0b022d0054a67cb1",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/close",
@@ -18286,29 +18468,36 @@
    "path": "/api/till/close",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1288,
-   "hash": "00865d90107d83ca",
+   "line": 1290,
+   "hash": "220f807a69f0ef45",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/diagnostic",
@@ -18316,29 +18505,36 @@
    "path": "/api/till/diagnostic",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1238,
-   "hash": "5708978a2d22adb3",
+   "line": 1240,
+   "hash": "b8af7e64143ede8b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/enrol",
@@ -18346,29 +18542,35 @@
    "path": "/api/till/enrol",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2065,
-   "hash": "42573990b3056727",
+   "line": 2067,
+   "hash": "d3d29fb2332f13de",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/flags",
@@ -18376,29 +18578,36 @@
    "path": "/api/till/flags",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1375,
-   "hash": "cde5a55a10cc8e78",
+   "line": 1377,
+   "hash": "65214f74263076ca",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/listen",
@@ -18406,18 +18615,22 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3190,
-   "hash": "a7980a455512119b",
+   "line": 3178,
+   "hash": "93504ef849a926a2",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -18428,7 +18641,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/till/offer-item",
@@ -18436,29 +18649,36 @@
    "path": "/api/till/offer-item",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1716,
-   "hash": "a9ab56d4593098b2",
+   "line": 1718,
+   "hash": "d6ad7fcb17c22003",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/pair",
@@ -18466,29 +18686,35 @@
    "path": "/api/till/pair",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2012,
-   "hash": "ab7e6d4df8739308",
+   "line": 2014,
+   "hash": "b8944df3397c8a0b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/pair/claim",
@@ -18496,27 +18722,34 @@
    "path": "/api/till/pair/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2119,
-   "hash": "4998b01f365aa08e",
+   "line": 2121,
+   "hash": "62505b6631fc9613",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    404,
+    429,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/price",
@@ -18524,29 +18757,37 @@
    "path": "/api/till/price",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1776,
-   "hash": "1b898112c28bbda6",
+   "line": 1778,
+   "hash": "3a149ca9b4b713e5",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/hide",
@@ -18554,29 +18795,35 @@
    "path": "/api/till/quick-keys/hide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1512,
-   "hash": "d4ce3114946bc44a",
+   "line": 1514,
+   "hash": "c041346835b390b6",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/screen-config",
@@ -18584,29 +18831,35 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1551,
-   "hash": "aa8cdf4c48b14e4c",
+   "line": 1553,
+   "hash": "7073d24f16ce0ca0",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/state",
@@ -18614,29 +18867,35 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1482,
-   "hash": "3c65057b7d63d0ea",
+   "line": 1484,
+   "hash": "668b1080ceb29326",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/unhide",
@@ -18644,29 +18903,35 @@
    "path": "/api/till/quick-keys/unhide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1526,
-   "hash": "179a4415fc8d1947",
+   "line": 1528,
+   "hash": "dbbc8c561f7c33d7",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reconcile",
@@ -18674,29 +18939,35 @@
    "path": "/api/till/reconcile",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2284,
-   "hash": "a1efda0967a189ea",
+   "line": 2286,
+   "hash": "fe056ad1a25bb4e7",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reward",
@@ -18704,29 +18975,36 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1891,
-   "hash": "fc098633dbbe32cf",
+   "line": 1893,
+   "hash": "e0244e6670840cab",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reward/claim",
@@ -18734,29 +19012,36 @@
    "path": "/api/till/reward/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1947,
-   "hash": "2d559cf10f626488",
+   "line": 1949,
+   "hash": "aa0eb6ceeead07c5",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/screens/rename",
@@ -18764,29 +19049,36 @@
    "path": "/api/till/screens/rename",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2216,
-   "hash": "ec3fe93629010584",
+   "line": 2218,
+   "hash": "035453d24223f376",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/screens/revoke",
@@ -18794,29 +19086,36 @@
    "path": "/api/till/screens/revoke",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2183,
-   "hash": "0cef0127efbc0307",
+   "line": 2185,
+   "hash": "a282304c2a83381b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/shop",
@@ -18824,29 +19123,35 @@
    "path": "/api/till/shop",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2413,
-   "hash": "ccee36b1724770ef",
+   "line": 2415,
+   "hash": "ecbd876fea2f9aed",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/state",
@@ -18854,29 +19159,35 @@
    "path": "/api/till/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1349,
-   "hash": "20e342ff5d9878d3",
+   "line": 1351,
+   "hash": "4f046894dfe93c93",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/stock",
@@ -18884,29 +19195,36 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1128,
-   "hash": "1eea9a30fdfe5d47",
+   "line": 1130,
+   "hash": "23ce0464860c30d3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/stock/bulk",
@@ -18914,29 +19232,35 @@
    "path": "/api/till/stock/bulk",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1174,
-   "hash": "3a8f6b73d6fca841",
+   "line": 1176,
+   "hash": "241047c4aa9d0ca5",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+    "lifecycle": "stable"
    },
-   "status": "not started"
+   "status": "meets standard"
   },
   {
    "key": "POST /deliver",
@@ -19346,7 +19670,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5689,
+   "line": 5693,
    "hash": "c2325cbe73f259fc",
    "columns": {
     "schema_in": true,
@@ -19383,7 +19707,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5970,
+   "line": 5974,
    "hash": "59600f5511771cf4",
    "columns": {
     "schema_in": true,
@@ -19419,7 +19743,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6026,
+   "line": 6030,
    "hash": "bdcc6791026b87ae",
    "columns": {
     "schema_in": true,
@@ -19456,7 +19780,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6101,
+   "line": 6105,
    "hash": "63dac164e0864b45",
    "columns": {
     "schema_in": true,
@@ -19492,7 +19816,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4921,
+   "line": 4925,
    "hash": "dbf1814d4f83fa55",
    "columns": {
     "schema_in": true,
@@ -19528,7 +19852,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3988,
+   "line": 3992,
    "hash": "7ee86b115feec09f",
    "columns": {
     "schema_in": true,
@@ -19564,7 +19888,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6231,
+   "line": 6235,
    "hash": "66ea83dae3a68cd1",
    "columns": {
     "schema_in": true,
