@@ -63941,6 +63941,32 @@
    "needs": []
   },
   {
+   "case_key": "chitbridge-api/tests/offers-published-contract.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE OFFER SERVICE'S PUBLISHED OPENAPI IS TYPED (BODY, REQUIRED, 429) WHILE THE ENFORCED SCHEMA STAYS LOOSE.",
+   "claim": "THE OFFER SERVICE'S PUBLISHED OPENAPI IS TYPED (BODY, REQUIRED, 429) WHILE THE ENFORCED SCHEMA STAYS LOOSE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 65 lines. Run: node chitbridge-api/tests/offers-published-contract.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 65,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-integrations.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
