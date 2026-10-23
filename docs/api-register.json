@@ -10515,7 +10515,7 @@
    "path": "/api/privacy/facts",
    "owner_area": "privacy",
    "file": "routes/privacy.js",
-   "line": 42,
+   "line": 43,
    "hash": "9010d0d7917cb45c",
    "columns": {
     "schema_in": true,
@@ -10561,7 +10561,7 @@
    "path": "/api/privacy/me",
    "owner_area": "privacy",
    "file": "routes/privacy.js",
-   "line": 63,
+   "line": 64,
    "hash": "bcf66a61bc43195e",
    "columns": {
     "schema_in": true,
@@ -24688,7 +24688,7 @@
    "path": "/api/privacy/me/consent",
    "owner_area": "privacy",
    "file": "routes/privacy.js",
-   "line": 71,
+   "line": 72,
    "hash": "4b9c7090878d6a92",
    "columns": {
     "schema_in": true,
@@ -24739,7 +24739,7 @@
    "path": "/api/privacy/me/requests",
    "owner_area": "privacy",
    "file": "routes/privacy.js",
-   "line": 84,
+   "line": 85,
    "hash": "6e0e17cb7cd94b64",
    "columns": {
     "schema_in": true,
