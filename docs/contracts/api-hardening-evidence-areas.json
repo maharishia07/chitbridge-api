@@ -117,6 +117,12 @@
   "POST /api/crm/parties/:id/stage": {
    "foreign_id_404": true
   },
+  "POST /api/identity/documents/:scheme/code": {
+   "foreign_id_404": true
+  },
+  "POST /api/identity/documents/:scheme/verify": {
+   "foreign_id_404": true
+  },
   "POST /api/repeat/:id/accept": {
    "foreign_id_404": true
   },

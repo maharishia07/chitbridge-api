@@ -2072,7 +2072,7 @@
   "PUT /api/identity/documents/:scheme": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2086,7 +2086,7 @@
   "POST /api/identity/documents/:scheme/code": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2099,7 +2099,7 @@
   "POST /api/identity/documents/:scheme/verify": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,

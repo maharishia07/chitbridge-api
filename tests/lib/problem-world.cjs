@@ -6,7 +6,7 @@
  *           and the three recordings: --capture (the answers of the code BEFORE the change), --freeze (the refusals of a capture into docs/contracts/api-legacy.json) and
  *           --compare (the answers now, byte for byte against a capture).
  * CALLED BY tests/api-problem-products.test.cjs · tests/api-problem-catalogue.test.cjs · tests/api-problem-network.test.cjs. Not a test itself.
- * Options a sweep may add: `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
+ * Options a sweep may add: `leak` (a RegExp for the text a 5xx must not carry: a route whose own code word is in the Problem type, e.g. VAULT_ENC_UNCONFIGURED → .../vault_enc_unconfigured, names the stand-in's SQL instead of the word), `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
  * FLOW      harness({ here, mounts, routeFiles, ... }) → installStubs() → scenariosOf(routes) → runScenario() → record / check / compare
  * CARD      qa/offline-guards
  * No database, no network. A scenario that needs a row the stand-in cannot make says so in its own `setup.sqlRows`.
@@ -220,7 +220,7 @@ function harness(options) {
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (options.inherited(scenario, answer)) return;
     checkProblemBody(label, answer);
-    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT|vault|relation "/.test(answer.text), answer.text);
+    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !(options.leak || /SELECT|vault|relation "/).test(answer.text), answer.text);
     else if (!scenario.after) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id), options.cannotRide ? options.cannotRide(scenario.route, scenario.id) : []); /* `after`: a refusal the sweep adds, so nothing was frozen */
   }
 

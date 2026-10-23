@@ -778,6 +778,14 @@
     422
    ]
   },
+  "GET /api/identity/documents": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/integrations/docs/:id": {
    "cases": 3,
    "failed": 0,
@@ -2250,6 +2258,22 @@
     422
    ]
   },
+  "POST /api/identity/documents/:scheme/code": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/identity/documents/:scheme/verify": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/integrations/:actor_id/approve": {
    "cases": 4,
    "failed": 0,
@@ -3116,6 +3140,14 @@
   },
   "PUT /api/governance/profile/vault": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "PUT /api/identity/documents/:scheme": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

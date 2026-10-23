@@ -3,8 +3,8 @@
  "stage": "2",
  "counts": {
   "routes": 633,
-  "not_started": 144,
-  "partial": 488,
+  "not_started": 140,
+  "partial": 492,
   "meets": 1,
   "columns": {
    "strict_input": {
@@ -9062,16 +9062,16 @@
    "path": "/api/identity/documents",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 127,
-   "hash": "34886bfbcac3cf8e",
+   "line": 132,
+   "hash": "ad2666d55208a153",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -9087,9 +9087,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    422,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -9098,7 +9105,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/integrations/catalogue",
@@ -23045,16 +23052,16 @@
    "path": "/api/identity/documents/:scheme/code",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 389,
-   "hash": "d44b329f9ef58ae1",
+   "line": 390,
+   "hash": "3b01820989658e64",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -23070,9 +23077,19 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    422,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -23081,7 +23098,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/identity/documents/:scheme/verify",
@@ -23089,16 +23106,16 @@
    "path": "/api/identity/documents/:scheme/verify",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 405,
-   "hash": "407af3113bee284b",
+   "line": 409,
+   "hash": "b28d5cdcf41ed79b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -23114,9 +23131,19 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    422,
+    429,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -23125,7 +23152,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/integrations/:actor_id/approve",
@@ -30249,16 +30276,16 @@
    "path": "/api/identity/documents/:scheme",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 221,
-   "hash": "9e43247747de3058",
+   "line": 224,
+   "hash": "0f2b63afeed881fd",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -30274,9 +30301,18 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    422,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -30285,7 +30321,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PUT /api/integrations/streams",
