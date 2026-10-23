@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * api-problem-marketing.test.cjs — API-4 sweep, marketing: every refusal of routes/crm.js, marketing.js, offers.js, network-offers.js and combo-templates.js.
+ * api-problem-marketing.test.cjs — API-4 sweep, marketing: every refusal of routes/marketing.js, offers.js and combo-templates.js (routes/crm.js is the crm sweep's, #373: one route, one owner; routes/network-offers.js is its own sweep after SEC-91).
  *
- * OWNS      the proof that each refusal of these five routers is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the
+ * OWNS      the proof that each refusal of these three routers is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the
  *           code before the sweep), and this file's rows of docs/contracts/api-error-tests.json (the statuses each route is tested for, which the register's error_tests column reads).
  *           Also: no answer outside the statuses the route's contract declares (lib/*-contract.js), and the refusal mappers of the five contracts as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routers over a stand-in db and auth.
@@ -25,12 +25,10 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-/** the five routers: mount, route file (named in full so the graph links this test to each), and the contract module that declares its statuses */
+/** the three routers: mount, route file (named in full so the graph links this test to each), and the contract module that declares its statuses */
 const AREAS = [
-  { mount: '/api/crm', file: 'routes/crm.js', contract: 'lib/crm-contract.js', export: 'contract' },
   { mount: '/api/marketing', file: 'routes/marketing.js', contract: 'lib/marketing-contract.js', export: 'marketingContract' },
   { mount: '/api/offers', file: 'routes/offers.js', contract: 'lib/offers-contract.js', export: 'contract' },
-  { mount: '/api/network-offers', file: 'routes/network-offers.js', contract: 'lib/network-offers-contract.js', export: 'contract' },
   { mount: '/api/combo-templates', file: 'routes/combo-templates.js', contract: 'lib/combo-templates-contract.js', export: 'contract' }
 ];
 const MINE = (route) => AREAS.some((area) => route.includes(' ' + area.mount + '/') || route.endsWith(' ' + area.mount));
@@ -106,17 +104,10 @@ const X = (id, route, status, extra) => Object.assign({ id, route, expect: statu
 const THROWS = () => {
   throw new Error(SECRET_SQL);
 };
-const throwsLater = async () => THROWS();
 /** a refusal a library throws (lib/crm-followups bad()): .status, .code and the sentence */
 const refusal = (status, code, message) => async () => {
   throw Object.assign(new Error(message), { status, code });
 };
-const MIGRATED = (sql) => (/to_regclass\('party_interaction'\)/.test(sql) ? { rows: [{ i: true, f: true }], rowCount: 1 } : undefined);
-const NEED_OK = ['lib/memberships.js', 'need', async () => undefined];
-const OFFER_ROW = (status) => (sql) =>
-  /FROM definition WHERE entity_id = \$1 AND definition_id/.test(sql)
-    ? { rows: [{ definition_id: PARTY, name: 'Spring offer', status, current_version: 1 }], rowCount: 1 }
-    : undefined;
 const COMBO_ROW = (sql) =>
   /FROM combo_templates WHERE id=\$1/.test(sql) ? { rows: [{ name: 'Combo', definition: [], price: null, product_item_id: null }], rowCount: 1 } : undefined;
 const GOOD_COMBO = { name: 'Combo', definition: [{ name: 'Size', options: [{ name: 'Large', price: 10 }] }] };
@@ -124,51 +115,6 @@ const LINES = { lines: [{ qty: 1, unitPrice: 5 }], offers: [{ kind: 'percent_off
 const DB_FAILS = { db: 'fail' };
 /** the extras: an answer the generic worlds cannot reach (a named refusal inside a handler, a fault behind a body the handler accepts) */
 const EXTRAS = [
-  X('db-fails-with-party', 'POST /api/crm/followups', 500, { setup: DB_FAILS, body: { party_id: PARTY, what: 'Ring' } }),
-  X('followup-not-there', 'DELETE /api/crm/followups/:id', 404, { setup: { sqlRows: MIGRATED } }),
-  X('followup-not-there', 'PATCH /api/crm/followups/:id', 404, { setup: { sqlRows: MIGRATED }, body: { done: true } }),
-  X('db-fails-with-group', 'POST /api/crm/groups', 500, { setup: DB_FAILS, body: { name: 'vip', add: [PARTY] } }),
-  X('db-fails-with-lead', 'POST /api/crm/leads', 500, { setup: DB_FAILS, body: { name: 'Asha Rao' }, patch: [NEED_OK] }),
-  X('db-fails-with-rows', 'POST /api/crm/leads/import', 500, { setup: DB_FAILS, body: { rows: [{ name: 'Asha Rao' }] }, patch: [NEED_OK] }),
-  X('party-not-yours', 'POST /api/crm/parties/:id/interactions', 404, { setup: { sqlRows: MIGRATED }, body: { kind: 'note', body: 'x' } }),
-  X('party-not-yours', 'POST /api/crm/parties/:id/outcome', 404, { setup: { sqlRows: MIGRATED }, body: { outcome: 'interested' } }),
-  X('db-fails-with-outcome', 'POST /api/crm/parties/:id/outcome', 500, { setup: DB_FAILS, body: { outcome: 'interested' } }),
-  X('lead-not-yours', 'POST /api/crm/parties/:id/stage', 404, { body: { stage: 'lead' }, patch: [NEED_OK] }),
-  X('db-fails-with-stage', 'POST /api/crm/parties/:id/stage', 500, { setup: DB_FAILS, body: { stage: 'lead' }, patch: [NEED_OK] }),
-  X('library-says-not-found', 'POST /api/crm/privacy-requests/:id/answer', 404, {
-    body: { outcome: 'done', answer: 'Done.' },
-    patch: [['lib/privacy.js', 'answerRequest', refusal(404, 'NOT_FOUND', 'No such request.')]]
-  }),
-  X('library-says-not-found', 'POST /api/crm/segments/:key/send', 404, {
-    url: '/api/crm/segments/high_value/send',
-    body: { text: 'Hello' },
-    patch: [['lib/crm-groups.js', 'send', refusal(404, 'NOT_FOUND', 'No group by that name.')]]
-  }),
-  X('db-fails-with-text', 'POST /api/crm/segments/:key/send', 500, { setup: DB_FAILS, url: '/api/crm/segments/high_value/send', body: { text: 'Hello' } }),
-  X('db-fails-with-phone', 'POST /api/crm/walk-ins/add', 500, { setup: DB_FAILS, body: { phone: '9876543210' } }),
-  X('network-read-breaks', 'GET /api/network-offers', 500, { patch: [['lib/network-offers.js', 'brandView', throwsLater]] }),
-  X('policy-write-breaks', 'PUT /api/network-offers/policy', 500, { body: { policy: 'opt_in' }, patch: [['lib/network-offers.js', 'mergeFlag', throwsLater]] }),
-  X('price-answer-breaks', 'POST /api/network-offers/catalogue/price', 500, {
-    body: { source_key: 's', name: 'n', choice: 'use' },
-    patch: [['lib/network-catalogue.js', 'answer', throwsLater]]
-  }),
-  X('offer-not-live', 'POST /api/network-offers/:id/release', 409, { setup: { sqlRows: OFFER_ROW('draft') } }),
-  X('ends-before-start', 'POST /api/network-offers/:id/release', 400, {
-    setup: { sqlRows: OFFER_ROW('live') },
-    body: { at: 'now', until: '2000-01-01T00:00:00Z' }
-  }),
-  X('release-breaks', 'POST /api/network-offers/:id/release', 500, {
-    setup: { sqlRows: OFFER_ROW('live') },
-    patch: [['lib/network-offers.js', 'flagsOf', throwsLater]]
-  }),
-  X('never-released', 'POST /api/network-offers/:id/withdraw', 409, {
-    setup: { sqlRows: OFFER_ROW('live') },
-    patch: [['lib/network-offers.js', 'flagsOf', async () => ({ flags: {} })]]
-  }),
-  X('withdraw-breaks', 'POST /api/network-offers/:id/withdraw', 500, {
-    setup: { sqlRows: OFFER_ROW('live') },
-    patch: [['lib/network-offers.js', 'flagsOf', throwsLater]]
-  }),
   X('engine-breaks', 'POST /api/offers/evaluate', 500, { body: LINES, patch: [['lib/offers-engine.js', 'CBOffers.evaluate', THROWS]] }),
   X('engine-breaks', 'POST /api/offers/explain', 500, { body: LINES, patch: [['lib/offers-engine.js', 'CBOffers.evaluate', THROWS]] }),
   X('engine-breaks', 'GET /api/offers/kinds', 500, { patch: [['lib/offers-engine.js', 'CBOffers.kinds', { get: THROWS }]] }),
@@ -317,7 +263,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
         .sort()
         .map((route) => [route, onDisk[route]])
     );
-    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for these five routers', kit.sameValue(mine, coverage), {
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for these three routers', kit.sameValue(mine, coverage), {
       onDisk: Object.keys(mine).length,
       covered: Object.keys(coverage).length
     });

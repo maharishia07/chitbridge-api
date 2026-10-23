@@ -11,6 +11,15 @@
  ],
  "codes": [
   {
+   "code": "ACTOR_KEY_TAKEN",
+   "status": "400/409",
+   "title": "Login key taken",
+   "shopkeeper": "That login key is already taken, even by someone who was removed.",
+   "hint": "Pick a different key.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ADVICE_EXISTS",
    "status": "409",
    "title": "Advice already recorded",
@@ -63,6 +72,15 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "ALREADY_ASSIGNED",
+   "status": "400",
+   "title": "Already assigned",
+   "shopkeeper": "Someone already holds this task.",
+   "hint": "Ask them to hand it back first.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
   },
   {
    "code": "ALREADY_CLAIMED",
@@ -119,22 +137,85 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ASSIST_BAD_REQUEST",
+   "status": "422",
+   "title": "Question not usable",
+   "shopkeeper": "That question could not be used.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "assist",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ASSIST_GATED",
-   "status": "varies",
-   "title": "Assist gated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "503",
+   "title": "Assistant resting",
+   "shopkeeper": "The assistant is resting for now.",
+   "hint": "The help library answers instead; try again later.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
   {
+   "code": "ASSIST_NOT_CONFIGURED",
+   "status": "503",
+   "title": "Assistant not switched on",
+   "shopkeeper": "The assistant is not switched on here yet.",
+   "hint": "The help library answers instead.",
+   "owner_area": "assist",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ASSIST_NOT_HELPDESK",
+   "status": "403",
+   "title": "Help desks only",
+   "shopkeeper": "Only a help desk can publish to its catalogue.",
+   "hint": "Ask your help desk to publish this answer.",
+   "owner_area": "assist",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ASSIST_NOT_OWNER",
+   "status": "403",
+   "title": "Owned by another brand",
+   "shopkeeper": "That belongs to another brand, so you cannot change it.",
+   "hint": "Change only what your own business owns.",
+   "owner_area": "assist",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ASSIST_NO_ANSWER",
+   "status": "502",
+   "title": "No answer this time",
+   "shopkeeper": "The assistant did not produce an answer.",
+   "hint": "Try again, or read the help library.",
+   "owner_area": "assist",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ASSIST_REVIEW_RETIRED",
+   "status": "410",
+   "title": "Review has moved",
+   "shopkeeper": "Reviewing questions here is retired.",
+   "hint": "Answer the question on its chit, then publish it.",
+   "owner_area": "assist",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ASSIST_SIGN_IN",
    "status": "503",
-   "title": "Assist sign in",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Sign in for the assistant",
+   "shopkeeper": "Sign in for fuller answers from the assistant.",
+   "hint": "Sign in and ask again; the help library answers meanwhile.",
    "owner_area": "assist",
    "since": "2026-10-22"
+  },
+  {
+   "code": "ASSIST_UPSTREAM",
+   "status": "502",
+   "title": "Assistant busy",
+   "shopkeeper": "The assistant is busy right now.",
+   "hint": "Try again in a moment.",
+   "owner_area": "assist",
+   "since": "2026-10-23"
   },
   {
    "code": "AUTO_TOKEN",
@@ -427,9 +508,9 @@
   {
    "code": "CATALOGUE_STORE_MISSING",
    "status": "503",
-   "title": "Catalogue store missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Saved catalogues not ready",
+   "shopkeeper": "Saved catalogues are not ready on this server yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
@@ -458,6 +539,15 @@
    "shopkeeper": "We could not find that business.",
    "hint": "Check its handle and try again.",
    "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_AND_ACTION_REQUIRED",
+   "status": "400",
+   "title": "Task and action needed",
+   "shopkeeper": "Say which task and what to do with it.",
+   "hint": "Send the task and the action.",
+   "owner_area": "actors",
    "since": "2026-10-23"
   },
   {
@@ -614,6 +704,51 @@
    "since": "2026-10-23"
   },
   {
+   "code": "COMBO_INVALID",
+   "status": "400",
+   "title": "Combo needs groups",
+   "shopkeeper": "A combo needs at least one group, each with a name and options.",
+   "hint": "Add a group with an option and save again.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_NAME_INVALID",
+   "status": "400",
+   "title": "Combo needs a name",
+   "shopkeeper": "A saved combo needs a name of up to 120 characters.",
+   "hint": "Type a name you will look for later.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_PRICE_INVALID",
+   "status": "400",
+   "title": "Combo price not valid",
+   "shopkeeper": "The price must be a number and cannot be negative.",
+   "hint": "Type a price of 0 or more, or leave it empty.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_PRICE_REQUIRED",
+   "status": "400",
+   "title": "Combo price needed",
+   "shopkeeper": "Give this combo a price before pushing it as a new product.",
+   "hint": "Set the price, then push again.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_REFUSED",
+   "status": "400",
+   "title": "Combo refused",
+   "shopkeeper": "This combo cannot be saved as it stands.",
+   "hint": "Read the sentence shown and fix it.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
    "code": "COMMENT_ONLY",
    "status": "403",
    "title": "Comment only",
@@ -635,8 +770,8 @@
    "code": "CONFIRM_REMOVE",
    "status": "400",
    "title": "Confirm remove",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Removing a person cannot be undone, so it needs your confirmation.",
+   "hint": "Confirm the removal to go on.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -705,10 +840,10 @@
   },
   {
    "code": "CONTAINER_STORE_MISSING",
-   "status": "403/503",
-   "title": "Container store missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "503",
+   "title": "Product containers not ready",
+   "shopkeeper": "Product containers are not ready on this server yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
@@ -786,10 +921,10 @@
   },
   {
    "code": "COVER_CONFLICT",
-   "status": "varies",
+   "status": "400",
    "title": "Cover conflict",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Going off would leave someone without cover.",
+   "hint": "Wait until the other person is back, or change who covers.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -1110,28 +1245,28 @@
   },
   {
    "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
-   "status": "varies",
+   "status": "503",
    "title": "Email delivery not configured",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This shop cannot e-mail a first code yet, so nothing was changed.",
+   "hint": "Set up e-mail sending first.",
    "owner_area": "employee-code",
    "since": "2026-10-22"
   },
   {
    "code": "EMAIL_TAKEN",
-   "status": "varies",
+   "status": "409",
    "title": "Email taken",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That e-mail already signs in to another account.",
+   "hint": "Use the person's own e-mail, or leave it empty.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
   {
    "code": "EMPLOYEE_EMAIL_REQUIRED",
-   "status": "varies",
+   "status": "400",
    "title": "Employee email required",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This person needs an e-mail address for the first code.",
+   "hint": "Add their e-mail, then try again.",
    "owner_area": "employee-code",
    "since": "2026-10-22"
   },
@@ -1318,9 +1453,9 @@
   {
    "code": "HANDOFF_STORE_MISSING",
    "status": "503",
-   "title": "Handoff store missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "ERP handoffs not ready",
+   "shopkeeper": "ERP handoffs are not ready on this server yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
@@ -1458,6 +1593,33 @@
    "hint": "If it keeps happening, tell us the request id.",
    "owner_area": "api",
    "since": "2026-10-22"
+  },
+  {
+   "code": "INVALID_ACTION",
+   "status": "400",
+   "title": "Action not understood",
+   "shopkeeper": "That is not something this can do.",
+   "hint": "Send pool, or push with a colleague.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "INVALID_ASSIGNEE",
+   "status": "400",
+   "title": "Default person not allowed",
+   "shopkeeper": "The default person must be able to take tasks.",
+   "hint": "Pick a person with Act or Manager access.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "INVALID_DELEGATE",
+   "status": "400",
+   "title": "Cover not allowed",
+   "shopkeeper": "That person cannot cover.",
+   "hint": "Pick someone else who can take tasks.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
   },
   {
    "code": "INVALID_INPUT",
@@ -1604,6 +1766,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "LINES_REQUIRED",
+   "status": "400",
+   "title": "Lines needed",
+   "shopkeeper": "Send at least one line with a quantity and a unit price.",
+   "hint": "Add the lines to evaluate and send again.",
+   "owner_area": "offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "LINE_BELOW_DELIVERED",
    "status": "409",
    "title": "Below what was delivered",
@@ -1641,10 +1812,10 @@
   },
   {
    "code": "MAX_TASKS_OVER_ENTITY",
-   "status": "varies",
+   "status": "400",
    "title": "Max tasks over entity",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "That is more tasks than the shop allows one person.",
+   "hint": "Raise the limit in Settings first, or give fewer.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -1687,9 +1858,9 @@
   {
    "code": "MKT_NOT_MIGRATED",
    "status": "varies",
-   "title": "Mkt not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Who came back update pending",
+   "shopkeeper": "Who came back arrives after the next update.",
+   "hint": "Try again after the next update.",
    "owner_area": "channels",
    "since": "2026-10-22"
   },
@@ -1724,8 +1895,8 @@
    "code": "NAME_THE_PERSON",
    "status": "400",
    "title": "Name the person",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Say who is away.",
+   "hint": "Pick the person.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -1757,6 +1928,33 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NETWORK_NOTHING_TO_CHANGE",
+   "status": "409",
+   "title": "Stores already up to date",
+   "shopkeeper": "Your stores already have every change.",
+   "hint": "Nothing to publish.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NOTHING_WAITING",
+   "status": "409",
+   "title": "Nothing waiting",
+   "shopkeeper": "Nothing is waiting to be published.",
+   "hint": "Publish a change first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NOT_ADOPTED",
+   "status": "409",
+   "title": "Catalogue not sold here",
+   "shopkeeper": "This store does not sell that catalogue.",
+   "hint": "Join the network catalogue first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NETWORK_ORDERS_OFF",
    "status": "403",
    "title": "Network orders off",
@@ -1775,12 +1973,39 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NETWORK_PRICE_MISSING",
+   "status": "409",
+   "title": "No brand price",
+   "shopkeeper": "The brand has no price for that product.",
+   "hint": "Ask the brand to suggest a price.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NETWORK_READ_FAILED",
    "status": "503",
    "title": "Network not read",
    "shopkeeper": "We could not read who is in the network just now. Nothing was changed.",
    "hint": "Try again in a minute.",
    "owner_area": "network-membership",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_REFUSED",
+   "status": "409",
+   "title": "Network step refused",
+   "shopkeeper": "The network cannot take that step as it stands.",
+   "hint": "Read the sentence shown and fix it.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_REQUEST_INVALID",
+   "status": "400",
+   "title": "Network request not valid",
+   "shopkeeper": "That request is not valid: the sentence says what to change.",
+   "hint": "Fix what the sentence says and send again.",
+   "owner_area": "network-offers",
    "since": "2026-10-23"
   },
   {
@@ -1808,6 +2033,15 @@
    "shopkeeper": "Say who to add or remove.",
    "hint": "Pick at least one customer.",
    "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NOTHING_TO_UPDATE",
+   "status": "400",
+   "title": "Nothing to update",
+   "shopkeeper": "Nothing was sent to change.",
+   "hint": "Fill in at least one field.",
+   "owner_area": "actors",
    "since": "2026-10-23"
   },
   {
@@ -2054,6 +2288,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_PIN_SET",
+   "status": "400",
+   "title": "No PIN set",
+   "shopkeeper": "No PIN is set yet.",
+   "hint": "Set your PIN when you sign in.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NO_PLATFORM_ROOT",
    "status": "404",
    "title": "No platform operator",
@@ -2151,6 +2394,42 @@
    "hint": "-",
    "owner_area": "offer-clash",
    "since": "2026-10-22"
+  },
+  {
+   "code": "OFFER_ENDS_BEFORE_START",
+   "status": "400",
+   "title": "Offer ends before it starts",
+   "shopkeeper": "The offer would end before it starts.",
+   "hint": "Pick an end after the start.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_NOT_LIVE",
+   "status": "409",
+   "title": "Offer not live",
+   "shopkeeper": "Make the offer live before releasing it to your stores.",
+   "hint": "Make it live, then release.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_NOT_RELEASED",
+   "status": "409",
+   "title": "Offer never released",
+   "shopkeeper": "That offer was never released to your stores.",
+   "hint": "Release it first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_UNKNOWN",
+   "status": "400",
+   "title": "Offer not known",
+   "shopkeeper": "That is not an offer.",
+   "hint": "Pick an offer from the list.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
   },
   {
    "code": "OFFLINE",
@@ -2317,9 +2596,9 @@
   {
    "code": "PENETRATION_STORE_MISSING",
    "status": "503",
-   "title": "Penetration store missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Reach figures not ready",
+   "shopkeeper": "Reach figures are not ready on this server yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
@@ -2351,6 +2630,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "PIN_ACTORS_ONLY",
+   "status": "400",
+   "title": "Only a person can change a PIN",
+   "shopkeeper": "Only a person with their own login can change a PIN.",
+   "hint": "Sign in as that person.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PIN_INCORRECT",
+   "status": "400",
+   "title": "Current PIN is wrong",
+   "shopkeeper": "The current PIN is not right.",
+   "hint": "Try again with your current PIN.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
    "code": "PLATFORM_BOUND",
    "status": "varies",
    "title": "Set by the platform",
@@ -2358,6 +2655,15 @@
    "hint": "It cannot be changed here.",
    "owner_area": "entities",
    "since": "2026-10-22"
+  },
+  {
+   "code": "POLICY_NOT_VALID",
+   "status": "400",
+   "title": "Policy not known",
+   "shopkeeper": "The policy must be opt_in or opt_out.",
+   "hint": "Pick one of the two.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
   },
   {
    "code": "POPULATION_BOUNDARY",
@@ -2496,10 +2802,10 @@
   },
   {
    "code": "REGION_STORE_MISSING",
-   "status": "403/404/503",
-   "title": "Region store missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "503",
+   "title": "Regions not ready",
+   "shopkeeper": "Regional overrides are not ready on this server yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
@@ -2702,6 +3008,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SESSION_ONLY",
+   "status": "403",
+   "title": "Sign in as a person",
+   "shopkeeper": "Network offers are managed by a signed-in person.",
+   "hint": "Sign in as a person, not with a key.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "SESSION_UPGRADE",
    "status": "varies",
    "title": "Session upgrade",
@@ -2767,9 +3082,9 @@
   {
    "code": "SOURCE_STORE_MISSING",
    "status": "503",
-   "title": "Source store missing",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Source authoring not ready",
+   "shopkeeper": "Catalogue source authoring is not ready on this server yet.",
+   "hint": "Try again after the next update.",
    "owner_area": "assist",
    "since": "2026-10-22"
   },
@@ -2831,17 +3146,35 @@
    "code": "SWITCHED_OFF",
    "status": "400/404",
    "title": "Switched off",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This person is switched off.",
+   "hint": "Switch them on first.",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "TARGET_ACTOR_NOT_ACTIVE",
+   "status": "400",
+   "title": "Colleague cannot take tasks",
+   "shopkeeper": "That colleague cannot take tasks right now.",
+   "hint": "Pick someone who is active.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TARGET_ACTOR_REQUIRED",
+   "status": "400",
+   "title": "Colleague needed",
+   "shopkeeper": "Say which colleague gets the tasks.",
+   "hint": "Pick a colleague.",
+   "owner_area": "actors",
+   "since": "2026-10-23"
   },
   {
    "code": "TASKS_TO_ROUTE",
    "status": "400",
    "title": "Tasks to route",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This person still has open tasks.",
+   "hint": "Send them to the pool or to a colleague first.",
    "owner_area": "actors",
    "since": "2026-10-22"
   },
@@ -3071,6 +3404,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "VALIDATION_FAILED",
+   "status": "400",
+   "title": "Fields not valid",
+   "shopkeeper": "Some of what was sent is missing or not valid.",
+   "hint": "Fix the fields listed and send again.",
+   "owner_area": "validate",
+   "since": "2026-10-23"
+  },
+  {
    "code": "VAULT_CHANGED",
    "status": "409",
    "title": "Vault changed",
@@ -3132,6 +3474,15 @@
    "hint": "Apply the pending database update, then build again.",
    "owner_area": "entities",
    "since": "2026-10-22"
+  },
+  {
+   "code": "WITHDRAWN",
+   "status": "403",
+   "title": "They withdrew consent",
+   "shopkeeper": "They withdrew their consent to offers on that channel.",
+   "hint": "Do not send offers there.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "WORKBOOK_CUT",

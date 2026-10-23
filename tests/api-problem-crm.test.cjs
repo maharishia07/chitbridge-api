@@ -7,7 +7,7 @@
  *           code before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json
  *           (the statuses each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world: a record addressed by an id in
  *           the path answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in
- *           docs/contracts/api-hardening-evidence.json. Also: no answer outside the statuses the contract declares (lib/crm-contract.js) and its words as units.
+ *           docs/contracts/api-hardening-evidence-areas.json. Also: no answer outside the statuses the contract declares (lib/crm-contract.js) and its words as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/crm.js and the real libraries over the in-memory stand-in (tests/support/crm-stub.cjs,
  *           the world and the scenes in tests/lib/crm-scenes.cjs).
  * FLOW      route list (read from the router) x world (signed out, a key, a viewer, staff, a failing db, an empty db, a bad id) + the named scenes → real route → body →
@@ -15,7 +15,7 @@
  * CARD      11-crm-and-marketing/crm-routes
  *
  *   node tests/api-problem-crm.test.cjs                    check
- *   node tests/api-problem-crm.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-crm.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-crm.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-crm.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-crm.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -33,7 +33,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/crm';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const ADDED = new Set(S.extras().filter((one) => one.after).map((one) => one.id));
 const { make, row } = require('./support/crm-stub.cjs');
@@ -230,7 +230,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/crm.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);

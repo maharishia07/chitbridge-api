@@ -1,4 +1,12 @@
 {
+ "DELETE /api/actors/:id/pin": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
  "DELETE /api/books/recurring/:id": [
   401,
   403,
@@ -88,6 +96,64 @@
  "GET /.well-known/ctp.json": [
   200,
   500
+ ],
+ "GET /api/actors": [
+  401,
+  500
+ ],
+ "GET /api/actors/:id/tasks": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/actors/access-events": [
+  401,
+  500
+ ],
+ "GET /api/actors/settings": [
+  401,
+  500
+ ],
+ "GET /api/assist/catalogue-mine": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/assist/catalogue-source/:key": [
+  404,
+  500
+ ],
+ "GET /api/assist/container/:id": [
+  404,
+  500
+ ],
+ "GET /api/assist/erp-handoffs": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/assist/gaps": [
+  401
+ ],
+ "GET /api/assist/penetration": [
+  401,
+  500,
+  503
+ ],
+ "GET /api/assist/questions": [
+  500
+ ],
+ "GET /api/assist/regions": [
+  500
+ ],
+ "GET /api/assist/resolve": [
+  400,
+  404,
+  500
+ ],
+ "GET /api/assist/whoami": [
+  401
  ],
  "GET /api/books/accounts": [
   401,
@@ -775,12 +841,6 @@
   500,
   503
  ],
- "GET /api/network-offers": [
-  401,
-  403,
-  500,
-  503
- ],
  "GET /api/network/entities/:id/connections": [
   401,
   403,
@@ -1056,6 +1116,14 @@
   403,
   500
  ],
+ "PATCH /api/actors/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -1158,6 +1226,67 @@
   401,
   404,
   500
+ ],
+ "POST /api/actors": [
+  400,
+  401,
+  403,
+  409,
+  500,
+  503
+ ],
+ "POST /api/actors/:id/otp": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/actors/check-key": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/actors/suggest-key": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/assist": [
+  422,
+  500,
+  502,
+  503
+ ],
+ "POST /api/assist/catalogue-adopt": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/assist/catalogue-structure": [
+  404,
+  500
+ ],
+ "POST /api/assist/conform": [
+  404,
+  422,
+  500
+ ],
+ "POST /api/assist/gap": [
+  422,
+  500
+ ],
+ "POST /api/assist/publish": [
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/assist/resolve": [
+  401,
+  410
  ],
  "POST /api/books/accounts": [
   401,
@@ -1995,45 +2124,6 @@
   413,
   500
  ],
- "POST /api/network-offers/:id/choice": [
-  400,
-  401,
-  403,
-  500
- ],
- "POST /api/network-offers/:id/release": [
-  400,
-  401,
-  403,
-  404,
-  409,
-  500
- ],
- "POST /api/network-offers/:id/withdraw": [
-  401,
-  403,
-  404,
-  409,
-  500
- ],
- "POST /api/network-offers/catalogue/cancel": [
-  401,
-  403,
-  409,
-  500
- ],
- "POST /api/network-offers/catalogue/price": [
-  400,
-  401,
-  403,
-  500
- ],
- "POST /api/network-offers/catalogue/publish": [
-  401,
-  403,
-  404,
-  500
- ],
  "POST /api/network/connections": [
   400,
   401,
@@ -2518,6 +2608,75 @@
   409,
   500
  ],
+ "PUT /api/actors/:id/delegate": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/actors/:id/status": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "PUT /api/actors/:id/tasks/route": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/actors/assign/:chit_id": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/actors/break": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "PUT /api/actors/change-pin": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PUT /api/actors/settings": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "PUT /api/assist/catalogue-source": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/assist/container": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/assist/region-override": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "PUT /api/catalogue-face": [
   400,
   401,
@@ -2634,12 +2793,6 @@
   400,
   401,
   413,
-  500
- ],
- "PUT /api/network-offers/policy": [
-  400,
-  401,
-  403,
   500
  ],
  "PUT /api/products/:id/availability": [
