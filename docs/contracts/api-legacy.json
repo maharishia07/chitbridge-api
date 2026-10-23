@@ -33252,6 +33252,1776 @@
      }
     }
    ]
+  },
+  "GET /api/entities/entitlements": {
+   "answers": [
+    {
+     "scenario": "entitlements-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read entitlements",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read entitlements",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/header": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Header read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Header read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "header-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Header read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Header read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/lookup": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     },
+     "fixture": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     },
+     "fixture": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     },
+     "fixture": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     },
+     "fixture": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     }
+    },
+    {
+     "scenario": "lookup-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     },
+     "fixture": {
+      "error": "Missing user_id",
+      "message": "Provide ?user_id="
+     }
+    },
+    {
+     "scenario": "lookup-none",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No entity with that user_id"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No entity with that user_id"
+     }
+    },
+    {
+     "scenario": "lookup-asked-twice",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No entity with that user_id"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No entity with that user_id"
+     }
+    },
+    {
+     "scenario": "lookup-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Lookup failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Lookup failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/me": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Entity not found"
+     },
+     "fixture": {
+      "error": "Entity not found"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Entity not found"
+     },
+     "fixture": {
+      "error": "Entity not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get profile",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get profile",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Entity not found"
+     },
+     "fixture": {
+      "error": "Entity not found"
+     }
+    },
+    {
+     "scenario": "me-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Entity not found"
+     },
+     "fixture": {
+      "error": "Entity not found"
+     }
+    },
+    {
+     "scenario": "me-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get profile",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get profile",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/me/can-see-costs": {
+   "answers": [
+    {
+     "scenario": "can-see-costs-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/mis": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "message": "The platform report is available to the operator entity only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "message": "The platform report is available to the operator entity only."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "mis-no-root",
+     "status": 404,
+     "body_keys": {
+      "error": "No platform root",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     },
+     "fixture": {
+      "error": "No platform root",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     }
+    },
+    {
+     "scenario": "mis-not-root",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "message": "The platform report is available to the operator entity only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "message": "The platform report is available to the operator entity only."
+     }
+    },
+    {
+     "scenario": "mis-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "mis-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not build the report",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/policy": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Policy read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Policy read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "policy-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Policy read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Policy read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/populations": {
+   "answers": [
+    {
+     "scenario": "stranger-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list populations"
+     },
+     "fixture": {
+      "error": "Failed to list populations"
+     }
+    },
+    {
+     "scenario": "populations-not-root",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     }
+    },
+    {
+     "scenario": "populations-no-root",
+     "status": 404,
+     "body_keys": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     },
+     "fixture": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     }
+    },
+    {
+     "scenario": "populations-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list populations"
+     },
+     "fixture": {
+      "error": "Failed to list populations"
+     }
+    }
+   ]
+  },
+  "GET /api/entities/routing": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read where work goes",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read where work goes",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "routing-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read where work goes",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read where work goes",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/search": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     },
+     "fixture": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     },
+     "fixture": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     },
+     "fixture": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     },
+     "fixture": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     }
+    },
+    {
+     "scenario": "search-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     },
+     "fixture": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     }
+    },
+    {
+     "scenario": "search-nothing-asked",
+     "status": 400,
+     "body_keys": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     },
+     "fixture": {
+      "error": "Search query too short",
+      "message": "Enter at least 2 characters"
+     }
+    },
+    {
+     "scenario": "search-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Search failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Search failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/sides": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Sides read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sides read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "sides-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Sides read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sides read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/entities/usage": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Usage read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Usage read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "usage-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Usage read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Usage read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/entities/:id/erase": {
+   "answers": [
+    {
+     "scenario": "stranger-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Erase failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Erase failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "erase-not-platform",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "erase-sealed",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Protected (sealed) entity — cannot be erased."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Protected (sealed) entity — cannot be erased."
+     }
+    },
+    {
+     "scenario": "erase-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Erase failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Erase failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/entities/me/exposure": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     }
+    },
+    {
+     "scenario": "exposure-no-switch",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "switches required — keys: tax, offers, stock, synonyms, hsn, description, media"
+     }
+    },
+    {
+     "scenario": "exposure-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Exposure save failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Exposure save failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/entities/me/locale": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "locale-bad-value",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad preference",
+      "message": "lang is not a valid value"
+     },
+     "fixture": {
+      "error": "Bad preference",
+      "message": "lang is not a valid value"
+     }
+    },
+    {
+     "scenario": "locale-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/entities/me/prefs/:kind": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown preference set"
+     },
+     "fixture": {
+      "error": "Unknown preference set"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown preference set"
+     },
+     "fixture": {
+      "error": "Unknown preference set"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown preference set"
+     },
+     "fixture": {
+      "error": "Unknown preference set"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown preference set"
+     },
+     "fixture": {
+      "error": "Unknown preference set"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown preference set"
+     },
+     "fixture": {
+      "error": "Unknown preference set"
+     }
+    },
+    {
+     "scenario": "prefs-unknown-set",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown preference set"
+     },
+     "fixture": {
+      "error": "Unknown preference set"
+     }
+    },
+    {
+     "scenario": "prefs-prototype-name",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown preference set"
+     },
+     "fixture": {
+      "error": "Unknown preference set"
+     }
+    },
+    {
+     "scenario": "prefs-bad-value",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad preference",
+      "message": "theme is not a valid value"
+     },
+     "fixture": {
+      "error": "Bad preference",
+      "message": "theme is not a valid value"
+     }
+    },
+    {
+     "scenario": "prefs-unknown-font",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad preference",
+      "message": "Unknown reading font"
+     },
+     "fixture": {
+      "error": "Bad preference",
+      "message": "Unknown reading font"
+     }
+    },
+    {
+     "scenario": "prefs-bad-locale",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad preference",
+      "message": "That combination is not a locale ICU recognises"
+     },
+     "fixture": {
+      "error": "Bad preference",
+      "message": "That combination is not a locale ICU recognises"
+     }
+    },
+    {
+     "scenario": "prefs-unknown-zone",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad preference",
+      "message": "Unknown time zone"
+     },
+     "fixture": {
+      "error": "Bad preference",
+      "message": "Unknown time zone"
+     }
+    },
+    {
+     "scenario": "prefs-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/entities/policy": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Policy update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Policy update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "policy-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner may let the books post by themselves.",
+      "message": "Only the owner may let the books post by themselves."
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner may let the books post by themselves.",
+      "message": "Only the owner may let the books post by themselves."
+     }
+    },
+    {
+     "scenario": "policy-bound-flag",
+     "status": 400,
+     "body_keys": {
+      "error": "Policy update failed",
+      "message": "dispute_scope is platform-bound and cannot be changed"
+     },
+     "fixture": {
+      "error": "Policy update failed",
+      "message": "dispute_scope is platform-bound and cannot be changed"
+     }
+    },
+    {
+     "scenario": "policy-unknown-flag",
+     "status": 400,
+     "body_keys": {
+      "error": "Policy update failed",
+      "message": "Unknown or invalid policy flag: nope"
+     },
+     "fixture": {
+      "error": "Policy update failed",
+      "message": "Unknown or invalid policy flag: nope"
+     }
+    },
+    {
+     "scenario": "policy-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Policy update failed",
+      "message": "Policy flags are not migrated on this environment (b130)."
+     },
+     "fixture": {
+      "error": "Policy update failed",
+      "message": "Policy flags are not migrated on this environment (b130)."
+     }
+    },
+    {
+     "scenario": "policy-set-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Policy update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Policy update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/entities/profile": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Profile update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Profile update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "profile-viewer",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "profile-chain-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "business_status",
+        "message": "Invalid value"
+       },
+       {
+        "field": "supplies",
+        "message": "Shop status can be open, closed or away."
+       },
+       {
+        "field": "dispute_handler_actor_id",
+        "message": "Pick a co-assist from the list — that is not a valid id."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "business_status",
+        "message": "Invalid value"
+       },
+       {
+        "field": "supplies",
+        "message": "Shop status can be open, closed or away."
+       },
+       {
+        "field": "dispute_handler_actor_id",
+        "message": "Pick a co-assist from the list — that is not a valid id."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "profile-name-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "A business name is 2 characters or more."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "A business name is 2 characters or more."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "profile-staff-user-id",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "USER_ID_ENTITY_ONLY",
+      "message": "A User ID belongs to the business, not to a person. You sign in as \"key@business\" — that is your login, and it cannot be changed here."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "USER_ID_ENTITY_ONLY",
+      "message": "A User ID belongs to the business, not to a person. You sign in as \"key@business\" — that is your login, and it cannot be changed here."
+     }
+    },
+    {
+     "scenario": "profile-user-id-fixed",
+     "status": 409,
+     "body_keys": {
+      "error": "A User ID cannot be changed",
+      "code": "USER_ID_IMMUTABLE",
+      "message": "Your User ID is \"shop-a\". It is how people sign in and how everything else is named, so it is fixed for the life of the business — like an email address. The name above it can be changed to anything.",
+      "user_id": "shop-a"
+     },
+     "fixture": {
+      "error": "A User ID cannot be changed",
+      "code": "USER_ID_IMMUTABLE",
+      "message": "Your User ID is \"shop-a\". It is how people sign in and how everything else is named, so it is fixed for the life of the business — like an email address. The name above it can be changed to anything.",
+      "user_id": "shop-a"
+     }
+    },
+    {
+     "scenario": "profile-user-id-unusable",
+     "status": 400,
+     "body_keys": {
+      "error": "Choose a User ID",
+      "code": "USER_ID_INVALID",
+      "message": "A User ID is at least 8 characters. \"a b\" is 3."
+     },
+     "fixture": {
+      "error": "Choose a User ID",
+      "code": "USER_ID_INVALID",
+      "message": "A User ID is at least 8 characters. \"a b\" is 3."
+     }
+    },
+    {
+     "scenario": "profile-user-id-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "That User ID is taken",
+      "code": "USER_ID_TAKEN",
+      "message": "\"fresh-name\" is already registered. Choose another — it cannot be changed later."
+     },
+     "fixture": {
+      "error": "That User ID is taken",
+      "code": "USER_ID_TAKEN",
+      "message": "\"fresh-name\" is already registered. Choose another — it cannot be changed later."
+     }
+    },
+    {
+     "scenario": "profile-handler-not-yours",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad handler",
+      "message": "dispute_handler_actor_id must be an actor under your entity"
+     },
+     "fixture": {
+      "error": "Bad handler",
+      "message": "dispute_handler_actor_id must be an actor under your entity"
+     }
+    },
+    {
+     "scenario": "profile-staff-currency",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "CURRENCY_ENTITY_ONLY",
+      "message": "The currency your prices are written in belongs to the business. Ask whoever runs the account to change it in Settings."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "CURRENCY_ENTITY_ONLY",
+      "message": "The currency your prices are written in belongs to the business. Ask whoever runs the account to change it in Settings."
+     }
+    },
+    {
+     "scenario": "profile-currency-malformed",
+     "status": 400,
+     "body_keys": {
+      "error": "Currency not permitted",
+      "code": "CURRENCY_MALFORMED",
+      "message": "\"U$D\" is not a currency code. Use the three-letter ISO 4217 code, like SGD."
+     },
+     "fixture": {
+      "error": "Currency not permitted",
+      "code": "CURRENCY_MALFORMED",
+      "message": "\"U$D\" is not a currency code. Use the three-letter ISO 4217 code, like SGD."
+     }
+    },
+    {
+     "scenario": "profile-tax-number-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Tax number not accepted",
+      "code": "TAX_ID_BAD",
+      "message": "That does not look like a GSTIN (15 characters, e.g. 27AAPFU0939F1ZV)."
+     },
+     "fixture": {
+      "error": "Tax number not accepted",
+      "code": "TAX_ID_BAD",
+      "message": "That does not look like a GSTIN (15 characters, e.g. 27AAPFU0939F1ZV)."
+     }
+    },
+    {
+     "scenario": "profile-visibility-capped",
+     "status": 403,
+     "body_keys": {
+      "error": "Not allowed",
+      "message": "Your network operator set this entity to stay closed. It cannot publish a public catalogue.",
+      "capped_by": "operator"
+     },
+     "fixture": {
+      "error": "Not allowed",
+      "message": "Your network operator set this entity to stay closed. It cannot publish a public catalogue.",
+      "capped_by": "operator"
+     }
+    },
+    {
+     "scenario": "profile-visibility-not-migrated",
+     "status": 409,
+     "body_keys": {
+      "error": "Not stored",
+      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "code": "VISIBILITY_NOT_MIGRATED"
+     },
+     "fixture": {
+      "error": "Not stored",
+      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "code": "VISIBILITY_NOT_MIGRATED"
+     }
+    },
+    {
+     "scenario": "profile-visibility-not-stored",
+     "status": 500,
+     "body_keys": {
+      "error": "Not stored",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Not stored",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "profile-schema-not-stored",
+     "status": 500,
+     "body_keys": {
+      "error": "Not stored",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Not stored",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "profile-user-id-race",
+     "status": 409,
+     "body_keys": {
+      "error": "Taken",
+      "message": "That user_id is already in use"
+     },
+     "fixture": {
+      "error": "Taken",
+      "message": "That user_id is already in use"
+     }
+    },
+    {
+     "scenario": "profile-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Profile update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Profile update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/entities/populations": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     },
+     "fixture": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     },
+     "fixture": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     },
+     "fixture": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     }
+    },
+    {
+     "scenario": "population-not-root",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     }
+    },
+    {
+     "scenario": "population-no-root",
+     "status": 404,
+     "body_keys": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     },
+     "fixture": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     }
+    },
+    {
+     "scenario": "population-code-unusable",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     },
+     "fixture": {
+      "error": "Not a usable code",
+      "message": "Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is stored on every entity in the population and appears in links."
+     }
+    },
+    {
+     "scenario": "population-needs-a-name",
+     "status": 400,
+     "body_keys": {
+      "error": "Needs a name",
+      "message": "What should it be called?"
+     },
+     "fixture": {
+      "error": "Needs a name",
+      "message": "What should it be called?"
+     }
+    },
+    {
+     "scenario": "population-needs-a-note",
+     "status": 400,
+     "body_keys": {
+      "error": "Needs a note",
+      "message": "Say what this population is for. A world nobody can describe is one nobody can decide to use."
+     },
+     "fixture": {
+      "error": "Needs a note",
+      "message": "Say what this population is for. A world nobody can describe is one nobody can decide to use."
+     }
+    },
+    {
+     "scenario": "population-exists",
+     "status": 409,
+     "body_keys": {
+      "error": "Already exists",
+      "message": "There is already a population called lab."
+     },
+     "fixture": {
+      "error": "Already exists",
+      "message": "There is already a population called lab."
+     }
+    },
+    {
+     "scenario": "population-registry-missing",
+     "status": 409,
+     "body_keys": {
+      "error": "Not available yet",
+      "message": "Run migration b249 — the population registry does not exist in this database."
+     },
+     "fixture": {
+      "error": "Not available yet",
+      "message": "Run migration b249 — the population registry does not exist in this database."
+     }
+    },
+    {
+     "scenario": "population-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to add the population",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to add the population",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/entities/populations/:code/desk": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "No such population",
+      "message": "There is no population called 22222222-2222-4222-8222-222222222222."
+     },
+     "fixture": {
+      "error": "No such population",
+      "message": "There is no population called 22222222-2222-4222-8222-222222222222."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "No such population",
+      "message": "There is no population called nope."
+     },
+     "fixture": {
+      "error": "No such population",
+      "message": "There is no population called nope."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not set the desk",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not set the desk",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "No such population",
+      "message": "There is no population called 22222222-2222-4222-8222-222222222222."
+     },
+     "fixture": {
+      "error": "No such population",
+      "message": "There is no population called 22222222-2222-4222-8222-222222222222."
+     }
+    },
+    {
+     "scenario": "desk-not-root",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only."
+     }
+    },
+    {
+     "scenario": "desk-no-root",
+     "status": 404,
+     "body_keys": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     },
+     "fixture": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface."
+     }
+    },
+    {
+     "scenario": "desk-no-such-population",
+     "status": 404,
+     "body_keys": {
+      "error": "No such population",
+      "message": "There is no population called ghost."
+     },
+     "fixture": {
+      "error": "No such population",
+      "message": "There is no population called ghost."
+     }
+    },
+    {
+     "scenario": "desk-column-missing",
+     "status": 409,
+     "body_keys": {
+      "error": "Not available yet",
+      "message": "Run migration b252 — the desk column does not exist in this database yet."
+     },
+     "fixture": {
+      "error": "Not available yet",
+      "message": "Run migration b252 — the desk column does not exist in this database yet."
+     }
+    },
+    {
+     "scenario": "desk-not-for-this-population",
+     "status": 409,
+     "body_keys": {
+      "error": "Not a desk for this population",
+      "message": "that business is not in this population",
+      "hint": "Pick one of its own."
+     },
+     "fixture": {
+      "error": "Not a desk for this population",
+      "message": "that business is not in this population",
+      "hint": "Pick one of its own."
+     }
+    },
+    {
+     "scenario": "desk-not-for-this-population-no-hint",
+     "status": 409,
+     "body_keys": {
+      "error": "Not a desk for this population",
+      "message": "pg 23514",
+      "hint": null
+     },
+     "fixture": {
+      "error": "Not a desk for this population",
+      "message": "pg 23514",
+      "hint": null
+     }
+    },
+    {
+     "scenario": "desk-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not set the desk",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not set the desk",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/entities/routing": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     },
+     "fixture": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     },
+     "fixture": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     },
+     "fixture": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     },
+     "fixture": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     }
+    },
+    {
+     "scenario": "routing-bad-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     },
+     "fixture": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     }
+    },
+    {
+     "scenario": "routing-no-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     },
+     "fixture": {
+      "error": "Not a routable kind",
+      "message": "Routing is set per kind of work, and that is not one of them."
+     }
+    },
+    {
+     "scenario": "routing-table-not-there",
+     "status": 409,
+     "body_keys": {
+      "error": "Not available yet",
+      "message": "Run migration b250 — the routing table does not exist in this database."
+     },
+     "fixture": {
+      "error": "Not available yet",
+      "message": "Run migration b250 — the routing table does not exist in this database."
+     }
+    },
+    {
+     "scenario": "routing-team-outside-network",
+     "status": 409,
+     "body_keys": {
+      "error": "Not your network",
+      "message": "that team is outside your network",
+      "hint": "Pick a team of your own network."
+     },
+     "fixture": {
+      "error": "Not your network",
+      "message": "that team is outside your network",
+      "hint": "Pick a team of your own network."
+     }
+    },
+    {
+     "scenario": "routing-team-outside-network-no-hint",
+     "status": 409,
+     "body_keys": {
+      "error": "Not your network",
+      "message": "pg 23514",
+      "hint": null
+     },
+     "fixture": {
+      "error": "Not your network",
+      "message": "pg 23514",
+      "hint": null
+     }
+    },
+    {
+     "scenario": "routing-folder-gone",
+     "status": 409,
+     "body_keys": {
+      "error": "Gone",
+      "message": "That folder or person no longer exists. Pick another."
+     },
+     "fixture": {
+      "error": "Gone",
+      "message": "That folder or person no longer exists. Pick another."
+     }
+    },
+    {
+     "scenario": "routing-save-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

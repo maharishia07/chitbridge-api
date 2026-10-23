@@ -488,6 +488,65 @@
   200,
   500
  ],
+ "GET /api/entities/entitlements": [
+  401,
+  500
+ ],
+ "GET /api/entities/header": [
+  401,
+  500
+ ],
+ "GET /api/entities/lookup": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/entities/me": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/entities/me/can-see-costs": [
+  401,
+  500
+ ],
+ "GET /api/entities/mis": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/entities/policy": [
+  401,
+  500
+ ],
+ "GET /api/entities/populations": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/entities/routing": [
+  401,
+  500
+ ],
+ "GET /api/entities/routing/preview": [
+  401
+ ],
+ "GET /api/entities/search": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/entities/sides": [
+  401,
+  500
+ ],
+ "GET /api/entities/usage": [
+  401,
+  500
+ ],
  "GET /api/facts/:card": [
   401,
   403,
@@ -998,6 +1057,42 @@
   401,
   403,
   404,
+  500
+ ],
+ "PATCH /api/entities/:id/erase": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "PATCH /api/entities/me/exposure": [
+  400,
+  401,
+  500
+ ],
+ "PATCH /api/entities/me/locale": [
+  400,
+  401,
+  500
+ ],
+ "PATCH /api/entities/me/prefs/:kind": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/entities/policy": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "PATCH /api/entities/profile": [
+  400,
+  401,
+  403,
+  409,
   500
  ],
  "PATCH /api/folders/:id": [
@@ -1685,6 +1780,14 @@
   200,
   400,
   403,
+  409,
+  500
+ ],
+ "POST /api/entities/populations": [
+  400,
+  401,
+  403,
+  404,
   409,
   500
  ],
@@ -2379,6 +2482,20 @@
   400,
   401,
   404,
+  500
+ ],
+ "PUT /api/entities/populations/:code/desk": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PUT /api/entities/routing": [
+  400,
+  401,
+  409,
   500
  ],
  "PUT /api/folders/inventory/:code": [

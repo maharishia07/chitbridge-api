@@ -23,6 +23,17 @@ const validate = (req, res, next) => {
   next();
 };
 
+/**
+ * validateAsProblem — validate()'s twin for a route that has moved to the standard (API-STANDARD S1): the SAME verdict from the same express-validator chains and the SAME old body
+ * ({ error: 'Validation failed', details: [{ field, message }] }), answered as a Problem (400, code INVALID_INPUT) with those keys beside the Problem fields.
+ */
+const validateAsProblem = (req, res, next) => {
+  const errors = validationResult(req);
+  if (errors.isEmpty()) return next();
+  const details = errors.array().map((e) => ({ field: e.path, message: e.msg }));
+  return problem(req, res, { status: 400, code: 'INVALID_INPUT', detail: details[0].message, field: details[0].field, legacy: { error: 'Validation failed', details } });
+};
+
 // Sanitise string — remove dangerous characters
 const sanitise = (str) => {
   if (!str) return str;
@@ -115,4 +126,4 @@ function schemaValidate(operation, options) {
   return schemaValidated;
 }
 
-module.exports = { validate, sanitise, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
+module.exports = { validate, validateAsProblem, sanitise, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };

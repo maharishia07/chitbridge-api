@@ -967,27 +967,27 @@
   {
    "code": "CURRENCY_ENTITY_ONLY",
    "status": "403",
-   "title": "Currency entity only",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Currency is the business’s",
+   "shopkeeper": "The currency your prices are written in belongs to the business.",
+   "hint": "Ask whoever runs the account to change it in Settings.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "CURRENCY_MALFORMED",
    "status": "varies",
-   "title": "Currency malformed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not a currency code",
+   "shopkeeper": "That is not a currency code.",
+   "hint": "Use the three-letter code, like SGD.",
    "owner_area": "govresolve",
    "since": "2026-10-22"
   },
   {
    "code": "CURRENCY_NOT_ALLOWED",
    "status": "varies",
-   "title": "Currency not allowed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Currency not available",
+   "shopkeeper": "That currency is not available for this business.",
+   "hint": "Choose one of the currencies listed.",
    "owner_area": "govresolve",
    "since": "2026-10-22"
   },
@@ -1136,6 +1136,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ENTITY_BAD_REQUEST",
+   "status": "400",
+   "title": "Request not usable",
+   "shopkeeper": "What was sent is missing something or cannot be used.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ENTITY_CLASH",
+   "status": "409",
+   "title": "Clashes with what is recorded",
+   "shopkeeper": "That clashes with what is already recorded.",
+   "hint": "Read the sentence shown, then pick another.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ENTITY_EMAIL_TAKEN",
    "status": "409",
    "title": "Email already used",
@@ -1145,12 +1163,30 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ENTITY_NOT_MIGRATED",
+   "status": "varies",
+   "title": "Update still to run",
+   "shopkeeper": "This part is not ready on this server yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ENTITY_QUOTA",
    "status": "409",
    "title": "Shop limit reached",
    "shopkeeper": "This installation cannot add another shop on its plan.",
    "hint": "Choose a plan with room for more shops.",
    "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ENTITY_SEALED",
+   "status": "403",
+   "title": "Protected business",
+   "shopkeeper": "This business is protected and cannot be erased.",
+   "hint": "Nothing to do: protected businesses stay.",
+   "owner_area": "entities",
    "since": "2026-10-23"
   },
   {
@@ -1849,9 +1885,9 @@
   {
    "code": "NOT_PLATFORM_ROOT",
    "status": "403",
-   "title": "Not platform root",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Platform operator only",
+   "shopkeeper": "This is for the platform operator only.",
+   "hint": "Ask the platform operator.",
    "owner_area": "platformroot",
    "since": "2026-10-22"
   },
@@ -2020,9 +2056,9 @@
   {
    "code": "NO_PLATFORM_ROOT",
    "status": "404",
-   "title": "No platform root",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "No platform operator",
+   "shopkeeper": "This installation has no platform operator set up.",
+   "hint": "Only the platform operator can use this.",
    "owner_area": "platformroot",
    "since": "2026-10-22"
   },
@@ -2317,9 +2353,9 @@
   {
    "code": "PLATFORM_BOUND",
    "status": "varies",
-   "title": "Platform bound",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Set by the platform",
+   "shopkeeper": "The platform sets this for every shop.",
+   "hint": "It cannot be changed here.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
@@ -2466,6 +2502,15 @@
    "hint": "-",
    "owner_area": "assist",
    "since": "2026-10-22"
+  },
+  {
+   "code": "REG_KIND_NOT_OFFERED",
+   "status": "400",
+   "title": "Registration kind not offered",
+   "shopkeeper": "That kind of tax registration is not offered in your country.",
+   "hint": "Pick one of the kinds listed.",
+   "owner_area": "policy",
+   "since": "2026-10-23"
   },
   {
    "code": "REPEAT_BAD_REQUEST",
@@ -2812,9 +2857,9 @@
   {
    "code": "TAX_ID_BAD",
    "status": "varies",
-   "title": "Tax id bad",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Tax number not accepted",
+   "shopkeeper": "That tax number is not accepted for your country.",
+   "hint": "Check the number and try again.",
    "owner_area": "profile",
    "since": "2026-10-22"
   },
@@ -2992,36 +3037,36 @@
   {
    "code": "USER_ID_ENTITY_ONLY",
    "status": "403",
-   "title": "User id entity only",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID is the business’s",
+   "shopkeeper": "A User ID belongs to the business, not to a person.",
+   "hint": "You sign in as key@business; that cannot be changed here.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "USER_ID_IMMUTABLE",
    "status": "409",
-   "title": "User id immutable",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID cannot change",
+   "shopkeeper": "A User ID cannot be changed once it is set.",
+   "hint": "Change the business name instead; the User ID stays.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "USER_ID_INVALID",
    "status": "400",
-   "title": "User id invalid",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID not usable",
+   "shopkeeper": "Choose a User ID that can be used.",
+   "hint": "Read the sentence shown and try another.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
   {
    "code": "USER_ID_TAKEN",
    "status": "409",
-   "title": "User id taken",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "User ID taken",
+   "shopkeeper": "That User ID is already taken.",
+   "hint": "Choose another; it cannot be changed later.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
@@ -3069,6 +3114,15 @@
    "hint": "Ask the owner for edit access.",
    "owner_area": "crm-groups",
    "since": "2026-10-22"
+  },
+  {
+   "code": "VISIBILITY_CAPPED",
+   "status": "403",
+   "title": "Catalogue visibility closed",
+   "shopkeeper": "The catalogue cannot be that open for this business.",
+   "hint": "The sentence names who closed it; ask them.",
+   "owner_area": "entities",
+   "since": "2026-10-23"
   },
   {
    "code": "VISIBILITY_NOT_MIGRATED",

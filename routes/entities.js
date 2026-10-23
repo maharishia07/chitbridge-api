@@ -10,8 +10,22 @@ const { v4: uuidv4 } = require('uuid');
 const visibilityCap = require('../lib/visibility-cap'); // a choice, bounded by a cap
 const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
-const { validate, sanitise } = require('../middleware/validate');
+const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
+const { failed } = contract;
+
+/** the schema check of one route, to spread after its gates (lib/entities-contract.js): a body that is not an object is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
+const checked = (route) => {
+  const operation = contract.entities.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
+};
+/** the platform doors as gates in front of a handler (they answer a Problem themselves and say which statuses they add): the root of the deployment, and the platform role */
+const rootGate = Object.assign((req, res, next) => (require('../lib/platformroot').refuseUnlessRoot(req, res) ? next() : undefined), { addsStatuses: [403, 404] });
+function platformGate(req, res, next) {
+  if (require('../lib/platformroot').refuseUnlessPlatform(req, res)) next();
+}
 const { sendOtpEmail } = require('../lib/notify'); // shared OTP email sender (F2 — extracted from here)
 const { resolveEntityGovernance, currencyRefusal } = require('../lib/govresolve'); // resolve the entity's governance from attributes
 
@@ -69,21 +83,13 @@ async function registerNew(req, res) {
     const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
     const verdict = handleLib.checkRoot(wanted);
     if (!verdict.ok) {
-      return res.status(400).json({
-        error: 'Choose a User ID',
-        code: 'USER_ID_INVALID',
-        message: verdict.reason,
-        suggestion: handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null
-      });
+      const suggestion = handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null;
+      return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason, { suggestion }) });
     }
     /* ⚠️ UNIQUE PLATFORM-WIDE, refused HERE — the unique index on lower(user_id) would raise a 500 that says nothing usable */
     const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [verdict.value]);
     if (taken.rows.length) {
-      return res.status(409).json({
-        error: 'That User ID is taken',
-        code: 'USER_ID_TAKEN',
-        message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.'
-      });
+      return problem(req, res, { status: 409, ...contract.words.userIdTaken(verdict.value) });
     }
     /**
      * ⚠️⚠️ A fixture registration is a CUSTOMER that is a TEST (b246 emptied entity_kind = 'test'). ⚠⚠ population, NOT
@@ -125,7 +131,7 @@ async function registerNew(req, res) {
     return await signin.sendCode(req, res, { identity_id, email, display_name }, {});
   } catch (err) {
     console.error('Register error:', err.message);
-    res.status(500).json({ error: 'Registration failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Registration failed'));
   }
 }
 
@@ -164,7 +170,7 @@ router.get('/search', auth, async (req, res) => {
   try {
     const q = sanitise(req.query.q || '');
     if (q.length < 2) {
-      return res.status(400).json({ error: 'Search query too short', message: 'Enter at least 2 characters' });
+      return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     }
     const result = await query(
       /**
@@ -249,7 +255,7 @@ router.get('/search', auth, async (req, res) => {
     res.json({ results: result.rows, count: result.rows.length });
   } catch (err) {
     console.error('Search error:', err.message);
-    res.status(500).json({ error: 'Search failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Search failed'));
   }
 });
 
@@ -284,25 +290,20 @@ router.get('/policy', auth, async (req, res) => {
     const { flags, country } = await policy.read(policyEntity(req));
     res.json({ flags, country, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
   } catch (err) {
-    res.status(500).json({ error: 'Policy read failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Policy read failed'));
   }
 });
 
-router.patch('/policy', auth, async (req, res) => {
+router.patch('/policy', auth, ...checked('PATCH /policy'), async (req, res) => {
   /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key.
      The code is the one owner code (OWNER_ONLY) — the same the GET's may[flag] carries, so a screen branches on one word. */
   const refused = policy.refusalFor(req.body, require('../lib/owner').isOwner(req));
-  if (refused)
-    return res.status(403).json({ error: 'Only the owner may do this.', code: require('../lib/owner').OWNER_ONLY, may: false, why: refused, message: refused });
+  if (refused) return problem(req, res, { status: 403, ...contract.words.policyOwnerOnly(refused) });
   try {
     res.json({ flags: await policy.set(policyEntity(req), req.body || {}) });
   } catch (err) {
     /* a refused value carries its code (REG_KIND_NOT_OFFERED: a kind this country's pack does not offer) and the sentence; a fault never leaks e.message */
-    res.status(err.status || 500).json({
-      error: 'Policy update failed',
-      code: err.status && err.code ? err.code : undefined,
-      message: err.status ? err.message || safeErr(err) : safeErr(err)
-    });
+    problem(req, res, contract.policyFault(err, req));
   }
 });
 
@@ -316,7 +317,7 @@ router.get('/header', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/entity-header').read(entity_id, req.identity.identity_id));
   } catch (err) {
-    res.status(500).json({ error: 'Header read failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Header read failed'));
   }
 });
 
@@ -330,7 +331,7 @@ router.get('/sides', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/sides').read(entity_id, req.identity.identity_id, { req }));
   } catch (err) {
-    res.status(500).json({ error: 'Sides read failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Sides read failed'));
   }
 });
 
@@ -416,7 +417,7 @@ router.get('/me', auth, async (req, res) => {
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Entity not found' });
+    if (result.rows.length === 0) return problem(req, res, { status: 404, ...contract.words.meUnknown() });
     /* ⚠️ DECLARED HERE, BESIDE THE QUERY IT COMES FROM. It was declared 40 lines lower, next to the first
        thing that used it — and the moment a second reader appeared above that point, `const` (not hoisted)
        threw a TDZ error. A binding belongs with its source, not with its first consumer. */
@@ -654,7 +655,7 @@ router.get('/me', auth, async (req, res) => {
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance, ...(want.length ? { included } : {}) });
   } catch (err) {
     console.error('Profile error:', err.message);
-    res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Failed to get profile'));
   }
 });
 
@@ -797,66 +798,76 @@ function prefPatch(set, payload) {
   return { set: out, drop };
 }
 
-async function savePrefSet(req, res, kind) {
-  /**
-   * ⚠️ hasOwnProperty, NOT A TRUTHY LOOKUP — found by red-teaming this endpoint rather than by a failure.
-   *
-   * `PREF_SETS[kind]` walks the PROTOTYPE CHAIN, so `kind=__proto__`, `constructor`, `toString` and
-   * `valueOf` all return something truthy and sail past the 404. None of them can write to a table — the
-   * column comes from `set.column`, which is undefined for all of them — but the request then throws deep
-   * inside the handler and surfaces as a 500 with a confusing log, when the honest answer is "no such set".
-   *
-   * The rule this is a case of: a whitelist consulted with bracket notation is not a whitelist unless the
-   * lookup is own-property. That is the same class as interpolating a caller's string into SQL, one step back.
-   */
-  const set = Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null;
-  if (!set || !set.column) return res.status(404).json({ error: 'Unknown preference set' });
-  try {
-    const p = prefPatch(set, req.body || {});
-    if (p.error) return res.status(400).json({ error: 'Bad preference', message: p.error });
-    const prefs = p.set;
+/**
+ * prefSetOf(kind) → the preference set the kind names, or null.
+ * ⚠️ hasOwnProperty, NOT A TRUTHY LOOKUP — found by red-teaming this endpoint rather than by a failure.
+ *
+ * `PREF_SETS[kind]` walks the PROTOTYPE CHAIN, so `kind=__proto__`, `constructor`, `toString` and
+ * `valueOf` all return something truthy and sail past the 404. None of them can write to a table — the
+ * column comes from `set.column`, which is undefined for all of them — but the request then throws deep
+ * inside the handler and surfaces as a 500 with a confusing log, when the honest answer is "no such set".
+ *
+ * The rule this is a case of: a whitelist consulted with bracket notation is not a whitelist unless the
+ * lookup is own-property. That is the same class as interpolating a caller's string into SQL, one step back.
+ */
+const prefSetOf = (kind) => (Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null);
+/** the kind a preference door writes: the shipped PATCH /me/locale is always 'locale', PATCH /me/prefs/:kind takes it from the path */
+const prefKindOf = (fixedKind, req) => fixedKind || String(req.params.kind || '');
+/**
+ * prefSetRoute(fixedKind) — the handler of the two preference doors, ONE function under two names.
+ * (The two refusals it makes carry their status in their words: only one of the two doors can answer a 404.)
+ */
+const prefSetRoute = (fixedKind) =>
+  async function savePrefSet(req, res) {
+    const kind = prefKindOf(fixedKind, req);
+    const set = prefSetOf(kind);
+    if (!set || !set.column) return problem(req, res, contract.words.unknownPrefSet());
+    try {
+      const p = prefPatch(set, req.body || {});
+      if (p.error) return problem(req, res, contract.words.badPreference(p.error));
+      const prefs = p.set;
 
-    const bad = set.check(prefs);
-    if (bad) return res.status(400).json({ error: 'Bad preference', message: bad });
+      const bad = set.check(prefs);
+      if (bad) return problem(req, res, contract.words.badPreference(bad));
 
-    /* ⚠️ A MERGE-PATCH, NEVER THE WHOLE COLUMN (CU2). This UPDATE used to write `= $1`, so a theme push erased every
-       other key in ui_prefs — the shop's product-rows choice with it. Only the keys sent change; the rest stay. */
-    const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`, [
-      JSON.stringify(prefs),
-      req.identity.identity_id,
-      p.drop
-    ]);
-    const merged = (r && r.rows && r.rows[0] && r.rows[0].v) || prefs;
-    res.json({ ok: true, kind, prefs: merged, [set.column]: merged });
-  } catch (err) {
-    /* ⚠️ Before the migration runs, the column does not exist. The person's preference still works from
-       localStorage and visibly applied, so this must degrade to "not synced yet" rather than surfacing an error
-       over a setting they can see took effect. Code ships before the migration, always. */
-    if (new RegExp(set.column).test(String(err && err.message))) return res.json({ ok: false, pending: true });
-    console.error('Prefs error (' + kind + '):', err.message);
-    res.status(500).json({ error: 'Failed to save', message: safeErr(err) });
-  }
-}
+      /* ⚠️ A MERGE-PATCH, NEVER THE WHOLE COLUMN (CU2). This UPDATE used to write `= $1`, so a theme push erased every
+         other key in ui_prefs — the shop's product-rows choice with it. Only the keys sent change; the rest stay. */
+      const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`, [
+        JSON.stringify(prefs),
+        req.identity.identity_id,
+        p.drop
+      ]);
+      const merged = (r && r.rows && r.rows[0] && r.rows[0].v) || prefs;
+      res.json({ ok: true, kind, prefs: merged, [set.column]: merged });
+    } catch (err) {
+      /* ⚠️ Before the migration runs, the column does not exist. The person's preference still works from
+         localStorage and visibly applied, so this must degrade to "not synced yet" rather than surfacing an error
+         over a setting they can see took effect. Code ships before the migration, always. */
+      if (new RegExp(set.column).test(String(err && err.message))) return res.json({ ok: false, pending: true });
+      console.error('Prefs error (' + kind + '):', err.message);
+      problem(req, res, failed(err, req, 'Failed to save'));
+    }
+  };
 
-router.patch('/me/prefs/:kind', auth, (req, res) => savePrefSet(req, res, String(req.params.kind || '')));
+router.patch('/me/prefs/:kind', auth, ...checked('PATCH /me/prefs/:kind'), prefSetRoute(null));
 
 /**
  * PATCH /entities/me/exposure — the business's DEFAULT "Shown to customers" switches (lib/exposure.js KEYS), merged into
  * policy_flags.storefront_exposure; an item's own switches override them. Only known keys, only booleans.
  */
-router.patch('/me/exposure', auth, async (req, res) => {
+router.patch('/me/exposure', auth, ...checked('PATCH /me/exposure'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const X = require('../lib/exposure');
     const payload = req.body || {};
     const out = {};
     for (const k of X.KEYS) if (k in payload) out[k] = !!payload[k];
-    if (!Object.keys(out).length) return res.status(400).json({ error: 'validation', message: 'switches required — keys: ' + X.KEYS.join(', ') });
+    if (!Object.keys(out).length) return problem(req, res, { status: 400, ...contract.words.exposureNoSwitch() });
     await policy.patchKey(null, entity_id, ['storefront_exposure'], out, { op: 'merge' }); /* T2-POLICY: the one writer */
     const r = await query(`SELECT policy_flags->'storefront_exposure' AS x FROM identities WHERE identity_id = $1`, [entity_id]);
     res.json({ message: 'Defaults saved', exposure: Object.assign({}, X.DEFAULTS, (r.rows[0] && r.rows[0].x) || {}) });
   } catch (err) {
-    res.status(500).json({ error: 'Exposure save failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Exposure save failed'));
   }
 });
 
@@ -877,31 +888,31 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
     const cost = require('../lib/cost');
     res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity' });
   } catch (err) {
-    res.status(500).json({ error: 'Read failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Read failed'));
   }
 });
 
 /* ⚠️ THE SHIPPED PATH, KEPT. Clients deployed before this refactor call /me/locale, and a browser holding a
    cached app.html will keep calling it after the API updates. Removing it would turn a tidy-up into an outage
    for exactly as long as those caches live. */
-router.patch('/me/locale', auth, (req, res) => savePrefSet(req, res, 'locale'));
+router.patch('/me/locale', auth, ...checked('PATCH /me/locale'), prefSetRoute('locale'));
 
 // GET /entities/lookup?user_id=<x> — resolve an entity by its external user_id (ATH-114).
 // The resolution primitive for adding suppliers / connecting by user_id instead of bridge_id.
 router.get('/lookup', auth, async (req, res) => {
   try {
     const uid = String(req.query.user_id || '').trim();
-    if (!uid) return res.status(400).json({ error: 'Missing user_id', message: 'Provide ?user_id=' });
+    if (!uid) return problem(req, res, { status: 400, ...contract.words.lookupMissing() });
     const result = await query(
       `SELECT identity_id, bridge_id, display_name, user_id
          FROM identities
         WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`,
       [uid]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No entity with that user_id' });
+    if (result.rows.length === 0) return problem(req, res, { status: 404, ...contract.words.lookupNone() });
     res.json({ entity: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: 'Lookup failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Lookup failed'));
   }
 });
 
@@ -1004,7 +1015,8 @@ router.patch(
      */
     body('user_id').optional().trim()
   ],
-  validate,
+  validateAsProblem /* the same chains, the same old "Validation failed" body, answered as a Problem */,
+  ...checked('PATCH /profile'),
   async (req, res) => {
     try {
       /* ⚠️ THE SHOP'S ROW, never the caller's (T3-FIXES, CAT-FIX1): a co-assist's name/address/GSTIN save landed on its own actor
@@ -1036,11 +1048,7 @@ router.patch(
        * ⭐ Refused here rather than in the validator, so the message can say WHY instead of "invalid".
        */
       if (req.identity.identity_type === 'actor' && req.body.user_id !== undefined && String(req.body.user_id).trim() !== '') {
-        return res.status(403).json({
-          error: 'Not permitted',
-          code: 'USER_ID_ENTITY_ONLY',
-          message: 'A User ID belongs to the business, not to a person. You sign in as ' + '"key@business" — that is your login, and it cannot be changed here.'
-        });
+        return problem(req, res, { status: 403, ...contract.words.userIdEntityOnly() });
       }
 
       let userId = null;
@@ -1050,29 +1058,15 @@ router.patch(
         const verdict = handleLib.checkRoot(req.body.user_id);
         if (existing) {
           if (verdict.value !== String(existing).toLowerCase()) {
-            return res.status(409).json({
-              error: 'A User ID cannot be changed',
-              code: 'USER_ID_IMMUTABLE',
-              message:
-                'Your User ID is "' +
-                existing +
-                '". It is how people sign in and how everything else ' +
-                'is named, so it is fixed for the life of the business — like an email address. ' +
-                'The name above it can be changed to anything.',
-              user_id: existing
-            });
+            return problem(req, res, { status: 409, ...contract.words.userIdFixed(existing) });
           }
         } else {
           if (!verdict.ok) {
-            return res.status(400).json({ error: 'Choose a User ID', code: 'USER_ID_INVALID', message: verdict.reason });
+            return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason) });
           }
           const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1 AND identity_id <> $2', [verdict.value, id]);
           if (taken.rows.length) {
-            return res.status(409).json({
-              error: 'That User ID is taken',
-              code: 'USER_ID_TAKEN',
-              message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.'
-            });
+            return problem(req, res, { status: 409, ...contract.words.userIdTaken(verdict.value) });
           }
           userId = verdict.value; // lowercase: the uniqueness index is on lower(user_id)
         }
@@ -1081,7 +1075,7 @@ router.patch(
       const handler = req.body.dispute_handler_actor_id || null;
       if (handler) {
         const ok = await query(`SELECT 1 FROM identities WHERE identity_id=$1 AND identity_type='actor' AND parent_entity_id=$2`, [handler, id]);
-        if (!ok.rows.length) return res.status(400).json({ error: 'Bad handler', message: 'dispute_handler_actor_id must be an actor under your entity' });
+        if (!ok.rows.length) return problem(req, res, { status: 400, ...contract.words.badHandler() });
       }
       /**
        * ⭐⭐ THE REGION BOUNDS THE SET; THE ENTITY PICKS ONE FROM IT. Athi, 2026-08-20: *"under region there can
@@ -1101,11 +1095,7 @@ router.patch(
        * A trading currency is a fact about the business that every counterparty reads off a price.
        */
       if (req.identity.identity_type === 'actor' && req.body.currency_code !== undefined) {
-        return res.status(403).json({
-          error: 'Not permitted',
-          code: 'CURRENCY_ENTITY_ONLY',
-          message: 'The currency your prices are written in belongs to the business. Ask whoever runs the ' + 'account to change it in Settings.'
-        });
+        return problem(req, res, { status: 403, ...contract.words.currencyEntityOnly() });
       }
 
       let _cur = null;
@@ -1113,7 +1103,7 @@ router.patch(
         /* ⚠️ ONE ANSWERER — see lib/govresolve.currencyRefusal. The envelope check used to be written out here,
            and the SECOND place that sets this column (network-design/build) was added without it. */
         const refusal = await currencyRefusal(id, req.body.currency_code);
-        if (refusal) return res.status(refusal.code === 'CURRENCY_MALFORMED' ? 400 : 422).json(Object.assign({ error: 'Currency not permitted' }, refusal));
+        if (refusal) return problem(req, res, { status: refusal.code === 'CURRENCY_MALFORMED' ? 400 : 422, ...contract.words.currencyRefused(refusal) });
         _cur = String(req.body.currency_code).toUpperCase();
       }
       /* ⭐ T2-POLICY (SET4): the tax number and address through the ONE writer's fragment (profile.shopIdentitySql), in this statement —
@@ -1124,7 +1114,7 @@ router.patch(
       if (req.body.gstn) {
         const c = await query('SELECT country FROM identities WHERE identity_id = $1', [id]);
         const bad = P.taxIdRefusal(c.rows[0] && c.rows[0].country, req.body.gstn);
-        if (bad) return res.status(400).json({ error: 'Tax number not accepted', code: bad.code, message: bad.why });
+        if (bad) return problem(req, res, { status: 400, ...contract.words.taxNumberRefused(bad) });
         idFields.tax_id = req.body.gstn;
       }
       if (req.body.address) idFields.address = req.body.address;
@@ -1191,7 +1181,7 @@ router.patch(
         const capInfo = await visibilityCapFor(id);
         const verdict = visibilityCap.check(req.body.catalogue_visibility, capInfo);
         if (!verdict.ok) {
-          return res.status(verdict.status).json({ error: 'Not allowed', message: verdict.message, capped_by: capInfo.by });
+          return problem(req, res, { status: verdict.status, ...contract.words.visibilityCapped(verdict, capInfo.by) });
         }
         /**
          * ⚠️ THIS `catch` USED TO SWALLOW EVERYTHING, and it cost twenty minutes and hid my own mistake.
@@ -1211,13 +1201,9 @@ router.patch(
           if (e && e.code === '42703') {
             /* pre-b114: no column yet — genuinely nothing to do */
           } else if (e && e.code === '23514') {
-            return res.status(409).json({
-              error: 'Not stored',
-              message: `This database does not accept "${req.body.catalogue_visibility}" yet — apply migration b115.`,
-              code: 'VISIBILITY_NOT_MIGRATED'
-            });
+            return problem(req, res, { status: 409, ...contract.words.visibilityNotMigrated(req.body.catalogue_visibility) });
           } else {
-            return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
+            return problem(req, res, failed(e, req, 'Not stored'));
           }
         }
 
@@ -1269,29 +1255,28 @@ router.patch(
              silently swallowing it is exactly how the identities write hid its own failure for twenty minutes. */
           if (e && (e.code === '42703' || e.code === '42P01')) {
             /* pre-migration column/table — nothing to do */
-          } else return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
+          } else return problem(req, res, failed(e, req, 'Not stored'));
         }
       }
       res.json({ message: 'Profile updated' });
     } catch (err) {
-      if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });
-      res.status(500).json({ error: 'Profile update failed', message: safeErr(err) });
+      if (err.code === '23505') return problem(req, res, { status: 409, ...contract.words.userIdRace() });
+      problem(req, res, failed(err, req, 'Profile update failed'));
     }
   }
 );
 
 // PATCH /entities/:id/erase — mark an identity erased (tombstone). The platform role only (lib/platformroot.refuseUnlessPlatform, W1-SET).
 // Full PII-redaction sweep is a separate ops routine; this just flips the markers.
-router.patch('/:id/erase', auth, async (req, res) => {
-  if (!require('../lib/platformroot').refuseUnlessPlatform(req, res)) return;
+router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), async (req, res) => {
   try {
     // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
     const s = await query(`SELECT sealed FROM identities WHERE identity_id = $1`, [req.params.id]);
-    if (s.rows[0] && s.rows[0].sealed) return res.status(403).json({ error: 'Forbidden', message: 'Protected (sealed) entity — cannot be erased.' });
+    if (s.rows[0] && s.rows[0].sealed) return problem(req, res, { status: 403, ...contract.words.sealed() });
     await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
     res.json({ message: 'Identity tombstoned', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ error: 'Erase failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Erase failed'));
   }
 });
 
@@ -1385,7 +1370,7 @@ router.get('/usage', auth, async (req, res) => {
       });
     }
     log.error('usage read failed', { id: req.id, err: err.message });
-    res.status(500).json({ error: 'Usage read failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Usage read failed'));
   }
 });
 
@@ -1448,10 +1433,7 @@ router.get('/usage', auth, async (req, res) => {
  * renaming its code would orphan them, and deleting it is already refused by the foreign key. The one thing
  * worse than not being able to remove a population is removing one that entities still point at.
  */
-/* SEC3: the one platform-staff door now lives in lib/platformroot (GET /api/events/stats asks it too) */
-function rootOnly(req, res) {
-  return require('../lib/platformroot').refuseUnlessRoot(req, res);
-}
+/* SEC3: the one platform-staff door lives in lib/platformroot (GET /api/events/stats asks it too); here it is rootGate, above */
 
 /**
  * ── ⭐⭐⭐ WHERE WORK GOES — CONFIGURABLE, NOT A MIGRATION ───────────────────────────────────────────────────────
@@ -1583,16 +1565,16 @@ router.get('/routing', auth, async (req, res) => {
     });
   } catch (e) {
     console.error('routing read:', e.code || '', e.message);
-    res.status(500).json({ error: 'Could not read where work goes', message: safeErr(e) });
+    problem(req, res, failed(e, req, 'Could not read where work goes'));
   }
 });
 
-router.put('/routing', auth, async (req, res) => {
+router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   const me = auth.entityOf(req);
   const b = req.body || {};
   const kind = String(b.kind || '').trim();
   if (!ROUTABLE.some((item) => item.kind === kind)) {
-    return res.status(400).json({ error: 'Not a routable kind', message: 'Routing is set per kind of work, and that is not one of them.' });
+    return problem(req, res, { status: 400, ...contract.words.routingBadKind() });
   }
   /* ⚠️ '' means "clear it", and it must be distinguishable from "leave it alone" — so the client always sends
      all three and null is an answer rather than an omission. */
@@ -1617,18 +1599,16 @@ router.put('/routing', auth, async (req, res) => {
     }
     res.json({ ok: true, kind });
   } catch (e) {
-    if (e.code === '42P01')
-      return res.status(409).json({ error: 'Not available yet', message: 'Run migration b250 — the routing table does not exist in this database.' });
+    if (e.code === '42P01') return problem(req, res, { status: 409, ...contract.words.routingNotThere() });
     /* ⚠️ b251 refuses a team outside your own network, and that refusal is a sentence, not a stack trace. */
-    if (e.code === '23514') return res.status(409).json({ error: 'Not your network', message: e.message, hint: e.hint || null });
-    if (e.code === '23503') return res.status(409).json({ error: 'Gone', message: 'That folder or person no longer exists. Pick another.' });
+    if (e.code === '23514') return problem(req, res, { status: 409, ...contract.words.teamOutsideNetwork(e) });
+    if (e.code === '23503') return problem(req, res, { status: 409, ...contract.words.folderGone() });
     console.error('routing write:', e.code || '', e.message);
-    res.status(500).json({ error: 'Could not save it', message: safeErr(e) });
+    problem(req, res, failed(e, req, 'Could not save it'));
   }
 });
 
-router.get('/populations', auth, async (req, res) => {
-  if (!rootOnly(req, res)) return;
+router.get('/populations', auth, rootGate, async (req, res) => {
   try {
     /* ⭐ the DESK comes back with the row (b252). A screen that has to fetch it separately is a screen where
        the two can disagree, and this one is the only place it can be set. */
@@ -1668,7 +1648,7 @@ router.get('/populations', auth, async (req, res) => {
     /* ⚠️ b249 not run yet is an ANSWER, not a fault: the screen falls back to the two it knows. */
     if (['42P01', '3F000', '42501'].includes(e.code)) return res.json({ populations: [], why: e.code });
     console.error('populations list:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to list populations' });
+    problem(req, res, contract.failedBare(e, req, 'Failed to list populations'));
   }
 });
 
@@ -1683,8 +1663,7 @@ router.get('/populations', auth, async (req, res) => {
  * ⚠️ ROOT ONLY. Which desk answers a whole population is the operator's decision, not a tenant's.
  * ⚠️ AND '' CLEARS IT, deliberately: an operator must be able to take a desk back out without a deploy.
  */
-router.put('/populations/:code/desk', auth, async (req, res) => {
-  if (!rootOnly(req, res)) return;
+router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populations/:code/desk'), async (req, res) => {
   const code = String(req.params.code || '')
     .trim()
     .toLowerCase();
@@ -1694,7 +1673,7 @@ router.put('/populations/:code/desk', auth, async (req, res) => {
     const u = await query('UPDATE ops.population SET desk_entity_id = $2 WHERE code = $1', [code, desk]);
     /* ⚠️ an UPDATE matching nothing is not an error. Without this, setting a desk on a population that does
        not exist answers ok and changes nothing. [[feedback-silence-is-the-bug]] */
-    if (!u.rowCount) return res.status(404).json({ error: 'No such population', message: 'There is no population called ' + code + '.' });
+    if (!u.rowCount) return problem(req, res, { status: 404, ...contract.words.noSuchPopulation(code) });
     /* ⚠️ the resolver memoises for 60s; without this the change looks like it did not save for a minute,
        which is long enough for somebody to set it twice. */
     try {
@@ -1704,18 +1683,16 @@ router.put('/populations/:code/desk', auth, async (req, res) => {
     }
     res.json({ ok: true, code, desk_entity_id: desk });
   } catch (e) {
-    if (e.code === '42703' || e.code === '42P01')
-      return res.status(409).json({ error: 'Not available yet', message: 'Run migration b252 — the desk column does not exist in this database yet.' });
+    if (e.code === '42703' || e.code === '42P01') return problem(req, res, { status: 409, ...contract.words.deskColumnMissing() });
     /* ⚠️ b252's trigger refuses a desk outside the population it serves, or one that is not a business. That
        refusal is a sentence somebody can act on, not a stack trace. */
-    if (e.code === '23514') return res.status(409).json({ error: 'Not a desk for this population', message: e.message, hint: e.hint || null });
+    if (e.code === '23514') return problem(req, res, { status: 409, ...contract.words.notADesk(e) });
     console.error('population desk:', e.code || '', e.message);
-    res.status(500).json({ error: 'Could not set the desk', message: safeErr(e) });
+    problem(req, res, failed(e, req, 'Could not set the desk'));
   }
 });
 
-router.post('/populations', auth, async (req, res) => {
-  if (!rootOnly(req, res)) return;
+router.post('/populations', auth, rootGate, ...checked('POST /populations'), async (req, res) => {
   const code = String((req.body || {}).code || '')
     .trim()
     .toLowerCase();
@@ -1724,29 +1701,20 @@ router.post('/populations', auth, async (req, res) => {
   /* ⚠️ the same shape the database enforces, checked here too so the answer is a sentence rather than a
      constraint name. The database remains the authority — this is the courtesy, not the rule. */
   if (!/^[a-z][a-z0-9_]{1,23}$/.test(code)) {
-    return res.status(400).json({
-      error: 'Not a usable code',
-      message:
-        'Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is ' +
-        'stored on every entity in the population and appears in links.'
-    });
+    return problem(req, res, { status: 400, ...contract.words.populationCodeUnusable() });
   }
-  if (!label) return res.status(400).json({ error: 'Needs a name', message: 'What should it be called?' });
-  if (!note)
-    return res
-      .status(400)
-      .json({ error: 'Needs a note', message: 'Say what this population is for. A world nobody can describe is one nobody can decide to use.' });
+  if (!label) return problem(req, res, { status: 400, ...contract.words.populationNeedsName() });
+  if (!note) return problem(req, res, { status: 400, ...contract.words.populationNeedsNote() });
   try {
     /* ⚠️ is_live is never accepted from the request. The unique index permits one live world and would refuse
        it anyway, but a route that forwards the field is a route somebody will one day trust. */
     await query('INSERT INTO ops.population (code, label, note) VALUES ($1, $2, $3)', [code, label, note]);
     res.status(201).json({ ok: true, code, label });
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'Already exists', message: 'There is already a population called ' + code + '.' });
-    if (['42P01', '3F000', '42501'].includes(e.code))
-      return res.status(409).json({ error: 'Not available yet', message: 'Run migration b249 — the population registry does not exist in this database.' });
+    if (e.code === '23505') return problem(req, res, { status: 409, ...contract.words.populationExists(code) });
+    if (['42P01', '3F000', '42501'].includes(e.code)) return problem(req, res, { status: 409, ...contract.words.populationRegistryMissing() });
     console.error('population create:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to add the population', message: safeErr(e) });
+    problem(req, res, failed(e, req, 'Failed to add the population'));
   }
 });
 
@@ -1758,10 +1726,10 @@ router.get('/mis', auth, async (req, res) => {
     /* ⚠️ ROOT ONLY. This is a cross-tenant view — every other entity gets a flat refusal, not an empty report,
        because an empty report reads as "there is nothing" rather than "this is not yours". */
     if (!platformroot.configured()) {
-      return res.status(404).json({ error: 'No platform root', message: 'PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.' });
+      return problem(req, res, { status: 404, ...contract.words.misNoRoot() });
     }
     if (!platformroot.isRoot(me)) {
-      return res.status(403).json({ error: 'Not the platform root', message: 'The platform report is available to the operator entity only.' });
+      return problem(req, res, { status: 403, ...contract.words.misNotRoot() });
     }
 
     /* ⭐ asked ONCE, before anything that needs it. Both the class ladder and the population predicate below
@@ -1791,7 +1759,7 @@ router.get('/mis', auth, async (req, res) => {
      */
     const escLit = (v) => {
       const t = String(v);
-      if (!/^[a-z][a-z0-9_]{1,23}$/.test(t)) throw Object.assign(new Error('bad population code'), { status: 400 });
+      if (!/^[a-z][a-z0-9_]{1,23}$/.test(t)) throw new Error('bad population code');
       return "'" + t + "'";
     };
 
@@ -2236,10 +2204,10 @@ router.get('/mis', auth, async (req, res) => {
         try {
           const who = await query("SELECT current_user AS u, current_setting('is_superuser') AS su");
           counts_error += ' [connected as ' + who.rows[0].u + ', superuser=' + who.rows[0].su + ']';
-        } catch (problem) {
+        } catch (whoFailed) {
           log.fellBack(
             'entities GET /mis: the read failed — carried on without it',
-            problem
+            whoFailed
           ); /* if even this fails the original error is the more useful one */
         }
       }
@@ -2431,7 +2399,7 @@ router.get('/mis', auth, async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not build the report', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Could not build the report'));
   }
 });
 
@@ -2504,9 +2472,11 @@ router.get('/entitlements', auth, async (req, res) => {
         'switched off after the outage its header records.'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read entitlements', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Could not read entitlements'));
   }
 });
+
+router.openapi = { paths: contract.entities.pathsOf(), schemas: {} };
 
 module.exports = router;
 /* for tests/prefs-merge.test.cjs — the merge-patch split and its SQL */
