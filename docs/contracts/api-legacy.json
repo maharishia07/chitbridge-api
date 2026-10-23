@@ -35022,6 +35022,1424 @@
      }
     }
    ]
+  },
+  "DELETE /api/relationships/suppliers/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "supplier-remove-staff",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     }
+    },
+    {
+     "scenario": "supplier-remove-by-key",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     }
+    },
+    {
+     "scenario": "supplier-remove-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "supplier-remove-has-dues",
+     "status": 409,
+     "body_keys": {
+      "code": "HAS_DUES",
+      "error": "There are open dues on this party.",
+      "message": "There are open dues on this party."
+     },
+     "fixture": {
+      "code": "HAS_DUES",
+      "error": "There are open dues on this party.",
+      "message": "There are open dues on this party."
+     }
+    },
+    {
+     "scenario": "supplier-remove-not-your-party",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "supplier-remove-refused-without-a-code",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Not allowed.",
+      "message": "Not allowed."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Not allowed.",
+      "message": "Not allowed."
+     }
+    },
+    {
+     "scenario": "supplier-remove-not-migrated",
+     "status": 500,
+     "body_keys": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "supplier-remove-library-throws-the-database",
+     "status": 500,
+     "body_keys": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "supplier-remove-lookup-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/customers": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get customers failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get customers failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "customers-other-state",
+     "status": 500,
+     "body_keys": {
+      "error": "Get customers failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get customers failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "customers-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get customers failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get customers failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/customers/:id/rewards": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get rewards failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get rewards failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "rewards-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Get rewards failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get rewards failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "rewards-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get rewards failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get rewards failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/customers/groups": {
+   "answers": [
+    {
+     "scenario": "groups-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Get groups failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get groups failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/scorecard": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Scorecard list failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Scorecard list failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "scorecard-list-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Scorecard list failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Scorecard list failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "scorecard-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Scorecard list failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Scorecard list failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/scorecard/:entity_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Scorecard failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Scorecard failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "scorecard-one-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Scorecard failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Scorecard failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "scorecard-one-rows-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Scorecard failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Scorecard failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/suppliers": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get suppliers failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get suppliers failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "suppliers-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get suppliers failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get suppliers failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "catalogue-view-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "catalogue-lookup-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "answers": [
+    {
+     "scenario": "availability-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Supplier availability failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Supplier availability failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/relationships/customers/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     }
+    },
+    {
+     "scenario": "customer-patch-chain-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "segment_override",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "segment_override",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "customer-patch-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+     }
+    },
+    {
+     "scenario": "customer-patch-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "customer-party-credit-days-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Credit days is a number of days, 0 or more."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Credit days is a number of days, 0 or more."
+     }
+    },
+    {
+     "scenario": "customer-party-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "customer-party-not-migrated",
+     "status": 409,
+     "body_keys": {
+      "error": "Conflict",
+      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+     },
+     "fixture": {
+      "error": "Conflict",
+      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+     }
+    },
+    {
+     "scenario": "customer-party-tax-id-held",
+     "status": 409,
+     "body_keys": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id.",
+      "holder": "Shop B",
+      "scheme": "PAN"
+     },
+     "fixture": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id.",
+      "holder": "Shop B",
+      "scheme": "PAN"
+     }
+    },
+    {
+     "scenario": "customer-patch-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update segment failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update segment failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/relationships/suppliers/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "supplier-patch-chain-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       },
+       {
+        "field": "preferred",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       },
+       {
+        "field": "preferred",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "supplier-patch-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "supplier-patch-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "supplier-rename-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "supplier-rename-not-yours",
+     "status": 403,
+     "body_keys": {
+      "error": "Not yours",
+      "message": "That is their own business name. Use \"your name for them\" instead."
+     },
+     "fixture": {
+      "error": "Not yours",
+      "message": "That is their own business name. Use \"your name for them\" instead."
+     }
+    },
+    {
+     "scenario": "supplier-rename-clash",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "You already have a supplier called Corner Hardware."
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "You already have a supplier called Corner Hardware."
+     }
+    },
+    {
+     "scenario": "supplier-rename-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "supplier-party-credit-days-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Credit days is a number of days, 0 or more."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Credit days is a number of days, 0 or more."
+     }
+    },
+    {
+     "scenario": "supplier-party-unknown-tax-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Unknown tax id kind \"XYZ\"."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Unknown tax id kind \"XYZ\"."
+     }
+    },
+    {
+     "scenario": "supplier-party-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "supplier-party-not-migrated",
+     "status": 409,
+     "body_keys": {
+      "error": "Conflict",
+      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+     },
+     "fixture": {
+      "error": "Conflict",
+      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+     }
+    },
+    {
+     "scenario": "supplier-party-merged-into-itself",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "A party cannot be merged into itself."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "A party cannot be merged into itself."
+     }
+    },
+    {
+     "scenario": "supplier-party-tax-id-held",
+     "status": 409,
+     "body_keys": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id.",
+      "holder": "Shop B",
+      "scheme": "PAN"
+     },
+     "fixture": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id.",
+      "holder": "Shop B",
+      "scheme": "PAN"
+     }
+    },
+    {
+     "scenario": "supplier-party-tax-id-race",
+     "status": 409,
+     "body_keys": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id."
+     },
+     "fixture": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id."
+     }
+    },
+    {
+     "scenario": "supplier-party-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "supplier-party-library-throws-the-database",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "supplier-party-library-says-duplicate",
+     "status": 409,
+     "body_keys": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id."
+     },
+     "fixture": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id."
+     }
+    }
+   ]
+  },
+  "POST /api/relationships/customers": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "customer-needs-who",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "",
+        "message": "Give a User ID or email for a ChitBridge business, or a name for a local customer"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "customer-minted-handle",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     }
+    },
+    {
+     "scenario": "customer-phone-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Enter a valid phone number."
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Enter a valid phone number."
+     }
+    },
+    {
+     "scenario": "customer-local-name-is-an-email",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
+     }
+    },
+    {
+     "scenario": "customer-local-name-on-the-list",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "Chola Auto Care is already in your customer list"
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "Chola Auto Care is already in your customer list"
+     }
+    },
+    {
+     "scenario": "customer-local-phone-on-the-list",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "That phone number is already on your list as Chola Auto Care."
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "That phone number is already on your list as Chola Auto Care."
+     }
+    },
+    {
+     "scenario": "customer-local-id-busy",
+     "status": 409,
+     "body_keys": {
+      "error": "Busy",
+      "message": "Could not allocate an ID for Chola Auto Care. Try once more."
+     },
+     "fixture": {
+      "error": "Busy",
+      "message": "Could not allocate an ID for Chola Auto Care. Try once more."
+     }
+    },
+    {
+     "scenario": "customer-local-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add customer failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add customer failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "customer-handle-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     }
+    },
+    {
+     "scenario": "customer-handle-is-self",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Cannot add yourself"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Cannot add yourself"
+     }
+    },
+    {
+     "scenario": "customer-handle-already-there",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "Already in your customer list"
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "Already in your customer list"
+     }
+    },
+    {
+     "scenario": "customer-handle-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add customer failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add customer failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "customer-lookup-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add customer failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add customer failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/relationships/customers/:id/groups": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Set groups failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Set groups failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "groups-set-by-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Sign in to place a customer in a group."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Sign in to place a customer in a group."
+     }
+    },
+    {
+     "scenario": "groups-set-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "groups-set-not-migrated",
+     "status": 409,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Named groups need the customer_groups migration (migrations/b205_customer_groups.sql) — run it in the Supabase SQL editor."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Named groups need the customer_groups migration (migrations/b205_customer_groups.sql) — run it in the Supabase SQL editor."
+     }
+    },
+    {
+     "scenario": "groups-set-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Set groups failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Set groups failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/relationships/suppliers": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "supplier-needs-who",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "supplier-chain-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       },
+       {
+        "field": "nickname",
+        "message": "Invalid value"
+       },
+       {
+        "field": "preferred",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       },
+       {
+        "field": "nickname",
+        "message": "Invalid value"
+       },
+       {
+        "field": "preferred",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "supplier-minted-handle",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     }
+    },
+    {
+     "scenario": "supplier-local-already-there",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "Corner Hardware is already in your supplier list"
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "Corner Hardware is already in your supplier list"
+     }
+    },
+    {
+     "scenario": "supplier-local-name-is-an-email",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
+     }
+    },
+    {
+     "scenario": "supplier-local-id-busy",
+     "status": 409,
+     "body_keys": {
+      "error": "Busy",
+      "message": "Could not allocate an ID for Corner Hardware. Try once more."
+     },
+     "fixture": {
+      "error": "Busy",
+      "message": "Could not allocate an ID for Corner Hardware. Try once more."
+     }
+    },
+    {
+     "scenario": "supplier-local-has-no-handle",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "The business minting this has no User ID to hang the name from."
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "The business minting this has no User ID to hang the name from."
+     }
+    },
+    {
+     "scenario": "supplier-local-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "supplier-handle-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     }
+    },
+    {
+     "scenario": "supplier-handle-is-self",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Cannot add yourself"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Cannot add yourself"
+     }
+    },
+    {
+     "scenario": "supplier-handle-already-there",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "Already in your supplier list"
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "Already in your supplier list"
+     }
+    },
+    {
+     "scenario": "supplier-handle-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "supplier-handle-lookup-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

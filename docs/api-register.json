@@ -3,8 +3,8 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 180,
-  "partial": 56,
+  "not_started": 167,
+  "partial": 69,
   "meets": 397
  },
  "machine_columns": [
@@ -749,20 +749,27 @@
    "path": "/api/relationships/suppliers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 434,
-   "hash": "a42b0dc55df15ed9",
+   "line": 429,
+   "hash": "233f98d3311b3f75",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7796,20 +7803,25 @@
    "path": "/api/relationships/customers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 674,
-   "hash": "4d2731e0f77fa20f",
+   "line": 668,
+   "hash": "092bdb68dfc1bb9c",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7818,7 +7830,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/customers/:id/rewards",
@@ -7826,20 +7838,26 @@
    "path": "/api/relationships/customers/:id/rewards",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 736,
-   "hash": "db4ab90709a5e354",
+   "line": 729,
+   "hash": "98725cf59755ef59",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7848,7 +7866,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/customers/groups",
@@ -7856,20 +7874,24 @@
    "path": "/api/relationships/customers/groups",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 667,
-   "hash": "d168fe00f44c29b5",
+   "line": 661,
+   "hash": "62e23cdc52ef1dff",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7878,7 +7900,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/scorecard",
@@ -7886,20 +7908,25 @@
    "path": "/api/relationships/scorecard",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 978,
-   "hash": "2e60168fb06c4fee",
+   "line": 972,
+   "hash": "8db4552a1d4a75a8",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7908,7 +7935,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/scorecard/:entity_id",
@@ -7916,20 +7943,26 @@
    "path": "/api/relationships/scorecard/:entity_id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 990,
-   "hash": "a81c31bf304826e0",
+   "line": 984,
+   "hash": "409c3eeb10e6d064",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7938,7 +7971,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/suppliers",
@@ -7946,20 +7979,25 @@
    "path": "/api/relationships/suppliers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 238,
-   "hash": "2703fbd4274c61f1",
+   "line": 235,
+   "hash": "7f3d3b40732a427c",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7968,7 +8006,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/suppliers/:supplier_entity_id/catalogue",
@@ -7976,20 +8014,26 @@
    "path": "/api/relationships/suppliers/:supplier_entity_id/catalogue",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 613,
-   "hash": "4db206b548a0c7bd",
+   "line": 607,
+   "hash": "8cbe02716280e9f4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -7998,7 +8042,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/suppliers/availability",
@@ -8006,20 +8050,25 @@
    "path": "/api/relationships/suppliers/availability",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 481,
-   "hash": "9c4886a8fa4dff35",
+   "line": 475,
+   "hash": "9a35e472c13f5045",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -8028,7 +8077,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/repeat",
@@ -10400,20 +10449,26 @@
    "path": "/api/relationships/customers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 924,
-   "hash": "903c5b62eb016f70",
+   "line": 911,
+   "hash": "5bc9e3d9758b6bb2",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -10422,7 +10477,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/relationships/suppliers/:id",
@@ -10430,20 +10485,28 @@
    "path": "/api/relationships/suppliers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 326,
-   "hash": "7ee0c90a275f1190",
+   "line": 322,
+   "hash": "6eb280a9000fe530",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -10452,7 +10515,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/schemas/fields/:field_key",
@@ -17861,20 +17924,27 @@
    "path": "/api/relationships/customers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 789,
-   "hash": "b23854a4a0bb85b8",
+   "line": 781,
+   "hash": "50824a73577f1ebf",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -17883,7 +17953,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/relationships/customers/:id/groups",
@@ -17891,20 +17961,28 @@
    "path": "/api/relationships/customers/:id/groups",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 899,
-   "hash": "038c70940e4cc884",
+   "line": 890,
+   "hash": "86847ee923b1a5c2",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -17913,7 +17991,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/relationships/suppliers",
@@ -17921,20 +17999,27 @@
    "path": "/api/relationships/suppliers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 110,
-   "hash": "5afa4963d07921c2",
+   "line": 108,
+   "hash": "2a2861aaa8e3ba13",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -17943,7 +18028,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat",
