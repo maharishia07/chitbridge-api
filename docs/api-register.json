@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 442,
-  "partial": 63,
-  "meets": 128
+  "partial": 24,
+  "meets": 167
  },
  "machine_columns": [
   "schema_in",
@@ -8386,11 +8386,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c2995c8f6e791e45"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/catalogue/blueprints",
@@ -8422,11 +8421,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c04cda3f5828248f"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/counters",
@@ -8494,11 +8492,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6300606e4b8b2243"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/match",
@@ -8530,11 +8527,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "54d1adaaf0e3d3d3"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/groups",
@@ -8566,11 +8562,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1a8aabca27fb4650"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/hidden",
@@ -8602,11 +8597,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b7e780f47d61011d"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/screen-config",
@@ -8638,11 +8632,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f0e8ef95c1ca39e7"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/quick-keys/state",
@@ -8675,11 +8668,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7b13e09bf04e7520"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/reward",
@@ -8712,11 +8704,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "125612d1e9e8a1d4"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/screens",
@@ -8748,11 +8739,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1709b0f3992b6b32"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/snapshot",
@@ -8784,11 +8774,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4dd2b1958c6e2d28"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/stock",
@@ -8821,11 +8810,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "73a822011366ea93"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/summary",
@@ -8858,11 +8846,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "29b2acf3dc55714b"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/tasks",
@@ -8894,11 +8881,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cb1b8cb1fb421e25"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/verify",
@@ -8930,11 +8916,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e4ec99cd20dc9aed"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/worth-an-offer",
@@ -8967,11 +8952,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6a287901a1fe9e06"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/work/:chit_id",
@@ -18050,11 +18034,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "543f5daa2e3e5c3e"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/catalogue",
@@ -18089,11 +18072,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e1579a69221a00b9"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/close",
@@ -18127,11 +18109,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "14a62059394dca76"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/diagnostic",
@@ -18165,11 +18146,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b3cf4d96d30e4301"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/enrol",
@@ -18202,11 +18182,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "14d37a51c8a5dc8e"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/flags",
@@ -18240,11 +18219,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "04c02cc5835c728c"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/listen",
@@ -18312,11 +18290,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "31f469ace2278da9"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/pair",
@@ -18349,11 +18326,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6b29c71e829c0e63"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/pair/claim",
@@ -18385,11 +18361,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4264c0f547ace985"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/price",
@@ -18424,11 +18399,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "60eb097e6c5b17b2"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/hide",
@@ -18461,11 +18435,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "112754d8b1e4b123"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/screen-config",
@@ -18498,11 +18471,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f7331e01a34b5117"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/state",
@@ -18535,11 +18507,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7ef6818bb885ecac"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/quick-keys/unhide",
@@ -18572,11 +18543,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e8ff98c316e7233d"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reconcile",
@@ -18609,11 +18579,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2116f90f8478c47f"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reward",
@@ -18647,11 +18616,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1e472cfa43fcfa86"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reward/claim",
@@ -18685,11 +18653,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6b6d541e2b4f9ad5"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/screens/rename",
@@ -18723,11 +18690,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "de8951bf59f36a35"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/screens/revoke",
@@ -18761,11 +18727,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "20da526276898d5d"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/shop",
@@ -18798,11 +18763,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4aabb1291f70959e"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/state",
@@ -18835,11 +18799,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a987c2cb3f0cc14"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/stock",
@@ -18873,11 +18836,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bd437c4ca96d5621"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/stock/bulk",
@@ -18910,11 +18872,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "105a4d8ee98e3d52"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#361",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /deliver",
