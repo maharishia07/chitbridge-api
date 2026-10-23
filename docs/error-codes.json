@@ -254,6 +254,51 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHIT_BAD_REQUEST",
+   "status": "400",
+   "title": "Chit request not accepted",
+   "shopkeeper": "That chit request could not be done.",
+   "hint": "Read the message, fix what it names and try again.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_CANNOT_WITHDRAW",
+   "status": "409",
+   "title": "Cannot withdraw",
+   "shopkeeper": "This chit cannot be withdrawn from where it is.",
+   "hint": "Raise a dispute on it if something is wrong.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_CONFLICT",
+   "status": "409",
+   "title": "Chit not in that state",
+   "shopkeeper": "The chit is not in a state that allows that.",
+   "hint": "Look at the chit again, then try once more.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_INVALID",
+   "status": "400",
+   "title": "Chit details not valid",
+   "shopkeeper": "Something on the chit is missing or not valid.",
+   "hint": "Read the list of fields it names, fix them and try again.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_NOT_A_BILL",
+   "status": "409",
+   "title": "Not a bill",
+   "shopkeeper": "Only a bill you received says what its goods are for.",
+   "hint": "Open a bill you received.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CHIT_NOT_DELIVERED",
    "status": "503",
    "title": "Chit not delivered",
@@ -261,6 +306,78 @@
    "hint": "-",
    "owner_area": "connectors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CHIT_NOT_MIGRATED",
+   "status": "503",
+   "title": "Chits update still to run",
+   "shopkeeper": "This part of chits is not ready on this server yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_NOT_PERMITTED",
+   "status": "403",
+   "title": "Not allowed on this chit",
+   "shopkeeper": "This login is not allowed to do that on this chit.",
+   "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_NO_BRIDGE_ID",
+   "status": "409",
+   "title": "Shop has no ChitBridge address",
+   "shopkeeper": "This shop has no ChitBridge address yet, so this cannot be recorded.",
+   "hint": "Open Settings, set the shop address, then send the bill again.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_PRIORITY_LOCKED",
+   "status": "409",
+   "title": "Customer priority already set",
+   "shopkeeper": "The customer priority on this chit is set once and cannot change.",
+   "hint": "Leave it as it is.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_REASON_REQUIRED",
+   "status": "400",
+   "title": "A reason is needed",
+   "shopkeeper": "An urgent priority needs a reason.",
+   "hint": "Write the reason and try again.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_TOO_MANY",
+   "status": "400",
+   "title": "Too many at once",
+   "shopkeeper": "That is more than can be done in one go.",
+   "hint": "Send fewer, then repeat for the rest.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_UNPROCESSABLE",
+   "status": "422",
+   "title": "Chit refused",
+   "shopkeeper": "That was understood but cannot be done as it stands.",
+   "hint": "Read the sentence shown and fix what it names.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHIT_VALUE_NOT_ACCEPTED",
+   "status": "409",
+   "title": "Value not accepted",
+   "shopkeeper": "The database does not accept one of those values yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
   },
   {
    "code": "CHOOSE_IDENTITY",
@@ -624,21 +741,48 @@
   },
   {
    "code": "DISPUTES_NOT_SET_UP",
-   "status": "varies",
-   "title": "Disputes not set up",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "200",
+   "title": "Disputes not set up yet",
+   "shopkeeper": "Disputes are not switched on on this server yet, so there are none to show.",
+   "hint": "Nothing to do; they will appear once the update has run.",
    "owner_area": "chits",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DISPUTES_TABLE_MISSING",
+   "status": "500",
+   "title": "Disputes not set up",
+   "shopkeeper": "Disputes are not set up on this server yet.",
+   "hint": "Tell us; the update has to be run.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DISPUTE_ALREADY_RESOLVED",
+   "status": "400",
+   "title": "Dispute already resolved",
+   "shopkeeper": "That dispute is already resolved.",
+   "hint": "Nothing more to do.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "DISPUTE_EXISTS",
+   "status": "400",
+   "title": "Dispute already open",
+   "shopkeeper": "You already have an open dispute of that kind on this chit.",
+   "hint": "Open the existing dispute instead.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
   },
   {
    "code": "DISPUTE_TARGET_NOT_PARTY",
    "status": "400",
-   "title": "Dispute target not party",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not a party to the dispute",
+   "shopkeeper": "That business is not a party to this dispute.",
+   "hint": "Pick one of the parties listed on the dispute.",
    "owner_area": "chits",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
   },
   {
    "code": "DSP",
@@ -976,11 +1120,11 @@
   {
    "code": "LAB_CHIT_LIVE_SHOP",
    "status": "409",
-   "title": "Lab chit live shop",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Lab chit on a live shop",
+   "shopkeeper": "A practice chit cannot be sent from a live shop.",
+   "hint": "Send it from a practice shop, or make a real chit.",
    "owner_area": "chits",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
   },
   {
    "code": "LEADS_NOT_MIGRATED",
@@ -998,6 +1142,33 @@
    "shopkeeper": "This shop has not switched the ledger on.",
    "hint": "The owner can switch it on.",
    "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "LINE_BELOW_DELIVERED",
+   "status": "409",
+   "title": "Below what was delivered",
+   "shopkeeper": "That would take the line below what has been delivered.",
+   "hint": "Record a negative delivery first.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "LINE_DELIVERED",
+   "status": "409",
+   "title": "Line already delivered",
+   "shopkeeper": "That line has been delivered, so it cannot be changed this way.",
+   "hint": "Record a negative delivery to take it back.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "LINE_UNIT_LOCKED",
+   "status": "409",
+   "title": "Unit locked",
+   "shopkeeper": "The unit cannot change once something has been delivered.",
+   "hint": "Leave the unit as it is.",
+   "owner_area": "chits",
    "since": "2026-10-23"
   },
   {
@@ -1453,11 +1624,11 @@
   {
    "code": "OVER_LIMIT",
    "status": "409",
-   "title": "Over limit",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Over the credit limit",
+   "shopkeeper": "This sale would take the customer past their credit limit.",
+   "hint": "Ask the owner to allow it, or take a payment first.",
    "owner_area": "chits",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
   },
   {
    "code": "OWNER_ONLY",
@@ -1479,12 +1650,12 @@
   },
   {
    "code": "PAGE_UNKNOWN",
-   "status": "varies",
-   "title": "Page unknown",
-   "shopkeeper": "PENDING",
-   "hint": "-",
-   "owner_area": "mint",
-   "since": "2026-10-22"
+   "status": "400",
+   "title": "Unknown chit page",
+   "shopkeeper": "That chit page is not one this server knows.",
+   "hint": "Use a page from the list, or none.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
   },
   {
    "code": "PAIR_CODE_UNKNOWN",
@@ -1502,6 +1673,24 @@
    "shopkeeper": "Too many wrong codes were tried.",
    "hint": "Wait a minute, then ask for a new code.",
    "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PAYMENT_ABOVE_QUOTE",
+   "status": "422",
+   "title": "Above the quoted amount",
+   "shopkeeper": "The amount received is above what the bill asked for.",
+   "hint": "Add a note saying why, or record the quoted amount.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PAYMENT_TENDER_ON_BILL",
+   "status": "422",
+   "title": "The tender is on the bill",
+   "shopkeeper": "This bill carries its own payment, so it cannot be marked paid here.",
+   "hint": "Record money received later at the counter, against the bill.",
+   "owner_area": "chits",
    "since": "2026-10-23"
   },
   {
@@ -1557,6 +1746,87 @@
    "hint": "Use a test counterparty.",
    "owner_area": "rail",
    "since": "2026-10-22"
+  },
+  {
+   "code": "PRODUCT_BAD_REQUEST",
+   "status": "400",
+   "title": "The catalogue needs something else",
+   "shopkeeper": "The catalogue could not take that request, and the sentence says why.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_CLASH",
+   "status": "409",
+   "title": "Clashes with the catalogue",
+   "shopkeeper": "That clashes with how this catalogue is set up.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_FILE_UNREADABLE",
+   "status": "400",
+   "title": "File could not be read",
+   "shopkeeper": "That file could not be read.",
+   "hint": "Save it again as a spreadsheet or a CSV and upload it again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_IMPORT_BLOCKED",
+   "status": "409",
+   "title": "The file has problems",
+   "shopkeeper": "The file has rows that must be fixed first, so nothing was imported.",
+   "hint": "Fix the rows listed and upload the file again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_INVALID",
+   "status": "400",
+   "title": "Product refused",
+   "shopkeeper": "The catalogue refused that product, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_NOT_READY",
+   "status": "503",
+   "title": "Not set up on this system yet",
+   "shopkeeper": "This is not set up on this system yet.",
+   "hint": "Try again later. If it stays, tell us.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_NO_DEFINITION",
+   "status": "500",
+   "title": "No catalogue definition",
+   "shopkeeper": "Your catalogue has no definition to add columns to.",
+   "hint": "Set up the catalogue first, then try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_REFUSED",
+   "status": "varies",
+   "title": "Refused by a catalogue rule",
+   "shopkeeper": "A rule of the catalogue refused that, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "products",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "PRODUCT_TOO_LARGE",
+   "status": "413",
+   "title": "Too large for this door",
+   "shopkeeper": "What you sent is too big for this door.",
+   "hint": "Send less at a time: split the file, or use a smaller picture.",
+   "owner_area": "products",
+   "since": "2026-10-23"
   },
   {
    "code": "QTY_OK",
@@ -1656,6 +1926,15 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SERVER_OWNED",
+   "status": "400",
+   "title": "Pictures come from Media",
+   "shopkeeper": "Pictures and video are added from the product's Media, not by editing the product.",
+   "hint": "Open the product's Media to add or remove them.",
+   "owner_area": "products",
+   "since": "2026-10-23"
   },
   {
    "code": "SESSION_EXPIRED",
@@ -1857,12 +2136,12 @@
   },
   {
    "code": "TILL_CLAIM_MISMATCH",
-   "status": "varies",
-   "title": "Till claim mismatch",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "400",
+   "title": "Bill from another phone",
+   "shopkeeper": "This bill was made on another phone.",
+   "hint": "Send it from the phone that made it.",
    "owner_area": "holder",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
   },
   {
    "code": "TILL_NO_COUNTER",
@@ -1894,20 +2173,20 @@
   {
    "code": "TILL_SEND_REFUSED",
    "status": "403",
-   "title": "Till send refused",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Counter bill not sent",
+   "shopkeeper": "That counter bill could not be sent as it is.",
+   "hint": "The counter keeps it; send the rest.",
    "owner_area": "chits",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
   },
   {
    "code": "TILL_SERIES_COLLISION",
-   "status": "varies",
-   "title": "Till series collision",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "409",
+   "title": "Bill number already used",
+   "shopkeeper": "Another counter already used that bill number.",
+   "hint": "The bill stays on this counter, unsent; it is given its own number next time.",
    "owner_area": "chits",
-   "since": "2026-10-22"
+   "since": "2026-10-23"
   },
   {
    "code": "TILL_SIGN_IN_FIRST",
@@ -2001,10 +2280,10 @@
   },
   {
    "code": "WORKBOOK_CUT",
-   "status": "varies",
+   "status": "413",
    "title": "Workbook cut",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This sheet is bigger than we read, so only part of it was read and nothing was imported.",
+   "hint": "Delete unused columns, or split the sheet, and upload again.",
    "owner_area": "products",
    "since": "2026-10-22"
   },
@@ -2051,6 +2330,60 @@
    "shopkeeper": "The year cannot be closed yet.",
    "hint": "Read the reasons shown and fix each one.",
    "owner_area": "books",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "co_held_record",
+   "status": "409",
+   "title": "A record both parties hold",
+   "shopkeeper": "This chit is a record both parties hold, so it cannot be deleted.",
+   "hint": "Archive it instead.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "code_already_used",
+   "status": "409",
+   "title": "Code already used",
+   "shopkeeper": "That code was already used.",
+   "hint": "Use the order that was made the first time.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "dispute_open",
+   "status": "409",
+   "title": "A dispute is open",
+   "shopkeeper": "A dispute is open on this chit.",
+   "hint": "Resolve it first.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "disputes_unknown",
+   "status": "503",
+   "title": "Could not check disputes",
+   "shopkeeper": "Could not check for open disputes.",
+   "hint": "Try again in a moment.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "reason_required",
+   "status": "400",
+   "title": "A reason is needed to reject",
+   "shopkeeper": "Say why you are rejecting this bill.",
+   "hint": "Write the reason and try again.",
+   "owner_area": "chits",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "status_conflict",
+   "status": "409",
+   "title": "Status changed under you",
+   "shopkeeper": "Someone else just changed this chit.",
+   "hint": "Look at it again, then try once more.",
+   "owner_area": "chits",
    "since": "2026-10-23"
   }
  ]

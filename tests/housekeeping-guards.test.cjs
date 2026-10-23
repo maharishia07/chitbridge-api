@@ -177,7 +177,7 @@ const says = (r, why, status) => r.status === status && r.body.why === why && r.
   r = await call('POST', '/api/chits/' + C1 + '/reprice', entity(R), { preview: true });
   t('the holder passes the rail question (no refusal word; the stand-in has no line rows → 503 from lib/reprice, which is after the gate)', r.status !== 403 && r.status !== 404 && !r.body.why, r.status + ' ' + JSON.stringify(r.body));
   const repriceSrc = SRC.slice(SRC.indexOf("router.post('/:chit_id/reprice'"), SRC.indexOf("router.post('/:chit_id/costs'"));
-  t('source: the reprice route asks railActions.can(…, \'amend\') and refuses with refuseOwnCopy', /railActions\.can\([\s\S]{0,160}?'amend'\)/.test(repriceSrc) && /refuseOwnCopy/.test(repriceSrc));
+  t('source: the reprice route asks railActions.can(…, \'amend\') and refuses with ownCopyRefusalOf', /railActions\.can\([\s\S]{0,160}?'amend'\)/.test(repriceSrc) && /ownCopyRefusalOf/.test(repriceSrc));
 
   console.log('\n— F · the ONE status table, derived from the engine —');
   t('STATES = the keys of rail.TRANSITIONS', JSON.stringify(RA.STATES) === JSON.stringify(Object.keys(rail.TRANSITIONS)));
@@ -198,7 +198,7 @@ const says = (r, why, status) => r.status === status && r.body.why === why && r.
     src.forEach((line, i) => { if (/^\s*(\/\/|\*)/.test(line)) return; if (BUCKET_RE.some((re) => re.test(line))) spelled.push(dir + '/' + f + ':' + (i + 1)); });
   }
   t('⭐ GUARD: no lib/ or routes/ file spells a status bucket again (was 11 places)', spelled.length === 0, spelled.join(', '));
-  t('chits.js reads BUCKETS / ASKABLE / arrivalStatus from the table', /railActions\.BUCKETS\[/.test(SRC) && /\.isIn\(railActions\.ASKABLE\)/.test(SRC) && (SRC.match(/railActions\.arrivalStatus\(receiver\.kind\)/g) || []).length === 2);
+  t('chits.js reads BUCKETS / ASKABLE / arrivalStatus from the table', /railActions\.BUCKETS\[/.test(SRC) && /oneOfTrimmed\(railActions\.ASKABLE\)/.test(fs.readFileSync(path.join(API, 'lib', 'chits-input.js'), 'utf8')) && (SRC.match(/railActions\.arrivalStatus\(receiver\.kind\)/g) || []).length === 2);
 
   console.log('\n— G · a cap says so (lib/page-limit) —');
   const pg500 = PL.pageArgs({ limit: '500' }, 20, 200);
