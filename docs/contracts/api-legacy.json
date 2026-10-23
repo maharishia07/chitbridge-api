@@ -35022,6 +35022,2436 @@
      }
     }
    ]
+  },
+  "DELETE /api/connectors/:actorId": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such connector under this entity."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such connector under this entity."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     },
+     "fixture": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     },
+     "fixture": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     }
+    },
+    {
+     "scenario": "delete-has-devices",
+     "status": 409,
+     "body_keys": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     },
+     "fixture": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     }
+    },
+    {
+     "scenario": "delete-has-one-device",
+     "status": 409,
+     "body_keys": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     },
+     "fixture": {
+      "error": "Has devices",
+      "message": "This connector has 1 device attached — remove them before deleting."
+     }
+    },
+    {
+     "scenario": "delete-has-records",
+     "status": 409,
+     "body_keys": {
+      "error": "In use",
+      "message": "This connector has raised records and cannot be hard-deleted. Disable its devices instead."
+     },
+     "fixture": {
+      "error": "In use",
+      "message": "This connector has raised records and cannot be hard-deleted. Disable its devices instead."
+     }
+    },
+    {
+     "scenario": "delete-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/connectors": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "gate-capability-switched-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "gate-no-capabilities-at-all",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    }
+   ]
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "connections-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List connections failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List connections failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "provisioning-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Provisioning failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Provisioning failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "receipts-not-an-erp-connector",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     }
+    },
+    {
+     "scenario": "receipts-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List receipts failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List receipts failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/connectors/:actorId/connections/:connId": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "connId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "connId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-switch-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "connection-switch-not-a-boolean",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-switch-not-a-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "connId",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "connId",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-switch-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "connection-switch-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "enabled",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "POST /api/connectors": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-name-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-type-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-config-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "config",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "config",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-both-wrong",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       },
+       {
+        "field": "config",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       },
+       {
+        "field": "config",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Create failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Create failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "display_name",
+        "message": "Name required"
+       },
+       {
+        "field": "type",
+        "message": "type must be iot or erp"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "POST /api/connectors/:actorId/connections": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-no-ref",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-bad-direction",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "direction",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "direction",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-bad-retention",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "retention",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "retention",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-counterparty-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "counterparty_entity_id",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "counterparty_entity_id",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-config-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "config",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "config",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add connection failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add connection failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "connection-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "ref",
+        "message": "endpoint/device ref required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "connection-unknown-connector",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such connector under this entity."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such connector under this entity."
+     }
+    }
+   ]
+  },
+  "POST /api/connectors/:actorId/erp-test": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "erp-test-not-an-erp-connector",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No ERP connector with that id under this entity."
+     }
+    },
+    {
+     "scenario": "erp-test-heartbeat-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "ERP test failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "ERP test failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/connectors/:actorId/ping": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "ping-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Ping failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Ping failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/connectors/:actorId/regenerate-key": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "actorId",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "regenerate-key-no-name",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "regenerate-key-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Type the gateway name"
+       },
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "regenerate-key-code-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "6-digit code required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "regenerate-key-not-allowed",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the entity admin or a manager delegate may reissue a device key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the entity admin or a manager delegate may reissue a device key."
+     }
+    },
+    {
+     "scenario": "regenerate-key-name-mismatch",
+     "status": 400,
+     "body_keys": {
+      "error": "Name mismatch",
+      "message": "The gateway name you typed does not match."
+     },
+     "fixture": {
+      "error": "Name mismatch",
+      "message": "The gateway name you typed does not match."
+     }
+    },
+    {
+     "scenario": "regenerate-key-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad code",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Bad code",
+      "message": "That sign-in didn't work. Check the details and try again."
+     }
+    },
+    {
+     "scenario": "regenerate-key-code-locked",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad code",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Bad code",
+      "message": "That sign-in didn't work. Check the details and try again."
+     }
+    },
+    {
+     "scenario": "regenerate-key-code-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad code",
+      "message": "Code expired — request a new one."
+     },
+     "fixture": {
+      "error": "Bad code",
+      "message": "Code expired — request a new one."
+     }
+    },
+    {
+     "scenario": "regenerate-key-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Regenerate failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Regenerate failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "regenerate-key-unknown-connector",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/connectors/erp-ingest": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "capability-off",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "erp-ingest-no-key",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "erp-ingest-bad-key",
+     "status": 401,
+     "body_keys": {
+      "error": "Bad key",
+      "code": "KEY_UNKNOWN",
+      "message": "ActorKey not recognised, or the connector is inactive."
+     },
+     "fixture": {
+      "error": "Bad key",
+      "code": "KEY_UNKNOWN",
+      "message": "ActorKey not recognised, or the connector is inactive."
+     }
+    },
+    {
+     "scenario": "erp-ingest-capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "erp-ingest-no-payload",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "erp-ingest-payload-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "erp-ingest-doc-type-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "doc_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "doc_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "erp-ingest-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "payload",
+        "message": "payload (JSON object) required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "erp-ingest-wrong-type",
+     "status": 409,
+     "body_keys": {
+      "error": "Wrong type",
+      "message": "This endpoint is for ERP connectors. IoT devices use /ingest."
+     },
+     "fixture": {
+      "error": "Wrong type",
+      "message": "This endpoint is for ERP connectors. IoT devices use /ingest."
+     }
+    },
+    {
+     "scenario": "erp-ingest-to-a-stranger",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "DEVICE_TO_REFUSED",
+      "message": "Not sent: that recipient is not one of this shop’s customers or suppliers. A device sends only to its own shop and the shop’s own customers or suppliers."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "DEVICE_TO_REFUSED",
+      "message": "Not sent: that recipient is not one of this shop’s customers or suppliers. A device sends only to its own shop and the shop’s own customers or suppliers."
+     }
+    },
+    {
+     "scenario": "erp-ingest-heartbeat-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "ERP ingest failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "ERP ingest failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "erp-ingest-claim-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "ERP ingest failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "ERP ingest failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/connectors/ingest": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "capability-off",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "ingest-no-key",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "ingest-bad-key",
+     "status": 401,
+     "body_keys": {
+      "error": "Bad key",
+      "code": "KEY_UNKNOWN",
+      "message": "ActorKey not recognised, or the connector is inactive."
+     },
+     "fixture": {
+      "error": "Bad key",
+      "code": "KEY_UNKNOWN",
+      "message": "ActorKey not recognised, or the connector is inactive."
+     }
+    },
+    {
+     "scenario": "ingest-key-inactive",
+     "status": 401,
+     "body_keys": {
+      "error": "Bad key",
+      "code": "KEY_UNKNOWN",
+      "message": "ActorKey not recognised, or the connector is inactive."
+     },
+     "fixture": {
+      "error": "Bad key",
+      "code": "KEY_UNKNOWN",
+      "message": "ActorKey not recognised, or the connector is inactive."
+     }
+    },
+    {
+     "scenario": "ingest-capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "ingest-signal-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "signal",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "signal",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "ingest-unit-too-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "ingest-body-is-a-list",
+     "status": 401,
+     "body_keys": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     },
+     "fixture": {
+      "error": "No key",
+      "code": "NO_KEY",
+      "message": "Send the ActorKey in the X-Bridge-Key header."
+     }
+    },
+    {
+     "scenario": "ingest-unknown-device",
+     "status": 404,
+     "body_keys": {
+      "error": "Unknown device",
+      "message": "No connection with that bridge_id under this connector."
+     },
+     "fixture": {
+      "error": "Unknown device",
+      "message": "No connection with that bridge_id under this connector."
+     }
+    },
+    {
+     "scenario": "ingest-device-disabled",
+     "status": 409,
+     "body_keys": {
+      "error": "Disabled",
+      "message": "This connection is disabled."
+     },
+     "fixture": {
+      "error": "Disabled",
+      "message": "This connection is disabled."
+     }
+    },
+    {
+     "scenario": "ingest-to-a-stranger",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "DEVICE_TO_REFUSED",
+      "message": "Not sent: that recipient is not one of this shop’s customers or suppliers. A device sends only to its own shop and the shop’s own customers or suppliers."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "DEVICE_TO_REFUSED",
+      "message": "Not sent: that recipient is not one of this shop’s customers or suppliers. A device sends only to its own shop and the shop’s own customers or suppliers."
+     }
+    },
+    {
+     "scenario": "ingest-to-not-an-id",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "DEVICE_TO_REFUSED",
+      "message": "Not sent: the recipient is not a ChitBridge id. A device sends only to its own shop and the shop’s own customers or suppliers."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "DEVICE_TO_REFUSED",
+      "message": "Not sent: the recipient is not a ChitBridge id. A device sends only to its own shop and the shop’s own customers or suppliers."
+     }
+    },
+    {
+     "scenario": "ingest-chit-not-delivered",
+     "status": 503,
+     "body_keys": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     },
+     "fixture": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     }
+    },
+    {
+     "scenario": "ingest-no-entity-for-the-chit",
+     "status": 503,
+     "body_keys": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     },
+     "fixture": {
+      "error": "Not delivered",
+      "code": "CHIT_NOT_DELIVERED",
+      "health": "live",
+      "message": "Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again."
+     }
+    },
+    {
+     "scenario": "ingest-population-boundary",
+     "status": 409,
+     "body_keys": {
+      "health": "live",
+      "error": "Test and live cannot mix",
+      "message": "a test entity cannot trade with a production one",
+      "hint": "Test data must never reach a real business's books. Use a test counterparty.",
+      "code": "POPULATION_BOUNDARY"
+     },
+     "fixture": {
+      "health": "live",
+      "error": "Test and live cannot mix",
+      "message": "a test entity cannot trade with a production one",
+      "hint": "Test data must never reach a real business's books. Use a test counterparty.",
+      "code": "POPULATION_BOUNDARY"
+     }
+    },
+    {
+     "scenario": "ingest-statement-timeout",
+     "status": 503,
+     "body_keys": {
+      "health": "live",
+      "error": "Took too long",
+      "message": "The database took too long to answer and the request was stopped. Try again; if it keeps happening, tell us.",
+      "code": "STATEMENT_TIMEOUT"
+     },
+     "fixture": {
+      "health": "live",
+      "error": "Took too long",
+      "message": "The database took too long to answer and the request was stopped. Try again; if it keeps happening, tell us.",
+      "code": "STATEMENT_TIMEOUT"
+     }
+    },
+    {
+     "scenario": "ingest-no-money-refusal",
+     "status": 409,
+     "body_keys": {
+      "health": "live",
+      "error": "No money",
+      "message": "The shop has not said what money it uses.",
+      "code": "NO_MONEY"
+     },
+     "fixture": {
+      "health": "live",
+      "error": "No money",
+      "message": "The shop has not said what money it uses.",
+      "code": "NO_MONEY"
+     }
+    },
+    {
+     "scenario": "ingest-heartbeat-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Ingest failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Ingest failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/connectors/reissue-code": {
+   "answers": [
+    {
+     "scenario": "capability-off",
+     "status": 403,
+     "body_keys": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     },
+     "fixture": {
+      "error": "Capability off",
+      "code": "CAPABILITY_OFF",
+      "message": "This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Gate check failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the entity admin or a manager delegate may reissue a device key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the entity admin or a manager delegate may reissue a device key."
+     }
+    },
+    {
+     "scenario": "reissue-code-not-allowed",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the entity admin or a manager delegate may reissue a device key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the entity admin or a manager delegate may reissue a device key."
+     }
+    },
+    {
+     "scenario": "reissue-code-no-email",
+     "status": 400,
+     "body_keys": {
+      "error": "No email",
+      "message": "The entity has no registered email to send a code to."
+     },
+     "fixture": {
+      "error": "No email",
+      "message": "The entity has no registered email to send a code to."
+     }
+    },
+    {
+     "scenario": "reissue-code-send-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Send failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Send failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
