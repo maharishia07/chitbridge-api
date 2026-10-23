@@ -7,13 +7,21 @@ const express = require('express');
 const logger = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
+const idempotency = require('../middleware/idempotency'); // API-3 S36: the public money doors require an Idempotency-Key
+const { problem, fromError } = require('../lib/problem'); // API-1 slice 1e: every public storefront refusal is a Problem that keeps its old body
+const storefront = require('../lib/storefront-contract'); // the public doors' OpenAPI operations and the old answers the storefront reads
+const { oldBody } = storefront; // { error, message }: the old body shop.html reads
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto'); // 6b: hash the ERP handoff payload (receipt, not raw payload)
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
-const { validate, sanitise } = require('../middleware/validate');
+const { validate, sanitise, schemaValidate } = require('../middleware/validate');
+/** refuseAs(req, res, spec) → a Problem that keeps the storefront's old body word for word (spec.legacy); its sentence is the detail */
+const refuseAs = (req, res, spec) => problem(req, res, Object.assign({ detail: spec.legacy.message || spec.legacy.why }, spec));
+/** doorCheck(key, chain?) → the door's own schema in front of it (strict input), refusing in the old 400 "Validation failed" words of the old chain */
+const doorCheck = (key, chain) => schemaValidate(storefront.OPERATIONS[key], storefront.refusalFor(chain || []));
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customer-auth'); // T2.4 — the storefront customer's OWN surface
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -569,6 +577,16 @@ async function resolveEntity(handle) {
   );
   return r.rows[0] || null;
 }
+/** the shop a request is on, read once: the key gate and the handler share the one read */
+const shopFor = (req) => (req.storefrontShop = req.storefrontShop || resolveEntity(req.params.bridge_id));
+/** ⭐ API-3 S36: order/start and order/confirm hold one Idempotency-Key per (shop, contact) — a double tap or a retry is answered once */
+const onceOnly = idempotency.requireKey({
+  shopOf: shopFor,
+  contactOf: (req) => {
+    const typed = resolveContact(req.body);
+    return typed.error ? null : typed.channel + ' ' + typed.raw;
+  }
+});
 
 // ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's members into ONE store. The
 //    public read runs withEntity(null) so RLS returns ONLY public items — a private department is never exposed.
@@ -599,7 +617,7 @@ const networkItems = (members) =>
 router.get('/network-store/:networkId', async (req, res) => {
   try {
     const network = await networkStoreOf(req.params.networkId);
-    if (!network) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
+    if (!network) return refuseAs(req, res, { status: 404, code: 'NO_SUCH_NETWORK', legacy: storefront.NO_SUCH_NETWORK });
     const q = String(req.query.q || '')
       .trim()
       .toLowerCase();
@@ -627,8 +645,10 @@ router.get('/network-store/:networkId', async (req, res) => {
       )
     ); // NO node/entity attribution — the internal structure stays hidden
   } catch (err) {
-    if (membership.answerReadFailed(res, err)) return; /* a member read that failed is said, never "no products" (T2-HONEST) */
-    res.status(500).json({ error: 'Storefront failed', message: safeErr(err) });
+    /* a member read that failed is said, never "no products" (T2-HONEST) */
+    if (err && err.code === membership.READ_FAILED)
+      return refuseAs(req, res, { status: 503, code: 'NETWORK_READ_FAILED', legacy: storefront.NETWORK_NOT_READ });
+    return fromError(req, res, err, storefront.FAILED.STOREFRONT);
   }
 });
 
@@ -726,28 +746,17 @@ function shopperOf(req) {
     display_name: claims.display_name || null
   };
 }
-router.post('/network-store/:networkId/order', async (req, res) => {
+router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:networkId/order'), async (req, res) => {
   try {
-    if (!networkOrdersOn()) {
-      return res.status(403).json({
-        error: 'Disabled',
-        code: 'NETWORK_ORDERS_OFF',
-        may: false,
-        why: 'Network ordering is not switched on here.',
-        message: 'Network ordering is not switched on here.'
-      });
-    }
+    if (!networkOrdersOn()) return refuseAs(req, res, { status: 403, code: 'NETWORK_ORDERS_OFF', legacy: storefront.NETWORK_ORDERS_OFF });
     const shopper = shopperOf(req);
-    if (!shopper) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
+    if (!shopper) return refuseAs(req, res, { status: 401, code: 'SIGN_IN_FIRST', legacy: storefront.SIGN_IN_FIRST });
     const cart = Array.isArray(req.body.items) ? req.body.items : [];
-    if (!cart.length) return res.status(400).json({ error: 'Bad request', message: 'items required' });
+    if (!cart.length) return refuseAs(req, res, { status: 400, code: 'ORDER_EMPTY', legacy: oldBody('Bad request', 'items required') });
     const network = await networkStoreOf(req.params.networkId);
-    if (!network) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
-    if (!network.members.includes(String(shopper.shop_entity_id || ''))) {
-      return res
-        .status(403)
-        .json({ error: 'Forbidden', code: 'NOT_THIS_NETWORK', message: "Your sign-in belongs to another store. Sign in at this network's store to order." });
-    }
+    if (!network) return refuseAs(req, res, { status: 404, code: 'NO_SUCH_NETWORK', legacy: storefront.NO_SUCH_NETWORK });
+    if (!network.members.includes(String(shopper.shop_entity_id || '')))
+      return refuseAs(req, res, { status: 403, code: 'NOT_THIS_NETWORK', legacy: storefront.NOT_THIS_NETWORK });
     const nid = network.brand.bridge_id;
     const ids = cart.map((item) => item.product_id).filter(Boolean);
     const rows = (
@@ -758,7 +767,8 @@ router.post('/network-store/:networkId/order', async (req, res) => {
         )
       )
     ).rows;
-    if (!rows.length) return res.status(404).json({ error: 'Not found', message: 'No matching products in this network' });
+    if (!rows.length)
+      return refuseAs(req, res, { status: 404, code: 'NO_MATCHING_PRODUCTS', legacy: oldBody('Not found', 'No matching products in this network') });
     const operatorId = String(network.brand.identity_id);
     /* one read for every party: the operator, the stores, and the customer the token names (by id — never by e-mail) */
     const idset = [...new Set([operatorId, String(shopper.identity_id), ...rows.map((item) => String(item.entity_id))])];
@@ -767,9 +777,9 @@ router.post('/network-store/:networkId/order', async (req, res) => {
       idents[item.identity_id] = { id: item.identity_id, bridge_id: item.bridge_id, display_name: item.display_name };
     });
     const operator = idents[operatorId];
-    if (!operator) return res.status(409).json({ error: 'No operator', message: 'Operator not found' });
+    if (!operator) return refuseAs(req, res, { status: 409, code: 'NO_OPERATOR', legacy: oldBody('No operator', 'Operator not found') });
     const crow = idents[String(shopper.identity_id)] || { id: shopper.identity_id, bridge_id: shopper.bridge_id, display_name: shopper.display_name };
-    if (!crow.bridge_id) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
+    if (!crow.bridge_id) return refuseAs(req, res, { status: 401, code: 'SIGN_IN_FIRST', legacy: storefront.SIGN_IN_FIRST });
     const customer = { id: crow.id, bridge_id: crow.bridge_id, display_name: crow.display_name || 'Customer' };
     const items = rows.map((item) => {
       const c = cart.find((x) => x.product_id === item.item_id) || {};
@@ -852,10 +862,8 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     }
     res.json({ ok: true, order_id: ORDER_ID, item_count: items.length, total, currency, fragment_count: fragments.length }); // customer sees only the order — no stores
   } catch (err) {
-    /* ⭐ a network order writes chits too (deliverEdge), so b247's boundary answers here as a 409 in words (lib/knownerr) */
-    const _known = require('../lib/knownerr').known(err);
-    if (_known) return res.status(_known.status).json(_known.body);
-    res.status(500).json({ error: 'Order failed', message: safeErr(err) });
+    /* ⭐ a network order writes chits too (deliverEdge), so b247's boundary answers here as a 409 in words (lib/knownerr, inside fromError) */
+    return fromError(req, res, err, storefront.FAILED.NETWORK_ORDER);
   }
 });
 
@@ -879,13 +887,13 @@ const MAX_DEPARTMENTS = 40;
 router.get('/network/:bridge_id', async (req, res) => {
   try {
     const root = await resolveEntity(req.params.bridge_id);
-    if (!root) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    if (!root) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
 
     // The members: everything under this root on the cb_entity tree. One query whatever the depth.
     /* ⭐ the one tree reader (lib/network-membership); a read that failed answers 503 in words, never "Shop not found" */
     const members = await membership.treeOf(root.bridge_id, { under: 'self' });
 
-    if (!members.length) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    if (!members.length) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     const truncated = members.length > MAX_DEPARTMENTS;
     const use = members.slice(0, MAX_DEPARTMENTS);
 
@@ -909,12 +917,13 @@ router.get('/network/:bridge_id', async (req, res) => {
 
     // A network with no PUBLIC department is indistinguishable from no network at all — same rule as a shop.
     if (!shopfront.departments.length && !req.query.q) {
-      return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+      return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     }
     res.json(shopfront);
   } catch (err) {
-    if (membership.answerReadFailed(res, err)) return;
-    res.status(500).json({ error: 'Network storefront failed', message: safeErr(err) });
+    if (err && err.code === membership.READ_FAILED)
+      return refuseAs(req, res, { status: 503, code: 'NETWORK_READ_FAILED', legacy: storefront.NETWORK_NOT_READ });
+    return fromError(req, res, err, storefront.FAILED.NETWORK_FRONT);
   }
 });
 // ── CJ-02: public catalogue (only when visibility='public') ──
@@ -1084,16 +1093,15 @@ router.get('/enquiry', auth, async (req, res) => {
 router.get('/:bridge_id', async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
-    if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     const asOwner = req.query.preview === '1' && ownerOf(req, entity);
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
     /* SEC4: this shop's signed-in customer (or its own owner/staff) passes a sign-in-first shop's gate; anyone else gets the card */
     const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || ownerOf(req, entity) });
-    if (!view.available) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    if (!view.available) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     res.json(publicResponseFor(view, asOwner));
   } catch (err) {
-    console.error('catalogue get:', err.message);
-    res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) });
+    return fromError(req, res, err, storefront.FAILED.CATALOGUE);
   }
 });
 
@@ -1103,26 +1111,26 @@ router.get('/:bridge_id', async (req, res) => {
 router.get('/:bridge_id/capture-fields', async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
-    if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     const fields = await require('../lib/conformance').captureFieldsForEntity(entity.identity_id);
     res.json({ shop: entity.display_name, fields });
   } catch (err) {
-    res.status(500).json({ error: 'Capture fields failed', message: safeErr(err) });
+    return fromError(req, res, err, storefront.FAILED.CAPTURE_FIELDS);
   }
 });
 
 // ── CJ-05a: order-first — enter phone → create/find end_customer scoped to entity → OTP ──
 router.post(
   '/:bridge_id/order/start',
-  validate, // identifier (phone|email) validated in-handler via resolveContact
+  doorCheck('POST /:bridge_id/order/start'), // strict input; identifier (phone|email) validated in-handler via resolveContact
+  onceOnly,
   async (req, res) => {
     try {
-      const entity = await resolveEntity(req.params.bridge_id);
-      if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
-      if (entity.business_status === 'closed')
-        return res.status(403).json({ error: 'Shop closed', message: 'This shop is currently closed and not accepting orders.' });
+      const entity = await shopFor(req);
+      if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
+      if (entity.business_status === 'closed') return refuseAs(req, res, { status: 403, code: 'SHOP_CLOSED', legacy: storefront.SHOP_CLOSED });
       const c = resolveContact(req.body);
-      if (c.error) return res.status(422).json({ error: 'Bad request', message: c.error });
+      if (c.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Bad request', c.error) });
       const { channel, raw } = c;
       const name = sanitise(req.body.name || '') || raw;
       const handle = crHandle(channel, raw, entity); // per-entity .cr key (full-email = collision-free)
@@ -1154,8 +1162,7 @@ router.post(
         ...(devOtp.mayExposeOtp() && { dev_otp: otp })
       });
     } catch (err) {
-      console.error('order/start:', err.message);
-      res.status(500).json({ error: 'Order start failed', message: safeErr(err) });
+      return fromError(req, res, err, storefront.FAILED.ORDER_START);
     }
   }
 );
@@ -1185,7 +1192,7 @@ router.get('/:bridge_id/support/preview', async (req, res) => {
    */
   try {
     const entity = await resolveEntity(req.params.bridge_id);
-    if (!entity) return res.json({ ok: false, why: 'This shop could not be found.' });
+    if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.PREVIEW_NO_SHOP });
     res.json({
       ok: true,
       to_name: entity.display_name || null,
@@ -1196,8 +1203,8 @@ router.get('/:bridge_id/support/preview', async (req, res) => {
       accepting: entity.business_status !== 'closed',
       urgency: require('../lib/raiseticket').URGENCY
     });
-  } catch (e) {
-    res.json({ ok: false, why: 'Could not check where this would go.' });
+  } catch (err) {
+    return fromError(req, res, err, storefront.PREVIEW_FAILED);
   }
 });
 
@@ -1214,12 +1221,12 @@ router.get('/:bridge_id/support/preview', async (req, res) => {
  * same fifteen minutes, the same attempt counter. Only the closed-shop check differs, because only that
  * differs. [[feedback-no-duplicate-functions]]
  */
-router.post('/:bridge_id/support/start', validate, async (req, res) => {
+router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
-    if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     const c = resolveContact(req.body);
-    if (c.error) return res.status(422).json({ error: 'Bad request', message: c.error });
+    if (c.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Bad request', c.error) });
     const { channel, raw } = c;
     const name = sanitise(req.body.name || '') || raw;
     const handle = crHandle(channel, raw, entity);
@@ -1249,21 +1256,20 @@ router.post('/:bridge_id/support/start', validate, async (req, res) => {
       ...(devOtp.mayExposeOtp() && { dev_otp: otp })
     });
   } catch (err) {
-    console.error('support/start:', err.message);
-    res.status(500).json({ error: 'Could not send the code', message: safeErr(err) });
+    return fromError(req, res, err, storefront.FAILED.SEND_CODE);
   }
 });
 
 router.post(
   '/:bridge_id/support',
-  [body('otp').trim().isLength({ min: 6, max: 64 }), body('observed').trim().isLength({ min: 1 }).withMessage('Say what went wrong')],
-  validate,
+  doorCheck('POST /:bridge_id/support', [['otp'], ['observed', 'Say what went wrong']]),
+  storefront.trimmed('otp', 'observed'),
   async (req, res) => {
     try {
       const entity = await resolveEntity(req.params.bridge_id);
-      if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+      if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
       const c0 = resolveContact(req.body);
-      if (c0.error) return res.status(422).json({ error: 'Verify failed', message: c0.error });
+      if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Verify failed', c0.error) });
       const handle = crHandle(c0.channel, c0.raw, entity);
 
       const cr = await query(
@@ -1271,10 +1277,9 @@ router.post(
            FROM identities WHERE email = $1`,
         [handle]
       );
-      if (!cr.rows.length) return res.status(400).json({ error: 'Verify failed', message: 'Ask for a code first' });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
-      if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
+      if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
+        return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
 
       /* ⚠️ THE CODE IS SPENT, exactly as /order/confirm spends it. verifyOtp does not clear it, so without this
          one code would post tickets for the rest of its fifteen minutes. */
@@ -1282,9 +1287,7 @@ router.post(
 
       const SEV = require('../lib/raiseticket').URGENCY.map((item) => item[0]);
       const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
-      const observed = String(req.body.observed || '')
-        .trim()
-        .slice(0, 4000);
+      const observed = String(req.body.observed).slice(0, 4000); /* trimmed and non-blank: the door checked it (storefront.trimmed, the schema) */
 
       /* ⚠️ THE POPULATION TRAVELS. Without it every storefront ticket was stamped 'live' in its immutable
          routed_by — on the one path where an actual member of the public raises something, which is exactly
@@ -1306,11 +1309,11 @@ router.post(
 
       /* ⚠️ raise() never throws and always answers — so 'raised: false' is a real outcome that must reach the
          buyer as a sentence, not as a green tick. [[feedback-silence-is-the-bug]] */
-      if (!out.raised) return res.status(502).json({ error: 'Could not send it', message: out.why || 'It did not reach the shop.' });
+      if (!out.raised)
+        return refuseAs(req, res, { status: 502, code: 'SUPPORT_NOT_TAKEN', legacy: oldBody('Could not send it', out.why || 'It did not reach the shop.') });
       res.json({ sent: true, ref: out.chit_id, to: entity.display_name || null, routed: out.routed });
     } catch (err) {
-      console.error('storefront support:', err.message);
-      res.status(500).json({ error: 'Could not send it', message: safeErr(err) });
+      return fromError(req, res, err, storefront.FAILED.SEND_REPORT);
     }
   }
 );
@@ -1318,16 +1321,16 @@ router.post(
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
 router.post(
   '/:bridge_id/order/confirm',
-  [body('otp').trim().isLength({ min: 6, max: 64 }), body('line_items').isArray({ min: 1 }).withMessage('Order is empty')],
-  validate,
+  doorCheck('POST /:bridge_id/order/confirm', [['otp'], ['line_items', 'Order is empty']]),
+  storefront.trimmed('otp'),
+  onceOnly,
   async (req, res) => {
     try {
-      const entity = await resolveEntity(req.params.bridge_id);
-      if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
-      if (entity.business_status === 'closed')
-        return res.status(403).json({ error: 'Shop closed', message: 'This shop is currently closed and not accepting orders.' });
+      const entity = await shopFor(req);
+      if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
+      if (entity.business_status === 'closed') return refuseAs(req, res, { status: 403, code: 'SHOP_CLOSED', legacy: storefront.SHOP_CLOSED });
       const c0 = resolveContact(req.body);
-      if (c0.error) return res.status(422).json({ error: 'Verify failed', message: c0.error });
+      if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Verify failed', c0.error) });
       const handle = crHandle(c0.channel, c0.raw, entity);
 
       const cr = await query(
@@ -1335,10 +1338,9 @@ router.post(
          FROM identities WHERE email = $1`,
         [handle]
       );
-      if (!cr.rows.length) return res.status(400).json({ error: 'Verify failed', message: 'Start the order first' });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
-      if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
+      if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
+        return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
@@ -1397,19 +1399,22 @@ router.post(
           }
           total = 0;
         } catch (ve) {
-          // T3.7 · only a DELIBERATE validation message (one we set a status on) is safe to show. Everything else is
-          // an internal error and went out verbatim on an unauthenticated endpoint, without safeErr().
-          const known = ve && (ve.status === 422 || ve.status === 503);
-          if (!known) console.error('order/confirm payload:', ve && ve.message);
-          return res.status(known ? ve.status : 500).json({ error: 'Submission rejected', message: known ? ve.message : safeErr(ve) });
+          // T3.7 · only a DELIBERATE message (one we set a status on) is shown; anything else is ours: logged, answered without its cause
+          if (!(ve && (ve.status === 422 || ve.status === 503))) return fromError(req, res, ve, storefront.FAILED.SUBMISSION);
+          const oldRefusal = oldBody('Submission rejected', ve.message);
+          if (ve.status === 503) return refuseAs(req, res, { status: 503, code: 'SUBMISSION_REJECTED', legacy: oldRefusal });
+          return refuseAs(req, res, { status: 422, code: 'SUBMISSION_REJECTED', legacy: oldRefusal });
         }
       } else {
         try {
           ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi));
           ({ items: line_items, total, applied: offersApplied } = await applyLiveOffers(entity, line_items, total, c && c.identity_id));
         } catch (ve) {
-          /* the signed-in shopper's standing with the shop */
-          return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message });
+          /* a refusal the pricing makes on purpose (a status: 422 not sold here, no price, out of stock · 409 mixed currencies) keeps its words; anything else is ours */
+          if (!(ve && ve.status >= 400 && ve.status < 500)) return fromError(req, res, ve, storefront.FAILED.REPRICE);
+          const oldRefusal = oldBody('Order rejected', ve.message);
+          if (ve.status === 409) return refuseAs(req, res, { status: 409, code: 'ORDER_REJECTED', legacy: oldRefusal });
+          return refuseAs(req, res, { status: 422, code: 'ORDER_REJECTED', legacy: oldRefusal });
         }
       }
       // ── T2.1 · AN OFFER MUST NOT CARRY AN ORDER'S MONEY ──────────────────────────────────────────────────────
@@ -1423,7 +1428,7 @@ router.post(
       const negotiation = line_items.some((nestedLi) => nestedLi && nestedLi.proposal);
       const purpose = negotiation ? 'offer' : 'order';
       const chit_id = uuidv4();
-      const custLocality = req.body && typeof req.body.location === 'string' ? req.body.location.trim().slice(0, 80) : ''; // STONE 4: consent-provided coarse locality
+      const custLocality = typeof req.body.location === 'string' ? req.body.location.trim().slice(0, 80) : ''; // STONE 4: consent-provided coarse locality
       // MONETARY OR NOT — Athi, 2026-07-31: "if the chit does not hold a currency, that means it is information or
       // helpdesk kind of activity."
       //
@@ -1441,16 +1446,16 @@ router.post(
       /* O8 (black-box 2026-10-09): what the customer typed at the shop checkout rides ON THE CHIT - the full delivery address, the time asked for, the remark - so the shop
          can act on the order. Bounded short strings, never spread from the body; the sheet reads summary_json.order_details (web chit-sheet.js). */
       const _short = (text, n) => (typeof text === 'string' ? text.trim().slice(0, n) : '');
-      const _rd = req.body && req.body.requested_delivery && typeof req.body.requested_delivery === 'object' ? req.body.requested_delivery : null;
-      const _addr = _short(req.body && req.body.location, 300),
-        _rem = _short(req.body && req.body.remark, 300);
+      const _rd = req.body.requested_delivery && typeof req.body.requested_delivery === 'object' ? req.body.requested_delivery : null;
+      const _addr = _short(req.body.location, 300),
+        _rem = _short(req.body.remark, 300);
       /* M182: the name typed at checkout rides on the order too — an existing account keeps its old display_name, so the till would show that instead */
-      const _cname = _short(req.body && req.body.name, 80);
+      const _cname = _short(req.body.name, 80);
       const _when = _rd ? { date: _short(_rd.date, 10) || null, time: _short(_rd.time, 5) || null } : null;
       /* T2b (M67): the shopper chose Pickup or Delivery — only those two words are taken from the body; anything else stays 'delivery' as before */
-      const _fulfil = req.body && req.body.fulfilment === 'pickup' ? 'pickup' : 'delivery';
+      const _fulfil = req.body.fulfilment === 'pickup' ? 'pickup' : 'delivery';
       const orderDetails =
-        oi.pipeline === 'commerce' && Array.isArray(req.body && req.body.line_items) && (_addr || _rem || _when || _cname || _fulfil === 'pickup')
+        oi.pipeline === 'commerce' && Array.isArray(req.body.line_items) && (_addr || _rem || _when || _cname || _fulfil === 'pickup')
           ? {
               channel: 'online',
               fulfilment: _fulfil,
@@ -1508,7 +1513,7 @@ router.post(
         // captureFieldsForEntity returns [{field, standard, facet, title}] — the key is `field`. Getting this wrong
         // yields an EMPTY allow-list, which silently drops every captured field rather than failing loudly.
         const allow = new Set((allowed || []).map((item) => (typeof item === 'string' ? item : item && (item.field || item.key))).filter(Boolean));
-        const raw = req.body && typeof req.body.captured === 'object' && !Array.isArray(req.body.captured) ? req.body.captured : {};
+        const raw = typeof req.body.captured === 'object' && !Array.isArray(req.body.captured) ? req.body.captured : {};
         for (const k of Object.keys(raw)) {
           if (!allow.has(k)) continue; // not asked for → not carried
           const v = raw[k];
@@ -1800,32 +1805,38 @@ router.post(
         ...(pendingDocs.length ? { documents: pendingDocs.map((item) => ({ name: item.name, sha256: item.sha256, line_index: item.line_index })) } : {})
       });
     } catch (err) {
-      /* ⭐ b247's population boundary answers as a 409 in words, not "Order failed" (lib/knownerr, review §23) */
-      const _known = require('../lib/knownerr').known(err);
-      if (_known) return res.status(_known.status).json(_known.body);
-      console.error('order/confirm:', err.message);
-      res.status(500).json({ error: 'Order failed', message: safeErr(err) });
+      /* ⭐ b247's population boundary and the second tap answer as a 409 in words, not "Order failed" (lib/knownerr inside fromError, review §23) */
+      return fromError(req, res, err, storefront.FAILED.ORDER);
     }
   }
 );
 
 // ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
-router.post('/:bridge_id/login/verify', [body('otp').trim().isLength({ min: 6, max: 64 })], validate, async (req, res) => {
+/**
+ * ⭐ SEC-81c · BEFORE SIGN-IN, ONE ANSWER. Is there a shopper row for this contact, and does the typed code hold? An unknown
+ * contact, a wrong code, an expired one and a locked row all get the same 400 in SEC-81's sentence (#333), so no one can probe
+ * which phones and e-mails are a shop's customers. The row is never told apart from the code; the attempt counting stays in
+ * lib/otp verifyOtp, untouched.
+ */
+async function codeHolds(row, typed, names) {
+  if (!row) return false;
+  return (await verifyOtp(query, row, typed, { names })).ok; // SEC1: the typed contact, for TESTER_NAMES
+}
+router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify', [['otp']]), storefront.trimmed('otp'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
-    if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     const c0 = resolveContact(req.body);
-    if (c0.error) return res.status(422).json({ error: 'Sign-in failed', message: c0.error });
+    if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Sign-in failed', c0.error) });
     const handle = crHandle(c0.channel, c0.raw, entity);
     const cr = await query(
       `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
          FROM identities WHERE email = $1`,
       [handle]
     );
-    if (!cr.rows.length) return res.status(400).json({ error: 'Sign-in failed', message: 'No account — place an order first' });
     const c = cr.rows[0];
-    const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
-    if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Sign-in failed', message: otpCheck.message });
+    if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
+      return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.SIGN_IN_REFUSED });
     await spendShopperOtp(query, c.identity_id);
     // ⭐ [capability: sign-in] issueToken() — see the other call site in this file for why this stopped
     // being a third hand-built jwt.sign().
@@ -1839,7 +1850,7 @@ router.post('/:bridge_id/login/verify', [body('otp').trim().isLength({ min: 6, m
     });
     res.json({ message: 'Signed in', token, name: c.display_name });
   } catch (err) {
-    res.status(500).json({ error: 'Sign-in failed', message: safeErr(err) });
+    return fromError(req, res, err, storefront.FAILED.SIGN_IN);
   }
 });
 
@@ -2061,6 +2072,8 @@ router.post(
     }
   }
 );
+
+router.openapi = { paths: storefront.openapiPaths('/api/catalogue') }; // S9: the 11 public doors (lib/storefront-contract.js)
 
 module.exports = router;
 module.exports.resolveContact = resolveContact; // exported for unit tests (F2 channel detection)

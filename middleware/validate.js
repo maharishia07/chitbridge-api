@@ -54,10 +54,11 @@ const urlSchemaOf = (operation) => {
   return { type: 'object', properties, required: given.filter((item) => item.required).map((item) => item.name) };
 };
 
-/** the field an ajv error is about: the missing property for "required", else the path to the bad value (a.b.0 style) */
+/** the field an ajv error is about: the missing property for "required", the key itself for one the schema does not list, else the path to the bad value (a.b.0 style) */
 const fieldOf = (failure) => {
   const where = failure.instancePath.split('/').filter(Boolean);
   if (failure.keyword === 'required') where.push(failure.params.missingProperty);
+  if (failure.keyword === 'additionalProperties') where.push(failure.params.additionalProperty);
   return where.join('.') || '(body)';
 };
 
@@ -65,9 +66,12 @@ const fieldOf = (failure) => {
 const sentenceOf = (failure, field) => {
   if (failure.keyword === 'required') return field + ' is needed.';
   if (failure.keyword === 'type') return field + ' must be ' + (Array.isArray(failure.params.type) ? failure.params.type.join(' or ') : 'a ' + failure.params.type) + '.';
+  if (failure.keyword === 'additionalProperties') return field + ' is not accepted here.'; /* API-3 strict input: refused, never dropped */
   if (failure.keyword === 'enum') return field + ' must be one of: ' + failure.params.allowedValues.join(', ') + '.';
   return field + ' ' + failure.message + '.';
 };
+
+const KIND_CODES = { required: 'MISSING_FIELD', additionalProperties: 'UNKNOWN_FIELD' };
 
 /** errorsOf(validator, value) → [] when the value fits the schema, else one {field, code, detail} per field at fault (every one, not the first) */
 function errorsOf(validator, value) {
@@ -76,7 +80,7 @@ function errorsOf(validator, value) {
   return validator.errors
     .map((failure) => {
       const field = fieldOf(failure);
-      const kind = failure.keyword === 'required' ? { code: 'MISSING_FIELD' } : { code: 'WRONG_VALUE' };
+      const kind = { code: KIND_CODES[failure.keyword] || 'WRONG_VALUE' };
       return { field, code: kind.code, detail: sentenceOf(failure, field) };
     })
     .filter((item) => !seen.has(item.field + item.code) && seen.add(item.field + item.code));
