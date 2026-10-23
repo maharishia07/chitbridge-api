@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 431,
-  "partial": 26,
-  "meets": 176
+  "partial": 24,
+  "meets": 178
  },
  "machine_columns": [
   "schema_in",
@@ -12320,11 +12320,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "56c30a3eebd74030"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/order/start",
@@ -12358,11 +12357,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "622c83d3ce290ba1"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/support",
