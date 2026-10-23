@@ -23,6 +23,7 @@
  * FLOW  facts: no sign-in → the answer of lib/privacy.js. The three shopper routes: customerAuth (a shopper's token only) → schema check (lib/privacy-contract.js) → the handler
  *       (the shop and the shopper from the token) → lib/privacy.js. A refusal or a fault → problem(req, res, faultOf(e, req)), the old { code, error, message } kept beside the Problem
  *       fields (docs/contracts/api-legacy.json). NO route here takes an id: the shopper and the shop are the token's, never named by the caller.
+ * CARD  11-crm-and-marketing/privacy-consent
  *
  * ⭐ It is the Standards register's live check: the register's privacy rows point here, so a reviewer runs one GET and sees the facts,
  *   and sees just as plainly what is NOT done yet. The shop's own registers (consent, requests) are /api/crm — signed in, per shop.
