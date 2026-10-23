@@ -39504,6 +39504,1308 @@
      }
     }
    ]
+  },
+  "DELETE /api/schemas/fields/:field_key": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "drop-locked",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "LOCKED",
+      "message": "\"name\" is one of the three columns every catalogue keeps — the cart, the storefront and the export all read it."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "LOCKED",
+      "message": "\"name\" is one of the three columns every catalogue keeps — the cart, the storefront and the export all read it."
+     }
+    },
+    {
+     "scenario": "drop-required",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "REQUIRED",
+      "message": "\"Grade\" is required by your catalogue definition. Make it optional first."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "REQUIRED",
+      "message": "\"Grade\" is required by your catalogue definition. Make it optional first."
+     }
+    },
+    {
+     "scenario": "drop-in-use",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 12,
+      "message": "12 products record a value in \"Grade\". Clear it on those first, or keep the column."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 12,
+      "message": "12 products record a value in \"Grade\". Clear it on those first, or keep the column."
+     }
+    },
+    {
+     "scenario": "drop-in-use-one",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Clear it on those first, or keep the column."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Clear it on those first, or keep the column."
+     }
+    },
+    {
+     "scenario": "drop-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "drop-blank-key",
+     "status": 400,
+     "body_keys": {
+      "error": "No column",
+      "message": "Name the column to remove."
+     },
+     "fixture": {
+      "error": "No column",
+      "message": "Name the column to remove."
+     }
+    },
+    {
+     "scenario": "drop-count-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "drop-delete-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "drop-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/schemas/fields": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "fields-declared-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "fields-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/schemas/my": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "my-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/schemas/fields/:field_key": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "patch-type-used",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 4,
+      "message": "4 products record a value in \"Grade\". Its type is fixed while they do."
+     },
+     "fixture": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 4,
+      "message": "4 products record a value in \"Grade\". Its type is fixed while they do."
+     }
+    },
+    {
+     "scenario": "patch-type-used-one",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Its type is fixed while they do."
+     },
+     "fixture": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Its type is fixed while they do."
+     }
+    },
+    {
+     "scenario": "patch-type-locked",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot change the type",
+      "code": "LOCKED",
+      "used_by": 0,
+      "message": "\"name\" keeps its type — the cart, the storefront and the export all read it as it is."
+     },
+     "fixture": {
+      "error": "Cannot change the type",
+      "code": "LOCKED",
+      "used_by": 0,
+      "message": "\"name\" keeps its type — the cart, the storefront and the export all read it as it is."
+     }
+    },
+    {
+     "scenario": "patch-type-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown type",
+      "message": "A column is text, number, choice or date — not \"blob\"."
+     },
+     "fixture": {
+      "error": "Unknown type",
+      "message": "A column is text, number, choice or date — not \"blob\"."
+     }
+    },
+    {
+     "scenario": "patch-required-off-locked",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot make optional",
+      "code": "LOCKED",
+      "message": "\"price\" is required by every catalogue."
+     },
+     "fixture": {
+      "error": "Cannot make optional",
+      "code": "LOCKED",
+      "message": "\"price\" is required by every catalogue."
+     }
+    },
+    {
+     "scenario": "patch-attr-not-ready",
+     "status": 409,
+     "body_keys": {
+      "error": "Not yet available",
+      "code": "MIGRATION",
+      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+     },
+     "fixture": {
+      "error": "Not yet available",
+      "code": "MIGRATION",
+      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+     }
+    },
+    {
+     "scenario": "patch-attr-leg-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown source",
+      "message": "A value comes from the system, the customer, a computation or ChitBridge."
+     },
+     "fixture": {
+      "error": "Unknown source",
+      "message": "A value comes from the system, the customer, a computation or ChitBridge."
+     }
+    },
+    {
+     "scenario": "patch-attr-via-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown channel",
+      "message": "ERP, IoT or AI."
+     },
+     "fixture": {
+      "error": "Unknown channel",
+      "message": "ERP, IoT or AI."
+     }
+    },
+    {
+     "scenario": "patch-unknown-column",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "patch-name-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-name-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-name-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-name-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-type-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-type-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-required-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-required-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-unit-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-unit-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-leg-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-via-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-all-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       },
+       {
+        "field": "required",
+        "message": "Invalid value"
+       },
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       },
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       },
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       },
+       {
+        "field": "required",
+        "message": "Invalid value"
+       },
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       },
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       },
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-bad-and-missing-column",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-count-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "patch-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "patch-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/schemas/fields/order": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-no-definition",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no definition."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no definition."
+     }
+    },
+    {
+     "scenario": "order-none-of-mine",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to order",
+      "message": "None of those columns are in your catalogue."
+     },
+     "fixture": {
+      "error": "Nothing to order",
+      "message": "None of those columns are in your catalogue."
+     }
+    },
+    {
+     "scenario": "order-empty-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "order-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/schemas/visibility": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-no-catalogue",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No active catalogue to update"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No active catalogue to update"
+     }
+    },
+    {
+     "scenario": "visibility-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-shouted",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "visibility-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/schemas/create-default": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Cannot read properties of undefined (reading 'schema_id')"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Cannot read properties of undefined (reading 'schema_id')"
+     }
+    },
+    {
+     "scenario": "create-bootstrap-refuses",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "the bootstrap said no"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "the bootstrap said no"
+     }
+    },
+    {
+     "scenario": "create-no-schema-id",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "no schema"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "no schema"
+     }
+    },
+    {
+     "scenario": "create-bootstrap-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-read-back-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
