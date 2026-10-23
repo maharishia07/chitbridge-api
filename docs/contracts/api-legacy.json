@@ -39504,6 +39504,1010 @@
      }
     }
    ]
+  },
+  "GET /api/privacy/me": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "me-token-has-no-shop",
+     "status": 403,
+     "body_keys": {
+      "code": "NO_SHOP",
+      "error": "This sign-in is not tied to a shop.",
+      "message": "This sign-in is not tied to a shop."
+     },
+     "fixture": {
+      "code": "NO_SHOP",
+      "error": "This sign-in is not tied to a shop.",
+      "message": "This sign-in is not tied to a shop."
+     }
+    },
+    {
+     "scenario": "me-identities-throw",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "me-identities-throw-code",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "me-consent-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "me-requests-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "me-table-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "me-answer-not-written",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-400-with-code-and-why",
+     "status": 400,
+     "body_keys": {
+      "code": "SOME_CODE",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence.",
+      "why": "Because of this."
+     },
+     "fixture": {
+      "code": "SOME_CODE",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence.",
+      "why": "Because of this."
+     }
+    },
+    {
+     "scenario": "thrown-403-no-code",
+     "status": 403,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-404-no-code",
+     "status": 404,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-409-with-code",
+     "status": 409,
+     "body_keys": {
+      "code": "ANSWERED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "ANSWERED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-502",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-503-plain",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-503-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-no-status-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-status-as-text",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-plain-error",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/privacy/me/consent": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b306 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b306 — not run yet."
+     }
+    },
+    {
+     "scenario": "consent-unknown-channel",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     }
+    },
+    {
+     "scenario": "consent-unknown-purpose",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Purpose is service or marketing.",
+      "message": "Purpose is service or marketing."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Purpose is service or marketing.",
+      "message": "Purpose is service or marketing."
+     }
+    },
+    {
+     "scenario": "consent-yes-as-text",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Say yes or no.",
+      "message": "Say yes or no."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Say yes or no.",
+      "message": "Say yes or no."
+     }
+    },
+    {
+     "scenario": "consent-yes-as-number",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Say yes or no.",
+      "message": "Say yes or no."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Say yes or no.",
+      "message": "Say yes or no."
+     }
+    },
+    {
+     "scenario": "consent-yes-missing",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Say yes or no.",
+      "message": "Say yes or no."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Say yes or no.",
+      "message": "Say yes or no."
+     }
+    },
+    {
+     "scenario": "consent-channel-missing",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     }
+    },
+    {
+     "scenario": "consent-purpose-missing",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Purpose is service or marketing.",
+      "message": "Purpose is service or marketing."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Purpose is service or marketing.",
+      "message": "Purpose is service or marketing."
+     }
+    },
+    {
+     "scenario": "consent-channel-as-number",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     }
+    },
+    {
+     "scenario": "consent-empty-body",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     }
+    },
+    {
+     "scenario": "consent-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     }
+    },
+    {
+     "scenario": "consent-body-is-a-list-of-answers",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Channel is phone, sms, whatsapp, email or chitbridge.",
+      "message": "Channel is phone, sms, whatsapp, email or chitbridge."
+     }
+    },
+    {
+     "scenario": "consent-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b306 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b306 — not run yet."
+     }
+    },
+    {
+     "scenario": "consent-token-has-no-shop",
+     "status": 403,
+     "body_keys": {
+      "code": "NO_SHOP",
+      "error": "This sign-in is not tied to a shop.",
+      "message": "This sign-in is not tied to a shop."
+     },
+     "fixture": {
+      "code": "NO_SHOP",
+      "error": "This sign-in is not tied to a shop.",
+      "message": "This sign-in is not tied to a shop."
+     }
+    },
+    {
+     "scenario": "consent-history-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "consent-write-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "consent-write-throws-code",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "consent-table-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "consent-answer-not-written",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-400-with-code-and-why",
+     "status": 400,
+     "body_keys": {
+      "code": "SOME_CODE",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence.",
+      "why": "Because of this."
+     },
+     "fixture": {
+      "code": "SOME_CODE",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence.",
+      "why": "Because of this."
+     }
+    },
+    {
+     "scenario": "thrown-403-no-code",
+     "status": 403,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-404-no-code",
+     "status": 404,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-409-with-code",
+     "status": 409,
+     "body_keys": {
+      "code": "ANSWERED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "ANSWERED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-502",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-503-plain",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-503-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-no-status-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-status-as-text",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-plain-error",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/privacy/me/requests": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    },
+    {
+     "scenario": "request-unknown-kind",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     }
+    },
+    {
+     "scenario": "request-kind-missing",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     }
+    },
+    {
+     "scenario": "request-kind-as-number",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     }
+    },
+    {
+     "scenario": "request-empty-body",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     }
+    },
+    {
+     "scenario": "request-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     }
+    },
+    {
+     "scenario": "request-body-is-a-list-of-kinds",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Kind is access, correct, erase, withdraw, nominate or grievance.",
+      "message": "Kind is access, correct, erase, withdraw, nominate or grievance."
+     }
+    },
+    {
+     "scenario": "request-shop-has-no-country",
+     "status": 400,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "Which country’s law applies? Give its two-letter code, like AU — or set the shop’s country first.",
+      "message": "Which country’s law applies? Give its two-letter code, like AU — or set the shop’s country first."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "Which country’s law applies? Give its two-letter code, like AU — or set the shop’s country first.",
+      "message": "Which country’s law applies? Give its two-letter code, like AU — or set the shop’s country first."
+     }
+    },
+    {
+     "scenario": "request-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "Privacy records need migration b307 — not run yet."
+     }
+    },
+    {
+     "scenario": "request-token-has-no-shop",
+     "status": 403,
+     "body_keys": {
+      "code": "NO_SHOP",
+      "error": "This sign-in is not tied to a shop.",
+      "message": "This sign-in is not tied to a shop."
+     },
+     "fixture": {
+      "code": "NO_SHOP",
+      "error": "This sign-in is not tied to a shop.",
+      "message": "This sign-in is not tied to a shop."
+     }
+    },
+    {
+     "scenario": "request-name-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "request-country-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "request-write-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "request-write-throws-code",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "request-table-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "request-answer-not-written",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-400-with-code-and-why",
+     "status": 400,
+     "body_keys": {
+      "code": "SOME_CODE",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence.",
+      "why": "Because of this."
+     },
+     "fixture": {
+      "code": "SOME_CODE",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence.",
+      "why": "Because of this."
+     }
+    },
+    {
+     "scenario": "thrown-403-no-code",
+     "status": 403,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-404-no-code",
+     "status": 404,
+     "body_keys": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "REFUSED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-409-with-code",
+     "status": 409,
+     "body_keys": {
+      "code": "ANSWERED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "ANSWERED",
+      "error": "A relayed sentence.",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-502",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-503-plain",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-503-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-no-status-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "code": "PRIVACY_NOT_MIGRATED",
+      "error": "Not migrated yet",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-status-as-text",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-plain-error",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
