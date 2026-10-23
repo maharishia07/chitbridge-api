@@ -101,8 +101,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | EMAIL_TAKEN | varies | Email taken | PENDING | - | actors | 2026-10-22 |
 | EMPLOYEE_EMAIL_REQUIRED | varies | Employee email required | PENDING | - | employee-code | 2026-10-22 |
 | EXISTS | 409 | Already on your list | They are already on your list. | Open the existing entry instead. | crm | 2026-10-23 |
-| FOLDER_IS_VIEW | 400 | Folder is view | PENDING | - | folders | 2026-10-22 |
-| FOLDER_WRONG_SIDE | varies | Folder wrong side | PENDING | - | folders | 2026-10-22 |
+| FOLDER_BAD_REQUEST | 400 | Folder request not accepted | That folder request could not be done. | Read the message, fix what it names and try again. | folders | 2026-10-23 |
+| FOLDER_INVALID | 400 | Folder details not valid | The folder name or id is missing or not valid. | Give the folder a name of 1 to 60 characters, then try again. | folders | 2026-10-23 |
+| FOLDER_IS_VIEW | 400 | Not a place for chits | That folder shows what its rule matches, so nothing can be moved into it. | Move the chit to a filing folder instead. | folders | 2026-10-22 |
+| FOLDER_NOT_MIGRATED | 503 | Folders update still to run | This part of folders is not ready on this server yet. | Try again after the next update. | folders | 2026-10-23 |
+| FOLDER_WRONG_SIDE | 400 | Folder on the other track | A Task folder holds chits that came to you; an Order folder holds chits you sent. | Pick a folder on the chit's own track. | folders | 2026-10-22 |
 | FX_RATE_MISSING | 422 | Exchange rate missing | There is no exchange rate for that day. | Add the rate for that day, then try again. | forms | 2026-10-22 |
 | FX_RATE_OF_DAY | varies | Fx rate of day | PENDING | - | forms | 2026-10-22 |
 | GROUPS_NOT_MIGRATED | 503 | Groups update pending | Groups are not ready yet. | Try again after the next update. | crm | 2026-10-23 |
@@ -128,6 +131,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ITEM_NOT_FOUND | 422 | Item not on the shelf | A line names an item this shop does not sell. | Check the item id or code. | tax | 2026-10-23 |
 | KEY_CANNOT_DECIDE | 403 | A key cannot decide this | A connector cannot decide this on its own. Sign in as a person. | Sign in to the shop and do it there. | integrations | 2026-10-23 |
 | KEY_CANNOT_MANAGE_KEYS | 403 | A key cannot manage keys | A key cannot make or remove keys. Sign in as a person. | Sign in to the shop and do it there. | keys | 2026-10-22 |
+| KEY_CANNOT_SEE_HOME | 403 | A key cannot see Home | Sign in to see the Home figures. | Open the app with your login, not a key. | facts | 2026-10-23 |
 | KEY_CANNOT_SIGN_IN | 403 | Key cannot sign in | PENDING | - | signin | 2026-10-22 |
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
 | KEY_UNKNOWN | 401 | Key unknown | PENDING | - | connectors | 2026-10-22 |
@@ -141,8 +145,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MINT_REFUSED | varies | Could not add them | They could not be added to your list. | Read the sentence shown and fix it. | crm | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
 | MKT_NOT_MIGRATED | varies | Who came back update pending | Who came back arrives after the next update. | Try again after the next update. | channels | 2026-10-22 |
-| MSG_ABOVE_CEILING | 409 | Msg above ceiling | PENDING | - | folders | 2026-10-22 |
-| MSG_FIXED | 409 | Msg fixed | PENDING | - | folders | 2026-10-22 |
+| MSG_ABOVE_CEILING | 409 | Messaging level too high | That folder can be kept internal or switched off, but not shared further than its default. | Pick a lower level. | folders | 2026-10-22 |
+| MSG_FIXED | 409 | Messaging level fixed | This folder's messaging level cannot be changed. | Leave it as it is. | folders | 2026-10-22 |
 | NAME_THE_PERSON | 400 | Name the person | PENDING | - | actors | 2026-10-22 |
 | NEED_DAY | 400 | Day needed | This outcome needs a day for the next call. | Pick a day. | crm | 2026-10-23 |
 | NETWORK_NOTHING_TO_CHANGE | 409 | Stores already up to date | Your stores already have every change. | Nothing to publish. | network-offers | 2026-10-23 |
