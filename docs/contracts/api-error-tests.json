@@ -11,6 +11,10 @@
   404,
   500
  ],
+ "GET /.well-known/ctp.json": [
+  200,
+  500
+ ],
  "GET /api/books/accounts": [
   401,
   404,
@@ -190,6 +194,10 @@
  "GET /api/books/year/:fy/status": [
   401,
   404,
+  500
+ ],
+ "GET /api/ctp/.well-known/ctp.json": [
+  200,
   500
  ],
  "GET /api/integrations/catalogue": [
@@ -573,6 +581,22 @@
   422,
   500
  ],
+ "POST /api/ctp/deliver": [
+  200,
+  400,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/ctp/query": [
+  200,
+  400,
+  403,
+  409,
+  500
+ ],
  "POST /api/integrations/:actor_id/approve": [
   400,
   401,
@@ -633,6 +657,22 @@
   400,
   401,
   403,
+  500
+ ],
+ "POST /deliver": [
+  200,
+  400,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /query": [
+  200,
+  400,
+  403,
+  409,
   500
  ],
  "PUT /api/integrations/streams": [
