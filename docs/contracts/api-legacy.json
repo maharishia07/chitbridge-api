@@ -159,6 +159,584 @@
     }
    ]
   },
+  "GET /.well-known/ctp.json": {
+   "answers": [
+    {
+     "scenario": "manifest-keys-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "manifest unavailable"
+     },
+     "fixture": {
+      "error": "manifest unavailable"
+     }
+    }
+   ]
+  },
+  "POST /deliver": {
+   "answers": [
+    {
+     "scenario": "deliver-not-envelope",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     }
+    },
+    {
+     "scenario": "deliver-no-body",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     }
+    },
+    {
+     "scenario": "deliver-no-recipient",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "the envelope does not name a recipient"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "the envelope does not name a recipient"
+     }
+    },
+    {
+     "scenario": "deliver-no-installation",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "the envelope does not say which installation sent it"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "the envelope does not say which installation sent it"
+     }
+    },
+    {
+     "scenario": "deliver-stranger",
+     "status": 403,
+     "body_keys": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     }
+    },
+    {
+     "scenario": "deliver-table-unreadable",
+     "status": 403,
+     "body_keys": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     }
+    },
+    {
+     "scenario": "deliver-hosted-here",
+     "status": 409,
+     "body_keys": {
+      "accepted": false,
+      "why": "installation mx-1 is hosted here — a local copy must not arrive over the wire"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "installation mx-1 is hosted here — a local copy must not arrive over the wire"
+     }
+    },
+    {
+     "scenario": "deliver-key-unreadable",
+     "status": 403,
+     "body_keys": {
+      "accepted": false,
+      "why": "could not read the sender’s manifest: no manifest at mx.example.com"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "could not read the sender’s manifest: no manifest at mx.example.com"
+     }
+    },
+    {
+     "scenario": "deliver-no-business",
+     "status": 404,
+     "body_keys": {
+      "accepted": false,
+      "why": "no active business here with bridge id CBRECV0001"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "no active business here with bridge id CBRECV0001"
+     }
+    },
+    {
+     "scenario": "deliver-crossing-unreadable",
+     "status": 503,
+     "body_keys": {
+      "accepted": false,
+      "why": "this installation cannot check whether that crossing is permitted — refusing"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "this installation cannot check whether that crossing is permitted — refusing"
+     }
+    },
+    {
+     "scenario": "deliver-not-paired",
+     "status": 409,
+     "body_keys": {
+      "accepted": false,
+      "why": "refused"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "refused"
+     }
+    },
+    {
+     "scenario": "deliver-envelope-refused",
+     "status": 409,
+     "body_keys": {
+      "accepted": false,
+      "why": "signature does not verify"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "signature does not verify"
+     }
+    },
+    {
+     "scenario": "deliver-no-sender",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "the copy does not say who sent it"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "the copy does not say who sent it"
+     }
+    },
+    {
+     "scenario": "deliver-store-fails",
+     "status": 500,
+     "body_keys": {
+      "accepted": false,
+      "why": "this installation failed to store it",
+      "code": "53100"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "this installation failed to store it"
+     },
+     "note": "before slice 1d `code` carried the database's own error code (a SQLSTATE, e.g. 53100) to the sending installation; since 1d `code` is the Problem's registered code CTP_STORE_FAILED. lib/ctptransport reads only `accepted` and `why`."
+    }
+   ]
+  },
+  "POST /query": {
+   "answers": [
+    {
+     "scenario": "query-not-query",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "why": "not a CTP/1 query"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "not a CTP/1 query"
+     }
+    },
+    {
+     "scenario": "query-no-installation",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "why": "the question does not say which installation is asking"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "the question does not say which installation is asking"
+     }
+    },
+    {
+     "scenario": "query-stranger",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "why": "installation mx-1 is not one we deal with"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "installation mx-1 is not one we deal with"
+     }
+    },
+    {
+     "scenario": "query-hosted-here",
+     "status": 409,
+     "body_keys": {
+      "ok": false,
+      "why": "installation mx-1 is hosted here — ask locally"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "installation mx-1 is hosted here — ask locally"
+     }
+    },
+    {
+     "scenario": "query-key-unreadable",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "why": "could not read the asker’s manifest: no manifest at mx.example.com"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "could not read the asker’s manifest: no manifest at mx.example.com"
+     }
+    },
+    {
+     "scenario": "query-not-open",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "why": "unsigned"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "unsigned"
+     }
+    },
+    {
+     "scenario": "query-unknown-question",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "why": "not a question this installation answers"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "not a question this installation answers"
+     }
+    },
+    {
+     "scenario": "query-fails",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "why": "this installation could not answer: relation \"chit_copy\" does not exist -- INSERT INTO vault"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "this installation could not answer"
+     },
+     "note": "before slice 1d `why` went on with the raw error text (a database message, sent to another installation); since 1d the sentence stops there."
+    }
+   ]
+  },
+  "GET /api/ctp/.well-known/ctp.json": {
+   "answers": [
+    {
+     "scenario": "manifest-keys-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "manifest unavailable"
+     },
+     "fixture": {
+      "error": "manifest unavailable"
+     }
+    }
+   ]
+  },
+  "POST /api/ctp/deliver": {
+   "answers": [
+    {
+     "scenario": "deliver-not-envelope",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     }
+    },
+    {
+     "scenario": "deliver-no-body",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "not a CTP/1 envelope"
+     }
+    },
+    {
+     "scenario": "deliver-no-recipient",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "the envelope does not name a recipient"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "the envelope does not name a recipient"
+     }
+    },
+    {
+     "scenario": "deliver-no-installation",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "the envelope does not say which installation sent it"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "the envelope does not say which installation sent it"
+     }
+    },
+    {
+     "scenario": "deliver-stranger",
+     "status": 403,
+     "body_keys": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     }
+    },
+    {
+     "scenario": "deliver-table-unreadable",
+     "status": 403,
+     "body_keys": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "installation mx-1 is not one we deal with"
+     }
+    },
+    {
+     "scenario": "deliver-hosted-here",
+     "status": 409,
+     "body_keys": {
+      "accepted": false,
+      "why": "installation mx-1 is hosted here — a local copy must not arrive over the wire"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "installation mx-1 is hosted here — a local copy must not arrive over the wire"
+     }
+    },
+    {
+     "scenario": "deliver-key-unreadable",
+     "status": 403,
+     "body_keys": {
+      "accepted": false,
+      "why": "could not read the sender’s manifest: no manifest at mx.example.com"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "could not read the sender’s manifest: no manifest at mx.example.com"
+     }
+    },
+    {
+     "scenario": "deliver-no-business",
+     "status": 404,
+     "body_keys": {
+      "accepted": false,
+      "why": "no active business here with bridge id CBRECV0001"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "no active business here with bridge id CBRECV0001"
+     }
+    },
+    {
+     "scenario": "deliver-crossing-unreadable",
+     "status": 503,
+     "body_keys": {
+      "accepted": false,
+      "why": "this installation cannot check whether that crossing is permitted — refusing"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "this installation cannot check whether that crossing is permitted — refusing"
+     }
+    },
+    {
+     "scenario": "deliver-not-paired",
+     "status": 409,
+     "body_keys": {
+      "accepted": false,
+      "why": "refused"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "refused"
+     }
+    },
+    {
+     "scenario": "deliver-envelope-refused",
+     "status": 409,
+     "body_keys": {
+      "accepted": false,
+      "why": "signature does not verify"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "signature does not verify"
+     }
+    },
+    {
+     "scenario": "deliver-no-sender",
+     "status": 400,
+     "body_keys": {
+      "accepted": false,
+      "why": "the copy does not say who sent it"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "the copy does not say who sent it"
+     }
+    },
+    {
+     "scenario": "deliver-store-fails",
+     "status": 500,
+     "body_keys": {
+      "accepted": false,
+      "why": "this installation failed to store it",
+      "code": "53100"
+     },
+     "fixture": {
+      "accepted": false,
+      "why": "this installation failed to store it"
+     },
+     "note": "before slice 1d `code` carried the database's own error code (a SQLSTATE, e.g. 53100) to the sending installation; since 1d `code` is the Problem's registered code CTP_STORE_FAILED. lib/ctptransport reads only `accepted` and `why`."
+    }
+   ]
+  },
+  "POST /api/ctp/query": {
+   "answers": [
+    {
+     "scenario": "query-not-query",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "why": "not a CTP/1 query"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "not a CTP/1 query"
+     }
+    },
+    {
+     "scenario": "query-no-installation",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "why": "the question does not say which installation is asking"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "the question does not say which installation is asking"
+     }
+    },
+    {
+     "scenario": "query-stranger",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "why": "installation mx-1 is not one we deal with"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "installation mx-1 is not one we deal with"
+     }
+    },
+    {
+     "scenario": "query-hosted-here",
+     "status": 409,
+     "body_keys": {
+      "ok": false,
+      "why": "installation mx-1 is hosted here — ask locally"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "installation mx-1 is hosted here — ask locally"
+     }
+    },
+    {
+     "scenario": "query-key-unreadable",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "why": "could not read the asker’s manifest: no manifest at mx.example.com"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "could not read the asker’s manifest: no manifest at mx.example.com"
+     }
+    },
+    {
+     "scenario": "query-not-open",
+     "status": 403,
+     "body_keys": {
+      "ok": false,
+      "why": "unsigned"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "unsigned"
+     }
+    },
+    {
+     "scenario": "query-unknown-question",
+     "status": 400,
+     "body_keys": {
+      "ok": false,
+      "why": "not a question this installation answers"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "not a question this installation answers"
+     }
+    },
+    {
+     "scenario": "query-fails",
+     "status": 500,
+     "body_keys": {
+      "ok": false,
+      "why": "this installation could not answer: relation \"chit_copy\" does not exist -- INSERT INTO vault"
+     },
+     "fixture": {
+      "ok": false,
+      "why": "this installation could not answer"
+     },
+     "note": "before slice 1d `why` went on with the raw error text (a database message, sent to another installation); since 1d the sentence stops there."
+    }
+   ]
+  },
   "GET /api/integrations/catalogue": {
    "answers": [
     {

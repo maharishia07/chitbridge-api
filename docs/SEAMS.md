@@ -18,8 +18,8 @@ of file each thing is; this says what already does the job.
 | 69 | `answer` | `availability.js` | from March; then nearest. |
 | 65 | `list` | `cap-settings.js` |  |
 | 65 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 64 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
-| 63 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 60 | `here` | `screen-id.js` |  |
 | 57 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 56 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
@@ -77,21 +77,21 @@ of file each thing is; this says what already does the job.
 | 26 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 26 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
+| 25 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 25 | `gate` | `country-setup.js` | gate(h, entity): |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `money` | `cart.js` |  |
 | 24 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 24 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 24 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 24 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 24 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
+| 24 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 24 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 24 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 23 | `call` | `cap-assist.js` |  |
 | 23 | `opts` | `cap-stock.js` |  |
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `rate` | `convert.js` | A rate, with its evidence. |
-| 23 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 22 | `account` | `home-facts.js` | OMITTED: |
 | 22 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 22 | `hold` | `orders.js` |  |
@@ -132,6 +132,7 @@ of file each thing is; this says what already does the job.
 | 17 | `group` | `identity.js` | again in a different costume. |
 | 17 | `match` | `itemmatch.js` | actually state. |
 | 17 | `known` | `knownerr.js` | known(err) → { status, body } · null |
+| 17 | `register` | `regulation.js` | register(pack) → the pack — |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 17 | `fail` | `books.js` | lib/books-contract.js refusalOf maps every typed refusal of the ledger to its status, code and the old {error, |
 | 16 | `message` | `cap-print.js` | the one message: |
@@ -140,7 +141,6 @@ of file each thing is; this says what already does the job.
 | 16 | `panel` | `sides.js` |  |
 | 16 | `plan` | `crm-leads.js` | `existing`: |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
-| 16 | `register` | `regulation.js` | register(pack) → the pack — |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
 | 15 | `bkDate` | `cap-books.js` |  |
@@ -186,6 +186,7 @@ of file each thing is; this says what already does the job.
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
+| 12 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 11 | `close` | `avatar.js` |  |
 | 11 | `link` | `chit-sheet.js` |  |
 | 11 | `safe` | `country-profiles.js` | text made safe for HTML — |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 10 | `confirm` | `lab-kit.js` | opts: |
 | 10 | `evidence` | `test-menu-tree.js` | something; nobody has yet written what it should do. |
 | 10 | `payment` | `books-store.js` |  |
-| 10 | `nameOf` | `categories.js` | already uses; this puts it in one place instead of two. |

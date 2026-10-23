@@ -714,6 +714,22 @@
     422
    ]
   },
+  "POST /api/ctp/deliver": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/ctp/query": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/integrations/:actor_id/approve": {
    "cases": 4,
    "failed": 0,
@@ -980,6 +996,22 @@
   },
   "POST /api/till/stock/bulk": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /deliver": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /query": {
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
