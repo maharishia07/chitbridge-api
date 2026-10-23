@@ -212,7 +212,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: cb_s41
-        ports: ["5432:5432"]
+        ports: ["5432:5432", "55432:5432"]   # 55432 too: the truth harness accepts only a local database on 55432 (tests/lib/truth-harness.cjs:17)
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 10s --health-timeout 5s --health-retries 5
@@ -262,7 +262,7 @@ jobs:
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
-          TRUTH_DB: postgres://postgres:postgres@localhost:5432/cb_s41
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41
           NODE_ENV: test
         run: |
           failed=0
