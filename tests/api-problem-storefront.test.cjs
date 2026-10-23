@@ -83,6 +83,7 @@ const FRESH = {
   adoptionFails: false,
   buyer: true,
   attempts: 0,
+  expired: false,
   members: [MEMBER_ID],
   tree: null,
   treeFails: false,
@@ -92,14 +93,37 @@ const FRESH = {
   orderInput: { pipeline: 'commerce' },
   notifyFails: false,
   captureFails: false,
-  raised: true
+  raised: true,
+  keyHeld: null
 };
 const world = Object.assign({}, FRESH);
 const readFailed = () => Object.assign(new Error('network read failed'), { code: 'NETWORK_READ_FAILED' });
 
+/* the idempotency_key rows (middleware/idempotency.js dbStore) by (entity, key): what a double tap meets */
+const keyRows = new Map();
+const statements = []; /* every statement run, in order: how a test counts what a request did */
+function keyStatement(s, params) {
+  const slot = (key) => params[0] + '\n' + key;
+  if (/^SELECT/.test(s)) {
+    if (world.keyHeld) return [Object.assign({ idem_key: 'held', req_hash: null, status: null, response: null, expired: false }, world.keyHeld)];
+    const held = keyRows.get(slot(/idem_key = \$3/.test(s) ? params[2] : params[1]));
+    return held ? [Object.assign({ expired: false }, held)] : [];
+  }
+  if (/^INSERT/.test(s)) {
+    if (keyRows.has(slot(params[1]))) return [];
+    keyRows.set(slot(params[1]), { idem_key: params[1], req_hash: params[4], state: 'in_progress', status: null, response: null });
+    return [{ idem_key: params[1] }];
+  }
+  if (/^UPDATE/.test(s)) Object.assign(keyRows.get(slot(params[1])) || {}, { state: 'done', status: params[2], response: JSON.parse(params[3]) });
+  if (/^DELETE/.test(s) && !/idem_key <>/.test(s)) keyRows.delete(slot(params[1])); /* a sweep never takes the row being recorded */
+  return [];
+}
+
 /** the rows a statement gets */
-function rowsFor(sql) {
+function rowsFor(sql, params) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
+  statements.push(s);
+  if (/idempotency_key/.test(s)) return keyStatement(s, params || []);
   if (world.dbFails) throw new Error(SECRET_SQL);
   if (/FROM identities WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/.test(s)) {
     /* the stand-in honours resolveEntity's own filter: a sealed or inactive shop is dropped only if the statement really asks for that */
@@ -126,7 +150,7 @@ function rowsFor(sql) {
             bridge_id: 'BUYER01',
             display_name: 'Buyer',
             otp_code: GOOD_CODE,
-            otp_expires_at: new Date(Date.now() + 600000).toISOString(),
+            otp_expires_at: new Date(Date.now() + (world.expired ? -600000 : 600000)).toISOString(),
             otp_attempts: world.attempts
           }
         ]
@@ -152,8 +176,8 @@ const mock = (relative, exported) => {
   require.cache[file] = { id: file, filename: file, loaded: true, exports: exported };
 };
 function installStubs() {
-  const q = async (sql) => {
-    const rows = rowsFor(sql);
+  const q = async (sql, params) => {
+    const rows = rowsFor(sql, params);
     return { rows, rowCount: rows.length };
   };
   const tx = { query: q };
@@ -431,7 +455,7 @@ const SCENARIOS = [
     id: 'support-locked',
     route: 'POST /api/catalogue/:bridge_id/support',
     url: C + '/shop-s/support',
-    status: 429,
+    status: 400,
     setup: { attempts: 99 },
     body: { phone: '9876543210', otp: GOOD_CODE, observed: 'It broke' }
   },
@@ -501,7 +525,7 @@ const SCENARIOS = [
     id: 'confirm-locked',
     route: 'POST /api/catalogue/:bridge_id/order/confirm',
     url: C + '/shop-s/order/confirm',
-    status: 429,
+    status: 400,
     setup: { attempts: 99 },
     body: CONFIRM()
   },
@@ -604,6 +628,79 @@ const SCENARIOS = [
   { id: 'shop-sign-in-first', route: 'GET /api/catalogue/:bridge_id', url: C + '/shop-s', status: 200, setup: { view: SIGN_IN_VIEW } },
   { id: 'fields-ok', route: 'GET /api/catalogue/:bridge_id/capture-fields', url: C + '/shop-s/capture-fields', status: 200 },
   {
+    id: 'support-expired',
+    route: 'POST /api/catalogue/:bridge_id/support',
+    url: C + '/shop-s/support',
+    status: 400,
+    setup: { expired: true },
+    body: { phone: '9876543210', otp: GOOD_CODE, observed: 'It broke' }
+  },
+  {
+    id: 'confirm-expired',
+    route: 'POST /api/catalogue/:bridge_id/order/confirm',
+    url: C + '/shop-s/order/confirm',
+    status: 400,
+    setup: { expired: true },
+    body: CONFIRM()
+  },
+  {
+    id: 'login-expired',
+    route: 'POST /api/catalogue/:bridge_id/login/verify',
+    url: C + '/shop-s/login/verify',
+    status: 400,
+    setup: { expired: true },
+    body: { phone: '9876543210', otp: GOOD_CODE }
+  },
+  {
+    id: 'start-no-key',
+    route: 'POST /api/catalogue/:bridge_id/order/start',
+    url: C + '/shop-s/order/start',
+    status: 422,
+    keyless: true,
+    body: { identifier: '9876543210', name: 'Buyer' }
+  },
+  {
+    id: 'start-key-in-progress',
+    route: 'POST /api/catalogue/:bridge_id/order/start',
+    url: C + '/shop-s/order/start',
+    status: 409,
+    setup: { keyHeld: { state: 'in_progress' } },
+    body: { identifier: '9876543210', name: 'Buyer' }
+  },
+  {
+    id: 'start-key-other-body',
+    route: 'POST /api/catalogue/:bridge_id/order/start',
+    url: C + '/shop-s/order/start',
+    status: 422,
+    setup: { keyHeld: { state: 'done', req_hash: 'another body', status: 200, response: {} } },
+    body: { identifier: '9876543210', name: 'Buyer' }
+  },
+  {
+    id: 'confirm-no-key',
+    route: 'POST /api/catalogue/:bridge_id/order/confirm',
+    url: C + '/shop-s/order/confirm',
+    status: 422,
+    keyless: true,
+    setup: { items: [PRICED_ITEM] },
+    body: CONFIRM({ line_items: [{ item_id: ITEM_ID, name: 'Rice', qty: 2 }] })
+  },
+  {
+    id: 'confirm-key-in-progress',
+    route: 'POST /api/catalogue/:bridge_id/order/confirm',
+    url: C + '/shop-s/order/confirm',
+    status: 409,
+    setup: { items: [PRICED_ITEM], keyHeld: { state: 'in_progress' } },
+    body: CONFIRM({ line_items: [{ item_id: ITEM_ID, name: 'Rice', qty: 2 }] })
+  },
+  {
+    id: 'confirm-key-other-body',
+    route: 'POST /api/catalogue/:bridge_id/order/confirm',
+    url: C + '/shop-s/order/confirm',
+    status: 422,
+    setup: { items: [PRICED_ITEM], keyHeld: { state: 'done', req_hash: 'another body', status: 200, response: {} } },
+    body: CONFIRM({ line_items: [{ item_id: ITEM_ID, name: 'Rice', qty: 2 }] })
+  },
+  {
     id: 'start-ok',
     route: 'POST /api/catalogue/:bridge_id/order/start',
     url: C + '/shop-s/order/start',
@@ -672,7 +769,7 @@ const SCENARIOS = [
     id: 'login-locked',
     route: 'POST /api/catalogue/:bridge_id/login/verify',
     url: C + '/shop-s/login/verify',
-    status: 429,
+    status: 400,
     setup: { attempts: 99 },
     body: { phone: '9876543210', otp: GOOD_CODE }
   },
@@ -686,6 +783,11 @@ const SCENARIOS = [
   }
 ];
 
+/* API-3 S36: every send to a money door is a new attempt with its own key, unless the scenario is about the key itself */
+let attempt = 0;
+const headersOf = (scenario) =>
+  Object.assign(/\/order\/(start|confirm)$/.test(scenario.url) && !scenario.keyless ? { 'idempotency-key': 'attempt-' + ++attempt } : {}, scenario.headers);
+
 function send(port, method, urlPath, body, headers) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
@@ -698,7 +800,15 @@ function send(port, method, urlPath, body, headers) {
     const request = http.request(options, (response) => {
       let text = '';
       response.on('data', (part) => (text += part));
-      response.on('end', () => resolve({ status: response.statusCode, type: String(response.headers['content-type'] || ''), text, json: safeParse(text) }));
+      response.on('end', () =>
+        resolve({
+          status: response.statusCode,
+          type: String(response.headers['content-type'] || ''),
+          text,
+          json: safeParse(text),
+          replay: response.headers['x-idempotent-replay']
+        })
+      );
     });
     request.setTimeout(5000, () => {
       request.destroy();
@@ -747,7 +857,7 @@ async function checkRoutes(port, recording) {
     Object.assign(world, FRESH, scenario.setup);
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
-    const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, scenario.headers);
+    const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
     (recording[scenario.route] = recording[scenario.route] || {})[scenario.id] = { status: answer.status, body: answer.json };
     (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (argv.includes('--capture')) continue;
@@ -763,8 +873,10 @@ async function checkRoutes(port, recording) {
       check(label + ': a 5xx says nothing of its cause', !/catalogue_items|SELECT|vault|relation|EACCES/.test(answer.text), answer.text);
   }
   if (!argv.includes('--capture')) await checkHiddenShops(port, recording);
+  if (!argv.includes('--capture')) await checkOnceOnly(port);
   delete process.env.NETWORK_STORE_ORDERS;
   checkSameNotFound(recording);
+  checkSameRefusal(recording);
   return tested;
 }
 
@@ -776,12 +888,53 @@ async function checkHiddenShops(port, recording) {
     Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
-    const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, scenario.headers);
+    const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
     const unknown = recording[scenario.route][scenario.id];
     const same =
       answer.status === 404 && sameValue(Object.assign({}, answer.json, { request_id: null }), Object.assign({}, unknown.body, { request_id: null }));
     check(scenario.route + ': a sealed shop gets the same 404 as ' + scenario.id, same, [answer.status, answer.json]);
     prove(scenario.route, 'foreign_id_404', same);
+  }
+}
+
+/* ⭐ API-3 S36 (laptop1, 23 Oct): a double tap makes ONE order, and a retry gets the same answer. The key decides, not timing:
+   the two taps go together, and what they ran is counted against what one request runs. */
+async function checkOnceOnly(port) {
+  console.log('\n-- one key, one run: a double tap and a retry on the two money doors --');
+  const DOES = { 'start-ok': /SET otp_code = \$1/, 'confirm-ok': /chit_deliver\(/ }; /* a code issued · an order delivered (both copies, one statement) */
+  for (const id of Object.keys(DOES)) {
+    const scenario = SCENARIOS.find((item) => item.id === id);
+    const runs = () => statements.filter((sql) => DOES[id].test(sql)).length;
+    Object.assign(world, FRESH, scenario.setup);
+    statements.length = 0;
+    await send(port, 'POST', scenario.url, scenario.body, { 'idempotency-key': 'one-' + id });
+    const single = runs();
+    statements.length = 0;
+    const tapped = { 'idempotency-key': 'tap-' + id };
+    const taps = await Promise.all([1, 2].map(() => send(port, 'POST', scenario.url, scenario.body, tapped)));
+    check(id + ': one request does its work (the yardstick)', single > 0, single);
+    check(id + ': a double tap does it once', runs() === single, [runs(), single]);
+    const first = taps.find((tap) => tap.status === 200);
+    const other = taps.find((tap) => tap !== first);
+    const otherIsSafe =
+      other && (other.status === 409 ? other.json.code === 'IDEMPOTENCY_IN_PROGRESS' : other.status === 200 && sameValue(other.json, first.json));
+    check(
+      id + ': one tap is answered 200; the other is the same 200 or 409 IDEMPOTENCY_IN_PROGRESS',
+      Boolean(first && otherIsSafe),
+      taps.map((tap) => [tap.status, tap.json])
+    );
+    statements.length = 0;
+    const retry = await send(port, 'POST', scenario.url, scenario.body, tapped);
+    check(
+      id + ': a retry gets the same answer, marked a replay',
+      Boolean(first) && retry.status === 200 && sameValue(retry.json, first.json) && retry.replay === 'true',
+      [retry.status, retry.replay]
+    );
+    check(
+      id + ': the retry ran nothing but the shop read and the key lookup',
+      statements.every((sql) => /idempotency_key|FROM identities WHERE \(bridge_id/.test(sql)),
+      statements
+    );
   }
 }
 
@@ -807,6 +960,25 @@ function checkSameNotFound(recording) {
   pairs.forEach(([route, unknown, hidden]) =>
     check(hidden + ': the same 404, byte for byte, as ' + unknown, sameValue(bodyOf(route, unknown), bodyOf(route, hidden)))
   );
+}
+
+/* ⭐ SEC-81c: before sign-in, an unknown contact and a refused code (wrong, locked, expired) answer byte for byte the same on each door */
+function checkSameRefusal(recording) {
+  const DOORS = [
+    ['POST /api/catalogue/:bridge_id/support', 'support-no-code-asked', 'support'],
+    ['POST /api/catalogue/:bridge_id/order/confirm', 'confirm-not-started', 'confirm'],
+    ['POST /api/catalogue/:bridge_id/login/verify', 'login-no-account', 'login']
+  ];
+  for (const [route, unknown, door] of DOORS) {
+    const bodyOf = (scenario) => Object.assign({}, recording[route][scenario].body, { request_id: null });
+    for (const known of [door + '-wrong-code', door + '-locked', door + '-expired']) {
+      const same = recording[route][known].status === recording[route][unknown].status && sameValue(bodyOf(known), bodyOf(unknown));
+      check(known + ': the same answer, byte for byte, as ' + unknown + ' (no one can tell a customer from a stranger)', same, [
+        bodyOf(known),
+        bodyOf(unknown)
+      ]);
+    }
+  }
 }
 
 /* ── lib/storefront-contract.js as a unit: the operations, the old validation body, the 5xx bodies ── */

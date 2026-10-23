@@ -862,7 +862,7 @@ it('⭐⭐⭐ a GSTIN typed at the counter is checked there AND refused by the s
   const route = src.slice(routeAt(src, 'post', '/shop'), routeAt(src, 'get', '/bills'));
   assert.ok(route.length > 200, 'POST /api/till/shop is gone');
   assert.ok(route.indexOf("gstinChecksum(") > 0, 'the server takes a GSTIN from a counter without checking it');
-  assert.ok(route.indexOf("status(400)") > 0, 'a bad GSTIN is not refused, only noted');
+  assert.ok(/status\(400\)|status: 400/.test(route), 'a bad GSTIN is not refused, only noted');
 
   /* 4 · ⚠⚠ the two a counter may never set, because each changes what a bill CHARGES rather than what it says */
   assert.ok(src.indexOf('const TILL_SHOP_FIELDS = [') > 0, 'the whitelist is gone — it is the security boundary');

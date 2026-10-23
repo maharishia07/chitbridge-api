@@ -19,9 +19,10 @@ if (!/@(127\.0\.0\.1|localhost):55432\//.test(DB)) { console.error('REFUSED: loc
 const ENTITY_OTP = '123456', CUSTOMER_OTP = '123123';   /* lib/dev-otp.js */
 const results = [];
 
-/** the doors (the seed's own j()) */
+/** the doors (the seed's own j()); an unsigned write is a public door, each call its own attempt with its own Idempotency-Key (API-3 S36) */
 async function j(path, { method = 'GET', token, body } = {}) {
-  const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}), body: body ? JSON.stringify(body) : undefined });
+  const once = !token && method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {};
+  const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once), body: body ? JSON.stringify(body) : undefined });
   let b = null; try { b = await r.json(); } catch (_) { /* a reply with no JSON body (bytes, 204) is read as {} */ }
   return { status: r.status, b: b || {} };
 }

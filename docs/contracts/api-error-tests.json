@@ -448,6 +448,90 @@
   401,
   500
  ],
+ "GET /api/till/bills": [
+  401,
+  500
+ ],
+ "GET /api/till/catalogue/blueprints": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/counters": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/engine/:name": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/till/match": [
+  401,
+  500
+ ],
+ "GET /api/till/quick-keys/groups": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/quick-keys/hidden": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/quick-keys/screen-config": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/quick-keys/state": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/reward": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/screens": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/snapshot": [
+  401,
+  500
+ ],
+ "GET /api/till/stock": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/summary": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "GET /api/till/tasks": [
+  401,
+  500
+ ],
+ "GET /api/till/verify": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/till/worth-an-offer": [
+  401,
+  403,
+  500
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -787,7 +871,6 @@
   400,
   404,
   422,
-  429,
   500
  ],
  "POST /api/catalogue/:bridge_id/order/confirm": [
@@ -796,7 +879,6 @@
   404,
   409,
   422,
-  429,
   500,
   503
  ],
@@ -804,6 +886,7 @@
   400,
   403,
   404,
+  409,
   422,
   500
  ],
@@ -811,7 +894,6 @@
   400,
   404,
   422,
-  429,
   500,
   502
  ],
@@ -1016,6 +1098,157 @@
   500
  ],
  "POST /api/tax/rate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/alias": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/till/catalogue": [
+  400,
+  401,
+  403,
+  409,
+  422,
+  500
+ ],
+ "POST /api/till/close": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/diagnostic": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/enrol": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/till/flags": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/listen": [
+  401
+ ],
+ "POST /api/till/offer-item": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/pair": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/pair/claim": [
+  404,
+  429,
+  500
+ ],
+ "POST /api/till/price": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/till/quick-keys/hide": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/quick-keys/screen-config": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/quick-keys/state": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/quick-keys/unhide": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/reconcile": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/reward": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/till/reward/claim": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/till/screens/rename": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/screens/revoke": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/shop": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/state": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/till/stock": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/till/stock/bulk": [
   400,
   401,
   403,
