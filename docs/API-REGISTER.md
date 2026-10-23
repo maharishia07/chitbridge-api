@@ -196,7 +196,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/governance/supplier-acceptance/:handle | governance | routes/governance.js:704 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/governance/track-record | governance | routes/governance.js:338 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/governance/vault-schema | governance | routes/governance.js:409 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/identity/documents | identity-docs | routes/identity-docs.js:127 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
+| GET | /api/identity/documents | identity-docs | routes/identity-docs.js:129 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/integrations/catalogue | integrations | routes/integrations.js:360 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/integrations/docs/:id | integrations | routes/integrations.js:273 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/integrations/download/:id | integrations | routes/integrations.js:379 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
@@ -486,8 +486,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/governance/source | governance | routes/governance.js:280 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/governance/supplier-acceptance | governance | routes/governance.js:664 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/governance/verify | governance | routes/governance.js:617 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/identity/documents/:scheme/code | identity-docs | routes/identity-docs.js:389 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
-| POST | /api/identity/documents/:scheme/verify | identity-docs | routes/identity-docs.js:405 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
+| POST | /api/identity/documents/:scheme/code | identity-docs | routes/identity-docs.js:390 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
+| POST | /api/identity/documents/:scheme/verify | identity-docs | routes/identity-docs.js:406 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/integrations/:actor_id/approve | integrations | routes/integrations.js:631 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:932 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/integrations/books | integrations | routes/integrations.js:668 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
@@ -634,7 +634,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/governance/country-setup | governance | routes/governance.js:495 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/governance/profile | governance | routes/governance.js:389 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/governance/profile/vault | governance | routes/governance.js:438 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:221 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
+| PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:223 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | PUT | /api/integrations/streams | integrations | routes/integrations.js:754 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-design | network-design | routes/network-design.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:275 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |

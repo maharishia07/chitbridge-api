@@ -9062,7 +9062,7 @@
    "path": "/api/identity/documents",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 127,
+   "line": 129,
    "hash": "34886bfbcac3cf8e",
    "columns": {
     "schema_in": false,
@@ -23045,7 +23045,7 @@
    "path": "/api/identity/documents/:scheme/code",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 389,
+   "line": 390,
    "hash": "d44b329f9ef58ae1",
    "columns": {
     "schema_in": false,
@@ -23089,7 +23089,7 @@
    "path": "/api/identity/documents/:scheme/verify",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 405,
+   "line": 406,
    "hash": "407af3113bee284b",
    "columns": {
     "schema_in": false,
@@ -30249,8 +30249,8 @@
    "path": "/api/identity/documents/:scheme",
    "owner_area": "identity-docs",
    "file": "routes/identity-docs.js",
-   "line": 221,
-   "hash": "9e43247747de3058",
+   "line": 223,
+   "hash": "25750b74560fd804",
    "columns": {
     "schema_in": false,
     "schema_out": false,

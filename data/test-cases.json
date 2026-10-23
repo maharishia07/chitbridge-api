@@ -95573,6 +95573,66 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-19T19:29:06+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec101-iddoc-hash.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-101: a national ID (Aadhaar) is stored as a keyed hash, never sha256(SCHEME:value); PHONE and EMAIL hashes unchanged.",
+   "claim": "SEC-101: a national ID (Aadhaar) is stored as a keyed hash, never sha256(SCHEME:value); PHONE and EMAIL hashes unchanged.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · offline. Run: node chitbridge-api/tests/sec101-iddoc-hash.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "routes/identity-docs.js",
+    "lib/vaultcrypto.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T12:00:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec101-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-101 truth on the local stack: an Aadhaar filed through the route has a keyed hash; same number again is one document; PHONE keeps the plain hash.",
+   "claim": "SEC-101 truth on the local stack: an Aadhaar filed through the route has a keyed hash; same number again is one document; PHONE keeps the plain hash.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · realstack T2 · written, run by S41. Run: node chitbridge-api/tests/sec101-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "e2e",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "routes/identity-docs.js",
+    "lib/vaultcrypto.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T12:00:00+05:30",
+   "needs": [
+    "the local stack",
+    "a database"
+   ]
   }
  ]
 }
