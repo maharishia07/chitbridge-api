@@ -6,7 +6,7 @@
  * OWNS      the proof that each refusal of the connector routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses each
  *           route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world for the nine routes addressed by a connector id in the path
- *           (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json. Also: no answer outside the statuses the contract declares
+ *           (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence-areas.json. Also: no answer outside the statuses the contract declares
  *           (lib/connectors-contract.js), its words as units, and the two doors a device and an ERP agent read (POST /ingest, POST /erp-ingest): every status and every key they answered
  *           stays, which the frozen answers and the 5xx replay below hold.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs), the rows of tests/lib/connectors-scenes.cjs.
@@ -15,7 +15,7 @@
  * CARD      28-platform-and-operations/connectors-routes
  *
  *   node tests/api-problem-connectors.test.cjs                    check
- *   node tests/api-problem-connectors.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-connectors.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-connectors.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-connectors.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-connectors.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -48,7 +48,7 @@ const lab = harness({
 const { check, world } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const STRANGER = { identity_id: scenes.STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' };
 const VALUES = { actorId: scenes.ACTOR, connId: scenes.CONNECTION };
 const WORLDS = [
@@ -259,7 +259,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/connectors.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), foreign.proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), foreign.proved);
   }
   check('signed in as another shop: all ' + foreign.asked + ' routes addressed by a connector id held (a foreign id answers exactly as an unknown one)', foreign.failures.length === 0, foreign.failures);
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
