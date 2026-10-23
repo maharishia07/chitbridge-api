@@ -151,7 +151,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | INVALID_KEY_REQUEST | 400 | Key request not valid | That key cannot be made as asked. | Pick a listed kind, and revoke a key if you have twenty. | keys | 2026-10-22 |
 | INVOICE_BAD_REQUEST | 400 | Invoice needs lines | The invoice needs at least one line. | Send the lines to invoice. | invoice | 2026-10-23 |
 | IN_FLIGHT | 409 | Open chit on the connection | A chit is still open on this connection. | Settle it first, or disconnect and settle together. | network | 2026-10-23 |
-| IN_USE | 409 | In use | PENDING | - | schemas | 2026-10-22 |
+| IN_USE | 409 | In use | Products still hold a value in this column. | Clear it on those products first, or keep the column. | schemas | 2026-10-22 |
 | ITEM_NOT_FOUND | 422 | Item not on the shelf | A line names an item this shop does not sell. | Check the item id or code. | tax | 2026-10-23 |
 | KEY_CANNOT_DECIDE | 403 | A key cannot decide this | A connector cannot decide this on its own. Sign in as a person. | Sign in to the shop and do it there. | integrations | 2026-10-23 |
 | KEY_CANNOT_MANAGE_KEYS | 403 | A key cannot manage keys | A key cannot make or remove keys. Sign in as a person. | Sign in to the shop and do it there. | keys | 2026-10-22 |
@@ -162,9 +162,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LAB_CHIT_LIVE_SHOP | 409 | Lab chit on a live shop | A practice chit cannot be sent from a live shop. | Send it from a practice shop, or make a real chit. | chits | 2026-10-23 |
 | LEADS_NOT_MIGRATED | 503 | Leads not migrated | Lead stages are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
 | LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |
-| LOCKED | 409 | Locked | PENDING | - | schemas | 2026-10-22 |
+| LOCKED | 409 | Locked | This column is one every catalogue keeps, so it cannot be changed that way. | Leave it as it is. | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | 400 | Max tasks over entity | That is more tasks than the shop allows one person. | Raise the limit in Settings first, or give fewer. | actors | 2026-10-22 |
-| MIGRATION | 409 | Migration | PENDING | - | schemas | 2026-10-22 |
+| MIGRATION | 409 | Not switched on yet | Unit and source are not switched on for your account yet. | Type, label and required still work; try again after the next update. | schemas | 2026-10-22 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
 | MKT_NOT_MIGRATED | varies | Mkt not migrated | PENDING | - | channels | 2026-10-22 |
@@ -256,11 +256,16 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REPEAT_REFUSED | 422 | Repeat refused | Repeat supply refused that, and the sentence says why. | Fix what the sentence says and try again. | repeat-supply | 2026-10-23 |
 | REPEAT_WRONG_STATE | 422 | Not at that step | This agreement is not at a step where that can be done. | Open the agreement to see what can be done now. | repeat-supply | 2026-10-23 |
 | REQUEST_TIMEOUT | 503 | Request timeout | PENDING | - | limits | 2026-10-22 |
-| REQUIRED | 409 | Required | PENDING | - | schemas | 2026-10-22 |
+| REQUIRED | 409 | Required | Your catalogue requires this column. | Make it optional first, then remove it. | schemas | 2026-10-22 |
 | RETURN_FROM_RAIL | 422 | Return comes from bills | Your return is made from your bills, not from these books. | Use the GST page. | books | 2026-10-23 |
 | ROOT_HANDLE_NEEDED | varies | Network name needed | Set your User ID, or choose a network name, before building. | Set it in your profile, or send a network name. | network-build-run | 2026-10-22 |
 | ROOT_HANDLE_TAKEN | varies | Network name taken | That network name is already taken. | Choose another network name. | network-build-run | 2026-10-22 |
 | ROOT_HANDLE_UNUSABLE | varies | Network name unusable | Your User ID cannot be a network name. | Change your User ID in Settings first. | network-build-run | 2026-10-22 |
+| SCHEMA_COLUMN_NOT_NAMED | 400 | Column not named | Name the column you want to remove. | Pick a column from the list and try again. | schemas | 2026-10-23 |
+| SCHEMA_NOTHING_TO_ORDER | 400 | Nothing to order | None of those columns are in your catalogue. | Reload the page and try again. | schemas | 2026-10-23 |
+| SCHEMA_UNKNOWN_CHANNEL | 400 | Unknown channel | The channel must be ERP, IoT or AI. | Pick one of those. | schemas | 2026-10-23 |
+| SCHEMA_UNKNOWN_SOURCE | 400 | Unknown source | A value can come from the system, the customer, a computation or ChitBridge. | Pick one of those. | schemas | 2026-10-23 |
+| SCHEMA_UNKNOWN_TYPE | 400 | Unknown column type | A column is text, number, choice or date. | Pick one of those. | schemas | 2026-10-23 |
 | SELF | 400 | Cannot connect to itself | A business cannot connect to itself. | Choose another business. | network | 2026-10-23 |
 | SENDING | varies | Sending | PENDING | - | verdict | 2026-10-22 |
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |

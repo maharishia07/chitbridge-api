@@ -1810,8 +1810,7 @@
   },
   "POST /api/schemas/create-default": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1835,8 +1834,7 @@
   },
   "PATCH /api/schemas/fields/order": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1845,8 +1843,7 @@
   },
   "PATCH /api/schemas/fields/:field_key": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1857,12 +1854,10 @@
   },
   "PATCH /api/schemas/visibility": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/actors/suggest-key": {
