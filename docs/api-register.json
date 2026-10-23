@@ -3,8 +3,8 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 445,
-  "partial": 50,
+  "not_started": 436,
+  "partial": 59,
   "meets": 138
  },
  "machine_columns": [
@@ -97,19 +97,26 @@
    "path": "/api/catalogue/:bridge_id/my-documents/:id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1906,
-   "hash": "1b34207b0a69660c",
+   "line": 1909,
+   "hash": "cb4788656770100d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -117,7 +124,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "DELETE /api/channels/:id",
@@ -2597,20 +2604,24 @@
    "path": "/api/catalogue-face",
    "owner_area": "catalogue-face",
    "file": "routes/catalogue-face.js",
-   "line": 16,
-   "hash": "e2e27691e280c305",
+   "line": 21,
+   "hash": "2b179ff1d2e0cf6a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -2619,7 +2630,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/catalogue/:bridge_id",
@@ -2627,7 +2638,7 @@
    "path": "/api/catalogue/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1082,
+   "line": 1085,
    "hash": "baa5a1ee9cdc5a82",
    "columns": {
     "schema_in": true,
@@ -2660,7 +2671,7 @@
    "path": "/api/catalogue/:bridge_id/capture-fields",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1100,
+   "line": 1103,
    "hash": "d607d6f62eb7d0de",
    "columns": {
     "schema_in": true,
@@ -2693,19 +2704,26 @@
    "path": "/api/catalogue/:bridge_id/my-documents",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1885,
-   "hash": "a016ada3fe93aabf",
+   "line": 1888,
+   "hash": "f8822ac8bc7414af",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -2713,7 +2731,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/catalogue/:bridge_id/my-orders",
@@ -2721,19 +2739,26 @@
    "path": "/api/catalogue/:bridge_id/my-orders",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1859,
-   "hash": "722b6a6522934dfd",
+   "line": 1862,
+   "hash": "32bc5eb8888ad730",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -2741,7 +2766,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/catalogue/:bridge_id/support/preview",
@@ -2749,7 +2774,7 @@
    "path": "/api/catalogue/:bridge_id/support/preview",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1174,
+   "line": 1177,
    "hash": "e92723610f98cd45",
    "columns": {
     "schema_in": true,
@@ -2782,20 +2807,25 @@
    "path": "/api/catalogue/enquiry",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1037,
-   "hash": "62f3cf03cfa45494",
+   "line": 1040,
+   "hash": "b199ff993db515f6",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -2804,7 +2834,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/catalogue/enquiry/:item_id",
@@ -2812,20 +2842,26 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1995,
-   "hash": "909446b9f8a2c3b5",
+   "line": 1998,
+   "hash": "94028d2eee2e5db1",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -2834,7 +2870,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/catalogue/network-store/:networkId",
@@ -2842,7 +2878,7 @@
    "path": "/api/catalogue/network-store/:networkId",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 606,
+   "line": 609,
    "hash": "985e2513117c90be",
    "columns": {
     "schema_in": true,
@@ -2876,7 +2912,7 @@
    "path": "/api/catalogue/network/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 876,
+   "line": 879,
    "hash": "7e516fd50beb91fc",
    "columns": {
     "schema_in": true,
@@ -12238,7 +12274,7 @@
    "path": "/api/catalogue/:bridge_id/login/verify",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1806,
+   "line": 1809,
    "hash": "40aa5cc7f1e7dbf3",
    "columns": {
     "schema_in": true,
@@ -12274,7 +12310,7 @@
    "path": "/api/catalogue/:bridge_id/order/confirm",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1312,
+   "line": 1315,
    "hash": "c7f1952d25e79ca0",
    "columns": {
     "schema_in": true,
@@ -12313,7 +12349,7 @@
    "path": "/api/catalogue/:bridge_id/order/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1112,
+   "line": 1115,
    "hash": "a6d31ef7a885e307",
    "columns": {
     "schema_in": true,
@@ -12349,7 +12385,7 @@
    "path": "/api/catalogue/:bridge_id/support",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1251,
+   "line": 1254,
    "hash": "0bbbd9474b3eb284",
    "columns": {
     "schema_in": true,
@@ -12386,7 +12422,7 @@
    "path": "/api/catalogue/:bridge_id/support/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1212,
+   "line": 1215,
    "hash": "7d9d4681880be122",
    "columns": {
     "schema_in": true,
@@ -12421,20 +12457,27 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2018,
-   "hash": "e762f4cf80197ac2",
+   "line": 2021,
+   "hash": "8c67d9df0fb2f2fd",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -12443,7 +12486,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/catalogue/network-store/:networkId/order",
@@ -12451,7 +12494,7 @@
    "path": "/api/catalogue/network-store/:networkId/order",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 738,
+   "line": 741,
    "hash": "dec4bb854d252554",
    "columns": {
     "schema_in": true,
@@ -12488,20 +12531,25 @@
    "path": "/api/catalogue/photo-extract",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1927,
-   "hash": "213dfb21eec3556c",
+   "line": 1930,
+   "hash": "c64265079935b335",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -12510,7 +12558,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/channels",
@@ -19221,20 +19269,27 @@
    "path": "/api/catalogue-face",
    "owner_area": "catalogue-face",
    "file": "routes/catalogue-face.js",
-   "line": 27,
-   "hash": "a9539973ed8971ee",
+   "line": 32,
+   "hash": "db4c5014112c4211",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    413,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -19243,7 +19298,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",

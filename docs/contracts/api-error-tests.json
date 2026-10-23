@@ -5,6 +5,11 @@
   404,
   500
  ],
+ "DELETE /api/catalogue/:bridge_id/my-documents/:id": [
+  401,
+  404,
+  500
+ ],
  "DELETE /api/folders/:id": [
   400,
   401,
@@ -221,6 +226,10 @@
   404,
   500
  ],
+ "GET /api/catalogue-face": [
+  401,
+  500
+ ],
  "GET /api/catalogue/:bridge_id": [
   404,
   500
@@ -229,8 +238,24 @@
   404,
   500
  ],
+ "GET /api/catalogue/:bridge_id/my-documents": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/:bridge_id/my-orders": [
+  401,
+  500
+ ],
  "GET /api/catalogue/:bridge_id/support/preview": [
   404,
+  500
+ ],
+ "GET /api/catalogue/enquiry": [
+  401,
+  500
+ ],
+ "GET /api/catalogue/enquiry/:item_id": [
+  401,
   500
  ],
  "GET /api/catalogue/network-store/:networkId": [
@@ -796,6 +821,13 @@
   422,
   500
  ],
+ "POST /api/catalogue/enquiry/:item_id": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
  "POST /api/catalogue/network-store/:networkId/order": [
   400,
   401,
@@ -803,6 +835,14 @@
   404,
   409,
   500
+ ],
+ "POST /api/catalogue/photo-extract": [
+  400,
+  401,
+  402,
+  429,
+  500,
+  503
  ],
  "POST /api/ctp/deliver": [
   200,
@@ -995,6 +1035,13 @@
   400,
   403,
   409,
+  500
+ ],
+ "PUT /api/catalogue-face": [
+  400,
+  401,
+  413,
+  422,
   500
  ],
  "PUT /api/folders/inventory/:code": [

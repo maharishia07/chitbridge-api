@@ -1,3 +1,6 @@
+// CARD storefront-and-catalogue/products-routes
+// OWNS /api/catalogue-face: this entity's saved catalogue setup (read, and save whole, refusing a declaration the catalogue cannot enforce) · CALLED BY server.js (app.use('/api/catalogue-face')), the catalogue setup screens.
+// FLOW  auth → schema check (lib/catalogue-contract.js) → withEntity → catalogue_face; a refusal → problem(req, res, { status, ...words.x() }), its old body frozen in docs/contracts/api-legacy.json
 // routes/catalogue-face.js — CATALOGUE FACE persistence: the catalogue setup config (purpose · method · units ·
 // facets · tax · ERP mapping), stored per entity so the SAME setup follows the user across machines/browsers (was
 // browser-localStorage only). The catalogue ITEMS live in catalogue_items (real products); this holds only the face.
@@ -6,7 +9,9 @@ const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
 const { withEntity, query } = require('../db');
-const { safeErr } = require('../lib/respond');
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { words, failed, schemaOptionsFor, face: faceContract } = require('../lib/catalogue-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 
 const ent = (req) => auth.entityOf(req);
@@ -19,20 +24,20 @@ router.get('/', auth, async (req, res) => {
     const r = await withEntity(e, (db) => db.query(`SELECT face, updated_at FROM catalogue_face WHERE entity_id = $1`, [e]));
     res.json({ face: r.rows.length ? r.rows[0].face : null, updated_at: r.rows.length ? r.rows[0].updated_at : null });
   } catch (err) {
-    res.status(500).json({ error: 'Load failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Load failed'));
   }
 });
 
 // PUT /api/catalogue-face — upsert the whole face config { face: {...} }.
-router.put('/', auth, async (req, res) => {
+router.put('/', auth, schemaValidate(faceContract.operationFor('PUT /'), schemaOptionsFor('PUT /')), async (req, res) => {
   try {
     const e = ent(req);
     const face = req.body && req.body.face;
     if (face === undefined || face === null || typeof face !== 'object' || Array.isArray(face)) {
-      return res.status(400).json({ error: 'Bad request', message: 'face must be an object' });
+      return problem(req, res, { status: 400, ...words.faceNotAnObject() });
     }
     if (Buffer.byteLength(JSON.stringify(face)) > MAX_BYTES) {
-      return res.status(413).json({ error: 'Too large', message: 'face exceeds ' + MAX_BYTES + ' bytes' });
+      return problem(req, res, { status: 413, ...words.faceTooLarge(MAX_BYTES) });
     }
     // T1.1 follow-up — TELL THE OWNER when a declaration cannot be enforced.
     // resolve() reports unsupported keywords, but nothing surfaced them, so declaring `pattern` on a GSTIN field was
@@ -66,7 +71,7 @@ router.put('/', auth, async (req, res) => {
       if (have.length) declErrors.push(...identity.check(ident, have).map((item) => 'identity: ' + item));
     }
     if (declErrors.length) {
-      return res.status(422).json({ error: 'Declaration not supported', message: declErrors.join('; '), errors: declErrors });
+      return problem(req, res, { status: 422, ...words.notSupported(declErrors) });
     }
     const r = await withEntity(e, (db) =>
       db.query(
@@ -78,8 +83,10 @@ router.put('/', auth, async (req, res) => {
     );
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
   } catch (err) {
-    res.status(500).json({ error: 'Save failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Save failed'));
   }
 });
+
+router.openapi = { paths: faceContract.pathsOf() }; // S9: the 2 routes (lib/catalogue-contract.js)
 
 module.exports = router;

@@ -49,7 +49,7 @@ const raising = (pattern, code) => (sql) => {
 /** a stand-in db that answers one statement with given rows */
 const answering = (pattern, rows) => (sql) => (pattern.test(sql) ? { rows, rowCount: rows.length } : null);
 /** several stand-in answers, the first that has an answer wins */
-const firstOf = (...answers) => (sql) => answers.map((answer) => answer(sql)).find((given) => given) || null;
+const firstOf = (...answers) => (sql, params) => answers.map((answer) => answer(sql, params)).find((given) => given) || null;
 
 /** the world a scenario sets up: the stand-in sign-in and database read it on every call */
 function harness(options) {
@@ -63,12 +63,12 @@ function harness(options) {
     else count.failed++;
     if (!condition || argv.includes('--verbose')) console.log('  ' + (condition ? 'ok  ' : 'FAIL') + '  ' + label + (condition || info === undefined ? '' : '\n        ' + JSON.stringify(info).slice(0, 500)));
   };
-  const mine = (route) => mounts.some((mount) => route.includes(' ' + mount + '/') || route.endsWith(' ' + mount));
+  const mine = options.owns || ((route) => mounts.some((mount) => route.includes(' ' + mount + '/') || route.endsWith(' ' + mount)));
 
   /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
-  function rowsFor(sql) {
+  function rowsFor(sql, params) {
     if (world.sqlRows) {
-      const given = world.sqlRows(String(sql));
+      const given = world.sqlRows(String(sql), params);
       if (given) return given;
     }
     if (world.db === 'fail') throw new Error(SECRET_SQL);
@@ -91,8 +91,8 @@ function harness(options) {
     mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
     const realCustomer = require(path.join(here, 'middleware', 'customer-auth'));
     mock('middleware/customer-auth', (req, res, next) => (world.realAuth || world.noCustomer ? realCustomer(req, res, next) : ((req.customer = CUSTOMER), next())));
-    const client = { query: async (sql) => rowsFor(sql) };
-    const known = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, run) => run(client), trySavepoint: async (db, run) => run(client), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one)) };
+    const client = { query: async (sql, params) => rowsFor(sql, params) };
+    const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, run) => run(client), trySavepoint: async (db, run, fallback) => run(client).catch(() => (fallback === undefined ? null : fallback)), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one, one.params)) };
     const fallback = async () => ({ rows: [], rowCount: 0 });
     const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : fallback) });
     mock('db', db);
@@ -259,7 +259,7 @@ function harness(options) {
     const old = Object.keys(before || {}).filter((name) => !OWNED_BY_PROBLEM.includes(name));
     const now = Object.keys(after || {}).filter((name) => !OWNED_BY_PROBLEM.includes(name) && !(name === 'code' && !(before && 'code' in before)));
     const sameOrder = old.every((name, index) => now[index] === name);
-    return sameOrder && old.every((name) => sameValue(before[name], after[name]));
+    return sameOrder && old.every((name) => sameValue(before[name], after[name])) && (!before || !('errors' in before) || sameValue(before.errors, after.errors)); /* `errors` is the Problem's key too: a list kept as it was is kept */
   }
 
   /** one scenario judged against the capture of the code before the change → { kind, reason } where kind is 'identical' | 'kept' | 'different' */

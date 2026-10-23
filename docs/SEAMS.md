@@ -12,11 +12,11 @@ of file each thing is; this says what already does the job.
 | 114 | `list` | `amend.js` |  |
 | 106 | `rows` | `crm.js` | still in them: |
 | 100 | `withEntity` | `books-hooks.js` |  |
-| 86 | `read` | `books-cashflow.js` | Trips: |
+| 87 | `read` | `books-cashflow.js` | Trips: |
 | 75 | `money` | `bill-privacy.js` |  |
 | 73 | `words` | `variant.browser.js` |  |
 | 70 | `answer` | `availability.js` | from March; then nearest. |
-| 66 | `catalogue` | `books-manual.js` | GET /events → the grid. |
+| 67 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 65 | `list` | `cap-settings.js` |  |
 | 65 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
@@ -33,9 +33,9 @@ of file each thing is; this says what already does the job.
 | 47 | `entry` | `books-store.js` |  |
 | 47 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 46 | `next` | `dayopen.js` | the next thing to do — |
+| 44 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 44 | `pack` | `books-store.js` |  |
 | 43 | `read` | `cap-print.js` |  |
-| 43 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 40 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 39 | `view` | `books-payables.js` | group: |
 | 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
@@ -55,17 +55,17 @@ of file each thing is; this says what already does the job.
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
 | 32 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 32 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 32 | `live` | `receivables.js` | the allocations that still count: |
 | 30 | `ensureCap` | `app.html` |  |
-| 30 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 29 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 29 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 29 | `lines` | `cart.js` |  |
 | 29 | `sentence` | `one-person.js` |  |
 | 29 | `facts` | `bill-steps.js` | MY state_log — |
 | 29 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
+| 29 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
-| 28 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 27 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
@@ -92,20 +92,20 @@ of file each thing is; this says what already does the job.
 | 23 | `opts` | `cap-stock.js` |  |
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `rate` | `convert.js` | A rate, with its evidence. |
-| 22 | `said` | `dispute-may.js` | a rail verdict → the answer with its sentence (the rail's WHY table; an unknown word fails loudly, as rail.say |
+| 23 | `said` | `dispute-may.js` | a rail verdict → the answer with its sentence (the rail's WHY table; an unknown word fails loudly, as rail.say |
+| 23 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 22 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 22 | `hold` | `orders.js` |  |
+| 22 | `register` | `regulation.js` | register(pack) → the pack — |
 | 22 | `checked` | `books.js` | the schema check of one route (its own operation in lib/books-contract.js), as a list to spread after the gate |
 | 21 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 21 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 21 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `account` | `home-facts.js` | OMITTED: |
-| 21 | `register` | `regulation.js` | register(pack) → the pack — |
 | 21 | `keep` | `signin.js` | see. |
 | 21 | `owner` | `books.js` |  |
 | 21 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
-| 21 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 20 | `form` | `accounts-shell.js` |  |
 | 20 | `shown` | `cap-settings.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |

@@ -11,16 +11,19 @@ const { problem, fromError } = require('../lib/problem'); // API-1 slice 1e: eve
 const storefront = require('../lib/storefront-contract'); // the public doors' OpenAPI operations and the old answers the storefront reads
 const { oldBody } = storefront; // { error, message }: the old body shop.html reads
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
-const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto'); // 6b: hash the ERP handoff payload (receipt, not raw payload)
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
-const { validate, sanitise, schemaValidate } = require('../middleware/validate');
+const { sanitise, schemaValidate } = require('../middleware/validate');
 /** refuseAs(req, res, spec) → a Problem that keeps the storefront's old body word for word (spec.legacy); its sentence is the detail */
 const refuseAs = (req, res, spec) => problem(req, res, Object.assign({ detail: spec.legacy.message || spec.legacy.why }, spec));
 /** doorCheck(key, chain?) → the door's own schema in front of it (strict input), refusing in the old 400 "Validation failed" words of the old chain */
 const doorCheck = (key, chain) => schemaValidate(storefront.OPERATIONS[key], storefront.refusalFor(chain || []));
+const signedIn = require('../lib/catalogue-contract'); // the signed-in routes' OpenAPI operations (my orders · documents · enquiries · the photo read) and the words of their refusals
+const { words, aiFault, failed, schemaOptionsFor, mergePaths } = signedIn;
+/** routeCheck(route) → the schema check of one signed-in route (its own operation in lib/catalogue-contract.js), as a list to spread after the gates */
+const routeCheck = (route) => [schemaValidate(signedIn.catalogue.operationFor(route), schemaOptionsFor(route))];
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customer-auth'); // T2.4 — the storefront customer's OWN surface
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -1034,7 +1037,7 @@ function publicResponseFor(view, asOwner) {
  */
 const ENQUIRY_PAGE = 20,
   ENQUIRY_MAX = 100;
-router.get('/enquiry', auth, async (req, res) => {
+router.get('/enquiry', auth, ...routeCheck('GET /enquiry'), async (req, res) => {
   const { page, limit, offset } = PL.pageArgs(
     { page: req.query.page, limit: req.query.limit != null ? req.query.limit : ENQUIRY_PAGE },
     ENQUIRY_PAGE,
@@ -1075,7 +1078,7 @@ router.get('/enquiry', auth, async (req, res) => {
     /* b161 not applied (no subject_type) → an empty list said as such, not a broken screen — the same answer /enquiry/:item_id gives */
     if (err && err.code === '42703') return res.json({ enquiries: [], total: 0, page, limit, migrated: false });
     console.error('enquiry list:', err.message);
-    res.status(500).json({ error: 'Enquiries failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Enquiries failed'));
   }
 });
 
@@ -1856,7 +1859,7 @@ const myRows = (rows) => rows.map(({ _total, ...r }) => r);
 // T2.4 · THE CUSTOMER'S OWN SURFACE. This route existed but was mounted on `auth`, which fails closed on
 // identity_type 'customer' — so its only intended caller could never reach it. It now uses customerAuth.
 // Also: `purpose = 'order'` would have hidden every OFFER since T2.1 renamed those; both are listed.
-router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
+router.get('/:bridge_id/my-orders', customerAuth, ...routeCheck('GET /:bridge_id/my-orders'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
     // B1 RLS: the customer's OWN copies -> withEntity(me). Never the shop's copies.
@@ -1877,12 +1880,12 @@ router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
     /* `count` = the rows on this page (kept for older readers); `total` = all of mine — the pager's end marker reads it */
     res.json({ orders, count: orders.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
   } catch (err) {
-    res.status(500).json({ error: 'Orders failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Orders failed'));
   }
 });
 
 // T2.4 · the documents the customer themselves submitted — their OWN per-copy rows, nobody else's.
-router.get('/:bridge_id/my-documents', customerAuth, async (req, res) => {
+router.get('/:bridge_id/my-documents', customerAuth, ...routeCheck('GET /:bridge_id/my-documents'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
     const pg = myPage(req);
@@ -1896,21 +1899,21 @@ router.get('/:bridge_id/my-documents', customerAuth, async (req, res) => {
     const documents = myRows(r.rows);
     res.json({ documents, count: documents.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
   } catch (err) {
-    res.status(500).json({ error: 'Documents failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Documents failed'));
   }
 });
 
 // T2.4 · and the right to PURGE their own copy. Per-copy independence means each party can delete what it holds
 // without touching the other's — that is the whole point of replicating rather than sharing, and until now the
 // customer's side of it was a claim the code could not honour. The shop's copy is untouched.
-router.delete('/:bridge_id/my-documents/:id', customerAuth, async (req, res) => {
+router.delete('/:bridge_id/my-documents/:id', customerAuth, ...routeCheck('DELETE /:bridge_id/my-documents/:id'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
     const r = await withEntity(me, (db) => db.query(`DELETE FROM cb_attachment WHERE id = $1 AND entity_id = $2 RETURNING id`, [req.params.id, me]));
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such document of yours' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchDocument() });
     res.json({ ok: true, deleted: r.rows[0].id });
   } catch (err) {
-    res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Delete failed'));
   }
 });
 
@@ -1924,15 +1927,15 @@ router.delete('/:bridge_id/my-documents/:id', customerAuth, async (req, res) => 
  * ⚠️ PROPOSES, NEVER COMMITS. gate:'confirm' — the owner edits and accepts every row. An AI-read price that
  * committed itself would be a fabricated number wearing the appearance of evidence.
  */
-router.post('/photo-extract', auth, async (req, res) => {
+router.post('/photo-extract', auth, ...routeCheck('POST /photo-extract'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const images = (req.body && req.body.images) || [];
-    if (!Array.isArray(images) || !images.length) return res.status(400).json({ error: 'No images', message: 'Send images: [{ mime, b64 }].' });
+    if (!Array.isArray(images) || !images.length) return problem(req, res, { status: 400, ...words.noImages() });
     const out = await require('../lib/ai').invokeSkill(entity_id, 'photo-to-items', { images });
     res.json(out);
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Photo read failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, aiFault(err, req));
   }
 });
 
@@ -1992,7 +1995,7 @@ const enquiryLimitCheck = async (viewer, item_id) => {
   return view && view.available !== false ? { ok: true, owner_id } : { ok: false };
 };
 
-router.get('/enquiry/:item_id', auth, async (req, res) => {
+router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), async (req, res) => {
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
     /* ⚠️ NO VISIBILITY GATE ON THE READ, and that is correct: RLS already returns only THIS entity's own copies.
@@ -2011,15 +2014,15 @@ router.get('/enquiry/:item_id', auth, async (req, res) => {
   } catch (err) {
     /* b161/b162 not applied on this deployment → an empty thread, not a broken screen. */
     if (err && (err.code === '42703' || err.code === '42883')) return res.json({ messages: [], count: 0, migrated: false, total: 0, page: 1, limit: 0 });
-    res.status(500).json({ error: 'Enquiry read failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Enquiry read failed'));
   }
 });
 
 router.post(
   '/enquiry/:item_id',
   auth,
-  [body('message_text').trim().notEmpty().withMessage('Message text required'), body('thread_type').optional().isIn(['external', 'internal'])],
-  validate,
+  ...routeCheck('POST /enquiry/:item_id'),
+  storefront.trimmed('message_text'), // the old chain's trim(): the message is stored trimmed, a number as text
   async (req, res) => {
     try {
       const me = req.identity.parent_entity_id || req.identity.identity_id;
@@ -2027,7 +2030,7 @@ router.post(
       /* ⚠️ 404, NOT 403. "You may not ask about this" and "this does not exist" must be the same answer, or the
          difference is an existence oracle over the item-id space — the same lesson the storefront learned when
          a private shop said "no public catalogue" and a missing one said "not found". */
-      if (!gate.ok) return res.status(404).json({ error: 'Not found', message: 'No such product' });
+      if (!gate.ok) return problem(req, res, { status: 404, ...words.noSuchProduct() });
 
       const message_id = uuidv4();
       const r = await withEntity(me, (db) =>
@@ -2050,14 +2053,14 @@ router.post(
       res.status(201).json({ message_id, created_at: r.rows[0] && r.rows[0].created_at });
     } catch (err) {
       if (err && err.code === '42883') {
-        return res.status(503).json({ error: 'Not migrated', message: 'Product enquiries need b162 — not applied on this deployment.' });
+        return problem(req, res, { status: 503, ...words.enquiryNotMigrated() });
       }
-      res.status(500).json({ error: 'Enquiry failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Enquiry failed'));
     }
   }
 );
 
-router.openapi = { paths: storefront.openapiPaths('/api/catalogue') }; // S9: the 11 public doors (lib/storefront-contract.js)
+router.openapi = { paths: mergePaths(storefront.openapiPaths('/api/catalogue'), signedIn.catalogue.pathsOf()) }; // S9: the 11 public doors (lib/storefront-contract.js) and the 7 signed-in routes (lib/catalogue-contract.js)
 
 module.exports = router;
 module.exports.resolveContact = resolveContact; // exported for unit tests (F2 channel detection)

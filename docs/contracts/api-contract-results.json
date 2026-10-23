@@ -10,6 +10,14 @@
     422
    ]
   },
+  "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "DELETE /api/folders/:id": {
    "cases": 3,
    "failed": 0,
@@ -232,6 +240,38 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/my-orders": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/enquiry": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/enquiry/:item_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "GET /api/facts/:card": {
@@ -866,7 +906,23 @@
     400
    ]
   },
+  "POST /api/catalogue/enquiry/:item_id": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/catalogue/network-store/:networkId/order": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/catalogue/photo-extract": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -1116,6 +1172,14 @@
   },
   "POST /query": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PUT /api/catalogue-face": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

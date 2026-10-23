@@ -12685,6 +12685,626 @@
      }
     }
    ]
+  },
+  "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     }
+    },
+    {
+     "scenario": "document-not-theirs",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such document of yours"
+     }
+    },
+    {
+     "scenario": "document-delete-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Delete failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue-face": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "face-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Load failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "documents-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Documents failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/my-orders": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "orders-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Orders failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/enquiry": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "enquiries-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiries failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/catalogue/enquiry/:item_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thread-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/enquiry/:item_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-text-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-thread-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-both-wrong",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       },
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "message_text",
+        "message": "Message text required"
+       },
+       {
+        "field": "thread_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "enquiry-product-not-visible",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such product"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such product"
+     }
+    },
+    {
+     "scenario": "enquiry-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Product enquiries need b162 — not applied on this deployment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Product enquiries need b162 — not applied on this deployment."
+     }
+    },
+    {
+     "scenario": "enquiry-db-fails-after-the-gate",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "enquiry-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Enquiry failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/catalogue/photo-extract": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-no-images",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-images-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-empty-list",
+     "status": 400,
+     "body_keys": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     },
+     "fixture": {
+      "error": "No images",
+      "message": "Send images: [{ mime, b64 }]."
+     }
+    },
+    {
+     "scenario": "photo-wallet-empty",
+     "status": 402,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Top up the wallet."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Top up the wallet."
+     }
+    },
+    {
+     "scenario": "photo-refusal-without-words",
+     "status": 429,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "photo-not-connected",
+     "status": 503,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "photo-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Photo read failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/catalogue-face": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "face must be an object"
+     }
+    },
+    {
+     "scenario": "face-too-large",
+     "status": 413,
+     "body_keys": {
+      "error": "Too large",
+      "message": "face exceeds 1000000 bytes"
+     },
+     "fixture": {
+      "error": "Too large",
+      "message": "face exceeds 1000000 bytes"
+     }
+    },
+    {
+     "scenario": "face-declaration-unsupported",
+     "status": 422,
+     "body_keys": {
+      "error": "Declaration not supported",
+      "message": "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     },
+     "fixture": {
+      "error": "Declaration not supported",
+      "message": "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "catalogue: field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "catalogue: field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     }
+    },
+    {
+     "scenario": "face-item-declaration-unsupported",
+     "status": 422,
+     "body_keys": {
+      "error": "Declaration not supported",
+      "message": "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     },
+     "fixture": {
+      "error": "Declaration not supported",
+      "message": "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description; item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated",
+      "errors": [
+       "item \"Tea\": field \"a\": keyword \"pattern\" is declared but NOT enforced — remove it or use one of: type, minimum, maximum, exclusiveMinimum, exclusiveMaximum, enum, maxLength, description",
+       "item \"Tea\": field \"a\": a \"type\" is required — an untyped field cannot be validated"
+      ]
+     }
+    },
+    {
+     "scenario": "face-identity-unknown-column",
+     "status": 422,
+     "body_keys": {
+      "error": "Declaration not supported",
+      "message": "identity: the identity field \"nope\" is not a column in this catalogue",
+      "errors": [
+       "identity: the identity field \"nope\" is not a column in this catalogue"
+      ]
+     },
+     "fixture": {
+      "error": "Declaration not supported",
+      "message": "identity: the identity field \"nope\" is not a column in this catalogue",
+      "errors": [
+       "identity: the identity field \"nope\" is not a column in this catalogue"
+      ]
+     }
+    },
+    {
+     "scenario": "face-save-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Save failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Save failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
