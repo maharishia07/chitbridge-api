@@ -65,6 +65,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "ALREADY_CLAIMED",
+   "status": "409",
+   "title": "Already claimed",
+   "shopkeeper": "This business has already been claimed.",
+   "hint": "Sign in with its claim code, or ask the network for a new one.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ALREADY_PAID",
    "status": "409",
    "title": "Already paid",
@@ -158,8 +167,8 @@
    "code": "BAD_PHONE",
    "status": "400",
    "title": "Bad phone",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Type the mobile number with its country code, 10 to 15 digits.",
+   "hint": "Check the number and try again.",
    "owner_area": "counters",
    "since": "2026-10-22"
   },
@@ -188,6 +197,24 @@
    "shopkeeper": "A line has a tax rate outside 0 to 100 percent.",
    "hint": "Send a rate from 0 to 100.",
    "owner_area": "tax",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_STATE",
+   "status": "409",
+   "title": "Not in that state",
+   "shopkeeper": "This connection is not in a state where that can be done.",
+   "hint": "Refresh the list and look at where it stands.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "BAD_TYPE",
+   "status": "400",
+   "title": "Unknown connection type",
+   "shopkeeper": "A connection is either governance or commercial.",
+   "hint": "Send one of those two words.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -296,6 +323,15 @@
    "shopkeeper": "Your categories could not be set up, so nothing was added.",
    "hint": "Try again in a moment.",
    "owner_area": "till",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHILD_NOT_FOUND",
+   "status": "404",
+   "title": "Business not found",
+   "shopkeeper": "We could not find that business.",
+   "hint": "Check its handle and try again.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -488,6 +524,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CONNECTION_BAD_REQUEST",
+   "status": "400",
+   "title": "Cannot connect to yourself",
+   "shopkeeper": "You cannot connect to your own business.",
+   "hint": "Choose another business.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTION_EXISTS",
+   "status": "400",
+   "title": "Already connected",
+   "shopkeeper": "A connection with this business already exists.",
+   "hint": "Open your connections to see where it stands.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CONNECTOR_HAS_NO_KEY",
    "status": "400",
    "title": "Connector has no key",
@@ -533,6 +587,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "COUNTER_BAD_REQUEST",
+   "status": "400",
+   "title": "Counter request not valid",
+   "shopkeeper": "That counter request is missing something or is not right.",
+   "hint": "Check the name and try again.",
+   "owner_area": "counters",
+   "since": "2026-10-23"
+  },
+  {
    "code": "COUNTER_CLOSED",
    "status": "401",
    "title": "Counter closed",
@@ -549,6 +612,24 @@
    "hint": "Close it there first, or take it over when asked.",
    "owner_area": "counters",
    "since": "2026-10-22"
+  },
+  {
+   "code": "COUNTER_NOT_MIGRATED",
+   "status": "503",
+   "title": "Counter update pending",
+   "shopkeeper": "Counters cannot be changed yet: a database update is still to arrive.",
+   "hint": "Try again after the next update.",
+   "owner_area": "counters",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COUNTER_SESSION_ONLY",
+   "status": "403",
+   "title": "Counters need a person",
+   "shopkeeper": "Counters are managed by a signed-in person, not by a key.",
+   "hint": "Sign in as the owner to change a counter.",
+   "owner_area": "counters",
+   "since": "2026-10-23"
   },
   {
    "code": "COUNTRY_SETUP_NOT_MIGRATED",
@@ -776,6 +857,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CYCLE",
+   "status": "409",
+   "title": "Would loop",
+   "shopkeeper": "A network cannot sit under one of its own members.",
+   "hint": "Choose a different network to join.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "DEVICE_MISMATCH",
    "status": "401",
    "title": "Device mismatch",
@@ -866,6 +956,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "EDGE_NOT_FOUND",
+   "status": "404",
+   "title": "Connection not found",
+   "shopkeeper": "We could not find that connection.",
+   "hint": "Refresh the list; it may have been removed.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
    "status": "varies",
    "title": "Email delivery not configured",
@@ -908,6 +1007,24 @@
    "shopkeeper": "This installation cannot add another shop on its plan.",
    "hint": "Choose a plan with room for more shops.",
    "owner_area": "governance",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ERR",
+   "status": "500",
+   "title": "Something went wrong",
+   "shopkeeper": "Something went wrong on our side. Try again in a moment.",
+   "hint": "If it keeps happening, tell us the request id.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "EXISTS",
+   "status": "409",
+   "title": "Already asked or connected",
+   "shopkeeper": "You have already asked, or are already connected.",
+   "hint": "Open the connection to see where it stands.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -1017,6 +1134,15 @@
    "hint": "-",
    "owner_area": "assist",
    "since": "2026-10-22"
+  },
+  {
+   "code": "HAS_PARENT",
+   "status": "409",
+   "title": "Already in a network",
+   "shopkeeper": "That business is already in a network, and a business can be in one at a time.",
+   "hint": "Remove it from that network first.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "IDEMPOTENCY_CONFLICT",
@@ -1160,6 +1286,15 @@
    "shopkeeper": "The invoice needs at least one line.",
    "hint": "Send the lines to invoice.",
    "owner_area": "invoice",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "IN_FLIGHT",
+   "status": "409",
+   "title": "Open chit on the connection",
+   "shopkeeper": "A chit is still open on this connection.",
+   "hint": "Settle it first, or disconnect and settle together.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -1316,6 +1451,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MINT_FAILED",
+   "status": "500",
+   "title": "Could not make an id",
+   "shopkeeper": "We could not make an id for this business just now.",
+   "hint": "Try again in a moment.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "MISSING_FIELD",
    "status": "422",
    "title": "Field missing",
@@ -1352,6 +1496,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NAME_REQUIRED",
+   "status": "400",
+   "title": "Name needed",
+   "shopkeeper": "A business needs a name.",
+   "hint": "Send a name.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NAME_THE_PERSON",
    "status": "400",
    "title": "Name the person",
@@ -1359,6 +1512,24 @@
    "hint": "-",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NETWORK_BAD_REQUEST",
+   "status": "400",
+   "title": "Network request not usable",
+   "shopkeeper": "What was sent to the network is missing something or cannot be used.",
+   "hint": "Read the sentence, fix it and try again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NAME_TAKEN",
+   "status": "409",
+   "title": "Network name taken",
+   "shopkeeper": "One of these names was taken while the network was being built. Nothing was created.",
+   "hint": "Try again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "NETWORK_ORDERS_OFF",
@@ -1370,12 +1541,39 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NETWORK_OWNER_ONLY",
+   "status": "403",
+   "title": "Owner only",
+   "shopkeeper": "Only the business owner can do this.",
+   "hint": "Sign in as the business itself.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NETWORK_READ_FAILED",
    "status": "503",
    "title": "Network not read",
    "shopkeeper": "We could not read who is in the network just now. Nothing was changed.",
    "hint": "Try again in a minute.",
    "owner_area": "network-membership",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_TOO_LARGE",
+   "status": "413",
+   "title": "Drawing too large",
+   "shopkeeper": "The drawing is too big to save.",
+   "hint": "Take some of it out and save again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NET_WRITE_DISABLED",
+   "status": "503",
+   "title": "Network editing is off",
+   "shopkeeper": "Network changes aren't available yet.",
+   "hint": "Try again later.",
+   "owner_area": "network",
    "since": "2026-10-23"
   },
   {
@@ -1386,6 +1584,15 @@
    "hint": "-",
    "owner_area": "notifications",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_ALLOWED",
+   "status": "403",
+   "title": "Not allowed",
+   "shopkeeper": "Only the two businesses on a connection, or the network above it, can do that.",
+   "hint": "Ask the other business or the network.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "NOT_BOARD_WRITER",
@@ -1485,6 +1692,15 @@
    "hint": "-",
    "owner_area": "signin",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_ACTOR",
+   "status": "401",
+   "title": "Not signed in as a business",
+   "shopkeeper": "Sign in as a business to use the network.",
+   "hint": "Sign in as the business itself.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "NO_BUYERS",
@@ -1802,6 +2018,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "PARENT_NOT_FOUND",
+   "status": "404",
+   "title": "Network not found",
+   "shopkeeper": "We could not find that network.",
+   "hint": "Check its handle and try again.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "PAYMENT_ABOVE_QUOTE",
    "status": "422",
    "title": "Above the quoted amount",
@@ -1982,13 +2207,85 @@
    "since": "2026-10-22"
   },
   {
+   "code": "REPEAT_BAD_REQUEST",
+   "status": "400",
+   "title": "Repeat needs an answer",
+   "shopkeeper": "Repeat supply needs one more answer before it can do that.",
+   "hint": "Read the question shown and answer it.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_ENDED",
+   "status": "422",
+   "title": "Agreement ended",
+   "shopkeeper": "This agreement has ended.",
+   "hint": "Start a new agreement from a bill.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_NOT_CUSTOMER",
+   "status": "422",
+   "title": "Customer only",
+   "shopkeeper": "Only the customer this agreement is with may do that.",
+   "hint": "Ask the customer to do it.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_NOT_DUE",
+   "status": "422",
+   "title": "Run not due",
+   "shopkeeper": "The next run is not due yet.",
+   "hint": "Try again on or after the next run date.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
    "code": "REPEAT_NOT_MIGRATED",
-   "status": "varies",
+   "status": "503",
    "title": "Repeat not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Repeat supply arrives after the next update.",
+   "hint": "Try again after the next update.",
    "owner_area": "repeat-supply",
    "since": "2026-10-22"
+  },
+  {
+   "code": "REPEAT_NOT_SELLER",
+   "status": "422",
+   "title": "Seller only",
+   "shopkeeper": "Only the shop that made this agreement may do that.",
+   "hint": "Ask the shop that made it.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_REASON_NEEDED",
+   "status": "422",
+   "title": "A reason is needed",
+   "shopkeeper": "Say why, so the other side can read it.",
+   "hint": "Write the reason and try again.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_REFUSED",
+   "status": "422",
+   "title": "Repeat refused",
+   "shopkeeper": "Repeat supply refused that, and the sentence says why.",
+   "hint": "Fix what the sentence says and try again.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REPEAT_WRONG_STATE",
+   "status": "422",
+   "title": "Not at that step",
+   "shopkeeper": "This agreement is not at a step where that can be done.",
+   "hint": "Open the agreement to see what can be done now.",
+   "owner_area": "repeat-supply",
+   "since": "2026-10-23"
   },
   {
    "code": "REQUEST_TIMEOUT",
@@ -2020,29 +2317,38 @@
   {
    "code": "ROOT_HANDLE_NEEDED",
    "status": "varies",
-   "title": "Root handle needed",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Network name needed",
+   "shopkeeper": "Set your User ID, or choose a network name, before building.",
+   "hint": "Set it in your profile, or send a network name.",
    "owner_area": "network-build-run",
    "since": "2026-10-22"
   },
   {
    "code": "ROOT_HANDLE_TAKEN",
    "status": "varies",
-   "title": "Root handle taken",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Network name taken",
+   "shopkeeper": "That network name is already taken.",
+   "hint": "Choose another network name.",
    "owner_area": "network-build-run",
    "since": "2026-10-22"
   },
   {
    "code": "ROOT_HANDLE_UNUSABLE",
    "status": "varies",
-   "title": "Root handle unusable",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Network name unusable",
+   "shopkeeper": "Your User ID cannot be a network name.",
+   "hint": "Change your User ID in Settings first.",
    "owner_area": "network-build-run",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SELF",
+   "status": "400",
+   "title": "Cannot connect to itself",
+   "shopkeeper": "A business cannot connect to itself.",
+   "hint": "Choose another business.",
+   "owner_area": "network",
+   "since": "2026-10-23"
   },
   {
    "code": "SENDING",
@@ -2378,6 +2684,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "UNCLAIMED",
+   "status": "409",
+   "title": "Not claimed yet",
+   "shopkeeper": "That business has not claimed its place yet, so it cannot say yes.",
+   "hint": "Ask it to claim its place first.",
+   "owner_area": "network",
+   "since": "2026-10-23"
+  },
+  {
    "code": "USER_ID_ENTITY_ONLY",
    "status": "403",
    "title": "User id entity only",
@@ -2462,8 +2777,8 @@
    "code": "VISIBILITY_NOT_MIGRATED",
    "status": "409",
    "title": "Visibility not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This database does not accept network visibility yet.",
+   "hint": "Apply the pending database update, then build again.",
    "owner_area": "entities",
    "since": "2026-10-22"
   },
@@ -2475,6 +2790,24 @@
    "hint": "Delete unused columns, or split the sheet, and upload again.",
    "owner_area": "products",
    "since": "2026-10-22"
+  },
+  {
+   "code": "WORK_BAD_REQUEST",
+   "status": "400",
+   "title": "Work request not valid",
+   "shopkeeper": "That list request is not valid.",
+   "hint": "Ask for one view at a time.",
+   "owner_area": "work",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "WORK_STAFF_ONLY",
+   "status": "403",
+   "title": "Staff only",
+   "shopkeeper": "Sign in as staff to see Tasks and Orders.",
+   "hint": "Sign in with a staff login.",
+   "owner_area": "work",
+   "since": "2026-10-23"
   },
   {
    "code": "WRITER_THREW",

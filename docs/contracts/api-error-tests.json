@@ -396,6 +396,19 @@
   401,
   500
  ],
+ "GET /api/connections/list": [
+  401,
+  500
+ ],
+ "GET /api/connections/pending": [
+  401,
+  500
+ ],
+ "GET /api/counters": [
+  401,
+  403,
+  500
+ ],
  "GET /api/ctp/.well-known/ctp.json": [
   200,
   500
@@ -597,6 +610,44 @@
   403,
   500
  ],
+ "GET /api/network-design": [
+  401,
+  500
+ ],
+ "GET /api/network-design/availability": [
+  400,
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/network-design/stores": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "GET /api/network/entities/:id/connections": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/network/entities/:id/subtree": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/network/entities/lookup": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/network/place": [
+  401,
+  500
+ ],
  "GET /api/pricing/kinds": [
   500
  ],
@@ -640,6 +691,17 @@
  "GET /api/products/workbook.xlsx": [
   401,
   500
+ ],
+ "GET /api/repeat": [
+  401,
+  500
+ ],
+ "GET /api/repeat/:id": [
+  400,
+  401,
+  404,
+  500,
+  503
  ],
  "GET /api/tax/gstr": [
   401,
@@ -816,6 +878,24 @@
   403,
   500
  ],
+ "GET /api/work/:chit_id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/work/facts": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/work/list": [
+  400,
+  401,
+  403,
+  500
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -826,6 +906,13 @@
   503
  ],
  "PATCH /api/books/recurring/:id": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "PATCH /api/counters/:id": [
+  400,
   401,
   403,
   404,
@@ -1378,6 +1465,41 @@
   422,
   500
  ],
+ "POST /api/connections/request": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/counters": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/counters/:id/assign": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/counters/:id/open": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/counters/:id/release": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/ctp/deliver": [
   200,
   400,
@@ -1534,6 +1656,89 @@
   403,
   500
  ],
+ "POST /api/network-design/build": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/network-design/reissue": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/network-design/validate": [
+  400,
+  401,
+  413,
+  500
+ ],
+ "POST /api/network/connections": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/approve": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/decline": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/disconnect": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/resume": [
+  401,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/connections/:id/suspend": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/network/entities": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/network/entities/:id/claim": [
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
  "POST /api/pricing/price": [
   400,
   401,
@@ -1602,6 +1807,93 @@
  "POST /api/products/status/bulk": [
   400,
   401,
+  500
+ ],
+ "POST /api/repeat": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/agree": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/counter": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/repeat/:id/decline": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/end": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/pause": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/repeat/:id/refuse": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/resume": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/run": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/:id/skip": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/repeat/sweep": [
+  401,
+  403,
   500
  ],
  "POST /api/tax/compute": [
@@ -1911,6 +2203,12 @@
   409,
   500
  ],
+ "PUT /api/connections/:id/respond": [
+  400,
+  401,
+  404,
+  500
+ ],
  "PUT /api/folders/inventory/:code": [
   400,
   401,
@@ -1947,6 +2245,12 @@
   401,
   403,
   422,
+  500
+ ],
+ "PUT /api/network-design": [
+  400,
+  401,
+  413,
   500
  ],
  "PUT /api/products/:id/availability": [

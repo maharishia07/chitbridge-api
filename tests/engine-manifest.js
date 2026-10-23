@@ -219,12 +219,16 @@ const INFRA_LIBS = [
   /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
   'chits-contract.js',
   'chits-input.js',
+  /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'orders-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
   'integrations-contract.js',
   /* API-4 sweep, the catalogue items: the contract of routes/products.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'products-contract.js',
   /* API-4 sweep, the rest of the catalogue: the contract of the signed-in routes of routes/catalogue.js and of routes/catalogue-face.js (their OpenAPI operations and the words of their refusals) — a door, not a rule of the platform. (2026-10-23) */
   'catalogue-contract.js',
+  /* API-4 sweep, the network: the contract of src/routes/network.js, routes/network-design.js and routes/connections.js (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'network-contract.js',
   /* API-4 sweep, the test board: the contract of routes/testing.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'testing-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
