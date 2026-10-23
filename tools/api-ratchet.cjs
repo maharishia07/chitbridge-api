@@ -10,6 +10,7 @@
  *   node tools/api-ratchet.cjs --base origin/main     check (CI)
  *   node tools/api-ratchet.cjs --base origin/main --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
  *   node tools/api-ratchet.cjs --write                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
+ * RAW ERROR TEXT (Athi 23 Oct): rawErrorTextWrites() counts response writes (res.json / .send / .end) whose body holds an exception's own text (e.message, err.stack, String(e), `${e}`) outside safeErr()/problem(); logs are not response writes. The count may only go down (docs/api-ratchet.json raw_error_writes); a new one prints file:line.
  * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js, routes/integrations.js) must have all seven machine columns true; every other touched route is counted, not blocked. Stage "all" holds every route.
  */
 const fs = require('fs');
@@ -61,6 +62,111 @@ function removeBase(dir) {
     fs.rmdirSync(link); /* a Windows junction answers rmdir, not unlink; either removes the link only */
   }
   fs.rmSync(dir, { recursive: true, force: true });
+}
+
+const RAW_SCAN_DIRS = ['routes', 'lib'];
+/* a write the caller sees: .json( .send( .end( .jsonp( on anything but a logger, console, fs or JSON */
+const RESPONSE_WRITE = /([\w$.\])]*)\.(?:json|jsonp|send|end)\s*\(/g;
+const NOT_A_RESPONSE = /(?:^|\.)(?:log|logger|console|fs|JSON|stream|process)$|\.(?:stdout|stderr)$/;
+/* the safe answers, removed from a body before it is read */
+const SAFE_CALL = /\b(?:safeErr|problem|known|publicMessage)\s*\(/g;
+/* an exception's own text: <name>.message / .stack, String(<name>), `${<name>}`, '...' + <name>, JSON.stringify(<name>) */
+const ERR_NAME = '(?:e|err|error|ex|exc|\\w+Err|\\w+Error|failure|cause)';
+const EXCEPTION_TEXT = new RegExp(
+  '\\b' + ERR_NAME + '\\s*\\??\\.\\s*(?:message|stack)\\b' +
+  '|\\bString\\(\\s*' + ERR_NAME + '\\s*\\)' +
+  '|\\$\\{\\s*' + ERR_NAME + '\\s*\\}' +
+  '|\\+\\s*' + ERR_NAME + '\\s*[,)}]' +
+  '|\\bJSON\\.stringify\\(\\s*' + ERR_NAME + '\\s*[,)]',
+  'g'
+);
+
+/** index just past the quoted string that starts at `start` */
+function stringEnd(text, start) {
+  let at = start + 1;
+  while (at < text.length && text[at] !== text[start]) at += text[at] === '\\' ? 2 : 1;
+  return at;
+}
+
+/** index just past the bracket that closes the one at `open`; strings are skipped so a bracket inside one does not count */
+function closeOf(text, open) {
+  let depth = 0;
+  for (let at = open; at < text.length; at++) {
+    const char = text[at];
+    if (char === '"' || char === "'" || char === '`') at = stringEnd(text, at);
+    else if (char === '(') depth++;
+    else if (char === ')' && --depth === 0) return at + 1;
+  }
+  return text.length;
+}
+
+/** blank out safeErr(...) / problem(...) calls (same length, newlines kept) so what they hold is not read as raw */
+function blankSafeCalls(body) {
+  let out = body;
+  const safe = new RegExp(SAFE_CALL.source, 'g');
+  for (let found = safe.exec(out); found; found = safe.exec(out)) {
+    const end = closeOf(out, found.index + found[0].length - 1);
+    out = out.slice(0, found.index) + out.slice(found.index, end).replace(/[^\n]/g, ' ') + out.slice(end);
+  }
+  return out;
+}
+
+/** the source with comment-only lines emptied (line numbers stay) */
+const withoutCommentLines = (lines) => lines.map((line) => (/^\s*(?:\/\/|\*|\/\*)/.test(line) ? '' : line)).join('\n');
+
+/** the lines of a source text where a response write carries an exception's text: [{line, text}] */
+function rawErrorTextWrites(source) {
+  const found = new Map();
+  const lines = source.split('\n');
+  const text = withoutCommentLines(lines);
+  const write = new RegExp(RESPONSE_WRITE.source, 'g');
+  for (let call = write.exec(text); call; call = write.exec(text)) {
+    if (NOT_A_RESPONSE.test(call[1])) continue;
+    const open = call.index + call[0].length - 1;
+    const body = blankSafeCalls(text.slice(open, closeOf(text, open)));
+    const exceptionText = new RegExp(EXCEPTION_TEXT.source, 'g');
+    for (let hit = exceptionText.exec(body); hit; hit = exceptionText.exec(body)) {
+      const line = text.slice(0, open + hit.index).split('\n').length;
+      found.set(line, { line, text: lines[line - 1].trim() });
+    }
+  }
+  return [...found.values()].sort((first, second) => first.line - second.line);
+}
+
+/** every raw-error write under routes/ and lib/ of a checkout: [{file, line, text}] */
+function rawErrorWritesOf(root) {
+  const all = [];
+  const walk = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) return walk(full);
+      if (!/\.(?:js|cjs|mjs)$/.test(entry.name)) return;
+      const file = path.relative(root, full).split(path.sep).join('/');
+      rawErrorTextWrites(fs.readFileSync(full, 'utf8')).forEach((match) => all.push({ file, line: match.line, text: match.text }));
+    });
+  };
+  RAW_SCAN_DIRS.forEach((dir) => walk(path.join(root, dir)));
+  return all;
+}
+
+/** the raw-error count may only go down; a write whose text the base did not have is printed with file:line */
+function checkRawErrors(baseWrites, headWrites, baseRatchet, headRatchet) {
+  const allowed = baseRatchet.raw_error_writes === undefined ? baseWrites.length : baseRatchet.raw_error_writes;
+  const problems = [];
+  if (headWrites.length > allowed) {
+    const seen = new Map();
+    const keyOf = (write) => write.file + '|' + write.text;
+    baseWrites.forEach((write) => seen.set(keyOf(write), (seen.get(keyOf(write)) || 0) + 1));
+    headWrites.forEach((write) => {
+      if (seen.get(keyOf(write)) > 0) return seen.set(keyOf(write), seen.get(keyOf(write)) - 1);
+      problems.push('raw error text sent to the caller at ' + write.file + ':' + write.line + ' (' + write.text.slice(0, 90) + '): answer with safeErr(err) or problem(), never the exception text');
+    });
+    problems.unshift('raw error text in responses rose to ' + headWrites.length + ' (allowed ' + allowed + ')');
+  }
+  if (headRatchet.raw_error_writes === undefined || headRatchet.raw_error_writes < headWrites.length) problems.push('docs/api-ratchet.json raw_error_writes is ' + headRatchet.raw_error_writes + ' but the code has ' + headWrites.length + ': run node tools/api-ratchet.cjs --write');
+  console.log('raw error text in responses: ' + headWrites.length + ' (base ratchet ' + allowed + ')');
+  return problems;
 }
 
 /** touched = a route the base does not have, or whose hash differs */
@@ -134,10 +240,12 @@ function writeRatchet(head) {
   const { rows } = codes.readRows();
   const previous = readJson(RATCHET_FILE, null);
   const notMeeting = head.counts.routes - head.counts.meets;
+  const rawNow = rawErrorWritesOf(ROOT).length;
+  if (previous && previous.raw_error_writes !== undefined && rawNow > previous.raw_error_writes) throw new Error('refusing to raise the raw error text count (' + rawNow + ' against ' + previous.raw_error_writes + ')');
   if (previous && !flag('--seed') && notMeeting > previous.not_meeting + Math.max(0, head.counts.routes - previous.total)) throw new Error('refusing to raise the count of routes not meeting the standard');
-  const next = { version: 1, stage: previous ? previous.stage : '1a', updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), debt: previous ? previous.debt : [] };
+  const next = { version: 1, stage: previous ? previous.stage : '1a', updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, debt: previous ? previous.debt : [] };
   fs.writeFileSync(RATCHET_FILE, JSON.stringify(next, null, 1) + '\n');
-  console.log('wrote docs/api-ratchet.json: ' + next.not_meeting + ' of ' + next.total + ' not meeting; ' + next.codes_pending + ' of ' + next.codes_total + ' codes waiting for a sentence');
+  console.log('wrote docs/api-ratchet.json: ' + next.not_meeting + ' of ' + next.total + ' not meeting; ' + next.codes_pending + ' of ' + next.codes_total + ' codes waiting for a sentence; ' + next.raw_error_writes + ' response writes carry raw error text');
 }
 
 /** run the ratchet: unpack the base, register both trees, compare routes, counts and codes, print and set the exit code */
@@ -152,7 +260,7 @@ function main() {
     const baseRegister = registerOf(base.dir);
     const headRatchet = readJson(RATCHET_FILE, null);
     const baseRatchet = readJson(path.join(base.dir, 'docs', 'api-ratchet.json'), headRatchet);
-    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet));
+    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet));
   } finally {
     base.remove();
   }
@@ -170,4 +278,4 @@ if (require.main === module) {
   }
   process.exit(process.exitCode || 0);
 }
-module.exports = { touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };
+module.exports = { rawErrorTextWrites, rawErrorWritesOf, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };

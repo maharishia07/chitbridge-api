@@ -101,6 +101,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NOT_YET | 409 | Not built yet | This connector is not built yet. | Use the File connector (CSV) or the Counter, and ask for it under Help. | integrations | 2026-10-22 |
 | NOT_YET_FOR_COUNTRY | 409 | Not yet for your country | This connector is not ready for your country yet. | Use the File connector (CSV) or the Counter. | integrations | 2026-10-22 |
 | NO_ACCOUNT | varies | No account | PENDING | - | signin | 2026-10-22 |
+| SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
 | NO_BUYERS | varies | No buyers | PENDING | - | marketing-results | 2026-10-22 |
 | NO_CONSENT | varies | No consent | PENDING | - | marketing-results | 2026-10-22 |
 | NO_COUNTRY | 400/422 | No country | PENDING | - | assist | 2026-10-22 |

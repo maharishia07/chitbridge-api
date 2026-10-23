@@ -36,6 +36,12 @@ t('schema_out: a success declared with no media type at all fails', !register.sc
 t('schema_out: a zip declared as a string of its media type passes', register.schemaOutColumn(answers({ 'application/zip': { schema: { type: 'string', contentMediaType: 'application/zip' } } })));
 t('the error-code parser finds the table of the committed register', codes.readRows().rows.length > 100);
 t('a 500 carries the generic sentence, never the error text', safeErr(new Error('relation x does not exist')) === SAFE_SENTENCE);
+const rawLines = (src) => ratchet.rawErrorTextWrites(src).length;
+t('raw error text: a safeErr / problem() answer is not counted', rawLines("res.status(500).json({ error: 'x', message: safeErr(e) });\nres.status(500).json(problem(req, { detail: err.message }));") === 0);
+t('raw error text: res.status(500).json({error:e.message}) is counted, also String(e), stack and a template', rawLines("res.status(500).json({error:e.message});\nres.send(String(err));\nres.json({ s: error.stack });\nres.status(400).send(`bad ${e}`);") === 4);
+t('raw error text: a multi-line write is counted at the line of the text', ratchet.rawErrorTextWrites("res.status(500).json({\n  error: 'x',\n  detail: e.message,\n});")[0].line === 3);
+t('raw error text: a log line is not counted', rawLines("log.error('boom', { err: e.message });\nconsole.error(e.message);\nlogger.warn(String(e));") === 0);
+t('raw error text: the ratchet prints file:line for a write the base did not have', ratchet.checkRawErrors([], [{ file: 'routes/a.js', line: 7, text: 'res.json({error:e.message})' }], { raw_error_writes: 0 }, { raw_error_writes: 0 }).some((line) => line.includes('routes/a.js:7')));
 t('the assembled OpenAPI is a contract that carries the Problem schema', typeof openapi.assemble === 'function');
 t('a refused request (401 or 422 validation) is answered in the Problem shape, a duplicate or replay never twice: see tests/api-problem.test.cjs', true);
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
