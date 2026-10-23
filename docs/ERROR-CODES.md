@@ -159,6 +159,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | KEY_CANNOT_SIGN_IN | 403 | Key cannot sign in | PENDING | - | signin | 2026-10-22 |
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
 | KEY_UNKNOWN | 401 | Key unknown | PENDING | - | connectors | 2026-10-22 |
+| KYB_BAD_REQUEST | 400 | Nothing to add | Say what the paper is called, or give its standard, and try again. | Type the name of the paper (for example Village NOC) and add it. | kyb | 2026-10-24 |
+| KYB_REFUSED | varies | Refused | The Know your business page could not do that as asked. | Read the line shown, change what you sent and try again. | kyb | 2026-10-24 |
 | LAB_CHIT_LIVE_SHOP | 409 | Lab chit on a live shop | A practice chit cannot be sent from a live shop. | Send it from a practice shop, or make a real chit. | chits | 2026-10-23 |
 | LEADS_NOT_MIGRATED | 503 | Leads not migrated | Lead stages are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
 | LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |

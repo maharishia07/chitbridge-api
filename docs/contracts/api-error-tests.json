@@ -810,6 +810,18 @@
   403,
   500
  ],
+ "GET /api/kyb/position": [
+  401,
+  500
+ ],
+ "GET /api/kyb/risk": [
+  401,
+  500
+ ],
+ "GET /api/kyb/yourself": [
+  401,
+  500
+ ],
  "GET /api/network-design": [
   401,
   500
@@ -2064,6 +2076,15 @@
   400,
   401,
   403,
+  500
+ ],
+ "POST /api/kyb/credential": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/kyb/field": [
+  401,
   500
  ],
  "POST /api/network-design/build": [
