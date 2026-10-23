@@ -163,6 +163,23 @@ const call = (port, method, p, body) => new Promise((done) => {
   const s3 = await R.sweep(SHOP);
   ok('a run the send path REFUSES is a named problem (the reason), the row stays put, nothing recorded', s3.ran.length === 0 && s3.problems.length === 1 && /credit limit/.test(s3.problems[0].why) && mem.rows.find((r) => r.agreement_id === B).next_on === '2026-12-31', JSON.stringify(s3));
   mem.refuseSend = null;
+  /* SEC-90: a FAULT (not a refusal) in a run, or in reading the list, is the safe sentence plus the request id, never the database's own text */
+  {
+    const { SAFE_SENTENCE } = require(path.join(H.API, 'lib', 'respond'));
+    const DB_TEXT = 'relation "repeat_agreement" does not exist';
+    R.useSender(async () => { throw new Error(DB_TEXT); });
+    const f1 = await R.sweep(SHOP, null, { request_id: 'req-sec90' });
+    R.useSender(mem.sendAs);
+    ok('SEC-90: a run that FAILS (not refused) says the safe sentence and the request id; the database text stays in the log',
+      f1.problems.length === 1 && f1.problems[0].why === SAFE_SENTENCE && f1.problems[0].request_id === 'req-sec90' && f1.problems[0].agreement_id === B
+        && !JSON.stringify(f1).includes('relation'), JSON.stringify(f1));
+    const list = mem.store.list;
+    mem.store.list = async () => { throw new Error(DB_TEXT); };
+    const f2 = await R.sweep(SHOP, null, { request_id: 'req-sec90b' });
+    mem.store.list = list;
+    ok('SEC-90: a list read that FAILS says the safe sentence and the request id, nothing of the database',
+      f2.problems.length === 1 && f2.problems[0].why === SAFE_SENTENCE && f2.problems[0].request_id === 'req-sec90b' && !JSON.stringify(f2).includes('relation'), JSON.stringify(f2));
+  }
   const en = await q('POST', '/' + B + '/end', { reason: 'Customer moved' });
   ok('END (seller): state ended with the reason; every verb now answers ended', en.status === 200 && en.body.agreement.state === 'ended' && en.body.agreement.state_note === 'Customer moved' && Object.values(en.body.agreement.actions).every((v) => v.why === 'ended'));
   WHO = CUSTOMER;

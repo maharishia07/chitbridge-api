@@ -73,7 +73,7 @@ router.post('/', auth, writeGate, ...checked('POST /'), async (req, res) => {
 /** POST /api/repeat/sweep → { ran, problems } — the seller runs everything due now (what the nightly would do) */
 router.post('/sweep', auth, writeGate, ...checked('POST /sweep'), async (req, res) => {
   try {
-    res.json(await RS().sweep(me(req)));
+    res.json(await RS().sweep(me(req), null, { request_id: req.id || null }));   /* SEC-90: a fault in problems[] says the safe sentence and this id */
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
@@ -161,7 +161,7 @@ router.post(
 router.post(
   '/:id/run',
   auth,
-  ...seller('POST /:id/run', async (req) => RS().run(me(req), req.params.id, who(req)))
+  ...seller('POST /:id/run', async (req) => RS().run(me(req), req.params.id, who(req), { request_id: req.id || null }))
 );
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
