@@ -224,7 +224,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - run: npm ci
       - name: ops role that production has by hand (b151 header)
         run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE cb_metrics NOLOGIN"
