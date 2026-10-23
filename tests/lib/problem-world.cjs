@@ -162,6 +162,7 @@ function harness(options) {
 
   async function runScenario(port, scenario, modules) {
     Object.assign(world, FRESH, scenario.setup);
+    if (options.before) await options.before(scenario); /* a sweep whose world is a stand-in of its own (tests/support/crm-stub.cjs) sets it up here */
     const restore = applyPatch(scenario.patch, modules);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
