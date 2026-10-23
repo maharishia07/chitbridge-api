@@ -204,7 +204,7 @@ function renamedSigned(base, head) {
   const added = head.routes.filter((row) => !baseKeys.has(row.key));
   return base.routes.filter((row) => row.human && row.human.signed_off_by_date && !headKeys.has(row.key))
     .filter((gone) => added.some((row) => row.file === gone.file && row.method === gone.method))
-    .map((gone) => gone.key + ' was signed off and is gone while ' + added.filter((row) => row.file === gone.file && row.method === gone.method).map((row) => row.key).join(', ') + ' is new in ' + gone.file + ': a renamed route keeps its hold, so sign the new key or say why in a debt entry');
+    .map((gone) => gone.key + ' was signed off and is gone while ' + added.filter((row) => row.file === gone.file && row.method === gone.method).map((row) => row.key).join(', ') + ' is new in ' + gone.file + ': a renamed route keeps its hold, so sign the new key (cb-api, non-builder) before this lands');
 }
 
 /** the touched routes held to the standard at this stage; returns the sentences that fail the PR */

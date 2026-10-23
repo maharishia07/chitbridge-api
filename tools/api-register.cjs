@@ -21,7 +21,7 @@ const rootArg = process.argv.indexOf('--root');
 const ROOT = rootArg > 0 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(TOOLS_DIR, '..');
 const STAGE = '2';
 const MACHINE_COLUMNS = ['schema_in', 'schema_out', 'error_shape', 'codes_registered', 'missing_input_answer', 'error_tests', 'status_codes', 'strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
-/* the five hardening columns of stage 2 (API-3): they close the OWASP API Top 10 gaps route by route */
+/* the six hardening columns of stage 2 (API-3): they close the OWASP API Top 10 gaps route by route */
 const HARDENING_COLUMNS = ['strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
 const SUCCESS_STATUSES = ['200', '201', '202', '204'];
 const HUMAN_COLUMNS = ['names_clear', 'sentence_plain', 'backward_compatible', 'signed_off_by_date', 'lifecycle'];
@@ -29,7 +29,6 @@ const BODY_METHODS = ['POST', 'PUT', 'PATCH'];
 const MD_FILE = path.join(ROOT, 'docs', 'API-REGISTER.md');
 const JSON_FILE = path.join(ROOT, 'docs', 'api-register.json');
 
-/** a JSON file under the repo root, or the fallback when it is absent */
 /** the hardening evidence: the generator's cases (api-hardening-evidence.json, written only by tools/api-contract-tests.cjs) united with the area tests' worlds (api-hardening-evidence-areas.json, written only by tests/api-problem-<area>.test.cjs); a column is proved when either file proves it */
 function hardeningEvidence() {
   return evidenceUnion(readJson('docs/contracts/api-hardening-evidence.json', { routes: {} }).routes, readJson('docs/contracts/api-hardening-evidence-areas.json', { routes: {} }).routes);
@@ -52,6 +51,7 @@ function evidenceOverrides(results, areas) {
   return overrides.sort();
 }
 
+/** a JSON file under the repo root, or the fallback when it is absent */
 const readJson = (relative, fallback) => {
   const file = path.join(ROOT, relative);
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback;
@@ -252,7 +252,7 @@ const inboundColumn = (isInbound, operation, facts) => !isInbound || (facts.hasS
 /** trips_budgeted (S38): the route has a FIRED line (a measured ceiling, not the placeholder) in round-trips.budget.json; tests/round-trips-all.test.cjs fails the guards when the route goes over it. Making it cheaper is cb-speed's; this only checks the budget exists */
 const tripsBudgetedColumn = (key, budget) => !!(budget && budget[key] && budget[key].fired === true);
 
-/** which of the five columns apply to a route (a column that does not apply passes, and is not counted as a pass in the per-column baseline) */
+/** which of the six columns apply to a route (a column that does not apply passes, and is not counted as a pass in the per-column baseline) */
 function hardeningApplies(leaf, operation, scope) {
   const key = leaf.method + ' ' + leaf.path;
   const hasBody = !!(operation && require('../middleware/validate').bodySchemaOf(operation)) || BODY_METHODS.includes(leaf.method);
