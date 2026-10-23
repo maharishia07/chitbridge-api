@@ -1343,6 +1343,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SIGNIN_REFUSED",
+   "status": "400",
+   "title": "Sign-in refused",
+   "shopkeeper": "That sign-in didn't work. Check the details and try again.",
+   "hint": "Check the details and try again.",
+   "owner_area": "signin",
+   "since": "2026-10-22"
+  },
+  {
    "code": "SIGN_IN",
    "status": "403",
    "title": "Sign in",
