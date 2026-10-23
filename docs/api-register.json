@@ -3,9 +3,9 @@
  "stage": "1b",
  "counts": {
   "routes": 633,
-  "not_started": 184,
-  "partial": 78,
-  "meets": 371
+  "not_started": 205,
+  "partial": 53,
+  "meets": 375
  },
  "machine_columns": [
   "schema_in",
@@ -998,191 +998,18 @@
    "path": "/api/assist/catalogue-mine",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 331,
-   "hash": "16dce8eae9caf39f",
+   "line": 335,
+   "hash": "e13aa550a90b51bf",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
-   },
-   "declared": [
-    401,
-    422,
-    500,
-    503
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial"
-  },
-  {
-   "key": "GET /api/assist/catalogue-source/:key",
-   "method": "GET",
-   "path": "/api/assist/catalogue-source/:key",
-   "owner_area": "assist",
-   "file": "routes/assist.js",
-   "line": 605,
-   "hash": "0f72c5d40f9949c9",
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
-   },
-   "declared": [
-    404,
-    422,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial"
-  },
-  {
-   "key": "GET /api/assist/catalogue-sources",
-   "method": "GET",
-   "path": "/api/assist/catalogue-sources",
-   "owner_area": "assist",
-   "file": "routes/assist.js",
-   "line": 191,
-   "hash": "96ca0760e762a888",
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
-    "status_codes": true
+    "status_codes": false
    },
-   "declared": [
-    500
-   ],
-   "notes": [],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial"
-  },
-  {
-   "key": "GET /api/assist/container/:id",
-   "method": "GET",
-   "path": "/api/assist/container/:id",
-   "owner_area": "assist",
-   "file": "routes/assist.js",
-   "line": 480,
-   "hash": "11f353aab6505d0a",
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
-   },
-   "declared": [
-    404,
-    422,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial"
-  },
-  {
-   "key": "GET /api/assist/erp-handoffs",
-   "method": "GET",
-   "path": "/api/assist/erp-handoffs",
-   "owner_area": "assist",
-   "file": "routes/assist.js",
-   "line": 492,
-   "hash": "b60b13eba3d91e46",
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
-   },
-   "declared": [
-    401,
-    422,
-    500,
-    503
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial"
-  },
-  {
-   "key": "GET /api/assist/gaps",
-   "method": "GET",
-   "path": "/api/assist/gaps",
-   "owner_area": "assist",
-   "file": "routes/assist.js",
-   "line": 727,
-   "hash": "6f348de8489a3952",
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": true
-   },
-   "declared": [
-    401,
-    500
-   ],
+   "declared": [],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -1193,7 +1020,151 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
+  },
+  {
+   "key": "GET /api/assist/catalogue-source/:key",
+   "method": "GET",
+   "path": "/api/assist/catalogue-source/:key",
+   "owner_area": "assist",
+   "file": "routes/assist.js",
+   "line": 612,
+   "hash": "13025b0722415fb2",
+   "columns": {
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
+   },
+   "declared": [],
+   "notes": [],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "not started"
+  },
+  {
+   "key": "GET /api/assist/catalogue-sources",
+   "method": "GET",
+   "path": "/api/assist/catalogue-sources",
+   "owner_area": "assist",
+   "file": "routes/assist.js",
+   "line": 195,
+   "hash": "cd4108949ff75b74",
+   "columns": {
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
+   },
+   "declared": [],
+   "notes": [],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "not started"
+  },
+  {
+   "key": "GET /api/assist/container/:id",
+   "method": "GET",
+   "path": "/api/assist/container/:id",
+   "owner_area": "assist",
+   "file": "routes/assist.js",
+   "line": 484,
+   "hash": "29d6b8ad97073ed3",
+   "columns": {
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
+   },
+   "declared": [],
+   "notes": [],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "not started"
+  },
+  {
+   "key": "GET /api/assist/erp-handoffs",
+   "method": "GET",
+   "path": "/api/assist/erp-handoffs",
+   "owner_area": "assist",
+   "file": "routes/assist.js",
+   "line": 496,
+   "hash": "ced4b1832de107c2",
+   "columns": {
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
+   },
+   "declared": [],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "not started"
+  },
+  {
+   "key": "GET /api/assist/gaps",
+   "method": "GET",
+   "path": "/api/assist/gaps",
+   "owner_area": "assist",
+   "file": "routes/assist.js",
+   "line": 736,
+   "hash": "41e9147d0e059062",
+   "columns": {
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
+   },
+   "declared": [],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "not started"
   },
   {
    "key": "GET /api/assist/penetration",
@@ -1201,25 +1172,20 @@
    "path": "/api/assist/penetration",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 574,
-   "hash": "7106f68aa28906a3",
+   "line": 581,
+   "hash": "ff9be55914f8c301",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    401,
-    500,
-    503
-   ],
+   "declared": [],
    "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
+    "auth middleware answers 401 in the old body"
    ],
    "human": {
     "names_clear": null,
@@ -1228,7 +1194,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "GET /api/assist/questions",
@@ -1236,24 +1202,19 @@
    "path": "/api/assist/questions",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 619,
-   "hash": "9251ef0f87aab8d5",
+   "line": 626,
+   "hash": "7ae74b94cc72c081",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    422,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
+   "declared": [],
+   "notes": [],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -1261,7 +1222,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "GET /api/assist/regions",
@@ -1269,23 +1230,19 @@
    "path": "/api/assist/regions",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 541,
-   "hash": "ea1369457eb8073d",
+   "line": 545,
+   "hash": "9b57cc7d5252602f",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
+   "declared": [],
+   "notes": [],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -1293,7 +1250,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "GET /api/assist/resolve",
@@ -1301,25 +1258,19 @@
    "path": "/api/assist/resolve",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 558,
-   "hash": "5239875ecd28dba4",
+   "line": 562,
+   "hash": "91dfc4c50ad010c0",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
     "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    400,
-    404,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
+   "declared": [],
+   "notes": [],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -1335,20 +1286,18 @@
    "path": "/api/assist/standards",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 188,
-   "hash": "893904eb8a477fa8",
+   "line": 192,
+   "hash": "aba597f101c39d82",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
-    "status_codes": true
+    "status_codes": false
    },
-   "declared": [
-    500
-   ],
+   "declared": [],
    "notes": [],
    "human": {
     "names_clear": null,
@@ -1357,7 +1306,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "GET /api/assist/whoami",
@@ -1365,21 +1314,18 @@
    "path": "/api/assist/whoami",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 740,
-   "hash": "f375b1a18c6f8268",
+   "line": 751,
+   "hash": "409ccf582b7e73bb",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
-    "status_codes": true
+    "status_codes": false
    },
-   "declared": [
-    401,
-    500
-   ],
+   "declared": [],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -1390,7 +1336,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "GET /api/attachments/:id",
@@ -4553,7 +4499,7 @@
    "path": "/api/entities/constitutions",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 149,
+   "line": 150,
    "hash": "90d643c3f36f275a",
    "columns": {
     "schema_in": true,
@@ -4583,7 +4529,7 @@
    "path": "/api/entities/entitlements",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 2406,
+   "line": 2407,
    "hash": "49d996ff5c656145",
    "columns": {
     "schema_in": true,
@@ -4617,7 +4563,7 @@
    "path": "/api/entities/header",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 315,
+   "line": 316,
    "hash": "3ae3d5630359c01f",
    "columns": {
     "schema_in": true,
@@ -4651,7 +4597,7 @@
    "path": "/api/entities/lookup",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 902,
+   "line": 903,
    "hash": "4fa9ad17575badb4",
    "columns": {
     "schema_in": true,
@@ -4687,8 +4633,8 @@
    "path": "/api/entities/me",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 338,
-   "hash": "79f6663a7db027c9",
+   "line": 339,
+   "hash": "0821fc7bb18cde9b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4708,13 +4654,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/me/can-see-costs",
@@ -4722,7 +4668,7 @@
    "path": "/api/entities/me/can-see-costs",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 885,
+   "line": 886,
    "hash": "219ee8eb8cdb9428",
    "columns": {
     "schema_in": true,
@@ -4756,8 +4702,8 @@
    "path": "/api/entities/mis",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1721,
-   "hash": "f838644e82146956",
+   "line": 1722,
+   "hash": "3911ad98eab24dfa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4778,13 +4724,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/policy",
@@ -4792,7 +4738,7 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 286,
+   "line": 287,
    "hash": "5aeb90e77e8a43e3",
    "columns": {
     "schema_in": true,
@@ -4826,7 +4772,7 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1611,
+   "line": 1612,
    "hash": "386d6272740a5072",
    "columns": {
     "schema_in": true,
@@ -4862,7 +4808,7 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1492,
+   "line": 1493,
    "hash": "cd54d77895b144b2",
    "columns": {
     "schema_in": true,
@@ -4896,7 +4842,7 @@
    "path": "/api/entities/routing/preview",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1476,
+   "line": 1477,
    "hash": "c0ac046521b15eac",
    "columns": {
     "schema_in": true,
@@ -4929,7 +4875,7 @@
    "path": "/api/entities/search",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 169,
+   "line": 170,
    "hash": "ebc90f56bb0a7114",
    "columns": {
     "schema_in": true,
@@ -4964,7 +4910,7 @@
    "path": "/api/entities/sides",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 329,
+   "line": 330,
    "hash": "8c9d2c5f400475c4",
    "columns": {
     "schema_in": true,
@@ -4998,7 +4944,7 @@
    "path": "/api/entities/usage",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1299,
+   "line": 1300,
    "hash": "4b70911dad3abcd6",
    "columns": {
     "schema_in": true,
@@ -9991,7 +9937,7 @@
    "path": "/api/entities/:id/erase",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1271,
+   "line": 1272,
    "hash": "e0c040a82e4ebfc4",
    "columns": {
     "schema_in": true,
@@ -10028,7 +9974,7 @@
    "path": "/api/entities/me/exposure",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 858,
+   "line": 859,
    "hash": "7d19b7065fef8cc8",
    "columns": {
     "schema_in": true,
@@ -10063,7 +10009,7 @@
    "path": "/api/entities/me/locale",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 898,
+   "line": 899,
    "hash": "e55ea05cc2141a4a",
    "columns": {
     "schema_in": true,
@@ -10098,7 +10044,7 @@
    "path": "/api/entities/me/prefs/:kind",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 852,
+   "line": 853,
    "hash": "3a7c9f99a608bfbf",
    "columns": {
     "schema_in": true,
@@ -10134,7 +10080,7 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 297,
+   "line": 298,
    "hash": "e190a37baf2cd8ee",
    "columns": {
     "schema_in": true,
@@ -10170,7 +10116,7 @@
    "path": "/api/entities/profile",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 950,
+   "line": 951,
    "hash": "21b4715aa77e270e",
    "columns": {
     "schema_in": true,
@@ -10836,26 +10782,19 @@
    "path": "/api/assist",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 77,
-   "hash": "ea241c7a2519aa88",
+   "line": 75,
+   "hash": "77fb258ef809569b",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    422,
-    500,
-    502,
-    503
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
+   "declared": [],
+   "notes": [],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -10863,7 +10802,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "POST /api/assist/catalogue-adopt",
@@ -10871,27 +10810,20 @@
    "path": "/api/assist/catalogue-adopt",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 252,
-   "hash": "4a5e560282faac94",
+   "line": 256,
+   "hash": "13b7e51acf2e4bce",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    401,
-    404,
-    422,
-    500,
-    503
-   ],
+   "declared": [],
    "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
+    "auth middleware answers 401 in the old body"
    ],
    "human": {
     "names_clear": null,
@@ -10900,7 +10832,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "POST /api/assist/catalogue-structure",
@@ -10908,25 +10840,19 @@
    "path": "/api/assist/catalogue-structure",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 197,
-   "hash": "8d3562cbe07c42e2",
+   "line": 201,
+   "hash": "78293206c9ea2c36",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    404,
-    422,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
+   "declared": [],
+   "notes": [],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -10934,7 +10860,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "POST /api/assist/conform",
@@ -10942,25 +10868,19 @@
    "path": "/api/assist/conform",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 133,
-   "hash": "6f95b3bdafa9f9d8",
+   "line": 137,
+   "hash": "ea74f06faa675153",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    404,
-    422,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
+   "declared": [],
+   "notes": [],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -10968,7 +10888,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "POST /api/assist/gap",
@@ -10976,24 +10896,19 @@
    "path": "/api/assist/gap",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 655,
-   "hash": "9ae4e8a63a91587a",
+   "line": 662,
+   "hash": "008ced80aa74f824",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    422,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
+   "declared": [],
+   "notes": [],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -11001,7 +10916,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "POST /api/assist/publish",
@@ -11009,26 +10924,20 @@
    "path": "/api/assist/publish",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 672,
-   "hash": "72ff17bb8418b3d7",
+   "line": 681,
+   "hash": "0b1f3ce95739133f",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    401,
-    403,
-    422,
-    500
-   ],
+   "declared": [],
    "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
+    "auth middleware answers 401 in the old body"
    ],
    "human": {
     "names_clear": null,
@@ -11037,7 +10946,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "POST /api/assist/resolve",
@@ -11045,26 +10954,20 @@
    "path": "/api/assist/resolve",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 734,
-   "hash": "9f02935797a24cbc",
+   "line": 743,
+   "hash": "807b597a9ce75c7a",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
     "error_tests": false,
-    "status_codes": true
+    "status_codes": false
    },
-   "declared": [
-    401,
-    410,
-    422,
-    500
-   ],
+   "declared": [],
    "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
+    "auth middleware answers 401 in the old body"
    ],
    "human": {
     "names_clear": null,
@@ -11073,7 +10976,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "POST /api/attachments",
@@ -15380,7 +15283,7 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1695,
+   "line": 1696,
    "hash": "c303d29a52083779",
    "columns": {
     "schema_in": true,
@@ -15418,7 +15321,7 @@
    "path": "/api/entities/register",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 138,
+   "line": 139,
    "hash": "353129a910091984",
    "columns": {
     "schema_in": false,
@@ -15446,7 +15349,7 @@
    "path": "/api/entities/verify",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 139,
+   "line": 140,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -20531,27 +20434,20 @@
    "path": "/api/assist/catalogue-source",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 388,
-   "hash": "04b1fcb826d849fd",
+   "line": 392,
+   "hash": "fa46dea243350052",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    401,
-    403,
-    422,
-    500,
-    503
-   ],
+   "declared": [],
    "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
+    "auth middleware answers 401 in the old body"
    ],
    "human": {
     "names_clear": null,
@@ -20560,7 +20456,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "PUT /api/assist/container",
@@ -20568,27 +20464,20 @@
    "path": "/api/assist/container",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 450,
-   "hash": "37f873526d513655",
+   "line": 454,
+   "hash": "f0309d6fd717f710",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    401,
-    403,
-    422,
-    500,
-    503
-   ],
+   "declared": [],
    "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
+    "auth middleware answers 401 in the old body"
    ],
    "human": {
     "names_clear": null,
@@ -20597,7 +20486,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "PUT /api/assist/region-override",
@@ -20605,28 +20494,20 @@
    "path": "/api/assist/region-override",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 518,
-   "hash": "c58516cba4a81276",
+   "line": 522,
+   "hash": "9f5e163bca823e7a",
    "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true
+    "schema_in": false,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": false
    },
-   "declared": [
-    401,
-    403,
-    404,
-    422,
-    500,
-    503
-   ],
+   "declared": [],
    "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
+    "auth middleware answers 401 in the old body"
    ],
    "human": {
     "names_clear": null,
@@ -20635,7 +20516,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "not started"
   },
   {
    "key": "PUT /api/catalogue-face",
@@ -21001,8 +20882,8 @@
    "path": "/api/entities/populations/:code/desk",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1666,
-   "hash": "26e79d27c74a48b6",
+   "line": 1667,
+   "hash": "bcdf0a12050562df",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21025,13 +20906,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/entities/routing",
@@ -21039,8 +20920,8 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1572,
-   "hash": "4edc83012e071cd8",
+   "line": 1573,
+   "hash": "21b29d7baf9e4c1e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21061,13 +20942,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/folders/inventory/:code",
