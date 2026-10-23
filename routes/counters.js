@@ -25,19 +25,28 @@
  * ⚠️ NO MIGRATION: the register rides identities.policy_flags.counters, beside the key list.
  
  * CALLED BY routes/till.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+ *
+ * OWNS      /api/counters: the shop's counters (create · rename · assign · open · release), and the claim and note-a-bill functions the till calls.
+ * FLOW      auth → sessionOnly → owner gate → schema check (lib/orders-contract.js) → the register under a row lock → res.json | problem(req, res, said(...) | counterFault(...))
+ *           (API-STANDARD S1: every refusal is a Problem that keeps the keys it always had, frozen in docs/contracts/api-legacy.json)
+ * CARD      09-counter/counters-and-keys-pair-enrol-open-release
  */
 'use strict';
 const express = require('express');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const words = require('../lib/orders-contract'); // the contract (each route's operation) and the words of a refusal
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
 const keys = require('./keys');
 
 const sessionOnly = (req, res, next) => {
-  if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Counters are managed by a signed-in person, not by a key.' });
+  if (req.api_key) return problem(req, res, { status: 403, ...words.sessionOnly() });
   next();
 };
+/** the schema check of one route (its own operation in lib/orders-contract.js) */
+const checked = (route) => schemaValidate(words.counters.operationFor(route), words.schemaOptions.counters);
 /* T3-SETTINGS: ONE owner gate on every counters write (lib/owner) — which PC bills under which series is the shop's call. GET says it as `may`. */
 const OWNER_SAYS = 'Only the owner can change the counters.';
 const ownerOnly = require('../lib/owner').gate(OWNER_SAYS);
@@ -162,12 +171,12 @@ router.get('/', auth, sessionOnly, async (req, res) => {
     });
     res.json({ counters: out, free: out.filter((item) => item.state === 'closed').length, may: { manage: require('../lib/owner').may(req, OWNER_SAYS) } });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, words.failed(e, req));
   }
 });
 
 /** ⭐ CREATE — online by construction (this is the web). The id is the lowest one no counter holds and nothing was billed under. */
-router.post('/', auth, sessionOnly, ownerOnly, async (req, res) => {
+router.post('/', auth, sessionOnly, ownerOnly, checked('POST /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const name = String((req.body && req.body.name) || '')
@@ -190,28 +199,28 @@ router.post('/', auth, sessionOnly, ownerOnly, async (req, res) => {
     });
     res.status(201).json({ counter: view(made, []) });
   } catch (e) {
-    res.status(e.status || 500).json({ error: e.status ? 'validation' : 'Failed', message: String(e && e.message) });
+    problem(req, res, words.counterFault(e, req, 'validation'));
   }
 });
 
-router.patch('/:id', auth, sessionOnly, ownerOnly, async (req, res) => {
+router.patch('/:id', auth, sessionOnly, ownerOnly, checked('PATCH /:id'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
     const name = String((req.body && req.body.name) || '')
       .trim()
       .slice(0, 40);
-    if (!name) return res.status(400).json({ error: 'validation', message: 'A counter needs a name.' });
+    if (!name) return problem(req, res, { status: 400, ...words.badRequest('A counter needs a name.') });
     const done = await withTransaction(async (db) => {
       const { counters } = await readLocked(db, entity_id);
       if (!counters[id]) return false;
       await patchCounter(db, entity_id, id, { name });
       return true;
     });
-    if (!done) return res.status(404).json({ error: 'Not found' });
+    if (!done) return problem(req, res, { status: 404, ...words.counterNotFound() });
     res.json({ ok: true, id, name });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, words.failed(e, req));
   }
 });
 
@@ -223,14 +232,14 @@ router.patch('/:id', auth, sessionOnly, ownerOnly, async (req, res) => {
  * ⚠️ A label still held by another phone is NOT taken from it here: that phone may be billing under it offline right now.
  * It moves off at its next sign-in/snapshot, and the newly assigned phone takes the label after that (`held_by` says who).
  */
-router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only the owner can assign a counter.'), async (req, res) => {
+router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only the owner can assign a counter.'), checked('POST /:id/assign'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
     const raw = req.body && req.body.phone;
     const phone = raw == null || raw === '' ? null : require('./identity-docs').normPhone(raw);
     if (phone !== null && !/^[+]?[0-9]{10,15}$/.test(phone))
-      return res.status(400).json({ error: 'validation', code: 'BAD_PHONE', message: 'Type the mobile number with its country code — 10 to 15 digits.' });
+      return problem(req, res, { status: 400, ...words.badPhone('Type the mobile number with its country code — 10 to 15 digits.') });
     const out = await withTransaction(async (db) => {
       const { counters, list, devices } = await readLocked(db, entity_id);
       if (!counters[id]) return null;
@@ -238,10 +247,10 @@ router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only
       await patchCounter(db, entity_id, id, { assigned });
       return view(Object.assign({}, counters[id], { assigned }), list, devices);
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return problem(req, res, { status: 404, ...words.counterNotFound() });
     res.json({ ok: true, counter: out });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, words.failed(e, req));
   }
 });
 
@@ -251,7 +260,7 @@ router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only
  * writes the same row, so doing it inside the lock would wait on itself — and then the key is bound. Two people
  * pressing Open at the same moment: one gets the counter, the other is told who has it.
  */
-router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
+router.post('/:id/open', auth, sessionOnly, ownerOnly, checked('POST /:id/open'), async (req, res) => {
   const entity_id = auth.entityOf(req);
   const id = String(req.params.id || '').toUpperCase();
   const nonce = 'pending:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -280,7 +289,7 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
       await patchCounter(db, entity_id, id, { held_by: nonce, held_at: new Date().toISOString() });
       return { status: 200, counter: nestedC };
     });
-    if (got.status !== 200) return res.status(got.status).json(got.body);
+    if (got.status !== 200) return problem(req, res, words.relayed(got)); /* 404 no such counter · 409 held by another PC: the body the lock made, kept whole */
 
     const ua = String(req.headers['user-agent'] || '');
     const os = /Windows/.test(ua) ? 'Win32' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : 'device';
@@ -304,7 +313,7 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
     });
     res.json({ key: minted.key, counter: Object.assign(view(Object.assign({}, c, { held_by: minted.jti }), [minted]), { state: 'open' }) });
   } catch (e) {
-    res.status(e.status || 500).json({ error: 'Failed', message: String(e && e.message) });
+    problem(req, res, words.counterFault(e, req, 'Failed'));
   }
 });
 
@@ -315,7 +324,7 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
  * CLOSE, from the counter. If that PC ever comes back, its key is refused, and its bills are recovered by pairing
  * it and bringing them in (the clash guard and renumbering then keep the books unique).
  */
-router.post('/:id/release', auth, sessionOnly, ownerOnly, async (req, res) => {
+router.post('/:id/release', auth, sessionOnly, ownerOnly, checked('POST /:id/release'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
@@ -341,10 +350,10 @@ router.post('/:id/release', auth, sessionOnly, ownerOnly, async (req, res) => {
       });
       return { id, released_from: holder ? holder.name : null };
     });
-    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (!out) return problem(req, res, { status: 404, ...words.counterNotFound() });
     res.json(Object.assign({ ok: true }, out));
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, words.failed(e, req));
   }
 });
 
@@ -470,5 +479,7 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
 
   return { status: 200, key: minted.key, counter: want, released: got.released };
 };
+
+router.openapi = { paths: words.counters.pathsOf(), schemas: {} };
 
 module.exports = router;

@@ -11,7 +11,7 @@
  *   node tools/api-ratchet.cjs --base origin/main --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
  *   node tools/api-ratchet.cjs --write --rebaseline   (only in the PR that switches the stage)                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
  * RAW ERROR TEXT (Athi 23 Oct): rawErrorTextWrites() counts response writes (res.json / .send / .end) whose body holds an exception's own text (e.message, err.stack, String(e), `${e}`) outside safeErr()/problem(); logs are not response writes. The count may only go down (docs/api-ratchet.json raw_error_writes); a new one prints file:line.
- * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js) must have all thirteen machine columns true (stage 2: the six hardening columns of S33-S38 included); every other touched route is counted, not blocked. Stage "all" holds every route.
+ * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js, routes/integrations.js, routes/books.js, routes/tax.js, routes/invoice.js, routes/ctp.js, routes/facts.js, routes/pricing.js, routes/repeat-supply.js, routes/work.js, routes/counters.js, src/routes/network.js, routes/network-design.js, routes/connections.js) must keep the seven core columns true and lose no hardening column it passed at the base (stage 2: the six hardening columns of S33-S38 are measured for every route and ratcheted by count); every other touched route is counted, not blocked. Stage "all" holds every route.
  */
 const fs = require('fs');
 const os = require('os');
@@ -20,8 +20,8 @@ const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const RATCHET_FILE = path.join(ROOT, 'docs', 'api-ratchet.json');
-/* the route files brought to the standard so far: a PR touching one of their routes must keep it at all thirteen machine columns (S16 a); the list grows with each slice */
-const HELD_FILES = ['routes/keys.js'];
+/* the route files brought to the standard so far: a PR touching one of their routes must keep it at the seven core columns and lose no hardening column (S16 a); the list grows with each slice */
+const HELD_FILES = ['routes/keys.js', 'routes/integrations.js', 'routes/books.js', 'routes/tax.js', 'routes/invoice.js', 'routes/ctp.js', 'routes/facts.js', 'routes/pricing.js', 'routes/repeat-supply.js', 'routes/work.js', 'routes/counters.js', 'src/routes/network.js', 'routes/network-design.js', 'routes/connections.js'];
 const DEBT_DAYS = 14;
 const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(name);
@@ -175,13 +175,15 @@ function touchedRoutes(baseRegister, headRegister) {
   return headRegister.routes.filter((row) => !before.has(row.key) || before.get(row.key) !== row.hash);
 }
 
-const liveColumnsPass = (row) => Object.keys(row.columns).every((name) => row.columns[name] === true);
 const meets = (row) => row.status === 'meets standard';
 
-/** routes held to the standard: the brought-over files until stage 'all' (every route, once the sweep is done) */
-const isHeld = (row, stage) => stage === 'all' || HELD_FILES.includes(row.file);
-/** a held route passes on its thirteen machine columns; the cb-api sign-off is the reviewer's, dated in the register, and is not the builder's to give (consult-map rule 1) */
-const passesHold = (row) => liveColumnsPass(row);
+/** routes held to the standard: the brought-over files, and any route signed off in the base register, until stage 'all' (every route, once the sweep is done) */
+const isHeld = (row, stage, baseRow) => stage === 'all' || HELD_FILES.includes(row.file) || !!(baseRow && baseRow.human && baseRow.human.signed_off_by_date);
+const { HARDENING_COLUMNS } = require('./api-register.cjs');
+/** the columns a held route must have: all thirteen for a route new to the base; else the seven core ones plus every hardening column it already passed at the base (a hardening column is never lost; the rest are ratcheted by count in checkColumns) */
+const heldColumns = (row, baseRow) => Object.keys(row.columns).filter((name) => !baseRow || !HARDENING_COLUMNS.includes(name) || baseRow.columns[name] === true);
+/** a held route passes on those columns; the cb-api sign-off is the reviewer's, dated in the register, and is not the builder's to give (consult-map rule 1) */
+const passesHold = (row, baseRow) => heldColumns(row, baseRow).every((name) => row.columns[name] === true);
 
 /** debt entries: a route listed here is allowed to stay below the standard until `expires` */
 function debtProblems(debt, hotfix, failing) {
@@ -200,11 +202,12 @@ function checkRoutes(base, head, ratchet, hotfix) {
   const stage = ratchet.stage || '1a';
   const debt = ratchet.debt || [];
   const touched = touchedRoutes(base, head);
-  const held = touched.filter((row) => isHeld(row, stage));
-  const failing = held.filter((row) => !passesHold(row));
+  const baseRows = new Map(base.routes.map((row) => [row.key, row]));
+  const held = touched.filter((row) => isHeld(row, stage, baseRows.get(row.key)));
+  const failing = held.filter((row) => !passesHold(row, baseRows.get(row.key)));
   const owed = failing.filter((row) => !debt.some((entry) => entry.route === row.key && entry.expires >= today()));
-  const problems = hotfix ? [] : owed.map((row) => row.key + ' was added or changed and does not meet the standard (' + Object.keys(row.columns).filter((name) => row.columns[name] !== true).join(', ') + ')');
-  const counted = touched.filter((row) => !isHeld(row, stage) && !meets(row));
+  const problems = hotfix ? [] : owed.map((row) => row.key + ' was added or changed and does not meet the standard (' + heldColumns(row, baseRows.get(row.key)).filter((name) => row.columns[name] !== true).join(', ') + ')');
+  const counted = touched.filter((row) => !isHeld(row, stage, baseRows.get(row.key)) && !meets(row));
   console.log(touched.length + ' routes touched against the base: ' + held.length + ' held, ' + counted.length + ' counted only (stage ' + stage + ')');
   return problems.concat(debtProblems(debt, hotfix, failing));
 }

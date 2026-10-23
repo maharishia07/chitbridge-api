@@ -30,6 +30,15 @@ const MD_FILE = path.join(ROOT, 'docs', 'API-REGISTER.md');
 const JSON_FILE = path.join(ROOT, 'docs', 'api-register.json');
 
 /** a JSON file under the repo root, or the fallback when it is absent */
+/** the hardening evidence: the generator's cases (api-hardening-evidence.json, written only by tools/api-contract-tests.cjs) united with the area tests' worlds (api-hardening-evidence-areas.json, written only by tests/api-problem-<area>.test.cjs); a column is proved when either file proves it */
+function hardeningEvidence() {
+  const union = {};
+  ['docs/contracts/api-hardening-evidence.json', 'docs/contracts/api-hardening-evidence-areas.json'].forEach((file) => {
+    Object.entries(readJson(file, { routes: {} }).routes || {}).forEach(([route, columns]) => { union[route] = Object.assign(union[route] || {}, columns); });
+  });
+  return union;
+}
+
 const readJson = (relative, fallback) => {
   const file = path.join(ROOT, relative);
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback;
@@ -127,7 +136,7 @@ function impliedStatuses(leaf, hasValidation, usesAuth) {
 /** the status_codes column: declared statuses against the res.status() literals in the handler */
 function statusColumn(declared, used, leaf, stackFacts) {
   const { implied, takesInput } = impliedStatuses(leaf, stackFacts.hasValidation, stackFacts.usesAuth);
-  const allowedExtra = stackFacts.hasGate ? [401, 403] : [];
+  const allowedExtra = (stackFacts.hasGate ? [401, 403] : []).concat(stackFacts.gateStatuses);
   if (!declared.length) return false;
   const covers = used.concat(implied).every((status) => declared.includes(status));
   const inputAnswered = !takesInput || declared.includes(400) || declared.includes(422);
@@ -142,6 +151,8 @@ function stackFactsOf(leaf, shared) {
   const usesAuth = everyone.some((fn) => fn && fn.name === 'auth' && shared.has(fn));
   return {
     usesAuth,
+    /* a gate declares the statuses it answers itself in fn.addsStatuses (middleware/idempotency.js ADDS_STATUSES) */
+    gateStatuses: everyone.flatMap((fn) => (fn && Array.isArray(fn.addsStatuses) ? fn.addsStatuses : [])),
     hasValidation: route.some(isValidationChain),
     hasSchemaCheck: route.some((fn) => !!(fn && fn.schemaOperation)),
     hasGate: route.some((fn) => typeof fn === 'function' && !isValidationChain(fn))
@@ -151,15 +162,19 @@ function stackFactsOf(leaf, shared) {
 /** a schema is well formed (ajv's own check of it against the JSON Schema meta-schema: no throw) */
 const compiles = (schema) => require('../middleware/validate').bodyEngine.validateSchema(schema) === true;
 
-/** schema_out: a success answer is declared with a JSON schema that compiles (204 needs none) */
+/**
+ * schema_out: every success answer declares at least one media type, and each declared schema compiles (204 needs none).
+ * application/json carries the JSON shape; a text or binary answer (a markdown page, a zip) is a string of its media type,
+ * { type: 'string', contentMediaType: '<type>' } — OpenAPI 3.1, API-STANDARD S9. A media type with no schema still fails.
+ */
 function schemaOutColumn(operation) {
   const responses = (operation && operation.responses) || {};
   const success = Object.keys(responses).filter((status) => SUCCESS_STATUSES.includes(status));
   if (!success.length) return false;
   return success.every((status) => {
     if (status === '204') return true;
-    const content = responses[status].content && responses[status].content['application/json'];
-    return !!(content && content.schema) && compiles(content.schema);
+    const declared = Object.values(responses[status].content || {});
+    return declared.length > 0 && declared.every((content) => !!(content && content.schema) && compiles(content.schema));
   });
 }
 
@@ -326,7 +341,7 @@ function buildRegister() {
   const routerFiles = routerFilesOf();
   /* a code counts as registered once its shopkeeper sentence is written: a PENDING row is a seed, not a finished entry (S14) */
   const registered = new Set(readJson('docs/error-codes.json', { codes: [] }).codes.filter((row) => row.shopkeeper !== 'PENDING').map((row) => row.code));
-  const context = { app, routerFiles, shared: sharedFunctions(), operations: operationsOfApp(), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: readJson('docs/contracts/api-hardening-evidence.json', { routes: {} }).routes, errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
+  const context = { app, routerFiles, shared: sharedFunctions(), operations: operationsOfApp(), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: hardeningEvidence(), errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
   const seen = new Set();
   const rows = loader
     .leavesOf(app, true)
@@ -412,4 +427,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check };
+module.exports = { hardeningEvidence, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

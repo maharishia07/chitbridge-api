@@ -49,7 +49,7 @@ async function captured(fn) {
   out('\nSEC1 · the tester code is Athi\'s secret, never in the code\n');
 
   /* ── 1 · TESTER_CODE signs in; a wrong code is refused ─────────────────────────────────────────────────────────────── */
-  env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, DEV_OTP: '1', TESTER_CODE: SECRET, TESTER_NAMES: '*' });
+  env({ NODE_ENV: 'test', DATABASE_URL: REMOTE, DEV_OTP: '1', TESTER_CODE: SECRET, TESTER_NAMES: '*' });
   let { dev, otp } = load();
   let row = rowOf();
   t('TESTER_CODE set → the tester code signs in (stored code untouched)', (await otp.verifyOtp(fakeRun(row), row, SECRET)).ok === true);
@@ -94,12 +94,56 @@ async function captured(fn) {
     && (await otp.verifyOtp(fakeRun(rowOf()), rowOf({ email: 'qa@test.chitbridge' }), SECRET)).ok === true
     && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET, { names: ['someone@else.test'] })).ok === false);
 
+  /* ── 3a · SEC (finding 3) · FAILS CLOSED: empty = nobody; a bare * only outside a sealed environment; guesses are limited ───── */
+  env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, TESTER_CODE: SECRET }); ({ dev, otp } = load());
+  t('EMPTY TESTER_NAMES: the tester code works for nobody (even on a local-looking name)', dev.testerCodeOk(SECRET, ['owner@shop.test']) === false
+    && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET)).ok === false);
+  env({ NODE_ENV: 'development', DATABASE_URL: LOCAL }); ({ dev } = load());
+  t('EMPTY TESTER_NAMES on a local stack: still nobody', dev.testerCodeOk(SECRET, ['anyone']) === false);
+  env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: 'anil-tester' }); ({ dev, otp } = load());
+  t('a NAMED tester succeeds', dev.testerCodeOk(SECRET, ['anil-tester']) === true
+    && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET, { names: ['Anil-Tester'] })).ok === true);
+  t('a NON-named account is refused', dev.testerCodeOk(SECRET, ['owner@shop.test']) === false
+    && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET)).ok === false);
+  for (const sealed of ['production', ' Production ', 'staging']) {
+    env({ NODE_ENV: sealed, DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: '*' }); ({ dev, otp } = load());
+    t('TESTER_NAMES * in ' + JSON.stringify(sealed) + ' is refused', dev.testerCodeOk(SECRET, ['owner@shop.test']) === false
+      && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET)).ok === false);
+  }
+  for (const odd of [undefined, '', ' development', 'preview', 'Development ']) {
+    env(Object.assign({ DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: '*' }, odd === undefined ? {} : { NODE_ENV: odd })); ({ dev, otp } = load());
+    t('TESTER_NAMES * with NODE_ENV ' + JSON.stringify(odd) + ' and a remote database is refused', dev.testerCodeOk(SECRET, ['owner@shop.test']) === false
+      && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET)).ok === false);
+  }
+  env({ NODE_ENV: 'development', DATABASE_URL: LOCAL, TESTER_CODE: SECRET, TESTER_NAMES: '*' }); ({ dev } = load());
+  t('TESTER_NAMES * on a real local stack still means every account', dev.testerCodeOk(SECRET, ['owner@shop.test']) === true);
+  env({ NODE_ENV: 'production', DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: '*, anil-tester' }); ({ dev } = load());
+  t('…a bare * beside a named tester in production: the name still works, nobody else', dev.testerCodeOk(SECRET, ['anil-tester']) === true && dev.testerCodeOk(SECRET, ['owner@shop.test']) === false);
+  env({ NODE_ENV: 'production', DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: 'qa-*' }); ({ dev } = load());
+  t('…a pattern list works in production', dev.testerCodeOk(SECRET, ['qa-one']) === true);
+  env({ NODE_ENV: 'test', TESTER_CODE: SECRET, TESTER_NAMES: '*' }); ({ dev } = load());
+  t('TESTER_NAMES * outside production (test run) still means every account', dev.testerCodeOk(SECRET, ['owner@shop.test']) === true);
+  {
+    env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: 'anil-tester' }); ({ dev, otp } = load());
+    const names = { names: ['anil-tester'] }, who = () => rowOf({ identity_id: 'tester-1', otp_code: '999111' });
+    let last;
+    for (let i = 0; i < dev.TESTER_GUESS_MAX; i++) last = await otp.verifyOtp(fakeRun(who()), who(), 'guess-' + i + '-xxxx', names);
+    t('tester guesses: ' + dev.TESTER_GUESS_MAX + ' misses are answered like any wrong code', last.ok === false && last.reason === 'OTP_WRONG');
+    t('…then the door is shut to that account, even for the right tester code', (await otp.verifyOtp(fakeRun(who()), who(), SECRET, names)).ok === false);
+    t('…but the stored code of that same account still works (a tester is not locked out of sign-in)', (await otp.verifyOtp(fakeRun(who()), who(), '999111', names)).ok === true);
+    const other = rowOf({ identity_id: 'tester-2', otp_code: '999111' });
+    t('…and another tester account has its own budget', (await otp.verifyOtp(fakeRun(other), other, SECRET, names)).ok === true);
+    const stranger = () => rowOf({ identity_id: 'stranger-1', email: 'stranger@x.test', otp_code: '999111' });
+    for (let i = 0; i < dev.TESTER_GUESS_MAX + 2; i++) await otp.verifyOtp(fakeRun(stranger()), stranger(), 'guess-' + i + '-xxxx', { names: ['stranger@x.test'] });
+    t('…an account the door is not open for is never counted (no tester path to guess)', (await dev.testerGuess('x', ['stranger@x.test'], 'stranger-1')) === false);
+  }
+
   /* ── 3b · W1 · the Build preview strip (dev_tools on GET /entities/me) — an explicit list only ─────────────────────── */
   env({ TESTER_CODE: SECRET, TESTER_NAMES: '*@test.chitbridge, anil-tester' }); ({ dev } = load());
   t('dev tools: a name on an explicit TESTER_NAMES list sees them', dev.mayShowDevTools(['ravi@test.chitbridge']) === true);
   t('dev tools: a shop not on the list does not', dev.mayShowDevTools(['owner@shop.test', 'mayuri123', 'B-1']) === false);
   env({ TESTER_CODE: SECRET }); ({ dev } = load());
-  t('dev tools: an EMPTY TESTER_NAMES (code open to all) shows them to nobody', dev.mayShowDevTools(['ravi@test.chitbridge']) === false);
+  t('dev tools: an EMPTY TESTER_NAMES (code shut to all) shows them to nobody', dev.mayShowDevTools(['ravi@test.chitbridge']) === false);
   env({ TESTER_CODE: SECRET, TESTER_NAMES: '*' }); ({ dev } = load());
   t('dev tools: TESTER_NAMES * shows them to nobody', dev.mayShowDevTools(['ravi@test.chitbridge']) === false);
   env({ NODE_ENV: 'development', DATABASE_URL: LOCAL }); ({ dev } = load());
@@ -130,7 +174,7 @@ async function captured(fn) {
   const fn = src.slice(src.indexOf('function testerCodeOk'), src.indexOf('\n}\n', src.indexOf('function testerCodeOk')));
   t('testerCodeOk compares with crypto.timingSafeEqual over SHA-256 digests', /timingSafeEqual\(digest\(got\), digest\(want\)\)/.test(fn)
     && /createHash\('sha256'\)/.test(src) && !/===\s*want|want\s*===/.test(fn));
-  t('verifyOtp asks testerCodeOk (the one verify every door uses)', /testerCodeOk\(code, names\)/.test(fs.readFileSync(path.join(API, 'lib', 'otp.js'), 'utf8')));
+  t('verifyOtp asks testerCodeOk (the one verify every door uses)', /testerGuess\(code, names, row\.identity_id\)/.test(fs.readFileSync(path.join(API, 'lib', 'otp.js'), 'utf8')));
 
   /* what ships: lib · routes · middleware · db · server.js · public · docs (minus the LOCAL-STACK docs) · .env.example.
      scripts/, tests/, tools/ and migrations/ run against a local stack (or are history) — they may name the local codes. */
@@ -162,7 +206,7 @@ async function captured(fn) {
     require('../lib/books-hooks'); await require('../db').query('select 1').catch(() => { /* no database in this test, by design */ });
   });
   const at = (ist) => clock.set(ist + '+05:30');
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp' }); ({ dev } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp' }); ({ dev } = load());
   at('2026-10-14T10:00:00');
   t('{yymmdd} → 261014 on 14 Oct IST', dev.testerCodeOk('qa-261014-lamp', ['qa']) === true && dev.testerCodeOk('qa-{yymmdd}-lamp', ['qa']) === false);
   t('…yesterday\'s code refused after 06:00', dev.testerCodeOk('qa-261013-lamp', ['qa']) === false);
@@ -173,22 +217,22 @@ async function captured(fn) {
   t('…refused from 06:00 sharp', dev.testerCodeOk('qa-261013-lamp', ['qa']) === false && dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
   clock.set('2026-10-13T19:00:00Z');   // 00:30 on 14 Oct in India, still the 13th in UTC
   t('the day is India\'s, not the server\'s UTC', dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp', TESTER_CODE_TZ: 'Australia/Sydney' }); ({ dev } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp', TESTER_CODE_TZ: 'Australia/Sydney' }); ({ dev } = load());
   clock.set('2026-10-14T15:00:00Z');   // 02:00 on 15 Oct in Sydney
   t('TESTER_CODE_TZ overrides the zone', dev.testerCodeOk('qa-261015-lamp', ['qa']) === true && dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'Q{yyyymmdd}' }); ({ dev } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'Q{yyyymmdd}' }); ({ dev } = load());
   at('2026-10-14T10:00:00');
   t('{yyyymmdd} → 20261014', dev.testerCodeOk('Q20261014', ['qa']) === true && dev.testerCodeOk('Q261014', ['qa']) === false);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: SECRET }); ({ dev } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: SECRET }); ({ dev } = load());
   at('2026-10-14T03:00:00');
   t('a static code is unchanged by the clock', dev.testerCodeOk(SECRET, ['qa']) === true && dev.testerCodeOk(SECRET + '261014') === false);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'a{yymmdd}' }); ({ dev } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'a{yymmdd}' }); ({ dev } = load());
   t('too short after filling (7) → no tester code works', dev.testerCodeOk('a261014', ['qa']) === false
     && dev.testerNotices().some((n) => /shorter than 8/.test(n.reason)));
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}{yymmdd}' }); ({ dev } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}{yymmdd}' }); ({ dev } = load());
   t('two placeholders → refused', dev.testerCodeOk('qa-261014261014', ['qa']) === false && dev.testerNotices().some((n) => /more than one/.test(n.reason)));
 
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp', LOG_LEVEL: 'debug' }); ({ dev, otp } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp', LOG_LEVEL: 'debug' }); ({ dev, otp } = load());
   at('2026-10-14T05:00:00');
   const daily = await captured(async () => {
     const log = require('../lib/logger');

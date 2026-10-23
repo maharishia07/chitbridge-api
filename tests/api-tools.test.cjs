@@ -29,6 +29,11 @@ t('a held route with a failing column does not pass', !ratchet.passesHold(row('x
 t('an expired debt entry is a problem', ratchet.debtProblems([{ route: 'GET /b', opened: '2020-01-01', expires: '2020-01-10', pr: '#1' }], false, []).length === 1);
 t('a hotfix with no debt entry is a problem', ratchet.debtProblems([], true, [row('GET /b', 'h', 'b.js')]).length === 1);
 t('the register normaliser ignores comments and spacing', register.normalise('a = 1 // note') === register.normalise('a  =  1'));
+/* schema_out (S9): a non-JSON answer counts as a string of its media type; a declared media type with no schema still fails */
+const answers = (content) => ({ responses: { 200: { description: 'ok', content } } });
+t('schema_out: a JSON answer declared without a schema fails', !register.schemaOutColumn(answers({ 'application/json': {} })));
+t('schema_out: a success declared with no media type at all fails', !register.schemaOutColumn({ responses: { 200: { description: 'ok' } } }));
+t('schema_out: a zip declared as a string of its media type passes', register.schemaOutColumn(answers({ 'application/zip': { schema: { type: 'string', contentMediaType: 'application/zip' } } })));
 t('the error-code parser finds the table of the committed register', codes.readRows().rows.length > 100);
 t('a 500 carries the generic sentence, never the error text', safeErr(new Error('relation x does not exist')) === SAFE_SENTENCE);
 const rawLines = (src) => ratchet.rawErrorTextWrites(src).length;
@@ -49,7 +54,11 @@ t('idempotent_money_write: a money write must REQUIRE the header and pass its ge
 t('inbound_validated: a peer door needs a schemaValidate check with a body schema', !register.inboundColumn(true, bodyOp({}), { hasSchemaCheck: false }) && register.inboundColumn(true, bodyOp({}), { hasSchemaCheck: true }) && register.inboundColumn(false, undefined, {}));
 t('a mutating route that looks like money and is in neither list is named', register.unclassifiedMoney([{ key: 'POST /api/x/refund', method: 'POST', path: '/api/x/refund' }], { money: new Set(), notMoney: new Set() }).length === 1);
 t('trips_budgeted: a fired budget line passes, a placeholder or no line does not', register.tripsBudgetedColumn('GET /a', { 'GET /a': { fired: true } }) && !register.tripsBudgetedColumn('GET /a', { 'GET /a': { fired: false } }) && !register.tripsBudgetedColumn('GET /b', {}));
-t('stage 2 asks thirteen machine columns, six of them the hardening ones', register.HARDENING_COLUMNS.length === 6 && ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: true, strict_input: false })) === false);
+t('stage 2 asks thirteen machine columns, six of them the hardening ones', register.HARDENING_COLUMNS.length === 6 && ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: false, strict_input: true })) === false);
+t('a route new to the base is held to all thirteen columns', ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: true, strict_input: false }), undefined) === false && ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: true, strict_input: true }), undefined) === true);
+t('a route signed off in the base register is held even outside the listed files', ratchet.isHeld(row('x', 'h', 'routes/other.js', {}), '2', Object.assign(row('x', 'g', 'routes/other.js', {}), { human: { signed_off_by_date: 'cb-api 2026-10-23' } })) && !ratchet.isHeld(row('x', 'h', 'routes/other.js', {}), '2', row('x', 'g', 'routes/other.js', {})));
+t('the hardening evidence is the union of the generator file and the area tests file', (() => { const all = register.hardeningEvidence(); return Object.keys(all).length >= Object.keys(require(path.join(API, 'docs', 'contracts', 'api-hardening-evidence-areas.json')).routes).length; })());
+t('a held route keeps its core columns and loses no hardening column it passed at the base', ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: true, strict_input: false }), row('x', 'g', 'routes/keys.js', { error_shape: true, strict_input: false })) === true && ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: true, strict_input: false }), row('x', 'g', 'routes/keys.js', { error_shape: true, strict_input: true })) === false);
 t('the assembled OpenAPI is a contract that carries the Problem schema', typeof openapi.assemble === 'function');
 t('a refused request (401 or 422 validation) is answered in the Problem shape, a duplicate or replay never twice: see tests/api-problem.test.cjs', true);
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');

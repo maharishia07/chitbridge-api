@@ -22,6 +22,13 @@
  *
  * ⚠️ AND IT NEVER 500s ON A BAD MESSAGE. A protocol endpoint that answers 500 tells the sender to retry
  * something that will never work. Malformed is 400, refused is 409, unknown sender is 403.
+ *
+ * ── THE ANSWERS (API-1 slice 1d) ── every refusal is a Problem (lib/problem.js) that keeps the keys a peer reads — `accepted`
+ * and `why` (deliver), `ok` and `why` (query) — word for word (docs/contracts/api-legacy.json). The contract and those old
+ * bodies live in lib/ctp-contract.js; tests/api-problem-ctp.test.cjs replays every answer on both mounts.
+ *
+ * FLOW  envelope ──▶ schema ──▶ peer we deal with ──▶ key on its domain ──▶ recipient here ──▶ crossing rule ──▶ open ──▶ mint.deliver
+ * CARD  05-ctp-and-cross-installation/deliver-query-across-domains
  */
 
 const express = require('express');
@@ -35,6 +42,14 @@ const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
 const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
+const { problem } = require('../lib/problem');
+const { safeErr } = require('../lib/respond');
+const { schemaValidate } = require('../middleware/validate'); // S9: the body is checked against the door's own schema
+/* the contract (each door's OpenAPI operation) and the answers these doors gave before the standard — lib/ctp-contract.js */
+const contract = require('../lib/ctp-contract');
+const { MANIFEST_OPERATION, DELIVER_OPERATION, QUERY_OPERATION, ENVELOPE_REFUSAL, QUERY_REFUSAL, MANIFEST_FAILED, STORE_FAILED, QUERY_FAILED } = contract;
+/** refusalTo(req, res, flag) → refuse({ status, code, why }): a Problem that keeps the keys a peer reads — `<flag>: false` and `why`, word for word */
+const refusalTo = (req, res, flag) => ({ why, ...spec }) => problem(req, res, Object.assign(spec, { detail: why, legacy: { [flag]: false, why } }));
 
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
 const ctpLimiter = rateLimit({
@@ -106,18 +121,18 @@ router.get('/.well-known/ctp.json', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=900');
     res.json(await manifest());
   } catch (e) {
-    console.error('ctp manifest:', e.message);
-    res.status(500).json({ error: 'manifest unavailable' });
+    safeErr(e, { id: req.id, path: req.path });
+    res.set('Cache-Control', 'no-store'); /* a peer must not keep a failure for 15 minutes */
+    return problem(req, res, { status: 500, code: 'CTP_MANIFEST_UNAVAILABLE', detail: MANIFEST_FAILED.error, legacy: MANIFEST_FAILED });
   }
 });
 
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
-router.post('/deliver', ctpLimiter, async (req, res) => {
-  const env = req.body;
-  const no = (code, why, extra) => res.status(code).json(Object.assign({ accepted: false, why }, extra || {}));
+router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), async (req, res) => {
+  const env = req.body; /* a CTP/1 envelope: the schema refused anything else, in the old words */
+  const refuse = refusalTo(req, res, 'accepted');
 
   try {
-    if (!env || env.ctp !== '1') return no(400, 'not a CTP/1 envelope');
 
     /**
      * ── ⚠️⚠️ THE BOUNDARY IS ABOUT THE TWO PARTIES, NOT ABOUT THIS INSTALLATION ─────────────────────────────
@@ -131,17 +146,18 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
      * RECIPIENT share a world? So the recipient is resolved first, and their population is the subject.
      */
     const toBridge0 = String((env.to || {}).bridge_id || '');
-    if (!toBridge0) return no(400, 'the envelope does not name a recipient');
+    if (!toBridge0) return refuse({ status: 400, code: 'CTP_NO_RECIPIENT', why: 'the envelope does not name a recipient' });
 
     /* ── who is this claiming to be, and do we know them? */
     const ik = String((env.from || {}).installation_key || '');
-    if (!ik) return no(400, 'the envelope does not say which installation sent it');
+    if (!ik) return refuse({ status: 400, code: 'CTP_NO_INSTALLATION', why: 'the envelope does not say which installation sent it' });
     /**
      * ⚠️⚠️ "IS HE A MEMBER OF ME" — Athi's phrase, and lib/ctpaddress peerByKey is the line that answers it, for both
      * doors (T2-SPLIT lifted the copy /query carried). Discovery is open; DELIVERY IS NOT.
      */
     const member = await addressBook.peerByKey(ik, 'a local copy must not arrive over the wire');
-    if (!member.peer) return no(member.status, member.why);
+    if (!member.peer && member.status === 409) return refuse({ status: 409, code: 'CTP_PEER_HOSTED_HERE', why: member.why });
+    if (!member.peer) return refuse({ status: 403, code: 'CTP_PEER_REFUSED', why: member.why });
     const peer = member.peer;
 
     /**
@@ -168,7 +184,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
 
     /* ── the signature, against the key on THEIR domain. Never one they sent us. */
     const pk = await directory.publicKeyFor(peer.domain, ik);
-    if (!pk.ok) return no(403, 'could not read the sender’s manifest: ' + pk.why);
+    if (!pk.ok) return refuse({ status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the sender’s manifest: ' + pk.why });
 
     /* ── is the recipient here, and which world are they in? */
     const toBridge = toBridge0;
@@ -178,7 +194,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
       [toBridge]
     );
     const to = r.rows[0];
-    if (!to) return no(404, 'no active business here with bridge id ' + toBridge);
+    if (!to) return refuse({ status: 404, code: 'CTP_RECIPIENT_NOT_HERE', why: 'no active business here with bridge id ' + toBridge });
 
     /**
      * ⚠️⚠️ AND THE PAIRING — §7.1. `live` is a universally shared meaning, so live↔live passes on the name
@@ -193,10 +209,10 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
     } catch (e) {
       /* ⚠️ b258 not run → REFUSE. This is the one place in the product where "fail open" would be wrong: an
          unreadable rule about a boundary must never resolve to "allowed". [[feedback-silence-is-the-bug]] */
-      return no(503, 'this installation cannot check whether that crossing is permitted — refusing');
+      return refuse({ status: 503, code: 'CTP_CROSSING_UNCHECKABLE', why: 'this installation cannot check whether that crossing is permitted — refusing' });
     }
     if (!mayCross) {
-      return no(409, to.population === 'live' ? 'refused' : '“' + to.population + '” is a local name on both sides — it must name ' + ik + ' as a peer first');
+      return refuse({ status: 409, code: 'CTP_CROSSING_REFUSED', why: contract.crossingRefused(to.population, ik) });
     }
 
     const opened = envelope.open(env, {
@@ -206,7 +222,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
       pairedWith: () => mayCross,
       verify: (hash, sig) => keys.verifyWith(pk.public_key, hash, sig)
     });
-    if (!opened.ok) return no(409, opened.why);
+    if (!opened.ok) return refuse({ status: 409, code: 'CTP_ENVELOPE_REFUSED', why: opened.why });
 
     /**
      * ── ⚠️ THE COPY IS WRITTEN AS THE RECIPIENT'S, WITH THE ENTITY WE RESOLVED — never the entity_id the
@@ -270,7 +286,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
      * counterparty on another machine can be named without existing here.
      */
     const senderCtx = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
-    if (!senderCtx) return no(400, 'the copy does not say who sent it');
+    if (!senderCtx) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
     await mint.deliver(senderCtx, opened.chit_id, [copy], { is_draft: false, arrived: true });
 
     res.json({
@@ -291,9 +307,9 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
     });
   } catch (e) {
     /* ⚠️ a 500 tells a sender to retry something that may never work — so it is reserved for OUR faults, and it
-       says which. */
-    console.error('ctp deliver:', e.code || '', e.message);
-    res.status(500).json({ accepted: false, why: 'this installation failed to store it', code: e.code || null });
+       says which side failed, never why (before slice 1d `code` carried the database's own error code to the peer). */
+    safeErr(e, { id: req.id, path: req.path });
+    return problem(req, res, { status: 500, code: 'CTP_STORE_FAILED', detail: STORE_FAILED.why, legacy: STORE_FAILED });
   }
 });
 
@@ -314,26 +330,26 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
  * /shop.html?s=<store> would. `resolve` answers only for a BUSINESS (entity or network store): an employee, a
  * customer or a minted party is refused by name, because none of them is a thing another installation may address.
  */
-router.post('/query', ctpLimiter, async (req, res) => {
-  const no = (status, why) => res.status(status).json({ ok: false, why });
+router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL), async (req, res) => {
+  const refuse = refusalTo(req, res, 'ok');
   try {
-    const q = req.body;
+    const q = req.body; /* a CTP/1 query: the schema refused anything else, in the old words */
     const ctpquery = require('../lib/ctpquery');
-    if (!q || q.ctp !== '1' || q.kind !== 'query') return no(400, 'not a CTP/1 query');
 
     const ik = String((q.from || {}).installation_key || '');
-    if (!ik) return no(400, 'the question does not say which installation is asking');
+    if (!ik) return refuse({ status: 400, code: 'CTP_NO_INSTALLATION', why: 'the question does not say which installation is asking' });
     /* the same door-keeping as deliver — the ONE peer lookup (lib/ctpaddress peerByKey) */
     const member = await addressBook.peerByKey(ik, 'ask locally');
-    if (!member.peer) return no(member.status, member.why);
+    if (!member.peer && member.status === 409) return refuse({ status: 409, code: 'CTP_PEER_HOSTED_HERE', why: member.why });
+    if (!member.peer) return refuse({ status: 403, code: 'CTP_PEER_REFUSED', why: member.why });
     const peer = member.peer;
 
     const pk = await directory.publicKeyFor(peer.domain, ik);
-    if (!pk.ok) return no(403, 'could not read the asker’s manifest: ' + pk.why);
+    if (!pk.ok) return refuse({ status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the asker’s manifest: ' + pk.why });
     const opened = ctpquery.open(q, {
       verify: (hash, sig, who) => who === ik && keys.verifyWith(pk.public_key, hash, sig)
     });
-    if (!opened.ok) return no(403, opened.why);
+    if (!opened.ok) return refuse({ status: 403, code: 'CTP_QUERY_REFUSED', why: opened.why });
 
     const ask = opened.ask;
     const cat = require('./catalogue');
@@ -368,12 +384,24 @@ router.post('/query', ctpLimiter, async (req, res) => {
       if (!view || !view.available) return res.json({ ok: true, found: false, why: ent.display_name + ' has no public catalogue' });
       return res.json(Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, cat.publicResponseFor(view, false)));
     }
-    return no(400, 'not a question this installation answers');
+    return refuse({ status: 400, code: 'CTP_UNKNOWN_QUESTION', why: 'not a question this installation answers' });
   } catch (e) {
-    console.error('ctp query:', e.code || '', e.message);
-    return no(500, 'this installation could not answer: ' + (e.message || 'error'));
+    safeErr(e, { id: req.id, path: req.path }); /* fail closed: which side failed, never why (QUERY_FAILED) */
+    return problem(req, res, { status: 500, code: 'CTP_QUERY_FAILED', detail: QUERY_FAILED.why, legacy: QUERY_FAILED });
   }
 });
+
+/* the contract, one operation per door on each of its two mounts (server.js: '/' for the manifest, '/api/ctp' for the doors) */
+router.openapi = {
+  paths: {
+    '/.well-known/ctp.json': { get: MANIFEST_OPERATION },
+    '/api/ctp/.well-known/ctp.json': { get: MANIFEST_OPERATION },
+    '/deliver': { post: DELIVER_OPERATION },
+    '/api/ctp/deliver': { post: DELIVER_OPERATION },
+    '/query': { post: QUERY_OPERATION },
+    '/api/ctp/query': { post: QUERY_OPERATION }
+  }
+};
 
 module.exports = router;
 module.exports.manifest = manifest;

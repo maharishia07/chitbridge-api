@@ -870,6 +870,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/compare": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/facts/connectors": {
       "file": "facts.js",
       "trips": 1,
@@ -882,6 +890,22 @@
       "file": "facts.js",
       "trips": 1,
       "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/country-lab": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/crm": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 14,
       "fired": true,
       "status": 200,
       "extra": true
@@ -989,6 +1013,14 @@
       "file": "facts.js",
       "trips": 2,
       "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/storefront": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -3074,6 +3106,14 @@
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "GET /api/facts/trend": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
     }
   }
 }

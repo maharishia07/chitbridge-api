@@ -329,7 +329,13 @@
    "example": {
     "code": "NOT_FOUND",
     "error": "No group by that name.",
-    "message": "No group by that name."
+    "message": "No group by that name.",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "detail": "No group by that name.",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -346,7 +352,13 @@
    "example": {
     "code": "HAS_DUES",
     "error": "There are open dues on this party.",
-    "message": "There are open dues on this party."
+    "message": "There are open dues on this party.",
+    "type": "https://chitbridge.com/problems/has_dues",
+    "title": "Open dues",
+    "status": 409,
+    "detail": "There are open dues on this party.",
+    "hint": "Settle the dues first, then remove them.",
+    "request_id": null
    },
    "optional": []
   },
@@ -2462,7 +2474,13 @@
    "example": {
     "code": "NOT_FOUND",
     "error": "Not found",
-    "message": "Not your party."
+    "message": "Not your party.",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "detail": "Not your party.",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -3323,7 +3341,13 @@
    "example": {
     "error": "Set the shop country first. The books never open on a guess.",
     "code": "NO_COUNTRY",
-    "message": "Set the shop country first. The books never open on a guess."
+    "message": "Set the shop country first. The books never open on a guess.",
+    "type": "https://chitbridge.com/problems/no_country",
+    "title": "No country set",
+    "status": 422,
+    "detail": "Set the shop country first. The books never open on a guess.",
+    "hint": "Set the country in Country setup.",
+    "request_id": null
    },
    "optional": []
   },
@@ -3495,7 +3519,14 @@
    "status": 404,
    "example": {
     "error": "Not found",
-    "message": "Chit not found or you do not have access"
+    "message": "Chit not found or you do not have access",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "code": "NOT_FOUND",
+    "detail": "Chit not found or you do not have access",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -3672,7 +3703,13 @@
     "error": "An advice is already recorded for this payment.",
     "message": "An advice is already recorded for this payment.",
     "code": "ADVICE_EXISTS",
-    "advice_chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+    "advice_chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+    "type": "https://chitbridge.com/problems/advice_exists",
+    "title": "Advice already recorded",
+    "status": 409,
+    "detail": "An advice is already recorded for this payment.",
+    "hint": "Open the payment to see it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -3864,7 +3901,13 @@
    "example": {
     "code": "PERIOD_LOCKED",
     "error": "That month is locked. Open it again (with a reason) to record this.",
-    "message": "That month is locked. Open it again (with a reason) to record this."
+    "message": "That month is locked. Open it again (with a reason) to record this.",
+    "type": "https://chitbridge.com/problems/period_locked",
+    "title": "Month locked",
+    "status": 409,
+    "detail": "That month is locked. Open it again (with a reason) to record this.",
+    "hint": "Use a date in an open month, or ask the owner to unlock it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -3952,7 +3995,14 @@
    "status": 409,
    "example": {
     "error": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
-    "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file."
+    "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+    "type": "https://chitbridge.com/problems/books_conflict",
+    "title": "Ledger cannot take that",
+    "status": 409,
+    "code": "BOOKS_CONFLICT",
+    "detail": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+    "hint": "Read the sentence shown, fix it and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4047,7 +4097,13 @@
     "error": "Already reversed",
     "message": "This entry was already reversed by MJ/2026-27/000008.",
     "entry_no": "MJ/2026-27/000008",
-    "entry_id": "00000000-0000-4000-8000-000000000130"
+    "entry_id": "00000000-0000-4000-8000-000000000130",
+    "type": "https://chitbridge.com/problems/already_reversed",
+    "title": "Already reversed",
+    "status": 409,
+    "detail": "This entry was already reversed by MJ/2026-27/000008.",
+    "hint": "Open the reversal to see it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4375,7 +4431,14 @@
    "status": 422,
    "example": {
     "error": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account.",
-    "message": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account."
+    "message": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account.",
+    "type": "https://chitbridge.com/problems/books_refused",
+    "title": "Ledger refused",
+    "status": 422,
+    "code": "BOOKS_REFUSED",
+    "detail": "The trial balance does not balance: debits A$15,230.50, credits A$12,000.00 — the difference is A$3,230.50. Export it again as at the move date, with every account.",
+    "hint": "Fix what the sentence says and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4539,7 +4602,13 @@
    "example": {
     "code": "MOVE_IN_COUNTRY",
     "error": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported.",
-    "message": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported."
+    "message": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported.",
+    "type": "https://chitbridge.com/problems/move_in_country",
+    "title": "Move in country",
+    "status": 422,
+    "detail": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported.",
+    "hint": "Check what was sent and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4686,7 +4755,13 @@
       "code": "excess",
       "words": "₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores."
      }
-    ]
+    ],
+    "type": "https://chitbridge.com/problems/already_paid",
+    "title": "Already paid",
+    "status": 409,
+    "detail": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
+    "hint": "Check the list, then confirm if it is really a new one.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4696,7 +4771,13 @@
    "example": {
     "code": "PERIOD_LOCKED",
     "error": "That month is locked. Open it again (with a reason) to record this.",
-    "message": "That month is locked. Open it again (with a reason) to record this."
+    "message": "That month is locked. Open it again (with a reason) to record this.",
+    "type": "https://chitbridge.com/problems/period_locked",
+    "title": "Month locked",
+    "status": 409,
+    "detail": "That month is locked. Open it again (with a reason) to record this.",
+    "hint": "Use a date in an open month, or ask the owner to unlock it.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4892,7 +4973,14 @@
       "name": "months_open",
       "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
      }
-    ]
+    ],
+    "type": "https://chitbridge.com/problems/year_close_refused",
+    "title": "Year cannot close yet",
+    "status": 422,
+    "code": "YEAR_CLOSE_REFUSED",
+    "detail": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+    "hint": "Read the reasons shown and fix each one.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4946,7 +5034,13 @@
    "example": {
     "code": "CRM_NOT_MIGRATED",
     "error": "Not migrated yet",
-    "message": "CB CRM needs migration b276 — not run yet."
+    "message": "CRM needs migration b276 — not run yet.",
+    "type": "https://chitbridge.com/problems/crm_not_migrated",
+    "title": "Crm not migrated",
+    "status": 503,
+    "detail": "CRM needs migration b276 — not run yet.",
+    "hint": "Try again after the next update.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4965,7 +5059,13 @@
    "example": {
     "code": "BAD_NAME",
     "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
-    "message": "Name the group: up to 40 letters, digits, spaces, - & /."
+    "message": "Name the group: up to 40 letters, digits, spaces, - & /.",
+    "type": "https://chitbridge.com/problems/bad_name",
+    "title": "Bad name",
+    "status": 400,
+    "detail": "Name the group: up to 40 letters, digits, spaces, - & /.",
+    "hint": "Check the name and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -4974,7 +5074,13 @@
    "example": {
     "code": "LEADS_NOT_MIGRATED",
     "error": "Lead stages arrive after the next update.",
-    "message": "Lead stages arrive after the next update."
+    "message": "Lead stages arrive after the next update.",
+    "type": "https://chitbridge.com/problems/leads_not_migrated",
+    "title": "Leads not migrated",
+    "status": 503,
+    "detail": "Lead stages arrive after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5054,7 +5160,13 @@
    "example": {
     "code": "TOO_MANY",
     "error": "Import up to 500 leads at a time. Split the file.",
-    "message": "Import up to 500 leads at a time. Split the file."
+    "message": "Import up to 500 leads at a time. Split the file.",
+    "type": "https://chitbridge.com/problems/too_many",
+    "title": "Too many",
+    "status": 400,
+    "detail": "Import up to 500 leads at a time. Split the file.",
+    "hint": "Send fewer, or make a smaller group.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5119,7 +5231,13 @@
    "example": {
     "code": "BAD_OUTCOME",
     "error": "Pick what happened on the call.",
-    "message": "Pick what happened on the call."
+    "message": "Pick what happened on the call.",
+    "type": "https://chitbridge.com/problems/bad_outcome",
+    "title": "Bad outcome",
+    "status": 400,
+    "detail": "Pick what happened on the call.",
+    "hint": "Tap one of the outcome buttons.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5128,7 +5246,13 @@
    "example": {
     "code": "LEADS_NOT_MIGRATED",
     "error": "Lead stages arrive after the next update.",
-    "message": "Lead stages arrive after the next update."
+    "message": "Lead stages arrive after the next update.",
+    "type": "https://chitbridge.com/problems/leads_not_migrated",
+    "title": "Leads not migrated",
+    "status": 503,
+    "detail": "Lead stages arrive after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5149,7 +5273,13 @@
    "example": {
     "code": "NOT_FOUND",
     "error": "Not one of your leads.",
-    "message": "Not one of your leads."
+    "message": "Not one of your leads.",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "detail": "Not one of your leads.",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5194,7 +5324,13 @@
    "example": {
     "code": "BAD_KEY",
     "error": "That is not a segment or a group.",
-    "message": "That is not a segment or a group."
+    "message": "That is not a segment or a group.",
+    "type": "https://chitbridge.com/problems/bad_key",
+    "title": "Not a segment",
+    "status": 400,
+    "detail": "That is not a segment or a group.",
+    "hint": "Pick one from the list.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5307,7 +5443,13 @@
    "example": {
     "code": "REPEAT_NOT_MIGRATED",
     "error": "Repeat supply arrives after the next update.",
-    "message": "Repeat supply arrives after the next update."
+    "message": "Repeat supply arrives after the next update.",
+    "type": "https://chitbridge.com/problems/repeat_not_migrated",
+    "title": "Repeat not migrated",
+    "status": 503,
+    "detail": "Repeat supply arrives after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
    },
    "optional": []
   },
@@ -5386,7 +5528,13 @@
    "example": {
     "code": "REPEAT_WRONG_STATE",
     "error": "This agreement is not at a step where that can be done.",
-    "message": "This agreement is not at a step where that can be done."
+    "message": "This agreement is not at a step where that can be done.",
+    "type": "https://chitbridge.com/problems/repeat_wrong_state",
+    "title": "Not at that step",
+    "status": 422,
+    "detail": "This agreement is not at a step where that can be done.",
+    "hint": "Open the agreement to see what can be done now.",
+    "request_id": null
    },
    "optional": []
   },
@@ -6429,7 +6577,13 @@
    "example": {
     "error": "Bad request",
     "code": "BAD_QTY",
-    "message": "Line \"A\" needs a quantity above 0."
+    "message": "Line \"A\" needs a quantity above 0.",
+    "type": "https://chitbridge.com/problems/bad_qty",
+    "title": "Quantity not above zero",
+    "status": 400,
+    "detail": "Line \"A\" needs a quantity above 0.",
+    "hint": "Send a quantity above 0 on every line.",
+    "request_id": null
    },
    "optional": []
   },
@@ -6439,7 +6593,13 @@
     "error": "Cannot compute",
     "code": "ITEM_NOT_FOUND",
     "message": "Line \"NOPE\" names an item this shop does not sell.",
-    "line": "0"
+    "line": "0",
+    "type": "https://chitbridge.com/problems/item_not_found",
+    "title": "Item not on the shelf",
+    "status": 422,
+    "detail": "Line \"NOPE\" names an item this shop does not sell.",
+    "hint": "Check the item id or code.",
+    "request_id": null
    },
    "optional": []
   }

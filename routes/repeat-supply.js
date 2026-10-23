@@ -13,6 +13,10 @@
  *                   names it; the server checks the copy under the caller's own RLS), at editor level (lib/rail can). Anyone else: 404.
  *   every verb    — lib/repeat-supply may(): the agreement's own step table; a refusal is 422 { code: 'REPEAT_<WHY>', message }.
  * BEFORE b303 runs every route answers 503 { code: 'REPEAT_NOT_MIGRATED', message } — never a 500.
+ * ANSWERS (API-STANDARD S1): every refusal is a Problem that keeps the keys it always had (docs/contracts/api-legacy.json); the words are lib/orders-contract.js.
+ * OWNS      /api/repeat: the agreement's 14 routes, over lib/repeat-supply (the rules). CALLED BY the Orders and Collections screens, the customer's agreement page, the nightly sweep.
+ * FLOW      auth → who may (writeGate | customerGate) → schema check (lib/orders-contract.js) → lib/repeat-supply → res.json | problem(req, res, repeatFault(e, req))
+ * CARD      12-suppliers-and-procurement/repeat-supply
  * ROUND TRIPS (tests/round-trips-all.test.cjs, by hand): list 2 (the zone, the join) · get 2–4 · a seller move 3 + 2 history lines ·
  *   the customer's accept = the status writer's own + 3 · create = the loopback send (its own request) + 3 · run = the sends + 2 each.
  */
@@ -21,35 +25,32 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const access = require('../lib/access');
 const railActions = require('../lib/rail-actions');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { repeat: contract, schemaOptions, repeatFault, levelRefusal } = require('../lib/orders-contract'); // the contract (each route's operation) and the words of a refusal
 const RS = () => require('../lib/repeat-supply');
 
 const me = (req) => auth.entityOf(req);
 const who = (req) => ({ id: (req.identity && req.identity.identity_id) || null, name: (req.identity && req.identity.display_name) || null });
 const chitOf = (req) => String((req.query && req.query.chit) || (req.body && req.body.chit_id) || '') || null;
 
-function fail(res, e) {
-  if (e && e.code === 'REPEAT_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: e.message, message: e.message });
-  if (e && e.code === 'BOOKS_NOT_FOUND') return res.status(404).json({ error: 'Not found', message: e.message });
-  if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
-  if (e && e.refused) return res.status(422).json({ code: e.code || 'REPEAT_REFUSED', error: e.message, message: e.message });
-  if (e && e.status >= 400 && e.status < 500) return res.status(e.status).json(Object.assign({ error: e.message, message: e.message }, e.body || {}));
-  require('../lib/logger').error('repeat.route', { error: String(e && e.message).slice(0, 200) });
-  return res.status(500).json({ error: 'Server error', message: 'Repeat supply could not answer. Try again.' });
+/** the schema check of one route (its own operation in lib/orders-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptions.repeat)] : [];
 }
-/** a writing verb on either side: the owner, or a person at editor level — the rail's own words for the rest */
-function editorMay(req, res) {
+/** a writing verb on either side: the owner, or a person at editor level — the rail's own words for the rest (403) */
+function writeGate(req, res, next) {
   const m = access.mayWrite(req); /* the one answer (lib/access mayWrite) — the trade writes ask the same */
-  if (m.may) return true;
-  res.status(403).json({ error: 'Not permitted', message: m.why, why: m.code });
-  return false;
+  if (m.may) return next();
+  return problem(req, res, { status: 403, ...levelRefusal(m.code, m.why) });
 }
 /** the customer's verbs: editor level on the copy they hold (the rail engine's ladder, the same answer GET /chits/:id gives) */
-function customerMay(req, res, action) {
+const customerGate = (action) => (req, res, next) => {
   const v = railActions.can({ held: true, received: 'pending', sender: false }, railActions.meOf(req), action);
-  if (v.ok) return true;
-  railActions.refuse(res, v, 403, { error: 'Not permitted', message: railActions.WHY[v.why] });
-  return false;
-}
+  if (v.ok) return next();
+  return problem(req, res, { status: 403, ...levelRefusal(v.why, railActions.WHY[v.why]) });
+};
 
 /** GET /api/repeat → { agreements: [...], migrated } — the seller's agreements, each with its actions (may/why) */
 router.get('/', auth, async (req, res) => {
@@ -58,111 +59,110 @@ router.get('/', auth, async (req, res) => {
     if (!(await R.migrated(me(req)))) return res.json({ agreements: [], migrated: false, message: R.WHY.not_migrated });
     res.json({ agreements: await R.list(me(req)), migrated: true });
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
 /** POST /api/repeat { chit_id, every, unit, start_on, anchor_day?, until: { runs? | on? }, mode? } → { agreement } — the agreement chit is sent */
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, writeGate, ...checked('POST /'), async (req, res) => {
   try {
-    if (!editorMay(req, res)) return;
     res.json({ agreement: await RS().create(me(req), who(req), req.body || {}) });
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
 /** POST /api/repeat/sweep → { ran, problems } — the seller runs everything due now (what the nightly would do) */
-router.post('/sweep', auth, async (req, res) => {
+router.post('/sweep', auth, writeGate, ...checked('POST /sweep'), async (req, res) => {
   try {
-    if (!editorMay(req, res)) return;
-    res.json(await RS().sweep(me(req)));
+    res.json(await RS().sweep(me(req), null, { request_id: req.id || null }));   /* SEC-90: a fault in problems[] says the safe sentence and this id */
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
 /** GET /api/repeat/:id?chit= → { agreement } — either side; the customer names the chit they hold */
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
   try {
     res.json(await RS().one(me(req), req.params.id, chitOf(req)));
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
 
 /* ── the customer's side (through the rail: they hold the agreement chit) ── */
-router.post('/:id/accept', auth, async (req, res) => {
+router.post('/:id/accept', auth, customerGate('accept'), ...checked('POST /:id/accept'), async (req, res) => {
   try {
-    if (!customerMay(req, res, 'accept')) return;
     res.json({ agreement: await RS().accept(me(req), req.params.id, chitOf(req), who(req), railActions.meOf(req)) });
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
 /** POST /:id/counter { chit_id, lines?: [{ line_id, quantity }], every?, unit?, start_on?, note } */
-router.post('/:id/counter', auth, async (req, res) => {
+router.post('/:id/counter', auth, customerGate('amend'), ...checked('POST /:id/counter'), async (req, res) => {
   try {
-    if (!customerMay(req, res, 'amend')) return;
     res.json({ agreement: await RS().counter(me(req), req.params.id, chitOf(req), who(req), req.body || {}) });
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
-router.post('/:id/decline', auth, async (req, res) => {
+router.post('/:id/decline', auth, customerGate('reject'), ...checked('POST /:id/decline'), async (req, res) => {
   try {
-    if (!customerMay(req, res, 'reject')) return;
     res.json({ agreement: await RS().decline(me(req), req.params.id, chitOf(req), who(req), req.body || {}, railActions.meOf(req)) });
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
 
 /* ── either side: skip the next run (the customer says why) ── */
-router.post('/:id/skip', auth, async (req, res) => {
+router.post('/:id/skip', auth, writeGate, ...checked('POST /:id/skip'), async (req, res) => {
   try {
-    if (!editorMay(req, res)) return;
     res.json({ agreement: await RS().skip(me(req), req.params.id, chitOf(req), who(req), req.body || {}) });
   } catch (e) {
-    fail(res, e);
+    problem(req, res, repeatFault(e, req));
   }
 });
 
 /* ── the seller's side ── */
-const seller = (fn) => async (req, res) => {
-  try {
-    if (!editorMay(req, res)) return;
-    res.json(await fn(req));
-  } catch (e) {
-    fail(res, e);
+/** a seller's verb: the gate and the schema check in front, the library's answer behind; a refusal it throws is a Problem */
+const seller = (route, answer) => [
+  writeGate,
+  ...checked(route),
+  async (req, res) => {
+    try {
+      res.json(await answer(req));
+    } catch (e) {
+      problem(req, res, repeatFault(e, req));
+    }
   }
-};
+];
 router.post(
   '/:id/agree',
   auth,
-  seller(async (req) => ({ agreement: await RS().agree(me(req), req.params.id, who(req)) }))
+  ...seller('POST /:id/agree', async (req) => ({ agreement: await RS().agree(me(req), req.params.id, who(req)) }))
 );
 router.post(
   '/:id/refuse',
   auth,
-  seller(async (req) => ({ agreement: await RS().refuseCounter(me(req), req.params.id, who(req), req.body || {}) }))
+  ...seller('POST /:id/refuse', async (req) => ({ agreement: await RS().refuseCounter(me(req), req.params.id, who(req), req.body || {}) }))
 );
 router.post(
   '/:id/pause',
   auth,
-  seller(async (req) => ({ agreement: await RS().pause(me(req), req.params.id, who(req), req.body || {}) }))
+  ...seller('POST /:id/pause', async (req) => ({ agreement: await RS().pause(me(req), req.params.id, who(req), req.body || {}) }))
 );
 router.post(
   '/:id/resume',
   auth,
-  seller(async (req) => ({ agreement: await RS().resume(me(req), req.params.id, who(req)) }))
+  ...seller('POST /:id/resume', async (req) => ({ agreement: await RS().resume(me(req), req.params.id, who(req)) }))
 );
 router.post(
   '/:id/end',
   auth,
-  seller(async (req) => ({ agreement: await RS().end(me(req), req.params.id, who(req), req.body || {}) }))
+  ...seller('POST /:id/end', async (req) => ({ agreement: await RS().end(me(req), req.params.id, who(req), req.body || {}) }))
 );
 router.post(
   '/:id/run',
   auth,
-  seller(async (req) => RS().run(me(req), req.params.id, who(req)))
+  ...seller('POST /:id/run', async (req) => RS().run(me(req), req.params.id, who(req), { request_id: req.id || null }))
 );
 
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

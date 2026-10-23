@@ -3,7 +3,14 @@
   "status": 403,
   "body": {
    "error": "Not permitted",
-   "message": "Only the business owner can build a network. Sign in as the business itself."
+   "message": "Only the business owner can build a network. Sign in as the business itself.",
+   "type": "https://chitbridge.com/problems/network_owner_only",
+   "title": "Owner only",
+   "status": 403,
+   "code": "NETWORK_OWNER_ONLY",
+   "detail": "Only the business owner can build a network. Sign in as the business itself.",
+   "hint": "Sign in as the business itself.",
+   "request_id": null
   },
   "calls": []
  },
@@ -11,7 +18,14 @@
   "status": 404,
   "body": {
    "error": "Not found",
-   "message": "Your account could not be read."
+   "message": "Your account could not be read.",
+   "type": "https://chitbridge.com/problems/not_found",
+   "title": "Not found",
+   "status": 404,
+   "code": "NOT_FOUND",
+   "detail": "Your account could not be read.",
+   "hint": "Check the address or the name and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -29,7 +43,13 @@
    "error": "Root name unusable",
    "code": "ROOT_HANDLE_UNUSABLE",
    "message": "Your User ID \"a@b.com\" cannot be a network name: A handle is not an email address. Change your User ID in Settings first — every store in the network is named from it.",
-   "suggestion": "athi-group"
+   "suggestion": "athi-group",
+   "type": "https://chitbridge.com/problems/root_handle_unusable",
+   "title": "Network name unusable",
+   "status": 409,
+   "detail": "Your User ID \"a@b.com\" cannot be a network name: A handle is not an email address. Change your User ID in Settings first — every store in the network is named from it.",
+   "hint": "Change your User ID in Settings first.",
+   "request_id": null
   },
   "calls": [
    {
@@ -48,7 +68,13 @@
    "code": "ROOT_HANDLE_NEEDED",
    "message": "Set your User ID before building a network. Every store below is named from it (<your-user-id>.store), and it cannot be changed afterwards without orphaning them — so it is yours to choose, not ours to guess from a diagram label.",
    "suggestion": "athi-group",
-   "where": "Profile › IAM"
+   "where": "Profile › IAM",
+   "type": "https://chitbridge.com/problems/root_handle_needed",
+   "title": "Network name needed",
+   "status": 409,
+   "detail": "Set your User ID before building a network. Every store below is named from it (<your-user-id>.store), and it cannot be changed afterwards without orphaning them — so it is yours to choose, not ours to guess from a diagram label.",
+   "hint": "Set it in your profile, or send a network name.",
+   "request_id": null
   },
   "calls": [
    {
@@ -65,7 +91,13 @@
   "body": {
    "error": "Root name unusable",
    "code": "ROOT_HANDLE_NEEDED",
-   "message": "Choose a network name. \"a b\" will not do: \"a b\" must be letters, numbers and dashes, starting with a letter or number."
+   "message": "Choose a network name. \"a b\" will not do: \"a b\" must be letters, numbers and dashes, starting with a letter or number.",
+   "type": "https://chitbridge.com/problems/root_handle_needed",
+   "title": "Network name needed",
+   "status": 400,
+   "detail": "Choose a network name. \"a b\" will not do: \"a b\" must be letters, numbers and dashes, starting with a letter or number.",
+   "hint": "Set it in your profile, or send a network name.",
+   "request_id": null
   },
   "calls": [
    {
@@ -82,7 +114,13 @@
   "body": {
    "error": "Root name taken",
    "code": "ROOT_HANDLE_TAKEN",
-   "message": "\"athi\" is already taken. Choose another network name."
+   "message": "\"athi\" is already taken. Choose another network name.",
+   "type": "https://chitbridge.com/problems/root_handle_taken",
+   "title": "Network name taken",
+   "status": 409,
+   "detail": "\"athi\" is already taken. Choose another network name.",
+   "hint": "Choose another network name.",
+   "request_id": null
   },
   "calls": [
    {
@@ -105,7 +143,14 @@
   "status": 400,
   "body": {
    "error": "Nothing designed",
-   "message": "Draw the network first — add the branches and units you want, then build."
+   "message": "Draw the network first — add the branches and units you want, then build.",
+   "type": "https://chitbridge.com/problems/network_bad_request",
+   "title": "Network request not usable",
+   "status": 400,
+   "code": "NETWORK_BAD_REQUEST",
+   "detail": "Draw the network first — add the branches and units you want, then build.",
+   "hint": "Read the sentence, fix it and try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -1829,7 +1874,14 @@
   "status": 500,
   "body": {
    "error": "Build failed",
-   "message": "Something went wrong — please try again."
+   "message": "Something went wrong — please try again.",
+   "type": "https://chitbridge.com/problems/internal",
+   "title": "Something went wrong",
+   "status": 500,
+   "code": "INTERNAL",
+   "detail": "Something went wrong on our side.",
+   "hint": "If it keeps happening, tell us the request id.",
+   "request_id": null
   },
   "calls": [
    {
@@ -1893,7 +1945,14 @@
   "status": 409,
   "body": {
    "error": "Name taken",
-   "message": "One of these names was taken while the network was being built. Nothing was created — try again."
+   "message": "One of these names was taken while the network was being built. Nothing was created — try again.",
+   "type": "https://chitbridge.com/problems/network_name_taken",
+   "title": "Network name taken",
+   "status": 409,
+   "code": "NETWORK_NAME_TAKEN",
+   "detail": "One of these names was taken while the network was being built. Nothing was created — try again.",
+   "hint": "Try again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -1996,7 +2055,13 @@
   "body": {
    "error": "Migration needed",
    "code": "VISIBILITY_NOT_MIGRATED",
-   "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+   "message": "This database does not accept \"network\" visibility yet — apply migration b115.",
+   "type": "https://chitbridge.com/problems/visibility_not_migrated",
+   "title": "Visibility not migrated",
+   "status": 409,
+   "detail": "This database does not accept \"network\" visibility yet — apply migration b115.",
+   "hint": "Apply the pending database update, then build again.",
+   "request_id": null
   },
   "calls": [
    {
@@ -2409,7 +2474,14 @@
   "status": 400,
   "body": {
    "error": "Bad request",
-   "message": "draft must be an object"
+   "message": "draft must be an object",
+   "type": "https://chitbridge.com/problems/network_bad_request",
+   "title": "Network request not usable",
+   "status": 400,
+   "code": "NETWORK_BAD_REQUEST",
+   "detail": "draft must be an object",
+   "hint": "Read the sentence, fix it and try again.",
+   "request_id": null
   },
   "calls": []
  }

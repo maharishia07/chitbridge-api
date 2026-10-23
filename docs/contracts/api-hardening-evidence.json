@@ -34,6 +34,10 @@
   "GET /api/entities/entitlements": {
    "output_allowlist": true
   },
+  "PUT /api/connections/:id/respond": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/chits/pulse": {
    "output_allowlist": true
   },
@@ -83,6 +87,10 @@
   "GET /api/chits/:chit_id/catalogue-overlay": {
    "output_allowlist": true
   },
+  "POST /api/chits/:chit_id/payment": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "DELETE /api/chits/:chit_id/payment": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -91,10 +99,26 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "PUT /api/chits/:chit_id/status": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/messages": {
+   "output_allowlist": true
+  },
   "GET /api/chits/:chit_id/diagnosis": {
    "output_allowlist": true
   },
+  "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+   "foreign_id_404": true
+  },
   "DELETE /api/chits/:chit_id": {
+   "foreign_id_404": true
+  },
+  "PUT /api/chits/:chit_id/priority": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "PUT /api/chits/:chit_id/priority-flag": {
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/archive": {
@@ -119,9 +143,11 @@
   "DELETE /api/chits/:chit_id/purge": {
    "foreign_id_404": true
   },
-  "GET /api/chits/:id/trace": {
-   "output_allowlist": true,
+  "PUT /api/chits/:chit_id/void": {
    "foreign_id_404": true
+  },
+  "POST /api/chits/assign-bulk": {
+   "output_allowlist": true
   },
   "GET /api/chits/trace/batches": {
    "output_allowlist": true
@@ -157,10 +183,16 @@
   "POST /api/integrations/:actor_id/approve": {
    "foreign_id_404": true
   },
+  "POST /api/integrations/books": {
+   "output_allowlist": true
+  },
   "GET /api/integrations/status": {
    "output_allowlist": true
   },
   "GET /api/integrations/streams": {
+   "output_allowlist": true
+  },
+  "POST /api/integrations/books/skip": {
    "output_allowlist": true
   },
   "GET /api/integrations/reconcile": {
@@ -310,6 +342,9 @@
   "DELETE /api/folders/:id": {
    "output_allowlist": true
   },
+  "POST /api/folders/move": {
+   "output_allowlist": true
+  },
   "GET /api/folders/:id/metrics": {
    "output_allowlist": true
   },
@@ -350,14 +385,36 @@
   "GET /api/catalogue/network-store/:networkId": {
    "output_allowlist": true
   },
+  "POST /api/catalogue/network-store/:networkId/order": {
+   "strict_input": true
+  },
   "GET /api/catalogue/enquiry": {
    "output_allowlist": true
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
    "output_allowlist": true
   },
+  "POST /api/catalogue/:bridge_id/order/start": {
+   "strict_input": true
+  },
   "GET /api/catalogue/:bridge_id/support/preview": {
    "output_allowlist": true
+  },
+  "POST /api/catalogue/:bridge_id/support/start": {
+   "strict_input": true
+  },
+  "POST /api/catalogue/:bridge_id/support": {
+   "strict_input": true
+  },
+  "POST /api/catalogue/:bridge_id/order/confirm": {
+   "strict_input": true
+  },
+  "POST /api/catalogue/:bridge_id/login/verify": {
+   "strict_input": true
+  },
+  "POST /api/catalogue/enquiry/:item_id": {
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/products/workbook.xlsx": {
    "output_allowlist": true
@@ -371,7 +428,16 @@
   "GET /api/products/starter-columns": {
    "output_allowlist": true
   },
+  "PATCH /api/products/:id": {
+   "foreign_id_404": true
+  },
+  "POST /api/products/:id/schedule": {
+   "foreign_id_404": true
+  },
   "DELETE /api/products/:id/schedule/:sid": {
+   "output_allowlist": true
+  },
+  "POST /api/products/availability/bulk": {
    "output_allowlist": true
   },
   "DELETE /api/products/:id": {
@@ -628,28 +694,11 @@
   "GET /api/crm/parties": {
    "output_allowlist": true
   },
-  "POST /api/crm/parties/:id/interactions": {
-   "foreign_id_404": true
-  },
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
-  "PATCH /api/crm/followups/:id": {
-   "foreign_id_404": true
-  },
-  "DELETE /api/crm/followups/:id": {
-   "output_allowlist": true,
-   "foreign_id_404": true
-  },
   "GET /api/crm/calls": {
    "output_allowlist": true
-  },
-  "GET /api/crm/parties/:id/contact-prefs": {
-   "output_allowlist": true,
-   "foreign_id_404": true
-  },
-  "POST /api/crm/parties/:id/contact-prefs": {
-   "foreign_id_404": true
   },
   "GET /api/crm/privacy-requests": {
    "output_allowlist": true
