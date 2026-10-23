@@ -618,6 +618,14 @@
     400
    ]
   },
+  "GET /api/events/stream": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/facts/:card": {
    "cases": 3,
    "failed": 0,
@@ -864,6 +872,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "GET /api/notifications": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "GET /api/products": {
@@ -2138,6 +2154,14 @@
     400
    ]
   },
+  "POST /api/events/ticket": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/folders": {
    "cases": 5,
    "failed": 0,
@@ -2400,6 +2424,22 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/notifications/dismiss": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/notifications/seen": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/pricing/price": {

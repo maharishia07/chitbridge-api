@@ -39504,6 +39504,644 @@
      }
     }
    ]
+  },
+  "GET /api/events/stats": {
+   "answers": [
+    {
+     "scenario": "stranger-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only.",
+      "type": "https://chitbridge.com/problems/not_platform_root",
+      "title": "Platform operator only",
+      "status": 403,
+      "detail": "This is for the platform operator only.",
+      "hint": "Ask the platform operator.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only.",
+      "type": "https://chitbridge.com/problems/not_platform_root",
+      "title": "Platform operator only",
+      "status": 403,
+      "detail": "This is for the platform operator only.",
+      "hint": "Ask the platform operator.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stats-another-shop",
+     "status": 403,
+     "body_keys": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only.",
+      "type": "https://chitbridge.com/problems/not_platform_root",
+      "title": "Platform operator only",
+      "status": 403,
+      "detail": "This is for the platform operator only.",
+      "hint": "Ask the platform operator.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not the platform root",
+      "code": "NOT_PLATFORM_ROOT",
+      "message": "This is for the platform operator only.",
+      "type": "https://chitbridge.com/problems/not_platform_root",
+      "title": "Platform operator only",
+      "status": 403,
+      "detail": "This is for the platform operator only.",
+      "hint": "Ask the platform operator.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stats-no-root-configured",
+     "status": 404,
+     "body_keys": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.",
+      "type": "https://chitbridge.com/problems/no_platform_root",
+      "title": "No platform operator",
+      "status": 404,
+      "detail": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.",
+      "hint": "Only the platform operator can use this.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "No platform root",
+      "code": "NO_PLATFORM_ROOT",
+      "message": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.",
+      "type": "https://chitbridge.com/problems/no_platform_root",
+      "title": "No platform operator",
+      "status": 404,
+      "detail": "PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.",
+      "hint": "Only the platform operator can use this.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stats-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/events/stream": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stream-no-ticket",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stream-unknown-t",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stream-unknown-ticket",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stream-t-asked-twice",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stream-empty-t",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stream-bad-t-beats-good-ticket",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "ticket missing, spent or expired"
+     }
+    },
+    {
+     "scenario": "stream-subscribe-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/notifications": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "badge-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "badge-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "feed-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "feed-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "feed-handler-read-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get notifications",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/events/ticket": {
+   "answers": [
+    {
+     "scenario": "ticket-login-names-no-shop",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised"
+     },
+     "fixture": {
+      "error": "Unauthorised"
+     }
+    },
+    {
+     "scenario": "ticket-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/notifications/dismiss": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "dismiss-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "dismiss-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "dismiss-log-ids-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "dismiss-log-ids-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "dismiss-log-ids-all-empty-values",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "dismiss-all-is-the-text-true",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     },
+     "fixture": {
+      "error": "Nothing to clear",
+      "message": "Send log_ids, or all:true."
+     }
+    },
+    {
+     "scenario": "dismiss-not-a-uuid-is-a-500",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dismiss-a-number-is-a-500",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dismiss-not-migrated-table",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Clearing Activity needs b164 on this environment.",
+      "code": "NOTIF_DISMISS_NOT_MIGRATED"
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Clearing Activity needs b164 on this environment.",
+      "code": "NOTIF_DISMISS_NOT_MIGRATED"
+     }
+    },
+    {
+     "scenario": "dismiss-not-migrated-column",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Clearing Activity needs b164 on this environment.",
+      "code": "NOTIF_DISMISS_NOT_MIGRATED"
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Clearing Activity needs b164 on this environment.",
+      "code": "NOTIF_DISMISS_NOT_MIGRATED"
+     }
+    },
+    {
+     "scenario": "dismiss-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dismiss-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dismiss-all-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/notifications/seen": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "seen-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "Clearing the badge needs b157 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "Clearing the badge needs b157 on this environment."
+     }
+    },
+    {
+     "scenario": "seen-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "seen-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
