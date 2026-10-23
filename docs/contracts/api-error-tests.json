@@ -916,6 +916,7 @@
   403,
   404,
   409,
+  422,
   500
  ],
  "POST /api/catalogue/photo-extract": [
