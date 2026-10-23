@@ -576,6 +576,84 @@
   401,
   500
  ],
+ "GET /api/testing/cases": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/cases/gherkin": [
+  401,
+  500
+ ],
+ "GET /api/testing/changes": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/cmdb": [
+  401,
+  500
+ ],
+ "GET /api/testing/cmdb/:ci": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/testing/coverage": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/engine": [
+  401,
+  500
+ ],
+ "GET /api/testing/incidents": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/releases": [
+  401,
+  500
+ ],
+ "GET /api/testing/reliability": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/report": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/requirements": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/results": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/runs": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/testing/stale": [
+  401,
+  500
+ ],
+ "GET /api/testing/trace": [
+  401,
+  500
+ ],
+ "GET /api/testing/vocabulary": [
+  500
+ ],
  "GET /api/till/bills": [
   401,
   500
@@ -694,6 +772,18 @@
   403,
   404,
   409,
+  500
+ ],
+ "PATCH /api/testing/incidents/:id": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/testing/requirements/:id": [
+  400,
+  401,
+  404,
   500
  ],
  "POST /api/books/accounts": [
@@ -1387,6 +1477,79 @@
   403,
   500
  ],
+ "POST /api/testing/cases/close": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/testing/cases/gherkin": [
+  400,
+  401,
+  403,
+  422,
+  500
+ ],
+ "POST /api/testing/cases/import": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/testing/cases/seed": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/testing/changes": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/cmdb/seed": [
+  401,
+  403,
+  500
+ ],
+ "POST /api/testing/evidence": [
+  400,
+  401,
+  413,
+  500
+ ],
+ "POST /api/testing/incidents": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/releases": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/requirements": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/testing/results": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "POST /api/testing/results/junit": [
+  400,
+  401,
+  422,
+  500
+ ],
+ "POST /api/testing/trace": [
+  400,
+  401,
+  500
+ ],
  "POST /api/till/alias": [
   400,
   401,
@@ -1634,6 +1797,12 @@
   400,
   401,
   404,
+  500
+ ],
+ "PUT /api/testing/cmdb/:ci": [
+  400,
+  401,
+  403,
   500
  ]
 }

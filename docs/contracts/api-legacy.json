@@ -22784,6 +22784,18 @@
      "fixture": {
       "error": "Unauthorised"
      }
+    },
+    {
+     "scenario": "close-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
     }
    ]
   },
@@ -23761,6 +23773,18 @@
       "error": "Not a writer of the shared board",
       "code": "NOT_BOARD_WRITER",
       "message": "Cases and CMDB records are read by every shop, so only the board’s own account (or one named in TEST_BOARD_WRITERS) can change them."
+     }
+    },
+    {
+     "scenario": "cmdb-put-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save the record",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save the record",
+      "message": "Something went wrong — please try again."
      }
     }
    ]

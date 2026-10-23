@@ -8,6 +8,8 @@
  * A scenario with `after: true` is an answer the sweep ADDS (the schema's refusal): the old code answered it otherwise, so it is run in a check but never frozen.
  */
 'use strict';
+const fs = require('fs');
+const path = require('path');
 const T = '/api/testing';
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
@@ -15,6 +17,7 @@ const JUNIT_OK = '<testsuites><testsuite name="s"><testcase name="[CTR-05] a sin
 const JUNIT_NO_KEY = '<testsuites><testsuite name="s"><testcase name="nothing here" classname="x"/></testsuite></testsuites>';
 const FEATURE = 'Feature: CTR-01 Clicks\n  Scenario: [CTR-05] a click\n    Given a screen\n    When I click\n    Then it opens\n';
 const TOO_LONG = 'p'.repeat(81);
+const SHIPPED_RECORD = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'data', 'cmdb', 'CAP-ADMIN.json'), 'utf8'));
 const cannotWrite = { board: { canWrite: () => false } };
 
 /** the tools a scene is built from: the harness's own stand-ins */
@@ -39,6 +42,7 @@ function extras(tools) {
     X('close-no-case', 'POST ' + T + '/cases/close', 400, { body: {} }),
     X('close-unknown-case', 'POST ' + T + '/cases/close', 404, { body: { case_key: 'CTR-05' } }),
     X('close-done', 'POST ' + T + '/cases/close', 200, { body: { case_key: 'CTR-05', why: 'done' }, setup: withRows(caseRow) }),
+    X('close-fails', 'POST ' + T + '/cases/close', 500, { body: { case_key: 'CTR-05' }, setup: failing }),
     X('close-not-a-writer', 'POST ' + T + '/cases/close', 403, { body: { case_key: 'CTR-05' }, patch: cannotWrite }),
     X('close-no-entity', 'POST ' + T + '/cases/close', 401, { body: { case_key: 'CTR-05' }, setup: noEntity }),
     N('close-body-a-list', 'POST ' + T + '/cases/close', 400, { body: [] }),
@@ -81,6 +85,7 @@ function extras(tools) {
     X('cmdb-one-found', 'GET ' + T + '/cmdb/:ci', 200, { url: T + '/cmdb/CAP-SIGNIN', setup: withRows(record) }),
     X('cmdb-one-fails', 'GET ' + T + '/cmdb/:ci', 500, { url: T + '/cmdb/CAP-SIGNIN', setup: failing }),
     X('cmdb-put-does-not-fit', 'PUT ' + T + '/cmdb/:ci', 400, { url: T + '/cmdb/CAP-SIGNIN', body: {} }),
+    X('cmdb-put-fails', 'PUT ' + T + '/cmdb/:ci', 500, { url: T + '/cmdb/CAP-ADMIN', body: SHIPPED_RECORD, setup: failing }),
     X('cmdb-put-not-a-writer', 'PUT ' + T + '/cmdb/:ci', 403, { url: T + '/cmdb/CAP-SIGNIN', body: {}, patch: cannotWrite }),
     N('cmdb-put-body-a-list', 'PUT ' + T + '/cmdb/:ci', 400, { url: T + '/cmdb/CAP-SIGNIN', body: [] }),
     X('cmdb-seed-not-a-writer', 'POST ' + T + '/cmdb/seed', 403, { patch: cannotWrite }),

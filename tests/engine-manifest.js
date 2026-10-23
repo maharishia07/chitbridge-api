@@ -223,6 +223,8 @@ const INFRA_LIBS = [
   'products-contract.js',
   /* API-4 sweep, the rest of the catalogue: the contract of the signed-in routes of routes/catalogue.js and of routes/catalogue-face.js (their OpenAPI operations and the words of their refusals) — a door, not a rule of the platform. (2026-10-23) */
   'catalogue-contract.js',
+  /* API-4 sweep, the test board: the contract of routes/testing.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'testing-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
   /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */

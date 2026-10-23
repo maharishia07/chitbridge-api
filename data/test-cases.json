@@ -63889,6 +63889,32 @@
    "needs": []
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-testing.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE TEST BOARD ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE TEST BOARD ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 178 lines. Run: node chitbridge-api/tests/api-problem-testing.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 178,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-books.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

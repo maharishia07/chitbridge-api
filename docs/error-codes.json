@@ -1274,8 +1274,8 @@
    "code": "NOT_BOARD_WRITER",
    "status": "403",
    "title": "Not board writer",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Only the board’s own account can change the shared cases and records.",
+   "hint": "Ask the board’s owner, or record your result instead.",
    "owner_area": "testing",
    "since": "2026-10-22"
   },
@@ -2124,6 +2124,51 @@
    "hint": "Try again after the update.",
    "owner_area": "books",
    "since": "2026-10-22"
+  },
+  {
+   "code": "TESTING_BAD_REQUEST",
+   "status": "400",
+   "title": "The test board needs something else",
+   "shopkeeper": "The test board could not take that, and the sentence says why.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_NOT_DEPLOYED",
+   "status": "500",
+   "title": "Test data missing on this server",
+   "shopkeeper": "The test cases or records are not on this server yet.",
+   "hint": "Tell us: the server needs to be deployed again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_NOT_SIGNED_IN",
+   "status": "401",
+   "title": "Not signed in to the test board",
+   "shopkeeper": "Sign in to use the test board.",
+   "hint": "Sign in, then try again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_NOT_STORED",
+   "status": "500",
+   "title": "Screenshot not stored",
+   "shopkeeper": "The screenshot could not be kept.",
+   "hint": "Try again. If it keeps happening, tell us.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "TESTING_REFUSED",
+   "status": "422",
+   "title": "The test board did not record that",
+   "shopkeeper": "The test board understood that but cannot record it as it is, and the sentence says why.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "testing",
+   "since": "2026-10-23"
   },
   {
    "code": "TILL_BAD_REQUEST",

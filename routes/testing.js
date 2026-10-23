@@ -38,12 +38,32 @@
  * b213 made for points, and the same append-only grant: a re-test is a NEW ROW and the latest one wins.
  */
 const express = require('express');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const {
+  badRequest,
+  refused,
+  notFound,
+  tooLarge,
+  notDeployed,
+  notStored,
+  notSignedIn,
+  notBoardWriter,
+  faultOf,
+  bareFaultOf,
+  schemaOptions,
+  contract
+} = require('../lib/testing-contract'); // the contract (each route's operation) and the words of a refusal
 const logger = require('../lib/logger');
 const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const teststatus = require('../lib/teststatus');
+/** the schema check of one route (its own operation in lib/testing-contract.js), as a list to spread after the gate: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptions)] : [];
+}
 /* ⚠️ `query` as well as withEntity: the operator copy reads identities, which has no RLS, so it must
    NOT be wrapped in withEntity — that would pin the read to one entity for no reason. */
 const { withEntity, query } = require('../db');
@@ -225,13 +245,13 @@ const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'pe
  * (`chitbridge-api/scripts/_proof.js`), so a path parameter would break on the slashes for exactly the cases
  * most likely to need closing in bulk one day.
  */
-router.post('/cases/close', auth, async (req, res) => {
+router.post('/cases/close', auth, ...checked('POST /cases/close'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: closing a shared case is authoring the board */
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    if (!entity_id) return res.status(401).json({ error: 'Unauthorised' });
+    if (!entity_id) return problem(req, res, { status: 401, ...notSignedIn() });
     const key = String((req.body && req.body.case_key) || '').trim();
-    if (!key) return res.status(400).json({ error: 'Bad request', message: 'which case?' });
+    if (!key) return problem(req, res, { status: 400, ...badRequest('Bad request', 'which case?') });
     /* the default is to CLOSE; {open:true} puts it back */
     const open = !!(req.body && req.body.open);
     /**
@@ -274,70 +294,74 @@ router.post('/cases/close', auth, async (req, res) => {
       );
     }
     if (!r || !r.rows.length) {
-      return res.status(404).json({ error: 'Not found', message: 'no case called ' + key });
+      return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'no case called ' + key }) });
     }
     return res.json({ case_key: r.rows[0].name, status: r.rows[0].status, closed: !open });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, faultOf(e, req, 'Failed'));
   }
 });
 
-router.post('/trace', auth, (req, res) => {
+router.post('/trace', auth, ...checked('POST /trace'), (req, res) => {
   try {
     const me = auth.entityOf(req);
-    if (!me) return res.status(401).json({ error: 'Unauthorised' });
+    if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
     const t = require('../lib/trips');
     const b = req.body || {};
     return res.json(b.off ? t.traceOff(me) : t.traceOn(me, b.minutes));
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, faultOf(e, req, 'Failed'));
   }
 });
-router.get('/trace', auth, (req, res) => {
+router.get('/trace', auth, ...checked('GET /trace'), (req, res) => {
   try {
     const me = auth.entityOf(req);
-    if (!me) return res.status(401).json({ error: 'Unauthorised' });
+    if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
     return res.json(require('../lib/trips').traceState(me));
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    problem(req, res, faultOf(e, req, 'Failed'));
   }
 });
 
 router.get('/vocabulary', (req, res) => {
-  res.json({
-    run_kinds: RUN_KINDS,
-    layers: LAYERS,
-    statuses: STATUSES,
-    test_types: TEST_TYPES,
-    /* ⚠️ said plainly, because "unit vs integration" is argued about endlessly and the argument is avoidable
+  try {
+    res.json({
+      run_kinds: RUN_KINDS,
+      layers: LAYERS,
+      statuses: STATUSES,
+      test_types: TEST_TYPES,
+      /* ⚠️ said plainly, because "unit vs integration" is argued about endlessly and the argument is avoidable
        if the board states which meaning it uses */
-    levels: {
-      unit: 'One module, on its own. A green run proves that function, and nothing about the product.',
-      integration: 'Several of our pieces wired together — a route over a stubbed database, an engine over a store.',
-      system: 'The whole product: a real browser, or a live API, or a real database.',
-      acceptance: 'A person deciding whether it does the job. The only kind that can find "correct but useless".',
-      static: 'Reads the source and judges the TEXT — nothing is executed. Real evidence, but of a different thing.',
-      support: 'Not a test. A fixture or harness other tests stand on, listed so it is never counted as coverage.',
-      /**
-       * ⭐ PURPOSE, WHERE A PERSON WOULD SAY PURPOSE. A load test is a system test and nobody filtering a board
-       * looks for it there. ⚠️ Both lists are DECLARED by name in classify-tests.cjs — detecting them from the
-       * source put money.test.js under performance and returned eighty-nine security files, because every proof
-       * script signs in and therefore contains the words token and scope.
-       */
-      performance: 'Round trips, query shape, load and concurrency. What it costs, not whether it is right.',
-      security: 'Forged tokens, algorithm pinning, key scopes, tenant isolation, routes left unguarded.',
-      penetration:
-        '⚠ There is none. Shown at zero so the absence cannot pass for "not applicable" — ' +
-        'scripts/penetration.js is MARKET penetration and is not a security test.'
-    },
-    /* ⚠️ SAID OUT LOUD, because the distinction is the one people get wrong: 'blocked' is not 'fail'. */
-    says: {
-      pass: 'It did what the case says it should.',
-      fail: 'It did something else. The note should say what.',
-      blocked: 'It could not be reached — something earlier is broken. This says nothing about the case itself.',
-      skipped: 'Deliberately not run this time. Not applicable, or out of scope for this sitting.'
-    }
-  });
+      levels: {
+        unit: 'One module, on its own. A green run proves that function, and nothing about the product.',
+        integration: 'Several of our pieces wired together — a route over a stubbed database, an engine over a store.',
+        system: 'The whole product: a real browser, or a live API, or a real database.',
+        acceptance: 'A person deciding whether it does the job. The only kind that can find "correct but useless".',
+        static: 'Reads the source and judges the TEXT — nothing is executed. Real evidence, but of a different thing.',
+        support: 'Not a test. A fixture or harness other tests stand on, listed so it is never counted as coverage.',
+        /**
+         * ⭐ PURPOSE, WHERE A PERSON WOULD SAY PURPOSE. A load test is a system test and nobody filtering a board
+         * looks for it there. ⚠️ Both lists are DECLARED by name in classify-tests.cjs — detecting them from the
+         * source put money.test.js under performance and returned eighty-nine security files, because every proof
+         * script signs in and therefore contains the words token and scope.
+         */
+        performance: 'Round trips, query shape, load and concurrency. What it costs, not whether it is right.',
+        security: 'Forged tokens, algorithm pinning, key scopes, tenant isolation, routes left unguarded.',
+        penetration:
+          '⚠ There is none. Shown at zero so the absence cannot pass for "not applicable" — ' +
+          'scripts/penetration.js is MARKET penetration and is not a security test.'
+      },
+      /* ⚠️ SAID OUT LOUD, because the distinction is the one people get wrong: 'blocked' is not 'fail'. */
+      says: {
+        pass: 'It did what the case says it should.',
+        fail: 'It did something else. The note should say what.',
+        blocked: 'It could not be reached — something earlier is broken. This says nothing about the case itself.',
+        skipped: 'Deliberately not run this time. Not applicable, or out of scope for this sitting.'
+      }
+    });
+  } catch (err) {
+    problem(req, res, bareFaultOf(err, req, 'Could not read the vocabulary'));
+  }
 });
 
 /* ── who is recording this ────────────────────────────────────────────────────────────────────────────────────
@@ -364,7 +388,7 @@ function testerOf(req) {
  * ⚠️ ONE QUERY, not one per case: the version join is done in SQL. A board that opens 110 cases would otherwise
  * make 110 round trips, and at 1.4–2.4 s per Railway↔Supabase call that is not a screen, it is an afternoon.
  */
-router.get('/cases', auth, async (req, res) => {
+router.get('/cases', auth, ...checked('GET /cases'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) =>
@@ -396,7 +420,7 @@ router.get('/cases', auth, async (req, res) => {
     );
     res.json({ cases, count: cases.length, total: r.total, page: r.page, limit: r.limit });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the test cases', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read the test cases'));
   }
 });
 
@@ -796,11 +820,11 @@ async function importCases(entity_id, who, rows, mode) {
   return out;
 }
 
-router.post('/cases/import', auth, async (req, res) => {
+router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: a rebuild of the shared suite is the board writer's act */
     const rows = Array.isArray(req.body && req.body.cases) ? req.body.cases : [];
-    if (!rows.length) return res.status(400).json({ error: 'Nothing to import', message: 'Send { cases: [...] }.' });
+    if (!rows.length) return problem(req, res, { status: 400, ...badRequest('Nothing to import', 'Send { cases: [...] }.') });
     /* ⚠️ shape-checked, not trusted: anything but the exact word means a rebuild, which is the safe default
        — a typo must never quietly turn a rebuild into an add and leave retired cases live. */
     const mode = req.body && req.body.mode === 'add' ? 'add' : null;
@@ -820,7 +844,7 @@ router.post('/cases/import', auth, async (req, res) => {
     }
     res.json(_out);
   } catch (err) {
-    res.status(500).json({ error: 'Import failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Import failed'));
   }
 });
 
@@ -847,7 +871,7 @@ router.post('/cases/import', auth, async (req, res) => {
  * ⚠️ These are NOT cases and must never be loaded as definitions: they are what the tests are about, and
  * putting them in the case table would make them countable as coverage.
  */
-router.get('/engine', auth, (req, res) => {
+router.get('/engine', auth, ...checked('GET /engine'), (req, res) => {
   try {
     const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
     if (!require('fs').existsSync(f)) return res.json({ engine: null });
@@ -855,11 +879,11 @@ router.get('/engine', auth, (req, res) => {
     /* ⭐ the notes ride with the contents: each row states what its own rule leaves out */
     res.json({ engine: doc.engine || null, contents: doc.contents || null, notes: doc.notes || null, foot: doc.foot || null });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the engine manifest' });
+    problem(req, res, bareFaultOf(err, req, 'Could not read the engine manifest'));
   }
 });
 
-router.post('/cases/seed', auth, async (req, res) => {
+router.post('/cases/seed', auth, ...checked('POST /cases/seed'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: "Load cases" reseeds what every shop reads */
     const file = require('path').join(__dirname, '..', 'data', 'test-cases.json');
@@ -867,16 +891,19 @@ router.post('/cases/seed', auth, async (req, res) => {
        something the person pressing the button can act on, and they must not be left staring at an empty board
        wondering whether they did it wrong. */
     if (!require('fs').existsSync(file)) {
-      return res.status(500).json({
-        error: 'The documented cases are not on this server',
-        message: 'This API was deployed without data/test-cases.json. Run build-test-cases.cjs and deploy again.'
+      return problem(req, res, {
+        status: 500,
+        ...notDeployed(
+          'The documented cases are not on this server',
+          'This API was deployed without data/test-cases.json. Run build-test-cases.cjs and deploy again.'
+        )
       });
     }
     const doc = JSON.parse(require('fs').readFileSync(file, 'utf8'));
     const out = await importCases(testboard.entityFor(auth.entityOf(req)), testerOf(req), doc.cases || []);
     res.json(Object.assign({ version: doc.version, date: doc.date }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not load the documented cases', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not load the documented cases'));
   }
 });
 
@@ -971,11 +998,8 @@ const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
  */
 function boardRefused(req, res) {
   if (testboard.canWrite(auth.entityOf(req))) return false;
-  res.status(403).json({
-    error: 'Not a writer of the shared board',
-    code: 'NOT_BOARD_WRITER',
-    message: 'Cases and CMDB records are read by every shop, so only the board’s own account (or one named in ' + 'TEST_BOARD_WRITERS) can change them.'
-  });
+  /* the sentence and the code the screen branches on (NOT_BOARD_WRITER: 'Not a writer of the shared board') are lib/testing-contract.js notBoardWriter */
+  problem(req, res, { status: 403, ...notBoardWriter() });
   return true;
 }
 
@@ -992,7 +1016,7 @@ function cmdbListRow(row) {
   };
 }
 /** GET /api/testing/cmdb — every record, PAGED (W1-SET: readPage → top-level total · page · limit, ?page= ?limit=; `records` stays) */
-router.get('/cmdb', auth, async (req, res) => {
+router.get('/cmdb', auth, ...checked('GET /cmdb'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const page = await withEntity(entity_id, (db) =>
@@ -1011,15 +1035,15 @@ router.get('/cmdb', auth, async (req, res) => {
     const records = page.rows.map(cmdbListRow);
     res.json({ records, count: records.length, total: page.total, page: page.page, limit: page.limit });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the CMDB', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read the CMDB'));
   }
 });
 
 /** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
-router.get('/cmdb/:ci', auth, async (req, res) => {
+router.get('/cmdb/:ci', auth, ...checked('GET /cmdb/:ci'), async (req, res) => {
   try {
     const ci = String(req.params.ci || '');
-    if (!cmdb.CI_RE.test(ci)) return res.status(400).json({ error: 'Not a CI id', message: 'A CI id looks like CAP-SIGNIN.' });
+    if (!cmdb.CI_RE.test(ci)) return problem(req, res, { status: 400, ...badRequest('Not a CI id', 'A CI id looks like CAP-SIGNIN.') });
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const want = Number(req.query.version) || null;
     const rows = await withEntity(entity_id, (db) =>
@@ -1032,35 +1056,38 @@ router.get('/cmdb/:ci', auth, async (req, res) => {
       )
     );
     const r = rows.rows[0];
-    if (!r) return res.status(404).json({ error: 'No such record', message: 'Nothing in the CMDB is called ' + ci + '.' });
+    if (!r) return problem(req, res, { status: 404, ...notFound({ error: 'No such record', message: 'Nothing in the CMDB is called ' + ci + '.' }) });
     res.json({ ci: r.name, version: r.version, current_version: r.current_version, saved_at: r.created_at, record: r.rules, flags: cmdb.flags(r.rules || {}) });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the record', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read the record'));
   }
 });
 
 /** PUT /api/testing/cmdb/:ci — save one record; a new version only when it actually changed */
-router.put('/cmdb/:ci', auth, async (req, res) => {
+router.put('/cmdb/:ci', auth, ...checked('PUT /cmdb/:ci'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return;
     const rec = Object.assign({}, req.body || {}, { ci: String(req.params.ci || '') });
     const v = cmdb.shape(rec);
-    if (!v.ok) return res.status(400).json({ error: 'That record does not fit', message: v.why });
+    if (!v.ok) return problem(req, res, { status: 400, ...badRequest('That record does not fit', v.why) });
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const out = await withEntity(entity_id, (db) => upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
     res.json(Object.assign({ ci: rec.ci, flags: cmdb.flags(rec) }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not save the record', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not save the record'));
   }
 });
 
 /** POST /api/testing/cmdb/seed — load every record shipped in data/cmdb/*.json, the way cases/seed loads cases */
-router.post('/cmdb/seed', auth, async (req, res) => {
+router.post('/cmdb/seed', auth, ...checked('POST /cmdb/seed'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return;
     const fs = require('fs');
     if (!fs.existsSync(CMDB_DIR)) {
-      return res.status(500).json({ error: 'The CMDB records are not on this server', message: 'This API was deployed without data/cmdb/. Deploy again.' });
+      return problem(req, res, {
+        status: 500,
+        ...notDeployed('The CMDB records are not on this server', 'This API was deployed without data/cmdb/. Deploy again.')
+      });
     }
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
@@ -1081,7 +1108,8 @@ router.post('/cmdb/seed', auth, async (req, res) => {
       return { n: item, r, v: cmdb.shape(r) };
     });
     const list = recs.filter((x) => !x.v.ok);
-    if (list.length) return res.status(400).json({ error: 'A shipped record does not fit', message: list.map((x) => x.n + ': ' + x.v.why).join(' · ') });
+    if (list.length)
+      return problem(req, res, { status: 400, ...badRequest('A shipped record does not fit', list.map((x) => x.n + ': ' + x.v.why).join(' · ')) });
     await withEntity(entity_id, async (db) => {
       for (const x of recs) {
         const w = await upsertVersioned(db, entity_id, who, 'cmdb', x.r.ci, x.r.system || null, x.r.title, x.r);
@@ -1090,7 +1118,7 @@ router.post('/cmdb/seed', auth, async (req, res) => {
     });
     res.json(out);
   } catch (err) {
-    res.status(500).json({ error: 'Could not load the CMDB records', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not load the CMDB records'));
   }
 });
 
@@ -1331,12 +1359,13 @@ async function recordResults(entity_id, who, b) {
   }
 }
 
-router.post('/results', auth, async (req, res) => {
+router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
   try {
     const out = await recordResults(resultsEntityOf(req), testerOf(req), req.body || {});
-    res.status(out.status).json(out.body);
+    if (out.status >= 400) return problem(req, res, { status: 422, ...refused(out.body) }); /* recordResults answers 200 or 422 */
+    res.json(out.body);
   } catch (err) {
-    res.status(500).json({ error: 'Could not record the result', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not record the result'));
   }
 });
 
@@ -1347,12 +1376,12 @@ router.post('/results', auth, async (req, res) => {
  * we?" The history is there on request (?case_key= or ?run_id=), and a case's history is the interesting half
  * when something is flaky.
  */
-router.get('/results', auth, async (req, res) => {
+router.get('/results', auth, ...checked('GET /results'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
     const pj = projectOf(q.project);
-    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
+    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
 
     if (q.case_key || q.run_id) {
       const where = q.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
@@ -1399,16 +1428,16 @@ router.get('/results', auth, async (req, res) => {
     );
     res.json({ results: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the results', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read the results'));
   }
 });
 
 /** GET /api/testing/runs — the sittings, newest first, each with its totals. */
-router.get('/runs', auth, async (req, res) => {
+router.get('/runs', auth, ...checked('GET /runs'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const pj = projectOf((req.query || {}).project);
-    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
+    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
     /**
      * ⭐ `projects` — every project the board has seen, newest first, with its run count. It is what the page's
      * Project filter offers; read from the whole ledger, not the 50 runs below, so an old sprint stays choosable.
@@ -1445,7 +1474,7 @@ router.get('/runs', auth, async (req, res) => {
     });
     res.json({ runs: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project, projects });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the runs', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read the runs'));
   }
 });
 
@@ -1499,10 +1528,10 @@ function layerOfCase(key) {
   }
 }
 
-router.post('/results/junit', auth, async (req, res) => {
+router.post('/results/junit', auth, ...checked('POST /results/junit'), async (req, res) => {
   try {
     const text = String((req.body && req.body.xml) || '');
-    if (!text.trim()) return res.status(400).json({ error: 'No report', message: 'Send { xml: "<testsuites>…" }.' });
+    if (!text.trim()) return problem(req, res, { status: 400, ...badRequest('No report', 'Send { xml: "<testsuites>…" }.') });
 
     const run_kind = RUN_KINDS.indexOf(req.body.run_kind) >= 0 ? req.body.run_kind : 't1';
     const layer = LAYERS.indexOf(req.body.layer) >= 0 ? req.body.layer : 'web';
@@ -1524,15 +1553,18 @@ router.post('/results/junit', auth, async (req, res) => {
         layerOf: layerOfCase
       });
     } catch (e) {
-      return res.status(400).json({ error: 'Not read', message: e.message });
+      return problem(req, res, { status: 400, ...badRequest('Not read', e.message) });
     }
     const results = read.results,
       unmatched = read.unmatched;
     if (!results.length) {
-      return res.status(422).json({
-        error: 'Nothing recognisable',
-        unmatched,
-        message: 'No test in that report carries a case key in brackets, e.g. "[CTR-05] a single click chooses".'
+      return problem(req, res, {
+        status: 422,
+        ...refused({
+          error: 'Nothing recognisable',
+          unmatched,
+          message: 'No test in that report carries a case key in brackets, e.g. "[CTR-05] a single click chooses".'
+        })
       });
     }
 
@@ -1544,9 +1576,11 @@ router.post('/results/junit', auth, async (req, res) => {
       build: req.body.build,
       project: req.body.project
     });
-    return res.status(out.status).json(Object.assign({ unmatched }, out.body));
+    const answered = Object.assign({ unmatched }, out.body);
+    if (out.status >= 400) return problem(req, res, { status: 422, ...refused(answered) }); /* recordResults answers 200 or 422 */
+    return res.json(answered);
   } catch (err) {
-    res.status(500).json({ error: 'Could not read that report', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read that report'));
   }
 });
 
@@ -1563,7 +1597,7 @@ router.post('/results/junit', auth, async (req, res) => {
  */
 
 /** GET /api/testing/cases/gherkin[?module=CTR] — download the board as .feature text. */
-router.get('/cases/gherkin', auth, async (req, res) => {
+router.get('/cases/gherkin', auth, ...checked('GET /cases/gherkin'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const gherkin = require('../lib/gherkin');
@@ -1609,7 +1643,7 @@ router.get('/cases/gherkin', auth, async (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename="' + (only || 'chitbridge') + '.feature"');
     res.send(gherkin.toFeatures(groups));
   } catch (err) {
-    res.status(500).json({ error: 'Could not export', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not export'));
   }
 });
 
@@ -1620,18 +1654,21 @@ router.get('/cases/gherkin', auth, async (req, res) => {
  * clause gains a version — which marks every case citing the old one as needing another look. Edit a Scenario
  * and the case gains a version. Nothing has to be remembered, because the versions do the remembering.
  */
-router.post('/cases/gherkin', auth, async (req, res) => {
+router.post('/cases/gherkin', auth, ...checked('POST /cases/gherkin'), async (req, res) => {
   try {
     if (boardRefused(req, res)) return; /* SEC-SMALL item 3: a feature file authors shared cases */
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const gherkin = require('../lib/gherkin');
     const text = String((req.body && req.body.text) || '');
-    if (!text.trim()) return res.status(400).json({ error: 'Nothing to import', message: 'Send { text: "Feature: …" }.' });
+    if (!text.trim()) return problem(req, res, { status: 400, ...badRequest('Nothing to import', 'Send { text: "Feature: …" }.') });
 
     const parts = gherkin.splitFeatures(text);
     if (!parts.length) {
-      return res.status(422).json({ error: 'Not a feature file', message: 'No "Feature:" line was found. A .feature file starts with one.' });
+      return problem(req, res, {
+        status: 422,
+        ...refused({ error: 'Not a feature file', message: 'No "Feature:" line was found. A .feature file starts with one.' })
+      });
     }
 
     const out = { added: 0, updated: 0, unchanged: 0, clauses: [], problems: [], cases: [] };
@@ -1670,7 +1707,7 @@ router.post('/cases/gherkin', auth, async (req, res) => {
     }
     res.json(out);
   } catch (err) {
-    res.status(500).json({ error: 'Could not import', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not import'));
   }
 });
 
@@ -1728,7 +1765,7 @@ const REQ_PRI = ['High', 'Medium', 'Low']; // the list's order, first to last
 const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rejected: 'retired' };
 
 /** POST /api/testing/requirements — raise one from the case that found it. */
-router.post('/requirements', auth, async (req, res) => {
+router.post('/requirements', auth, ...checked('POST /requirements'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
@@ -1771,8 +1808,8 @@ router.post('/requirements', auth, async (req, res) => {
     }
     /* ⚠️ BOTH, and refused rather than defaulted. A requirement with no evidence is a wish, and evidence with no
        requirement is a note — neither can be actioned, which is the whole point of the list. */
-    if (!requirement) return res.status(400).json({ error: 'Nothing to raise', message: 'Say what must be true.' });
-    if (!observed) return res.status(400).json({ error: 'No evidence', message: 'Say what you saw happen.' });
+    if (!requirement) return problem(req, res, { status: 400, ...badRequest('Nothing to raise', 'Say what must be true.') });
+    if (!observed) return problem(req, res, { status: 400, ...badRequest('No evidence', 'Say what you saw happen.') });
 
     const out = await withEntity(entity_id, async (db) => {
       /* the clause id: given, or minted from the case it came from so it reads as what it is */
@@ -1912,7 +1949,7 @@ router.post('/requirements', auth, async (req, res) => {
     }
     res.json(Object.assign({ raised: true, state: 'raised', support }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not raise it', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not raise it'));
   }
 });
 
@@ -1923,7 +1960,7 @@ router.post('/requirements', auth, async (req, res) => {
  * somebody, which is the question the person opening this screen is asking. ⚠️ Not the same as "raised" alone —
  * an accepted requirement nobody has built is exactly the one that gets forgotten.
  */
-router.get('/requirements', auth, async (req, res) => {
+router.get('/requirements', auth, ...checked('GET /requirements'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
@@ -1990,7 +2027,7 @@ router.get('/requirements', auth, async (req, res) => {
       limit: r.limit
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read them', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read them'));
   }
 });
 
@@ -2002,7 +2039,7 @@ router.get('/requirements', auth, async (req, res) => {
  * can be changed with no trace is a requirement nobody can be held to.
  * ⚠️ REJECTING NEEDS A REASON. "No" without one gets re-raised by the next tester, and rightly.
  */
-router.patch('/requirements/:id', auth, async (req, res) => {
+router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
@@ -2016,10 +2053,10 @@ router.patch('/requirements/:id', auth, async (req, res) => {
      */
     const onlyPriority = !state && (req.body || {}).priority;
     if (!onlyPriority && REQ_STATES.indexOf(state) < 0) {
-      return res.status(400).json({ error: 'Not a state', message: 'One of: ' + REQ_STATES.join(' · ') });
+      return problem(req, res, { status: 400, ...badRequest('Not a state', 'One of: ' + REQ_STATES.join(' · ')) });
     }
     if (state === 'rejected' && !why) {
-      return res.status(400).json({ error: 'Say why', message: 'A rejected requirement needs its reason, or the next tester raises it again.' });
+      return problem(req, res, { status: 400, ...badRequest('Say why', 'A rejected requirement needs its reason, or the next tester raises it again.') });
     }
 
     const out = await withEntity(entity_id, async (db) => {
@@ -2063,7 +2100,7 @@ router.patch('/requirements/:id', auth, async (req, res) => {
       };
     });
 
-    if (!out) return res.status(404).json({ error: 'Not found', message: 'No requirement with that id.' });
+    if (!out) return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'No requirement with that id.' }) });
     /* ⭐ accepted or rejected, the person who raised it hears — a rejection nobody is told about is how the
        same requirement gets raised a third time. See the argument in lib/testnews.js. */
     try {
@@ -2082,7 +2119,7 @@ router.patch('/requirements/:id', auth, async (req, res) => {
     delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not set it', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not set it'));
   }
 });
 
@@ -2141,7 +2178,7 @@ const SEV_MEANS = {
 };
 
 /** POST /api/testing/incidents — record one where it happened. */
-router.post('/incidents', auth, async (req, res) => {
+router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
@@ -2149,7 +2186,7 @@ router.post('/incidents', auth, async (req, res) => {
     const observed = String(b.observed || '').trim();
     /* ⚠️ refused, not defaulted: an incident with no account of what happened cannot be investigated by
        anybody but the person who filed it, and they are the one person who will not need to. */
-    if (!observed) return res.status(400).json({ error: 'Nothing recorded', message: 'Say what happened.' });
+    if (!observed) return problem(req, res, { status: 400, ...badRequest('Nothing recorded', 'Say what happened.') });
 
     const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
     const sev = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : 'Sev-3';
@@ -2265,7 +2302,7 @@ router.post('/incidents', auth, async (req, res) => {
 
     res.json(Object.assign({ recorded: true, state: 'raised', support }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not record it', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not record it'));
   }
 });
 
@@ -2275,7 +2312,7 @@ router.post('/incidents', auth, async (req, res) => {
  * ⭐ `open` MEANS RAISED OR BEING INVESTIGATED, and it is the default for the same reason it is on the
  * requirements list: the person opening this screen is asking what is still waiting on somebody.
  */
-router.get('/incidents', auth, async (req, res) => {
+router.get('/incidents', auth, ...checked('GET /incidents'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
@@ -2375,7 +2412,7 @@ router.get('/incidents', auth, async (req, res) => {
       means: SEV_MEANS
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read them', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read them'));
   }
 });
 
@@ -2386,7 +2423,7 @@ router.get('/incidents', auth, async (req, res) => {
  * incident whose state can change with no trace is an incident nobody can be held to, and the support desk is
  * exactly where that matters.
  */
-router.patch('/incidents/:id', auth, async (req, res) => {
+router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
@@ -2398,7 +2435,7 @@ router.patch('/incidents/:id', auth, async (req, res) => {
     const onlySeverity = !state && sevIn;
     const linking = !state && (b.defect || b.change);
     if (!onlySeverity && !linking && INC_STATES.indexOf(state) < 0) {
-      return res.status(400).json({ error: 'Not a state', message: 'One of: ' + INC_STATES.join(' · ') });
+      return problem(req, res, { status: 400, ...badRequest('Not a state', 'One of: ' + INC_STATES.join(' · ')) });
     }
     /**
      * ⚠️⚠️ RESOLVED WITHOUT SAYING WHAT CHANGED IS THE FAILURE MODE OF EVERY INCIDENT TOOL. The row goes green,
@@ -2406,10 +2443,10 @@ router.patch('/incidents/:id', auth, async (req, res) => {
      * resolution carries either the commit that did it or, in words, why nothing needed doing.
      */
     if (state === 'resolved' && !b.change && !why) {
-      return res.status(400).json({ error: 'Say what changed', message: 'Cite the commit that fixed it, or say why nothing needed to change.' });
+      return problem(req, res, { status: 400, ...badRequest('Say what changed', 'Cite the commit that fixed it, or say why nothing needed to change.') });
     }
     if (state === 'closed' && !why) {
-      return res.status(400).json({ error: 'Say why', message: 'Closing is a decision — record it, or the next person reopens the same thing.' });
+      return problem(req, res, { status: 400, ...badRequest('Say why', 'Closing is a decision — record it, or the next person reopens the same thing.') });
     }
 
     const out = await withEntity(entity_id, async (db) => {
@@ -2491,7 +2528,7 @@ router.patch('/incidents/:id', auth, async (req, res) => {
       };
     });
 
-    if (!out) return res.status(404).json({ error: 'Not found', message: 'No incident with that id.' });
+    if (!out) return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
     /**
      * ── ⭐⭐⭐ THE RETURN LEG ─────────────────────────────────────────────────────────────────────────────
      *
@@ -2520,7 +2557,7 @@ router.patch('/incidents/:id', auth, async (req, res) => {
     delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not set it', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not set it'));
   }
 });
 
@@ -2543,21 +2580,21 @@ router.patch('/incidents/:id', auth, async (req, res) => {
  * ⚠️ IMAGES ONLY, AND 4 MB. A tester pasting a PDF of a spec into an incident is not evidence of what they
  * saw, and an unbounded upload from a browser is a way to fill a database by accident.
  */
-router.post('/evidence', auth, async (req, res) => {
+router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
     const b = req.body || {};
     const mime = String(b.mime || '').toLowerCase();
     const data = String(b.data_base64 || '');
-    if (!data) return res.status(400).json({ error: 'Nothing to attach', message: 'Send data_base64.' });
+    if (!data) return problem(req, res, { status: 400, ...badRequest('Nothing to attach', 'Send data_base64.') });
     if (!/^image\/(png|jpe?g|gif|webp|bmp)$/.test(mime)) {
-      return res.status(400).json({ error: 'Not an image', message: 'A screenshot, please \u2014 png, jpg, gif, webp or bmp.' });
+      return problem(req, res, { status: 400, ...badRequest('Not an image', 'A screenshot, please \u2014 png, jpg, gif, webp or bmp.') });
     }
     const buffer = Buffer.from(data, 'base64');
-    if (!buffer.length) return res.status(400).json({ error: 'Empty', message: 'That decoded to nothing.' });
+    if (!buffer.length) return problem(req, res, { status: 400, ...badRequest('Empty', 'That decoded to nothing.') });
     if (buffer.length > 4 * 1024 * 1024) {
-      return res.status(413).json({ error: 'Too large', message: 'Screenshots are capped at 4 MB \u2014 crop it, or grab the part that matters.' });
+      return problem(req, res, { status: 413, ...tooLarge('Screenshots are capped at 4 MB \u2014 crop it, or grab the part that matters.') });
     }
     const id = await storage.putForParticipants({
       chit_id: null,
@@ -2571,16 +2608,16 @@ router.post('/evidence', auth, async (req, res) => {
       participants: [entity_id],
       forEntity: entity_id
     });
-    if (!id) return res.status(500).json({ error: 'Not stored', message: 'The attachment store returned nothing.' });
+    if (!id) return problem(req, res, { status: 500, ...notStored() });
     /* ⭐ the id is all the caller keeps; the bytes come back from /api/attachments/:id, which is already
        entity-scoped, so evidence cannot be read by anyone the tester does not work for. */
     res.json({ id: id, name: b.name || null, mime: mime, size: buffer.length });
   } catch (err) {
-    res.status(500).json({ error: 'Could not attach it', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not attach it'));
   }
 });
 
-router.get('/stale', auth, async (req, res) => {
+router.get('/stale', auth, ...checked('GET /stale'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) =>
@@ -2614,7 +2651,7 @@ router.get('/stale', auth, async (req, res) => {
         : 'Every case cites the current wording of its clause.'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read that', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read that'));
   }
 });
 
@@ -2641,12 +2678,12 @@ router.get('/stale', auth, async (req, res) => {
  * ⚠️ ONE QUERY. A per-module loop here would be sixteen Pacific crossings to answer a question the panel asks on
  * every open. [[project-roundtrip-cost]]
  */
-router.get('/coverage', auth, async (req, res) => {
+router.get('/coverage', auth, ...checked('GET /coverage'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
-    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
+    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
     /* ⭐ ?project= narrows every RESULT read below to that project's rows; the cases are the board's either way */
 
     const r = await withEntity(entity_id, async (db) =>
@@ -2800,7 +2837,7 @@ router.get('/coverage', auth, async (req, res) => {
         : 'Every case has been run at least once.'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the coverage', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read the coverage'));
   }
 });
 
@@ -2825,12 +2862,12 @@ router.get('/coverage', auth, async (req, res) => {
  * ⭐ So every section is marked `source: 'measured'` or `source: 'needs a person'`, and the ones that need a
  * person carry the QUESTION rather than an answer. The screen renders that difference plainly.
  */
-router.get('/report', auth, async (req, res) => {
+router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
-    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
+    if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
 
     const data = await withEntity(entity_id, async (db) => {
       /* ⭐ ?project= — every RESULT read below is that project's rows only; the cases stay the board's */
@@ -3435,7 +3472,7 @@ router.get('/report', auth, async (req, res) => {
       ]
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not build the report', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not build the report'));
   }
 });
 
@@ -3460,7 +3497,7 @@ router.get('/report', auth, async (req, res) => {
  * ⚠ It reads RESULTS, not cases — so a guard file that has never been written up as a case still gets its
  * history. The board answers "what should be tested"; this answers "what can be believed".
  */
-router.get('/reliability', auth, async (req, res) => {
+router.get('/reliability', auth, ...checked('GET /reliability'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
@@ -3584,7 +3621,7 @@ router.get('/reliability', auth, async (req, res) => {
         : 'Nothing has been recorded yet.'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the history', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Could not read the history'));
   }
 });
 
@@ -3654,7 +3691,7 @@ function citedEntityOf(callerEntity, cites) {
 }
 
 /** POST /api/testing/changes — record what we did, to which code, why, and how to undo it. */
-router.post('/changes', auth, async (req, res) => {
+router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
   try {
     /* ⚠️ entityForFinding, NOT entityFor: a change is ours and never goes on the shared board. */
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
@@ -3669,16 +3706,16 @@ router.post('/changes', auth, async (req, res) => {
        A change with no CAUSE is undocumented work or scope creep, and both are worth catching.
        A change with no BACKOUT has not been thought through; writing the sentence is the review.
        A change with no SUMMARY is a sha, and a sha is not a record. */
-    if (!summary) return res.status(400).json({ error: 'Nothing recorded', message: 'Say what the change does.' });
+    if (!summary) return problem(req, res, { status: 400, ...badRequest('Nothing recorded', 'Say what the change does.') });
     if (!backout)
-      return res.status(400).json({
-        error: 'No way back',
-        message: 'How would you undo this? ⚠️ Written before it ships, not after — if the answer is "I am not sure", that is the finding.'
+      return problem(req, res, {
+        status: 400,
+        ...badRequest('No way back', 'How would you undo this? ⚠️ Written before it ships, not after — if the answer is "I am not sure", that is the finding.')
       });
     if (!cites || !String(cites.ref || '').trim())
-      return res.status(400).json({
-        error: 'No cause',
-        message: 'Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep.'
+      return problem(req, res, {
+        status: 400,
+        ...badRequest('No cause', 'Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep.')
       });
 
     const { risk, forced } = riskOf(b);
@@ -3737,12 +3774,12 @@ router.post('/changes', auth, async (req, res) => {
     });
   } catch (e) {
     console.error('change create:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to record the change', message: safeErr(e) });
+    problem(req, res, faultOf(e, req, 'Failed to record the change'));
   }
 });
 
 /** GET /api/testing/changes */
-router.get('/changes', auth, async (req, res) => {
+router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
@@ -3789,7 +3826,7 @@ router.get('/changes', auth, async (req, res) => {
     );
   } catch (e) {
     console.error('changes list:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to list changes' });
+    problem(req, res, bareFaultOf(e, req, 'Failed to list changes'));
   }
 });
 
@@ -3807,7 +3844,7 @@ router.get('/changes', auth, async (req, res) => {
  * which is why `cites.entity_id` is captured when the change is recorded and not looked up now. withEntity pins
  * a transaction to ONE entity, so each shop's incident is moved in its own, after ours is committed.
  */
-router.post('/releases', auth, async (req, res) => {
+router.post('/releases', auth, ...checked('POST /releases'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const who = testerOf(req);
@@ -3815,9 +3852,13 @@ router.post('/releases', auth, async (req, res) => {
     const name = String(b.name || '').trim();
     const ids = Array.isArray(b.changes) ? b.changes.map((x) => String(x).trim()).filter(Boolean) : [];
 
-    if (!name) return res.status(400).json({ error: 'Unnamed release', message: 'Give it a tag — it is what a shop will be told its fix arrived in.' });
+    if (!name)
+      return problem(req, res, { status: 400, ...badRequest('Unnamed release', 'Give it a tag — it is what a shop will be told its fix arrived in.') });
     if (!ids.length)
-      return res.status(400).json({ error: 'Nothing in it', message: 'A release carries changes. One with none is a tag, and a tag tells nobody anything.' });
+      return problem(req, res, {
+        status: 400,
+        ...badRequest('Nothing in it', 'A release carries changes. One with none is a tag, and a tag tells nobody anything.')
+      });
 
     const carried = await withEntity(entity_id, async (db) => {
       const got = await db.query(
@@ -3915,7 +3956,7 @@ router.post('/releases', auth, async (req, res) => {
     });
   } catch (e) {
     console.error('release create:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to cut the release', message: safeErr(e) });
+    problem(req, res, faultOf(e, req, 'Failed to cut the release'));
   }
 });
 
@@ -3990,7 +4031,7 @@ async function markIncidentResolved(entity_id, definition_id, releaseName, who, 
 }
 
 /** GET /api/testing/releases */
-router.get('/releases', auth, async (req, res) => {
+router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) =>
@@ -4021,12 +4062,14 @@ router.get('/releases', auth, async (req, res) => {
     );
   } catch (e) {
     console.error('releases list:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to list releases' });
+    problem(req, res, bareFaultOf(e, req, 'Failed to list releases'));
   }
 });
 
 /* the project-column cache, for tests/junit-board.test.js only — the route never reads it from outside */
 router._proj = _proj;
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
+
 module.exports = router;
 router.citedEntityOf = citedEntityOf;
 router.resultsEntityOf = resultsEntityOf; /* SEC-FIX3 — exported for tests/sec-fix3.test.cjs */
