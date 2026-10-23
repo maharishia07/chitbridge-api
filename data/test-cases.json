@@ -63915,6 +63915,33 @@
    "needs": []
   },
   {
+   "case_key": "chitbridge-api/tests/raida-close-route.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "RAIL-93: ending a register entry from a chit (the worklist) closes it end to end, with its disposition, carried-forward register and evidence.",
+   "claim": "RAIL-93: ending a register entry from a chit (the worklist) closes it end to end, with its disposition, carried-forward register and evidence.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 97 lines. Run: node chitbridge-api/tests/raida-close-route.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 381,
+   "step": "",
+   "areas": [
+    "api",
+    "rail"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-finance.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

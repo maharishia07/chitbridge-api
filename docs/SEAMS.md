@@ -33,8 +33,8 @@ of file each thing is; this says what already does the job.
 | 47 | `entry` | `books-store.js` |  |
 | 47 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 46 | `next` | `dayopen.js` | the next thing to do — |
+| 45 | `pack` | `books-store.js` |  |
 | 44 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 44 | `pack` | `books-store.js` |  |
 | 43 | `read` | `cap-print.js` |  |
 | 40 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 39 | `view` | `books-payables.js` | group: |
@@ -45,11 +45,11 @@ of file each thing is; this says what already does the job.
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
+| 35 | `rules` | `docnumber.js` | the rule set for a country — |
 | 35 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 35 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
-| 34 | `rules` | `docnumber.js` | the rule set for a country — |
 | 34 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
@@ -67,6 +67,7 @@ of file each thing is; this says what already does the job.
 | 29 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
+| 27 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 27 | `changes` | `books-store.js` |  |
 | 27 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
@@ -75,7 +76,6 @@ of file each thing is; this says what already does the job.
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 26 | `sheet` | `cap-employees.js` |  |
 | 26 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 26 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 26 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `status` | `books-engines.js` | what the health screen says about the engines — |
@@ -108,25 +108,25 @@ of file each thing is; this says what already does the job.
 | 21 | `owner` | `books.js` |  |
 | 21 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 20 | `form` | `accounts-shell.js` |  |
-| 20 | `shown` | `cap-settings.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `entries` | `books-store.js` |  |
 | 20 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 20 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 19 | `renderApp` | `app.html` |  |
+| 19 | `shown` | `cap-settings.js` |  |
 | 19 | `card` | `cap-shop.js` |  |
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `more` | `lab-kit.js` | idKey: |
 | 19 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 18 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 18 | `next` | `cap-stock.js` | the next level: |
+| 18 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 18 | `later` | `signin-ui.js` |  |
 | 18 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 18 | `note` | `dbwatch.js` |  |
 | 18 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 17 | `step` | `cart.js` |  |
 | 17 | `model` | `chit-sheet.js` |  |
-| 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 17 | `chip` | `screen-id.js` | var S = { app: |
 | 17 | `verify` | `bookpack.js` | manifest's own hash. |
 | 17 | `notMigrated` | `crm-followups.js` |  |
