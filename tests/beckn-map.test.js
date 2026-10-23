@@ -87,6 +87,17 @@ t('⚠ a mismatched currency is REFUSED, not converted', () => {
     assert.match(e.message, /comes from the business, not the message/);
   }
 });
+t('⚠ CTRY-24: a claimed currency with none of ours to check against is REFUSED, never adopted', () => {
+  for (const opts of [undefined, {}, { currency: '' }, { currency: '  ' }]) {
+    try { M.toChit(CONFIRM, opts); assert.fail('should throw'); }
+    catch (e) { assert.strictEqual(e.status, 409); assert.strictEqual(e.code, 'CURRENCY_UNGOVERNED'); assert.strictEqual(e.claimed, 'INR'); }
+  }
+});
+t('CTRY-24: the refusal carries a code, and a lower-case or padded claim of OUR currency still passes as ours', () => {
+  try { M.toChit(CONFIRM, { currency: 'USD' }); assert.fail('should throw'); } catch (e) { assert.strictEqual(e.code, 'CURRENCY_MISMATCH'); }
+  const msg = JSON.parse(JSON.stringify(CONFIRM)); msg.message.order.quote.price.currency = ' inr ';
+  assert.strictEqual(M.toChit(msg, { currency: 'INR' }).currency_code, 'INR');
+});
 t('an unparseable price withholds the total and SAYS so', () => {
   const msg = JSON.parse(JSON.stringify(CONFIRM));
   msg.message.order.quote.price.value = 'lots';

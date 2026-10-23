@@ -64961,6 +64961,33 @@
    "changed_at": "2026-10-08T03:36:04+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/governance-entity-own.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC (23 Oct): a shop's governance view is its own; another shop's id gets the unknown id's 404.",
+   "claim": "SEC (23 Oct): a shop's governance view is its own; another shop's id gets the unknown id's 404.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 90 lines. Run: node chitbridge-api/tests/governance-entity-own.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "routes/governance.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-23T08:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/governed-currency.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

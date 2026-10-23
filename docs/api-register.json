@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 602,
-  "partial": 28,
-  "meets": 3
+  "partial": 18,
+  "meets": 13
  },
  "machine_columns": [
   "schema_in",
@@ -2404,13 +2404,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/:bridge_id/capture-fields",
@@ -2437,13 +2437,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/:bridge_id/my-documents",
@@ -2526,13 +2526,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/enquiry",
@@ -2620,13 +2620,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/network/:bridge_id",
@@ -2654,13 +2654,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/channels",
@@ -5062,7 +5062,7 @@
    "path": "/api/governance/ai-skills",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 535,
+   "line": 540,
    "hash": "467942837c2b7330",
    "columns": {
     "schema_in": false,
@@ -5092,7 +5092,7 @@
    "path": "/api/governance/ai-usage",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 524,
+   "line": 529,
    "hash": "18f7c1a1101b8482",
    "columns": {
     "schema_in": false,
@@ -5122,7 +5122,7 @@
    "path": "/api/governance/boilerplate/:key",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 230,
+   "line": 235,
    "hash": "448e788033786f1d",
    "columns": {
     "schema_in": false,
@@ -5152,7 +5152,7 @@
    "path": "/api/governance/commerce-standards",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 354,
+   "line": 359,
    "hash": "7f08b500e1fee9bc",
    "columns": {
     "schema_in": false,
@@ -5182,7 +5182,7 @@
    "path": "/api/governance/country-setup",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 474,
+   "line": 479,
    "hash": "be68df54fe7003fb",
    "columns": {
     "schema_in": false,
@@ -5212,8 +5212,8 @@
    "path": "/api/governance/entities/:id",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 73,
-   "hash": "8be3f44012628f3d",
+   "line": 75,
+   "hash": "5b1c4eabbf25de60",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -5242,7 +5242,7 @@
    "path": "/api/governance/instruments",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 336,
+   "line": 341,
    "hash": "1aaf55dc5250bef2",
    "columns": {
     "schema_in": false,
@@ -5272,7 +5272,7 @@
    "path": "/api/governance/journey",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 345,
+   "line": 350,
    "hash": "677c2d26443bdddd",
    "columns": {
     "schema_in": false,
@@ -5302,7 +5302,7 @@
    "path": "/api/governance/lanes",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 312,
+   "line": 317,
    "hash": "c7cf6c322f7c4c8a",
    "columns": {
     "schema_in": false,
@@ -5332,7 +5332,7 @@
    "path": "/api/governance/profile",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 363,
+   "line": 368,
    "hash": "e6fbea92e3225524",
    "columns": {
     "schema_in": false,
@@ -5362,7 +5362,7 @@
    "path": "/api/governance/profile/path",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 454,
+   "line": 459,
    "hash": "453fdbaf182f0f67",
    "columns": {
     "schema_in": false,
@@ -5392,7 +5392,7 @@
    "path": "/api/governance/profile/readiness",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 445,
+   "line": 450,
    "hash": "f2839b6f71e3f767",
    "columns": {
     "schema_in": false,
@@ -5422,7 +5422,7 @@
    "path": "/api/governance/readiness",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 296,
+   "line": 301,
    "hash": "0cb41af509e2f197",
    "columns": {
     "schema_in": false,
@@ -5452,7 +5452,7 @@
    "path": "/api/governance/readiness/:bridge_id",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 546,
+   "line": 551,
    "hash": "d48868d55b1b3726",
    "columns": {
     "schema_in": false,
@@ -5482,7 +5482,7 @@
    "path": "/api/governance/source/:key",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 284,
+   "line": 289,
    "hash": "fc271fffe7910fd0",
    "columns": {
     "schema_in": false,
@@ -5512,7 +5512,7 @@
    "path": "/api/governance/supplier-acceptance/:handle",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 694,
+   "line": 699,
    "hash": "c84d9a1c5e4a253d",
    "columns": {
     "schema_in": false,
@@ -5542,7 +5542,7 @@
    "path": "/api/governance/track-record",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 325,
+   "line": 330,
    "hash": "dea91cfd0d802991",
    "columns": {
     "schema_in": false,
@@ -5572,7 +5572,7 @@
    "path": "/api/governance/vault-schema",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 396,
+   "line": 401,
    "hash": "ac5cfddf2885179b",
    "columns": {
     "schema_in": false,
@@ -7297,7 +7297,7 @@
    "path": "/api/signin/devices",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 129,
+   "line": 130,
    "hash": "44b050cddc91b9e8",
    "columns": {
     "schema_in": false,
@@ -7327,7 +7327,7 @@
    "path": "/api/signin/sessions",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 102,
+   "line": 103,
    "hash": "3d96a78c38ea06b5",
    "columns": {
     "schema_in": false,
@@ -11467,13 +11467,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/order/confirm",
@@ -11506,13 +11506,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/order/start",
@@ -11543,11 +11543,11 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -11580,13 +11580,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/:bridge_id/support/start",
@@ -11615,13 +11615,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/enquiry/:item_id",
@@ -11682,13 +11682,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/catalogue/photo-extract",
@@ -14016,7 +14016,7 @@
    "path": "/api/governance/ai-draft",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 511,
+   "line": 516,
    "hash": "871998a1282f2921",
    "columns": {
     "schema_in": false,
@@ -14046,7 +14046,7 @@
    "path": "/api/governance/boilerplate/:key/adopt",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 242,
+   "line": 247,
    "hash": "45429f4d386bc2c0",
    "columns": {
     "schema_in": false,
@@ -14076,7 +14076,7 @@
    "path": "/api/governance/compliance",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 586,
+   "line": 591,
    "hash": "f0ddd54c6940e716",
    "columns": {
     "schema_in": false,
@@ -14106,7 +14106,7 @@
    "path": "/api/governance/conformance",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 218,
+   "line": 223,
    "hash": "a5ac127d3a7e3df4",
    "columns": {
     "schema_in": false,
@@ -14136,7 +14136,7 @@
    "path": "/api/governance/entities",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 102,
+   "line": 107,
    "hash": "d00452a6bd7d99f4",
    "columns": {
     "schema_in": false,
@@ -14166,7 +14166,7 @@
    "path": "/api/governance/entities/:id/reattest",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 154,
+   "line": 159,
    "hash": "8891669d97c4fc73",
    "columns": {
     "schema_in": false,
@@ -14196,7 +14196,7 @@
    "path": "/api/governance/source",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 266,
+   "line": 271,
    "hash": "9460b0190be38d89",
    "columns": {
     "schema_in": false,
@@ -14226,7 +14226,7 @@
    "path": "/api/governance/supplier-acceptance",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 654,
+   "line": 659,
    "hash": "5514e5799d57f990",
    "columns": {
     "schema_in": false,
@@ -14256,7 +14256,7 @@
    "path": "/api/governance/verify",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 608,
+   "line": 613,
    "hash": "327b68351cd968aa",
    "columns": {
     "schema_in": false,
@@ -16390,8 +16390,8 @@
    "path": "/api/signin/ask",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 936,
-   "hash": "9e07bddc6967148c",
+   "line": 950,
+   "hash": "42cb51cd388da68d",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -16418,7 +16418,7 @@
    "path": "/api/signin/logout",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 92,
+   "line": 93,
    "hash": "84b6041b552384e3",
    "columns": {
     "schema_in": false,
@@ -16448,7 +16448,7 @@
    "path": "/api/signin/pin",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 938,
+   "line": 952,
    "hash": "7032d4cf101ec273",
    "columns": {
     "schema_in": false,
@@ -16478,7 +16478,7 @@
    "path": "/api/signin/renew",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 68,
+   "line": 69,
    "hash": "7448baae28dc0c9a",
    "columns": {
     "schema_in": false,
@@ -16508,7 +16508,7 @@
    "path": "/api/signin/sessions/revoke",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 151,
+   "line": 152,
    "hash": "cd1b084e1c218968",
    "columns": {
     "schema_in": false,
@@ -16538,8 +16538,8 @@
    "path": "/api/signin/verify",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 937,
-   "hash": "58fc763037e5ed8a",
+   "line": 951,
+   "hash": "be90f4652ffa4fb3",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -18629,7 +18629,7 @@
    "path": "/api/governance/country-setup",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 483,
+   "line": 488,
    "hash": "2a5bf9ba99758eaf",
    "columns": {
     "schema_in": false,
@@ -18659,7 +18659,7 @@
    "path": "/api/governance/profile",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 376,
+   "line": 381,
    "hash": "4ebeb1d885811bfe",
    "columns": {
     "schema_in": false,
@@ -18689,7 +18689,7 @@
    "path": "/api/governance/profile/vault",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 425,
+   "line": 430,
    "hash": "ea3205db607da3b2",
    "columns": {
     "schema_in": false,
