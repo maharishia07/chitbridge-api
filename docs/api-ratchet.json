@@ -3,9 +3,9 @@
  "stage": "1b",
  "updated": "2026-10-23",
  "total": 633,
- "not_meeting": 258,
- "codes_total": 335,
- "codes_pending": 73,
- "raw_error_writes": 36,
+ "not_meeting": 236,
+ "codes_total": 368,
+ "codes_pending": 68,
+ "raw_error_writes": 33,
  "debt": []
 }
