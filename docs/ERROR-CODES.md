@@ -21,8 +21,15 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ALREADY_RECORDED | 409 | Already recorded | That is already recorded. | Refresh the list: it is already there. | books | 2026-10-23 |
 | ALREADY_REVERSED | 409 | Already reversed | This entry was already reversed. | Open the reversal to see it. | books | 2026-10-22 |
 | AMBIGUOUS_NAME | 409 | Ambiguous name | PENDING | - | signin | 2026-10-22 |
-| ASSIST_GATED | varies | Assist gated | PENDING | - | assist | 2026-10-22 |
-| ASSIST_SIGN_IN | 503 | Assist sign in | PENDING | - | assist | 2026-10-22 |
+| ASSIST_BAD_REQUEST | 422 | Question not usable | That question could not be used. | Read the sentence shown, fix it and try again. | assist | 2026-10-23 |
+| ASSIST_GATED | 503 | Assistant resting | The assistant is resting for now. | The help library answers instead; try again later. | assist | 2026-10-22 |
+| ASSIST_NOT_CONFIGURED | 503 | Assistant not switched on | The assistant is not switched on here yet. | The help library answers instead. | assist | 2026-10-23 |
+| ASSIST_NOT_HELPDESK | 403 | Help desks only | Only a help desk can publish to its catalogue. | Ask your help desk to publish this answer. | assist | 2026-10-23 |
+| ASSIST_NOT_OWNER | 403 | Owned by another brand | That belongs to another brand, so you cannot change it. | Change only what your own business owns. | assist | 2026-10-23 |
+| ASSIST_NO_ANSWER | 502 | No answer this time | The assistant did not produce an answer. | Try again, or read the help library. | assist | 2026-10-23 |
+| ASSIST_REVIEW_RETIRED | 410 | Review has moved | Reviewing questions here is retired. | Answer the question on its chit, then publish it. | assist | 2026-10-23 |
+| ASSIST_SIGN_IN | 503 | Sign in for the assistant | Sign in for fuller answers from the assistant. | Sign in and ask again; the help library answers meanwhile. | assist | 2026-10-22 |
+| ASSIST_UPSTREAM | 502 | Assistant busy | The assistant is busy right now. | Try again in a moment. | assist | 2026-10-23 |
 | AUTO_TOKEN | varies | Auto token | PENDING | - | auth | 2026-10-22 |
 | A_INVARIANT | 422 | Rule would be loosened | That would loosen a rule the platform has set. | Only tighten the setting, never loosen it. | governance | 2026-10-23 |
 | BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
@@ -43,7 +50,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
 | CAPABILITY_OFF | varies | Capability off | PENDING | - | connectors | 2026-10-22 |
 | CATALOGUE_NOT_EMPTY | 409 | Shop already has products | This shop already has products. | Start a starter list only on an empty shop. | till | 2026-10-23 |
-| CATALOGUE_STORE_MISSING | 503 | Catalogue store missing | PENDING | - | assist | 2026-10-22 |
+| CATALOGUE_STORE_MISSING | 503 | Saved catalogues not ready | Saved catalogues are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | CATEGORIES_NOT_SET_UP | 500 | Categories not set up | Your categories could not be set up, so nothing was added. | Try again in a moment. | till | 2026-10-23 |
 | CHILD_NOT_FOUND | 404 | Business not found | We could not find that business. | Check its handle and try again. | network | 2026-10-23 |
 | CHIT_NOT_DELIVERED | 503 | Chit not delivered | PENDING | - | connectors | 2026-10-22 |
@@ -57,7 +64,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTION_EXISTS | 400 | Already connected | A connection with this business already exists. | Open your connections to see where it stands. | network | 2026-10-23 |
 | CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
-| CONTAINER_STORE_MISSING | 403/503 | Container store missing | PENDING | - | assist | 2026-10-22 |
+| CONTAINER_STORE_MISSING | 503 | Product containers not ready | Product containers are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | COST_BLIND | varies | Cost blind | Your access does not include cost or price. | Ask the owner to give you Sees costs, or change availability only. | cost | 2026-10-22 |
 | COUNTER_BAD_REQUEST | 400 | Counter request not valid | That counter request is missing something or is not right. | Check the name and try again. | counters | 2026-10-23 |
 | COUNTER_CLOSED | 401 | Counter closed | PENDING | - | auth | 2026-10-22 |
@@ -120,7 +127,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | GOV_CONFLICT | 409 | Clashes with what is recorded | That clashes with what is already recorded. | Reload the page and try again. | governance | 2026-10-23 |
 | GOV_NOT_AVAILABLE | 503 | Not available yet | That is not available on this installation yet. | Try again after the next update. | governance | 2026-10-23 |
 | GOV_REFUSED | 422 | Could not be done as sent | That could not be done as it was sent. | Check what was sent and try again. | governance | 2026-10-23 |
-| HANDOFF_STORE_MISSING | 503 | Handoff store missing | PENDING | - | assist | 2026-10-22 |
+| HANDOFF_STORE_MISSING | 503 | ERP handoffs not ready | ERP handoffs are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | HAS_PARENT | 409 | Already in a network | That business is already in a network, and a business can be in one at a time. | Remove it from that network first. | network | 2026-10-23 |
 | IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
 | IDEMPOTENCY_IN_PROGRESS | 409 | Idempotency in progress | The same request is still being handled. | Wait a moment and look before sending it again. | idempotency | 2026-10-22 |
@@ -210,7 +217,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PAIR_CODE_UNKNOWN | 404 | Pairing code not known | That code is wrong or has expired. | Ask ChitBridge for a new code. | till | 2026-10-23 |
 | PAIR_TOO_MANY_TRIES | 429 | Too many wrong codes | Too many wrong codes were tried. | Wait a minute, then ask for a new code. | till | 2026-10-23 |
 | PARENT_NOT_FOUND | 404 | Network not found | We could not find that network. | Check its handle and try again. | network | 2026-10-23 |
-| PENETRATION_STORE_MISSING | 503 | Penetration store missing | PENDING | - | assist | 2026-10-22 |
+| PENETRATION_STORE_MISSING | 503 | Reach figures not ready | Reach figures are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | PERIOD_LOCKED | 409 | Month locked | That month is locked. | Use a date in an open month, or ask the owner to unlock it. | books | 2026-10-22 |
 | PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | PENDING | - | iddoc-verify | 2026-10-22 |
 | PIN | varies | Pin | PENDING | - | country | 2026-10-22 |
@@ -230,7 +237,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QUICK_KEY_INVALID | 400 | Quick key not valid | A group needs a name, and a key needs a product. | Fill in what is missing and try again. | quick-keys | 2026-10-23 |
 | QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
-| REGION_STORE_MISSING | 403/404/503 | Region store missing | PENDING | - | assist | 2026-10-22 |
+| REGION_STORE_MISSING | 503 | Regions not ready | Regional overrides are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | REG_KIND_NOT_OFFERED | 400 | Registration kind not offered | That kind of tax registration is not offered in your country. | Pick one of the kinds listed. | policy | 2026-10-23 |
 | REPEAT_BAD_REQUEST | 400 | Repeat needs an answer | Repeat supply needs one more answer before it can do that. | Read the question shown and answer it. | repeat-supply | 2026-10-23 |
 | REPEAT_ENDED | 422 | Agreement ended | This agreement has ended. | Start a new agreement from a bill. | repeat-supply | 2026-10-23 |
@@ -258,7 +265,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SIGN_IN | 403 | Sign in | CRM opens only for a signed-in person, not for a key. | Sign in with your own login. | crm | 2026-10-22 |
 | SIGN_IN_FIRST | 401/409 | Sign in first | Sign in at the store to order. | Sign in with your phone or email, then order again. | catalogue | 2026-10-22 |
 | SIGN_IN_FOR_LEDGER | 403 | Sign in as a person | Sign in as a person to use the ledger. | A counter or device key cannot use the ledger. | books | 2026-10-23 |
-| SOURCE_STORE_MISSING | 503 | Source store missing | PENDING | - | assist | 2026-10-22 |
+| SOURCE_STORE_MISSING | 503 | Source authoring not ready | Catalogue source authoring is not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | PENDING | - | verdict | 2026-10-22 |
