@@ -49,7 +49,8 @@ async function cases(A, B) {
     const unknown = await Promise.all(ask(B, NOBODY));
     foreign.forEach((reply, index) => {
       expect(reply.status === 404 && unknown[index].status === 404, 'route ' + index + ' answered ' + reply.status + ' and ' + unknown[index].status + ', not 404');
-      expect(JSON.stringify(reply.b) === JSON.stringify(unknown[index].b), 'route ' + index + ' answered a different body for a foreign id: ' + JSON.stringify([reply.b, unknown[index].b]));
+      const same = (body) => JSON.stringify(Object.assign({}, body, { request_id: null }));
+      expect(same(reply.b) === same(unknown[index].b), 'route ' + index + ' answered a different body for a foreign id: ' + JSON.stringify([reply.b, unknown[index].b]));
     });
     expect((await held(A))[0].signed_at === null, 'the foreign sign stamped the other shop\'s form');
   });
