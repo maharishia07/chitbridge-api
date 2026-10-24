@@ -7,6 +7,10 @@
  * only answers "who, and what may THIS login do to each" (lib/people.js), so a refused action is greyed WITH its sentence.
  * A person can read the list (colleagues); every action is then refused with the owner-only sentence. The actions still
  * refuse on their own — this is never the check, only the early word.
+ * R112: each person also carries code_given (who gave their last first code, and when), one join on the code_issued trail row.
+ * FLOW   auth → readBatch (one trip, the shop's scope) → lib/people.view → JSON
+ * CARD 17-people-employees-hr-and-payroll/people-list
+ * CALLED BY server.js (mounted at /api/people)
  */
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */

@@ -130,7 +130,7 @@ it('R112 · the shown answer is one the idempotency store refuses to record (a r
   env(SEALED); const ec = load(); const { otp } = ec.mint();
   const body = await ec.deliver({ to: '', name: 'Asha', otp, send: stub(), show: true });
   const idem = require('../middleware/idempotency');
-  assert(idem.carriesCode(body) === true, 'show_code must mark the answer as unrecordable');
+  assert(idem._carriesCode(body) === true, 'show_code must mark the answer as unrecordable');
 });
 it('R112 · issue(): a screen code lives 30 minutes, a mailed one 24 hours; the one writer, in the row', async () => {
   env({ NODE_ENV: 'test' }); const ec = load(); const rows = [];

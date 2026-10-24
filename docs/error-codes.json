@@ -695,6 +695,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CODE_ISSUE_LIMIT",
+   "status": "429",
+   "title": "Too many codes",
+   "shopkeeper": "Five codes were made for this person in the last 15 minutes.",
+   "hint": "Wait a few minutes, then make a new one.",
+   "owner_area": "employee-code",
+   "since": "2026-10-24"
+  },
+  {
    "code": "CODE_NOT_ASKED",
    "status": "400",
    "title": "No code asked for",
@@ -702,6 +711,15 @@
    "hint": "Tap \"Send code\", then type the code you get.",
    "owner_area": "catalogue",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CODE_SHOW_NOT_READY",
+   "status": "503",
+   "title": "Showing a code is not ready",
+   "shopkeeper": "This environment cannot show a first code yet, so none was made.",
+   "hint": "Add their e-mail, or try again later.",
+   "owner_area": "employee-code",
+   "since": "2026-10-24"
   },
   {
    "code": "COMMENT_ONLY",

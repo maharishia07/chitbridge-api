@@ -430,7 +430,6 @@ router.post(
           login_format: `${actor_key}@${entity_name}`,
           parent_entity: entity_name
         },
-        /* R112: show_code only for a person with no e-mail, only here on the issuing call, only to the owner (ownerWrite on this route) */
         ...(await empCode.deliver({ to: toEmail, name: display_name, otp, show: true, expires })),
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
         /* SEC2: the code reaches the person by e-mail, or the owner reads it off the screen (R112); this text names only the user id */
