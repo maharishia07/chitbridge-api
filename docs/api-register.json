@@ -12864,7 +12864,7 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2910,
+   "line": 2920,
    "hash": "3d6b2fc666d0eb0a",
    "columns": {
     "schema_in": true,
@@ -12913,7 +12913,7 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2809,
+   "line": 2819,
    "hash": "d10e6a6e1d2b604c",
    "columns": {
     "schema_in": true,
@@ -13011,7 +13011,7 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3340,
+   "line": 3350,
    "hash": "4a422f34f38b13a0",
    "columns": {
     "schema_in": true,
@@ -13061,7 +13061,7 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3046,
+   "line": 3056,
    "hash": "be0d9bf2e28e212b",
    "columns": {
     "schema_in": true,
@@ -13456,8 +13456,8 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2636,
-   "hash": "e1436d1dbc57b9eb",
+   "line": 2648,
+   "hash": "879aa38ccc49a05e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13495,8 +13495,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "51badc5b53345004"
    },
    "status": "partial"
   },
@@ -13506,7 +13507,7 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2875,
+   "line": 2885,
    "hash": "2da4e820d2a1ee15",
    "columns": {
     "schema_in": true,
@@ -13556,7 +13557,7 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3017,
+   "line": 3027,
    "hash": "3699b1c90b1b4388",
    "columns": {
     "schema_in": true,
@@ -27647,7 +27648,7 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3231,
+   "line": 3241,
    "hash": "1b393f3ac10694ac",
    "columns": {
     "schema_in": true,
@@ -27697,7 +27698,7 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2700,
+   "line": 2710,
    "hash": "0b022d0054a67cb1",
    "columns": {
     "schema_in": true,
@@ -27952,7 +27953,7 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3274,
+   "line": 3284,
    "hash": "93504ef849a926a2",
    "columns": {
     "schema_in": true,
