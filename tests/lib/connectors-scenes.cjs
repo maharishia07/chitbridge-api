@@ -66,7 +66,7 @@ function stubRows(spec) {
     if (/SELECT identity_id, display_name, connector_type, site, connector_config, last_seen FROM identities/.test(text)) return answer(mine(params) ? [s.actor] : []);
     if (/SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status, created_at/.test(text)) return answer([Object.assign({ status: 'active', created_at: STAMP, connection_count: '1' }, s.actor)]);
     if (/SELECT email, display_name FROM identities/.test(text)) return answer(s.email === null ? [{ email: null, display_name: 'Mayur' }] : [{ email: s.email, display_name: 'Mayur' }]);
-    if (/SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities/.test(text)) return answer([s.otpRow || { identity_id: SHOP, otp_code: '123456', otp_expires_at: new Date('2099-01-01T00:00:00Z'), otp_attempts: 0 }]);
+    if (/SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities/.test(text)) return answer([s.otpRow || { identity_id: SHOP, otp_code: '482910', otp_expires_at: new Date('2099-01-01T00:00:00Z'), otp_attempts: 0 }]);
     if (/INSERT INTO connector_receipt/.test(text)) return answer(s.duplicate ? [] : [{ receipt_id: 'r-new' }]);
     if (/SELECT receipt_id, outcome, chit_id FROM connector_receipt/.test(text)) return answer([{ receipt_id: 'r-first', outcome: 'processed', chit_id: 'c-first' }]);
     if (/FROM connector_receipt WHERE actor_id/.test(text)) return answer(s.receipts);
@@ -195,20 +195,20 @@ function extras(tools) {
     X('reissue-code-no-email', R('POST', '/reissue-code'), 400, { setup: world({ email: null }) }),
     X('reissue-code-send-fails', R('POST', '/reissue-code'), 500, { setup: world(failing(/UPDATE identities SET otp_code/)) })
   ];
-  const ASK = { name: 'Tally Mayur', otp: '123456' };
+  const ASK = { name: 'Tally Mayur', otp: '482910' };
   const regen = (id, expect, body, spec, more) => X(id, R('POST', '/:actorId/regenerate-key'), expect, Object.assign({ url: owned('/regenerate-key'), body, setup: world(spec || {}) }, more));
   const regenerate = [
     regen('regenerate-key-issued', 200, ASK, {}, { patch: fixed }),
-    regen('regenerate-key-name-in-other-case', 200, { name: 'tally mayur', otp: '123456' }, {}, { patch: fixed }),
+    regen('regenerate-key-name-in-other-case', 200, { name: 'tally mayur', otp: '482910' }, {}, { patch: fixed }),
     regen('regenerate-key-unknown-connector', 404, ASK, { owner: 'nobody' }),
-    regen('regenerate-key-no-name', 400, { otp: '123456' }),
+    regen('regenerate-key-no-name', 400, { otp: '482910' }),
     regen('regenerate-key-body-is-a-list', 400, [1, 2]),
     regen('regenerate-key-code-too-short', 400, { name: 'Tally Mayur', otp: '123' }),
     regen('regenerate-key-not-allowed', 403, ASK, { hat: 'act' }, { setup: Object.assign({}, world({ hat: 'act' }), asManager) }),
-    regen('regenerate-key-name-mismatch', 400, { name: 'Other', otp: '123456' }),
+    regen('regenerate-key-name-mismatch', 400, { name: 'Other', otp: '482910' }),
     regen('regenerate-key-wrong-code', 400, { name: 'Tally Mayur', otp: '654321' }),
-    regen('regenerate-key-code-locked', 400, ASK, { otpRow: { identity_id: SHOP, otp_code: '123456', otp_expires_at: new Date('2099-01-01T00:00:00Z'), otp_attempts: 9 } }),
-    regen('regenerate-key-code-expired', 400, ASK, { otpRow: { identity_id: SHOP, otp_code: '123456', otp_expires_at: new Date('2000-01-01T00:00:00Z'), otp_attempts: 0 } }),
+    regen('regenerate-key-code-locked', 400, ASK, { otpRow: { identity_id: SHOP, otp_code: '482910', otp_expires_at: new Date('2099-01-01T00:00:00Z'), otp_attempts: 9 } }),
+    regen('regenerate-key-code-expired', 400, ASK, { otpRow: { identity_id: SHOP, otp_code: '482910', otp_expires_at: new Date('2000-01-01T00:00:00Z'), otp_attempts: 0 } }),
     regen('regenerate-key-update-fails', 500, ASK, failing(/UPDATE identities SET provision_key_hash/))
   ];
 

@@ -161,7 +161,7 @@ function checkFrozenFaults(recording) {
 }
 
 /* ── the foreign-id world (API-STANDARD S35): shop B asks for shop A's connector by its id ── */
-const WITH_BODY = { regenerate: { name: 'Tally Mayur', otp: '123456' }, connection: { ref: 'sensor-9' }, toggle: { enabled: true } };
+const WITH_BODY = { regenerate: { name: 'Tally Mayur', otp: '482910' }, connection: { ref: 'sensor-9' }, toggle: { enabled: true } };
 const FOREIGN_ROUTES = () => [
   ['GET ' + MOUNT + '/:actorId/receipts', 'GET', '/receipts'],
   ['POST ' + MOUNT + '/:actorId/erp-test', 'POST', '/erp-test', {}],
