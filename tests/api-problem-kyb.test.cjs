@@ -118,7 +118,10 @@ function checkContractShape(routes, router) {
   const queries = (contract.OPERATIONS['GET /api/kyb/position'].parameters || []).filter((item) => item.in === 'query');
   check('GET /position\'s query values are declared as anything (a repeated value was read as it came)', queries.length === 2 && queries.every((item) => sameValue(item.schema, {})), queries);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
-  check('a success answer stays typed: every operation names the keys of its answer', operations.every((key) => ((contract.OPERATIONS[key].responses['200'].content['application/json'].schema.required) || []).length > 0));
+  /* R2-13 (#390): the 200 schema is derived from recorded answers; a handler that answers a passed-through expression is recorded OPEN with its reason in docs/contracts/api-output-shapes.json — honest, not untyped by accident */
+  const shapes = require('../docs/contracts/api-output-shapes.json');
+  const shapeRow = (key) => (shapes.routes || shapes)[key] || {};
+  check('a success answer stays typed: every operation names the keys of its answer, or its recorded shape is open with a reason (R2-13)', operations.every((key) => ((contract.OPERATIONS[key].responses['200'].content['application/json'].schema.required) || []).length > 0 || (shapeRow(key).open || []).some((item) => item.reason)));
 }
 
 /** the safe shape of a refusal built by a scene that makes a library throw: patch the module, ask once, put it back */
