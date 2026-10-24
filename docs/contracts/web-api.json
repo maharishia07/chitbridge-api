@@ -4592,9 +4592,24 @@
        "group_code": "G1500",
        "group_id": "00000000-0000-4000-8000-000000000149",
        "group_name": "Bank Accounts",
+       "rec": {
+        "name": "Coffee beans 1kg",
+        "code": "BEANS1",
+        "unit": "unit",
+        "price": 30,
+        "gst_rate": 10,
+        "cost": 18.5,
+        "source_system": "xero",
+        "source_ref": "BEANS1",
+        "description": "Coffee beans 1kg"
+       },
+       "notes": [
+        "GST on Income = Taxable supply 10%"
+       ],
        "dr_minor": 1523050,
        "cr_minor": 0
-      }
+      },
+      "code": "tax_code"
      }
     ],
     "tax_codes": [
@@ -4616,6 +4631,7 @@
    },
    "optional": [
     "control",
+    "rows[].code",
     "rows[].data.account_id",
     "rows[].data.code",
     "rows[].data.cr_minor",
@@ -4625,6 +4641,8 @@
     "rows[].data.group_name",
     "rows[].data.name",
     "rows[].data.note",
+    "rows[].data.notes",
+    "rows[].data.rec",
     "rows[].data.source_code",
     "tax_codes",
     "totals"
