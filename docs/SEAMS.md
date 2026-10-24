@@ -11,11 +11,11 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 122 | `list` | `amend.js` |  |
 | 107 | `rows` | `crm.js` | still in them: |
-| 100 | `withEntity` | `books-hooks.js` |  |
-| 87 | `read` | `books-cashflow.js` | Trips: |
+| 101 | `withEntity` | `books-hooks.js` |  |
+| 88 | `read` | `books-cashflow.js` | Trips: |
 | 82 | `words` | `variant.browser.js` |  |
 | 75 | `money` | `bill-privacy.js` |  |
-| 73 | `answer` | `availability.js` | from March; then nearest. |
+| 74 | `answer` | `availability.js` | from March; then nearest. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 65 | `list` | `cap-settings.js` |  |
@@ -30,10 +30,10 @@ of file each thing is; this says what already does the job.
 | 52 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 50 | `entry` | `books-store.js` |  |
 | 50 | `next` | `dayopen.js` | the next thing to do — |
-| 50 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 49 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
+| 52 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 47 | `again` | `signin-ui.js` |  |
 | 47 | `pack` | `books-store.js` |  |
 | 44 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
@@ -43,7 +43,7 @@ of file each thing is; this says what already does the job.
 | 39 | `view` | `books-payables.js` | group: |
 | 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 39 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 39 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 40 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
@@ -76,19 +76,19 @@ of file each thing is; this says what already does the job.
 | 28 | `changes` | `books-store.js` |  |
 | 28 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
+| 26 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 26 | `sheet` | `cap-employees.js` |  |
 | 26 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 26 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 26 | `rate` | `convert.js` | A rate, with its evidence. |
-| 26 | `gate` | `country-setup.js` | gate(h, entity): |
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
-| 25 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 26 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 26 | `gate` | `country-setup.js` | gate(h, entity): |
 | 25 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `money` | `cart.js` |  |
@@ -97,11 +97,11 @@ of file each thing is; this says what already does the job.
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 23 | `hold` | `orders.js` |  |
-| 23 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
-| 23 | `owner` | `books.js` |  |
+| 24 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 22 | `account` | `home-facts.js` | OMITTED: |
+| 23 | `owner` | `books.js` |  |
 | 22 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 21 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 21 | `chart` | `fx-rates.js` |  |
@@ -124,7 +124,6 @@ of file each thing is; this says what already does the job.
 | 18 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `later` | `signin-ui.js` |  |
-| 18 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 18 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 17 | `step` | `cart.js` |  |
 | 17 | `model` | `chit-sheet.js` |  |
@@ -135,8 +134,9 @@ of file each thing is; this says what already does the job.
 | 17 | `notMigrated` | `crm-followups.js` |  |
 | 17 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 17 | `governance` | `home-facts.js` |  |
-| 17 | `group` | `identity.js` | again in a different costume. |
+| 18 | `group` | `identity.js` | again in a different costume. |
 | 17 | `match` | `itemmatch.js` | actually state. |
+| 18 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 17 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
