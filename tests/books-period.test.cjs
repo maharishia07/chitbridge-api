@@ -231,6 +231,21 @@ function memoryRegister() {
       && m4.body.from_ledger.value_minor === 240000 && m4.body.from_ledger.lines === 1 && movesUntil === '2026-10-31T18:30:00.000Z', JSON.stringify([m4.body, movesUntil]));
     eq('…its lines are the engine\'s closing_stock for that value (book 55,000 → 2,400)', me && stored(me), engine({ type: 'closing_stock', mode: 'manual', book: 55000, amount: 2400, date: '2026-10-31', currency: 'INR' }));
     ok('…said where it came from: the narration names the stock ledger', me && /from the stock ledger/.test(String(me.narration || '')), me && me.narration);
+
+    /* R104: a tiffin shop — Masala Dosa sold 5 times, never received (−5): made to order, NOT stock, so the ledger values without refusing */
+    const DOSA = 'a1000000-0000-4000-8000-00000000d05a'; NAMES[DOSA] = 'Masala Dosa';
+    const G = require(path.join(H.API, 'lib', 'govresolve')); const verticalWas = G.verticalOf;
+    G.verticalOf = async () => G.verticalFrom({ sectors: ['tiffin'] });
+    const dq1 = X.db.query;
+    X.db.query = async (t, p) => /item_data->'stocked'/.test(String(t)) ? { rows: [{ item_id: RICE, batch_tracked: null, stocked: true }, { item_id: DOSA, batch_tracked: null, stocked: null }] } : dq1(t, p);
+    MOVES = MOVES.concat([mv(DOSA, -2, null, 'sale', '2026-10-20T06:00:00.000Z'), mv(DOSA, -3, null, 'sale', '2026-10-25T06:00:00.000Z')]);
+    /* a month later (31 Oct is already posted above): 1 kg rice left at 400; the dish's −5 must not stop the valuation */
+    const m5 = await q('POST', '/closing-stock', { date: '2026-11-30', method: 'automatic', client_ref: 'cs-auto-dish' });
+    ok('R104 a tiffin shop with a dish at −5: no STOCK_BELOW_ZERO — closing stock values from the ledger (1 kg rice = 400, 1 line, the dish not in it)', m5.status === 200 && m5.body.ok && m5.body.from_ledger && m5.body.from_ledger.value_minor === 40000 && m5.body.from_ledger.lines === 1, JSON.stringify(m5.body));
+    G.verticalOf = async () => G.verticalFrom({ sectors: ['vegetables'] });
+    const m6 = await q('POST', '/closing-stock', { date: '2026-11-30', method: 'automatic', client_ref: 'cs-auto-veg' });
+    ok('…the same rows in a vegetable shop: the unflagged dish IS counted → 422 STOCK_BELOW_ZERO naming Masala Dosa (nothing changed for them)', m6.status === 422 && m6.body.code === 'STOCK_BELOW_ZERO' && /Masala Dosa/.test(m6.body.message), JSON.stringify(m6.body));
+    G.verticalOf = verticalWas;
     X.db.query = dq0; SCH.hasTable = hasT0;
   }
   await q('POST', '/periods/2026-27/7/lock', { reason: 'x' });

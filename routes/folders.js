@@ -100,8 +100,8 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       if (f.kind === 'view') {
         try {
           f.count = (await views.members(e, f, {})).counts.open;
-        } catch (problem) {
-          log.fellBack('folders GET /: failed — answered with nothing', problem);
+        } catch (countError) {
+          log.fellBack('folders GET /: failed — answered with nothing', countError);
           f.count = null;
         }
       }

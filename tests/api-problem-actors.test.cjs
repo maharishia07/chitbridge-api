@@ -41,7 +41,8 @@ const lab = harness({
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
   inherited: (scenario, answer) => (answer.status === 401 && scenario.id === 'signed-out') || SIGN_IN.includes(scenario.route),
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || AFTER.has(scenario) || SIGN_IN.includes(one.route),
-  cannotRide: () => []
+  cannotRide: () => [],
+  before: async () => require(path.join(HERE, 'lib', 'employee-code'))._resetAsk() /* R112: each scene starts with a clean issue limiter */
 });
 const { check, world } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
