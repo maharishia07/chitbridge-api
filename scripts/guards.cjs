@@ -434,7 +434,10 @@ const GUARDS = [
   'pay-fix-renumber.test.cjs',
   'pay-fix-void.test.cjs',
   'std2-one-reading.test.cjs',
-  'till-t2c.test.cjs'
+  'till-t2c.test.cjs',
+  /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
+  'party-contact-patch.test.cjs',
+  'r58-no-sales-offer-on-receipt.test.js'
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
