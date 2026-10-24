@@ -63,7 +63,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 722,
-   "hash": "f82daac59443f925",
+   "hash": "ef0e583e98b1b4ef",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1266,7 +1266,7 @@
    "path": "/api/actors/:id/tasks",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1598,
+   "line": 1597,
    "hash": "8706b2506aaf77b4",
    "columns": {
     "schema_in": true,
@@ -1316,7 +1316,7 @@
    "path": "/api/actors/access-events",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1767,
+   "line": 1766,
    "hash": "b5ae4b066598ae9b",
    "columns": {
     "schema_in": true,
@@ -1406,7 +1406,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1476,
+   "line": 1475,
    "hash": "63f0748acf99af50",
    "columns": {
     "schema_in": true,
@@ -10434,8 +10434,8 @@
    "path": "/api/people",
    "owner_area": "people",
    "file": "routes/people.js",
-   "line": 22,
-   "hash": "a05f7ed088008867",
+   "line": 26,
+   "hash": "acbea6a6931629fe",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -15192,7 +15192,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 241,
-   "hash": "9c6ea25247681b5c",
+   "hash": "818035cce72f823f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15244,7 +15244,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 865,
-   "hash": "ce1acd1ccb1f4b35",
+   "hash": "96b2b79b2c8bfcfa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29010,7 +29010,7 @@
    "path": "/api/actors/:id/delegate",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1563,
+   "line": 1562,
    "hash": "3c22e829c4753516",
    "columns": {
     "schema_in": true,
@@ -29061,8 +29061,8 @@
    "path": "/api/actors/:id/status",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 948,
-   "hash": "20153dc2329acc8f",
+   "line": 947,
+   "hash": "6b97087f638e6255",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29113,7 +29113,7 @@
    "path": "/api/actors/:id/tasks/route",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1667,
+   "line": 1666,
    "hash": "604e3e7a86fdc94f",
    "columns": {
     "schema_in": true,
@@ -29164,7 +29164,7 @@
    "path": "/api/actors/assign/:chit_id",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1430,
+   "line": 1429,
    "hash": "13039b2d4ba7b7d5",
    "columns": {
     "schema_in": true,
@@ -29214,7 +29214,7 @@
    "path": "/api/actors/break",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1166,
+   "line": 1165,
    "hash": "62a37a11ca6434c7",
    "columns": {
     "schema_in": true,
@@ -29314,7 +29314,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1498,
+   "line": 1497,
    "hash": "85a8330db3f71f02",
    "columns": {
     "schema_in": true,

@@ -27,13 +27,13 @@ of file each thing is; this says what already does the job.
 | 57 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 51 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 52 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 50 | `entry` | `books-store.js` |  |
 | 50 | `next` | `dayopen.js` | the next thing to do — |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 49 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
-| 51 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 52 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 47 | `again` | `signin-ui.js` |  |
 | 47 | `pack` | `books-store.js` |  |
 | 44 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
@@ -42,7 +42,7 @@ of file each thing is; this says what already does the job.
 | 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 39 | `view` | `books-payables.js` | group: |
 | 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 39 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
+| 39 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 40 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `write` | `junitresults.js` | control characters are not legal XML at all — |
@@ -76,7 +76,7 @@ of file each thing is; this says what already does the job.
 | 28 | `changes` | `books-store.js` |  |
 | 28 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
-| 27 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 26 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -101,7 +101,7 @@ of file each thing is; this says what already does the job.
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 22 | `account` | `home-facts.js` | OMITTED: |
-| 22 | `owner` | `books.js` |  |
+| 23 | `owner` | `books.js` |  |
 | 22 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 21 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 21 | `chart` | `fx-rates.js` |  |

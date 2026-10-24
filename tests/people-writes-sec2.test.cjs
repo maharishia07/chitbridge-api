@@ -28,7 +28,7 @@ const say = console.log.bind(console);
 let pass = 0, fail = 0;
 const t = (name, ok, extra) => { if (ok) { pass++; say('  ok  ' + name); } else { fail++; say('  FAIL ' + name + (extra ? '\n       ' + extra : '')); } };
 
-const SECRET = '987654';
+const SECRET = String(require('crypto').randomInt(100000, 1000000)); /* R112: generated per run, never fixed digits */
 const SHOP = '11111111-1111-4111-8111-111111111111', BALA = '22222222-2222-4222-8222-222222222222', RAVI = '33333333-3333-4333-8333-333333333333';
 const CHIT = '44444444-4444-4444-8444-444444444444';
 
@@ -37,7 +37,7 @@ const WRITES = [];
 let throwOn = null;
 const splitTop = (s) => { const out = []; let d = 0, cur = ''; for (const c of s) { if (c === '(') d++; else if (c === ')') d--; if (c === ',' && d === 0) { out.push(cur); cur = ''; } else cur += c; } out.push(cur); return out.map((x) => x.trim()).filter(Boolean); };
 let BREAK = 'active';   /* what identities.break_status holds for Bala: section 6 switches her off or removes her */
-let STORED_EMAIL = 'v_email';   /* what identities.email holds for Bala — section 5 sets a real address, or none */
+let STORED_EMAIL = 'bala@shop.test';   /* what identities.email holds for Bala — section 5 sets a real address, or none */
 const valueFor = (col) => {
   if (col === 'otp_code') return SECRET;
   if (col === 'email') return STORED_EMAIL;
@@ -98,7 +98,9 @@ stub('middleware/auth', auth);
 const app = express(); app.use(express.json());
 app.use('/api/actors', require(path.join(API, 'routes', 'actors')));
 let base;
-const call = (method, url, body) => new Promise((resolve, reject) => { const data = body ? JSON.stringify(body) : null;
+/* R112: each call starts with a clean issue limiter (the limiter has its own section below, which keeps the count) */
+let KEEP_COUNT = false;
+const call = (method, url, body) => new Promise((resolve, reject) => { if (!KEEP_COUNT) require(path.join(API, 'lib', 'employee-code'))._resetAsk(); const data = body ? JSON.stringify(body) : null;
   const h = { 'content-type': 'application/json' }; if (data) h['content-length'] = Buffer.byteLength(data);
   const r = http.request(base + url, { method, headers: h }, (res) => { let s = ''; res.on('data', (c) => { s += c; }); res.on('end', () => { let j = null; try { j = JSON.parse(s); } catch (_) {} resolve({ status: res.statusCode, raw: s, body: j || {} }); }); });
   r.on('error', reject); if (data) r.write(data); r.end(); });
@@ -116,7 +118,7 @@ const WRITES_PEOPLE = [
   ['PUT', '/' + BALA + '/delegate', { delegate_actor_id: RAVI }],
   ['PUT', '/' + BALA + '/tasks/route', { chit_id: CHIT, action: 'pool' }],
 ];
-const BANNED_KEYS = ['otp_code', 'first_code', 'dev_otp', 'otp'];
+const BANNED_KEYS = ['otp_code', 'first_code', 'dev_otp', 'otp', 'show_code'];
 /* section 5: the four doors that mint a code for a person — the Add and the three resets (lib/employee-code is called 4× in actors.js) */
 const RESET_DOORS = [
   ['POST', '/', { display_name: 'Bala', actor_key: 'bala', email: 'bala@shop.test' }],
@@ -149,16 +151,36 @@ async function proveSealedReset() {
     t('   …the code went to the STORED address (not the request), and the row holds its keyed hash, never the code', SENT.length === 1 && SENT[0].to === 'bala@shop.test' && SENT[0].otp === SECRET && wroteTheCode() && !wrotePlainCode(),
       JSON.stringify(SENT) + ' writes:' + WRITES.length);
     balaHas('');
-    const refused = await call(method, url, withoutEmail(body));   /* Add reads the body's address; the resets read the stored one */
-    t(method + ' ' + url + ' with NO e-mail on file → 400 EMPLOYEE_EMAIL_REQUIRED in words, nothing written, nothing sent',
-      refused.status === 400 && refused.body.code === 'EMPLOYEE_EMAIL_REQUIRED' && /e-mail/i.test(refused.body.message || '') && !refused.raw.includes(SECRET) && nothingTouched(),
-      refused.status + ' ' + refused.raw.slice(0, 200) + ' writes:' + WRITES.length + ' sent:' + SENT.length);
+    const shown = await call(method, url, withoutEmail(body));   /* Add reads the body's address; the resets read the stored one */
+    const issuing = method !== 'PUT';   /* R112: reactivate never shows a code */
+    t(method + ' ' + url + ' with NO e-mail on file → ' + (issuing ? '200, the owner is SHOWN the code, 30 minutes, nothing sent' : '200, no code shown (reactivate says Reset code)'),
+      shown.status === 200 && SENT.length === 0 && (issuing ? shown.body.show_code === SECRET && shown.body.expires_in === '30 minutes' && shown.body.delivery === 'shown' && Math.abs(Date.parse(shown.body.expires_at) - Date.now() - 30 * 60 * 1000) < 60 * 1000 : !shown.raw.includes(SECRET)),
+      shown.status + ' ' + shown.raw.slice(0, 200) + ' sent:' + SENT.length);
+    t('   …the row keeps the keyed hash, never the code' + (issuing ? ', and the shown code is in no other key' : ''), wroteTheCode() && !wrotePlainCode() && (!issuing || keysIn(shown.body).filter((k) => /otp|code/.test(k)).join() === 'show_code'), JSON.stringify(keysIn(shown.body)));
+    if (issuing) {
+      balaHas('bala@shop.test');
+      const mailed = await call(method, url, body);
+      t('   …a person WITH an e-mail gets no show_code (the code goes by mail only)', !('show_code' in mailed.body) && mailed.body.delivery === 'sent' && !mailed.raw.includes(SECRET), mailed.raw.slice(0, 160));
+    }
   }
   delete process.env.RESEND_API_KEY; balaHas('bala@shop.test');
   const noSender = await call('DELETE', '/' + BALA + '/pin');
   t('sealed with no sender → 503 EMAIL_DELIVERY_NOT_CONFIGURED, nothing written, nothing sent',
     noSender.status === 503 && noSender.body.code === 'EMAIL_DELIVERY_NOT_CONFIGURED' && nothingTouched(), noSender.status + ' ' + noSender.raw.slice(0, 160));
-  unsealHost(); STORED_EMAIL = 'v_email';
+  unsealHost(); STORED_EMAIL = 'bala@shop.test';
+}
+/* Section 7 (R112): a colleague never gets a code; the sixth code in 15 minutes for one person is refused in words, nothing written */
+async function proveLimiter() {
+  balaHas(''); sealHost();
+  WHO = COLLEAGUE; const no = await call('POST', '/' + BALA + '/otp');
+  t('a colleague is refused 403 and never sees show_code', no.status === 403 && !no.raw.includes(SECRET) && !('show_code' in no.body), no.raw.slice(0, 120));
+  WHO = OWNER; KEEP_COUNT = true; require(path.join(API, 'lib', 'employee-code'))._resetAsk();
+  const ok = [];
+  for (let n = 0; n < 5; n++) ok.push((await call('POST', '/' + BALA + '/otp')).status);
+  WRITES.length = 0;
+  const sixth = await call('DELETE', '/' + BALA + '/pin');
+  KEEP_COUNT = false; unsealHost();
+  t('five codes in 15 minutes pass, the sixth is 429 CODE_ISSUE_LIMIT in words with nothing written', ok.every((c) => c === 200) && sixth.status === 429 && sixth.body.code === 'CODE_ISSUE_LIMIT' && /minutes/.test(sixth.body.message || '') && !WRITES.some((w) => /identities/.test(w.sql)), ok + ' ' + sixth.status + ' ' + sixth.raw.slice(0, 160));
 }
 /* Section 6 (PP-03b): both code doors read the person first; the refusal says why with a code, and no code is minted or mailed */
 async function proveNoCodeForOff() {
@@ -175,7 +197,7 @@ async function proveNoCodeForOff() {
     const r = await call('POST', '/' + BALA + '/otp');
     t('a person who is ' + state + ' still gets a code -> 200 (away is not off)', r.status === 200 && wroteTheCode(), r.status + ' ' + r.raw.slice(0, 120));
   }
-  BREAK = 'active'; STORED_EMAIL = 'v_email';
+  BREAK = 'active'; STORED_EMAIL = 'bala@shop.test';
 }
 const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k of Object.keys(v)) { out.push(k); keysIn(v[k], out); } return out; };
 
@@ -240,6 +262,9 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
 
     say('\n6 · PP-03b: no sign-in code for a person who is switched off or removed (refused in words, nothing written, nothing sent)');
     WHO = OWNER; await proveNoCodeForOff();
+
+    say('\n7 · R112: a colleague never sees a code; the issue limiter refuses the sixth code in words');
+    WHO = OWNER; await proveLimiter();
 
     say('\n4 · the connector code comes through the one generator');
     const csrc = fs.readFileSync(path.join(API, 'routes', 'connectors.js'), 'utf8');

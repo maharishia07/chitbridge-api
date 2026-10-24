@@ -35,10 +35,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/schemas/fields/:field_key | schemas | routes/schemas.js:184 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /.well-known/ctp.json | ctp | routes/ctp.js:119 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/actors | actors | routes/actors.js:769 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/actors/:id/tasks | actors | routes/actors.js:1598 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/actors/access-events | actors | routes/actors.js:1767 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/actors/:id/tasks | actors | routes/actors.js:1597 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/actors/access-events | actors | routes/actors.js:1766 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/actors/check-login | actors | routes/actors.js:656 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/actors/settings | actors | routes/actors.js:1476 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/actors/settings | actors | routes/actors.js:1475 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:143 | yes | no | no | no | yes | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:331 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:605 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
@@ -225,7 +225,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/offers/kinds | offers | routes/offers.js:37 | yes | yes | no | no | yes | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/offers/openapi.json | offers | routes/offers.js:94 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/openapi.json | openapi | routes/openapi.js:34 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/people | people | routes/people.js:22 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
+| GET | /api/people | people | routes/people.js:26 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/pricing/kinds | pricing | routes/pricing.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/privacy/facts | privacy | routes/privacy.js:34 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/privacy/me | privacy | routes/privacy.js:58 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -609,13 +609,13 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/till/stock/bulk | till | routes/till.js:1195 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /deliver | ctp | routes/ctp.js:131 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /query | ctp | routes/ctp.js:333 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| PUT | /api/actors/:id/delegate | actors | routes/actors.js:1563 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/actors/:id/status | actors | routes/actors.js:948 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| PUT | /api/actors/:id/tasks/route | actors | routes/actors.js:1667 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PUT | /api/actors/assign/:chit_id | actors | routes/actors.js:1430 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/actors/break | actors | routes/actors.js:1166 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PUT | /api/actors/:id/delegate | actors | routes/actors.js:1562 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/actors/:id/status | actors | routes/actors.js:947 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PUT | /api/actors/:id/tasks/route | actors | routes/actors.js:1666 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PUT | /api/actors/assign/:chit_id | actors | routes/actors.js:1429 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/actors/break | actors | routes/actors.js:1165 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/actors/change-pin | actors | routes/actors.js:663 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/actors/settings | actors | routes/actors.js:1498 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/actors/settings | actors | routes/actors.js:1497 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/assist/catalogue-source | assist | routes/assist.js:388 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | PUT | /api/assist/container | assist | routes/assist.js:450 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/assist/region-override | assist | routes/assist.js:518 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
