@@ -62,8 +62,8 @@
    "path": "/api/actors/:id/pin",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 710,
-   "hash": "fcfbc941c0d2d3bc",
+   "line": 722,
+   "hash": "20b1ed68d6239fdd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -102,8 +102,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "20b1ed68d6239fdd"
    },
    "status": "partial"
   },
@@ -1216,7 +1217,7 @@
    "path": "/api/actors",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 757,
+   "line": 771,
    "hash": "5a8cd45a1d9902d3",
    "columns": {
     "schema_in": true,
@@ -1264,7 +1265,7 @@
    "path": "/api/actors/:id/tasks",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1595,
+   "line": 1611,
    "hash": "8706b2506aaf77b4",
    "columns": {
     "schema_in": true,
@@ -1314,7 +1315,7 @@
    "path": "/api/actors/access-events",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1764,
+   "line": 1780,
    "hash": "b5ae4b066598ae9b",
    "columns": {
     "schema_in": true,
@@ -1362,7 +1363,7 @@
    "path": "/api/actors/check-login",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 655,
+   "line": 656,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -1404,7 +1405,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1473,
+   "line": 1489,
    "hash": "63f0748acf99af50",
    "columns": {
     "schema_in": true,
@@ -13936,7 +13937,7 @@
    "path": "/api/actors/:id",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 457,
+   "line": 458,
    "hash": "c1f432f0445caa71",
    "columns": {
     "schema_in": true,
@@ -15187,7 +15188,7 @@
    "path": "/api/actors",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 240,
+   "line": 241,
    "hash": "b67874c0748e48ea",
    "columns": {
     "schema_in": true,
@@ -15238,8 +15239,8 @@
    "path": "/api/actors/:id/otp",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 853,
-   "hash": "436ae181735a866c",
+   "line": 867,
+   "hash": "cdb7a412dd467453",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15278,8 +15279,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cdb7a412dd467453"
    },
    "status": "partial"
   },
@@ -15289,7 +15291,7 @@
    "path": "/api/actors/check-key",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 206,
+   "line": 207,
    "hash": "d04b9c2fa9ba396a",
    "columns": {
     "schema_in": true,
@@ -15338,7 +15340,7 @@
    "path": "/api/actors/login",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 753,
+   "line": 767,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -15380,7 +15382,7 @@
    "path": "/api/actors/set-pin",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 658,
+   "line": 659,
    "hash": "ed4b3e29367ec07b",
    "columns": {
     "schema_in": false,
@@ -15424,7 +15426,7 @@
    "path": "/api/actors/suggest-key",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 176,
+   "line": 177,
    "hash": "4f3a11031b6436af",
    "columns": {
     "schema_in": true,
@@ -28951,7 +28953,7 @@
    "path": "/api/actors/:id/delegate",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1560,
+   "line": 1576,
    "hash": "3c22e829c4753516",
    "columns": {
     "schema_in": true,
@@ -29002,7 +29004,7 @@
    "path": "/api/actors/:id/status",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 941,
+   "line": 957,
    "hash": "d146e250925f4998",
    "columns": {
     "schema_in": true,
@@ -29053,7 +29055,7 @@
    "path": "/api/actors/:id/tasks/route",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1664,
+   "line": 1680,
    "hash": "604e3e7a86fdc94f",
    "columns": {
     "schema_in": true,
@@ -29104,7 +29106,7 @@
    "path": "/api/actors/assign/:chit_id",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1427,
+   "line": 1443,
    "hash": "13039b2d4ba7b7d5",
    "columns": {
     "schema_in": true,
@@ -29154,7 +29156,7 @@
    "path": "/api/actors/break",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1163,
+   "line": 1179,
    "hash": "62a37a11ca6434c7",
    "columns": {
     "schema_in": true,
@@ -29204,7 +29206,7 @@
    "path": "/api/actors/change-pin",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 662,
+   "line": 663,
    "hash": "70cf5e1b9e3afd29",
    "columns": {
     "schema_in": true,
@@ -29254,7 +29256,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1495,
+   "line": 1511,
    "hash": "85a8330db3f71f02",
    "columns": {
     "schema_in": true,
