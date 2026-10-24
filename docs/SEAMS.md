@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
 | 88 | `read` | `books-cashflow.js` | Trips: |
-| 84 | `words` | `variant.browser.js` |  |
+| 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
 | 74 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -35,7 +35,7 @@ of file each thing is; this says what already does the job.
 | 49 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 47 | `again` | `signin-ui.js` |  |
-| 47 | `pack` | `books-store.js` |  |
+| 48 | `pack` | `books-store.js` |  |
 | 44 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 43 | `read` | `cap-print.js` |  |
 | 41 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
@@ -207,5 +207,6 @@ of file each thing is; this says what already does the job.
 | 11 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 11 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 11 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
+| 11 | `move` | `rail.js` | Order = the order the server refused in: |
 | 10 | `start` | `app.html` |  |
 | 10 | `show` | `cap-catalogue.js` |  |

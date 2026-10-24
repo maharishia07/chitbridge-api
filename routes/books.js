@@ -1581,7 +1581,7 @@ router.post('/cheques/:id/status', auth, editor, on, ...checked('POST /cheques/:
  * the books' one word for a held bill, as the row says it (R106: "Hold this bill" on ANY supplier reuses this status — the engine knows
  * disputed / undisputed and no `held`; a screen paints these words, never its own)
  */
-const STATUS_WORDS = { disputed: 'Held — in dispute with you', undisputed: 'Released — payable again' };
+const STATUS_WORDS = require('../lib/books-payables').STATUS_WORDS;
 /**
  * POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } → { ok, status: disputed|undisputed, words, against_ref }
  * — a disputed bill cannot take a payment (C4); Payables and cash-flow leave it out until it is released

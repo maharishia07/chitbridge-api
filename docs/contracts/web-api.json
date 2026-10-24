@@ -1170,9 +1170,15 @@
     "parties[].last_remind",
     "parties[].over_limit",
     "parties[].payable",
+    "parties[].payable.bills[].disputed",
     "parties[].payable.bills[].early.record.body.lines[].party",
+    "parties[].payable.bills[].held_words",
     "parties[].payable.early.record.body.lines[].party",
     "payables"
+   ],
+   "also_optional": [
+    "parties[].payable.bills[].disputed",
+    "parties[].payable.bills[].held_words"
    ]
   },
   "GET /api/books/events": {
@@ -4913,7 +4919,12 @@
     "code": null,
     "duplicate": null
    },
-   "optional": []
+   "optional": [
+    "lines[].party"
+   ],
+   "also_optional": [
+    "lines[].party"
+   ]
   },
   "POST /api/books/recurring": {
    "status": 200,
