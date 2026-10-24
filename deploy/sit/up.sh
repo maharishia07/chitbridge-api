@@ -134,6 +134,15 @@ ON CONFLICT (installation_key) DO UPDATE
   SET country = EXCLUDED.country, domain = EXCLUDED.domain, currency = EXCLUDED.currency, timezone = EXCLUDED.timezone, active = true;
 SQL
 
+# ---- 6b. a country-neutral base (SET-42, Athi 2026-10-24: "not bound but inherited") -------------------------------------------
+# SIT only, as DATA: the live base row drops its allowed lists and its India defaults, so nothing at the top binds a country,
+# currency, time zone or language; the installation (step 6) states its own, or none. Production waits for the SET-42 migration.
+say "base constitution: country-neutral (SIT data)"
+$DC exec -T db psql -X -q -U postgres -d chitbridge -v ON_ERROR_STOP=1 -f - <<'SQL'
+UPDATE constitution SET governance = governance - 'allowed' - 'defaults' - 'open'
+ WHERE constitution_key = 'base' AND active AND (governance ? 'allowed' OR governance ? 'defaults' OR governance ? 'open');
+SQL
+
 # ---- 7. the stack ------------------------------------------------------------------------------------------------------------
 say "starting the stack (the first build on 2 OCPU takes a few minutes)"
 $DC up -d --build
