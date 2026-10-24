@@ -91,6 +91,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
   } finally {
     srv.close();
     console.log(`\n  ${pass} passed, ${fail} failed\n`);
-    process.exit(fail ? 1 : 0);
+    /* exitCode, not exit(): exit() while the closing server socket is mid-close aborts Node 24 on Windows (UV_HANDLE_CLOSING, src/win/async.c:94) - the 10 checks passed, then the process crashed (QA-82) */
+    process.exitCode = fail ? 1 : 0;
+    if (srv.closeAllConnections) srv.closeAllConnections();
   }
 });
