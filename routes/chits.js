@@ -3212,8 +3212,8 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           console.error('mark-read skipped:', e.message);
           try {
             await db.query('ROLLBACK TO SAVEPOINT mark_read');
-          } catch (problem) {
-            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', problem);
+          } catch (rollbackError) {
+            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', rollbackError);
           }
         }
       }
