@@ -74,7 +74,7 @@ const codeLeak = (body) => { const s = JSON.stringify(body); return /"(otp|otp_c
     expect(row && row.state !== 'on', 'premise: the person should be off in the list, saw state ' + (row && row.state));
     expect(reset.status >= 400 && reset.status < 500, 'a code for a person who is off answered ' + reset.status + ' ' + JSON.stringify(reset.b).slice(0, 200));
     expect(row && row.may.reset_pin.ok === false && /\w+/.test(row.may.reset_pin.why || ''), 'the list says reset_pin ' + JSON.stringify(row && row.may.reset_pin));
-  }, 'DELETE /api/actors/:id/pin (routes/actors.js:637) never reads break_status: a person who is off gets a fresh one-time code (200); people.test.cjs only proves the list greys it');
+  });
 
   await kase('PP-03b', 'a code for a person who is switched off through POST /:id/otp is refused', async () => {
     const off = await addActor(A, 'Off Again', 'd'), id = off.actor.identity_id;
