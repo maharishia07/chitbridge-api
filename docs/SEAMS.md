@@ -86,7 +86,7 @@ of file each thing is; this says what already does the job.
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 25 | `flags` | `cmdb.js` | the flags a record raises about itself — |
-| 25 | `gate` | `country-setup.js` | gate(h, entity): |
+| 26 | `gate` | `country-setup.js` | gate(h, entity): |
 | 25 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `money` | `cart.js` |  |
@@ -135,7 +135,7 @@ of file each thing is; this says what already does the job.
 | 17 | `governance` | `home-facts.js` |  |
 | 17 | `group` | `identity.js` | again in a different costume. |
 | 17 | `match` | `itemmatch.js` | actually state. |
-| 17 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
+| 18 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 17 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 18 | `allowed` | `trips.js` | let _idsFrom = null, |
