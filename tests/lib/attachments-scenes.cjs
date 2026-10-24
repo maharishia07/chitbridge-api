@@ -127,7 +127,7 @@ function extras(tools) {
     up('up-empty-mime-is-octet-stream', 200, withBody({ mime: '' })),
     up('up-name-an-object-is-echoed-as-sent', 200, withBody({ name: { any: 'thing' } })),
     up('up-mime-a-number-is-echoed-as-sent', 200, withBody({ mime: 7 })),
-    up('up-bytes-a-number', 200, withBody({ data_base64: 123456 })),
+    up('up-bytes-a-number', 200, withBody({ data_base64: 246810 })),
     up('up-line-index-text-2', 200, withBody({ line_index: '2' })),
     up('up-line-index-zero', 200, withBody({ line_index: 0 })),
     up('up-line-index-null', 200, withBody({ line_index: null })),
