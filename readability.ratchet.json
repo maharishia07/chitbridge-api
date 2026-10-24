@@ -22,7 +22,7 @@
   "lib/books-manual.js": {"score":67,"long40":1,"long80":0,"complex10":5,"complex15":2,"deep3":0,"deep4":0,"cryptic":59,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/books-nightly.js": {"score":28,"long40":2,"long80":1,"complex10":2,"complex15":1,"deep3":1,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/books-pack.js": {"score":33,"long40":2,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":28,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "lib/books-payables.js": {"score":32,"long40":2,"long80":2,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":26,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
+  "lib/books-payables.js": {"score":30,"long40":2,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":25,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/books-period.js": {"score":178,"long40":10,"long80":2,"complex10":6,"complex15":2,"deep3":0,"deep4":0,"cryptic":158,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/books-recurring.js": {"score":83,"long40":1,"long80":0,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":74,"noWhatLine":4,"emptyCatch":0,"noHeader":0},
   "lib/books-store.js": {"score":134,"long40":0,"long80":0,"complex10":5,"complex15":1,"deep3":0,"deep4":0,"cryptic":121,"noWhatLine":7,"emptyCatch":0,"noHeader":0},
