@@ -2,18 +2,17 @@
  "_about": "lint ratchet (MNT-1): eslint warnings per own-code file, 18 Oct = the baseline. A file may have FEWER warnings than its row, never more. Warn-only: no CI step reads this yet. Lower with `node tools/lint-ratchet.cjs --write`.",
  "_totals": {
   "files": 431,
-  "eslintWarnings": 86,
+  "eslintWarnings": 69,
   "parseErrors": 0,
   "prettierFail": 12,
   "prettierChecked": 431
  },
  "_rules": {
-  "no-unused-vars": 8,
-  "no-useless-escape": 1,
-  "no-control-regex": 2,
-  "no-empty": 73,
-  "no-dupe-keys": 1,
-  "no-shadow": 1
+  "no-empty": 69,
+  "no-control-regex": 1,
+  "no-unused-vars": 6,
+  "no-shadow": 1,
+  "no-useless-escape": 1
  },
  "lib/access-events.js": {
   "warnings": 0,
@@ -632,7 +631,7 @@
   "prettierOk": true
  },
  "lib/raiseticket.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "lib/rates.js": {
@@ -1104,7 +1103,7 @@
   "prettierOk": true
  },
  "routes/till.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "routes/work.js": {
@@ -1668,7 +1667,7 @@
   "prettierOk": true
  },
  "src/routes/network.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "src/services/catalogue.js": {
@@ -1732,7 +1731,7 @@
   "prettierOk": true
  },
  "tools/simulate-years.cjs": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "tools/sql-inventory.cjs": {

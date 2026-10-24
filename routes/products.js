@@ -558,12 +558,12 @@ const UUID = require('../lib/namedentity').UUID; /* only a real id is asked of t
 /** the import's 200: what was added, updated and failed, in a sentence and in numbers, plus the columns it created */
 function importAnswer(outcome, created) {
   const count = (action) => outcome.filter((item) => item.action === action).length;
-  const failed = count('failed');
+  const failedCount = count('failed');
   return {
-    message: `${count('created')} added, ${count('updated')} updated` + (failed ? `, ${failed} failed` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
+    message: `${count('created')} added, ${count('updated')} updated` + (failedCount ? `, ${failedCount} failed` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
     created_columns: created,
     outcome,
-    summary: { created: count('created'), updated: count('updated'), failed }
+    summary: { created: count('created'), updated: count('updated'), failed: failedCount }
   };
 }
 /** CAT-210: the file lines of an editor's import that set or change a rate, by position (never their values, Q19); [] for an owner or manager. ONE read of the shop's products for the lot. */
