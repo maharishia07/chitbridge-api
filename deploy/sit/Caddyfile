@@ -1,0 +1,62 @@
+# deploy/sit/Caddyfile - the one front door of a SIT installation. {$SIT_HOST} = sit-in.ondcpro.com or sit-au.ondcpro.com.
+#
+# HOW THE WEB FINDS THE API: the web is static and reads window.CB_API from /config.js (web deploy/40-cb-api-base.sh). Here CB_API is the
+# SAME host, so the browser calls /api/... on the host it opened and Caddy sends those to the api: no CORS, no second name, no second
+# certificate. /config.js is answered per host by Caddy, so a storefront subdomain or a shop's own domain also calls its own origin.
+# The api's CORS check refuses an Origin it does not list (server.js ALLOWED_ORIGINS); a same-origin POST still carries one, so the proxy removes
+# it on the way in. That is safe: the browser blocks any other site from READING these answers, and sign-in is a bearer token, not a cookie.
+#
+# CERTIFICATES (GoDaddy's DNS API is not usable, so NO wildcard certificate, NO DNS challenge):
+#   {$SIT_HOST}             a normal certificate, HTTP-01, at first start
+#   anything else           on-demand: the first request for a name asks http://ask:9123/ask?domain=<name>; 200 = issue, anything else = refuse.
+#                           That covers  <shop>.{$SIT_HOST}  (DNS: A *.sit-in -> the VM)  and a shop's OWN domain (shop CNAMEs www.shop.example -> {$SIT_HOST}).
+#   What `ask` must check (deploy/sit/ask.cjs): the name is {$SIT_HOST} itself, or ONE label under it that is a valid handle AND the api has a live
+#   storefront for it (GET /api/catalogue/<handle> = 200), or it is on ASK_CUSTOM_HOSTS. Anything else is refused, and the answer is cached so a
+#   flood of made-up names cannot reach Let's Encrypt (50 certificates a week per registered domain) or the api's rate limit.
+#   A shop's own domain needs a record of "this domain belongs to shop X" and proof the owner controls it (the CNAME). Neither exists in the api today
+#   (docs/28-platform-and-operations/CLOUD-DEPENDENCY.md), so a custom domain is approved by hand in ASK_CUSTOM_HOSTS; the web would also have to open that shop's storefront
+#   from the Host name, which it does not do yet.
+{
+	on_demand_tls {
+		ask http://ask:9123/ask
+	}
+}
+
+(front_door) {
+	encode zstd gzip
+
+	@api path /api/* /health /.well-known/*
+	handle @api {
+		reverse_proxy api:3000 {
+			header_up -Origin
+			# the live bell is Server-Sent Events: send each event at once, never buffer it
+			flush_interval -1
+		}
+	}
+
+	handle /config.js {
+		header Content-Type "application/javascript; charset=utf-8"
+		header Cache-Control "no-store"
+		respond `window.CB_API = window.CB_API || "https://{host}";` 200
+	}
+
+	handle {
+		# vercel.json sent these on the live site; the web's nginx image does not
+		header X-Content-Type-Options nosniff
+		header Referrer-Policy strict-origin-when-cross-origin
+		header Content-Security-Policy "object-src 'none'; base-uri 'self'"
+		reverse_proxy web:8080
+	}
+}
+
+{$SIT_HOST} {
+	import front_door
+}
+
+# every other name that reaches port 443: certificate only if `ask` says yes
+https:// {
+	tls {
+		on_demand
+	}
+	import front_door
+}
