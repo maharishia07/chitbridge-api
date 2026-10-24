@@ -25,6 +25,8 @@ case "${1:-}" in
   au) SIT_HOST=sit-au.ondcpro.com; COUNTRY=AU; CURRENCY=AUD; TZNAME=Australia/Sydney; KEY=sit-au ;;
   *) die "usage: ./up.sh in|au" ;;
 esac
+# before DNS: SIT_HOST_AS=129-225-85-65.sslip.io (a public name that resolves to the VM's IP) stands in for the ondcpro.com name
+SIT_HOST=${SIT_HOST_AS:-$SIT_HOST}
 cd "$HERE"
 
 # ---- helpers for .env -------------------------------------------------------------------------------------------------------
