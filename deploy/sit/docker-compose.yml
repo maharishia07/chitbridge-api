@@ -1,5 +1,6 @@
 # deploy/sit/docker-compose.yml - the SIT installation (sit-in / sit-au): deploy/compose.yml WIDENED, never copied.
 #   docker compose -p chitbridge -f ../compose.yml -f docker-compose.yml --env-file .env up -d --build      (up.sh does exactly this)
+# Relative paths below resolve against deploy/ (the FIRST -f file sets the project folder), hence sit/...
 # The base file already holds db (postgres:16-alpine + volume), the migrate job, api (this repo's Dockerfile), web (../../chitbridge-web).
 # This file adds only what a public host needs:
 #   caddy  TLS (Let's Encrypt, automatic) and the one front door: /api, /health, /.well-known to the api, everything else to the web
@@ -15,7 +16,7 @@ services:
 
   api:
     ports: !reset []
-    env_file: [.api.env]
+    env_file: [sit/.api.env]
     environment:
       # base file sets NODE_ENV, DATABASE_URL (cb_app, never the owner), JWT_SECRET, OTP_EMAIL_ENABLED, RESEND_*, ALLOWED_ORIGINS, PUBLIC_WEB_BASE
       INSTALLATION_KEY: ${INSTALLATION_KEY:?set INSTALLATION_KEY in deploy/sit/.env (up.sh does)}
@@ -42,7 +43,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sit/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddydata:/data
       - caddyconfig:/config
     depends_on: [api, web, ask]
@@ -58,7 +59,7 @@ services:
       ASK_API: http://api:3000
       ASK_CUSTOM_HOSTS: ${ASK_CUSTOM_HOSTS:-}
     volumes:
-      - ./ask.cjs:/ask/ask.cjs:ro
+      - ./sit/ask.cjs:/ask/ask.cjs:ro
     depends_on: [api]
 
 volumes:
