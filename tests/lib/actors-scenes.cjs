@@ -69,9 +69,8 @@ function extras(tools) {
   const own = (fn) => ({ sqlRows: fn });
   const T = (patchOf) => ({ patch: patchOf });
   /* a sealed environment: the first-code door refuses unless a sender is set up (503) or the person has an e-mail (400) */
-  const sealed = (mailerReady) => ({
-    empcode: {
-      refusal: (to) => {
+  const sealed = (mailerReady) => {
+    const refusal = (to) => {
         const real = tools.realRefusal;
         const was = ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'FROM_EMAIL'].map((name) => [name, process.env[name]]);
         const sealedWas = tools.devOtp.isSealed;
@@ -83,9 +82,10 @@ function extras(tools) {
           tools.devOtp.isSealed = sealedWas;
           was.forEach(([name, value]) => (value === undefined ? delete process.env[name] : (process.env[name] = value)));
         }
-      }
-    }
-  });
+    };
+    /* SEC-106: the routes ask mayIssue (this refusal, then the code store), so it answers the same refusal */
+    return { empcode: { refusal, mayIssue: async (to) => refusal(to) } };
+  };
   const showsCode = { devotp: { mayExposeOtp: () => true } };
   const mailed = { notify: { sendOtpEmail: async () => ({ delivered: true }) } };
   const BODY_NEW = { display_name: 'Ravi Kumar', actor_key: 'ravik' };
