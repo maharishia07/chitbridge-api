@@ -1184,8 +1184,8 @@
    "code": "DUPLICATE_PARTY",
    "status": "409",
    "title": "Duplicate party",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Another party on your list already has this tax number.",
+   "hint": "Check the number, or open the party that holds it.",
    "owner_area": "relationships",
    "since": "2026-10-22"
   },
@@ -2663,6 +2663,96 @@
    "shopkeeper": "That kind of tax registration is not offered in your country.",
    "hint": "Pick one of the kinds listed.",
    "owner_area": "policy",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_EXISTS",
+   "status": "409",
+   "title": "Already on your list",
+   "shopkeeper": "They are already on your list.",
+   "hint": "Open the list to find them.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_ID_BUSY",
+   "status": "409",
+   "title": "Could not make an id",
+   "shopkeeper": "We could not give them an id just now.",
+   "hint": "Try once more.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_NAME_REFUSED",
+   "status": "400",
+   "title": "Name not accepted",
+   "shopkeeper": "That name could not be used to add them.",
+   "hint": "Type a plain name, not an email, and try again.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_NEED_PARTY",
+   "status": "400",
+   "title": "Say who to add",
+   "shopkeeper": "Say who to add: a ChitBridge User ID or email, or a name.",
+   "hint": "Type a User ID, an email or a name and try again.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_NOTHING_TO_UPDATE",
+   "status": "400",
+   "title": "Nothing to change",
+   "shopkeeper": "You sent nothing to change.",
+   "hint": "Send at least one field to change.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_NOT_YOURS",
+   "status": "403",
+   "title": "Not yours to rename",
+   "shopkeeper": "That is their own business name, so you cannot change it.",
+   "hint": "Use your own name for them instead.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_NO_BUSINESS",
+   "status": "404",
+   "title": "No such business",
+   "shopkeeper": "We could not find a business with that User ID, bridge ID or email.",
+   "hint": "Check what you typed, or add them by name instead.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_PARTY_CONFLICT",
+   "status": "409",
+   "title": "Party details not set up",
+   "shopkeeper": "The party details are not set up here yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_PARTY_INVALID",
+   "status": "400",
+   "title": "Party detail not accepted",
+   "shopkeeper": "One of the party details was not accepted.",
+   "hint": "Read the line shown, correct it and try again.",
+   "owner_area": "relationships",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "REL_SELF",
+   "status": "400",
+   "title": "Cannot add yourself",
+   "shopkeeper": "You cannot add your own business to your list.",
+   "hint": "Choose another business.",
+   "owner_area": "relationships",
    "since": "2026-10-23"
   },
   {

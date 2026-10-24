@@ -372,6 +372,9 @@
   "GET /api/folders/mis": {
    "output_allowlist": true
   },
+  "PATCH /api/relationships/suppliers/:id": {
+   "output_allowlist": true
+  },
   "GET /api/relationships/suppliers/availability": {
    "output_allowlist": true
   },
@@ -384,6 +387,9 @@
   "POST /api/relationships/customers/:id/groups": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PATCH /api/relationships/customers/:id": {
+   "output_allowlist": true
   },
   "GET /api/relationships/scorecard": {
    "output_allowlist": true

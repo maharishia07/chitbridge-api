@@ -13,6 +13,9 @@
   "DELETE /api/crm/parties/:id": {
    "foreign_id_404": true
   },
+  "DELETE /api/relationships/suppliers/:id": {
+   "foreign_id_404": true
+  },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
@@ -61,6 +64,12 @@
    "foreign_id_404": true
   },
   "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/relationships/customers/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/relationships/suppliers/:id": {
    "foreign_id_404": true
   },
   "PATCH /api/testing/incidents/:id": {
@@ -115,6 +124,9 @@
    "foreign_id_404": true
   },
   "POST /api/crm/parties/:id/stage": {
+   "foreign_id_404": true
+  },
+  "POST /api/relationships/customers/:id/groups": {
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/accept": {

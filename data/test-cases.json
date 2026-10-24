@@ -64528,6 +64528,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-relationships.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE 14 RELATIONSHIP ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO ANSWER CARRIES A THROWN ERROR'S TEXT; ANOTHER SHOP'S LIST ROW ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE 14 RELATIONSHIP ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO ANSWER CARRIES A THROWN ERROR'S TEXT; ANOTHER SHOP'S LIST ROW ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 276 lines. Run: node chitbridge-api/tests/api-problem-relationships.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 276,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-products.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
