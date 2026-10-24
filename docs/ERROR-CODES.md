@@ -15,6 +15,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
 | AI_LIMIT | 429 | AI limit reached | You have used your AI allowance for now. | Try again later. | governance | 2026-10-23 |
 | AI_PROVIDER | 502 | AI did not answer | The AI did not answer just now. | Try again in a moment. | governance | 2026-10-23 |
+| AI_UNAVAILABLE | 503 | AI not connected | The AI is not available just now. | Try again later, or raise the request by hand. | capture | 2026-10-23 |
 | ALL_REFUSED | varies | All refused | PENDING | - | marketing-results | 2026-10-22 |
 | ALL_SENT | varies | All sent | PENDING | - | verdict | 2026-10-22 |
 | ALREADY_ASSIGNED | 400 | Already assigned | Someone already holds this task. | Ask them to hand it back first. | actors | 2026-10-23 |
@@ -51,6 +52,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
 | CAPABILITY_OFF | varies | Capability off | PENDING | - | connectors | 2026-10-22 |
+| CAPTURE_REFUSED | varies | Message not handled | That message could not be handled as asked. | Read the line shown, then try again. | capture | 2026-10-23 |
+| CAPTURE_STORE_MISSING | 503 | Inbox not ready | The inbox is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
 | CATALOGUE_NOT_EMPTY | 409 | Shop already has products | This shop already has products. | Start a starter list only on an empty shop. | till | 2026-10-23 |
 | CATALOGUE_STORE_MISSING | 503 | Saved catalogues not ready | Saved catalogues are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | CATEGORIES_NOT_SET_UP | 500 | Categories not set up | Your categories could not be set up, so nothing was added. | Try again in a moment. | till | 2026-10-23 |
@@ -276,6 +279,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | PENDING | - | verdict | 2026-10-22 |
+| STORES_NOT_MIGRATED | 503 | Shop list not ready | The shop list is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
 | SWITCHED_OFF | 400/404 | Switched off | This person is switched off. | Switch them on first. | actors | 2026-10-22 |
 | TARGET_ACTOR_NOT_ACTIVE | 400 | Colleague cannot take tasks | That colleague cannot take tasks right now. | Pick someone who is active. | actors | 2026-10-23 |

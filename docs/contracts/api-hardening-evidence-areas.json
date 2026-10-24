@@ -72,6 +72,18 @@
   "POST /api/actors/:id/otp": {
    "foreign_id_404": true
   },
+  "POST /api/capture/:id/convert": {
+   "foreign_id_404": true
+  },
+  "POST /api/capture/:id/dismiss": {
+   "foreign_id_404": true
+  },
+  "POST /api/capture/:id/raise": {
+   "foreign_id_404": true
+  },
+  "POST /api/capture/:id/structure": {
+   "foreign_id_404": true
+  },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "output_allowlist": true,
    "foreign_id_404": true

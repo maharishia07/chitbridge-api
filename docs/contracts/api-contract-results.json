@@ -354,6 +354,14 @@
     422
    ]
   },
+  "GET /api/capture/consolidate": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/catalogue/:bridge_id/my-documents": {
    "cases": 3,
    "failed": 0,
@@ -1712,6 +1720,54 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "POST /api/capture/:id/convert": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/:id/dismiss": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/:id/raise": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/:id/structure": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/simulate": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/stores": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "POST /api/catalogue/:bridge_id/login/verify": {

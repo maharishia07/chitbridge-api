@@ -3,8 +3,8 @@
  "stage": "2",
  "counts": {
   "routes": 633,
-  "not_started": 144,
-  "partial": 488,
+  "not_started": 135,
+  "partial": 497,
   "meets": 1,
   "columns": {
    "strict_input": {
@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 610
    },
    "foreign_id_404": {
     "applies": 227,
@@ -3678,18 +3678,18 @@
    "path": "/api/capture/consolidate",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 274,
-   "hash": "c560808f2b95e331",
+   "line": 277,
+   "hash": "2c754880414516a4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3703,9 +3703,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3714,7 +3719,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/capture/pending",
@@ -3722,16 +3727,16 @@
    "path": "/api/capture/pending",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 56,
-   "hash": "d7d1f325b05f79f5",
+   "line": 59,
+   "hash": "aa63a36c8fb35bd0",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -3747,9 +3752,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3758,7 +3767,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/capture/stores",
@@ -3766,16 +3775,16 @@
    "path": "/api/capture/stores",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 298,
-   "hash": "21f18f0a84e013da",
+   "line": 301,
+   "hash": "96f6dbc935fffa9d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -3791,9 +3800,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -3802,7 +3815,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/capture/webhook/whatsapp",
@@ -3810,7 +3823,7 @@
    "path": "/api/capture/webhook/whatsapp",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 121,
+   "line": 124,
    "hash": "78663c728812c446",
    "columns": {
     "schema_in": false,
@@ -18162,16 +18175,16 @@
    "path": "/api/capture/:id/convert",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 90,
-   "hash": "33a61432704235e0",
+   "line": 93,
+   "hash": "af4a403f154c6a3d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18187,9 +18200,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18198,7 +18217,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/capture/:id/dismiss",
@@ -18206,16 +18225,16 @@
    "path": "/api/capture/:id/dismiss",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 98,
-   "hash": "fa5da55144c55bc9",
+   "line": 101,
+   "hash": "a42a7a067092a26b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18231,9 +18250,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18242,7 +18267,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/capture/:id/raise",
@@ -18250,16 +18275,16 @@
    "path": "/api/capture/:id/raise",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 80,
-   "hash": "048e57210b7bcb98",
+   "line": 83,
+   "hash": "a6cd77f3fba06fd4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18275,9 +18300,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18286,7 +18317,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/capture/:id/structure",
@@ -18294,16 +18325,16 @@
    "path": "/api/capture/:id/structure",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 65,
-   "hash": "699ba17c91dfa208",
+   "line": 68,
+   "hash": "3f2d19294eed1651",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18319,9 +18350,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18330,7 +18367,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/capture/simulate",
@@ -18338,16 +18375,16 @@
    "path": "/api/capture/simulate",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 38,
-   "hash": "da38b16ffa5254e4",
+   "line": 41,
+   "hash": "37fd221879f08cb3",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18363,9 +18400,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18374,7 +18416,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/capture/stores",
@@ -18382,16 +18424,16 @@
    "path": "/api/capture/stores",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 305,
-   "hash": "a4ff6d7e1133f7b2",
+   "line": 308,
+   "hash": "255328331f6e7b90",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18407,9 +18449,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18418,7 +18465,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/capture/webhook/email",
@@ -18426,7 +18473,7 @@
    "path": "/api/capture/webhook/email",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 220,
+   "line": 223,
    "hash": "970b221adf248a12",
    "columns": {
     "schema_in": false,
@@ -18468,7 +18515,7 @@
    "path": "/api/capture/webhook/whatsapp",
    "owner_area": "capture",
    "file": "routes/capture.js",
-   "line": 190,
+   "line": 193,
    "hash": "560f4ec338a1edeb",
    "columns": {
     "schema_in": false,
