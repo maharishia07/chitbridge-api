@@ -188,7 +188,9 @@ echo "web  : $([ "$ok_web" = 1 ] && echo UP || echo NOT UP)  $WEB_OUT" 2>/dev/nu
 echo "api commit : $SOURCE_COMMIT  ($API_REF)  $(git -C "$API_DIR" log -1 --format=%s)"
 echo "web commit : $WEB_COMMIT  ($WEB_REF)  $(git -C "$WEB_DIR" log -1 --format=%s)"
 say "CTP manifest"
-curl -fsS --max-time 15 "https://$SIT_HOST/.well-known/ctp.json" 2>/dev/null | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const m=JSON.parse(s);console.log('ctp  : '+m.installation_key+' endpoint='+m.endpoint+' can_sign='+m.can_sign+' accepts='+JSON.stringify(m.accepts_populations)+(m.note?' ('+m.note+')':''))}catch(e){console.log('ctp  : manifest not readable yet')}})" || true
+# read inside the api container: the VM itself has no node
+CTP_JS="fetch('http://127.0.0.1:3000/.well-known/ctp.json').then(r=>r.json()).then(m=>{console.log('ctp  : '+m.installation_key+' endpoint='+m.endpoint+' can_sign='+m.can_sign+' accepts='+JSON.stringify(m.accepts_populations)+(m.note?' ('+m.note+')':''));process.exit(0)},()=>{console.log('ctp  : manifest not readable yet');process.exit(0)})"
+$DC exec -T api node -e "$CTP_JS" 2>/dev/null || echo "ctp  : manifest not readable yet"
 if curl -fsS --max-time 15 "https://$SIT_HOST/health" >/dev/null 2>&1; then
   echo "public     : https://$SIT_HOST/health answers (certificate issued)"
 else
