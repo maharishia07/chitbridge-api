@@ -467,7 +467,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/entities/populations | entities | routes/entities.js:1696 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/register | entities | routes/entities.js:139 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/verify | entities | routes/entities.js:140 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/events/ticket | events | routes/events.js:25 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/events/ticket | events | routes/events.js:25 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/folders | folders | routes/folders.js:185 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/folders/:id/rules | folders | routes/folders.js:518 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:764 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
@@ -515,8 +515,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/network/connections/:id/suspend | network | src/routes/network.js:164 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/network/entities | network | src/routes/network.js:38 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/network/entities/:id/claim | network | src/routes/network.js:54 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/notifications/dismiss | notifications | routes/notifications.js:210 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/notifications/seen | notifications | routes/notifications.js:181 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/notifications/dismiss | notifications | routes/notifications.js:210 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/notifications/seen | notifications | routes/notifications.js:181 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/offers/evaluate | offers | routes/offers.js:90 | no | yes | no | no | no | no | no | no | no | yes | yes | yes | no | partial |
 | POST | /api/offers/explain | offers | routes/offers.js:91 | no | yes | no | no | no | no | no | no | no | yes | yes | yes | no | partial |
 | POST | /api/pricing/price | pricing | routes/pricing.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |

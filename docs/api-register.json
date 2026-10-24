@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 608
    },
    "foreign_id_404": {
     "applies": 227,
@@ -7238,7 +7238,7 @@
    "owner_area": "events",
    "file": "routes/events.js",
    "line": 42,
-   "hash": "434e24b16c6ea9ee",
+   "hash": "c5740815fe4127c4",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10275,7 +10275,7 @@
    "owner_area": "notifications",
    "file": "routes/notifications.js",
    "line": 54,
-   "hash": "7493137af8579513",
+   "hash": "fc131eda6a1e8dca",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22146,7 +22146,7 @@
    "owner_area": "events",
    "file": "routes/events.js",
    "line": 25,
-   "hash": "a785aad8d9b3e459",
+   "hash": "3214cd54f41afe2d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22156,7 +22156,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -24481,7 +24481,7 @@
    "owner_area": "notifications",
    "file": "routes/notifications.js",
    "line": 210,
-   "hash": "eec8a3ea560c4282",
+   "hash": "d59f0da9b304d519",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -24491,7 +24491,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -24531,7 +24531,7 @@
    "owner_area": "notifications",
    "file": "routes/notifications.js",
    "line": 181,
-   "hash": "de2df848572c47dc",
+   "hash": "010892fd7215ad6f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -24541,7 +24541,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
