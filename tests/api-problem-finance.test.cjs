@@ -121,6 +121,12 @@ const raising = (pattern, code) => (sql) => {
 };
 /** a stand-in db that answers one statement with given rows */
 const answering = (pattern, rows) => (sql) => (pattern.test(sql) ? { rows, rowCount: rows.length } : null);
+/** several stand-in answers, the first that has one wins */
+const firstOf = (...answers) => (sql, params) => answers.map((answer) => answer(sql, params)).find((given) => given) || null;
+/** SEC-100: the folder lookup finds the folder (it is this shop's own) */
+const OWN_FOLDER = answering(/SELECT 1 FROM folder WHERE folder_id = \$1 AND entity_id = \$2/, [{ '?column?': 1 }]);
+/** a scenario for an answer the SEC-100 fix ADDS: the code before answered it otherwise (200 or 500), so nothing is frozen for it */
+const N = (id, route, status, extra) => X(id, route, status, Object.assign({ after: true }, extra));
 const BAD_WHEN = { when: { nonsense: 'x' } };
 const FOLDER_ROW = (extra) => Object.assign({ folder_id: PARTY, name: 'Mayur', scope: 'task', kind: 'filed' }, extra);
 const EXTRAS = [
@@ -138,6 +144,9 @@ const EXTRAS = [
   X('nothing-to-update', 'PATCH ' + F + '/:id', 400, { body: {} }),
   X('own-parent', 'PATCH ' + F + '/:id', 400, { body: { parent_id: PARTY } }),
   X('name-empty', 'PATCH ' + F + '/:id', 400, { body: { name: '' } }),
+  N('parent-folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { parent_id: '33333333-3333-4333-8333-333333333333' } }),
+  N('parent-not-an-id', 'PATCH ' + F + '/:id', 404, { body: { parent_id: 'nope' } }),
+  N('moved-under-own-folder', 'PATCH ' + F + '/:id', 200, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/UPDATE folder SET/, [FOLDER_ROW()])) } }),
   X('renamed', 'PATCH ' + F + '/:id', 200, { body: { name: 'Mayur' }, setup: { sqlRows: answering(/UPDATE folder SET/, [FOLDER_ROW()]) } }),
   X('db-fails-with-a-chit', 'POST ' + F + '/move', 500, { body: { chit_id: PARTY }, setup: { db: 'fail' } }),
   X('chit-not-an-id', 'POST ' + F + '/move', 400, { body: { chit_id: 'nope' } }),
@@ -153,7 +162,9 @@ const EXTRAS = [
   X('system-rule-shown', 'GET ' + F + '/:id/rules', 200, { url: F + '/' + sysId('B-2100') + '/rules' }),
   X('db-fails-with-a-rule', 'POST ' + F + '/:id/rules', 500, { body: { when: { doc: 'invoice' } }, setup: { db: 'fail' } }),
   X('condition-unknown', 'POST ' + F + '/:id/rules', 400, { body: BAD_WHEN }),
-  X('rules-not-migrated', 'POST ' + F + '/:id/rules', 503, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: raising(/INSERT INTO folder_rule/, '42P01') } }),
+  X('rules-not-migrated', 'POST ' + F + '/:id/rules', 503, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, raising(/INSERT INTO folder_rule/, '42P01')) } }),
+  N('rule-folder-not-found', 'POST ' + F + '/:id/rules', 404, { body: { when: { doc: 'invoice' } } }),
+  N('rule-made-in-own-folder', 'POST ' + F + '/:id/rules', 200, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [{ rule_id: PARTY, folder_id: PARTY }])) } }),
   X('rules-not-migrated', 'DELETE ' + F + '/rules/:rule_id', 503, { setup: { sqlRows: raising(/DELETE FROM folder_rule/, '42P01') } }),
   X('db-fails-with-a-change', 'PATCH ' + F + '/rules/:rule_id', 500, { body: { name: 'Mayur' }, setup: { db: 'fail' } }),
   X('rule-nothing-to-update', 'PATCH ' + F + '/rules/:rule_id', 400, { body: {} }),
@@ -333,7 +344,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (inherited(scenario, answer)) continue;
     checkProblemBody(label, answer);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT|vault|relation "/.test(answer.text), answer.text);
-    else checkLegacy(label, answer, legacyOf(scenario.route, scenario.id));
+    else if (!scenario.after) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id));
   }
   return tested;
 }

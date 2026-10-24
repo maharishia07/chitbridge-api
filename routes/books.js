@@ -1556,25 +1556,33 @@ router.post('/cheques/:id/status', auth, editor, on, ...checked('POST /cheques/:
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } — a disputed bill cannot take a payment (C4) */
+/**
+ * the books' one word for a held bill, as the row says it (R106: "Hold this bill" on ANY supplier reuses this status — the engine knows
+ * disputed / undisputed and no `held`; a screen paints these words, never its own)
+ */
+const STATUS_WORDS = { disputed: 'Held — in dispute with you', undisputed: 'Released — payable again' };
+/**
+ * POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } → { ok, status: disputed|undisputed, words, against_ref }
+ * — a disputed bill cannot take a payment (C4); Payables and cash-flow leave it out until it is released
+ */
 router.post('/parties/:id/dispute', auth, editor, on, ...checked('POST /parties/:id/dispute'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
       b = req.body || {};
     if (!UUID.test(id) || !b.against_ref) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which bill?', 'Which bill?');
-    res.json(
-      await B.postEntry(null, e, {
-        type: 'party_status',
-        party: id,
-        side: b.side === 'supplier' ? 'supplier' : 'customer',
-        against_ref: String(b.against_ref),
-        status: b.disputed === false ? 'undisputed' : 'disputed',
-        note: b.note ? String(b.note).slice(0, 300) : null,
-        currency: curOf(req),
-        by: byOf(req)
-      })
-    );
+    const status = b.disputed === false ? 'undisputed' : 'disputed';
+    const posted = await B.postEntry(null, e, {
+      type: 'party_status',
+      party: id,
+      side: b.side === 'supplier' ? 'supplier' : 'customer',
+      against_ref: String(b.against_ref),
+      status,
+      note: b.note ? String(b.note).slice(0, 300) : null,
+      currency: curOf(req),
+      by: byOf(req)
+    });
+    res.json(Object.assign({}, posted, posted.ok && !posted.off ? { words: STATUS_WORDS[status], against_ref: String(b.against_ref) } : {}));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2269,7 +2277,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
     problem(req, res, refusalOf(err, req));
   }
 });
-/** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
+/** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · suppliers_to_add · bills_unrated (F5 A1: a bill with an unrated line, listed never changed) · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
     res.json(await require('../lib/books-todo').todo(ctx(req), req.books));
