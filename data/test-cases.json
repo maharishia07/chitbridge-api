@@ -64106,6 +64106,34 @@
    "changed_at": "2026-10-22T23:01:04+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/api-allowlist.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-1 output allow-list (S34): the pruning rule, the res.json filter and the shape derivation from recorded answers (the identity on every answer seen; a key never seen is dropped and named).",
+   "claim": "API-1 output allow-list (S34): the pruning rule, the res.json filter and the shape derivation from recorded answers (the identity on every answer seen; a key never seen is dropped and named).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 29 checks. Run: node chitbridge-api/tests/api-allowlist.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "middleware"
+   ],
+   "subjects": [
+    "lib/output-allowlist.js",
+    "tools/api-allowlist.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T22:40:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-csp.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
