@@ -56,6 +56,9 @@ REF=${API_REF:-main}
 if [ -d "$API_DIR/.git" ]; then
   git_auth -C "$API_DIR" fetch -q origin "$REF"
   git -C "$API_DIR" checkout -q -B "$REF" "origin/$REF"
+elif [ -n "${SPIN_SEED:-}" ] && [ -f "$SPIN_SEED" ]; then
+  # a SIT-only branch (the kit + the rail fixes + this tooling) travels as a git bundle from the master, so it needs no branch on GitHub
+  git clone -q --branch "$REF" "$SPIN_SEED" "$API_DIR"
 else
   git_auth clone -q --branch "$REF" https://github.com/maharishia07/chitbridge-api.git "$API_DIR"
 fi

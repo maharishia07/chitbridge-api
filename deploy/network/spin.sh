@@ -28,6 +28,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 MASTER_DIR=${MASTER_DIR:-$HERE/../sit}
 PROJECT=${SPIN_MASTER_PROJECT:-cbnet}
 SSH_KEY=${SPIN_SSH_KEY:-$HOME/.ssh/spin_ed25519}
+SEED_BUNDLE=${SPIN_SEED_BUNDLE:-$HOME/net/seed.bundle}   # set on a master whose SIT branch is a bundle, not a GitHub branch
 SSH="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15 $TARGET"
 DOCKER=docker; docker info >/dev/null 2>&1 || DOCKER="sudo docker"
 MC="$DOCKER compose -p $PROJECT -f ../compose.yml -f docker-compose.yml --env-file .env exec -T api node tools/network-cert.cjs"
@@ -62,6 +63,7 @@ $SSH 'mkdir -p ~/net && chmod 700 ~/net'
   echo "SPIN_HANDLE=$HANDLE"
   echo "SPIN_HOST=$HOST"
   echo "SPIN_PROJECT=$PROJECT"
+  [ ! -f "$SEED_BUNDLE" ] || echo 'SPIN_SEED=$HOME/net/seed.bundle'
   echo "CB_INSTALLER_TOKEN=$TOKEN"
   echo "API_REF=${SPIN_API_REF:-$(sed -n 's/^API_REF=//p' .env | head -n 1)}"
   echo "GIT_TOKEN=$(sed -n 's/^GIT_TOKEN=//p' .env | head -n 1)"
@@ -70,6 +72,7 @@ $SSH 'mkdir -p ~/net && chmod 700 ~/net'
   echo "CB_MASTER_KEY=$PIN"
   echo "SPIN_MASTER_FINGERPRINT=$FINGERPRINT"
 } | $SSH 'umask 077; cat > ~/net/spin.env'
+[ ! -f "$SEED_BUNDLE" ] || scp -q -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o BatchMode=yes "$SEED_BUNDLE" "$TARGET:net/seed.bundle"
 $SSH 'cat > ~/net/install.sh' < "$HERE/install.sh"   # copied, then run with its own stdin: a command inside must not swallow the script
 OUT=$($SSH 'sh ~/net/install.sh' < /dev/null | tee /dev/stderr | sed -n 's/^SPIN_RESULT //p' | tail -n 1)
 [ -n "$OUT" ] || die "the target did not report a result"
