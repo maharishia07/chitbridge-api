@@ -112,6 +112,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
 | EMAIL_TAKEN | 409 | Email taken | That e-mail already signs in to another account. | Use the person's own e-mail, or leave it empty. | actors | 2026-10-22 |
 | EMPLOYEE_EMAIL_REQUIRED | 400 | Employee email required | This person needs an e-mail address for the first code. | Add their e-mail, then try again. | employee-code | 2026-10-22 |
+| CODE_ISSUE_LIMIT | 429 | Too many codes | Five codes were made for this person in the last 15 minutes. | Wait a few minutes, then make a new one. | employee-code | 2026-10-24 |
+| CODE_SHOW_NOT_READY | 503 | Showing a code is not ready | This environment cannot show a first code yet, so none was made. | Add their e-mail, or try again later. | employee-code | 2026-10-24 |
 | ENTITY_BAD_REQUEST | 400 | Request not usable | What was sent is missing something or cannot be used. | Read the sentence shown, fix it and try again. | entities | 2026-10-23 |
 | ENTITY_CLASH | 409 | Clashes with what is recorded | That clashes with what is already recorded. | Read the sentence shown, then pick another. | entities | 2026-10-23 |
 | ENTITY_EMAIL_TAKEN | 409 | Email already used | A shop with that email already exists. | Use another email. | governance | 2026-10-23 |

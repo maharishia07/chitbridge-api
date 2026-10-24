@@ -167,6 +167,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
+     govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
+     same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
+  'stocked.js',
   /* ADOPTION, and the name is exact: it decides what one shop may take into its own catalogue from another's
      delivery. Pure policy over shapes — the vertical gate, the resale/own-use split, the seed for a form.
      It decides no money and holds no state, and the day the chit shape changes this file changes alone. */

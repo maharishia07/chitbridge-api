@@ -2120,7 +2120,8 @@
   },
   "GET /api/people": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    }
   },
   "POST /api/connectors": {

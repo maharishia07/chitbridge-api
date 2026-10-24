@@ -113,7 +113,8 @@ it('sealed + column + NO key: mayIssue goes ahead, issue writes the plain column
   hasHash = true; setKey(null); errors.length = 0;
   assert.strictEqual(await sealed.mayIssue('a@b.co'), null, 'a missing key is not a refusal');
   const noMail = await sealed.mayIssue('');
-  assert.strictEqual(noMail.body.code, 'EMPLOYEE_EMAIL_REQUIRED', 'the delivery refusal stays');
+  assert.strictEqual(noMail, null, 'R112: no e-mail is shown to the owner, not refused (the column is there)');
+  hasHash = false; assert.strictEqual((await sealed.mayIssue('')).body.code, 'CODE_SHOW_NOT_READY', 'R112: no column, sealed, no e-mail: the show path refuses in words'); assert.strictEqual(await sealed.mayIssue('a@b.co'), null, 'an e-mailed code is never refused for the column'); hasHash = true;
   const run = recorder(); const { otp: code } = await sealed.issue(run, ID, { entity_id: SHOP });
   assert(/otp_code = \$1, otp_code_hash = NULL, otp_expires_at/.test(run.calls[0].sql), run.calls[0].sql); assert.strictEqual(run.calls[0].args[0], code);
   assert(errors.some((e) => /VAULT_ENC_KEY is not set: the staff code is kept in plain text until it is/.test(e)), 'ERROR in words'); assert(!errors.join(' ').includes(code));

@@ -2632,6 +2632,18 @@ router.post('/shop', auth, auth.requireScope('till'), ...checked('POST /shop'), 
  * everything else `lib/stock-store.js` already says about v1. A tracked product's balance is still the sum
  * across its batches, which is exactly what "total qty" asks for.
  */
+/** the answer's shape per product: qty · avg_cost (the ledger's own rounding); with detail its lots and `counted` (R104), and how many are not counted */
+function stockBalancesOf(by, inventoryEngine, detail) {
+  const out = {};
+  let notCounted = 0;
+  for (const id of Object.keys(by)) {
+    const b = by[id];
+    out[id] = { qty: b.qty, avg_cost: b.qty ? inventoryEngine.m2(b.value / b.qty) : 0 };
+    if (detail) Object.assign(out[id], { lots: b.lots, counted: b.counted !== false });
+    if (b.counted === false) notCounted++;
+  }
+  return { out, notCounted };
+}
 router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2650,13 +2662,11 @@ router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), 
         not_ready: 'STOCK_LEDGER_MISSING',
         says: 'Stock is not switched on for this shop yet. Receive a delivery and it starts.'
       });
-    const by = await stockStore.onHand(entity_id, withEntity, detail ? { lots: true } : {});
-    const out = {};
-    for (const id of Object.keys(by)) {
-      const b = by[id];
-      out[id] = { qty: b.qty, avg_cost: b.qty ? inv.m2(b.value / b.qty) : 0 };
-      if (detail) out[id].lots = b.lots;
-    }
+    /* R104: with detail, each balance says whether the shop COUNTS it (`counted`, lib/stocked — a dish made to order is false) and
+       `not_counted` says how many are not, so the screen can say so instead of listing a dish at −40 "below zero"; the counter's
+       plain call is unchanged (the till does not show stock). The rows stay: a dish keeps its old figure, greyed. */
+    const by = await stockStore.onHand(entity_id, withEntity, detail ? { lots: true, counted: 'stamp' } : {});
+    const { out, notCounted } = stockBalancesOf(by, inv, detail);
     if (detail && Object.keys(out).length) {
       const ids = Object.keys(out);
       const r = await withEntity(entity_id, (db) => db.query(require('../lib/catalogue-read').ITEM_NAMES_SQL, [entity_id, ids]));
@@ -2668,7 +2678,7 @@ router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), 
     }
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
-    res.json({ balances: out, at: new Date().toISOString() });
+    res.json(Object.assign({ balances: out, at: new Date().toISOString() }, detail ? { not_counted: notCounted } : {}));
   } catch (e) {
     problem(req, res, failed(e, req));
   }
