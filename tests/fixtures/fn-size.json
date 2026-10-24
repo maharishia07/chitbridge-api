@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 228,
+  "long_functions": 227,
   "worst_complexity": 183,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -42,7 +42,6 @@
       "build"
     ],
     "lib/books-payables.js": [
-      "(anonymous)",
       "view"
     ],
     "lib/books-period.js": [
