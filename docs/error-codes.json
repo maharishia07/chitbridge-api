@@ -2918,6 +2918,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "SIM_FEEDBACK_MESSAGE_MISSING",
+   "status": "400",
+   "title": "Feedback message missing",
+   "shopkeeper": "The feedback has no message in it.",
+   "hint": "Write what you thought, then send.",
+   "owner_area": "simulator",
+   "since": "2026-10-24"
+  },
+  {
+   "code": "SIM_LEAD_FIELDS_MISSING",
+   "status": "400",
+   "title": "Name or e-mail missing",
+   "shopkeeper": "A name and a valid e-mail are needed to start the tour.",
+   "hint": "Type your name and an e-mail address, then try again.",
+   "owner_area": "simulator",
+   "since": "2026-10-24"
+  },
+  {
    "code": "SOURCE_STORE_MISSING",
    "status": "503",
    "title": "Source authoring not ready",

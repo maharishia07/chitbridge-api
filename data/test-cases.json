@@ -64620,6 +64620,62 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-simulator.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE TOUR ROUTES (ROUTES/SIMULATOR.JS, 3 PUBLIC ROUTES) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER, SQL STATEMENT, E-MAIL OR TOKEN MOVED; NO ANSWER SAYS ITS CAUSE; A LEAD ID IS A FOREIGN-KEY EXISTENCE ORACLE (A FINDING, MODELLED).",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE TOUR ROUTES (ROUTES/SIMULATOR.JS, 3 PUBLIC ROUTES) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER, SQL STATEMENT, E-MAIL OR TOKEN MOVED; NO ANSWER SAYS ITS CAUSE; A LEAD ID IS A FOREIGN-KEY EXISTENCE ORACLE (A FINDING, MODELLED).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 386 lines. Run: node chitbridge-api/tests/api-problem-simulator.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 386,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/simulator-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "TOUR TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of the tour routes).",
+   "claim": "TOUR TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of the tour routes).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 101 lines. Run: node chitbridge-api/tests/simulator-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 101,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-till.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

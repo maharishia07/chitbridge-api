@@ -903,6 +903,9 @@
   500,
   503
  ],
+ "GET /api/simulator/content": [
+  500
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -2304,6 +2307,14 @@
  "POST /api/repeat/sweep": [
   401,
   403,
+  500
+ ],
+ "POST /api/simulator/feedback": [
+  400,
+  500
+ ],
+ "POST /api/simulator/lead": [
+  400,
   500
  ],
  "POST /api/tax/compute": [
