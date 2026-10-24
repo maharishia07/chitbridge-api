@@ -4,9 +4,9 @@
  "updated": "2026-10-24",
  "total": 633,
  "not_meeting": 632,
- "codes_total": 380,
+ "codes_total": 382,
  "codes_pending": 59,
- "raw_error_writes": 33,
+ "raw_error_writes": 32,
  "columns_failing": {
   "strict_input": 338,
   "output_allowlist": 611,

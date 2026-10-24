@@ -1694,6 +1694,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "KYB_BAD_REQUEST",
+   "status": "400",
+   "title": "Nothing to add",
+   "shopkeeper": "Say what the paper is called, or give its standard, and try again.",
+   "hint": "Type the name of the paper (for example Village NOC) and add it.",
+   "owner_area": "kyb",
+   "since": "2026-10-24"
+  },
+  {
+   "code": "KYB_REFUSED",
+   "status": "varies",
+   "title": "Refused",
+   "shopkeeper": "The Know your business page could not do that as asked.",
+   "hint": "Read the line shown, change what you sent and try again.",
+   "owner_area": "kyb",
+   "since": "2026-10-24"
+  },
+  {
    "code": "LAB_CHIT_LIVE_SHOP",
    "status": "409",
    "title": "Lab chit on a live shop",

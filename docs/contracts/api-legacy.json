@@ -39504,6 +39504,386 @@
      }
     }
    ]
+  },
+  "GET /api/kyb/position": {
+   "answers": [
+    {
+     "scenario": "position-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "position-bad-setting",
+     "status": 500,
+     "body_keys": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "position-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "position-library-throws-409",
+     "status": 409,
+     "body_keys": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Position failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/kyb/risk": {
+   "answers": [
+    {
+     "scenario": "risk-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "risk-bad-setting",
+     "status": 500,
+     "body_keys": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "risk-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "risk-library-throws-503",
+     "status": 503,
+     "body_keys": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Risk failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/kyb/yourself": {
+   "answers": [
+    {
+     "scenario": "yourself-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "yourself-bad-setting",
+     "status": 500,
+     "body_keys": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "yourself-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "yourself-library-throws-409",
+     "status": 409,
+     "body_keys": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "yourself-library-throws-503",
+     "status": 503,
+     "body_keys": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Yourself failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/kyb/credential": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     }
+    },
+    {
+     "scenario": "credential-nothing-named",
+     "status": 400,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     }
+    },
+    {
+     "scenario": "credential-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     }
+    },
+    {
+     "scenario": "credential-title-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "a title or standard_key is required"
+     }
+    },
+    {
+     "scenario": "credential-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "credential-bad-date",
+     "status": 500,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "credential-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "credential-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "credential-library-says-403",
+     "status": 403,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "Not for you."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "Not for you."
+     }
+    },
+    {
+     "scenario": "credential-library-says-409",
+     "status": 409,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "Already held."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "Already held."
+     }
+    },
+    {
+     "scenario": "credential-library-throws-503",
+     "status": 503,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/kyb/field": {
+   "answers": [
+    {
+     "scenario": "field-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "field-bad-setting",
+     "status": 500,
+     "body_keys": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "field-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "field-library-throws-502",
+     "status": 502,
+     "body_keys": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "field-library-throws-409",
+     "status": 409,
+     "body_keys": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Field failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
