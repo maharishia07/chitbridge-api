@@ -14,6 +14,7 @@ const { validate, validateAsProblem, schemaValidate, sanitise } = require('../mi
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
+const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
 
@@ -1570,6 +1571,35 @@ router.get('/routing', auth, async (req, res) => {
   }
 });
 
+/**
+ * saveRouting(shop, kind, { folder, assignee, team }) → true when the row is written, false when the folder named is not this shop's and nothing is (SEC-100).
+ * The foreign key on folder_id is checked WITHOUT row security, so the folder is looked up under THIS shop in the same transaction; a null folder still clears it.
+ */
+async function saveRouting(shop, kind, fields) {
+  return withEntity(shop, async (db) => {
+    if (fields.folder && !(await folderViews.folderOwned(db, shop, fields.folder))) return false;
+    await db.query(
+      `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
+       VALUES ($1,$2,$3,$4,$5, now())
+       ON CONFLICT (entity_id, kind) DO UPDATE
+         SET folder_id = EXCLUDED.folder_id, assignee_actor_id = EXCLUDED.assignee_actor_id,
+             route_to_entity_id = EXCLUDED.route_to_entity_id, updated_at = now()`,
+      [shop, kind, fields.folder, fields.assignee, fields.team]
+    );
+    return true;
+  });
+}
+
+/* ⚠️ the resolver memoises for 60s; without this a change looks like it did not save for a minute, which
+   is exactly long enough for somebody to set it twice. */
+function forgetRouting(shop) {
+  try {
+    require('../lib/workroute').invalidate(shop);
+  } catch (e) {
+    log.fellBack('entities nul: the helper failed — carried on without it', e);
+  }
+}
+
 router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   const me = auth.entityOf(req);
   const b = req.body || {};
@@ -1581,23 +1611,10 @@ router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
      all three and null is an answer rather than an omission. */
   const nul = (v) => (v === '' || v === undefined || v === null ? null : String(v));
   try {
-    await withEntity(me, (db) =>
-      db.query(
-        `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
-       VALUES ($1,$2,$3,$4,$5, now())
-       ON CONFLICT (entity_id, kind) DO UPDATE
-         SET folder_id = EXCLUDED.folder_id, assignee_actor_id = EXCLUDED.assignee_actor_id,
-             route_to_entity_id = EXCLUDED.route_to_entity_id, updated_at = now()`,
-        [me, kind, nul(b.folder_id), nul(b.assignee_actor_id), nul(b.route_to_entity_id)]
-      )
-    );
-    /* ⚠️ the resolver memoises for 60s; without this a change looks like it did not save for a minute, which
-       is exactly long enough for somebody to set it twice. */
-    try {
-      require('../lib/workroute').invalidate(me);
-    } catch (e) {
-      log.fellBack('entities nul: the helper failed — carried on without it', e);
-    }
+    const saved = await saveRouting(me, kind, { folder: nul(b.folder_id), assignee: nul(b.assignee_actor_id), team: nul(b.route_to_entity_id) });
+    /* an unknown folder and another shop's folder are one answer */
+    if (!saved) return problem(req, res, { status: 404, ...contract.words.routingFolderNone() });
+    forgetRouting(me);
     res.json({ ok: true, kind });
   } catch (e) {
     if (e.code === '42P01') return problem(req, res, { status: 409, ...contract.words.routingNotThere() });

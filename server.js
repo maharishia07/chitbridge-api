@@ -510,6 +510,8 @@ app.get('/health', async (req, res) => {
     web: require('./lib/public-base').webBase() || null /* HX1: the site this api serves (PUBLIC_WEB_BASE) — a counter learns it here */,
     /* SEC-SMALL: IAM audit rows this process could not write since boot (lib/access-events.lostCount) — a reviewer wants to see 0 */
     audit_lost: require('./lib/access-events').lostCount(),
+    /* S34: keys the output allow-list would drop (OUTPUT_ALLOWLIST=report, the default) or dropped (enforce) since boot — Athi switches production to enforce after 7 days at 0 */
+    output_dropped: require('./lib/output-allowlist').droppedCount(),
     /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.
        Athi turns the refusal on after 7 days of minted: 0 here (SECURITY-BACKLOG.md) */
     legacy_tokens: require('./lib/person-session').legacyCounts()
