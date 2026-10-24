@@ -11,7 +11,7 @@ const read = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8').repla
 const PAGE = read('tools/tally-connector/till.html');
 function fn(sig) { const a = PAGE.indexOf(sig); assert.ok(a >= 0, sig + ' is gone'); return PAGE.slice(a, PAGE.indexOf('\n}\n', a) + 3); }
 const src = ['function usignRefusalWords(', 'function usignAnswer(', 'function usignDoor(', 'function usignWasOk(', 'function usignWasRefused(', 'function usignAskedFirstCode(',
-  'function whoHandle(', 'function whoPick(', 'function whoAsk(', 'function whoNoPinWords(', 'async function usignAfterIn(', 'async function usignKeepChosenPin(', 'function usignCounterLine(']
+  'function whoHandle(', 'function whoPick(', 'function whoAsk(', 'function whoNoPinWords(', 'async function usignAfterIn(', 'async function usignKeepChosenPin(', 'function usignCounterLine(', 'function usignInWords(']
   .map(fn).join('\n');
 let pass = 0;
 const it = (w, f) => Promise.resolve().then(f).then(() => { pass++; console.log('  ok  ' + w); }, (e) => { console.log('  FAIL ' + w + '\n      ' + e.message); process.exitCode = 1; });
@@ -27,7 +27,7 @@ function world(o) {
   const usignLocal = () => ({ save: async (s, pin) => { calls.saved = pin; } });
   const make = new Function('S', 'USIGN', 'SIGN', 'pinBook', 'lineUp', 'usignOpen', 'usignClose', 'cbQuiet', 'pinLaterOffer', 'pinUsableFor', 'usignLocal',
     'DAY', 'dayState', 'paired', 'document', 'window', 'crypto', 'ask', 'whoFloat', 'curSym',
-    src + '; return { whoPick, usignAnswer, usignRefusalWords, usignAfterIn, usignCounterLine, whoHandle };');
+    src + '; return { whoPick, usignAnswer, usignRefusalWords, usignAfterIn, usignCounterLine, usignInWords, whoHandle };');
   const api = make(S, USIGN, SIGN, () => o.book, () => o.online, () => {}, () => { calls.closed++; }, () => {}, () => { calls.later++; },
     () => false, usignLocal, () => ({ assign: () => o.assign }), () => ({}), () => !!o.paired,
     { getElementById: () => ({ close() {}, open: true }) }, { crypto: {} }, { subtle: {} }, async () => '', () => {}, () => '$');
@@ -116,6 +116,12 @@ function world(o) {
   await it('4 · "Sign in to connect this counter to a shop" is not said under a box that says the person is in', () => {
     const w = world({ assign: { action: 'shop', why: 'Sign in to connect this counter to a shop. It needs the internet once, to fetch the shop.' } });
     assert.strictEqual(w.api.usignCounterLine(), '');
+  });
+  await it('4 · the signed-in note never goes blank (an empty box is invisible: seven till walks waited on it)', () => {
+    const w = world({ assign: { action: 'shop', why: 'Sign in to connect this counter to a shop.' } });
+    assert.strictEqual(w.api.usignInWords({ id: 'w1', name: 'Asha Devi' }), 'Asha Devi is signed in at this counter.');
+    assert.strictEqual(w.api.usignInWords(null), 'Signed in at this counter.');
+    assert.strictEqual(world({ assign: { action: 'keep', why: 'Counter 1 carries on' } }).api.usignInWords({ name: 'Asha Devi' }), 'Counter 1 carries on');
   });
   await it('4 · it IS said when no shop is held', () => {
     const w = world({ S: null, assign: { action: 'shop', why: 'Sign in to connect this counter to a shop.' } });
