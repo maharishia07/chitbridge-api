@@ -20,6 +20,7 @@ const express = require('express');
 
 /* unsealed, NOT a local stack: the posture production has had — a code may never be echoed here */
 Object.assign(process.env, { NODE_ENV: 'development', DATABASE_URL: 'postgres://u:p@db.example.com:5432/cb', DEV_OTP: '1' });
+process.env.VAULT_ENC_KEY = process.env.VAULT_ENC_KEY || Buffer.alloc(32, 6).toString('base64'); /* SEC-106: production keeps a first code as a keyed hash, so it has the key */
 ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'FROM_EMAIL', 'DEV_OTP_IN_RESPONSE', 'TESTER_CODE'].forEach((k) => { delete process.env[k]; });
 
 const say = console.log.bind(console);
@@ -131,7 +132,9 @@ const unsealHost = () => { Object.keys(SEALED_ENV).forEach((k) => { delete proce
 /* Bala's mailbox as the store holds it, and the two ledgers (writes · e-mails) emptied before each call */
 const balaHas = (email) => { STORED_EMAIL = email; WRITES.length = 0; SENT.length = 0; };
 const nothingTouched = () => !WRITES.some((write) => /identities/.test(write.sql)) && SENT.length === 0;
-const wroteTheCode = () => WRITES.some((write) => /^(UPDATE|INSERT INTO) identities/.test(write.sql) && write.params.includes(SECRET));
+/* SEC-106: the row holds the KEYED HASH of the code (made for the person the statement names, its last parameter), never the code itself */
+const wroteTheCode = () => WRITES.some((write) => /^UPDATE identities/.test(write.sql) && write.params.includes(realOtp.codeHash(write.params[write.params.length - 1], SECRET)));
+const wrotePlainCode = () => WRITES.some((write) => /^(UPDATE|INSERT INTO) identities/.test(write.sql) && write.params.includes(SECRET));
 
 /* Section 5 — the sealed host: each code door reads the STORED address, mails the code there and says so; no address → refused
    before any write (W2-PEOPLE: "a sealed reset can send to it" had no end-to-end proof through routes/actors.js). */
@@ -143,7 +146,7 @@ async function proveSealedReset() {
     t(method + ' ' + url + ' with an e-mail on file → 200, delivery sent to the masked stored address, the code never in the answer',
       sent.status === 200 && sent.body.delivery === 'sent' && sent.body.sent_to === 'b***@shop.test' && /b\*\*\*@shop\.test/.test(sent.body.delivery_note || '') && !sent.raw.includes(SECRET),
       sent.status + ' ' + sent.raw.slice(0, 200));
-    t('   …the code went to the STORED address (not the request), and the row holds it', SENT.length === 1 && SENT[0].to === 'bala@shop.test' && SENT[0].otp === SECRET && wroteTheCode(),
+    t('   …the code went to the STORED address (not the request), and the row holds its keyed hash, never the code', SENT.length === 1 && SENT[0].to === 'bala@shop.test' && SENT[0].otp === SECRET && wroteTheCode() && !wrotePlainCode(),
       JSON.stringify(SENT) + ' writes:' + WRITES.length);
     balaHas('');
     const refused = await call(method, url, withoutEmail(body));   /* Add reads the body's address; the resets read the stored one */

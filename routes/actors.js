@@ -339,9 +339,8 @@ router.post(
       // see lib/identity-auth.js. Same fixed code as an entity's own OTP on a LOCAL stack; a real code anywhere else (SEC1).
       // M02: 24 h, and refused up front in a sealed env with no Resend / no e-mail (nothing is written then).
       const toEmail = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-      const refused = empCode.refusal(toEmail);
+      const refused = await empCode.mayIssue(toEmail);
       if (refused) return problem(req, res, words.fromLibrary(refused));
-      const { otp, expires: otp_expires } = empCode.mint();
 
       /**
        * ── ⭐⭐⭐ THE EMPLOYEE ID IS STORED, from 2026-09-15 ─────────────────────────────────────────────────────
@@ -381,8 +380,8 @@ router.post(
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',${shopCountrySql(5)},$13${_lvlCol ? ',$14,$15' : ''})`,
+          hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}
+        ) VALUES ($1,$2,$3,$4,$10,'human',$5,$6,$7,$8,'actor','active','active',$9,'actor',${shopCountrySql(5)},$11${_lvlCol ? ',$12,$13' : ''})`,
         [
           identity_id,
           bridge_id,
@@ -392,13 +391,14 @@ router.post(
           actor_role || null,
           phone,
           max_tasks,
-          otp,
-          otp_expires,
           list,
           employee_id,
           toEmail || null
         ].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
       );
+
+      /* SEC-106: the code is made AFTER the row, by the one issuer — a keyed hash is kept, the code itself only goes to the e-mail or the owner's screen */
+      const { otp } = await empCode.issue(db, identity_id, { entity_id, by: req.identity.identity_id, channel: empCode.channelOf(toEmail) });
 
       /* SEC2: a REAL code is never logged — only the local stack's fixed code, which is a known constant anyway */
       console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.fixedOtp('entity') ? ` — OTP: ${otp}` : ''));
@@ -739,16 +739,14 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
     // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
     // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
     const toEmail = await actorEmail(actor_id);
-    const refused = empCode.refusal(toEmail);
+    const refused = await empCode.mayIssue(toEmail);
     if (refused) return problem(req, res, words.fromLibrary(refused));
-    const { otp, expires } = empCode.mint();
-    await db(
-      `UPDATE identities
-         SET pin_hash = NULL, pin_set_at = NULL, pin_attempts = 0, pin_locked_at = NULL,
-             otp_code = $2, otp_expires_at = $3
-         WHERE identity_id = $1`,
-      [actor_id, otp, expires]
-    );
+    const { otp } = await empCode.issue(db, actor_id, {
+      entity_id,
+      by: req.identity.identity_id,
+      channel: empCode.channelOf(toEmail),
+      also: 'pin_hash = NULL, pin_set_at = NULL, pin_attempts = 0, pin_locked_at = NULL'
+    });
     res.json({
       message: 'PIN reset — share the new one-time code; they set a new PIN on next login',
       actor_name: actor.rows[0].display_name,
@@ -811,7 +809,7 @@ router.get('/', auth, async (req, res) => {
            /* SEC2: NEVER the code. Any signed-in colleague reads this list, and it carried every pending first code
               (otp_code). The screen only needs to know which of three states the sign-in is in. */
            CASE WHEN pin_hash IS NOT NULL THEN 'set'
-                WHEN otp_code IS NOT NULL AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
+                WHEN (otp_code IS NOT NULL OR (to_jsonb(identities) ->> 'otp_code_hash') IS NOT NULL) AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
                 ELSE 'none' END AS pin_state,
            site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
          FROM identities
@@ -887,16 +885,9 @@ router.post('/:id/otp', auth, ownerWrite, ...checked('POST /:id/otp'), async (re
 
     // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
     const toEmail = await actorEmail(actor_id);
-    const refused = empCode.refusal(toEmail);
+    const refused = await empCode.mayIssue(toEmail);
     if (refused) return problem(req, res, words.fromLibrary(refused));
-    const { otp, expires } = empCode.mint();
-
-    await db(
-      `UPDATE identities
-         SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
-         WHERE identity_id = $3`,
-      [otp, expires, actor_id]
-    );
+    const { otp } = await empCode.issue(db, actor_id, { entity_id, by: req.identity.identity_id, channel: empCode.channelOf(toEmail) });
 
     res.json({
       message: 'OTP reset successfully',
@@ -1004,19 +995,14 @@ router.put(
       if (action === 'reactivate') {
         // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
         const toEmail = await actorEmail(actor_id);
-        const refused = empCode.refusal(toEmail);
+        const refused = await empCode.mayIssue(toEmail);
         if (refused) return problem(req, res, words.fromLibrary(refused));
-        const { otp, expires } = empCode.mint();
-        await db(
-          `UPDATE identities
-           SET break_status = 'active',
-               deactivated_at = NULL,
-               return_date = NULL,
-               otp_code = $1,
-               otp_expires_at = $2
-           WHERE identity_id = $3`,
-          [otp, expires, actor_id]
-        );
+        const { otp } = await empCode.issue(db, actor_id, {
+          entity_id,
+          by: req.identity.identity_id,
+          channel: empCode.channelOf(toEmail),
+          also: "break_status = 'active', deactivated_at = NULL, return_date = NULL"
+        });
         const nestedAudit = await recordBreak(entity_id, actor_id, a.break_status, 'active', req.identity.identity_id, 'reactivate');
         return res.json({
           message: 'Actor reactivated',
@@ -1061,11 +1047,12 @@ router.put(
           }
           await taskCount(client, actor_id, 'clear');
         }
+        const clearHash = await empCode.clearSql(); // SEC-106: a held code's hash goes with the code
         if (action === 'deactivate') {
           await client.query(
             `UPDATE identities
              SET break_status = 'deactivated', deactivated_at = NOW(), deactivated_by = $1,
-                 return_date = $2, otp_code = NULL, delegate_actor_id = NULL
+                 return_date = $2, otp_code = NULL${clearHash}, delegate_actor_id = NULL
              WHERE identity_id = $3`,
             [req.identity.identity_id, return_date || null, actor_id]
           );
@@ -1073,7 +1060,7 @@ router.put(
           await client.query(
             `UPDATE identities
              SET break_status = 'removed', removed_at = NOW(), removed_by = $1,
-                 otp_code = NULL, otp_expires_at = NULL, delegate_actor_id = NULL
+                 otp_code = NULL${clearHash}, otp_expires_at = NULL, delegate_actor_id = NULL
              WHERE identity_id = $2`,
             [req.identity.identity_id, actor_id]
           );

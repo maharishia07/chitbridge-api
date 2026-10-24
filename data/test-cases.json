@@ -74900,6 +74900,36 @@
    "changed_at": "2026-10-24T12:00:00+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/sec106-staff-code-hash.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-106: a staff first sign-in code is stored as a keyed hash, never plain; verify, attempts reset, trail row, no idempotent replay of a code.",
+   "claim": "SEC-106: a staff first sign-in code is stored as a keyed hash, never plain; verify, attempts reset, trail row, no idempotent replay of a code.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · offline. Run: node chitbridge-api/tests/sec106-staff-code-hash.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/employee-code.js",
+    "lib/otp.js",
+    "lib/vaultcrypto.js",
+    "middleware/idempotency.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T14:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/sec3-device-keys.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
