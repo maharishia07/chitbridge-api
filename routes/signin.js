@@ -36,6 +36,9 @@ const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
+const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
+const { OTP_HASH_COL } = require('../lib/otp');
+const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const owner = require('../lib/owner');
 const { isOwner } = owner;
@@ -311,6 +314,22 @@ async function sendCode(req, res, { identity_id, email, display_name }, extra) {
   );
 }
 
+/**
+ * firstCodeFor(actor, toMail) -> { otp, fresh }: otp = the plain code to e-mail or echo on a local stack (null when the held one is kept),
+ * fresh = a new code was made (SEC-106). TOP-CORRECT: the code the admin shared is KEPT while it is live, a new one only when none is held.
+ * A code kept as a hash cannot be read back to e-mail, so a mailed ask makes a NEW code (empCode.issue, attempts back to 0) — but this door has no
+ * session, so empCode.mayReplaceOnAsk allows that only a few times per person per hour and not twice within a minute; past that the held
+ * code is kept, the guess count is NOT reset, and the answer is the same as any other ask.
+ */
+async function firstCodeFor(actor, toMail) {
+  const wantsNew = toMail || !identityAuth.holdsLiveCode(actor);
+  if (wantsNew && (await empCode.mayReplaceOnAsk(actor.identity_id))) {
+    return { otp: (await empCode.issue(query, actor.identity_id, { ttlMs: SIGNIN_ASK_TTL_MS })).otp, fresh: true };
+  }
+  return { otp: identityAuth.heldOtp(actor), fresh: false };
+}
+
+
 async function ask(req, res, next) {
   try {
     const input = String(req.body.email || req.body.user_id || req.body.id || '').trim();
@@ -342,20 +361,15 @@ async function ask(req, res, next) {
         note(req, a, 'ask', 'pin');
         return res.json(Object.assign({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id }, extra('actor', 'pin', a.user_id)));
       }
-      /* ⭐ TOP-CORRECT: the code the admin shared is KEPT while it is live (identityAuth.heldOtp) — this line used to re-issue and
-         overwrite it, so the employee typed a code that was no longer in the row. A new code only when none is held. */
-      const otp = identityAuth.heldOtp(a) || (await identityAuth.issueOtp(query, a));
-      note(req, a, 'ask', 'otp');
       /* M14: an employee who signed in by a VERIFIED e-mail gets the code there — the one contact the shop proved is theirs */
       const toMail = found.via === 'contact' && input.includes('@') && !identityAuth.mobileOf(input);
-      const sent = toMail ? await sendOtpEmail(input.toLowerCase(), a.display_name, otp) : null;
+      const { otp, fresh } = await firstCodeFor(a, toMail);
+      note(req, a, 'ask', 'otp');
+      const sent = toMail && fresh ? await sendOtpEmail(input.toLowerCase(), a.display_name, otp) : null;
       return res.json(
         Object.assign(
           {
-            message:
-              sent && sent.delivered
-                ? 'Verification code sent to your email'
-                : 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
+            message: empCode.askMessage(toMail, fresh, sent),
             user_id: a.user_id,
             ...(devOtp.mayExposeOtp() && { dev_otp: otp })
           },
@@ -532,7 +546,7 @@ async function verify(req, res) {
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
+                    pin_hash, pin_attempts, pin_locked_at, otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
     let rows;
     if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows;
     else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows;
@@ -838,7 +852,7 @@ async function actorLogin(req, res) {
     const actor = await query(
       `SELECT identity_id, bridge_id, display_name, actor_key,
               actor_role, actor_type, break_status,
-              otp_code, otp_expires_at, otp_attempts, max_tasks,
+              otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, max_tasks,
               pin_hash, pin_attempts, pin_locked_at
        FROM identities
        WHERE actor_key = $1

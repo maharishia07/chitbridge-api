@@ -25,6 +25,8 @@ function extras(tools) {
   /** a scenario for an answer the sweep ADDS (the schema's refusal): it is not frozen, since the old code answered it otherwise */
   const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more));
   const failing = { db: 'fail' };
+  /** SEC-100: the folder lookup finds the folder (it is this shop's own) */
+  const OWN_FOLDER = answering(/SELECT 1 FROM folder WHERE folder_id = \$1 AND entity_id = \$2/, [{ '?column?': 1 }]);
   const at = (tail) => ENT + tail;
   const sqlState = (code, message, hint) => (sql) => { throw Object.assign(new Error(message || 'pg ' + code), { code }, hint ? { hint } : {}); };
   const when = (pattern, run) => (sql, params) => (pattern.test(sql) ? run(sql, params) : null);
@@ -206,7 +208,10 @@ function extras(tools) {
     X('routing-team-outside-network', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'work can only be routed inside your own network', 'Pick a team of your own network.') } }),
     X('routing-plain-check-violation', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: when(/INSERT INTO entity_work_routing/, sqlState('23514', SECRET_SQL)) } }),
     X('routing-team-outside-network-no-hint', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: when(/INSERT INTO entity_work_routing/, sqlState('23514', 'work can only be routed inside your own network')) } }),
-    X('routing-folder-gone', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', folder_id: OTHER }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '23503') } }),
+    X('routing-folder-gone', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', folder_id: OTHER }, setup: { sqlRows: firstOf(OWN_FOLDER, raising(/INSERT INTO entity_work_routing/, '23503')) } }),
+    N('routing-folder-not-found', 'PUT ' + at('/routing'), 404, { body: { kind: 'incident', folder_id: OTHER } }),
+    N('routing-folder-not-an-id', 'PUT ' + at('/routing'), 404, { body: { kind: 'incident', folder_id: 'nope' } }),
+    N('routing-saved-with-an-own-folder', 'PUT ' + at('/routing'), 200, { body: { kind: 'incident', folder_id: OTHER }, setup: { sqlRows: OWN_FOLDER } }),
     X('routing-save-fails', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident' }, setup: failing }),
     N('routing-body-a-list', 'PUT ' + at('/routing'), 400, { body: [] })
   ];

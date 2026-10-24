@@ -4645,12 +4645,12 @@
      "scenario": "nothing-found",
      "status": 400,
      "body_keys": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      },
      "fixture": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      }
     }
    ]
@@ -16688,6 +16688,22 @@
       "error": "Update failed",
       "message": "This catalogue is priced in INR; a price in USD cannot be stored on it. The currency comes from the business, not the request."
      }
+    },
+    {
+     "scenario": "edit-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },
@@ -16829,6 +16845,22 @@
      "fixture": {
       "error": "Add failed",
       "message": "Price must be a finite number, got \"abc\""
+     }
+    },
+    {
+     "scenario": "rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
      }
     }
    ]
@@ -17424,6 +17456,22 @@
       "error": "Bulk add failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "bulk-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },
@@ -17555,6 +17603,22 @@
      "fixture": {
       "error": "Bulk update failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "edit-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
      }
     }
    ]
@@ -17866,6 +17930,28 @@
         "field": "decisions",
         "message": "Invalid value"
        }
+      ]
+     }
+    },
+    {
+     "scenario": "import-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "rows": [
+       2
+      ]
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "rows": [
+       2
       ]
      }
     }
@@ -39501,6 +39587,476 @@
      "fixture": {
       "ok": false,
       "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/rate": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "rate-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-cashier-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-unknown-key-in-body",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "rate-shop-charges-none",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "This shop charges no GST, so no rate is needed.",
+      "type": "https://chitbridge.com/problems/till_no_tax_scheme",
+      "title": "Shop charges no tax",
+      "status": 409,
+      "code": "TILL_NO_TAX_SCHEME",
+      "detail": "This shop charges no GST, so no rate is needed.",
+      "hint": "If that is wrong, check the registration in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "This shop charges no GST, so no rate is needed.",
+      "type": "https://chitbridge.com/problems/till_no_tax_scheme",
+      "title": "Shop charges no tax",
+      "status": 409,
+      "code": "TILL_NO_TAX_SCHEME",
+      "detail": "This shop charges no GST, so no rate is needed.",
+      "hint": "If that is wrong, check the registration in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-slab-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That rate is not one of this shop’s GST slabs.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That rate is not one of this shop’s GST slabs.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That rate is not one of this shop’s GST slabs.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That rate is not one of this shop’s GST slabs.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-item-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That product is not in this shop’s catalogue.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That product is not in this shop’s catalogue.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That product is not in this shop’s catalogue.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That product is not in this shop’s catalogue.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     }
    ]

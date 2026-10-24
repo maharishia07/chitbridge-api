@@ -243,6 +243,11 @@ function checked(route) {
  * different permission from changing records generally.
  */
 const cost = require('../lib/cost');
+const rateDoor = require('../lib/rate-door'); /* CAT-210: a rate is owner or manager only — one predicate, one sentence, every door */
+/** CAT-210: the 403 for an editor whose request sets or changes a tax rate (the whole request is refused, nothing is written) */
+const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
+/** CAT-210: does an editor's create or parked change NAME a rate? (an owner or manager never does: false) */
+const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
 /** strips item_data.cost from every row in place — the one place a list response leaves this file */
 function stripCosts(items) {
   items.forEach((item) => {
@@ -390,6 +395,7 @@ async function catalogueShape(entity_id) {
 router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
+    if (editorNamesRate(req, [req.body.item_data])) return problem(req, res, rateRefusal());
     const schema_id = await defaultSchemaId(entity_id);
     /**
      * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
@@ -457,6 +463,7 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
     if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
       return problem(req, res, { status: 400, ...words.notObjects() });
     }
+    if (editorNamesRate(req, items)) return problem(req, res, rateRefusal());
 
     /**
      * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
@@ -547,6 +554,45 @@ router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, r
  * so a rejected row left the category attached to 39 of 40 and the toast said "39 updated" without saying which
  * one did not.
  */
+const UUID = require('../lib/namedentity').UUID; /* only a real id is asked of the uuid column; any other id has no stored row */
+/** the import's 200: what was added, updated and failed, in a sentence and in numbers, plus the columns it created */
+function importAnswer(outcome, created) {
+  const count = (action) => outcome.filter((item) => item.action === action).length;
+  const failedCount = count('failed');
+  return {
+    message: `${count('created')} added, ${count('updated')} updated` + (failedCount ? `, ${failedCount} failed` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
+    created_columns: created,
+    outcome,
+    summary: { created: count('created'), updated: count('updated'), failed: failedCount }
+  };
+}
+/** CAT-210: the file lines of an editor's import that set or change a rate, by position (never their values, Q19); [] for an owner or manager. ONE read of the shop's products for the lot. */
+async function editorImportRateRows(req, entity_id, applied, ident) {
+  if (rateDoor.setsRate(req)) return [];
+  const found = await withEntity(entity_id, (db) => db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true', [entity_id]));
+  const byIdentity = new Map();
+  for (const row of found.rows) {
+    const key = identity.identityOf(row.item_data || {}, ident);
+    if (key) byIdentity.set(key, row.item_data || {});
+  }
+  return applied.items.reduce((rows, fileRow, index) => {
+    const item = sheet.fromSheet(fileRow, { source: 'upload' }).item_data;
+    const prior = byIdentity.get(identity.identityOf(item, ident));
+    const changed = prior ? rateDoor.rateChanged(Object.assign({}, prior, item), prior) : rateDoor.rateNamed(item);
+    return changed ? rows.concat(applied.lines[index]) : rows;
+  }, []);
+}
+/** CAT-210: does any whole-record edit change a rate against what is stored? ONE read for the lot (an owner or manager never pays it) */
+async function editorChangesRate(req, entity_id, items) {
+  if (rateDoor.setsRate(req)) return false;
+  const found = await withEntity(entity_id, (db) =>
+    db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, items.map((item) => item.id).filter((id) => UUID.test(id))])
+  );
+  const stored = new Map(found.rows.map((row) => [row.item_id, row.item_data]));
+  return items.some((item) => rateDoor.rateChanged(item.item_data, stored.get(item.id)));
+}
+/** one bulk-update entry is { id, item_data } with item_data a plain object */
+const isEditShape = (item) => !!item && typeof item.id === 'string' && !!item.item_data && typeof item.item_data === 'object' && !Array.isArray(item.item_data);
 router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -554,18 +600,11 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
     if (items.length > BULK_MAX) {
       return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
     }
-    const shaped = items.every(
-      (item) =>
-        item &&
-        typeof item === 'object' &&
-        typeof item.id === 'string' &&
-        item.item_data &&
-        typeof item.item_data === 'object' &&
-        !Array.isArray(item.item_data)
-    );
-    if (!shaped) {
+    if (!items.every(isEditShape)) {
       return problem(req, res, { status: 400, ...words.badShape() });
     }
+
+    if (await editorChangesRate(req, entity_id, items)) return problem(req, res, rateRefusal());
 
     const schema_id = await defaultSchemaId(entity_id);
     const currency = await regional.currencyFor(entity_id);
@@ -1129,6 +1168,9 @@ router.post(
         return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
       }
 
+      const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
+      if (rateRows.length) return problem(req, res, rateRefusal(rateRows));
+
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
       let ruleRows = await schemaFieldsOf(schema_id);
@@ -1273,20 +1315,7 @@ router.post(
         });
       }
 
-      const failedItems = outcome.filter((item) => item.action === 'failed');
-      res.json({
-        message:
-          `${outcome.filter((item) => item.action === 'created').length} added, ${outcome.filter((item) => item.action === 'updated').length} updated` +
-          (failedItems.length ? `, ${failedItems.length} failed` : '') +
-          (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
-        created_columns: created,
-        outcome,
-        summary: {
-          created: outcome.filter((item) => item.action === 'created').length,
-          updated: outcome.filter((item) => item.action === 'updated').length,
-          failed: failedItems.length
-        }
-      });
+      res.json(importAnswer(outcome, created));
     } catch (e) {
       problem(req, res, faultOf(e, req, 'Import failed'));
     }
@@ -1399,15 +1428,19 @@ router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async
   }
 });
 
-/** the stored row, read only when merge:true or a server-owned key asks for it (an ordinary edit costs no extra trip) → { missing } or { stored, bodyItem } */
-async function readStoredForEdit(entity_id, item_id, payload) {
-  if (payload.merge !== true && !catcols.hasServerOwned(payload.item_data)) return { stored: null, bodyItem: payload.item_data };
+/** does this edit need the stored row? a merge, a server-owned key, or an editor (whose rate is compared with the stored one, CAT-210) */
+const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data);
+/** the stored row, read only when merge:true, a server-owned key or an editor (to compare the rate, CAT-210) asks for it → { refusal } (404 or the rate 403) or { stored, bodyItem } */
+async function readStoredForEdit(req, entity_id, item_id, payload) {
+  if (!needsStored(req, payload)) return { stored: null, bodyItem: payload.item_data };
   const current = await withEntity(entity_id, (db) =>
     db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [item_id, entity_id])
   );
-  if (!current.rows.length) return { missing: true };
+  if (!current.rows.length) return { refusal: { status: 404, ...words.notFound() } };
   const stored = current.rows[0].item_data || {};
-  return { stored, bodyItem: payload.merge === true ? mergePatch(stored, payload.item_data) : payload.item_data };
+  const bodyItem = payload.merge === true ? mergePatch(stored, payload.item_data) : payload.item_data;
+  if (!rateDoor.setsRate(req) && rateDoor.rateChanged(bodyItem, stored)) return { refusal: rateRefusal() };
+  return { stored, bodyItem };
 }
 // UPDATE — edit a product
 /** RFC 7386 merge-patch: an object merges key by key, null deletes a key, anything else replaces. The catalogue standard we adopted
@@ -1454,8 +1487,8 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     /* ⭐ C4: media/image are SERVER-OWNED (catalogue-columns.SERVER_OWNED). The stored row is read when merge:true asks for
        it, or when the body names a server-owned key (an unchanged echo passes, a change is refused) — an ordinary edit costs
        no extra trip. */
-    const read = await readStoredForEdit(entity_id, req.params.id, req.body);
-    if (read.missing) return problem(req, res, { status: 404, ...words.notFound() });
+    const read = await readStoredForEdit(req, entity_id, req.params.id, req.body);
+    if (read.refusal) return problem(req, res, read.refusal);
     const stored = read.stored,
       bodyItem = read.bodyItem;
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
@@ -1506,12 +1539,18 @@ router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, r
     problem(req, res, faultOf(e, req, 'Could not read the schedule'));
   }
 });
+/** the 403 a parked change meets before anything is read: the cost gate (OFFR-04), then the rate gate (CAT-210: a parked rate is a rate set) → a spec, or null */
+async function writeRefusalOf(req, entity_id, item_data) {
+  const refused = await cost.writeRefusal(req, entity_id, Object.keys(item_data || {}));
+  if (refused) return { status: 403, ...words.costBlind(refused) };
+  return editorNamesRate(req, [item_data]) ? rateRefusal() : null;
+}
 router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     /* [OFFR-04] a parked change is an edit that lands later — the same cost gate as PATCH /:id, before anything is read */
-    const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
-    if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
+    const refusal = await writeRefusalOf(req, entity_id, req.body.item_data);
+    if (refusal) return problem(req, res, refusal);
     /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
     const decl = await catcols.ensureDeclared({
       query,
