@@ -62,8 +62,8 @@
    "path": "/api/actors/:id/pin",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 710,
-   "hash": "fcfbc941c0d2d3bc",
+   "line": 722,
+   "hash": "20b1ed68d6239fdd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -102,8 +102,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "20b1ed68d6239fdd"
    },
    "status": "partial"
   },
@@ -257,7 +258,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5929,
+   "line": 5963,
    "hash": "b1621a61d6a1f385",
    "columns": {
     "schema_in": true,
@@ -307,7 +308,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4545,
+   "line": 4579,
    "hash": "f1e5c5ac7a0e6422",
    "columns": {
     "schema_in": true,
@@ -357,7 +358,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6190,
+   "line": 6224,
    "hash": "045463184137e6f1",
    "columns": {
     "schema_in": true,
@@ -1216,7 +1217,7 @@
    "path": "/api/actors",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 757,
+   "line": 771,
    "hash": "5a8cd45a1d9902d3",
    "columns": {
     "schema_in": true,
@@ -1264,7 +1265,7 @@
    "path": "/api/actors/:id/tasks",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1595,
+   "line": 1611,
    "hash": "8706b2506aaf77b4",
    "columns": {
     "schema_in": true,
@@ -1314,7 +1315,7 @@
    "path": "/api/actors/access-events",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1764,
+   "line": 1780,
    "hash": "b5ae4b066598ae9b",
    "columns": {
     "schema_in": true,
@@ -1362,7 +1363,7 @@
    "path": "/api/actors/check-login",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 655,
+   "line": 656,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -1404,7 +1405,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1473,
+   "line": 1489,
    "hash": "63f0748acf99af50",
    "columns": {
     "schema_in": true,
@@ -4422,7 +4423,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3125,
+   "line": 3159,
    "hash": "fa10a96462934751",
    "columns": {
     "schema_in": true,
@@ -4472,7 +4473,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4358,
+   "line": 4392,
    "hash": "336f23691ee01d37",
    "columns": {
     "schema_in": true,
@@ -4521,7 +4522,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3674,
+   "line": 3708,
    "hash": "7f5ffff524fed108",
    "columns": {
     "schema_in": true,
@@ -4572,7 +4573,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5614,
+   "line": 5648,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -4623,7 +4624,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5568,
+   "line": 5602,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -4674,7 +4675,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5245,
+   "line": 5279,
    "hash": "670ecd88a1125b2d",
    "columns": {
     "schema_in": true,
@@ -4725,7 +4726,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3867,
+   "line": 3901,
    "hash": "3431da4ab22159e0",
    "columns": {
     "schema_in": true,
@@ -4775,7 +4776,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3974,
+   "line": 4008,
    "hash": "be91d2bc805731af",
    "columns": {
     "schema_in": true,
@@ -4826,7 +4827,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6489,
+   "line": 6523,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -4877,7 +4878,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6516,
+   "line": 6550,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -4928,7 +4929,7 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5834,
+   "line": 5868,
    "hash": "46daea8f32caa803",
    "columns": {
     "schema_in": true,
@@ -4977,7 +4978,7 @@
    "path": "/api/chits/folder",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2699,
+   "line": 2733,
    "hash": "f44d902821914d77",
    "columns": {
     "schema_in": true,
@@ -5026,7 +5027,7 @@
    "path": "/api/chits/inbox",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2871,
+   "line": 2905,
    "hash": "897736af9a9c708d",
    "columns": {
     "schema_in": true,
@@ -5075,7 +5076,7 @@
    "path": "/api/chits/pulse",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3069,
+   "line": 3103,
    "hash": "67e2a779765f3c7d",
    "columns": {
     "schema_in": true,
@@ -5122,7 +5123,7 @@
    "path": "/api/chits/raida/report",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3851,
+   "line": 3885,
    "hash": "565d3b192b7015a8",
    "columns": {
     "schema_in": true,
@@ -5171,7 +5172,7 @@
    "path": "/api/chits/register/attachables",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3702,
+   "line": 3736,
    "hash": "979cb6a933b53c47",
    "columns": {
     "schema_in": true,
@@ -5219,7 +5220,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3710,
+   "line": 3744,
    "hash": "c301e82efd66c02d",
    "columns": {
     "schema_in": true,
@@ -5268,7 +5269,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3751,
+   "line": 3785,
    "hash": "e43efc96f747efa8",
    "columns": {
     "schema_in": true,
@@ -5316,7 +5317,7 @@
    "path": "/api/chits/register/walk/:from",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3810,
+   "line": 3844,
    "hash": "600c2cdb5a83af1a",
    "columns": {
     "schema_in": true,
@@ -5366,7 +5367,7 @@
    "path": "/api/chits/rollup",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2777,
+   "line": 2811,
    "hash": "2fcdcf06a8c66b94",
    "columns": {
     "schema_in": true,
@@ -5415,7 +5416,7 @@
    "path": "/api/chits/sent",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2634,
+   "line": 2668,
    "hash": "5040e600e5cfbf70",
    "columns": {
     "schema_in": true,
@@ -5464,7 +5465,7 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6716,
+   "line": 6750,
    "hash": "6f3dc35905e3296e",
    "columns": {
     "schema_in": true,
@@ -5513,7 +5514,7 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6757,
+   "line": 6791,
    "hash": "7fd343a2fc790048",
    "columns": {
     "schema_in": true,
@@ -5563,7 +5564,7 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6938,
+   "line": 6972,
    "hash": "fb7da6818f541830",
    "columns": {
     "schema_in": true,
@@ -5611,7 +5612,7 @@
    "path": "/api/chits/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3096,
+   "line": 3130,
    "hash": "83ccb19f48fcdd4c",
    "columns": {
     "schema_in": true,
@@ -13936,7 +13937,7 @@
    "path": "/api/actors/:id",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 457,
+   "line": 458,
    "hash": "c1f432f0445caa71",
    "columns": {
     "schema_in": true,
@@ -15187,7 +15188,7 @@
    "path": "/api/actors",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 240,
+   "line": 241,
    "hash": "b67874c0748e48ea",
    "columns": {
     "schema_in": true,
@@ -15238,8 +15239,8 @@
    "path": "/api/actors/:id/otp",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 853,
-   "hash": "436ae181735a866c",
+   "line": 867,
+   "hash": "cdb7a412dd467453",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15278,8 +15279,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cdb7a412dd467453"
    },
    "status": "partial"
   },
@@ -15289,7 +15291,7 @@
    "path": "/api/actors/check-key",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 206,
+   "line": 207,
    "hash": "d04b9c2fa9ba396a",
    "columns": {
     "schema_in": true,
@@ -15338,7 +15340,7 @@
    "path": "/api/actors/login",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 753,
+   "line": 767,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -15380,7 +15382,7 @@
    "path": "/api/actors/set-pin",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 658,
+   "line": 659,
    "hash": "ed4b3e29367ec07b",
    "columns": {
     "schema_in": false,
@@ -15424,7 +15426,7 @@
    "path": "/api/actors/suggest-key",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 176,
+   "line": 177,
    "hash": "4f3a11031b6436af",
    "columns": {
     "schema_in": true,
@@ -19215,7 +19217,7 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4248,
+   "line": 4282,
    "hash": "a9675c91b063f337",
    "columns": {
     "schema_in": true,
@@ -19266,7 +19268,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6082,
+   "line": 6116,
    "hash": "bb57518baa5d6aee",
    "columns": {
     "schema_in": true,
@@ -19316,7 +19318,7 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4193,
+   "line": 4227,
    "hash": "033ba1833edc157a",
    "columns": {
     "schema_in": true,
@@ -19366,7 +19368,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4596,
+   "line": 4630,
    "hash": "f1261716ab50b218",
    "columns": {
     "schema_in": true,
@@ -19417,7 +19419,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3655,
+   "line": 3689,
    "hash": "2b38b28b578677cd",
    "columns": {
     "schema_in": true,
@@ -19467,7 +19469,7 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4002,
+   "line": 4036,
    "hash": "7c6fe581bbb94181",
    "columns": {
     "schema_in": true,
@@ -19517,7 +19519,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5330,
+   "line": 5364,
    "hash": "b751da3f4c8f8917",
    "columns": {
     "schema_in": true,
@@ -19568,7 +19570,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5068,
+   "line": 5102,
    "hash": "caeca2235a33877a",
    "columns": {
     "schema_in": true,
@@ -19619,7 +19621,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4503,
+   "line": 4537,
    "hash": "e01c8002cbcabc9c",
    "columns": {
     "schema_in": true,
@@ -19670,7 +19672,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3879,
+   "line": 3913,
    "hash": "659c6ddb81952ef4",
    "columns": {
     "schema_in": true,
@@ -19720,7 +19722,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3935,
+   "line": 3969,
    "hash": "91cf212eca7f8069",
    "columns": {
     "schema_in": true,
@@ -19770,7 +19772,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3954,
+   "line": 3988,
    "hash": "1a2adac71f1176a0",
    "columns": {
     "schema_in": true,
@@ -19820,7 +19822,7 @@
    "path": "/api/chits/:chit_id/reprice",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3619,
+   "line": 3653,
    "hash": "b8739cdb69130686",
    "columns": {
     "schema_in": true,
@@ -19870,7 +19872,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6161,
+   "line": 6195,
    "hash": "bff670d16c1973fc",
    "columns": {
     "schema_in": true,
@@ -19920,7 +19922,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6140,
+   "line": 6174,
    "hash": "53214e1f816dbb5d",
    "columns": {
     "schema_in": true,
@@ -19970,7 +19972,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6122,
+   "line": 6156,
    "hash": "cc6a9bccb319682e",
    "columns": {
     "schema_in": true,
@@ -20020,7 +20022,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6392,
+   "line": 6426,
    "hash": "a5ce4d89eefc0a51",
    "columns": {
     "schema_in": true,
@@ -20069,7 +20071,7 @@
    "path": "/api/chits/register/entries/:raida_id/accept",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3828,
+   "line": 3862,
    "hash": "f38f901b020ba047",
    "columns": {
     "schema_in": true,
@@ -20119,7 +20121,7 @@
    "path": "/api/chits/register/entries/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3802,
+   "line": 3836,
    "hash": "e30bfd0747fe6ca0",
    "columns": {
     "schema_in": true,
@@ -20169,7 +20171,7 @@
    "path": "/api/chits/register/entries/:raida_id/revise",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3819,
+   "line": 3853,
    "hash": "cdd19d12dfb65e3a",
    "columns": {
     "schema_in": true,
@@ -20219,7 +20221,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3723,
+   "line": 3757,
    "hash": "91ef772a2c9c80d6",
    "columns": {
     "schema_in": true,
@@ -20268,7 +20270,7 @@
    "path": "/api/chits/register/subjects/:subject_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3742,
+   "line": 3776,
    "hash": "57091b17e2671ef3",
    "columns": {
     "schema_in": true,
@@ -20318,7 +20320,7 @@
    "path": "/api/chits/register/subjects/:subject_id/entries",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3779,
+   "line": 3813,
    "hash": "2f000d4fac8318c9",
    "columns": {
     "schema_in": true,
@@ -20368,7 +20370,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3759,
+   "line": 3793,
    "hash": "7783fd2adbe4f1d4",
    "columns": {
     "schema_in": true,
@@ -28951,7 +28953,7 @@
    "path": "/api/actors/:id/delegate",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1560,
+   "line": 1576,
    "hash": "3c22e829c4753516",
    "columns": {
     "schema_in": true,
@@ -29002,7 +29004,7 @@
    "path": "/api/actors/:id/status",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 941,
+   "line": 957,
    "hash": "d146e250925f4998",
    "columns": {
     "schema_in": true,
@@ -29053,7 +29055,7 @@
    "path": "/api/actors/:id/tasks/route",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1664,
+   "line": 1680,
    "hash": "604e3e7a86fdc94f",
    "columns": {
     "schema_in": true,
@@ -29104,7 +29106,7 @@
    "path": "/api/actors/assign/:chit_id",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1427,
+   "line": 1443,
    "hash": "13039b2d4ba7b7d5",
    "columns": {
     "schema_in": true,
@@ -29154,7 +29156,7 @@
    "path": "/api/actors/break",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1163,
+   "line": 1179,
    "hash": "62a37a11ca6434c7",
    "columns": {
     "schema_in": true,
@@ -29204,7 +29206,7 @@
    "path": "/api/actors/change-pin",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 662,
+   "line": 663,
    "hash": "70cf5e1b9e3afd29",
    "columns": {
     "schema_in": true,
@@ -29254,7 +29256,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1495,
+   "line": 1511,
    "hash": "85a8330db3f71f02",
    "columns": {
     "schema_in": true,
@@ -29511,7 +29513,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5693,
+   "line": 5727,
    "hash": "c2325cbe73f259fc",
    "columns": {
     "schema_in": true,
@@ -29562,7 +29564,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5974,
+   "line": 6008,
    "hash": "59600f5511771cf4",
    "columns": {
     "schema_in": true,
@@ -29612,7 +29614,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6030,
+   "line": 6064,
    "hash": "bdcc6791026b87ae",
    "columns": {
     "schema_in": true,
@@ -29663,7 +29665,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6105,
+   "line": 6139,
    "hash": "63dac164e0864b45",
    "columns": {
     "schema_in": true,
@@ -29713,7 +29715,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4925,
+   "line": 4959,
    "hash": "dbf1814d4f83fa55",
    "columns": {
     "schema_in": true,
@@ -29763,7 +29765,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3992,
+   "line": 4026,
    "hash": "7ee86b115feec09f",
    "columns": {
     "schema_in": true,
@@ -29813,7 +29815,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6235,
+   "line": 6269,
    "hash": "66ea83dae3a68cd1",
    "columns": {
     "schema_in": true,

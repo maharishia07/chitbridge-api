@@ -35,6 +35,7 @@ const CHIT = '44444444-4444-4444-8444-444444444444';
 const WRITES = [];
 let throwOn = null;
 const splitTop = (s) => { const out = []; let d = 0, cur = ''; for (const c of s) { if (c === '(') d++; else if (c === ')') d--; if (c === ',' && d === 0) { out.push(cur); cur = ''; } else cur += c; } out.push(cur); return out.map((x) => x.trim()).filter(Boolean); };
+let BREAK = 'active';   /* what identities.break_status holds for Bala: section 6 switches her off or removes her */
 let STORED_EMAIL = 'v_email';   /* what identities.email holds for Bala — section 5 sets a real address, or none */
 const valueFor = (col) => {
   if (col === 'otp_code') return SECRET;
@@ -43,7 +44,7 @@ const valueFor = (col) => {
   if (/^(identity_id|delegate_actor_id|assigned_to_actor_id)$/.test(col)) return BALA;
   if (col === 'chit_id') return CHIT;
   if (col === 'hat') return 'act';
-  if (col === 'break_status') return 'active';
+  if (col === 'break_status') return BREAK;
   if (col === 'pin_state') return 'pending';
   return 'v_' + col;
 };
@@ -156,6 +157,23 @@ async function proveSealedReset() {
     noSender.status === 503 && noSender.body.code === 'EMAIL_DELIVERY_NOT_CONFIGURED' && nothingTouched(), noSender.status + ' ' + noSender.raw.slice(0, 160));
   unsealHost(); STORED_EMAIL = 'v_email';
 }
+/* Section 6 (PP-03b): both code doors read the person first; the refusal says why with a code, and no code is minted or mailed */
+async function proveNoCodeForOff() {
+  for (const [state, status, code] of [['deactivated', 400, 'SWITCHED_OFF'], ['removed', 404, 'NOT_FOUND']]) {
+    for (const [method, url] of [['DELETE', '/' + BALA + '/pin'], ['POST', '/' + BALA + '/otp']]) {
+      BREAK = state; balaHas('bala@shop.test');
+      const r = await call(method, url);
+      t(method + ' ' + url + ' for a person who is ' + state + ' -> ' + status + ' ' + code + ' with a sentence, nothing written, nothing sent',
+        r.status === status && r.body.code === code && /\w+ \w+/.test(r.body.message || '') && !r.raw.includes(SECRET) && nothingTouched(), r.status + ' ' + r.raw.slice(0, 200) + ' writes:' + WRITES.length);
+    }
+  }
+  for (const state of ['active', 'short_break', 'leave']) {
+    BREAK = state; balaHas('bala@shop.test');
+    const r = await call('POST', '/' + BALA + '/otp');
+    t('a person who is ' + state + ' still gets a code -> 200 (away is not off)', r.status === 200 && wroteTheCode(), r.status + ' ' + r.raw.slice(0, 120));
+  }
+  BREAK = 'active'; STORED_EMAIL = 'v_email';
+}
 const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k of Object.keys(v)) { out.push(k); keysIn(v[k], out); } return out; };
 
 (async () => {
@@ -216,6 +234,9 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
 
     say('\n5 · W2-PEOPLE — a sealed host resets through the stored e-mail (the code to the mailbox, the answer says where)');
     WHO = OWNER; await proveSealedReset();
+
+    say('\n6 · PP-03b: no sign-in code for a person who is switched off or removed (refused in words, nothing written, nothing sent)');
+    WHO = OWNER; await proveNoCodeForOff();
 
     say('\n4 · the connector code comes through the one generator');
     const csrc = fs.readFileSync(path.join(API, 'routes', 'connectors.js'), 'utf8');
