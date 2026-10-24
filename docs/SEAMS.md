@@ -27,12 +27,12 @@ of file each thing is; this says what already does the job.
 | 56 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 50 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 51 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 50 | `entry` | `books-store.js` |  |
 | 50 | `next` | `dayopen.js` | the next thing to do — |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
-| 48 | `record` | `access-events.js` |  |
+| 49 | `record` | `access-events.js` |  |
 | 48 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 47 | `again` | `signin-ui.js` |  |
 | 46 | `pack` | `books-store.js` |  |
@@ -50,7 +50,7 @@ of file each thing is; this says what already does the job.
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
 | 35 | `rules` | `docnumber.js` | the rule set for a country — |
-| 35 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 36 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 35 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -69,7 +69,7 @@ of file each thing is; this says what already does the job.
 | 29 | `facts` | `bill-steps.js` | MY state_log — |
 | 29 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
-| 29 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
+| 30 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
 | 28 | `changes` | `books-store.js` |  |
 | 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
 | 28 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
@@ -138,7 +138,7 @@ of file each thing is; this says what already does the job.
 | 17 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 17 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
-| 17 | `allowed` | `trips.js` | let _idsFrom = null, |
+| 18 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
@@ -206,6 +206,7 @@ of file each thing is; this says what already does the job.
 | 11 | `format` | `ctpaddress.js` | Render one. |
 | 11 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 11 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
+| 11 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 10 | `start` | `app.html` |  |
 | 10 | `show` | `cap-catalogue.js` |  |
 | 10 | `reload` | `cap-employees.js` |  |
