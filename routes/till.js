@@ -50,13 +50,15 @@ const rateOf = (value) => (value == null || value === '' || !Number.isFinite(Num
  * land on a tax invoice. A blank is null — "nobody said", never 0.
  */
 function taxFactsOf(item_data) {
+  /* engines 1.72.0: the ONE builder (tax_slab · tax_slab_name · gst_rate · cess_rate · categories[] · hsn || sac), blanks left out — the wire says null for them */
+  const facts = taxSlab.inputOf(item_data);
   return {
-    hsn: item_data.hsn || item_data.sac || item_data.hs_code || item_data.hsn_code || null,
-    tax_slab: item_data.tax_slab || null,
-    gst_rate: rateOf(item_data.gst_rate),
-    tax_slab_name: item_data.tax_slab_name || null,
-    cess_rate: rateOf(item_data.cess_rate),
-    categories: taxSlab.categoryIdsOf(item_data)
+    hsn: facts.hsn !== undefined ? facts.hsn : item_data.hs_code || item_data.hsn_code || null /* the two legacy keys old rows still carry */,
+    tax_slab: facts.tax_slab || null,
+    gst_rate: rateOf(facts.gst_rate),
+    tax_slab_name: facts.tax_slab_name || null,
+    cess_rate: rateOf(facts.cess_rate),
+    categories: facts.categories || []
   };
 }
 /**
