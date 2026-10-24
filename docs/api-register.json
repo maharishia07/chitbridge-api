@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 610
    },
    "foreign_id_404": {
     "applies": 227,
@@ -3679,7 +3679,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 277,
-   "hash": "a332bb4ae88bea30",
+   "hash": "2c754880414516a4",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3689,7 +3689,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3728,7 +3728,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 59,
-   "hash": "c5b7474f9c6b5789",
+   "hash": "aa63a36c8fb35bd0",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3776,7 +3776,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 301,
-   "hash": "bbc35ddb7a13dcc9",
+   "hash": "96f6dbc935fffa9d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18176,7 +18176,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 93,
-   "hash": "ff695130dcdbd74b",
+   "hash": "af4a403f154c6a3d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18226,7 +18226,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 101,
-   "hash": "c42d9fb4e25bab70",
+   "hash": "a42a7a067092a26b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18276,7 +18276,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 83,
-   "hash": "da898aafa27ce592",
+   "hash": "a6cd77f3fba06fd4",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18326,7 +18326,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 68,
-   "hash": "68cb503bf75b9f79",
+   "hash": "3f2d19294eed1651",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18376,7 +18376,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 41,
-   "hash": "abefea709f36db06",
+   "hash": "37fd221879f08cb3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -18425,7 +18425,7 @@
    "owner_area": "capture",
    "file": "routes/capture.js",
    "line": 308,
-   "hash": "ba912fdad7e2490b",
+   "hash": "255328331f6e7b90",
    "columns": {
     "schema_in": true,
     "schema_out": true,
