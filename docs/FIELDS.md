@@ -360,6 +360,7 @@ Every key is a READ of what exists; nothing is stored and no money is computed h
 | `tax_ids` · `legal_name` · `nickname` · `state_code` · `terms` | as `party-fields.decorate` | Read from the party fields (b274). `terms` is per role. |
 | `gstin` | `{ value, source, theirs, differs }` | The shop's GSTIN (`party_tax_id`) wins; theirs (`identities.gstn`) shows only when the shop has none; `differs` flags both present and unequal. |
 | `phone` | string or null | `identities.phone`, else the sign-in target `otp_contact`. |
+| body `phone` · `email` (PATCH `/api/relationships/customers|suppliers/:id`) | string or null (null clears) | R14: written by `party-fields.saveContact` to `identities.otp_contact` (phone, through `local-identity.phoneOf`) and `identities.email` (lower-case), only for a party this shop minted (else 403); an e-mail another account holds is 409 in fixed words that never name the holder. Read back as `phone` above and the party `email`. An unknown key on the customer PATCH is 400 `UNKNOWN_FIELD` with `fields[]`. |
 | `walk_ins[]` | `{ walk_in: true, party_id: null, phone, points, last_activity }` | A phone that holds points nobody has claimed (`reward_ledger`, net above 0). |
 | `merged_from` (record) | `{ party_id, party_no }` or null | The id asked for was merged away; the survivor is returned. |
 | `relationship` (record) | `{ relationship, completion }` or null | `measure.scorecard` over `select.rows` — what `/relationships/scorecard/:id` answers. null for a local party (no chits). |

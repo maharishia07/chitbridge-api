@@ -31,7 +31,7 @@ const customerGroups = require('../lib/customer-groups'); // the one segment exp
 const orderInput = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
 const partyFields = require('../lib/party-fields');
-const PARTY_KEYS = ['legal_name', 'nickname', 'credit_days', 'credit_limit', 'credit_limit_minor', 'state_code', 'merged_into', 'tax_ids'];
+const PARTY_KEYS = ['legal_name', 'nickname', 'credit_days', 'credit_limit', 'credit_limit_minor', 'state_code', 'merged_into', 'tax_ids', 'phone', 'email'];
 const hasParty = (b, side) => PARTY_KEYS.some((item) => item in (b || {}) && !(side === 'supplier' && item === 'nickname'));
 /** the party half of a PATCH: its own answer (404 / 409 / 400 in words) or null when the body carries none */
 async function partyPatch(req, res, side) {
@@ -921,16 +921,29 @@ router.post('/customers/:id/groups', auth, async (req, res) => {
 });
 
 // Manual segment override (optional)
+const CUSTOMER_PATCH_KEYS = PARTY_KEYS.concat('segment_override');
+/** R14: a key this route does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) */
+function unknownKeys(b, allowed) {
+  return Object.keys(b || {}).filter((item) => allowed.indexOf(item) < 0);
+}
 router.patch('/customers/:id', [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])], auth, validate, async (req, res) => {
   try {
     const owner = ctx(req);
+    const unknown = unknownKeys(req.body, CUSTOMER_PATCH_KEYS);
+    if (unknown.length)
+      return res.status(400).json({
+        error: 'validation',
+        code: 'UNKNOWN_FIELD',
+        fields: unknown,
+        message: 'Not saved: ' + unknown.join(', ') + ' cannot be changed here. You can change ' + CUSTOMER_PATCH_KEYS.join(', ') + '.'
+      });
     const party = await partyPatch(req, res, 'customer');
     if (party === false) return;
     if (!('segment_override' in (req.body || {}))) {
       if (party) return res.json({ message: 'Customer updated', party });
       return res.status(400).json({
         error: 'Nothing to update',
-        message: 'Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)'
+        message: 'Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)'
       });
     }
     const r = await withEntity(owner, (db) =>
