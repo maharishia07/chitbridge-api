@@ -17,13 +17,13 @@ of file each thing is; this says what already does the job.
 | 75 | `money` | `bill-privacy.js` |  |
 | 73 | `answer` | `availability.js` | from March; then nearest. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
-| 69 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 65 | `list` | `cap-settings.js` |  |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 60 | `here` | `screen-id.js` |  |
 | 58 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 57 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 57 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 58 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 57 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
@@ -83,7 +83,7 @@ of file each thing is; this says what already does the job.
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 26 | `sheet` | `cap-employees.js` |  |
 | 26 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 26 | `rate` | `convert.js` | A rate, with its evidence. |
+| 28 | `rate` | `convert.js` | A rate, with its evidence. |
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
@@ -97,7 +97,7 @@ of file each thing is; this says what already does the job.
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 23 | `hold` | `orders.js` |  |
-| 23 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 24 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 22 | `account` | `home-facts.js` | OMITTED: |

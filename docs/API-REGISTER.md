@@ -26,9 +26,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/folders/:id | folders | routes/folders.js:297 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:537 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/keys/:jti | keys | routes/keys.js:723 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| DELETE | /api/products/:id | products | routes/products.js:1660 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/products/:id/media/:mid | products | routes/products.js:1810 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1541 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| DELETE | /api/products/:id | products | routes/products.js:1682 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/products/:id/media/:mid | products | routes/products.js:1832 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1563 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:64 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | DELETE | /api/quick-keys/groups/:id/items/:productId | quick-keys | routes/quick-keys.js:90 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
 | DELETE | /api/relationships/suppliers/:id | relationships | routes/relationships.js:434 | no | no | no | yes | no | no | no | yes | no | no | yes | yes | yes | partial |
@@ -229,15 +229,15 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/pricing/kinds | pricing | routes/pricing.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/privacy/facts | privacy | routes/privacy.js:34 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/privacy/me | privacy | routes/privacy.js:58 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/products | products | routes/products.js:602 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/:id/schedule | products | routes/products.js:1502 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/products/:id/versions | products | routes/products.js:1846 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/export.csv | products | routes/products.js:961 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/lists | products | routes/products.js:1961 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1705 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/products/starter-columns | products | routes/products.js:1302 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/template | products | routes/products.js:990 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/workbook.xlsx | products | routes/products.js:890 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products | products | routes/products.js:614 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/:id/schedule | products | routes/products.js:1518 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/products/:id/versions | products | routes/products.js:1868 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/export.csv | products | routes/products.js:973 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/lists | products | routes/products.js:1983 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1727 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/products/starter-columns | products | routes/products.js:1314 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/template | products | routes/products.js:1002 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/workbook.xlsx | products | routes/products.js:902 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:31 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:110 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/relationships/customers | relationships | routes/relationships.js:674 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -277,23 +277,23 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/testing/stale | testing | routes/testing.js:2616 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/testing/trace | testing | routes/testing.js:321 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/testing/vocabulary | testing | routes/testing.js:331 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/bills | till | routes/till.js:2910 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/catalogue/blueprints | till | routes/till.js:2809 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/counters | till | routes/till.js:1470 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/engine/:name | till | routes/till.js:3340 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/till/match | till | routes/till.js:3046 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/quick-keys/groups | till | routes/till.js:1479 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/quick-keys/hidden | till | routes/till.js:1517 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/quick-keys/screen-config | till | routes/till.js:1561 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/quick-keys/state | till | routes/till.js:1489 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/till/reward | till | routes/till.js:1954 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/till/screens | till | routes/till.js:2262 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/snapshot | till | routes/till.js:185 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/stock | till | routes/till.js:2636 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/summary | till | routes/till.js:2875 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/tasks | till | routes/till.js:3017 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/verify | till | routes/till.js:2421 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/till/worth-an-offer | till | routes/till.js:1626 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/bills | till | routes/till.js:2909 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/catalogue/blueprints | till | routes/till.js:2808 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/counters | till | routes/till.js:1471 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/engine/:name | till | routes/till.js:3339 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/till/match | till | routes/till.js:3045 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/quick-keys/groups | till | routes/till.js:1480 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/quick-keys/hidden | till | routes/till.js:1518 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/quick-keys/screen-config | till | routes/till.js:1562 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/quick-keys/state | till | routes/till.js:1490 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/till/reward | till | routes/till.js:1953 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/till/screens | till | routes/till.js:2261 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/snapshot | till | routes/till.js:186 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/stock | till | routes/till.js:2635 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/summary | till | routes/till.js:2874 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/tasks | till | routes/till.js:3016 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/verify | till | routes/till.js:2420 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/till/worth-an-offer | till | routes/till.js:1627 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/work/:chit_id | work | routes/work.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/work/facts | work | routes/work.js:53 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/work/list | work | routes/work.js:41 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -314,7 +314,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/entities/profile | entities | routes/entities.js:952 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/folders/:id | folders | routes/folders.js:253 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PATCH | /api/folders/rules/:rule_id | folders | routes/folders.js:530 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PATCH | /api/products/:id | products | routes/products.js:1436 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/products/:id | products | routes/products.js:1452 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:51 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | PATCH | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:100 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | PATCH | /api/relationships/customers/:id | relationships | routes/relationships.js:929 | no | no | no | yes | no | no | no | no | no | no | yes | yes | yes | partial |
@@ -522,17 +522,17 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/pricing/price | pricing | routes/pricing.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/privacy/me/consent | privacy | routes/privacy.js:66 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/privacy/me/requests | privacy | routes/privacy.js:79 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/products | products | routes/products.js:390 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/:id/media | products | routes/products.js:1745 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/products/:id/schedule | products | routes/products.js:1509 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/availability/bulk | products | routes/products.js:1555 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/products/bulk | products | routes/products.js:450 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/products/bulk-update | products | routes/products.js:550 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/import | products | routes/products.js:1087 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/import/preflight | products | routes/products.js:1014 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/lists/adopt | products | routes/products.js:2082 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/products/starter-columns | products | routes/products.js:1311 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/status/bulk | products | routes/products.js:499 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products | products | routes/products.js:395 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/:id/media | products | routes/products.js:1767 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/products/:id/schedule | products | routes/products.js:1531 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/availability/bulk | products | routes/products.js:1577 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/products/bulk | products | routes/products.js:456 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/products/bulk-update | products | routes/products.js:569 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/import | products | routes/products.js:1099 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/import/preflight | products | routes/products.js:1026 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/lists/adopt | products | routes/products.js:2104 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/products/starter-columns | products | routes/products.js:1323 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/status/bulk | products | routes/products.js:506 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:40 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:77 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/relationships/customers | relationships | routes/relationships.js:789 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
@@ -582,31 +582,31 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/testing/results | testing | routes/testing.js:1358 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/testing/results/junit | testing | routes/testing.js:1527 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/testing/trace | testing | routes/testing.js:310 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/till/alias | till | routes/till.js:3231 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/catalogue | till | routes/till.js:2700 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/close | till | routes/till.js:1309 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/diagnostic | till | routes/till.js:1259 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/enrol | till | routes/till.js:2163 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/flags | till | routes/till.js:1396 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/listen | till | routes/till.js:3274 | yes | yes | no | no | yes | no | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/till/offer-item | till | routes/till.js:1737 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/pair | till | routes/till.js:2110 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/till/pair/claim | till | routes/till.js:2217 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/price | till | routes/till.js:1797 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/till/quick-keys/hide | till | routes/till.js:1533 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/quick-keys/screen-config | till | routes/till.js:1572 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/quick-keys/state | till | routes/till.js:1503 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/quick-keys/unhide | till | routes/till.js:1547 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/rate | till | routes/till.js:1898 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/till/reconcile | till | routes/till.js:2382 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/till/reward | till | routes/till.js:1989 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
-| POST | /api/till/reward/claim | till | routes/till.js:2045 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | no | partial |
-| POST | /api/till/screens/rename | till | routes/till.js:2314 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/screens/revoke | till | routes/till.js:2281 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/shop | till | routes/till.js:2511 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/till/state | till | routes/till.js:1370 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/till/stock | till | routes/till.js:1149 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/stock/bulk | till | routes/till.js:1195 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/alias | till | routes/till.js:3230 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/catalogue | till | routes/till.js:2699 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/close | till | routes/till.js:1310 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/diagnostic | till | routes/till.js:1260 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/enrol | till | routes/till.js:2162 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/flags | till | routes/till.js:1397 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/listen | till | routes/till.js:3273 | yes | yes | no | no | yes | no | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/till/offer-item | till | routes/till.js:1738 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/pair | till | routes/till.js:2109 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/till/pair/claim | till | routes/till.js:2216 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/price | till | routes/till.js:1798 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/till/quick-keys/hide | till | routes/till.js:1534 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/quick-keys/screen-config | till | routes/till.js:1573 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/quick-keys/state | till | routes/till.js:1504 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/quick-keys/unhide | till | routes/till.js:1548 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/rate | till | routes/till.js:1897 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/till/reconcile | till | routes/till.js:2381 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/till/reward | till | routes/till.js:1988 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
+| POST | /api/till/reward/claim | till | routes/till.js:2044 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | no | partial |
+| POST | /api/till/screens/rename | till | routes/till.js:2313 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/screens/revoke | till | routes/till.js:2280 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/shop | till | routes/till.js:2510 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/till/state | till | routes/till.js:1371 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/till/stock | till | routes/till.js:1150 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/till/stock/bulk | till | routes/till.js:1196 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /deliver | ctp | routes/ctp.js:131 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /query | ctp | routes/ctp.js:333 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/actors/:id/delegate | actors | routes/actors.js:1563 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -639,8 +639,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/integrations/streams | integrations | routes/integrations.js:754 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-design | network-design | routes/network-design.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:275 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| PUT | /api/products/:id/availability | products | routes/products.js:1600 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PUT | /api/products/:id/status | products | routes/products.js:1630 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PUT | /api/products/:id/availability | products | routes/products.js:1622 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PUT | /api/products/:id/status | products | routes/products.js:1652 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:120 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/service/:chit_id | service | routes/service.js:146 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1066 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |

@@ -2159,6 +2159,7 @@
  "POST /api/products": [
   400,
   401,
+  403,
   422,
   500
  ],
@@ -2186,11 +2187,13 @@
  "POST /api/products/bulk": [
   400,
   401,
+  403,
   500
  ],
  "POST /api/products/bulk-update": [
   400,
   401,
+  403,
   500
  ],
  "POST /api/products/import": [

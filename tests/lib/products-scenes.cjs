@@ -60,7 +60,9 @@ function extras(tools) {
     X('product-refused-by-the-rules', 'POST ' + P, 400, { body: { item_data: { unit: 'kg' } }, setup: withRows(requiredName) }),
     X('server-owned-key', 'POST ' + P, 400, { body: { item_data: { name: 'Tea', media: [{ id: 'm1' }] } }, setup: withRows(shelf) }),
     X('price-below-zero', 'POST ' + P, 422, { body: { item_data: { name: 'Tea', price: 'abc' } }, setup: withRows(shelf) }),
+    X('rate-owner-only', 'POST ' + P, 403, { body: { item_data: { name: 'Tea', gst_rate: 18 } }, setup: costBlind }),
     /* POST /bulk */
+    X('bulk-rate-owner-only', 'POST ' + P + '/bulk', 403, { body: { items: [{ name: 'Tea', gst_rate: 18 }] }, setup: costBlind }),
     X('too-many-products', 'POST ' + P + '/bulk', 400, { body: { items: manyOf(201, { name: 'Tea' }) } }),
     X('an-item-is-not-an-object', 'POST ' + P + '/bulk', 400, { body: { items: ['tea'] } }),
     X('bulk-refused-by-the-rules', 'POST ' + P + '/bulk', 400, { body: { items: [{ unit: 'kg' }] }, setup: withRows(requiredName) }),
@@ -75,6 +77,7 @@ function extras(tools) {
     X('bulk-status-ids-and-status-wrong', 'POST ' + P + '/status/bulk', 400, { body: { ids: 'x', status: 5 } }),
     X('bulk-status-status-missing', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY] } }),
     /* POST /bulk-update */
+    X('edit-rate-owner-only', 'POST ' + P + '/bulk-update', 403, { body: { items: [{ id: PARTY, item_data: { name: 'Tea', gst_rate: 18 } }] }, setup: costBlind }),
     X('too-many-edits', 'POST ' + P + '/bulk-update', 400, { body: { items: manyOf(201, { id: PARTY, item_data: { name: 'Tea' } }) } }),
     X('an-edit-has-the-wrong-shape', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY }] } }),
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
@@ -120,6 +123,7 @@ function extras(tools) {
     X('edit-item-data-missing', 'PATCH ' + P + '/:id', 400, { body: {} }),
     X('edit-db-fails', 'PATCH ' + P + '/:id', 500, { body: body(), setup: failing }),
     X('edit-cost-blind', 'PATCH ' + P + '/:id', 403, { body: { item_data: { price: 5 } }, setup: costBlind, patch: costHidden }),
+    X('edit-rate-owner-only', 'PATCH ' + P + '/:id', 403, { body: { merge: true, item_data: { gst_rate: 18 } }, setup: { who: STAFF, sqlRows: firstOf(answering(/can_see_costs FROM identities/, [{ can_see_costs: true }]), shelf) } }),
     X('edit-not-found', 'PATCH ' + P + '/:id', 404, { body: body(), setup: withRows(money) }),
     X('edit-merge-not-found', 'PATCH ' + P + '/:id', 404, { body: { merge: true, item_data: { name: 'Tea' } }, setup: withRows(money) }),
     X('edit-refused-by-the-rules', 'PATCH ' + P + '/:id', 400, { body: { item_data: { unit: 'kg' } }, setup: withRows(requiredName) }),
