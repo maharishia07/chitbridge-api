@@ -39504,6 +39504,570 @@
      }
     }
    ]
+  },
+  "GET /api/supplies": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the supplies",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the supplies",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the supplies",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the supplies",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the supplies",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read the supplies",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/supplies/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "edit-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "edit-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "edit-table-missing-is-a-500",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "edit-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save the supply",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/supplies": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     }
+    },
+    {
+     "scenario": "add-needs-a-name",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     }
+    },
+    {
+     "scenario": "add-name-is-spaces",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     }
+    },
+    {
+     "scenario": "add-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a supply needs a name"
+     }
+    },
+    {
+     "scenario": "add-not-created",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "the supply could not be created"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "the supply could not be created"
+     }
+    },
+    {
+     "scenario": "add-not-ready",
+     "status": 503,
+     "body_keys": {
+      "error": "Not ready",
+      "message": "run b217 first"
+     },
+     "fixture": {
+      "error": "Not ready",
+      "message": "run b217 first"
+     }
+    },
+    {
+     "scenario": "add-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not add the supply",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not add the supply",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "add-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not add the supply",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not add the supply",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/supplies/:id/issue": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "no such supply"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "no such supply"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "no such supply"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "no such supply"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "no such supply"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "no such supply"
+     }
+    },
+    {
+     "scenario": "issue-no-such-supply",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "no such supply"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "no such supply"
+     }
+    },
+    {
+     "scenario": "issue-expensed-supply",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "this supply is expensed when it arrives, so there is no balance to issue from"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "this supply is expensed when it arrives, so there is no balance to issue from"
+     }
+    },
+    {
+     "scenario": "issue-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a movement of nothing records nothing"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a movement of nothing records nothing"
+     }
+    },
+    {
+     "scenario": "issue-not-a-number",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a movement of nothing records nothing"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a movement of nothing records nothing"
+     }
+    },
+    {
+     "scenario": "issue-negative",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "issued takes stock out; give the quantity as a positive number"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "issued takes stock out; give the quantity as a positive number"
+     }
+    },
+    {
+     "scenario": "issue-unit-differs-from-the-balance",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "this stock is counted in bottle, and the movement is in carton — there is no conversion between them, so it cannot be added"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "this stock is counted in bottle, and the movement is in carton — there is no conversion between them, so it cannot be added"
+     }
+    },
+    {
+     "scenario": "issue-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-table-missing-is-a-500",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record it",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/supplies/purchase": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     }
+    },
+    {
+     "scenario": "buy-no-lines",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     }
+    },
+    {
+     "scenario": "buy-lines-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     }
+    },
+    {
+     "scenario": "buy-no-reference",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs its own reference — the bill number, or the date and the shop"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs its own reference — the bill number, or the date and the shop"
+     }
+    },
+    {
+     "scenario": "buy-reference-is-spaces",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs its own reference — the bill number, or the date and the shop"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs its own reference — the bill number, or the date and the shop"
+     }
+    },
+    {
+     "scenario": "buy-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "a purchase needs at least one line"
+     }
+    },
+    {
+     "scenario": "buy-not-ready",
+     "status": 503,
+     "body_keys": {
+      "error": "Not ready",
+      "message": "run b217 first"
+     },
+     "fixture": {
+      "error": "Not ready",
+      "message": "run b217 first"
+     }
+    },
+    {
+     "scenario": "buy-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record the purchase",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record the purchase",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "buy-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record the purchase",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record the purchase",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "buy-counted-line-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record the purchase",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not record the purchase",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
