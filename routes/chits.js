@@ -1175,7 +1175,7 @@ async function sendSeller(st, req, res) {
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
 async function sendOffers(st, req, res) {
-  const { sender_id, business_json, orderLike, sellerId } = st;
+  const { sender_id, purpose, business_json, orderLike, sellerId } = st;
   let { line_items } = st;
   /**
    * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
@@ -1204,7 +1204,7 @@ async function sendOffers(st, req, res) {
       req.body.recipients.length &&
       req.body.recipients.every((item) => item && (item.self === true || String(item.name || '').toLowerCase() === 'self'));
     /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
-    if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
+    if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike) && require('../lib/offers-live').isSalesDocument(purpose, bj)) {
       const cur = await require('../lib/regional')
         .currencyFor(sellerId)
         .catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
