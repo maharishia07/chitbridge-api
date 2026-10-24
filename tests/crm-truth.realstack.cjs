@@ -6,7 +6,8 @@
  * bills only and say why a count is low · remove HIDES and never deletes, and is refused while dues are open.
  * CR-01 first bill ends the lead · CR-02 segments match the bills sent · CR-03 unnamed bills are not counted AND the screen says why ·
  * CR-04 remove refused with open dues · CR-05 a removed party is hidden, the row kept · CR-06 one phone, one party (lead, counter, import).
- * Not here (covered or a screen): CR-07 may-trade, CR-08 viewer, CR-09 follow-ups (offline ✓ files) · CR-10 the lead path (W16, a walk).
+ * CR-07 may we trade (a local party, a party on the rail) · CR-09 a follow-up is shown on its day (today · late · later).
+ * Not here: CR-08 viewer (an actor sign-in has no offline-provable code: crm-viewer.test.cjs ✓) · CR-10 the lead path (W16, a walk) · may-trade's inactive / shopper / other-sandbox words (pure unit: crm-maytrade.test.cjs).
  * A `gap:` FAIL is a RECORDED finding (CRM-BACKLOG "K-TRUTH-1 2026-10-19"), never fixed here. LOCAL ONLY.
  * Break-tested 2026-10-19: each passing case was run once with its expected figure flipped to a wrong one (CR-02a 5 regular, CR-03a 12 customers, CR-04 status 200, CR-05 txn_count 99) and went red.
  * Run: node tests/crm-truth.realstack.cjs   (one realstack file at a time on :3100)
@@ -97,6 +98,35 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
     await kase('CR-06c', 'the same phone typed with +91 and spaces is the same party', async () => {
       const c = await lead(A, 'Format Twin', '+91 98765 10077');
       expect(c.status === 409 && await count('9876510077') === 1, 'lead ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 140) + ' · parties with that phone ' + await count('9876510077'));
+    });
+
+    /* CR-07 · may we trade? the verdict word comes with the party (list row and record), the sentence with the add answer */
+    await kase('CR-07a', 'a local party (a lead) is NOT on ChitBridge: the record says may_trade false, why "local", and the add answer says so in words', async () => {
+      const rec = ok(await j('/api/crm/parties/' + base.party_id, { token: A.token }), 'record').b;
+      const row = (await listOf(A)).parties.find((x) => x.party_id === base.party_id);
+      const added = ok(await j('/api/relationships/customers', { method: 'POST', token: A.token, body: { name: 'Counter Local ' + RUN } }), 'add local').b;
+      expect(rec.may_trade && rec.may_trade.ok === false && rec.may_trade.why === 'local' && rec.on_chitbridge === false && row && row.may_trade.why === 'local', 'record ' + JSON.stringify(rec.may_trade) + ' · list ' + JSON.stringify(row && row.may_trade));
+      expect(/not on ChitBridge/.test(added.message || '') && added.customer.on_rail === false && /not on ChitBridge/.test((added.customer.one_sided || {}).why || ''), 'add answer ' + JSON.stringify(added).slice(0, 200));
+    });
+    const B = await freshShop(RUN + 'b', 'Crm truth trader');
+    await kase('CR-07b', 'a business on the rail in the same sandbox MAY trade: added by User ID, on_rail true, no one-sided note, may_trade ok', async () => {
+      const added = ok(await j('/api/relationships/customers', { method: 'POST', token: A.token, body: { handle: RUN + 'b' } }), 'add by user id').b;
+      const rec = ok(await j('/api/crm/parties/' + added.customer.customer_identity_id, { token: A.token }), 'record').b;
+      expect(added.customer.on_rail === true && !added.customer.one_sided && rec.may_trade && rec.may_trade.ok === true && rec.on_chitbridge === true, 'add ' + JSON.stringify(added.customer).slice(0, 200) + ' · record ' + JSON.stringify(rec.may_trade));
+    });
+
+    /* CR-09 · a follow-up is shown on its day: the SERVER names the shop's day, and says today / late / week */
+    const shopDay = ok(await j('/api/crm/followups?scope=all', { token: A.token }), 'followups').b;
+    const dayPlus = (n) => new Date(Date.parse(shopDay.shop_day + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+    const askFollowup = async (what, due) => ok(await j('/api/crm/followups', { method: 'POST', token: A.token, body: { party_id: first.party_id, what, due_at: due } }), 'follow-up ' + what).b.followup;
+    await kase('CR-09', 'a follow-up due today is TODAY (not late), one due yesterday is LATE, one due in three days is neither; the list counts and the record carry them', async () => {
+      const t = await askFollowup('Ring about the quote ' + RUN, dayPlus(0)), l = await askFollowup('Overdue call ' + RUN, dayPlus(-1)), w = await askFollowup('Next week call ' + RUN, dayPlus(3));
+      expect(t.today === true && t.late === false && t.bucket === 'today' && t.due_day === dayPlus(0), 'today one ' + JSON.stringify({ today: t.today, late: t.late, bucket: t.bucket, due_day: t.due_day }));
+      expect(l.late === true && l.today === false && l.bucket === 'late' && w.late === false && w.today === false && w.bucket === 'week', 'late ' + l.bucket + ' · later ' + w.bucket);
+      const all = ok(await j('/api/crm/followups?scope=all', { token: A.token }), 'list').b, rec = ok(await j('/api/crm/parties/' + first.party_id, { token: A.token }), 'record').b;
+      const mine = new Set([t.followup_id, l.followup_id, w.followup_id]);
+      expect(all.today === shopDay.today + 1 && all.late === shopDay.late + 1 && all.total === shopDay.total + 3 && all.shop_day === shopDay.shop_day, 'counts ' + JSON.stringify({ today: all.today, late: all.late, total: all.total, was: [shopDay.today, shopDay.late, shopDay.total] }));
+      expect(rec.followups.filter((x) => mine.has(x.followup_id)).length === 3, 'the record carries ' + rec.followups.length + ' follow-ups');
     });
   } finally { await pg.end(); }
   finish('crm-truth', process.env.CRM_TRUTH_JSON, { run: RUN });
