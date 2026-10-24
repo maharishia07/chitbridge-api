@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 607
    },
    "foreign_id_404": {
     "applies": 227,
@@ -11845,7 +11845,7 @@
    "owner_area": "supplies",
    "file": "routes/supplies.js",
    "line": 34,
-   "hash": "636898bcd1add008",
+   "hash": "c4953df700becb6a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11855,7 +11855,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15048,7 +15048,7 @@
    "owner_area": "supplies",
    "file": "routes/supplies.js",
    "line": 79,
-   "hash": "68b2a70e569b05f7",
+   "hash": "2ea7dda86e1cb9cb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -26770,7 +26770,7 @@
    "owner_area": "supplies",
    "file": "routes/supplies.js",
    "line": 55,
-   "hash": "f6e10ad216307d0e",
+   "hash": "4bc2bbc1f21a36b9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -26780,7 +26780,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26821,7 +26821,7 @@
    "owner_area": "supplies",
    "file": "routes/supplies.js",
    "line": 118,
-   "hash": "1c474b5b75d3f25e",
+   "hash": "eacf63dcd79a6a2e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -26831,7 +26831,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26872,7 +26872,7 @@
    "owner_area": "supplies",
    "file": "routes/supplies.js",
    "line": 99,
-   "hash": "1ea0f40b99996ada",
+   "hash": "157ae23f58e75039",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -26882,7 +26882,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
     "inbound_validated": true,
