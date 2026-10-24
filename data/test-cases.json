@@ -64294,9 +64294,9 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · integration · 498 lines. Run: node chitbridge-api/tests/api-problem-finance.test.cjs",
+   "note": "test.guard · contract · 757 lines. Run: node chitbridge-api/tests/api-problem-finance.test.cjs",
    "layer": "engine",
-   "test_type": "integration",
+   "test_type": "contract",
    "group": "test.guard",
    "automated": true,
    "seq": 90,
@@ -64313,7 +64313,7 @@
     "lib/pricing-contract.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-23T08:12:12+05:30"
+   "changed_at": "2026-10-24T00:00:00Z"
   },
   {
    "case_key": "chitbridge-api/tests/api-problem-governance.test.cjs",
@@ -68643,6 +68643,37 @@
    "changed_at": "2026-10-14T15:58:42Z",
    "needs": [
     "a database"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/finance-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "FINANCE ROUTES TRUTH (FOLDERS · HOME FACTS · PRICING), ON THE REAL STACK (API-4 STAGE 2, R2-10): ANOTHER SHOP ASKS A'S IDS ON A REAL DATABASE, GETS THE UNKNOWN ID'S ANSWER, AND NOTHING OF A'S MOVES.",
+   "claim": "FINANCE ROUTES TRUTH (FOLDERS · HOME FACTS · PRICING), ON THE REAL STACK (API-4 STAGE 2, R2-10): ANOTHER SHOP ASKS A'S IDS ON A REAL DATABASE, GETS THE UNKNOWN ID'S ANSWER, AND NOTHING OF A'S MOVES.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 206 lines. Run: node chitbridge-api/tests/finance-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
    ]
   },
   {
