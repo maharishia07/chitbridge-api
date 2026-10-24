@@ -132,8 +132,8 @@ function extras(tools) {
     X('create-made-and-mailed', 'POST ' + at(''), 200, { body: Object.assign({ email: 'Ravi@Example.com' }, BODY_NEW), patch: mailed, setup: { sqlRows: ENTITY_ROW } }),
     X('create-made-and-code-shown', 'POST ' + at(''), 200, { body: BODY_NEW, patch: showsCode, setup: { sqlRows: ENTITY_ROW } }),
     X('create-mail-not-sent', 'POST ' + at(''), 200, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: ENTITY_ROW } }),
-    X('create-sealed-no-mailer', 'POST ' + at(''), 503, { body: BODY_NEW, patch: sealed(false), setup: { sqlRows: ENTITY_ROW } }),
-    X('create-sealed-needs-an-email', 'POST ' + at(''), 400, { body: BODY_NEW, patch: sealed(true), setup: { sqlRows: ENTITY_ROW } }),
+    X('create-sealed-no-mailer', 'POST ' + at(''), 503, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), patch: sealed(false), setup: { sqlRows: ENTITY_ROW } }),
+    N('create-sealed-no-email-shown', 'POST ' + at(''), 200, { body: BODY_NEW, patch: sealed(true), setup: { sqlRows: ENTITY_ROW } }),
     X('create-email-is-taken', 'POST ' + at(''), 409, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: firstOf(ENTITY_ROW, failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'identities_email_key' })) } }),
     X('create-key-is-taken-at-the-insert', 'POST ' + at(''), 409, { body: BODY_NEW, setup: { sqlRows: failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'uq_actor_key_per_entity' }) } }),
     X('create-insert-fails', 'POST ' + at(''), 500, { body: BODY_NEW, setup: { sqlRows: failOn(/INSERT INTO identities/, 'XX000', SECRET_SQL) } }),
@@ -169,14 +169,14 @@ function extras(tools) {
     X('pin-reset-made', 'DELETE ' + at('/:id/pin'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
     X('pin-reset-made-and-mailed', 'DELETE ' + at('/:id/pin'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
     X('pin-reset-code-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
-    X('pin-reset-sealed-no-mailer', 'DELETE ' + at('/:id/pin'), 503, { patch: sealed(false), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
-    X('pin-reset-sealed-needs-an-email', 'DELETE ' + at('/:id/pin'), 400, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
+    X('pin-reset-sealed-no-mailer', 'DELETE ' + at('/:id/pin'), 503, { patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
+    N('pin-reset-sealed-no-email-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
     X('pin-reset-fails', 'DELETE ' + at('/:id/pin'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
     X('otp-made', 'POST ' + at('/:id/otp'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
     X('otp-made-and-mailed', 'POST ' + at('/:id/otp'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
     X('otp-code-shown', 'POST ' + at('/:id/otp'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
-    X('otp-sealed-no-mailer', 'POST ' + at('/:id/otp'), 503, { patch: sealed(false), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
-    X('otp-sealed-needs-an-email', 'POST ' + at('/:id/otp'), 400, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
+    X('otp-sealed-no-mailer', 'POST ' + at('/:id/otp'), 503, { patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
+    N('otp-sealed-no-email-shown', 'POST ' + at('/:id/otp'), 200, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
     X('otp-fails', 'POST ' + at('/:id/otp'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
     X('otp-body-is-a-list', 'POST ' + at('/:id/otp'), 200, { body: [], setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } })
   ];
@@ -212,8 +212,8 @@ function extras(tools) {
     X('status-removed', 'PUT ' + at('/:id/status'), 200, { body: { action: 'remove', confirm: 'REMOVE' }, setup: { sqlRows: firstOf(SHOP_FLAGS, NO_TASKS) } }),
     X('status-switched-on', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, setup: { sqlRows: NO_TASKS } }),
     X('status-switched-on-code-shown', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, patch: showsCode, setup: { sqlRows: NO_TASKS } }),
-    X('status-switched-on-sealed-no-mailer', 'PUT ' + at('/:id/status'), 503, { body: { action: 'reactivate' }, patch: sealed(false), setup: { sqlRows: NO_TASKS } }),
-    X('status-switched-on-sealed-needs-an-email', 'PUT ' + at('/:id/status'), 400, { body: { action: 'reactivate' }, patch: sealed(true), setup: { sqlRows: NO_TASKS } }),
+    X('status-switched-on-sealed-no-mailer', 'PUT ' + at('/:id/status'), 503, { body: { action: 'reactivate' }, patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), NO_TASKS) } }),
+    N('status-switched-on-sealed-no-email', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, patch: sealed(true), setup: { sqlRows: NO_TASKS } }),
     X('status-fails', 'PUT ' + at('/:id/status'), 500, { body: { action: 'deactivate' }, setup: { sqlRows: firstOf(SHOP_FLAGS, NO_TASKS, failOn(/SET break_status = 'deactivated'/, 'XX000', SECRET_SQL)) } })
   ];
 
