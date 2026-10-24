@@ -84,6 +84,8 @@ function extras(tools) {
     X('face-item-declaration-unsupported', 'PUT ' + F, 422, { body: { face: { items: [{ name: 'Tea', order_input: { schema: { properties: { a: { pattern: 'x' } } } } }] } } }),
     X('face-identity-unknown-column', 'PUT ' + F, 422, { body: { face: { identity: { key: ['nope'] } } }, setup: withRows(identity('name')) }),
     X('face-saved-whole', 'PUT ' + F, 200, { body: { face: { purpose: 'shop' } }, setup: withRows(answering(/INSERT INTO catalogue_face/, [{ updated_at: '2026-10-23T00:00:00.000Z' }])) }),
+    /* CAT-211: the shop default rate is owner or manager only; the editor's save that changes it is refused whole */
+    X('face-rate-owner-only', 'PUT ' + F, 403, { body: { face: { purpose: 'shop', tax: { default_slab: 'slab-18' } } }, setup: { who: STAFF, sqlRows: answering(/SELECT face FROM catalogue_face/, [{ face: { purpose: 'shop' } }]) } }),
     X('face-save-fails', 'PUT ' + F, 500, { body: { face: { purpose: 'shop' } }, setup: failing }),
     X('face-saved-by-staff', 'PUT ' + F, 200, { body: { face: { purpose: 'shop' } }, setup: { who: STAFF, sqlRows: answering(/INSERT INTO catalogue_face/, [{ updated_at: '2026-10-23T00:00:00.000Z' }]) } })
   ];
