@@ -61,6 +61,9 @@ const supplierRow = (d, pid) => ((d.b && d.b.parties) || []).find((p) => String(
       expect(row.todo === 'accept', 'todo ' + row.todo + ' (expected accept — the Accept action stays open)');
       expect(row.short && row.short.theirs_minor === THEIRS * 100 && row.short.ours_minor === OURS * 100 && row.short.short_minor === SHORT * 100, 'short ' + JSON.stringify(row.short));
       expect(/₹250 short, noted/.test(row.reason || ''), 'the sentence does not offer the accept: ' + row.reason);
+      /* the bill sheet reads the SAME figures off its own chit read (books_wait.short), not a second list */
+      const wait = (await j('/api/chits/' + CHIT, { token: A.token })).b.books_wait;
+      expect(wait && wait.todo === 'accept' && wait.short && wait.short.theirs_minor === THEIRS * 100 && wait.short.ours_minor === OURS * 100 && wait.short.short_minor === SHORT * 100, 'chit read books_wait ' + JSON.stringify(wait));
       return row.reason;
     });
 
@@ -87,7 +90,13 @@ const supplierRow = (d, pid) => ((d.b && d.b.parties) || []).find((p) => String(
       expect(held.status === 'disputed' && held.words === 'Held — in dispute with you', 'answer ' + JSON.stringify(held));
       const row = await until(() => dues(A), (d) => { const p = supplierRow(d, PID); return p && p.disputed_minor !== 0 ? p : null; });
       expect(row && row.disputed_minor === -OURS * 100, 'disputed ' + JSON.stringify(row && row.disputed_minor));
-      expect(!((row.payable && row.payable.bills) || []).length && (!row.payable || row.payable.total_minor === 0), 'the held bill is still payable: ' + JSON.stringify(row.payable));
+      /* R106: the held bill is LISTED (Release needs a row) with disputed:true and the hold's words, but counts in NO total */
+      const listed = (row.payable && row.payable.bills) || [];
+      expect(listed.length === 1 && listed[0].ref === BILL && listed[0].disputed === true && listed[0].held_words === held.words && listed[0].open_minor === OURS * 100, 'held bill not listed as held: ' + JSON.stringify(row.payable));
+      expect(row.payable.total_minor === 0 && Object.values(row.payable.buckets).every((n) => n === 0), 'the held bill is still counted owed: ' + JSON.stringify(row.payable));
+      const d = (await dues(A)).b, cash = ok(await j('/api/books/cashflow?days=30', { token: A.token }), 'cashflow').b;
+      expect(d.payables.total_minor === 0, 'what-you-owe moved: ' + JSON.stringify(d.payables));
+      expect(cash.out_minor === 0 && cash.uncounted.disputed_out_minor === OURS * 100, 'cash out moved or the hold is unnamed: ' + JSON.stringify({ out: cash.out_minor, unc: cash.uncounted }));
       return held.words;
     });
 

@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
 | 88 | `read` | `books-cashflow.js` | Trips: |
-| 82 | `words` | `variant.browser.js` |  |
+| 83 | `words` | `variant.browser.js` |  |
 | 75 | `money` | `bill-privacy.js` |  |
 | 74 | `answer` | `availability.js` | from March; then nearest. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -207,5 +207,6 @@ of file each thing is; this says what already does the job.
 | 11 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 11 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 11 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
+| 11 | `move` | `rail.js` | Order = the order the server refused in: |
 | 10 | `start` | `app.html` |  |
 | 10 | `show` | `cap-catalogue.js` |  |
