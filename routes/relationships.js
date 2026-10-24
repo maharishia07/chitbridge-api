@@ -923,8 +923,8 @@ router.post('/customers/:id/groups', auth, async (req, res) => {
 // Manual segment override (optional)
 const CUSTOMER_PATCH_KEYS = PARTY_KEYS.concat('segment_override');
 /** R14: a key this route does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) */
-function unknownKeys(b, allowed) {
-  return Object.keys(b || {}).filter((item) => allowed.indexOf(item) < 0);
+function unknownKeys(sent, allowed) {
+  return Object.keys(sent || {}).filter((item) => allowed.indexOf(item) < 0);
 }
 router.patch('/customers/:id', [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])], auth, validate, async (req, res) => {
   try {
