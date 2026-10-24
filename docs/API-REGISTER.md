@@ -463,7 +463,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/ctp/deliver | ctp | routes/ctp.js:131 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/ctp/query | ctp | routes/ctp.js:333 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/definitions | definitions | routes/definitions.js:261 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/definitions/freeze | definitions | routes/definitions.js:498 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/definitions/freeze | definitions | routes/definitions.js:499 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/entities/populations | entities | routes/entities.js:1696 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/register | entities | routes/entities.js:139 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/verify | entities | routes/entities.js:140 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |

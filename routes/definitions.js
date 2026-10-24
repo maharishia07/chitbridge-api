@@ -471,7 +471,8 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
     if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
     /* the slab guard (lib/slab-cites.js) refuses 409 (cited) or 400 (the takeover is the same slab, or not a live one) */
     if (out.refused) return problem(req, res, out.refused.status === 409 ? { status: 409, ...words.cited(out.refused.body) } : { status: 400, ...words.takeover(out.refused.body) });
-    res.json(out.body);
+    const { message, retired, moved } = out.body; /* R2-13: the answer's keys written where it is sent, so the allow-list can read them */
+    res.json({ message, retired, moved });
   } catch (e) {
     problem(req, res, definitionFault(e, req));
   }
@@ -499,7 +500,7 @@ router.post('/freeze', auth, ...checked('POST /freeze'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const ids = (req.body.definition_ids || []).map(String).filter(Boolean);
-    if (!ids.length) return res.json({ frozen: [], missing: [] });
+    if (!ids.length) return res.json({ frozen: [], missing: [], frozen_at: null }); /* R2-13: one shape on both paths (laptop1, 24 Oct): frozen_at is null when nothing was frozen */
 
     /* ⚠️ A GOVERNED ID IS NOT A UUID and would make the cast below refuse the whole request. Split: the entity's
        own definitions freeze from their version row; the jurisdiction's slabs freeze as a copy of the regional
