@@ -26,7 +26,7 @@ of file each thing is; this says what already does the job.
 | 56 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 50 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 51 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 50 | `entry` | `books-store.js` |  |
 | 50 | `next` | `dayopen.js` | the next thing to do — |
 | 49 | `toast` | `accounts-shell.js` |  |
@@ -46,10 +46,10 @@ of file each thing is; this says what already does the job.
 | 38 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 37 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 36 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 36 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
 | 35 | `rules` | `docnumber.js` | the rule set for a country — |
-| 35 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 35 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -158,7 +158,6 @@ of file each thing is; this says what already does the job.
 | 15 | `connectors` | `home-facts.js` | declare (said in words — |
 | 15 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 15 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
-| 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `control` | `cap-settings.js` |  |
 | 14 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
@@ -173,6 +172,7 @@ of file each thing is; this says what already does the job.
 | 14 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 14 | `report` | `raida.js` | register at the one moment it must not. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
+| 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 13 | `resolve` | `page.js` |  |
