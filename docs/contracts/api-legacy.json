@@ -4645,12 +4645,12 @@
      "scenario": "nothing-found",
      "status": 400,
      "body_keys": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      },
      "fixture": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      }
     }
    ]
