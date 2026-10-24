@@ -398,7 +398,7 @@ router.post(
       );
 
       /* SEC-106: the code is made AFTER the row, by the one issuer — a keyed hash is kept, the code itself only goes to the e-mail or the owner's screen */
-      const { otp } = await empCode.issue(db, identity_id, { entity_id, by: req.identity.identity_id, channel: empCode.channelOf(toEmail) });
+      const { otp, expires } = await empCode.issue(db, identity_id, { entity_id, by: req.identity.identity_id, channel: empCode.channelOf(toEmail) });
 
       /* SEC2: a REAL code is never logged — only the local stack's fixed code, which is a known constant anyway */
       console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.fixedOtp('entity') ? ` — OTP: ${otp}` : ''));
@@ -430,12 +430,13 @@ router.post(
           login_format: `${actor_key}@${entity_name}`,
           parent_entity: entity_name
         },
-        ...(await empCode.deliver({ to: toEmail, name: display_name, otp })),
+        /* R112: show_code only for a person with no e-mail, only here on the issuing call, only to the owner (ownerWrite on this route) */
+        ...(await empCode.deliver({ to: toEmail, name: display_name, otp, show: true, expires })),
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        /* SEC2: the code reaches the person by e-mail; the answer names only the user id (a code here went through no door) */
+        /* SEC2: the code reaches the person by e-mail, or the owner reads it off the screen (R112); this text names only the user id */
         login_instruction:
           `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}` +
-          (toEmail ? '\nThe first code was sent to their e-mail.' : '\nAdd their e-mail so the first code can be sent.')
+          (empCode.channelOf(toEmail) === 'email' ? '\nThe first code was sent to their e-mail.' : '\nThe first code is shown on your screen. Give it to them in person.')
       });
     } catch (err) {
       /**
@@ -739,9 +740,9 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
     // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
     // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
     const toEmail = await actorEmail(actor_id);
-    const refused = await empCode.mayIssue(toEmail);
+    const refused = await empCode.mayIssue(toEmail, { entity_id, identity_id: actor_id });
     if (refused) return problem(req, res, words.fromLibrary(refused));
-    const { otp } = await empCode.issue(db, actor_id, {
+    const { otp, expires } = await empCode.issue(db, actor_id, {
       entity_id,
       by: req.identity.identity_id,
       channel: empCode.channelOf(toEmail),
@@ -750,7 +751,7 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
     res.json({
       message: 'PIN reset — share the new one-time code; they set a new PIN on next login',
       actor_name: actor.rows[0].display_name,
-      ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
+      ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp, show: true, expires })),
       ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
       login_format: await loginIdFor(actor.rows[0].actor_key, req)
     });
@@ -885,17 +886,16 @@ router.post('/:id/otp', auth, ownerWrite, ...checked('POST /:id/otp'), async (re
 
     // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
     const toEmail = await actorEmail(actor_id);
-    const refused = await empCode.mayIssue(toEmail);
+    const refused = await empCode.mayIssue(toEmail, { entity_id, identity_id: actor_id });
     if (refused) return problem(req, res, words.fromLibrary(refused));
-    const { otp } = await empCode.issue(db, actor_id, { entity_id, by: req.identity.identity_id, channel: empCode.channelOf(toEmail) });
+    const { otp, expires } = await empCode.issue(db, actor_id, { entity_id, by: req.identity.identity_id, channel: empCode.channelOf(toEmail) });
 
     res.json({
       message: 'OTP reset successfully',
       actor_name: actor.rows[0].display_name,
-      ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
+      ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp, show: true, expires })),
       ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-      login_format: await loginIdFor(actor.rows[0].actor_key, req),
-      expires_in: '7 days'
+      login_format: await loginIdFor(actor.rows[0].actor_key, req)
     });
   } catch (err) {
     problem(req, res, failed(err, req, 'OTP reset failed'));
@@ -995,9 +995,9 @@ router.put(
       if (action === 'reactivate') {
         // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
         const toEmail = await actorEmail(actor_id);
-        const refused = await empCode.mayIssue(toEmail);
+        const refused = await empCode.mayIssue(toEmail, { entity_id, identity_id: actor_id });
         if (refused) return problem(req, res, words.fromLibrary(refused));
-        const { otp } = await empCode.issue(db, actor_id, {
+        const { otp, expires } = await empCode.issue(db, actor_id, {
           entity_id,
           by: req.identity.identity_id,
           channel: empCode.channelOf(toEmail),
@@ -1007,7 +1007,7 @@ router.put(
         return res.json({
           message: 'Actor reactivated',
           audit: nestedAudit,
-          ...(await empCode.deliver({ to: toEmail, name: a.display_name, otp })),
+          ...(await empCode.deliver({ to: toEmail, name: a.display_name, otp, expires })), // R112: reactivate never shows a code (it mails, or says to use Reset code)
           ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
           login_format: await loginIdFor(a.actor_key, req)
         });

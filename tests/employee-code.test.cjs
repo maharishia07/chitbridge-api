@@ -36,9 +36,12 @@ it('sealed + OTP_EMAIL_ENABLED off, or FROM_EMAIL missing: refused too', () => {
   env({ ...SEALED, OTP_EMAIL_ENABLED: '' }); assert.strictEqual(load().refusal('a@b.co').body.code, 'EMAIL_DELIVERY_NOT_CONFIGURED');
   env({ ...SEALED, FROM_EMAIL: '' }); assert.strictEqual(load().refusal('a@b.co').status, 503);
 });
-it('sealed + no employee e-mail: refused 400 EMPLOYEE_EMAIL_REQUIRED (never a code to read out)', () => {
-  env(SEALED); const ec = load();
-  for (const to of ['', null, 'not-an-email']) { const r = ec.refusal(to); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'EMPLOYEE_EMAIL_REQUIRED'); }
+it('R112 · sealed + no e-mail (blank, null or malformed): never refused, even with no sender — the owner is shown the code', () => {
+  for (const e of [SEALED, { NODE_ENV: 'production' }]) { env(e); const ec = load(); for (const to of ['', null, '   ', 'not-an-email']) assert.strictEqual(ec.refusal(to), null); }
+});
+it('R112 · sealed + an e-mail + no sender stays refused 503 (no mail-failed fallback to the screen)', () => {
+  env({ NODE_ENV: 'production' }); const r = load().refusal('kumar@shop.test');
+  assert.strictEqual(r.status, 503); assert.strictEqual(r.body.code, 'EMAIL_DELIVERY_NOT_CONFIGURED');
 });
 it('every sealed env name never shows a code, even if DEV_OTP / the echo opt-in survived', async () => {
   for (const NODE_ENV of ['production', 'uat', 'staging', 'live', 'prod', ' Production ']) {
@@ -107,6 +110,51 @@ it('boot guard: a sealed env without RESEND_API_KEY + FROM_EMAIL cannot start; w
 it('notify.sendOtpEmail takes a ttl, so the mail says 24 hours rather than 1 hour', () => {
   const n = read('lib', 'notify.js');
   assert(/opts\.ttl\) \|\| '1 hour'/.test(n) && /expires in \$\{ttl\}/.test(n));
+});
+
+/* ── R112 · a worker with no e-mail: the code is SHOWN to the owner, once, for 30 minutes ── */
+it('R112 · deliver({ show }) with no e-mail answers show_code, 30 minutes, expires_at, delivery shown; nothing is e-mailed', async () => {
+  env(SEALED); const ec = load(); const send = stub(); const { otp, expires } = ec.mint(ec.SHOW_TTL_MS);
+  const body = await ec.deliver({ to: '', name: 'Asha Devi', otp, send, show: true, expires });
+  assert.strictEqual(body.show_code, otp); assert.strictEqual(body.expires_in, '30 minutes'); assert.strictEqual(body.delivery, 'shown');
+  assert.strictEqual(body.expires_at, expires.toISOString()); assert.strictEqual(send.calls.length, 0); assert(!('otp' in body) && !('dev_otp' in body));
+});
+it('R112 · a person with an e-mail gets no show_code even when the route asks to show; a call that does not ask shows nothing', async () => {
+  env(SEALED); const ec = load(); const { otp } = ec.mint();
+  const mailed = await ec.deliver({ to: 'asha@shop.test', name: 'Asha', otp, send: stub(), show: true });
+  assert(!('show_code' in mailed) && mailed.delivery === 'sent' && !JSON.stringify(mailed).includes(otp));
+  const quiet = await ec.deliver({ to: '', name: 'Asha', otp, send: stub() });
+  assert(!('show_code' in quiet) && !JSON.stringify(quiet).includes(otp), 'reactivate, a list or a GET never shows');
+});
+it('R112 · the shown answer is one the idempotency store refuses to record (a replay can never return it)', async () => {
+  env(SEALED); const ec = load(); const { otp } = ec.mint();
+  const body = await ec.deliver({ to: '', name: 'Asha', otp, send: stub(), show: true });
+  const idem = require('../middleware/idempotency');
+  assert(idem.carriesCode(body) === true, 'show_code must mark the answer as unrecordable');
+});
+it('R112 · issue(): a screen code lives 30 minutes, a mailed one 24 hours; the one writer, in the row', async () => {
+  env({ NODE_ENV: 'test' }); const ec = load(); const rows = [];
+  const run = async (sql, args) => { rows.push({ sql, args }); };
+  const screen = await ec.issue(run, 'p1', { channel: 'screen' }); const mail = await ec.issue(run, 'p1', { channel: 'email' });
+  const min = (d) => Math.round((d.getTime() - Date.now()) / 60000);
+  assert.strictEqual(min(screen.expires), 30); assert.strictEqual(min(mail.expires), 24 * 60);
+  assert(rows.every((r) => /otp_attempts = 0/.test(r.sql)), 'every issue zeroes the guess count');
+});
+it('R112 · the issue limiter: five codes per person in the window pass, the sixth is 429 in words; another person is unaffected', async () => {
+  env({ NODE_ENV: 'test' }); const ec = load(); ec._resetAsk();
+  const who = { entity_id: 'shop-1', identity_id: 'p1' };
+  for (let n = 0; n < ec.ISSUE_MAX; n++) assert.strictEqual(await ec.mayIssue('', who), null);
+  const six = await ec.mayIssue('', who);
+  assert.strictEqual(six.status, 429); assert.strictEqual(six.body.code, 'CODE_ISSUE_LIMIT'); assert(/minutes/.test(six.body.message) && !/p1|shop-1/.test(six.body.message), 'in words, no caller value echoed');
+  assert.strictEqual(await ec.mayIssue('', { entity_id: 'shop-1', identity_id: 'p2' }), null);
+  assert.strictEqual(await ec.mayIssue('', { entity_id: 'shop-2', identity_id: 'p1' }), null);
+  ec._resetAsk();
+});
+it('R112 · the shown code is never logged and routes/actors.js passes show only on create, reset PIN and new code', () => {
+  const a = read('routes', 'actors.js');
+  assert.strictEqual((a.match(/show: true/g) || []).length, 3, 'three issuing doors show; reactivate does not');
+  const lib = read('lib', 'employee-code.js');
+  assert(!lib.split(String.fromCharCode(10)).some((l) => l.includes('log.') && l.includes('show_code')), 'show_code is never logged');
 });
 
 queue.then(() => { KEYS.forEach((k) => { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; }); console.log(pass + ' checks'); });
