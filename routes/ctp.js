@@ -42,6 +42,7 @@ const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
 const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
+const net = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
 const { problem } = require('../lib/problem');
 const { safeErr } = require('../lib/respond');
 const { schemaValidate } = require('../middleware/validate'); // S9: the body is checked against the door's own schema
@@ -114,8 +115,22 @@ async function manifest() {
     /* ⚠️ said out loud. An installation that cannot sign is one whose envelopes nobody should accept, and a
        peer deserves to learn that from the manifest rather than from a failed delivery. */
     can_sign: k.can_sign,
-    note: k.can_sign ? undefined : k.why
+    note: k.can_sign ? undefined : k.why,
+    /* RAIL-97: the pass the network master signed for this installation, published so a receiver needs no call to the master; and (on a master) the fingerprint of the
+       network key, which a joining installation compares with what it was told. Both are absent on a standalone installation. */
+    membership: await netMembership(),
+    network_fingerprint: net.networkFingerprint() || undefined
   };
+}
+
+/** this installation's own membership certificate for the manifest; a failed read is logged and the manifest goes out without it (the door then says why) */
+async function netMembership() {
+  try {
+    return (await net.ownMembership()) || undefined;
+  } catch (e) {
+    log.fellBack('ctp manifest: the membership read failed — published without it', e);
+    return undefined;
+  }
 }
 
 /**
@@ -257,6 +272,11 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
     const opened = await openEnvelope(env, peer, ik, pk.public_key, { population: to.population, pairedWith: () => mayCross });
     if (!opened.ok) return refuse({ status: 409, code: 'CTP_ENVELOPE_REFUSED', why: opened.why });
 
+    /* ── RAIL-97: after the signature, the PASS. A member or master accepts a chit only from a peer whose manifest carries a membership certificate signed by the key
+       it pinned (the pinned master itself is trusted by that key). A standalone installation skips this and behaves exactly as before. */
+    const pass = await net.doorVerdict(ik, peer, pk.manifest);
+    if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
+
     /**
      * ── ⚠️ THE COPY IS WRITTEN AS THE RECIPIENT'S, WITH THE ENTITY WE RESOLVED — never the entity_id the
      * envelope carried. A sender naming somebody else's entity_id is the one way this door could write into a
@@ -378,7 +398,10 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
     if (!member.peer) return refuse({ status: 403, code: 'CTP_PEER_REFUSED', why: member.why });
     const peer = member.peer;
 
-    const pk = await directory.publicKeyFor(peer.domain, ik);
+    /* RAIL-96/97: a question only the pinned master may ask is verified with the PINNED key; one only a master answers is refused anywhere else, in words */
+    const gate = await net.queryGate(q.ask && q.ask.want, ik);
+    if (gate.refuse) return refuse({ status: gate.refuse.status, code: gate.refuse.code, why: gate.refuse.why });
+    const pk = gate.pinnedKey ? { ok: true, public_key: gate.pinnedKey } : await directory.publicKeyFor(peer.domain, ik);
     if (!pk.ok) return refuse({ status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the asker’s manifest: ' + pk.why });
     const opened = ctpquery.open(q, {
       verify: (hash, sig, who) => who === ik && keys.verifyWith(pk.public_key, hash, sig)
@@ -386,6 +409,10 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
     if (!opened.ok) return refuse({ status: 403, code: 'CTP_QUERY_REFUSED', why: opened.why });
 
     const ask = opened.ask;
+    /* after the signature, the PASS (as in deliver): resolve, catalogue and locate need a valid certificate; renewing one and reading the directory do not */
+    const pass = net.needsMembership(ask.want) ? await net.doorVerdict(ik, peer, pk.manifest) : { ok: true };
+    if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
+    if (ctpquery.NETWORK_WANTS.includes(ask.want)) return res.json(await net.answer(ask, ik));
     const cat = require('./catalogue');
 
     if (ask.want === 'resolve') {
