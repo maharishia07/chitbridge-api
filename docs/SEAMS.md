@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
 | 88 | `read` | `books-cashflow.js` | Trips: |
-| 82 | `words` | `variant.browser.js` |  |
+| 84 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
 | 74 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -23,13 +23,13 @@ of file each thing is; this says what already does the job.
 | 60 | `here` | `screen-id.js` |  |
 | 58 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 58 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
-| 58 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 60 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 57 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
 | 52 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 52 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 51 | `next` | `dayopen.js` | the next thing to do — |
+| 53 | `next` | `dayopen.js` | the next thing to do — |
 | 50 | `entry` | `books-store.js` |  |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 49 | `record` | `access-events.js` |  |
@@ -43,7 +43,7 @@ of file each thing is; this says what already does the job.
 | 40 | `view` | `books-payables.js` | group: |
 | 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 39 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 40 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
@@ -51,7 +51,7 @@ of file each thing is; this says what already does the job.
 | 36 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
-| 35 | `rules` | `docnumber.js` | the rule set for a country — |
+| 37 | `rules` | `docnumber.js` | the rule set for a country — |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 33 | `closeModal` | `app.html` |  |
@@ -74,7 +74,7 @@ of file each thing is; this says what already does the job.
 | 28 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 28 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 28 | `changes` | `books-store.js` |  |
-| 28 | `rate` | `convert.js` | A rate, with its evidence. |
+| 30 | `rate` | `convert.js` | A rate, with its evidence. |
 | 28 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
