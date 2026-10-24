@@ -838,6 +838,233 @@
     "url": "/api/assist/whoami"
    }
   },
+  "GET /api/combo-templates": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "templates",
+     "total",
+     "page",
+     "limit"
+    ],
+    "properties": {
+     "templates": {},
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "PAGE_DEFAULT": {}
+    },
+    "additionalProperties": false
+   },
+   "observed": 4,
+   "open": []
+  },
+  "GET /api/marketing/came-back": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "migrated",
+     "code",
+     "say",
+     "days",
+     "sent_n",
+     "came_back_n",
+     "counts",
+     "why",
+     "money",
+     "customers",
+     "total",
+     "page",
+     "limit"
+    ],
+    "properties": {
+     "migrated": {
+      "type": "boolean"
+     },
+     "code": {
+      "type": "string"
+     },
+     "say": {
+      "type": "string"
+     },
+     "days": {
+      "type": "number"
+     },
+     "sent_n": {
+      "type": "number"
+     },
+     "came_back_n": {
+      "type": "number"
+     },
+     "counts": {
+      "type": "object",
+      "required": [
+       "all",
+       "sent",
+       "refused",
+       "failed"
+      ],
+      "properties": {
+       "all": {
+        "type": "number"
+       },
+       "sent": {
+        "type": "number"
+       },
+       "refused": {
+        "type": "number"
+       },
+       "failed": {
+        "type": "number"
+       },
+       "query": {}
+      },
+      "additionalProperties": false
+     },
+     "why": {
+      "type": "object",
+      "required": [
+       "code",
+       "say"
+      ],
+      "properties": {
+       "code": {
+        "type": "string"
+       },
+       "say": {
+        "type": "string"
+       },
+       "query": {}
+      },
+      "additionalProperties": false
+     },
+     "money": {
+      "type": "object",
+      "required": [
+       "by_currency",
+       "mixed",
+       "excluded",
+       "total"
+      ],
+      "properties": {
+       "by_currency": {},
+       "mixed": {
+        "type": "boolean"
+       },
+       "excluded": {
+        "type": "object",
+        "required": [
+         "non_monetary",
+         "awaiting_agreement"
+        ],
+        "properties": {
+         "non_monetary": {
+          "type": "number"
+         },
+         "awaiting_agreement": {
+          "type": "number"
+         },
+         "query": {}
+        },
+        "additionalProperties": false
+       },
+       "total": {},
+       "query": {}
+      },
+      "additionalProperties": false
+     },
+     "customers": {},
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "query": {}
+    },
+    "additionalProperties": false
+   },
+   "observed": 3,
+   "open": []
+  },
+  "GET /api/offers/kinds": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "engine",
+     "version",
+     "kinds"
+    ],
+    "properties": {
+     "engine": {
+      "type": "string"
+     },
+     "version": {
+      "type": "number"
+     },
+     "kinds": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "kind",
+        "scope",
+        "fields"
+       ],
+       "properties": {
+        "kind": {
+         "type": "string"
+        },
+        "scope": {
+         "type": "string"
+        },
+        "fields": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "engine": {},
+        "version": {},
+        "kinds": {}
+       },
+       "additionalProperties": false
+      }
+     },
+     "kind": {},
+     "scope": {},
+     "fields": {}
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": []
+  },
+  "GET /api/offers/openapi.json": {
+   "status": "200",
+   "schema": {
+    "type": "object"
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "(answer)",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ]
+  },
   "POST /api/assist": {
    "status": "200",
    "schema": {
@@ -1166,6 +1393,7 @@
   }
  },
  "listed": {
+  "DELETE /api/combo-templates/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
@@ -1173,10 +1401,16 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/offers/openapi.json": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+  "PATCH /api/combo-templates/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
   "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/combo-templates": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/combo-templates/:id/push": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/offers/evaluate": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/offers/explain": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
  }
 }

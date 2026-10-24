@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 609
    },
    "foreign_id_404": {
     "applies": 227,
@@ -5666,7 +5666,7 @@
    "owner_area": "combo-templates",
    "file": "routes/combo-templates.js",
    "line": 60,
-   "hash": "0d320258e022e963",
+   "hash": "c0dd4ca7465ccd30",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5703,8 +5703,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#350",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c0dd4ca7465ccd30"
    },
    "status": "partial"
   },
@@ -9839,7 +9840,7 @@
    "owner_area": "marketing",
    "file": "routes/marketing.js",
    "line": 35,
-   "hash": "1dcc1f99943ffc27",
+   "hash": "bb655a9984a3027a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9849,7 +9850,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9877,8 +9878,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#350",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bb655a9984a3027a"
    },
    "status": "partial"
   },
@@ -10324,7 +10326,7 @@
    "owner_area": "offers",
    "file": "routes/offers.js",
    "line": 45,
-   "hash": "ead99ce264721948",
+   "hash": "d6cadbb3014b48c6",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10334,7 +10336,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10356,8 +10358,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#350",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d6cadbb3014b48c6"
    },
    "status": "partial"
   },
@@ -10368,7 +10371,7 @@
    "owner_area": "offers",
    "file": "routes/offers.js",
    "line": 109,
-   "hash": "66d638aa4a466b4c",
+   "hash": "699612b806de2926",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10400,8 +10403,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#350",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "699612b806de2926"
    },
    "status": "partial"
   },
