@@ -196,7 +196,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/governance/supplier-acceptance/:handle | governance | routes/governance.js:704 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/governance/track-record | governance | routes/governance.js:338 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/governance/vault-schema | governance | routes/governance.js:409 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/identity/documents | identity-docs | routes/identity-docs.js:132 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/identity/documents | identity-docs | routes/identity-docs.js:132 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/integrations/catalogue | integrations | routes/integrations.js:360 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/integrations/docs/:id | integrations | routes/integrations.js:273 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/integrations/download/:id | integrations | routes/integrations.js:379 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |

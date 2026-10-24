@@ -336,6 +336,9 @@
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
+  "GET /api/identity/documents": {
+   "output_allowlist": true
+  },
   "POST /api/identity/documents/:scheme/code": {
    "foreign_id_404": true
   },

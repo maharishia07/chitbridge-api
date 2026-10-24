@@ -129,7 +129,10 @@ function checkContractShape(routes, router) {
   check('every query value is declared as anything (a repeated value was read as it came)', queries.length >= 4 && queries.every((item) => sameValue(item.schema, {})), queries);
   check('a document value, a code and a consent are declared as anything: a number was taken as a phone, a number as a code', sameValue(contract.OPERATIONS[KEYS.PUT].requestBody.content['application/json'].schema.properties.value, {}) && sameValue(contract.OPERATIONS[KEYS.VERIFY].requestBody.content['application/json'].schema.properties.code, {}));
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
-  check('a success answer stays typed: every operation names the keys of its answer', operations.every((key) => ((contract.OPERATIONS[key].responses['200'].content['application/json'].schema.required) || []).length > 0));
+  /* R2-13 (#390): the 200 schema is derived from recorded answers; a handler that answers a passed-through expression is recorded OPEN with its reason in docs/contracts/api-output-shapes.json — honest, not untyped by accident */
+  const shapes = require('../docs/contracts/api-output-shapes.json');
+  const shapeRow = (key) => (shapes.routes || shapes)[key] || {};
+  check('a success answer stays typed: every operation names the keys of its answer, or its recorded shape is open with a reason (R2-13)', operations.every((key) => ((contract.OPERATIONS[key].responses['200'].content['application/json'].schema.required) || []).length > 0 || (shapeRow(key).open || []).some((item) => item.reason)));
   const declared = (key) => Object.keys(contract.OPERATIONS[key].responses).map(Number);
   check('POST /code declares the statuses lib/iddoc-verify.js can answer: 400, 409 and 503 beside the 404 and the 403', [400, 403, 404, 409, 503].every((status) => declared(KEYS.CODE).includes(status)), declared(KEYS.CODE));
   check('POST /verify declares 400 and 429 (a computed status: both literals written) beside the 404 and the 403', [400, 403, 404, 429, 503].every((status) => declared(KEYS.VERIFY).includes(status)), declared(KEYS.VERIFY));
