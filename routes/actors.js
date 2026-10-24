@@ -33,7 +33,8 @@ const railActions = require('../lib/rail-actions'); // T1-RAIL — who is moving
 const router = express.Router();
 /* SEC2 · THE ONE owner gate on every people WRITE (lib/owner.js ownerOnly, the sentence lib/people.js already shows on the
    People screen). Before it, delegate and settings had no check at all and the others refused a person by an accidental 404. */
-const ownerWrite = require('../lib/owner').ownerOnly(require('../lib/people').OWNER_ONLY);
+const people = require('../lib/people'); // PP-03b: stateOf, the one reader of on · away · off
+const ownerWrite = require('../lib/owner').ownerOnly(people.OWNER_ONLY);
 /* PEOPLE-EMAIL (SEC2): identities.email is UNIQUE across every sign-in (000_baseline_part2.sql identities_email_key), so the
    owner's own address on a staff row collides. Said in words with a code — never "Key taken", never a 500 (the answer is words.emailTaken, lib/actors-contract.js). */
 const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(String(err.constraint || err.detail || '')));
@@ -705,6 +706,17 @@ router.put(
   }
 );
 
+/**
+ * codeRefusal(actor) → a refusal to send with problem(), or null — PP-03b: no sign-in code for a person who cannot sign in.
+ * Sign-in already turns a switched-off or removed person away (routes/signin.js); the two code doors (DELETE /:id/pin,
+ * POST /:id/otp) say so first, in words, before anything is written. "Off" is lib/people.stateOf, the reader the list greys by.
+ */
+function codeRefusal(actor) {
+  if (actor.break_status === 'removed') return { status: 404, ...words.notInYourShop() };
+  if (people.stateOf(actor.break_status) === 'off') return { status: 400, ...words.switchedOff(actor.display_name) };
+  return null;
+}
+
 // ── DELETE /api/actors/:id/pin ──────────────────────────────
 // Admin clears actor PIN — forces new PIN setup on next OTP login
 router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async (req, res) => {
@@ -713,7 +725,7 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
     const actor_id = req.params.id;
     // Verify actor belongs to this entity
     const actor = await db(
-      `SELECT identity_id, display_name, actor_key FROM identities
+      `SELECT identity_id, display_name, actor_key, break_status FROM identities
          WHERE identity_id = $1 AND parent_entity_id = $2
          AND identity_type = 'actor'`,
       [actor_id, entity_id]
@@ -721,6 +733,8 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
     if (actor.rows.length === 0) {
       return problem(req, res, { status: 404, ...words.actorGone() });
     }
+    const noCode = codeRefusal(actor.rows[0]);
+    if (noCode) return problem(req, res, noCode);
     // Clear the PIN AND issue a fresh OTP. The actor's original OTP was consumed at first login, so without
     // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
     // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
@@ -857,7 +871,7 @@ router.post('/:id/otp', auth, ownerWrite, ...checked('POST /:id/otp'), async (re
 
     // Verify actor belongs to this entity
     const actor = await db(
-      `SELECT identity_id, display_name, actor_key
+      `SELECT identity_id, display_name, actor_key, break_status
          FROM identities
          WHERE identity_id = $1
          AND parent_entity_id = $2
@@ -868,6 +882,8 @@ router.post('/:id/otp', auth, ownerWrite, ...checked('POST /:id/otp'), async (re
     if (actor.rows.length === 0) {
       return problem(req, res, { status: 404, ...words.actorGoneInWords() });
     }
+    const noCode = codeRefusal(actor.rows[0]);
+    if (noCode) return problem(req, res, noCode);
 
     // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
     const toEmail = await actorEmail(actor_id);
