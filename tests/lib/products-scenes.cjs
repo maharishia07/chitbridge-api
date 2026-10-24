@@ -60,7 +60,9 @@ function extras(tools) {
     X('product-refused-by-the-rules', 'POST ' + P, 400, { body: { item_data: { unit: 'kg' } }, setup: withRows(requiredName) }),
     X('server-owned-key', 'POST ' + P, 400, { body: { item_data: { name: 'Tea', media: [{ id: 'm1' }] } }, setup: withRows(shelf) }),
     X('price-below-zero', 'POST ' + P, 422, { body: { item_data: { name: 'Tea', price: 'abc' } }, setup: withRows(shelf) }),
+    X('rate-owner-only', 'POST ' + P, 403, { body: { item_data: { name: 'Tea', gst_rate: 18 } }, setup: costBlind }),
     /* POST /bulk */
+    X('bulk-rate-owner-only', 'POST ' + P + '/bulk', 403, { body: { items: [{ name: 'Tea', gst_rate: 18 }] }, setup: costBlind }),
     X('too-many-products', 'POST ' + P + '/bulk', 400, { body: { items: manyOf(201, { name: 'Tea' }) } }),
     X('an-item-is-not-an-object', 'POST ' + P + '/bulk', 400, { body: { items: ['tea'] } }),
     X('bulk-refused-by-the-rules', 'POST ' + P + '/bulk', 400, { body: { items: [{ unit: 'kg' }] }, setup: withRows(requiredName) }),
@@ -75,6 +77,7 @@ function extras(tools) {
     X('bulk-status-ids-and-status-wrong', 'POST ' + P + '/status/bulk', 400, { body: { ids: 'x', status: 5 } }),
     X('bulk-status-status-missing', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY] } }),
     /* POST /bulk-update */
+    X('edit-rate-owner-only', 'POST ' + P + '/bulk-update', 403, { body: { items: [{ id: PARTY, item_data: { name: 'Tea', gst_rate: 18 } }] }, setup: costBlind }),
     X('too-many-edits', 'POST ' + P + '/bulk-update', 400, { body: { items: manyOf(201, { id: PARTY, item_data: { name: 'Tea' } }) } }),
     X('an-edit-has-the-wrong-shape', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY }] } }),
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
@@ -107,6 +110,7 @@ function extras(tools) {
     X('import-too-many-rows', 'POST ' + P + '/import', 413, { body: importBody({ csv: 'sku,name\n' + Array.from({ length: 2001 }, (v, i) => 'S' + i + ',Tea').join('\n') + '\n', decisions: [] }) }),
     X('import-a-row-has-a-problem', 'POST ' + P + '/import', 409, { body: importBody({ csv: 'sku,name,unit,price\nA1,Tea,kg,not-a-number\n' }), setup: withRows(shelf) }),
     X('import-done', 'POST ' + P + '/import', 200, { body: importBody(), setup: withRows(shelf) }),
+    X('import-rate-owner-only', 'POST ' + P + '/import', 403, { body: importBody({ csv: 'sku,name,unit,price,gst_rate' + String.fromCharCode(10) + 'A1,Tea,kg,5,18' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'gst_rate', action: 'map', field: 'gst_rate' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }]), shelf) } }),
     X('import-db-fails', 'POST ' + P + '/import', 500, { body: importBody({ decisions: [] }), setup: failing }),
     X('import-decisions-not-a-list', 'POST ' + P + '/import', 400, { body: importBody({ decisions: 'all' }) }),
     /* starter columns */
@@ -120,6 +124,7 @@ function extras(tools) {
     X('edit-item-data-missing', 'PATCH ' + P + '/:id', 400, { body: {} }),
     X('edit-db-fails', 'PATCH ' + P + '/:id', 500, { body: body(), setup: failing }),
     X('edit-cost-blind', 'PATCH ' + P + '/:id', 403, { body: { item_data: { price: 5 } }, setup: costBlind, patch: costHidden }),
+    X('edit-rate-owner-only', 'PATCH ' + P + '/:id', 403, { body: { merge: true, item_data: { gst_rate: 18 } }, setup: { who: STAFF, sqlRows: firstOf(answering(/can_see_costs FROM identities/, [{ can_see_costs: true }]), shelf) } }),
     X('edit-not-found', 'PATCH ' + P + '/:id', 404, { body: body(), setup: withRows(money) }),
     X('edit-merge-not-found', 'PATCH ' + P + '/:id', 404, { body: { merge: true, item_data: { name: 'Tea' } }, setup: withRows(money) }),
     X('edit-refused-by-the-rules', 'PATCH ' + P + '/:id', 400, { body: { item_data: { unit: 'kg' } }, setup: withRows(requiredName) }),

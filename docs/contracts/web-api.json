@@ -726,7 +726,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "fc43d8fc-d766-4c45-aa39-48c27aabbcf6",
+      "snapshot_id": "09b408e7-c85a-4d51-8829-0029e580dbed",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -736,7 +736,7 @@
        "bs"
       ],
       "lines": 22,
-      "created_at": "2026-09-29T10:00:55.000Z"
+      "created_at": "2026-09-29T10:00:51.000Z"
      }
     ]
    },
@@ -748,7 +748,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "fc43d8fc-d766-4c45-aa39-48c27aabbcf6",
+     "snapshot_id": "09b408e7-c85a-4d51-8829-0029e580dbed",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1141,7 +1141,8 @@
            "why": "owner_confirms",
            "say": "Ask Kumar Traders for a GST credit note. You confirm it when it comes."
           }
-         }
+         },
+         "note": null
         }
        ]
       },
@@ -1224,6 +1225,9 @@
      ],
      "blocked_credit": [
       "food"
+     ],
+     "debit_reason": [
+      "rate"
      ]
     },
     "pending": [
@@ -1289,7 +1293,7 @@
       "source": "official",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:24.000Z"
+      "created_at": "2026-09-29T10:01:27.000Z"
      }
     ]
    },
@@ -1328,7 +1332,7 @@
     "missing": [],
     "gain_minor": 75000,
     "posted": {
-     "entry_id": "00000000-0000-4000-8000-000000000358",
+     "entry_id": "00000000-0000-4000-8000-000000000361",
      "entry_no": "MJ/2027-28/000003"
     }
    },
@@ -1368,6 +1372,7 @@
     },
     "waiting": [
      {
+      "short": null,
       "id": 1,
       "chit_id": null,
       "ref": "chit:bill1",
@@ -1942,14 +1947,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-10-17T01:15:34.420Z",
+      "created_at": "2026-10-19T08:17:20.008Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-10-17T01:15:34.420Z"
+       "at": "2026-10-19T08:17:20.008Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -1978,11 +1983,11 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-10-15",
+      "due_day": "2026-10-23",
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-14T01:04:38.200Z",
+      "last_at": "2026-10-22T08:17:15.180Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2015,7 +2020,7 @@
       "why": null
      }
     },
-    "shop_day": "2026-10-16"
+    "shop_day": "2026-10-24"
    },
    "optional": []
   },
@@ -2030,13 +2035,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-15T01:04:38.161Z",
-      "due_day": "2026-10-15",
+      "due_at": "2026-10-23T08:17:15.151Z",
+      "due_day": "2026-10-23",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-16T01:04:38.163Z",
+      "created_at": "2026-10-24T08:17:15.152Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2047,7 +2052,7 @@
     "limit": 2,
     "late": 1,
     "today": 0,
-    "shop_day": "2026-10-16",
+    "shop_day": "2026-10-24",
     "may": {
      "write": {
       "may": true,
@@ -2495,7 +2500,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-14T01:04:38.066Z",
+      "due_at": "2026-10-22T08:17:15.027Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -2713,9 +2718,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-10-17T01:15:34.420Z",
+      "sent_at": "2026-10-19T08:17:20.008Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-10-18T01:15:34.421Z",
+      "first_bill_at": "2026-10-20T08:17:20.009Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -2740,7 +2745,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-10-18T01:15:34.421Z",
+        "at": "2026-10-20T08:17:20.009Z",
         "value": 480,
         "currency": "INR"
        }
@@ -2969,7 +2974,7 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+      "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3111,7 +3116,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3381,7 +3386,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-16T00:04:38.332Z",
+    "created_at": "2026-10-24T07:17:16.099Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -3603,7 +3608,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-16T00:04:38.332Z",
+      "created_at": "2026-10-24T07:17:16.099Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -3692,7 +3697,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-16T01:04:39.242Z"
+     "shared_at": "2026-10-24T08:17:21.288Z"
     }
    },
    "optional": []
@@ -3702,11 +3707,11 @@
    "example": {
     "error": "An advice is already recorded for this payment.",
     "message": "An advice is already recorded for this payment.",
-    "code": "ADVICE_EXISTS",
     "advice_chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
     "type": "https://chitbridge.com/problems/advice_exists",
     "title": "Advice already recorded",
     "status": 409,
+    "code": "ADVICE_EXISTS",
     "detail": "An advice is already recorded for this payment.",
     "hint": "Open the payment to see it.",
     "request_id": null
@@ -3751,13 +3756,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-15T01:04:38.161Z",
-     "due_day": "2026-10-15",
+     "due_at": "2026-10-23T08:17:15.151Z",
+     "due_day": "2026-10-23",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-16T01:04:38.171Z",
-     "created_at": "2026-10-16T01:04:38.163Z",
+     "done_at": "2026-10-24T08:17:15.157Z",
+     "created_at": "2026-10-24T08:17:15.152Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -3980,7 +3985,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "fc43d8fc-d766-4c45-aa39-48c27aabbcf6",
+    "snapshot_id": "09b408e7-c85a-4d51-8829-0029e580dbed",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4093,7 +4098,6 @@
   "POST /api/books/entries/:id/reverse #409": {
    "status": 409,
    "example": {
-    "code": "ALREADY_REVERSED",
     "error": "Already reversed",
     "message": "This entry was already reversed by MJ/2026-27/000008.",
     "entry_no": "MJ/2026-27/000008",
@@ -4101,6 +4105,7 @@
     "type": "https://chitbridge.com/problems/already_reversed",
     "title": "Already reversed",
     "status": 409,
+    "code": "ALREADY_REVERSED",
     "detail": "This entry was already reversed by MJ/2026-27/000008.",
     "hint": "Open the reversal to see it.",
     "request_id": null
@@ -4135,7 +4140,7 @@
      "source": "manual",
      "source_ref": null,
      "entered_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-09-29T10:01:23.000Z"
+     "created_at": "2026-09-29T10:01:26.000Z"
     }
    },
    "optional": []
@@ -4160,7 +4165,7 @@
       "source": "official",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:24.000Z"
+      "created_at": "2026-09-29T10:01:27.000Z"
      }
     ]
    },
@@ -4287,7 +4292,7 @@
     "ref_hint": "The payment reference number on the BAS",
     "carried_word": "GST refund due from the ATO",
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000245",
+    "entry_id": "00000000-0000-4000-8000-000000000241",
     "entry_no": "JV/2026-27/000001",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
@@ -4357,7 +4362,7 @@
      "vat": 4000
     },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000246",
+    "entry_id": "00000000-0000-4000-8000-000000000242",
     "entry_no": "MJ/2026-27/000001",
     "posting_date": "2026-10-15",
     "doc_date": "2026-10-15",
@@ -4377,61 +4382,97 @@
   },
   "POST /api/books/move-in/import": {
    "status": 200,
+   "note": "W1 (2026-10-18): held rows are listed with their code; proof = the match proof (lib/move-in-proof build, free); proof_stored false before b765; item_ids for items",
    "example": {
     "side": null,
-    "as_at": "2027-04-01",
+    "as_at": "2026-07-01",
     "kind": "accounts",
     "source": "xero",
-    "added": 3,
-    "merged": 5,
-    "skipped": 7,
+    "added": 6,
+    "merged": 8,
+    "skipped": 1,
+    "held": 0,
     "rows": [
      {
-      "line": 5,
-      "what": "Other Revenue",
-      "why": "Your chart has no group \"sales\" for Xero type REVENUE — add it under Shop ledgers.",
-      "code": "tax_code"
+      "line": 16,
+      "what": "Tracking Transfers",
+      "why": "No home for Xero type \"TRACKING\" — add it under Shop ledgers and pick its group."
      }
     ],
     "notes": [
      "Their account codes could not be kept yet (a database update, b302, is still to run) — a trial balance will match on names."
     ],
     "source_code_written": false,
-    "entry": {
-     "entry_no": "JV/2027-28/000001",
-     "entry_id": "00000000-0000-4000-8000-000000000136",
-     "posting_date": "2027-04-01",
-     "suspense_minor": 400000,
-     "duplicate": false
-    },
-    "held": 1,
     "proof": {
      "source": "xero",
-     "differences": 0
+     "source_country": "AU",
+     "country_how": "stated",
+     "shop_country": "AU",
+     "company_id": null,
+     "kind": "accounts",
+     "side": null,
+     "as_at": "2026-07-01",
+     "currency": "AUD",
+     "counts": {
+      "add": 6,
+      "merge": 8,
+      "skip": 1,
+      "hold": 0
+     },
+     "landed": {
+      "added": 6,
+      "merged": 8,
+      "skipped": 1,
+      "held": 0
+     },
+     "held": [],
+     "documents": [],
+     "parties": [],
+     "accounts": [
+      {
+       "line": 2,
+       "what": "Business Bank Account",
+       "action": "merge",
+       "our_code": "1500",
+       "their_code": "090",
+       "dr_minor": 1523050,
+       "cr_minor": 0
+      }
+     ],
+     "tax_codes": [
+      {
+       "code": "BAS Excluded",
+       "verdict": "no_tax",
+       "kind": "Taxable supply",
+       "rate": 0
+      }
+     ],
+     "contacts": [],
+     "differences": 1
     },
     "proof_stored": false,
     "import_id": null,
-    "item_ids": [
-     "00000000-0000-4000-8000-000000000201"
-    ]
+    "entry": {
+     "entry_no": "JV/2026-27/000002",
+     "entry_id": "00000000-0000-4000-8000-000000000249",
+     "posting_date": "2026-10-01",
+     "suspense_minor": -570000,
+     "duplicate": false
+    }
    },
    "optional": [
     "entry",
-    "import_id",
-    "item_ids",
-    "rows[].code",
     "source_code_written"
    ],
    "free": [
     "proof"
-   ],
-   "note": "W1 (2026-10-18): held rows are listed with their code; proof = the match proof (lib/move-in-proof build, free); proof_stored false before b765; item_ids for items"
+   ]
   },
   "POST /api/books/move-in/import #422": {
    "status": 422,
    "example": {
-    "error": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account.",
-    "message": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account.",
+    "error": "The trial balance does not balance: debits A$15,230.50, credits A$12,000.00 — the difference is A$3,230.50. Export it again as at the move date, with every account.",
+    "message": "The trial balance does not balance: debits A$15,230.50, credits A$12,000.00 — the difference is A$3,230.50. Export it again as at the move date, with every account.",
     "type": "https://chitbridge.com/problems/books_refused",
     "title": "Ledger refused",
     "status": 422,
@@ -4519,36 +4560,49 @@
     "kind": "accounts",
     "source": "xero",
     "side": null,
-    "as_at": "2027-04-01",
+    "as_at": "2026-07-01",
     "counts": {
-     "add": 3,
-     "merge": 5,
-     "skip": 7,
-     "hold": 1
+     "add": 6,
+     "merge": 8,
+     "skip": 1,
+     "hold": 0
     },
     "refusal": null,
     "notes": [
-     "Suspense will hold ₹6,600.00 until the open invoices and bills are moved in."
+     "Suspense will hold A$6,600.00 until the open invoices and bills are moved in."
     ],
+    "country": {
+     "shop": "AU",
+     "source": "AU",
+     "how": "stated"
+    },
+    "company_id": null,
     "rows": [
      {
       "line": 2,
       "what": "Business Bank Account",
-      "action": "add",
-      "why": "Under Bank Accounts, keeping Xero code 090.",
+      "action": "merge",
+      "why": "A ledger named \"Business bank account\" exists (1500) — keeps Xero code 090.",
       "data": {
-       "name": "Business Bank Account",
-       "group_code": "G1500",
-       "group_id": "00000000-0000-4000-8000-000000000016",
-       "group_name": "Bank Accounts",
+       "account_id": "00000000-0000-4000-8000-000000000176",
+       "code": "1500",
        "source_code": "090",
        "note": "default tax BAS Excluded = no GST — not kept",
-       "account_id": "00000000-0000-4000-8000-000000000074",
-       "code": "4000",
+       "name": "Business Savings Account",
+       "group_code": "G1500",
+       "group_id": "00000000-0000-4000-8000-000000000149",
+       "group_name": "Bank Accounts",
        "dr_minor": 1523050,
        "cr_minor": 0
-      },
-      "code": "tax_code"
+      }
+     }
+    ],
+    "tax_codes": [
+     {
+      "code": "BAS Excluded",
+      "verdict": "no_tax",
+      "kind": "Taxable supply",
+      "rate": 0
      }
     ],
     "totals": {
@@ -4558,26 +4612,10 @@
     "control": {
      "debtors_minor": 440000,
      "creditors_minor": -220000
-    },
-    "country": {
-     "shop": "AU",
-     "source": "AU",
-     "how": "stated"
-    },
-    "company_id": "9341455130166501",
-    "tax_codes": [
-     {
-      "code": "GST",
-      "verdict": "maps",
-      "kind": "Taxable supply",
-      "rate": 10
-     }
-    ]
+    }
    },
    "optional": [
-    "company_id",
     "control",
-    "rows[].code",
     "rows[].data.account_id",
     "rows[].data.code",
     "rows[].data.cr_minor",
@@ -4588,7 +4626,6 @@
     "rows[].data.name",
     "rows[].data.note",
     "rows[].data.source_code",
-    "side",
     "tax_codes",
     "totals"
    ],
@@ -4747,7 +4784,6 @@
    "status": 409,
    "note": "M26 (api #57) - a duplicate-rule warning not named in acknowledge[]; nothing is written.",
    "example": {
-    "code": "ALREADY_PAID",
     "error": "Already paid?",
     "message": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
     "warnings": [
@@ -4759,6 +4795,7 @@
     "type": "https://chitbridge.com/problems/already_paid",
     "title": "Already paid",
     "status": 409,
+    "code": "ALREADY_PAID",
     "detail": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
     "hint": "Check the list, then confirm if it is really a new one.",
     "request_id": null
@@ -4852,7 +4889,7 @@
     "bill": null,
     "flags": [],
     "refusals": [
-     "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+     "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
     ],
     "code": null,
     "duplicate": null
@@ -5015,13 +5052,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-15T01:04:38.161Z",
-     "due_day": "2026-10-15",
+     "due_at": "2026-10-23T08:17:15.151Z",
+     "due_day": "2026-10-23",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-16T01:04:38.163Z",
+     "created_at": "2026-10-24T08:17:15.152Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -5179,9 +5216,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-16T01:04:38.161Z",
+     "at": "2026-10-24T08:17:15.151Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-16T01:04:38.161Z"
+     "created_at": "2026-10-24T08:17:15.151Z"
     }
    },
    "optional": []
@@ -5196,9 +5233,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-16T01:04:38.202Z",
+     "at": "2026-10-24T08:17:15.182Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-16T01:04:38.202Z"
+     "created_at": "2026-10-24T08:17:15.182Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -5207,13 +5244,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-10-19T00:00:00.000Z",
-     "due_day": "2026-10-19",
+     "due_at": "2026-10-27T00:00:00.000Z",
+     "due_day": "2026-10-27",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-16T01:04:38.202Z",
+     "created_at": "2026-10-24T08:17:15.182Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -5287,7 +5324,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "4d7f3c1e-5b0a-4e55-9a51-0c2a6f1d9e10",
+    "send_ref": "d0a31548-6f81-4bab-b02c-99aed2dfcc46",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
@@ -5312,7 +5349,7 @@
     "failed_n": 0,
     "refused_n": 2,
     "refusals_logged": 0,
-    "refusals_unlogged": false
+    "refusals_unlogged": true
    },
    "optional": [
     "refusals_logged",
@@ -5353,7 +5390,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5457,7 +5494,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5542,7 +5579,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5634,7 +5671,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5722,7 +5759,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "a34707d9-e900-4852-b934-a6869200f488",
+     "agreement_id": "35e48940-329b-4280-96af-a3e9f0977e1e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5800,7 +5837,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5907,7 +5944,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5999,7 +6036,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "dae72163-3293-4574-b3e3-d8011c35447e",
+     "agreement_id": "c13c2c8d-7424-4016-aef5-b54bfa2ec82e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6090,7 +6127,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6182,7 +6219,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6289,7 +6326,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f418b8fe-152d-41e8-96c8-2ab42706fdc2",
+     "agreement_id": "653ad0e6-b80b-40a0-8d21-18c74928a793",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",

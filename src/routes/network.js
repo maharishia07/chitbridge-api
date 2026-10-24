@@ -193,7 +193,9 @@ function _told(edge) {
       reply.rows.forEach((x) => {
         try {
           require('../../lib/shopchanged').shopChanged(x.identity_id, 'network membership');
-        } catch (_) {}
+        } catch (signalError) {
+          require('../../lib/logger').fellBack('network: the shop-changed signal was not sent — the shop sees the change on its next read', signalError);
+        }
       })
     )
     .catch(() => {});
