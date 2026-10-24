@@ -144,20 +144,20 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/ctp/.well-known/ctp.json | ctp | routes/ctp.js:119 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/definitions | definitions | routes/definitions.js:70 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/definitions/:id | definitions | routes/definitions.js:212 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/entities/constitutions | entities | routes/entities.js:151 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/entitlements | entities | routes/entities.js:2424 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/header | entities | routes/entities.js:317 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/lookup | entities | routes/entities.js:904 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/entities/me | entities | routes/entities.js:340 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/me/can-see-costs | entities | routes/entities.js:887 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/mis | entities | routes/entities.js:1739 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/policy | entities | routes/entities.js:288 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/populations | entities | routes/entities.js:1629 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/routing | entities | routes/entities.js:1494 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/routing/preview | entities | routes/entities.js:1478 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/search | entities | routes/entities.js:171 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/sides | entities | routes/entities.js:331 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/usage | entities | routes/entities.js:1301 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/constitutions | entities | routes/entities.js:152 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/entitlements | entities | routes/entities.js:2426 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/header | entities | routes/entities.js:318 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/lookup | entities | routes/entities.js:905 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/entities/me | entities | routes/entities.js:341 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/me/can-see-costs | entities | routes/entities.js:888 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/mis | entities | routes/entities.js:1741 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/policy | entities | routes/entities.js:289 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/populations | entities | routes/entities.js:1631 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/routing | entities | routes/entities.js:1495 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/routing/preview | entities | routes/entities.js:1479 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/search | entities | routes/entities.js:172 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/sides | entities | routes/entities.js:332 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/usage | entities | routes/entities.js:1302 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/events/stats | events | routes/events.js:33 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/events/stream | events | routes/events.js:20 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/facts/:card | facts | routes/facts.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
@@ -306,12 +306,12 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:961 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | PATCH | /api/counters/:id | counters | routes/counters.js:206 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/crm/followups/:id | crm | routes/crm.js:400 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/entities/:id/erase | entities | routes/entities.js:1273 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
-| PATCH | /api/entities/me/exposure | entities | routes/entities.js:860 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/entities/me/locale | entities | routes/entities.js:900 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/entities/me/prefs/:kind | entities | routes/entities.js:854 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PATCH | /api/entities/policy | entities | routes/entities.js:299 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/entities/profile | entities | routes/entities.js:952 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/:id/erase | entities | routes/entities.js:1274 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
+| PATCH | /api/entities/me/exposure | entities | routes/entities.js:861 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/me/locale | entities | routes/entities.js:901 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/me/prefs/:kind | entities | routes/entities.js:855 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PATCH | /api/entities/policy | entities | routes/entities.js:300 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/profile | entities | routes/entities.js:953 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/folders/:id | folders | routes/folders.js:253 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PATCH | /api/folders/rules/:rule_id | folders | routes/folders.js:530 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PATCH | /api/products/:id | products | routes/products.js:1436 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -464,9 +464,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/ctp/query | ctp | routes/ctp.js:333 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/definitions | definitions | routes/definitions.js:258 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/definitions/freeze | definitions | routes/definitions.js:503 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/entities/populations | entities | routes/entities.js:1713 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/entities/register | entities | routes/entities.js:140 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
-| POST | /api/entities/verify | entities | routes/entities.js:141 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
+| POST | /api/entities/populations | entities | routes/entities.js:1715 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/entities/register | entities | routes/entities.js:141 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
+| POST | /api/entities/verify | entities | routes/entities.js:142 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/events/ticket | events | routes/events.js:15 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/folders | folders | routes/folders.js:185 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/folders/:id/rules | folders | routes/folders.js:519 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
@@ -628,8 +628,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6235 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:119 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:334 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1684 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PUT | /api/entities/routing | entities | routes/entities.js:1603 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1686 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PUT | /api/entities/routing | entities | routes/entities.js:1605 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/folders/inventory/:code | folders | routes/folders.js:148 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | PUT | /api/governance/country-setup | governance | routes/governance.js:495 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/governance/profile | governance | routes/governance.js:389 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |

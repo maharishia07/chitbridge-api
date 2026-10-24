@@ -491,6 +491,8 @@ const ENGINE_OTHER = [
      classification the inbox and the folders share; bill-steps.js — the bill lifecycle derived from existing records. CB's own
      decisions. folder-views.js — what a view folder holds (the rule's matches), plumbing over select + match. */
   'folder-inventory.js', 'bill-steps.js', 'folder-views.js',
+  /* shop-actors.js — SEC-103: is this actor one of the shop's own, asked before a write stores an actor id */
+  'shop-actors.js',
   /* bill-privacy.js — where a bill's step is written (the folder's messaging level) and what a holder may read of the other copy (2026-10-01) */
   'bill-privacy.js',
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
