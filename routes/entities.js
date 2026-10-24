@@ -14,6 +14,7 @@ const { validate, validateAsProblem, schemaValidate, sanitise } = require('../mi
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
+const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
@@ -1572,12 +1573,13 @@ router.get('/routing', auth, async (req, res) => {
 });
 
 /**
- * saveRouting(shop, kind, { folder, assignee, team }) → true when the row is written, false when the folder named is not this shop's and nothing is (SEC-100).
- * The foreign key on folder_id is checked WITHOUT row security, so the folder is looked up under THIS shop in the same transaction; a null folder still clears it.
+ * saveRouting(shop, kind, { folder, assignee, team }) → null when the row is written, else the name of the contract word that refuses it, because the folder or person named is not this shop's and nothing is written (SEC-100, SEC-103).
+ * The foreign key on folder_id is checked WITHOUT row security and assignee_actor_id has none, so both are looked up under THIS shop in the same transaction; a null still clears it.
  */
 async function saveRouting(shop, kind, fields) {
   return withEntity(shop, async (db) => {
-    if (fields.folder && !(await folderViews.folderOwned(db, shop, fields.folder))) return false;
+    if (fields.folder && !(await folderViews.folderOwned(db, shop, fields.folder))) return 'routingFolderNone';
+    if (fields.assignee && !(await shopActors.actorOwned(db, shop, fields.assignee))) return 'routingPersonNone';
     await db.query(
       `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
        VALUES ($1,$2,$3,$4,$5, now())
@@ -1586,7 +1588,7 @@ async function saveRouting(shop, kind, fields) {
              route_to_entity_id = EXCLUDED.route_to_entity_id, updated_at = now()`,
       [shop, kind, fields.folder, fields.assignee, fields.team]
     );
-    return true;
+    return null;
   });
 }
 
@@ -1611,9 +1613,9 @@ router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
      all three and null is an answer rather than an omission. */
   const nul = (v) => (v === '' || v === undefined || v === null ? null : String(v));
   try {
-    const saved = await saveRouting(me, kind, { folder: nul(b.folder_id), assignee: nul(b.assignee_actor_id), team: nul(b.route_to_entity_id) });
-    /* an unknown folder and another shop's folder are one answer */
-    if (!saved) return problem(req, res, { status: 404, ...contract.words.routingFolderNone() });
+    const refused = await saveRouting(me, kind, { folder: nul(b.folder_id), assignee: nul(b.assignee_actor_id), team: nul(b.route_to_entity_id) });
+    /* an unknown folder and another shop's folder are one answer; an unknown person and another shop's person are one answer */
+    if (refused) return problem(req, res, { status: 404, ...contract.words[refused]() });
     forgetRouting(me);
     res.json({ ok: true, kind });
   } catch (e) {
