@@ -26226,6 +26226,7 @@ function usignLocal(){
 /** [TILL-192] forceEnrol: true only when pairAgain() called this — see its own comment. A routine sign-in
  * (whoAct()'s 'signin' door) passes nothing, and paired()'s existing key is trusted as it always was. */
 function usignOpen(forceEnrol){
+  USIGN.pickName = ''; USIGN.newPin = '';   /* R132: a picked worker's words belong to her pick only (whoPick sets the name after this) */
   /* ⚠️ W1 (2026-10-12): the window still mounted from the last sign-in is taken DOWN first. usignFresh() dropped the handle and
      usignMount() found nothing to destroy — the old window's document listeners (submit · click · input) lived on, so every
      press from then on drove TWO machines: the picker's PIN signed nobody in, an unlock by the next person lost its PIN offer. */
@@ -26256,7 +26257,7 @@ function usignRefusalWords(name, step){
 function usignAnswer(path, reqBody, reply, name){
   var body = reply && reply.body, door = usignDoor(path);
   if (!body || typeof body !== 'object') return reply;
-  if (usignWasRefused(door, reply)) body.message = usignRefusalWords(name, door);
+  if (name && usignWasRefused(door, reply)) body.message = usignRefusalWords(name, door);   /* the owner, or a typed ID, keeps the server's sentence */
   else if (door === 'ask' && usignAskedFirstCode(reply)) body.message = 'Type the first code the owner gave you. Then choose a Counter PIN.';
   else if (door === 'pin' && usignWasOk(reply) && reqBody && reqBody.pin) USIGN.newPin = String(reqBody.pin);
   return reply;

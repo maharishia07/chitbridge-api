@@ -73,9 +73,9 @@ function world(o) {
     assert.ok(/Asha Devi signs in with a counter PIN, or the first code from the owner\./.test(r.body.message), r.body.message);
     assert.ok(/People › Asha Devi › Reset code/.test(r.body.message));
   });
-  await it('2 · Q19: the typed mobile never comes back in the sentence', () => {
+  await it('2 · Q19 + no pick: the owner or a typed ID keeps the server sentence, and the typed mobile never comes back in it', () => {
     const w = world(); const r = w.api.usignAnswer('/api/signin/ask', { id: '9000000004' }, copy(refusedAsk), '');
-    assert.ok(!/9000000004/.test(r.body.message)); assert.ok(/counter PIN/.test(r.body.message) && /Reset code/.test(r.body.message));
+    assert.ok(!/9000000004/.test(r.body.message)); assert.ok(/^That sign-in didn.t work/.test(r.body.message)); assert.ok(!/Staff|counter PIN/.test(r.body.message));
   });
   await it('2 · a wrong first code says so and where a new one comes from', () => {
     const w = world(); const r = w.api.usignAnswer('/api/signin/verify', { id: 'x', otp: '123456' }, copy(refusedAsk), 'Asha Devi');
