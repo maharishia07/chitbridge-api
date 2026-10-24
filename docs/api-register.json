@@ -845,7 +845,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1682,
+   "line": 1699,
    "hash": "ef5500ca995d3b4b",
    "columns": {
     "schema_in": true,
@@ -895,7 +895,7 @@
    "path": "/api/products/:id/media/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1832,
+   "line": 1849,
    "hash": "2c018b29c6dc0708",
    "columns": {
     "schema_in": true,
@@ -945,7 +945,7 @@
    "path": "/api/products/:id/schedule/:sid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1563,
+   "line": 1580,
    "hash": "d1ce481d9e75dc7a",
    "columns": {
     "schema_in": true,
@@ -10607,7 +10607,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 614,
+   "line": 641,
    "hash": "091f1ce75402d338",
    "columns": {
     "schema_in": true,
@@ -10656,7 +10656,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1518,
+   "line": 1535,
    "hash": "f27ee6ea29d22689",
    "columns": {
     "schema_in": true,
@@ -10706,7 +10706,7 @@
    "path": "/api/products/:id/versions",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1868,
+   "line": 1885,
    "hash": "6bc46a7033f4102a",
    "columns": {
     "schema_in": true,
@@ -10757,7 +10757,7 @@
    "path": "/api/products/export.csv",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 973,
+   "line": 1000,
    "hash": "e6c365a0051bb1fc",
    "columns": {
     "schema_in": true,
@@ -10805,7 +10805,7 @@
    "path": "/api/products/lists",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1983,
+   "line": 2000,
    "hash": "5d9fd08ccb9f8f04",
    "columns": {
     "schema_in": true,
@@ -10853,7 +10853,7 @@
    "path": "/api/products/media/:item_id/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1727,
+   "line": 1744,
    "hash": "37dfa7e57774ac5a",
    "columns": {
     "schema_in": true,
@@ -10902,7 +10902,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1314,
+   "line": 1331,
    "hash": "7fd15416d5433865",
    "columns": {
     "schema_in": true,
@@ -10951,7 +10951,7 @@
    "path": "/api/products/template",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1002,
+   "line": 1029,
    "hash": "4fa0397692601b3c",
    "columns": {
     "schema_in": true,
@@ -10999,7 +10999,7 @@
    "path": "/api/products/workbook.xlsx",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 902,
+   "line": 929,
    "hash": "f926495a5d767afd",
    "columns": {
     "schema_in": true,
@@ -14688,7 +14688,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1452,
+   "line": 1469,
    "hash": "2cb19f337d86ef8c",
    "columns": {
     "schema_in": true,
@@ -24834,7 +24834,7 @@
    "path": "/api/products/:id/media",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1767,
+   "line": 1784,
    "hash": "c82f2c2dbbf7c486",
    "columns": {
     "schema_in": true,
@@ -24886,7 +24886,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1531,
+   "line": 1548,
    "hash": "6b487edc09786183",
    "columns": {
     "schema_in": true,
@@ -24939,7 +24939,7 @@
    "path": "/api/products/availability/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1577,
+   "line": 1594,
    "hash": "e22e7ba9374b3ef4",
    "columns": {
     "schema_in": true,
@@ -25039,7 +25039,7 @@
    "path": "/api/products/bulk-update",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 569,
+   "line": 596,
    "hash": "c171de3ebf354cea",
    "columns": {
     "schema_in": true,
@@ -25090,8 +25090,8 @@
    "path": "/api/products/import",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1099,
-   "hash": "668511f633758dd5",
+   "line": 1126,
+   "hash": "ed75a55ba1d66a41",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25118,6 +25118,7 @@
    "declared": [
     400,
     401,
+    403,
     409,
     413,
     500
@@ -25130,8 +25131,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "352d0a344c74117f"
    },
    "status": "partial"
   },
@@ -25141,7 +25143,7 @@
    "path": "/api/products/import/preflight",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1026,
+   "line": 1053,
    "hash": "4345c2ea3bad5916",
    "columns": {
     "schema_in": true,
@@ -25190,7 +25192,7 @@
    "path": "/api/products/lists/adopt",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2104,
+   "line": 2121,
    "hash": "17aa750372131c9d",
    "columns": {
     "schema_in": true,
@@ -25239,7 +25241,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1323,
+   "line": 1340,
    "hash": "ea8cd5d6b378f465",
    "columns": {
     "schema_in": true,
@@ -30523,7 +30525,7 @@
    "path": "/api/products/:id/availability",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1622,
+   "line": 1639,
    "hash": "61175630388e5785",
    "columns": {
     "schema_in": true,
@@ -30573,7 +30575,7 @@
    "path": "/api/products/:id/status",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1652,
+   "line": 1669,
    "hash": "19e06763d0d328ee",
    "columns": {
     "schema_in": true,

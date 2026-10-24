@@ -245,7 +245,7 @@ function checked(route) {
 const cost = require('../lib/cost');
 const rateDoor = require('../lib/rate-door'); /* CAT-210: a rate is owner or manager only — one predicate, one sentence, every door */
 /** CAT-210: the 403 for an editor whose request sets or changes a tax rate (the whole request is refused, nothing is written) */
-const rateRefusal = () => ({ status: 403, ...words.rateOwnerOnly() });
+const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
 /** CAT-210: does an editor's create or parked change NAME a rate? (an owner or manager never does: false) */
 const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
 /** strips item_data.cost from every row in place — the one place a list response leaves this file */
@@ -555,6 +555,33 @@ router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, r
  * one did not.
  */
 const UUID = require('../lib/namedentity').UUID; /* only a real id is asked of the uuid column; any other id has no stored row */
+/** the import's 200: what was added, updated and failed, in a sentence and in numbers, plus the columns it created */
+function importAnswer(outcome, created) {
+  const count = (action) => outcome.filter((item) => item.action === action).length;
+  const failed = count('failed');
+  return {
+    message: `${count('created')} added, ${count('updated')} updated` + (failed ? `, ${failed} failed` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
+    created_columns: created,
+    outcome,
+    summary: { created: count('created'), updated: count('updated'), failed }
+  };
+}
+/** CAT-210: the file lines of an editor's import that set or change a rate, by position (never their values, Q19); [] for an owner or manager. ONE read of the shop's products for the lot. */
+async function editorImportRateRows(req, entity_id, applied, ident) {
+  if (rateDoor.setsRate(req)) return [];
+  const found = await withEntity(entity_id, (db) => db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true', [entity_id]));
+  const byIdentity = new Map();
+  for (const row of found.rows) {
+    const key = identity.identityOf(row.item_data || {}, ident);
+    if (key) byIdentity.set(key, row.item_data || {});
+  }
+  return applied.items.reduce((rows, fileRow, index) => {
+    const item = sheet.fromSheet(fileRow, { source: 'upload' }).item_data;
+    const prior = byIdentity.get(identity.identityOf(item, ident));
+    const changed = prior ? rateDoor.rateChanged(Object.assign({}, prior, item), prior) : rateDoor.rateNamed(item);
+    return changed ? rows.concat(applied.lines[index]) : rows;
+  }, []);
+}
 /** CAT-210: does any whole-record edit change a rate against what is stored? ONE read for the lot (an owner or manager never pays it) */
 async function editorChangesRate(req, entity_id, items) {
   if (rateDoor.setsRate(req)) return false;
@@ -1141,6 +1168,9 @@ router.post(
         return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
       }
 
+      const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
+      if (rateRows.length) return problem(req, res, rateRefusal(rateRows));
+
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
       let ruleRows = await schemaFieldsOf(schema_id);
@@ -1285,20 +1315,7 @@ router.post(
         });
       }
 
-      const failed = outcome.filter((item) => item.action === 'failed');
-      res.json({
-        message:
-          `${outcome.filter((item) => item.action === 'created').length} added, ${outcome.filter((item) => item.action === 'updated').length} updated` +
-          (failed.length ? `, ${failed.length} failed` : '') +
-          (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
-        created_columns: created,
-        outcome,
-        summary: {
-          created: outcome.filter((item) => item.action === 'created').length,
-          updated: outcome.filter((item) => item.action === 'updated').length,
-          failed: failed.length
-        }
-      });
+      res.json(importAnswer(outcome, created));
     } catch (e) {
       problem(req, res, faultOf(e, req, 'Import failed'));
     }

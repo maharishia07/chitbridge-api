@@ -110,6 +110,7 @@ function extras(tools) {
     X('import-too-many-rows', 'POST ' + P + '/import', 413, { body: importBody({ csv: 'sku,name\n' + Array.from({ length: 2001 }, (v, i) => 'S' + i + ',Tea').join('\n') + '\n', decisions: [] }) }),
     X('import-a-row-has-a-problem', 'POST ' + P + '/import', 409, { body: importBody({ csv: 'sku,name,unit,price\nA1,Tea,kg,not-a-number\n' }), setup: withRows(shelf) }),
     X('import-done', 'POST ' + P + '/import', 200, { body: importBody(), setup: withRows(shelf) }),
+    X('import-rate-owner-only', 'POST ' + P + '/import', 403, { body: importBody({ csv: 'sku,name,unit,price,gst_rate' + String.fromCharCode(10) + 'A1,Tea,kg,5,18' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'gst_rate', action: 'map', field: 'gst_rate' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }]), shelf) } }),
     X('import-db-fails', 'POST ' + P + '/import', 500, { body: importBody({ decisions: [] }), setup: failing }),
     X('import-decisions-not-a-list', 'POST ' + P + '/import', 400, { body: importBody({ decisions: 'all' }) }),
     /* starter columns */

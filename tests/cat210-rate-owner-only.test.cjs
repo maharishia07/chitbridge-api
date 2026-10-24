@@ -41,10 +41,15 @@ const call = (port, method, p, body) => new Promise((done) => {
   const FAKE = { item_id: ITEM, item_data: STORED };
   require.cache[require.resolve(API + '/db')] = {
     exports: {
-      query: async () => ({ rows: [] }),
+      query: async (sql) => {
+        if (/SELECT schema_id FROM entity_schemas/.test(sql)) return { rows: [{ schema_id: ITEM }] };
+        if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }] };
+        return { rows: [] };
+      },
       withEntity: async (_id, fn) => fn({
         query: async (sql) => {
           if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: true }] };
+          if (/SELECT item_id, item_data FROM catalogue_items WHERE entity_id=.1 AND is_active/.test(sql)) return { rows: [{ item_id: ITEM, item_data: Object.assign({}, STORED, { sku: 'A1' }) }] };
           if (/SELECT item_id, item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_id: ITEM, item_data: Object.assign({}, STORED) }] };
           if (/SELECT item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_data: Object.assign({}, STORED) }] };
           if (/UPDATE catalogue_items/.test(sql)) { writes++; return { rows: [FAKE] }; }
@@ -107,7 +112,24 @@ const call = (port, method, p, body) => new Promise((done) => {
   const sc = await call(port, 'POST', '/api/products/' + ITEM + '/schedule', { effective_at: '2030-01-01T00:00:00Z', item_data: { gst_rate: 18 } });
   t('POST /:id/schedule parking a rate: 403', [sc.status, sc.body.code], [403, 'TILL_RATE_OWNER_ONLY']);
 
-  console.log('\n   the payload the catalogue page reads');
+    const NL = String.fromCharCode(10);
+  const fileOf = (rate) => ({ confirm: true, csv: 'name,gst_rate' + NL + 'Tea,' + rate + NL + 'Coffee,' + rate + NL, decisions: [{ incoming: 'name', action: 'map', field: 'name' }, { incoming: 'gst_rate', action: 'map', field: 'gst_rate' }] });
+  WHO = actor('editor'); writes = 0;
+  const imp = await call(port, 'POST', '/api/products/import', fileOf(18));
+  t('POST /import: an editor whose file names a rate is refused, whole file, nothing written', [imp.status, imp.body.code, imp.body.message, writes], [403, 'TILL_RATE_OWNER_ONLY', SENTENCE, 0]);
+  t('  ...and says which rows by position, never their values (Q19)', [imp.body.rows, /18/.test(JSON.stringify(imp.body.message))], [[2, 3], false]);
+  WHO = actor('manager');
+  t('POST /import: a manager is not refused for the rate', (await call(port, 'POST', '/api/products/import', fileOf(18))).status !== 403, true);
+  WHO = OWNER;
+  t('POST /import: the owner is not refused for the rate', (await call(port, 'POST', '/api/products/import', fileOf(18))).status !== 403, true);
+
+  const BP = require(API + '/lib/catalogue-blueprint');
+  const rated = Object.keys(BP.BLUEPRINTS).filter((key) => BP.mintPlan(key, [], {}).items.some((item) => door.rateNamed(item)));
+  t('POST /lists/adopt: no blueprint row names a rate, and the caller only overrides the price, so an editor cannot set one', rated, []);
+  const wanted = { name: 'Combo', modifiers: { groups: [] }, price: 99 };
+  t('combo push: its fields (name, modifiers, price) never name a rate and leave a product stored rate unchanged', [door.rateNamed(wanted), door.rateChanged(require(API + '/routes/products').mergePatch(STORED, wanted), STORED)], [false, false]);
+
+console.log('\n   the payload the catalogue page reads');
   const may = async (who) => { WHO = who; return (await call(port, 'GET', '/api/entities/me/can-see-costs')).body.may_set_rate; };
   t('GET /entities/me/can-see-costs carries may_set_rate: owner and manager true, editor false', [await may(OWNER), await may(actor('manager')), await may(actor('editor'))], [true, true, false]);
 
