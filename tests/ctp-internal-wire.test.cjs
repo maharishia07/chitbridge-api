@@ -36,7 +36,7 @@ function load(file, stubs) {
 
 const RECIP = 'r-entity-1';
 /* ⚠️ no bridge_id on the copy, exactly as a real send copy */
-const copy = { entity_id: RECIP, display_name: 'QA Rish Pty', direction: 'received', sender_entity_id: 's1' };
+const copy = { entity_id: RECIP, direction: 'received', sender_entity_id: 's1' };
 const remote = () => ({
   resolveAll: async (ids) =>
     new Map(ids.map((i) => [String(i), { local: false, installation_key: 'sit-au', endpoint: 'https://au.example/api/ctp/deliver' }]))
@@ -48,7 +48,7 @@ function mintWith(transport) {
       throw new Error('a local write must not happen');
     },
     query: async (sql) => {
-      if (/SELECT bridge_id FROM identities/.test(sql)) return { rows: [{ bridge_id: 'CBSQRH9ASH' }] };
+      if (/SELECT bridge_id, display_name FROM identities/.test(sql)) return { rows: [{ bridge_id: 'CBSQRH9ASH', display_name: 'QA Rish Pty' }] };
       if (/coalesce\(population/.test(sql)) return { rows: [{ population: 'live', bridge_id: 'CBEGY7LB2J', display_name: 'QA Athi' }] };
       return { rows: [] };
     }
@@ -258,6 +258,64 @@ function mintWith(transport) {
     const got = await RP().adopt('owner-1', 'CBSQRH9ASH@au.example', deps(w));
     assert.strictEqual(got.error.status, 409);
     assert.strictEqual(got.error.code, 'CTP_ADDRESS_CLASH');
+  });
+
+  /* ── RAIL-104 ── the manifest cache: a failure is short, a rotated key is re-read once */
+  const directory = (served) => {
+    const dir = load('lib/ctpdirectory.js', { './safe-url': { assertPublicHttps: async () => ({ ok: true }) } });
+    global.fetch = async () => {
+      const next = served.shift();
+      if (next === 'down') throw Object.assign(new Error('refused'), { name: 'TypeError' });
+      return { ok: true, status: 200, text: async () => JSON.stringify({ ctp: '1', installation_key: 'sit-au', public_key: next }) };
+    };
+    return dir;
+  };
+  const realNow = Date.now;
+  const atTime = (ms) => {
+    Date.now = () => ms;
+  };
+
+  await t('RAIL-104: a failed manifest read is retried after seconds, not kept for 15 minutes', async () => {
+    const dir = directory(['down', 'KEY-A']);
+    try {
+      atTime(1000000);
+      const first = await dir.publicKeyFor('au.example', 'sit-au');
+      assert.strictEqual(first.ok, false);
+      atTime(1000000 + 5000);
+      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au')).ok, false, 'within seconds the failure may be reused');
+      atTime(1000000 + dir.FAILURE_TTL_MS + 1000);
+      const later = await dir.publicKeyFor('au.example', 'sit-au');
+      assert.ok(later.ok && later.public_key === 'KEY-A', 'the peer is back; the next delivery must find it');
+    } finally {
+      Date.now = realNow;
+    }
+  });
+
+  await t('RAIL-104: a key that stopped verifying is re-read once (throttled), so a rotation heals itself', async () => {
+    const dir = directory(['KEY-OLD', 'KEY-NEW']);
+    try {
+      atTime(2000000);
+      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au')).public_key, 'KEY-OLD');
+      atTime(2000000 + 1000);
+      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au', { fresh: true })).public_key, 'KEY-OLD', 'a re-read a second after the last one is refused (no dial per bad envelope)');
+      atTime(2000000 + dir.REREAD_MIN_MS + 1000);
+      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au', { fresh: true })).public_key, 'KEY-NEW');
+    } finally {
+      Date.now = realNow;
+    }
+  });
+
+  await t('RAIL-104: the receiving door tries the published key once more before it refuses a signature', async () => {
+    const src = require('fs').readFileSync(root('routes/ctp.js'), 'utf8');
+    assert.ok(/signature did not verify[\s\S]{0,400}fresh: true/.test(src));
+  });
+
+  await t('RAIL-105: the same chit sent twice is accepted as a repeat (nothing written), a chit id held by another sender is not', async () => {
+    const dup = Object.assign(new Error('duplicate key'), { code: '23505' });
+    const held = (rows) => ({ query: async () => ({ rows: [] }), withEntity: async (id, fn) => fn({ query: async () => ({ rows }) }) });
+    assert.strictEqual(await load('routes/ctp.js', { '../db': held([{}]) }).alreadyHeld(dup, 'r1', 'c1', 's1'), true);
+    assert.strictEqual(await load('routes/ctp.js', { '../db': held([]) }).alreadyHeld(dup, 'r1', 'c1', 's1'), false, 'no copy of ours from that sender: a real fault');
+    assert.strictEqual(await load('routes/ctp.js', { '../db': held([{}]) }).alreadyHeld(new Error('disk'), 'r1', 'c1', 's1'), false, 'only a unique-key refusal can be a repeat');
   });
 
   await t('RAIL-101: the add-supplier route calls the existing seam (no parallel route)', async () => {

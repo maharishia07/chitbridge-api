@@ -36,7 +36,7 @@ const log = require('../lib/logger');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const envelope = require('../lib/ctpenvelope');
 const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
@@ -116,6 +116,43 @@ async function manifest() {
     can_sign: k.can_sign,
     note: k.can_sign ? undefined : k.why
   };
+}
+
+/**
+ * RAIL-104: open the envelope with the key the sender's domain published. If it does not verify, the sender may have rotated its key while we hold the old
+ * one: read its manifest once more (ctpdirectory throttles that) and try the key it publishes NOW. A forger fails again.
+ * @param ctxParts { population, pairedWith } — the recipient's world and the pairing answer the caller already got from the database
+ */
+async function openEnvelope(env, peer, installationKey, publicKey, ctxParts) {
+  const openWith = (key) => envelope.open(env, Object.assign({ verify: (hash, sig) => keys.verifyWith(key, hash, sig) }, ctxParts));
+  const opened = openWith(publicKey);
+  if (opened.ok || !/signature did not verify/.test(opened.why)) return opened;
+  const again = await directory.publicKeyFor(peer.domain, installationKey, { fresh: true });
+  return again.ok && again.public_key !== publicKey ? openWith(again.public_key) : opened;
+}
+
+/**
+ * RAIL-105: write the copy; if this recipient ALREADY holds this chit from this same sender (a sender that timed out and sent it twice), say so and write nothing.
+ * Read as the recipient (its own copy, through RLS), so a chit id held by somebody else is never mistaken for a repeat.
+ * @returns {Promise<{duplicate?: true}>} spread into the answer; any other failure is thrown
+ */
+async function deliverOrRepeat(sender, chit_id, copy, recipient) {
+  try {
+    await mint.deliver(sender, chit_id, [copy], { is_draft: false, arrived: true });
+    return {};
+  } catch (failure) {
+    if (!(await alreadyHeld(failure, recipient, chit_id, sender))) throw failure;
+    return { duplicate: true };
+  }
+}
+
+/** true when `failure` is the unique-key refusal of a chit this recipient already holds from this sender */
+async function alreadyHeld(failure, recipient, chit_id, sender) {
+  if (!failure || failure.code !== '23505') return false;
+  const held = await withEntity(recipient, (db) =>
+    db.query('SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2 AND sender_entity_id = $3 LIMIT 1', [chit_id, recipient, sender])
+  );
+  return held.rows.length > 0;
 }
 
 router.get('/.well-known/ctp.json', async (req, res) => {
@@ -217,13 +254,7 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
       return refuse({ status: 409, code: 'CTP_CROSSING_REFUSED', why: contract.crossingRefused(to.population, ik) });
     }
 
-    const opened = envelope.open(env, {
-      /* ⭐ the RECIPIENT's world is the subject, and the pairing question has already been answered above by
-         the database, so `pairedWith` simply reports it rather than deciding it a second time. */
-      population: to.population,
-      pairedWith: () => mayCross,
-      verify: (hash, sig) => keys.verifyWith(pk.public_key, hash, sig)
-    });
+    const opened = await openEnvelope(env, peer, ik, pk.public_key, { population: to.population, pairedWith: () => mayCross });
     if (!opened.ok) return refuse({ status: 409, code: 'CTP_ENVELOPE_REFUSED', why: opened.why });
 
     /**
@@ -289,10 +320,11 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
      */
     const senderCtx = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
     if (!senderCtx) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
-    await mint.deliver(senderCtx, opened.chit_id, [copy], { is_draft: false, arrived: true });
+    const repeat = await deliverOrRepeat(senderCtx, opened.chit_id, copy, to.identity_id);
 
     res.json({
       accepted: true,
+      ...repeat,
       chit_id: opened.chit_id,
       to: toBridge,
       /* ⭐ the sender's governance as WE resolved it from their installation — visible, and never the reason a
@@ -407,3 +439,4 @@ router.openapi = {
 
 module.exports = router;
 module.exports.manifest = manifest;
+module.exports.alreadyHeld = alreadyHeld;
