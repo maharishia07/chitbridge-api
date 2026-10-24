@@ -33,7 +33,7 @@ of file each thing is; this says what already does the job.
 | 49 | `toast` | `accounts-shell.js` |  |
 | 49 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
-| 50 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 51 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 47 | `again` | `signin-ui.js` |  |
 | 47 | `pack` | `books-store.js` |  |
 | 44 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
@@ -43,7 +43,7 @@ of file each thing is; this says what already does the job.
 | 39 | `view` | `books-payables.js` | group: |
 | 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 39 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
-| 39 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 40 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
@@ -97,7 +97,7 @@ of file each thing is; this says what already does the job.
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 23 | `hold` | `orders.js` |  |
-| 23 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 24 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 22 | `account` | `home-facts.js` | OMITTED: |
