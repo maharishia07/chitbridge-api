@@ -95780,6 +95780,66 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-24T03:20:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/bills-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "UNPAID BILLS TRUTH (R124 · BKS011 / BIL002 · rows R124, R123), on the LOCAL stack: a paper bill received at the counter from a LOCAL supplier names the SUPPLIER and THEIR number on the Unpaid bills row and on the pay sheet; a plain goods receipt stays out; the shop's own sale still names its customer.",
+   "claim": "UNPAID BILLS TRUTH (R124 · BKS011 / BIL002 · rows R124, R123), on the LOCAL stack: a paper bill received at the counter from a LOCAL supplier names the SUPPLIER and THEIR number on the Unpaid bills row and on the pay sheet; a plain goods receipt stays out; the shop's own sale still names its customer.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 106 lines. Run: node chitbridge-api/tests/bills-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js",
+    "lib/select.js",
+    "lib/folder-inventory.js",
+    "lib/books-store.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T14:30:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/select-received-party.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "R124: a paper bill RECEIVED at the counter names its SUPPLIER and THEIR bill number (select.js counterparty + bill_no, the one theirNoSql helper, billNos for the pay sheet; never the frozen invoice).",
+   "claim": "R124: a paper bill RECEIVED at the counter names its SUPPLIER and THEIR bill number (select.js counterparty + bill_no, the one theirNoSql helper, billNos for the pay sheet; never the frozen invoice).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 37 lines. Run: node chitbridge-api/tests/select-received-party.test.cjs",
+   "layer": "api",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [
+    "lib/select.js",
+    "lib/folder-inventory.js",
+    "lib/books-store.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T14:30:00+05:30"
   }
  ]
 }
