@@ -3569,7 +3569,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 503"
    }
   },
   "POST /api/assist/conform": {
@@ -3578,8 +3578,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "GET /api/assist/standards": {
@@ -3622,8 +3621,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "PUT /api/assist/container": {
@@ -3632,8 +3630,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "GET /api/assist/container/:id": {
@@ -3643,8 +3640,7 @@
   },
   "GET /api/assist/erp-handoffs": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "PUT /api/assist/region-override": {
@@ -3653,8 +3649,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "GET /api/assist/regions": {
@@ -3665,8 +3660,7 @@
   },
   "GET /api/assist/resolve": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/assist/penetration": {
@@ -3677,8 +3671,7 @@
   },
   "GET /api/assist/catalogue-source/:key": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -3687,8 +3680,7 @@
   },
   "GET /api/assist/questions": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/assist/gap": {
@@ -3697,8 +3689,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "POST /api/assist/publish": {
@@ -3707,8 +3698,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "GET /api/assist/gaps": {
