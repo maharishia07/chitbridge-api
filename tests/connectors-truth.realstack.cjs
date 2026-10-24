@@ -14,7 +14,7 @@
  * the statement is recorded · CN-07 IN: contacts and untaxed items land, taxed rows held, bills refused · CN-08 a CSV with bad rows is read before it becomes
  * data, with reasons · CN-09 the connector list per country · CN-10 the kit ships blanks · CN-11 the Tally files come from the one writer, and only for India.
  * KNOWN GAPS (`gap:` kases, a FAIL is a RECORDED finding, never red, never fixed here): CN-05 numbering does not continue theirs (MOVE-IN-GAPS W2.4) ·
- * CN-06 a number over 16 characters is not held for its length in India (W2.4; India bills are refused whole until CON-11).
+ * CN-06 a number over 16 characters is not held for its length in India (W2.4; India bills are refused whole until CON-11) · CN-11b no Australia books pack can be built (reg-au has no pack.export, lib/bookpack.js:61).
  * NOT YET TRUE, LISTED ONLY (no field or route exists to observe, so a kase would assert a made-up shape):
  *   CN-12 a live connector's each sync re-runs the proof and drift raises a flag: lib/move-in-proof.js builds one proof per import; no sync path calls it
  *         and no drift flag exists (CONNECT-BACKLOG CON-10 "re-proof on each live sync"; routes/integrations.js POST /books has no proof step).
@@ -51,6 +51,7 @@ const OPENING_MINOR = 100000;
 const TALLY_FILES = ['tally-masters.xml', 'tally-vouchers.xml'];
 const GAP_CN05 = 'MOVE-IN-GAPS-REQUIREMENT W2.4 (numbering continues theirs); CONNECT-BACKLOG CON-10: move-in keeps no last number and no series, the counter series is client-side (routes/till.js claimSeries)';
 const GAP_CN06 = 'MOVE-IN-GAPS-REQUIREMENT W2.4 (IN number over 16 characters held); CONNECT-BACKLOG CON-11: India bills are refused whole (lib/move-in-gate.js notReady), no length rule exists';
+const GAP_CN11B = 'the Australia pack (lib/reg-au.js, engines) carries no pack.export, so lib/bookpack.js:61 refuses to build any Australia books pack (422); lib/books-pack.js:150 not_for_country is never reached';
 const SETUP_INDIA = { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false } };
 const SETUP_AUSTRALIA = { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: false } };
 const SETUP_EMIRATES = { country: 'AE', currency: 'AED', fy_start_month: 1, timezone: 'Asia/Dubai', tax: { registered: false } };
@@ -261,15 +262,17 @@ async function csvAndCatalogue(india, australia, emirates) {
 }
 
 async function tallyWriter(india, australia) {
-  await kase('CN-11', 'the Tally files in the books pack come from the one adapter writer (masters + vouchers) for India, and Australia gets none, said', async () => {
+  await kase('CN-11', 'the Tally files in the books pack come from the one adapter writer (masters + vouchers) for India', async () => {
     await openingEntry(india);
     const indian = await packOf(india);
     expect(indian.manifest.tally_xml_status === 'adapter', 'India tally_xml_status ' + indian.manifest.tally_xml_status);
     expect(TALLY_FILES.every((file) => indian.names.includes(file)) && !indian.names.includes('tally.xml'), 'India files ' + indian.names.join(', '));
+  });
+  await kase('CN-11b', 'an Australia books pack is built and says its Tally files are not for the country (no tally-* file)', async () => {
     const australian = await packOf(australia);
     expect(australian.manifest.tally_xml_status === 'not_for_country', 'AU tally_xml_status ' + australian.manifest.tally_xml_status);
     expect(!australian.names.some((file) => /tally/.test(file)), 'AU files ' + australian.names.join(', '));
-  });
+  }, GAP_CN11B);
 }
 
 async function main() {
