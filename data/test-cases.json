@@ -64106,6 +64106,34 @@
    "changed_at": "2026-10-22T23:01:04+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/api-allowlist.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-1 output allow-list (S34): the pruning rule, the res.json filter and the shape derivation from recorded answers (the identity on every answer seen; a key never seen is dropped and named).",
+   "claim": "API-1 output allow-list (S34): the pruning rule, the res.json filter and the shape derivation from recorded answers (the identity on every answer seen; a key never seen is dropped and named).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 29 checks. Run: node chitbridge-api/tests/api-allowlist.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "middleware"
+   ],
+   "subjects": [
+    "lib/output-allowlist.js",
+    "tools/api-allowlist.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T22:40:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-csp.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -95598,6 +95626,34 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-19T19:29:06+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec102-readiness-evidence.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-102: a clearance's evidence chit counts only when the ownership check ran and found this shop's copy (fail closed).",
+   "claim": "SEC-102: a clearance's evidence chit counts only when the ownership check ran and found this shop's copy (fail closed).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · security · 84 lines. Run: node chitbridge-api/tests/sec102-readiness-evidence.test.cjs",
+   "layer": "engine",
+   "test_type": "security",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 576,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/readiness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T03:20:00+05:30"
   }
  ]
 }

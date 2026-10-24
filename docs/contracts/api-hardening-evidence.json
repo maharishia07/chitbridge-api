@@ -538,6 +538,9 @@
   "POST /api/notifications/seen": {
    "output_allowlist": true
   },
+  "POST /api/assist/conform": {
+   "output_allowlist": true
+  },
   "GET /api/assist/standards": {
    "output_allowlist": true
   },
@@ -550,7 +553,34 @@
   "POST /api/assist/catalogue-adopt": {
    "output_allowlist": true
   },
+  "PUT /api/assist/catalogue-source": {
+   "output_allowlist": true
+  },
+  "PUT /api/assist/container": {
+   "output_allowlist": true
+  },
   "GET /api/assist/container/:id": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/erp-handoffs": {
+   "output_allowlist": true
+  },
+  "PUT /api/assist/region-override": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/resolve": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/catalogue-source/:key": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/questions": {
+   "output_allowlist": true
+  },
+  "POST /api/assist/gap": {
+   "output_allowlist": true
+  },
+  "POST /api/assist/publish": {
    "output_allowlist": true
   },
   "GET /api/assist/gaps": {
