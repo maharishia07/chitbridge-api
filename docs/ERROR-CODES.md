@@ -107,10 +107,13 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | PENDING | - | folder-inventory | 2026-10-22 |
 | DUPLICATE_PARTY | 409 | Duplicate party | PENDING | - | relationships | 2026-10-22 |
+| UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | - | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
 | EMAIL_TAKEN | 409 | Email taken | That e-mail already signs in to another account. | Use the person's own e-mail, or leave it empty. | actors | 2026-10-22 |
 | EMPLOYEE_EMAIL_REQUIRED | 400 | Employee email required | This person needs an e-mail address for the first code. | Add their e-mail, then try again. | employee-code | 2026-10-22 |
+| CODE_ISSUE_LIMIT | 429 | Too many codes | Five codes were made for this person in the last 15 minutes. | Wait a few minutes, then make a new one. | employee-code | 2026-10-24 |
+| CODE_SHOW_NOT_READY | 503 | Showing a code is not ready | This environment cannot show a first code yet, so none was made. | Add their e-mail, or try again later. | employee-code | 2026-10-24 |
 | ENTITY_BAD_REQUEST | 400 | Request not usable | What was sent is missing something or cannot be used. | Read the sentence shown, fix it and try again. | entities | 2026-10-23 |
 | ENTITY_CLASH | 409 | Clashes with what is recorded | That clashes with what is already recorded. | Read the sentence shown, then pick another. | entities | 2026-10-23 |
 | ENTITY_EMAIL_TAKEN | 409 | Email already used | A shop with that email already exists. | Use another email. | governance | 2026-10-23 |
@@ -164,6 +167,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |
 | LOCKED | 409 | Locked | PENDING | - | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | 400 | Max tasks over entity | That is more tasks than the shop allows one person. | Raise the limit in Settings first, or give fewer. | actors | 2026-10-22 |
+| MEMBERSHIP_SUSPENDED | 403 | Membership suspended | The network has suspended your membership, so you cannot send to it. | Ask the network to resume it, then send again. | network | 2026-10-24 |
 | MIGRATION | 409 | Migration | PENDING | - | schemas | 2026-10-22 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
@@ -292,6 +296,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TILL_BAD_REQUEST | 400 | Counter request not valid | The counter sent something that is missing or not right. | Check what was entered and try again. | till | 2026-10-23 |
 | TILL_CLAIM_MISMATCH | 400 | Bill from another phone | This bill was made on another phone. | Send it from the phone that made it. | holder | 2026-10-23 |
 | TILL_NO_COUNTER | 403 | Key holds no counter | This key is not holding a counter. | Open the counter on this PC first. | till | 2026-10-23 |
+| TILL_NO_TAX_SCHEME | 409 | Shop charges no tax | This shop charges no tax, so no rate is needed. | If that is wrong, check the registration in Country setup. | till | 2026-10-24 |
+| TILL_RATE_OWNER_ONLY | 403 | Owner or manager sets the rate | Only the owner or a manager can set a tax rate. | Ask them to set it once; the sale goes on. | till | 2026-10-24 |
 | TILL_REFUSED | varies | Counter request refused | ChitBridge could not do that. | Read the sentence beside it, then try again. | till | 2026-10-23 |
 | TILL_SCREEN_ONLY | 403 | Shop screens only | Only a shop screen can be changed from the counter. | Pick one of the paired screens. | till | 2026-10-23 |
 | TILL_SEND_REFUSED | 403 | Counter bill not sent | That counter bill could not be sent as it is. | The counter keeps it; send the rest. | chits | 2026-10-23 |
