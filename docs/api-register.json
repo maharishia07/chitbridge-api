@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 605
    },
    "foreign_id_404": {
     "applies": 227,
@@ -694,7 +694,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 296,
-   "hash": "a7a5a0e07f26ec5e",
+   "hash": "7a24ea1ed3849dd8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -704,7 +704,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -744,7 +744,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 534,
-   "hash": "29fd16d8665f60b0",
+   "hash": "3921824cb1079ecd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7324,7 +7324,7 @@
    "owner_area": "facts",
    "file": "routes/facts.js",
    "line": 45,
-   "hash": "bbabdc627fec2b0f",
+   "hash": "edf49b781a5f1d7f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7363,8 +7363,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "edf49b781a5f1d7f"
    },
    "status": "partial"
   },
@@ -7375,7 +7376,7 @@
    "owner_area": "facts",
    "file": "routes/facts.js",
    "line": 36,
-   "hash": "05d5f33a3f03c039",
+   "hash": "77b993ef8cfb176d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7412,8 +7413,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "77b993ef8cfb176d"
    },
    "status": "partial"
   },
@@ -7424,7 +7426,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 72,
-   "hash": "4dc2225386798c55",
+   "hash": "61731d714314228c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7461,8 +7463,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "61731d714314228c"
    },
    "status": "partial"
   },
@@ -7473,7 +7476,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 410,
-   "hash": "bb204c7a8e782061",
+   "hash": "a60cb445e53ae2a1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7511,8 +7514,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a60cb445e53ae2a1"
    },
    "status": "partial"
   },
@@ -7523,7 +7527,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 466,
-   "hash": "47486dec2da7fddd",
+   "hash": "42b58d8e01439a7b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7533,7 +7537,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7561,8 +7565,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "42b58d8e01439a7b"
    },
    "status": "partial"
   },
@@ -7573,7 +7578,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 502,
-   "hash": "c699793f92f8b281",
+   "hash": "6c744afc85af2717",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7623,7 +7628,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 817,
-   "hash": "007f1d0f3518165a",
+   "hash": "45699dc86729202a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7633,7 +7638,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7660,8 +7665,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "45699dc86729202a"
    },
    "status": "partial"
   },
@@ -7672,7 +7678,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 131,
-   "hash": "b47e31b79620787e",
+   "hash": "b6e727a5f02eaf0b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7682,7 +7688,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7708,8 +7714,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b6e727a5f02eaf0b"
    },
    "status": "partial"
   },
@@ -7720,7 +7727,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 626,
-   "hash": "90df1b9d0ced1a55",
+   "hash": "89418c407e09d593",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7757,8 +7764,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "89418c407e09d593"
    },
    "status": "partial"
   },
@@ -7769,7 +7777,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 961,
-   "hash": "eca040ded68054ae",
+   "hash": "40ac737b3537e80b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7806,8 +7814,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "40ac737b3537e80b"
    },
    "status": "partial"
   },
@@ -7818,7 +7827,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 866,
-   "hash": "8d90526d91c6055a",
+   "hash": "be7e53d8fcf48581",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7855,8 +7864,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "be7e53d8fcf48581"
    },
    "status": "partial"
   },
@@ -7867,7 +7877,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 575,
-   "hash": "6552b5c42fd20a68",
+   "hash": "997763be239aba2c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7904,8 +7914,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "997763be239aba2c"
    },
    "status": "partial"
   },
@@ -7916,7 +7927,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 554,
-   "hash": "b0493f4f41424aa1",
+   "hash": "acd81ea945245e41",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7926,7 +7937,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7951,8 +7962,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "acd81ea945245e41"
    },
    "status": "partial"
   },
@@ -7963,7 +7975,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 785,
-   "hash": "7a858079df6a042f",
+   "hash": "a698c4e096c3eacc",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7973,7 +7985,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8001,8 +8013,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a698c4e096c3eacc"
    },
    "status": "partial"
   },
@@ -10477,7 +10490,7 @@
    "owner_area": "pricing",
    "file": "routes/pricing.js",
    "line": 44,
-   "hash": "9e36f1a2d6fa3b95",
+   "hash": "1a74f70a0f80e1b9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10509,8 +10522,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1a74f70a0f80e1b9"
    },
    "status": "partial"
   },
@@ -14584,7 +14598,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 256,
-   "hash": "56bac579c10ffd40",
+   "hash": "b6f16d5afe9857f2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14622,8 +14636,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b6f16d5afe9857f2"
    },
    "status": "partial"
   },
@@ -22173,7 +22188,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 185,
-   "hash": "a5c087038bff5c7b",
+   "hash": "af90e6343a3d4888",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22211,8 +22226,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "af90e6343a3d4888"
    },
    "status": "partial"
   },
@@ -22273,7 +22289,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 764,
-   "hash": "e1e0553c2e47dfe8",
+   "hash": "6475ef0d1713bdc8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22313,8 +22329,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6475ef0d1713bdc8"
    },
    "status": "partial"
   },
@@ -24639,7 +24656,7 @@
    "owner_area": "pricing",
    "file": "routes/pricing.js",
    "line": 52,
-   "hash": "691ca321135fb824",
+   "hash": "d3b57ed9daecd0aa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -24678,8 +24695,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d3b57ed9daecd0aa"
    },
    "status": "partial"
   },
@@ -30059,7 +30077,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 148,
-   "hash": "abcd059525ec8d8b",
+   "hash": "b644de49f85a1d71",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -30100,8 +30118,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b644de49f85a1d71"
    },
    "status": "partial"
   },
