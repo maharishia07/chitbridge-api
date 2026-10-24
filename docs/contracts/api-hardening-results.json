@@ -4249,8 +4249,7 @@
   },
   "GET /api/forms/:key": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -4262,8 +4261,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -4275,8 +4273,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,

@@ -174,7 +174,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/folders/rules | folders | routes/folders.js:575 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/folders/rules/vocabulary | folders | routes/folders.js:554 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/folders/worklist | folders | routes/folders.js:785 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/forms | forms | routes/forms.js:23 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/forms | forms | routes/forms.js:23 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/forms/:key | forms | routes/forms.js:31 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/forms/instances/:id | forms | routes/forms.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/forms/instances/all | forms | routes/forms.js:55 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |

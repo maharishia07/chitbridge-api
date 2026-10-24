@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 610
    },
    "foreign_id_404": {
     "applies": 227,
@@ -8013,7 +8013,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 23,
-   "hash": "26783eca4b1abd50",
+   "hash": "a83a138eb0767172",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8023,7 +8023,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8061,7 +8061,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 31,
-   "hash": "238d8e18ea107ec1",
+   "hash": "e8c36f2d5c0ed626",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8111,7 +8111,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 63,
-   "hash": "9b48302d71d153c8",
+   "hash": "386ad563bf93c10a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8161,7 +8161,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 55,
-   "hash": "ef7b00e1231715fd",
+   "hash": "6bb088a3711770a5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22444,7 +22444,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 47,
-   "hash": "8e097db259c1ba11",
+   "hash": "6bb72f6be968bf6c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22495,7 +22495,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 39,
-   "hash": "874cccbbae041e0a",
+   "hash": "0821b35501620684",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22545,7 +22545,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 79,
-   "hash": "bb887461fa4c418f",
+   "hash": "e234eb853c333178",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22596,7 +22596,7 @@
    "owner_area": "forms",
    "file": "routes/forms.js",
    "line": 71,
-   "hash": "922f3f32d2851566",
+   "hash": "e804ea712cacf61d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
