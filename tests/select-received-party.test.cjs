@@ -14,8 +14,8 @@ const sel = src('select.js'), store = src('books-store.js');
 const INV = require('../lib/folder-inventory');
 
 /* the ONE helper, and its text */
-ok(INV.theirNoSql('h') === "NULLIF(btrim(h.business_json->'their_bill'->>'no'), '')", 'theirNoSql(h): their number, blank = NULL');
-ok(INV.docSql('ch', 'cs').includes(INV.theirNoSql('ch') + ' IS NOT NULL'), 'docSql\'s their_bill term reads the same helper');
+ok(INV.theirNoSql('h') === "btrim(h.business_json->'their_bill'->>'no')", 'theirNoSql(h): their number, trimmed (the caller turns blank into NULL)');
+ok(INV.docSql('ch', 'cs').includes('(COALESCE(' + INV.theirNoSql('ch') + ", '') <> '' AND"), 'docSql\'s their_bill term reads the same helper — bytes as before (migrations/archive/b619 freezes that statement)');
 ok(!/'their_bill'->>'no'/.test(sel) && !/'their_bill'->>'no'/.test(store), 'select.js and books-store.js spell their number through the helper only (no second spelling)');
 
 /* counterparty_name: customer (issued side) → party (received paper bill) → the header */
@@ -28,9 +28,9 @@ ok(idArms.test(sel), 'counterparty_id: the party\'s id, uuid-guarded, before the
 ok(/const UUID_SQL = `'\^\[0-9a-f\]\{8\}-/.test(sel), 'the uuid guard is one named constant');
 
 /* bill_no: mine first (nothing issued changes), else theirs; never the frozen invoice */
-ok(/COALESCE\(ch\.business_json->>'bill_no', \$\{INV\.theirNoSql\('ch'\)\}\) AS bill_no/.test(sel), 'bill_no = COALESCE(bill_no, their number)');
+ok(/COALESCE\(ch\.business_json->>'bill_no', NULLIF\(\$\{INV\.theirNoSql\('ch'\)\}, ''\)\) AS bill_no/.test(sel), 'bill_no = COALESCE(bill_no, their number; blank = NULL)');
 ok(!/'invoice'->>'no'/.test(sel) && !/'invoice'->>'no'/.test(store), 'business_json.invoice (the frozen tax invoice) is never read as a number');
 
 /* R123: the pay sheet's numbers come from billNos — printed_as → bill_no → their number */
-ok(/COALESCE\(h\.business_json->>'printed_as', h\.business_json->>'bill_no', \$\{require\('\.\/folder-inventory'\)\.theirNoSql\('h'\)\}\) AS no/.test(store), 'billNos: printed_as, bill_no, then their number (the pay sheet names SG-1022, not a chit id)');
+ok(/COALESCE\(h\.business_json->>'printed_as', h\.business_json->>'bill_no', NULLIF\(\$\{require\('\.\/folder-inventory'\)\.theirNoSql\('h'\)\}, ''\)\) AS no/.test(store), 'billNos: printed_as, bill_no, then their number (the pay sheet names SG-1022, not a chit id)');
 console.log(n + ' checks passed');
