@@ -243,11 +243,11 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/relationships/customers | relationships | routes/relationships.js:667 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/relationships/customers/:id/rewards | relationships | routes/relationships.js:728 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/relationships/customers/groups | relationships | routes/relationships.js:660 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/relationships/scorecard | relationships | routes/relationships.js:971 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/relationships/scorecard/:entity_id | relationships | routes/relationships.js:983 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/relationships/scorecard | relationships | routes/relationships.js:971 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/relationships/scorecard/:entity_id | relationships | routes/relationships.js:983 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
 | GET | /api/relationships/suppliers | relationships | routes/relationships.js:234 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/relationships/suppliers/:supplier_entity_id/catalogue | relationships | routes/relationships.js:606 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/relationships/suppliers/availability | relationships | routes/relationships.js:474 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/relationships/suppliers/availability | relationships | routes/relationships.js:474 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/repeat | repeat-supply | routes/repeat-supply.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/repeat/:id | repeat-supply | routes/repeat-supply.js:82 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/schemas/fields | schemas | routes/schemas.js:86 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -317,7 +317,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/products/:id | products | routes/products.js:1436 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:51 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | PATCH | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:100 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
-| PATCH | /api/relationships/customers/:id | relationships | routes/relationships.js:910 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/relationships/customers/:id | relationships | routes/relationships.js:910 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PATCH | /api/relationships/suppliers/:id | relationships | routes/relationships.js:321 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/schemas/fields/:field_key | schemas | routes/schemas.js:314 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PATCH | /api/schemas/fields/order | schemas | routes/schemas.js:255 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
@@ -536,7 +536,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:40 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:77 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/relationships/customers | relationships | routes/relationships.js:780 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/relationships/customers/:id/groups | relationships | routes/relationships.js:889 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/relationships/customers/:id/groups | relationships | routes/relationships.js:889 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/relationships/suppliers | relationships | routes/relationships.js:107 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/repeat | repeat-supply | routes/repeat-supply.js:66 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/repeat/:id/accept | repeat-supply | routes/repeat-supply.js:91 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |

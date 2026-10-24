@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 606
    },
    "foreign_id_404": {
     "applies": 227,
@@ -1083,7 +1083,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 428,
-   "hash": "097b294dbefdf91a",
+   "hash": "683aa6ccd46c28b5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11140,7 +11140,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 667,
-   "hash": "7110cc02120a8fe6",
+   "hash": "dd816c613da54877",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11189,7 +11189,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 728,
-   "hash": "55b625227a903b11",
+   "hash": "283ad24d6c24e087",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11239,7 +11239,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 660,
-   "hash": "e28c30daa6086c43",
+   "hash": "d18c205627345524",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11287,7 +11287,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 971,
-   "hash": "b1dc02721c1e0ecc",
+   "hash": "afebf4d8f77fd1b3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11297,7 +11297,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -11336,7 +11336,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 983,
-   "hash": "b057174b16015d1e",
+   "hash": "4ac5847991430d69",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11346,7 +11346,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -11386,7 +11386,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 234,
-   "hash": "80eabc6ab54cc6a3",
+   "hash": "89e50658703656e5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11435,7 +11435,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 606,
-   "hash": "57b501d40f032989",
+   "hash": "b79d8dd5681c07c2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11485,7 +11485,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 474,
-   "hash": "ee1763eb44c0842a",
+   "hash": "17646a9cbbf08ec2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11495,7 +11495,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14872,7 +14872,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 910,
-   "hash": "7b670a550b4e81c5",
+   "hash": "892806edef1610a9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14882,7 +14882,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14922,7 +14922,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 321,
-   "hash": "6a6333aedbe9fcde",
+   "hash": "a2e749b6fe81e0d3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25472,7 +25472,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 780,
-   "hash": "d75dc184c497e260",
+   "hash": "c6699df6864b635a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25523,7 +25523,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 889,
-   "hash": "dc9471f351f59e0f",
+   "hash": "e982cebe9da706c1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25533,7 +25533,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -25575,7 +25575,7 @@
    "owner_area": "relationships",
    "file": "routes/relationships.js",
    "line": 107,
-   "hash": "a370995423f72cff",
+   "hash": "2389702af63c287c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
