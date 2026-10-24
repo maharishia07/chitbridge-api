@@ -128,6 +128,14 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       expect(all.today === shopDay.today + 1 && all.late === shopDay.late + 1 && all.total === shopDay.total + 3 && all.shop_day === shopDay.shop_day, 'counts ' + JSON.stringify({ today: all.today, late: all.late, total: all.total, was: [shopDay.today, shopDay.late, shopDay.total] }));
       expect(rec.followups.filter((x) => mine.has(x.followup_id)).length === 3, 'the record carries ' + rec.followups.length + ' follow-ups');
     });
+
+    /* R82 (CRM walk 24 Oct): a logged call must be readable again: the party's timeline is the GET that lists it */
+    await kase('CR-R82', 'a call logged on a party is listed again by GET /parties/:id/timeline (kind interaction, with its words)', async () => {
+      const said = 'Rang about the order ' + RUN;
+      ok(await j('/api/crm/parties/' + first.party_id + '/interactions', { method: 'POST', token: A.token, body: { kind: 'call', direction: 'in', body: said } }), 'log call');
+      const tl = ok(await j('/api/crm/parties/' + first.party_id + '/timeline', { token: A.token }), 'timeline').b;
+      expect((tl.entries || []).some((x) => x.kind === 'interaction' && JSON.stringify(x).indexOf(said) >= 0), 'timeline kinds ' + (tl.entries || []).map((x) => x.kind).join(','));
+    }, 'R82: the walk saw logged calls not listed; GET /calls is the to-call queue, not the log (owner cb-crm decides where the log lists)');
   } finally { await pg.end(); }
   finish('crm-truth', process.env.CRM_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('crm truth could not run:', e && e.message); process.exit(2); });
