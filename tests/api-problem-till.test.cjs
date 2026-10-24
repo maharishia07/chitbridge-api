@@ -117,6 +117,17 @@ const PROGRAMME = ['lib/reward-store.js', 'programme', async () => ({ name: 'Poi
 const OFFER_ROW = (kind, status) => (sql) =>
   /FROM definition d/.test(sql) ? { rows: [{ definition_id: ITEM, name: 'Spring', current_version: 1, status, kind, rules: {} }], rowCount: 1 } : undefined;
 const PARTY = (country) => ['lib/profile.js', 'invoiceParty', async () => ({ country })];
+/* F5 A1 · the rate door's worlds: a shop's registration row (regular charges, composition does not), and a shelf holding one slab but no product */
+const SLAB = '00000000-0000-4000-8000-0000000001d1'; /* a slab's definition id (the generated hardening case plays this recorded request: tools/api-contract-tests PATH_ID) */
+const RATE_BODY = { item_id: ITEM, slab_id: SLAB };
+const RATE_SHOP = (registration) => (sql) =>
+  /FROM identities WHERE identity_id = \$1/.test(sql) ? { rows: [{ gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: registration } }], rowCount: 1 } : undefined;
+const RATE_SHELF = (sql) =>
+  RATE_SHOP('regular')(sql) || (/FROM definition d/.test(sql) ? { rows: [{ definition_id: SLAB, kind: 'tax', name: 'GST 5%', current_version: 1, status: 'live', rules: { rate: 5 } }], rowCount: 1 } : undefined);
+/* …and the product itself, unrated, so the door reaches its 200 (the success answer the output allow-list is derived from) */
+const RATE_ITEM = (sql) =>
+  RATE_SHELF(sql) ||
+  (/SELECT item_data FROM catalogue_items/.test(sql) ? { rows: [{ item_data: { name: 'Poori', price: 40 } }], rowCount: 1 } : /^\s*UPDATE catalogue_items/.test(sql) ? { rows: [{ item_id: ITEM }], rowCount: 1 } : undefined);
 /** the extras: an answer the generic worlds cannot reach (a named refusal inside a handler, a fault behind a body the handler accepts) */
 const EXTRAS = [
   X('snapshot-breaks', 'GET /api/till/snapshot', 500, { patch: [['lib/profile.js', 'countryOf', THROWS]] }),
@@ -161,6 +172,15 @@ const EXTRAS = [
   X('price-no-money', 'POST /api/till/price', 422, { body: { item_id: ITEM, price: 5 } }),
   X('price-item-not-there', 'POST /api/till/price', 404, { body: { item_id: ITEM, price: 5 }, setup: { sqlRows: SHOP_ROW } }),
   X('price-write-breaks', 'POST /api/till/price', 500, { body: { item_id: ITEM, price: 5 }, setup: { db: 'fail', sqlRows: SHOP_ROW } }),
+  /* F5 A1 · POST /rate: the door (a key, a cashier) with a full body, since the strict schema answers an empty one first; the shop that charges none; the slab and the product not there; the write breaking */
+  X('rate-key-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { key: ['till'] } }),
+  X('rate-cashier-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { who: STAFF } }),
+  X('rate-unknown-key-in-body', 'POST /api/till/rate', 400, { body: Object.assign({ colour: 'red' }, RATE_BODY) }),
+  X('rate-shop-charges-none', 'POST /api/till/rate', 409, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('composition') } }),
+  X('rate-slab-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('regular') } }),
+  X('rate-item-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHELF } }),
+  X('rate-write-breaks', 'POST /api/till/rate', 500, { body: RATE_BODY, setup: { db: 'fail', sqlRows: RATE_SHELF } }),
+  X('rate-set', 'POST /api/till/rate', 200, { body: RATE_BODY, setup: { sqlRows: RATE_ITEM } }),
   X('alias-no-words', 'POST /api/till/alias', 400, { body: { item_id: ITEM } }),
   X('alias-too-long', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'x'.repeat(121) } }),
   X('alias-bad-factor', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'SUNFL OIL', factor: -2 } }),

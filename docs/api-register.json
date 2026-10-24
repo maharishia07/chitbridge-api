@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2",
  "counts": {
-  "routes": 633,
+  "routes": 634,
   "not_started": 143,
-  "partial": 489,
+  "partial": 490,
   "meets": 1,
   "columns": {
    "strict_input": {
-    "applies": 344,
+    "applies": 345,
     "failing": 338
    },
    "output_allowlist": {
-    "applies": 633,
-    "failing": 611
+    "applies": 634,
+    "failing": 612
    },
    "foreign_id_404": {
     "applies": 227,
@@ -28,7 +28,7 @@
     "failing": 4
    },
    "trips_budgeted": {
-    "applies": 633,
+    "applies": 634,
     "failing": 166
    }
   }
@@ -12863,7 +12863,7 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2814,
+   "line": 2908,
    "hash": "3d6b2fc666d0eb0a",
    "columns": {
     "schema_in": true,
@@ -12912,7 +12912,7 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2713,
+   "line": 2807,
    "hash": "d10e6a6e1d2b604c",
    "columns": {
     "schema_in": true,
@@ -12961,7 +12961,7 @@
    "path": "/api/till/counters",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1451,
+   "line": 1468,
    "hash": "2076c6a23b42055a",
    "columns": {
     "schema_in": true,
@@ -13010,7 +13010,7 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3244,
+   "line": 3338,
    "hash": "4a422f34f38b13a0",
    "columns": {
     "schema_in": true,
@@ -13060,7 +13060,7 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2950,
+   "line": 3044,
    "hash": "be0d9bf2e28e212b",
    "columns": {
     "schema_in": true,
@@ -13109,7 +13109,7 @@
    "path": "/api/till/quick-keys/groups",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1460,
+   "line": 1477,
    "hash": "35f7ecacff13de4d",
    "columns": {
     "schema_in": true,
@@ -13158,7 +13158,7 @@
    "path": "/api/till/quick-keys/hidden",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1498,
+   "line": 1515,
    "hash": "58978b2c96355943",
    "columns": {
     "schema_in": true,
@@ -13207,7 +13207,7 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1542,
+   "line": 1559,
    "hash": "476b78ae0d50a3d6",
    "columns": {
     "schema_in": true,
@@ -13256,7 +13256,7 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1470,
+   "line": 1487,
    "hash": "07c6f23d46074c97",
    "columns": {
     "schema_in": true,
@@ -13306,7 +13306,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1858,
+   "line": 1952,
    "hash": "e51972ce8a02f1cf",
    "columns": {
     "schema_in": true,
@@ -13356,7 +13356,7 @@
    "path": "/api/till/screens",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2166,
+   "line": 2260,
    "hash": "fee1ffe46e308ce3",
    "columns": {
     "schema_in": true,
@@ -13405,8 +13405,8 @@
    "path": "/api/till/snapshot",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 160,
-   "hash": "b01f9c0d65c7946e",
+   "line": 183,
+   "hash": "ea5e601d9a1eb33f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13443,8 +13443,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e66994db22b4bbc5"
    },
    "status": "partial"
   },
@@ -13454,7 +13455,7 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2540,
+   "line": 2634,
    "hash": "e1436d1dbc57b9eb",
    "columns": {
     "schema_in": true,
@@ -13504,7 +13505,7 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2779,
+   "line": 2873,
    "hash": "2da4e820d2a1ee15",
    "columns": {
     "schema_in": true,
@@ -13554,7 +13555,7 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2921,
+   "line": 3015,
    "hash": "3699b1c90b1b4388",
    "columns": {
     "schema_in": true,
@@ -13603,7 +13604,7 @@
    "path": "/api/till/verify",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2325,
+   "line": 2419,
    "hash": "048543cabfe017b6",
    "columns": {
     "schema_in": true,
@@ -13652,7 +13653,7 @@
    "path": "/api/till/worth-an-offer",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1607,
+   "line": 1624,
    "hash": "16793d611dc5c4c7",
    "columns": {
     "schema_in": true,
@@ -27643,7 +27644,7 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3135,
+   "line": 3229,
    "hash": "1b393f3ac10694ac",
    "columns": {
     "schema_in": true,
@@ -27693,7 +27694,7 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2604,
+   "line": 2698,
    "hash": "0b022d0054a67cb1",
    "columns": {
     "schema_in": true,
@@ -27745,7 +27746,7 @@
    "path": "/api/till/close",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1290,
+   "line": 1307,
    "hash": "220f807a69f0ef45",
    "columns": {
     "schema_in": true,
@@ -27796,7 +27797,7 @@
    "path": "/api/till/diagnostic",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1240,
+   "line": 1257,
    "hash": "b8af7e64143ede8b",
    "columns": {
     "schema_in": true,
@@ -27847,7 +27848,7 @@
    "path": "/api/till/enrol",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2067,
+   "line": 2161,
    "hash": "d3d29fb2332f13de",
    "columns": {
     "schema_in": true,
@@ -27897,7 +27898,7 @@
    "path": "/api/till/flags",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1377,
+   "line": 1394,
    "hash": "65214f74263076ca",
    "columns": {
     "schema_in": true,
@@ -27948,7 +27949,7 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3178,
+   "line": 3272,
    "hash": "93504ef849a926a2",
    "columns": {
     "schema_in": true,
@@ -27996,7 +27997,7 @@
    "path": "/api/till/offer-item",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1718,
+   "line": 1735,
    "hash": "d6ad7fcb17c22003",
    "columns": {
     "schema_in": true,
@@ -28047,7 +28048,7 @@
    "path": "/api/till/pair",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2014,
+   "line": 2108,
    "hash": "b8944df3397c8a0b",
    "columns": {
     "schema_in": true,
@@ -28097,7 +28098,7 @@
    "path": "/api/till/pair/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2121,
+   "line": 2215,
    "hash": "62505b6631fc9613",
    "columns": {
     "schema_in": true,
@@ -28146,7 +28147,7 @@
    "path": "/api/till/price",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1778,
+   "line": 1795,
    "hash": "3a149ca9b4b713e5",
    "columns": {
     "schema_in": true,
@@ -28198,7 +28199,7 @@
    "path": "/api/till/quick-keys/hide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1514,
+   "line": 1531,
    "hash": "c041346835b390b6",
    "columns": {
     "schema_in": true,
@@ -28248,7 +28249,7 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1553,
+   "line": 1570,
    "hash": "7073d24f16ce0ca0",
    "columns": {
     "schema_in": true,
@@ -28298,7 +28299,7 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1484,
+   "line": 1501,
    "hash": "668b1080ceb29326",
    "columns": {
     "schema_in": true,
@@ -28348,7 +28349,7 @@
    "path": "/api/till/quick-keys/unhide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1528,
+   "line": 1545,
    "hash": "dbbc8c561f7c33d7",
    "columns": {
     "schema_in": true,
@@ -28393,12 +28394,64 @@
    "status": "partial"
   },
   {
+   "key": "POST /api/till/rate",
+   "method": "POST",
+   "path": "/api/till/rate",
+   "owner_area": "till",
+   "file": "routes/till.js",
+   "line": 1896,
+   "hash": "80b40e174131e2f5",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial"
+  },
+  {
    "key": "POST /api/till/reconcile",
    "method": "POST",
    "path": "/api/till/reconcile",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2286,
+   "line": 2380,
    "hash": "fe056ad1a25bb4e7",
    "columns": {
     "schema_in": true,
@@ -28448,7 +28501,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1893,
+   "line": 1987,
    "hash": "e0244e6670840cab",
    "columns": {
     "schema_in": true,
@@ -28499,7 +28552,7 @@
    "path": "/api/till/reward/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1949,
+   "line": 2043,
    "hash": "aa0eb6ceeead07c5",
    "columns": {
     "schema_in": true,
@@ -28550,7 +28603,7 @@
    "path": "/api/till/screens/rename",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2218,
+   "line": 2312,
    "hash": "035453d24223f376",
    "columns": {
     "schema_in": true,
@@ -28601,7 +28654,7 @@
    "path": "/api/till/screens/revoke",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2185,
+   "line": 2279,
    "hash": "a282304c2a83381b",
    "columns": {
     "schema_in": true,
@@ -28652,7 +28705,7 @@
    "path": "/api/till/shop",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2415,
+   "line": 2509,
    "hash": "ecbd876fea2f9aed",
    "columns": {
     "schema_in": true,
@@ -28702,7 +28755,7 @@
    "path": "/api/till/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1351,
+   "line": 1368,
    "hash": "4f046894dfe93c93",
    "columns": {
     "schema_in": true,
@@ -28752,7 +28805,7 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1130,
+   "line": 1147,
    "hash": "23ce0464860c30d3",
    "columns": {
     "schema_in": true,
@@ -28803,7 +28856,7 @@
    "path": "/api/till/stock/bulk",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1176,
+   "line": 1193,
    "hash": "241047c4aa9d0ca5",
    "columns": {
     "schema_in": true,

@@ -294,6 +294,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TILL_BAD_REQUEST | 400 | Counter request not valid | The counter sent something that is missing or not right. | Check what was entered and try again. | till | 2026-10-23 |
 | TILL_CLAIM_MISMATCH | 400 | Bill from another phone | This bill was made on another phone. | Send it from the phone that made it. | holder | 2026-10-23 |
 | TILL_NO_COUNTER | 403 | Key holds no counter | This key is not holding a counter. | Open the counter on this PC first. | till | 2026-10-23 |
+| TILL_NO_TAX_SCHEME | 409 | Shop charges no tax | This shop charges no tax, so no rate is needed. | If that is wrong, check the registration in Country setup. | till | 2026-10-24 |
+| TILL_RATE_OWNER_ONLY | 403 | Owner or manager sets the rate | Only the owner or a manager can set a tax rate. | Ask them to set it once; the sale goes on. | till | 2026-10-24 |
 | TILL_REFUSED | varies | Counter request refused | ChitBridge could not do that. | Read the sentence beside it, then try again. | till | 2026-10-23 |
 | TILL_SCREEN_ONLY | 403 | Shop screens only | Only a shop screen can be changed from the counter. | Pick one of the paired screens. | till | 2026-10-23 |
 | TILL_SEND_REFUSED | 403 | Counter bill not sent | That counter bill could not be sent as it is. | The counter keeps it; send the rest. | chits | 2026-10-23 |

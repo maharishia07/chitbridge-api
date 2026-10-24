@@ -3125,6 +3125,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "TILL_NO_TAX_SCHEME",
+   "status": "409",
+   "title": "Shop charges no tax",
+   "shopkeeper": "This shop charges no tax, so no rate is needed.",
+   "hint": "If that is wrong, check the registration in Country setup.",
+   "owner_area": "till",
+   "since": "2026-10-24"
+  },
+  {
+   "code": "TILL_RATE_OWNER_ONLY",
+   "status": "403",
+   "title": "Owner or manager sets the rate",
+   "shopkeeper": "Only the owner or a manager can set a tax rate.",
+   "hint": "Ask them to set it once; the sale goes on.",
+   "owner_area": "till",
+   "since": "2026-10-24"
+  },
+  {
    "code": "TILL_REFUSED",
    "status": "varies",
    "title": "Counter request refused",
