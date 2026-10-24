@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 100 | `withEntity` | `books-hooks.js` |  |
 | 87 | `read` | `books-cashflow.js` | Trips: |
 | 79 | `words` | `variant.browser.js` |  |
-| 75 | `money` | `bill-privacy.js` |  |
+| 76 | `money` | `bill-privacy.js` |  |
 | 73 | `answer` | `availability.js` | from March; then nearest. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 68 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -29,7 +29,7 @@ of file each thing is; this says what already does the job.
 | 54 | `items` | `books-store.js` | PERF1: |
 | 50 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 50 | `entry` | `books-store.js` |  |
-| 50 | `next` | `dayopen.js` | the next thing to do — |
+| 51 | `next` | `dayopen.js` | the next thing to do — |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
@@ -40,9 +40,9 @@ of file each thing is; this says what already does the job.
 | 43 | `read` | `cap-print.js` |  |
 | 41 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
-| 39 | `view` | `books-payables.js` | group: |
-| 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 39 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 40 | `view` | `books-payables.js` | group: |
+| 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
+| 40 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
@@ -100,7 +100,7 @@ of file each thing is; this says what already does the job.
 | 23 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 22 | `account` | `home-facts.js` | OMITTED: |
+| 23 | `account` | `home-facts.js` | OMITTED: |
 | 22 | `owner` | `books.js` |  |
 | 21 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 21 | `chart` | `fx-rates.js` |  |
@@ -167,7 +167,7 @@ of file each thing is; this says what already does the job.
 | 14 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 14 | `refuse_` | `bookpack.js` | function M_() { return MONEY_ ·· (MONEY_ = req_('CBMoney', 'decimals', './money')); } |
 | 14 | `summary` | `catalogue-read.js` | A count a person can act on: |
-| 14 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
+| 15 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 14 | `report` | `raida.js` | register at the one moment it must not. |
