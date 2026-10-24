@@ -141,7 +141,6 @@ of file each thing is; this says what already does the job.
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
-| 16 | `panel` | `sides.js` |  |
 | 16 | `plan` | `crm-leads.js` | `existing`: |
 | 16 | `update` | `folder-rules.js` |  |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
@@ -198,8 +197,6 @@ of file each thing is; this says what already does the job.
 | 11 | `safe` | `country-profiles.js` | text made safe for HTML — |
 | 11 | `session` | `page-frame.js` | FLOW  mount → session() → skeleton()? → CBShell.mount(host, { host:{app·bar}, person, signin, avatar, title, h |
 | 11 | `verdict` | `rail-thread.js` |  |
-| 11 | `tabs` | `workflow.js` | the folder tabs, in the order the screen shows them |
-| 11 | `actions` | `workflow.js` | actions(chit, me) — |
 | 11 | `patch` | `books-recurring.js` |  |
 | 11 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 11 | `faultOf` | `chits-contract.js` | `extra` keys ride after the message (the gate that names what is still open). |
