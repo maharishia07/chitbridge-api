@@ -103,7 +103,7 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
     /* CR-07 · may we trade? the verdict word comes with the party (list row and record), the sentence with the add answer */
     await kase('CR-07a', 'a local party (a lead) is NOT on ChitBridge: the record says may_trade false, why "local", and the add answer says so in words', async () => {
       const rec = ok(await j('/api/crm/parties/' + base.party_id, { token: A.token }), 'record').b;
-      const row = (await listOf(A)).parties.find((x) => x.party_id === base.party_id);
+      const row = ok(await j('/api/crm/parties?view=leads', { token: A.token }), 'leads list').b.parties.find((x) => x.party_id === base.party_id); /* leads are out of the default list (lib/crm.js:301) */
       const added = ok(await j('/api/relationships/customers', { method: 'POST', token: A.token, body: { name: 'Counter Local ' + RUN } }), 'add local').b;
       expect(rec.may_trade && rec.may_trade.ok === false && rec.may_trade.why === 'local' && rec.on_chitbridge === false && row && row.may_trade.why === 'local', 'record ' + JSON.stringify(rec.may_trade) + ' · list ' + JSON.stringify(row && row.may_trade));
       expect(/not on ChitBridge/.test(added.message || '') && added.customer.on_rail === false && /not on ChitBridge/.test((added.customer.one_sided || {}).why || ''), 'add answer ' + JSON.stringify(added).slice(0, 200));
