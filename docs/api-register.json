@@ -63,7 +63,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 722,
-   "hash": "20b1ed68d6239fdd",
+   "hash": "f82daac59443f925",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1217,8 +1217,8 @@
    "path": "/api/actors",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 771,
-   "hash": "5a8cd45a1d9902d3",
+   "line": 769,
+   "hash": "12d87f7a45a24e2e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1254,8 +1254,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "12d87f7a45a24e2e"
    },
    "status": "partial"
   },
@@ -1265,7 +1266,7 @@
    "path": "/api/actors/:id/tasks",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1611,
+   "line": 1598,
    "hash": "8706b2506aaf77b4",
    "columns": {
     "schema_in": true,
@@ -1315,7 +1316,7 @@
    "path": "/api/actors/access-events",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1780,
+   "line": 1767,
    "hash": "b5ae4b066598ae9b",
    "columns": {
     "schema_in": true,
@@ -1405,7 +1406,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1489,
+   "line": 1476,
    "hash": "63f0748acf99af50",
    "columns": {
     "schema_in": true,
@@ -11715,7 +11716,7 @@
    "path": "/api/signin/devices",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 130,
+   "line": 133,
    "hash": "44b050cddc91b9e8",
    "columns": {
     "schema_in": false,
@@ -11759,7 +11760,7 @@
    "path": "/api/signin/sessions",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 103,
+   "line": 106,
    "hash": "3d96a78c38ea06b5",
    "columns": {
     "schema_in": false,
@@ -15190,7 +15191,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 241,
-   "hash": "b67874c0748e48ea",
+   "hash": "9c6ea25247681b5c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15229,8 +15230,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9c6ea25247681b5c"
    },
    "status": "partial"
   },
@@ -15240,8 +15242,8 @@
    "path": "/api/actors/:id/otp",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 867,
-   "hash": "cdb7a412dd467453",
+   "line": 865,
+   "hash": "ce1acd1ccb1f4b35",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15341,7 +15343,7 @@
    "path": "/api/actors/login",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 767,
+   "line": 765,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -26420,8 +26422,8 @@
    "path": "/api/signin/ask",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 950,
-   "hash": "42cb51cd388da68d",
+   "line": 964,
+   "hash": "e872fc56e1fade59",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -26462,7 +26464,7 @@
    "path": "/api/signin/logout",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 93,
+   "line": 96,
    "hash": "84b6041b552384e3",
    "columns": {
     "schema_in": false,
@@ -26506,7 +26508,7 @@
    "path": "/api/signin/pin",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 952,
+   "line": 966,
    "hash": "7032d4cf101ec273",
    "columns": {
     "schema_in": false,
@@ -26550,7 +26552,7 @@
    "path": "/api/signin/renew",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 69,
+   "line": 72,
    "hash": "7448baae28dc0c9a",
    "columns": {
     "schema_in": false,
@@ -26594,7 +26596,7 @@
    "path": "/api/signin/sessions/revoke",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 152,
+   "line": 155,
    "hash": "cd1b084e1c218968",
    "columns": {
     "schema_in": false,
@@ -26638,8 +26640,8 @@
    "path": "/api/signin/verify",
    "owner_area": "signin",
    "file": "routes/signin.js",
-   "line": 951,
-   "hash": "be90f4652ffa4fb3",
+   "line": 965,
+   "hash": "d392c9d09d159c7f",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -29007,7 +29009,7 @@
    "path": "/api/actors/:id/delegate",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1576,
+   "line": 1563,
    "hash": "3c22e829c4753516",
    "columns": {
     "schema_in": true,
@@ -29058,8 +29060,8 @@
    "path": "/api/actors/:id/status",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 957,
-   "hash": "d146e250925f4998",
+   "line": 948,
+   "hash": "20153dc2329acc8f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29098,8 +29100,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "20153dc2329acc8f"
    },
    "status": "partial"
   },
@@ -29109,7 +29112,7 @@
    "path": "/api/actors/:id/tasks/route",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1680,
+   "line": 1667,
    "hash": "604e3e7a86fdc94f",
    "columns": {
     "schema_in": true,
@@ -29160,7 +29163,7 @@
    "path": "/api/actors/assign/:chit_id",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1443,
+   "line": 1430,
    "hash": "13039b2d4ba7b7d5",
    "columns": {
     "schema_in": true,
@@ -29210,7 +29213,7 @@
    "path": "/api/actors/break",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1179,
+   "line": 1166,
    "hash": "62a37a11ca6434c7",
    "columns": {
     "schema_in": true,
@@ -29310,7 +29313,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1511,
+   "line": 1498,
    "hash": "85a8330db3f71f02",
    "columns": {
     "schema_in": true,
