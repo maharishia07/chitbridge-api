@@ -129,10 +129,12 @@ function loadAddress(dbStub) {
        [[feedback-improvise-update-cases]] */
     ok('…and settles every remote copy BEFORE any local write, or throws', () => {
       const guard = body.slice(0, body.indexOf("'SELECT chit_deliver"));
-      assert.ok(/transport\.send/.test(guard), 'remote copies must be sent before the local write');
-      assert.ok(/CTP_REFUSED/.test(guard), 'a refusal must carry a named code');
-      assert.ok(/throw e;/.test(guard), 'it must throw, not warn — half a chit is worse than none');
-      assert.ok(/Nothing was written/.test(guard), 'and the message must say the local side was not written');
+      assert.ok(/await sendAway\(/.test(guard) && /transport\.send/.test(src), 'remote copies must be sent before the local write');
+      /* RAIL-99: the refusal is built by farEndFailure (named codes CTP_REFUSED / CTP_UNREACHABLE, in words that say nothing was saved) */
+      const whole = src;
+      assert.ok(/throw farEndFailure\(/.test(src), 'it must throw, not warn — half a chit is worse than none');
+      assert.ok(/CTP_REFUSED/.test(whole) && /CTP_UNREACHABLE/.test(whole), 'a refusal must carry a named code');
+      assert.ok(/nothing was saved here/.test(whole), 'and the message must say the local side was not written');
     });
 
     ok('a DRAFT never crosses an installation boundary', () => {

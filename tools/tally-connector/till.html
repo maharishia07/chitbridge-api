@@ -3595,7 +3595,7 @@
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()">Close</button></div>
-  <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person to sign in with their PIN. The name goes on every bill until somebody takes over.</div>
+  <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person for their counter PIN, or the first code from the owner. The name goes on every bill until somebody takes over.</div>
 </div></dialog>
 
 <dialog id="shiftdlg"><div class="dlg">
@@ -26174,7 +26174,7 @@ function SIGN(){
 var USIGN = usignFresh();
 function usignFresh(){
   return { win: null, person: null, idn: null, pending: null, held: null, opening: '', busy: false,
-           forceEnrol: false, floatAsk: false, closeWhenIn: false, pinOffered: false, localPerson: null };
+           forceEnrol: false, floatAsk: false, closeWhenIn: false, pinOffered: false, localPerson: null, pickName: '', newPin: '' };
 }
 /* the window's own session keeping (cb_sess) goes nowhere on a counter — becomeShop() is the one writer of a session here */
 var USIGN_STORE = { getItem: function(){ return null; }, setItem: function(){}, removeItem: function(){} };
@@ -26226,6 +26226,7 @@ function usignLocal(){
 /** [TILL-192] forceEnrol: true only when pairAgain() called this — see its own comment. A routine sign-in
  * (whoAct()'s 'signin' door) passes nothing, and paired()'s existing key is trusted as it always was. */
 function usignOpen(forceEnrol){
+  USIGN.pickName = ''; USIGN.newPin = '';   /* R132: a picked worker's words belong to her pick only (whoPick sets the name after this) */
   /* ⚠️ W1 (2026-10-12): the window still mounted from the last sign-in is taken DOWN first. usignFresh() dropped the handle and
      usignMount() found nothing to destroy — the old window's document listeners (submit · click · input) lived on, so every
      press from then on drove TWO machines: the picker's PIN signed nobody in, an unlock by the next person lost its PIN offer. */
@@ -26237,6 +26238,45 @@ function usignOpen(forceEnrol){
   if (d && d.showModal) { try { d.showModal(); } catch (e) { cbQuiet('usignOpen:2', e); } }
 }
 function usignClose(){ var d = document.getElementById('usigndlg'); if (d && d.open) { try { d.close(); } catch (e) { cbQuiet('usignClose:1', e); } } }
+
+/**
+ * ⭐ R132 · SAY WHAT THIS PERSON CAN SIGN IN WITH (silence was the bug: "That sign-in didn't work" named nothing to use instead).
+ * A staff mobile is no way in unless the owner proved it, so the server refuses it with its one sentence for every reason (it must,
+ * or it tells a stranger who works here). This counter can say the way in without telling anyone anything: a counter PIN, or the
+ * first code the owner hands out (People › name › Reset code). Never the typed value (Q19); the name is the picked one.
+ */
+function usignRefusalWords(name, step){
+  var reset = 'People › ' + (name || 'your name') + ' › Reset code.';
+  if (step === 'verify') return 'That code did not work. Check it, or ask the owner for a new one: ' + reset;
+  return (name ? name + ' signs in' : 'Staff sign in') + ' with a counter PIN, or the first code from the owner. No code yet? Ask the owner: ' + reset;
+}
+/**
+ * the server's answer to ask / verify / pin, in this counter's words. A first code is SHOWN by the owner (People › Reset code), never
+ * sent; the server's own sentence for it still says "set a PIN in Co-assists" (frozen sign-in text), so the counter says it itself.
+ */
+function usignAnswer(path, reqBody, reply, name){
+  var body = reply && reply.body, door = usignDoor(path);
+  if (!body || typeof body !== 'object') return reply;
+  if (name && usignWasRefused(door, reply)) body.message = usignRefusalWords(name, door);   /* the owner, or a typed ID, keeps the server's sentence */
+  else if (door === 'ask' && usignAskedFirstCode(reply)) body.message = 'Type the first code the owner gave you. Then choose a Counter PIN.';
+  else if (door === 'pin' && usignWasOk(reply) && reqBody && reqBody.pin) USIGN.newPin = String(reqBody.pin);
+  return reply;
+}
+/** which sign-in door a path is ('ask' · 'verify' · 'pin'), '' for anything else */
+function usignDoor(path){
+  var text = String(path || '');
+  return text.indexOf('/api/signin/') >= 0 ? text.split('/').pop() : '';
+}
+function usignWasOk(reply){
+  return reply.status >= 200 && reply.status < 300;
+}
+/** the server's one sentence for every hidden reason (lib/otp.js SIGNIN_REFUSED_SENTENCE) */
+function usignWasRefused(door, reply){
+  return (door === 'ask' || door === 'verify') && reply.status === 400 && /^That sign-in didn.t work/.test(String(reply.body.message || ''));
+}
+function usignAskedFirstCode(reply){
+  return usignWasOk(reply) && reply.body.kind === 'actor' && reply.body.need === 'code';
+}
 
 /** the window, mounted fresh into #usignbody — the ONLY place this page calls CBSignin.mount */
 function usignMount(){
@@ -26259,7 +26299,7 @@ function usignMount(){
         message: (lk && SIGN().pinLocked(lk)) ? SIGN().pinAfter(lk, false).why
           : 'There is no counter PIN for ' + (typedId || 'you') + ' on this counter yet. The first sign-in here needs the internet.' } });
     }
-    return SIGN().transport(c)(path, reqBody, token);
+    return Promise.resolve(SIGN().transport(c)(path, reqBody, token)).then(function(reply){ return usignAnswer(path, reqBody, reply, USIGN.pickName); });
   };
   USIGN.win = SIGN().mount(body, c);
   USIGN.win.machine.onChange(function(st){
@@ -26279,7 +26319,7 @@ function usignButtons(){
   var at = USIGN.win ? USIGN.win.state().at : 'out';
   if (at === 'in' && USIGN.person) {
     /* ⭐ and what it means for this counter, which is the next question anybody has */
-    if (a) a.innerHTML = '<p class="note" data-testid="till-usign-in">' + esc(usignCounterLine()) + '</p>';
+    if (a) a.innerHTML = '<p class="note" data-testid="till-usign-in">' + esc(usignInWords(USIGN.person)) + '</p>';
     b.innerHTML = '<button class="pri" data-testid="till-usign-done" onclick="usignClose()">Done</button>'
       /**
        * ⚠️⚠️ SIGNING OUT DOES NOT CLOSE THE COUNTER. Athi: *"the person sign-out and another person sign-in,
@@ -26314,8 +26354,15 @@ function usignRestore(why){
 function usignCounterLine(){
   try {
     var a = DAY().assign(dayState());
+    /* R132: dayState() carries no shop, so the engine always answered "Sign in to connect this counter to a shop" - said under a box that SAYS the person is in. True only with no shop held. */
+    if (a.action === 'shop' && ((S && (S.entity_id || (S.shop && S.shop.name))) || paired())) return '';
     return a.why || a.say || '';
   } catch (_) { return ''; }
+}
+/** the signed-in note never goes blank (R132 hid the untrue "connect" line, which left an empty, invisible box): the counter line, else who is in */
+function usignInWords(person){
+  var name = person && person.name;
+  return usignCounterLine() || (name ? name + ' is signed in at this counter.' : 'Signed in at this counter.');
 }
 
 /**
@@ -26675,7 +26722,9 @@ async function usignAfterIn(p, idn){
                            '', 'Cash in the drawer (' + curSym() + ')', 'Who is at this counter');
     whoFloat(Math.max(0, Number(float0) || 0));
   }
-  if (idn && !pinUsableFor(p) && window.crypto && crypto.subtle && USIGN.win) {
+  var offerable = idn && !pinUsableFor(p) && window.crypto && crypto.subtle && USIGN.win;
+  if (offerable && USIGN.newPin) return usignKeepChosenPin(p, idn);   /* R132: chosen in this very sign-in: one ask */
+  if (offerable) {
     /* TOUR-FIX1: the PIN is offered INSIDE a sign-in window that is already open — never by opening one over the counter (the tour: a Counter PIN
        window covered the bill on every visit). With no window up, the offer waits on "Who is at the counter?" (pinLaterOffer). */
     var d = document.getElementById('usigndlg');
@@ -26684,6 +26733,12 @@ async function usignAfterIn(p, idn){
     USIGN.win.machine.offerPin();
     return;
   }
+  if (USIGN.closeWhenIn) usignClose();
+}
+/** R132: the PIN was just CHOSEN in this window (the server's first-sign-in step): the same four digits go in this counter's book, and nothing asks again */
+async function usignKeepChosenPin(person, identity){
+  var chosen = USIGN.newPin; USIGN.newPin = ''; USIGN.idn = identity;
+  try { await usignLocal().save(null, chosen); } catch (e) { cbQuiet('usignKeepChosenPin:1', e); pinLaterOffer(person, identity); }
   if (USIGN.closeWhenIn) usignClose();
 }
 /** the drawer's float, for the person just signed in — part of G2, the only writer of who is on */
@@ -26856,15 +26911,36 @@ function whoAdd(){
  * The staff list carries identity ids, not logins, which is exactly what the PIN book is also keyed by.
  */
 function whoPick(id, name, kind){
-  var target = kind === 'entity' ? ((S && S.entity_id) || '') : id;
+  var entity = kind === 'entity', target = entity ? ((S && S.entity_id) || '') : id;
   try { document.getElementById('whodlg').close(); } catch (e) { cbQuiet('whoPick:1', e); }
   usignOpen();
   USIGN.floatAsk = true; USIGN.closeWhenIn = true;
-  var m = USIGN.win && USIGN.win.machine;
-  var loc = target ? SIGN().pinFind(pinBook(), target) : null;
-  if (m && loc && !SIGN().pinLocked(loc)) { m.typed(target); m.go(); }      /* the window finds the same entry and opens the PIN box */
-  else if (m) m.refuse((loc ? SIGN().pinAfter(loc, true).why + ' ' : '')
-      + (lineUp() ? name + ' — type your user ID to sign in.' : 'There is no counter PIN for ' + name + ' on this counter yet. The first sign-in here needs the internet.'));
+  USIGN.pickName = entity ? '' : name;
+  var machine = USIGN.win && USIGN.win.machine;
+  /* R132: the pick carries WHO she is (the user ID the snapshot carried), so she is asked only for what proves it; the shop itself keeps its old door */
+  if (machine) whoAsk(machine, { id: target, name: name, entity: entity, handle: entity ? '' : whoHandle(id) });
+}
+/** her counter PIN if she has one here, else the first code from the owner; never "type your user ID" for a person we know */
+function whoAsk(machine, person){
+  var held = person.id ? SIGN().pinFind(pinBook(), person.id) : null, locked = !!(held && SIGN().pinLocked(held));
+  if (held && !locked) { machine.typed(person.id); machine.go(); return; }      /* the window finds the same entry and opens the PIN box */
+  if (person.handle && lineUp() && !locked) {
+    machine.words.code = 'First code from the owner';                           /* shown by the owner, not sent: the box says so */
+    machine.typed(person.handle); machine.go();                                 /* the window asks the server, which opens the code box */
+    return;
+  }
+  machine.refuse((held ? SIGN().pinAfter(held, true).why + ' ' : '') + whoNoPinWords(person));
+}
+function whoNoPinWords(person){
+  if (!lineUp()) return 'There is no counter PIN for ' + person.name + ' on this counter yet. The first sign-in here needs the internet.';
+  if (person.entity) return person.name + ' — type your user ID to sign in.';
+  return person.name + ' has no counter PIN here yet. Ask the owner for a first code: People › ' + person.name + ' › Reset code.';
+}
+/** the user ID the snapshot carried for a picked person ('' when it did not: an older server) */
+function whoHandle(id){
+  var list = (S && S.staff) || [];
+  for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(id)) return String(list[i].user_id || '');
+  return '';
 }
 /**
  * ── ⭐⭐⭐ FOUR DIFFERENT THINGS A COUNTER CAN "STOP" FOR (Athi, 2026-09-17) ─────────────────────────────────────

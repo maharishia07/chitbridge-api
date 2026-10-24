@@ -617,19 +617,19 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
 
     /**
      * ⭐ THE PEOPLE WHO MAY STAND AT A COUNTER (2026-09-07). The shop's own co-assists — never the connectors, which are actors too
-     * and would otherwise offer "Zoho Books connector" as a cashier. Name and id only: the till records WHO billed, it does not
+     * and would otherwise offer "Zoho Books connector" as a cashier. Name, id and the sign-in user ID only (R132: a picked name must carry who the person is, so the counter asks only for the PIN or first code; the ID is not a secret and no contact detail travels): the till records WHO billed, it does not
      * authenticate anybody, and nothing about a person's contact details belongs on a device at a counter.
      */
     let staff = [];
     try {
       const st = await query(
-        `SELECT identity_id, display_name, hat FROM identities
+        `SELECT identity_id, display_name, hat, user_id FROM identities
           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND status = 'active'
             AND (actor_type IS NULL OR actor_type <> 'connector') AND connector_type IS NULL
           ORDER BY display_name LIMIT 200`,
         [entity_id]
       );
-      staff = st.rows.map((item) => ({ id: item.identity_id, name: item.display_name, hat: item.hat || null }));
+      staff = st.rows.map((item) => ({ id: item.identity_id, name: item.display_name, hat: item.hat || null, user_id: item.user_id || null }));
     } catch (e) {
       log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no co-assists bills as the shop itself */
     }

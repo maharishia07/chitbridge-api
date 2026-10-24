@@ -920,6 +920,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CTP_ADDRESS_CLASH",
+   "status": "409",
+   "title": "Id already used here",
+   "shopkeeper": "A different business here already uses that id, so the one you typed cannot be added under it.",
+   "hint": "Ask them to share their link, and tell us.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_ADDRESS_INVALID",
+   "status": "400",
+   "title": "Address not readable",
+   "shopkeeper": "That is not an address we can read.",
+   "hint": "Type it as id@domain, or paste the business's link.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_ADDRESS_UNKNOWN",
+   "status": "404",
+   "title": "No such business there",
+   "shopkeeper": "We do not deal with that domain, or nobody there has that id.",
+   "hint": "Check the address, or paste their shared link.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_CROSSING_REFUSED",
    "status": "409",
    "title": "Crossing refused",
@@ -1055,6 +1082,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CTP_REFUSED",
+   "status": "409",
+   "title": "The other business refused it",
+   "shopkeeper": "The other installation answered no, and the chit was not sent or saved.",
+   "hint": "Read the reason, fix the chit or the address, send again.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_STORE_FAILED",
    "status": "500",
    "title": "Could not store the chit",
@@ -1071,6 +1107,15 @@
    "hint": "Ask to resolve a business or for its catalogue.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_UNREACHABLE",
+   "status": "502",
+   "title": "The other installation did not answer",
+   "shopkeeper": "We could not reach the other installation, so nothing was sent or saved.",
+   "hint": "Send it again when they are back.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
   },
   {
    "code": "CURRENCY_ENTITY_ONLY",
