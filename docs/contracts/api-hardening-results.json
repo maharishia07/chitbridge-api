@@ -1279,6 +1279,15 @@
     "why": "not reached: answered 400"
    }
   },
+  "POST /api/till/rate": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/till/reward": {
    "output_allowlist": {
     "pass": false,
@@ -2111,7 +2120,8 @@
   },
   "GET /api/people": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    }
   },
   "POST /api/connectors": {

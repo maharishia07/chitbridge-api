@@ -2834,6 +2834,14 @@
     400
    ]
   },
+  "POST /api/till/rate": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/till/reconcile": {
    "cases": 2,
    "failed": 0,
