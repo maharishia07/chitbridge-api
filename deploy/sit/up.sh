@@ -33,7 +33,8 @@ cd "$HERE"
 get_kv() { sed -n "s/^$1=//p" "$ENVF" | head -n 1; }
 # set_kv NAME VALUE: replace the line NAME=..., or add it. Values are written as given (no shell or sed pattern reads them)
 set_kv() {
-  awk -v k="$1" -v v="$2" 'BEGIN{FS=OFS="="} $1==k{print k "=" v; f=1; next} {print} END{if(!f) print k "=" v}' "$ENVF" > "$ENVF.tmp"
+  # the name and value go in through ENVIRON, not awk -v: -v turns a backslash-n in a value (the CTP key's PEM is stored on one line with them) into a real newline
+  KV_K="$1" KV_V="$2" awk 'BEGIN{FS=OFS="="; k=ENVIRON["KV_K"]; v=ENVIRON["KV_V"]} $1==k{print k "=" v; f=1; next} {print} END{if(!f) print k "=" v}' "$ENVF" > "$ENVF.tmp"
   mv "$ENVF.tmp" "$ENVF"
   chmod 600 "$ENVF"
 }
@@ -70,6 +71,8 @@ if [ ! -f "$ENVF" ]; then
   FIRST=1
 fi
 for name in POSTGRES_PASSWORD CB_APP_PASSWORD JWT_SECRET CB_ADMIN_KEY VAULT_ENC_KEY; do fill_secret "$name"; done
+# this installation's CTP identity: its own Ed25519 key, made once on this VM and never printed (PEM on one line, newlines written as backslash-n: lib/ctpkeys.js reads that form)
+[ -n "$(get_kv CTP_PRIVATE_KEY)" ] || set_kv CTP_PRIVATE_KEY "$(openssl genpkey -algorithm ed25519 | awk 'NR>1{printf "\\n"} {printf "%s", $0}')"
 [ -n "$(get_kv TESTER_CODE)" ] || set_kv TESTER_CODE "$(openssl rand -hex 4){yymmdd}"
 set_kv SIT_HOST "$SIT_HOST"
 set_kv SIT_COUNTRY "$COUNTRY"
@@ -80,7 +83,7 @@ set_kv PUBLIC_API_BASE "https://$SIT_HOST"
 set_kv TESTER_CODE_TZ "$TZNAME"
 # the api's own env file: the same file without what only this script, compose or the database owner needs (the owner's password stays out of the api)
 grep -E '^[A-Z][A-Z0-9_]*=.' "$ENVF" \
-  | grep -vE '^(POSTGRES_PASSWORD|CB_APP_PASSWORD|GIT_TOKEN|API_REF|WEB_REF|SIT_ROOT|SIT_HOST|SIT_COUNTRY|WEB_ORIGIN|CB_API_BASE|DB_PORT|ASK_CUSTOM_HOSTS)=' \
+  | grep -vE '^(POSTGRES_PASSWORD|CB_APP_PASSWORD|GIT_TOKEN|API_REF|WEB_REF|SIT_ROOT|SIT_HOST|SIT_COUNTRY|WEB_ORIGIN|CB_API_BASE|DB_PORT|ASK_CUSTOM_HOSTS|SIT_PEERS)=' \
   > "$APIENV" || true
 chmod 600 "$APIENV"
 
@@ -129,12 +132,33 @@ $DC run --rm -T migrate
 # ---- 6. the country pack: this installation's own row (same INSERT as deploy/spin-lib.sh spin_installation, widened with currency and zone) ----
 say "installation $KEY: $COUNTRY / $CURRENCY / $TZNAME"
 $DC exec -T db psql -X -q -U postgres -d chitbridge -v ON_ERROR_STOP=1 \
-  -v k="$KEY" -v c="$COUNTRY" -v d="$SIT_HOST" -v cur="$CURRENCY" -v tz="$TZNAME" -f - <<'SQL'
-INSERT INTO installation (installation_key, label, purpose, cloud_provider, region, zone, domain, currency, timezone, vertical_key, country)
-VALUES (:'k', :'k', 'sit', 'oracle', :'c', 'always-free', :'d', :'cur', :'tz', 'base', :'c')
+  -v k="$KEY" -v c="$COUNTRY" -v d="$SIT_HOST" -v cur="$CURRENCY" -v tz="$TZNAME" -v ep="https://$SIT_HOST/api/ctp/deliver" -f - <<'SQL'
+INSERT INTO installation (installation_key, label, purpose, cloud_provider, region, zone, domain, currency, timezone, vertical_key, country, ctp_endpoint)
+VALUES (:'k', :'k', 'sit', 'oracle', :'c', 'always-free', :'d', :'cur', :'tz', 'base', :'c', :'ep')
 ON CONFLICT (installation_key) DO UPDATE
-  SET country = EXCLUDED.country, domain = EXCLUDED.domain, currency = EXCLUDED.currency, timezone = EXCLUDED.timezone, active = true;
+  SET country = EXCLUDED.country, domain = EXCLUDED.domain, currency = EXCLUDED.currency, timezone = EXCLUDED.timezone,
+      ctp_endpoint = EXCLUDED.ctp_endpoint, active = true;
 SQL
+
+# ---- 6a. CTP peers: the OTHER installations this one trades with (SIT_PEERS="sit-au=129-225-90-80.sslip.io,..." in the env or .env) -------------
+# A peer is an `installation` row marked REMOTE (hosted_locally = false) with its domain and the endpoint that takes envelopes. The peer's PUBLIC KEY is
+# never stored here: the door fetches it from https://<domain>/.well-known/ctp.json on every check (lib/ctpdirectory.js). Ours is published the same way.
+# It needs CTP_PRIVATE_KEY on BOTH sides (step 3) and each side's endpoint over public https (the sslip.io names satisfy lib/safe-url.js).
+SIT_PEERS=${SIT_PEERS:-$(get_kv SIT_PEERS)}
+if [ -n "$SIT_PEERS" ]; then
+  set_kv SIT_PEERS "$SIT_PEERS"
+  say "CTP peers: $SIT_PEERS"
+  for pair in $(echo "$SIT_PEERS" | tr ',' ' '); do
+    pkey=${pair%%=*}; phost=${pair#*=}
+    { [ -n "$pkey" ] && [ -n "$phost" ] && [ "$pkey" != "$pair" ] && [ "$pkey" != "$KEY" ]; } || die "SIT_PEERS entry '$pair': expected <installation_key>=<host>, and not this installation"
+    $DC exec -T db psql -X -q -U postgres -d chitbridge -v ON_ERROR_STOP=1 -v k="$pkey" -v d="$phost" -v ep="https://$phost/api/ctp/deliver" -f - <<'SQL'
+INSERT INTO installation (installation_key, label, purpose, cloud_provider, domain, vertical_key, hosted_locally, ctp_endpoint)
+VALUES (:'k', :'k', 'sit-peer', 'oracle', :'d', 'base', false, :'ep')
+ON CONFLICT (installation_key) DO UPDATE
+  SET domain = EXCLUDED.domain, ctp_endpoint = EXCLUDED.ctp_endpoint, hosted_locally = false, active = true;
+SQL
+  done
+fi
 
 # ---- 6b. a country-neutral base (SET-42, Athi 2026-10-24: "not bound but inherited") -------------------------------------------
 # SIT only, as DATA: the live base row drops its allowed lists and its India defaults, so nothing at the top binds a country,
@@ -163,6 +187,8 @@ echo "api  : $([ "$ok_api" = 1 ] && echo UP || echo NOT UP)  $API_OUT" 2>/dev/nu
 echo "web  : $([ "$ok_web" = 1 ] && echo UP || echo NOT UP)  $WEB_OUT" 2>/dev/null || true
 echo "api commit : $SOURCE_COMMIT  ($API_REF)  $(git -C "$API_DIR" log -1 --format=%s)"
 echo "web commit : $WEB_COMMIT  ($WEB_REF)  $(git -C "$WEB_DIR" log -1 --format=%s)"
+say "CTP manifest"
+curl -fsS --max-time 15 "https://$SIT_HOST/.well-known/ctp.json" 2>/dev/null | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const m=JSON.parse(s);console.log('ctp  : '+m.installation_key+' endpoint='+m.endpoint+' can_sign='+m.can_sign+' accepts='+JSON.stringify(m.accepts_populations)+(m.note?' ('+m.note+')':''))}catch(e){console.log('ctp  : manifest not readable yet')}})" || true
 if curl -fsS --max-time 15 "https://$SIT_HOST/health" >/dev/null 2>&1; then
   echo "public     : https://$SIT_HOST/health answers (certificate issued)"
 else

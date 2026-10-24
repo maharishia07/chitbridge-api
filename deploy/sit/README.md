@@ -40,6 +40,22 @@ Re-run the same command any time to update; it only changes what changed. It see
 **5. Australia only, the long-distance feel:** `sh chitbridge-api/deploy/sit/netem.sh on` adds about 150 ms and 1% loss to everything the VM sends
 (Mumbai to Sydney); `off` removes it; `status` shows it. A reboot also clears it. SSH will feel it too.
 
+## Two installations talking: CTP
+
+`up.sh` gives each installation its own Ed25519 key (`CTP_PRIVATE_KEY` in `deploy/sit/.env`, made on first run, never printed) and sets the `ctp_endpoint` of its own
+`installation` row, so `https://<host>/.well-known/ctp.json` answers with an endpoint, a public key and `can_sign: true`. To let the two talk, name each as the
+other's peer, on BOTH VMs, then run `up.sh` again (the host names are the ones in `SIT_HOST`):
+
+```sh
+SIT_PEERS=sit-au=129-225-90-80.sslip.io sh chitbridge-api/deploy/sit/up.sh in     # on the India VM
+SIT_PEERS=sit-in=129-225-85-65.sslip.io sh chitbridge-api/deploy/sit/up.sh au     # on the Australia VM
+```
+
+A peer is an `installation` row marked remote (`hosted_locally=false`, a domain, an endpoint). Its public key is never copied: the receiving door reads it from the
+sender's own manifest on every check (cached 15 minutes, a failed read too, so restart the api after fixing a key). Population: only `live` crosses.
+What the kit does NOT do: it cannot make a shop on one side addressable from the other. A recipient must be a local `identities` row, and nothing in the product
+creates one for a business that lives elsewhere yet (`lib/ctpaddress.js resolveAddress` has no caller), so a send across needs that row made by hand (see the SIT report).
+
 ## Sign-in tonight
 
 The daily tester code. `up.sh` prints it on the first run. It is `<fixed part><yymmdd>` where the fixed part is `TESTER_CODE` in `deploy/sit/.env` and `yymmdd`
