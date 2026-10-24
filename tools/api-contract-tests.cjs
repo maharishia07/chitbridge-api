@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict';
 /*
  * OWNS      the contract tests GENERATED from each route's own schema (API-STANDARD S18, schema-level cases that need no data): what a request with a field missing, a field of the wrong kind, or nothing at all is answered.
  *           Also docs/contracts/api-contract-results.json, the proof the register's missing_input_answer column and part of error_tests read (never filled by hand, S15).
@@ -13,6 +12,8 @@
  *   node tools/api-contract-tests.cjs --write   run, then rewrite docs/contracts/api-contract-results.json, api-hardening-results.json and api-hardening-evidence.json
  * Other cases that need data (role 403, a real 409) are T2 on realstack, not here. No database is touched and nothing leaves the machine: the schema cases run the middleware alone; the hardening cases serve the app on 127.0.0.1 inside this process.
  */
+'use strict';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* the generated output_allowlist case needs the filter to cut for real */
 const fs = require('fs');
 const path = require('path');
 const { bodySchemaOf, urlSchemaOf } = require('../middleware/validate');
@@ -379,11 +380,17 @@ async function runHardening(app, port, facts) {
     const cases = casesOfRoute(leaf, facts.appliesOf(leaf, operation), leaf.fns.find((fn) => fn && fn.schemaOperation));
     for (const column of Object.keys(cases)) {
       world.keys.clear();
-      const fault = await cases[column](target);
+      const fault = await cases[column](column === 'output_allowlist' ? exampleTarget(target, key) : target);
       (results[key] = results[key] || {})[column] = fault ? { pass: false, why: fault } : { pass: true };
     }
   }
   return { results, evidence: evidenceOf(results) };
+}
+
+/** output_allowlist plays a request known to reach the route's success answer when the derived shape (tools/api-allowlist.cjs → docs/contracts/api-output-shapes.json) holds one: a body of empty fields is often refused by the handler's own rule, which is no answer to look at */
+function exampleTarget(target, key) {
+  const shape = require('../lib/output-allowlist').shapeOf(key);
+  return shape && shape.example ? Object.assign({}, target, { url: shape.example.url, body: shape.example.body }) : target;
 }
 
 /** the routes whose generated cases passed, per column: the only thing docs/contracts/api-hardening-evidence.json may say */

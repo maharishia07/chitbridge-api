@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 118 | `list` | `amend.js` |  |
+| 119 | `list` | `amend.js` |  |
 | 106 | `rows` | `crm.js` | still in them: |
 | 100 | `withEntity` | `books-hooks.js` |  |
 | 87 | `read` | `books-cashflow.js` | Trips: |
@@ -28,9 +28,9 @@ of file each thing is; this says what already does the job.
 | 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 54 | `items` | `books-store.js` | PERF1: |
 | 50 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 50 | `entry` | `books-store.js` |  |
+| 50 | `next` | `dayopen.js` | the next thing to do — |
 | 49 | `toast` | `accounts-shell.js` |  |
-| 49 | `entry` | `books-store.js` |  |
-| 49 | `next` | `dayopen.js` | the next thing to do — |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `record` | `access-events.js` |  |
 | 48 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
@@ -39,8 +39,8 @@ of file each thing is; this says what already does the job.
 | 45 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 43 | `read` | `cap-print.js` |  |
 | 42 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 39 | `view` | `books-payables.js` | group: |
-| 39 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 39 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
@@ -50,10 +50,10 @@ of file each thing is; this says what already does the job.
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
 | 35 | `rules` | `docnumber.js` | the rule set for a country — |
+| 35 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 35 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
-| 34 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 34 | `register` | `regulation.js` | register(pack) → the pack — |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
@@ -169,6 +169,7 @@ of file each thing is; this says what already does the job.
 | 14 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 14 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
+| 14 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 14 | `report` | `raida.js` | register at the one moment it must not. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
@@ -181,7 +182,6 @@ of file each thing is; this says what already does the job.
 | 13 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 13 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 13 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
-| 13 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 13 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 13 | `fail` | `books.js` | lib/books-contract.js refusalOf maps every typed refusal of the ledger to its status, code and the old {error, |
 | 12 | `units` | `cart.js` |  |
