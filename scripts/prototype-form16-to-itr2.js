@@ -133,9 +133,7 @@ async function extractText(pdfBuffer) {
         used = label;
         break;
       }
-    } catch (loadError) {
-      require('../lib/logger').fellBack('form16: could not load ' + label + ' — trying the next place', loadError);
-    }
+    } catch (_) {}
   }
   if (!mod) throw new Error('pdfjs not found. Install it somewhere and set PDFJS_PATH to .../pdfjs-dist/legacy/build/pdf.mjs');
   const doc = await mod.getDocument({ data: new Uint8Array(pdfBuffer), useSystemFonts: false, isEvalSupported: false }).promise;
@@ -232,9 +230,7 @@ async function extractText(pdfBuffer) {
       let j = null;
       try {
         j = await reply.json();
-      } catch (parseError) {
-        require('../lib/logger').fellBack('prototype-form16-to-itr2: the reply was not JSON — j keeps its first value', parseError);
-      }
+      } catch (_) {}
       return { status: reply.status, json: j };
     };
     try {

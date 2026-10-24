@@ -32,8 +32,6 @@ export function loadConfig(path = 'copy-guard.config.json') {
   }
 }
 
-// eslint-disable-next-line no-control-regex -- NUL marks a ** while the single * is rewritten
-const GLOBSTAR_MARK = /\u0000/g;
 const globLike = (text, s) =>
   new RegExp(
     '^' +
@@ -41,7 +39,7 @@ const globLike = (text, s) =>
         .replace(/[.+^${}()|[\]\\]/g, '\\$&')
         .replace(/\*\*/g, '\u0000')
         .replace(/\*/g, '[^/]*')
-        .replace(GLOBSTAR_MARK, '.*') +
+        .replace(/\u0000/g, '.*') +
       '$'
   ).test(s);
 

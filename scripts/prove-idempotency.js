@@ -16,9 +16,7 @@ async function api(m, p, o) {
   let j = null;
   try {
     j = await reply.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('prove-idempotency: the reply was not JSON — j keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: reply.status, j, replay: reply.headers.get('X-Idempotent-Replay') };
 }
 async function login(email) {

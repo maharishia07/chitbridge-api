@@ -27,9 +27,7 @@ async function api(method, path, { token, key, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('lifecycle-iot: the reply was not JSON — json keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: res.status, json };
 }
 

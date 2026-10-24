@@ -26,9 +26,7 @@ async function api(method, path, { token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('actor-harness: the reply was not JSON — json keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: res.status, json };
 }
 async function entLogin(name) {

@@ -50,9 +50,7 @@ async function api(path, { method = 'GET', token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('prove-network-mint: the reply was not JSON — json keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: res.status, json };
 }
 async function shop(key, name) {

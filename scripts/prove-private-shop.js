@@ -47,9 +47,7 @@ async function api(path, { method = 'GET', token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('prove-private-shop: the reply was not JSON — json keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: res.status, json };
 }
 async function mint(email, name) {

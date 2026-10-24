@@ -40,9 +40,7 @@ async function call(method, path, { token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('seed-test-entities: the reply was not JSON — json keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: res.status, json };
 }
 async function signIn(email, display_name) {

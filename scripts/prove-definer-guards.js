@@ -8,10 +8,7 @@
 // Setup uses the live API; assertions are DB-direct against the SAME database. Requires DATABASE_URL. node scripts/prove-definer-guards.js
 try {
   require('dotenv').config();
-} catch (dotenvMissing) {
-  // load .env for the standalone script (the db module doesn't); without dotenv the environment is used as it is
-  require('../lib/logger').fellBack('prove-definer-guards: dotenv is not installed — using the environment as it is', dotenvMissing, 'debug');
-}
+} catch (_) {} // load .env for the standalone script (the db module doesn't)
 const { query, withEntity } = require('../db');
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0,
@@ -27,9 +24,7 @@ async function api(m, p, o) {
   let j = null;
   try {
     j = await reply.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('prove-definer-guards: the reply was not JSON — j keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: reply.status, j };
 }
 async function login(email) {

@@ -20,9 +20,7 @@ async function api(m, p, o) {
   let j = null;
   try {
     j = await reply.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('prove-sectors: the reply was not JSON — j keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: reply.status, j };
 }
 
@@ -30,7 +28,7 @@ async function api(m, p, o) {
   console.log('== PROVE SECTORS (generic, not chemical-only) ==  ' + B + '\n');
   const ts = Date.now().toString().slice(-6),
     email = 'sec-' + ts + '@test.com';
-  await api('POST', '/api/entities/register', { body: { email } }).catch(() => ({}));
+  const reply = await api('POST', '/api/entities/register', { body: { email } }).catch(() => ({}));
   const reg = await (
     await fetch(B + '/api/entities/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
   ).json();

@@ -4423,7 +4423,7 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 3125,
-   "hash": "fa10a96462934751",
+   "hash": "cbd798d37d6ccc9d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4461,8 +4461,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cbd798d37d6ccc9d"
    },
    "status": "partial"
   },
@@ -7424,7 +7425,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 72,
-   "hash": "4dc2225386798c55",
+   "hash": "43f1e03628304b31",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7461,8 +7462,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "43f1e03628304b31"
    },
    "status": "partial"
   },
@@ -25074,7 +25076,7 @@
    "owner_area": "products",
    "file": "routes/products.js",
    "line": 1087,
-   "hash": "668511f633758dd5",
+   "hash": "d35c7135eced7940",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25113,8 +25115,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d35c7135eced7940"
    },
    "status": "partial"
   },

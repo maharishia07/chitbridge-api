@@ -40,9 +40,7 @@ async function api(m, p, { token, key, body } = {}) {
   let j = null;
   try {
     j = await reply.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('erp-connector: the reply was not JSON — j keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: reply.status, json: j };
 }
 async function login(name) {

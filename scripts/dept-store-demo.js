@@ -54,9 +54,7 @@ async function api(path, { method = 'GET', token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('dept-store-demo: the reply was not JSON — json keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: res.status, json };
 }
 async function shop(key, name) {
@@ -109,7 +107,7 @@ const DEPTS = [
   const wh = made.find((item) => item.key === 'warehouse');
   const clothing = made.find((item) => item.key === 'clothing');
   // A member reading the warehouse proves membership resolves; nothing else can tell us from outside.
-  await api('/api/relationships/suppliers', { method: 'POST', token: clothing.token, body: { supplier_bridge_id: wh.bridge } });
+  const reply = await api('/api/relationships/suppliers', { method: 'POST', token: clothing.token, body: { supplier_bridge_id: wh.bridge } });
   const sups = await api('/api/relationships/suppliers', { token: clothing.token });
   const row = ((sups.json && (sups.json.suppliers || sups.json)) || []).find((x) => x.bridge_id === wh.bridge);
   const viaMember = row ? await api('/api/relationships/suppliers/' + row.supplier_entity_id + '/catalogue', { token: clothing.token }) : { json: {} };

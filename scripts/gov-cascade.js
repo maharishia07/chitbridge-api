@@ -22,9 +22,7 @@ async function api(m, p, { token, body } = {}) {
   let j = null;
   try {
     j = await reply.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('gov-cascade: the reply was not JSON — j keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: reply.status, json: j };
 }
 async function regVerify(name, constitution) {

@@ -52,9 +52,7 @@ async function call(method, path, { token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (parseError) {
-    require('../lib/logger').fellBack('journey-document-store: the reply was not JSON — json keeps its first value', parseError);
-  }
+  } catch (_) {}
   return { status: res.status, json };
 }
 
@@ -126,7 +124,7 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
   console.log('  API: ' + API);
   hr('═');
 
-  let store, sourceKey, chitId;
+  let store, customer, sourceKey, chitId;
 
   // ─────────────────────────────────────────────────────────────────────────────
   head('Create the DOCUMENT store (a real entity)');

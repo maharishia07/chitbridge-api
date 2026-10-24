@@ -93,8 +93,10 @@ async function j(p, o = {}) {
       lastWhy = (e && e.message) || 'network error';
       continue;
     }
-    // an edge 503 has no JSON body by design (see below), so a reply that does not parse is normal flow: debug, and b stays null
-    const b = await r.json().catch(require('../lib/logger').orElse('_proof: the reply was not JSON — b is null', null, 'debug'));
+    let b = null;
+    try {
+      b = await r.json();
+    } catch (_) {}
     /**
      * ⚠️ A 503 FROM OUR OWN CODE IS AN ANSWER, NOT AN OUTAGE — and this guard got that wrong on its first real
      * outing. The API returns 503 with a JSON body to mean "that migration has not been run"; the edge returns 503
