@@ -94,5 +94,5 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
-  process.exit(fail ? 1 : 0);
+  process.exitCode = fail ? 1 : 0;
 })().catch((e) => { console.error(e); process.exit(1); });
