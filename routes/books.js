@@ -741,6 +741,31 @@ async function statementInput(h, e, party, from, to) {
  *   beside the parties — the bills are F3's own (books-cashflow.datedSide 'out'), so the total IS the cash view's outgoing dues. Owner only, as Collections.
  *   Trips added: cheques 1 · Udyam ids 1 · supplier terms 1 (+ the terms-column check, cached). Nothing per party.
  */
+/**
+ * R76: the early-pay offer the customer's TERMS make, in money, on the oldest netted bill still inside its window — books-engines.earlyOffer
+ * (CBReceivables.earlyDiscount on what is owed). null = no offer in the terms, or none still valid; `words` are the shopkeeper's line.
+ */
+function earlyOfferRow(docs, asOf, currency, early) {
+  const money = (minor) => require('../lib/bill-privacy').money(minor, currency);
+  const open = (docs || []).filter((doc) => doc.outstanding_minor > 0 && !doc.disputed).sort((first, second) => String(first.date || '').localeCompare(String(second.date || '')));
+  for (const doc of open) {
+    const offer = E.earlyOffer({ date: doc.date, open_minor: doc.outstanding_minor }, asOf, currency, early);
+    if (offer && offer.valid) return Object.assign(offer, { ref: doc.ref, words: 'Pays ' + money(offer.pay_minor) + ' by ' + B.dateWords(offer.by) + ' · saves ' + money(offer.save_minor) });
+  }
+  return null;
+}
+/** FIN-R1 + R76: the figures a customer's TERMS put on a Collections row — interest SHOWN (never posted), its state code, and the early-pay offer */
+function termsFigures(docs, asOf, currency, eff) {
+  return {
+    interest_minor: E.interestMinor(docs, asOf, currency, eff && eff.interest.value),
+    interest_state: E.interestState(eff),
+    early: earlyOfferRow(docs, asOf, currency, eff && eff.early.value)
+  };
+}
+/*
+ * ⭐ THE ONE DUE FIGURE (R73/R76): a party's open documents below are the NETTED bills (E.dues → books-engines.netOpen — net of its receipts on
+ * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
+ */
 router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
@@ -779,7 +804,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         const items = (await S.items(h, e, null, a.account_id)).filter((item) => new Date(item.created_at).getTime() < cut).map(E.itemOf);
         const d = E.dues(items, asOf, side);
         if (role === 'creditors') payableItems = items;
-        const byRef = d.outstanding.by_ref || {};
+        const byRef = d.open.by_ref || {}; /* the NETTED bills — the one due figure (see above) */
         /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */
         const docsOf = new Map();
         Object.keys(byRef).forEach((item) => {
@@ -814,11 +839,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
               disputed_minor: sign * disputed,
               buckets
             };
-            if (fin && role === 'debtors') {
-              const eff = effOf(pid);
-              row.interest_minor = E.interestMinor(docs, asOf, curOf(req), eff && eff.interest.value);
-              row.interest_state = E.interestState(eff);
-            }
+            if (fin && role === 'debtors') Object.assign(row, termsFigures(docs, asOf, curOf(req), effOf(pid)));
             lookup.set(pid + '|' + role, row);
           });
       }
@@ -1556,25 +1577,33 @@ router.post('/cheques/:id/status', auth, editor, on, ...checked('POST /cheques/:
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } — a disputed bill cannot take a payment (C4) */
+/**
+ * the books' one word for a held bill, as the row says it (R106: "Hold this bill" on ANY supplier reuses this status — the engine knows
+ * disputed / undisputed and no `held`; a screen paints these words, never its own)
+ */
+const STATUS_WORDS = { disputed: 'Held — in dispute with you', undisputed: 'Released — payable again' };
+/**
+ * POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } → { ok, status: disputed|undisputed, words, against_ref }
+ * — a disputed bill cannot take a payment (C4); Payables and cash-flow leave it out until it is released
+ */
 router.post('/parties/:id/dispute', auth, editor, on, ...checked('POST /parties/:id/dispute'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
       b = req.body || {};
     if (!UUID.test(id) || !b.against_ref) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which bill?', 'Which bill?');
-    res.json(
-      await B.postEntry(null, e, {
-        type: 'party_status',
-        party: id,
-        side: b.side === 'supplier' ? 'supplier' : 'customer',
-        against_ref: String(b.against_ref),
-        status: b.disputed === false ? 'undisputed' : 'disputed',
-        note: b.note ? String(b.note).slice(0, 300) : null,
-        currency: curOf(req),
-        by: byOf(req)
-      })
-    );
+    const status = b.disputed === false ? 'undisputed' : 'disputed';
+    const posted = await B.postEntry(null, e, {
+      type: 'party_status',
+      party: id,
+      side: b.side === 'supplier' ? 'supplier' : 'customer',
+      against_ref: String(b.against_ref),
+      status,
+      note: b.note ? String(b.note).slice(0, 300) : null,
+      currency: curOf(req),
+      by: byOf(req)
+    });
+    res.json(Object.assign({}, posted, posted.ok && !posted.off ? { words: STATUS_WORDS[status], against_ref: String(b.against_ref) } : {}));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2269,7 +2298,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
     problem(req, res, refusalOf(err, req));
   }
 });
-/** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
+/** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · suppliers_to_add · bills_unrated (F5 A1: a bill with an unrated line, listed never changed) · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
     res.json(await require('../lib/books-todo').todo(ctx(req), req.books));

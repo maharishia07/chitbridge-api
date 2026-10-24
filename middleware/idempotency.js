@@ -86,6 +86,17 @@ function fingerprint(req) {
   }
 }
 
+/** the answer fields that hold a sign-in CODE in clear: dev_otp / otp (a local stack's echo) and show_code (the owner's one-time screen, R112) */
+const CODE_FIELDS = ['otp', 'dev_otp', 'show_code'];
+
+/**
+ * carriesCode(body) → true when an answer holds a sign-in code (SEC-106). Unlike a token (kept for a few minutes, then swept), a code answer is
+ * NEVER recorded: the store would keep a live credential in clear. The retry that follows a lost answer runs again and makes a new code.
+ */
+function carriesCode(body) {
+  return Boolean(body && typeof body === 'object' && CODE_FIELDS.some((field) => body[field]));
+}
+
 /** carriesToken(body) → true when a recorded answer holds a token, a signed-in session */
 function carriesToken(body) {
   return Boolean(body && typeof body === 'object' && body.token);
@@ -123,8 +134,8 @@ const dbStore = {
   },
   async finalize(entity, key, status, body) {
     return withEntity(entity, async (db) => {
-      if (notSettled(status)) {
-        // a server error or a refused token is NOT a completed outcome — let a retry re-run it
+      if (notSettled(status) || carriesCode(body)) {
+        // a server error, a refused token or an answer that carries a code is NOT recorded — let a retry re-run it
         await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2 AND state = 'in_progress'`, [entity, key]);
       } else {
         // 2xx/3xx/4xx are settled outcomes — record so replays are consistent
@@ -165,8 +176,8 @@ const memoryStore = {
     const memoryKey = entity + '\n' + key,
       held = unverified.get(memoryKey);
     if (!held) return;
-    if (notSettled(status))
-      unverified.delete(memoryKey); // not a completed outcome — a retry may run again
+    if (notSettled(status) || carriesCode(body))
+      unverified.delete(memoryKey); // not a completed outcome (or it carries a code) — a retry may run again
     else Object.assign(held, { state: 'done', status, response: body == null ? null : body });
   },
   size: () => unverified.size,
@@ -296,3 +307,4 @@ module.exports._memory = memoryStore;
 module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
 module.exports.TOKEN_REPLAY_MINUTES = TOKEN_REPLAY_MINUTES;
 module.exports.UNVERIFIED_MEMORY_MAX = UNVERIFIED_MEMORY_MAX;
+module.exports._carriesCode = carriesCode;
