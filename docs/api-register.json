@@ -3,8 +3,8 @@
  "stage": "2",
  "counts": {
   "routes": 633,
-  "not_started": 144,
-  "partial": 488,
+  "not_started": 143,
+  "partial": 489,
   "meets": 1,
   "columns": {
    "strict_input": {
@@ -11264,7 +11264,7 @@
    "path": "/api/relationships/scorecard",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 978,
+   "line": 991,
    "hash": "2e60168fb06c4fee",
    "columns": {
     "schema_in": false,
@@ -11308,7 +11308,7 @@
    "path": "/api/relationships/scorecard/:entity_id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 990,
+   "line": 1003,
    "hash": "a81c31bf304826e0",
    "columns": {
     "schema_in": false,
@@ -14823,14 +14823,14 @@
    "path": "/api/relationships/customers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 924,
-   "hash": "903c5b62eb016f70",
+   "line": 929,
+   "hash": "e5855c528c7fb1d0",
    "columns": {
     "schema_in": false,
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -14859,7 +14859,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/relationships/suppliers/:id",

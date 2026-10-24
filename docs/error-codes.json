@@ -3206,6 +3206,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "UNKNOWN_FIELD",
+   "status": "400",
+   "title": "Field not known here",
+   "shopkeeper": "Not saved: that detail cannot be changed here. Check the name and try again.",
+   "hint": "-",
+   "owner_area": "relationships",
+   "since": "2026-10-24"
+  },
+  {
    "code": "USER_ID_ENTITY_ONLY",
    "status": "403",
    "title": "User ID is the business’s",
