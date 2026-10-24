@@ -1061,6 +1061,50 @@
     }
    }
   },
+  "POST /api/till/rate": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "ok",
+     "item_id",
+     "slab_id",
+     "rate",
+     "changed",
+     "words"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     },
+     "item_id": {
+      "type": "string"
+     },
+     "slab_id": {
+      "type": "string"
+     },
+     "rate": {
+      "type": "number"
+     },
+     "changed": {
+      "type": "boolean"
+     },
+     "words": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 1,
+   "open": [],
+   "example": {
+    "url": "/api/till/rate",
+    "body": {
+     "item_id": "22222222-2222-4222-8222-222222222222",
+     "slab_id": "00000000-0000-4000-8000-0000000001d1"
+    }
+   }
+  },
   "PUT /api/assist/catalogue-source": {
    "status": "200",
    "schema": {
@@ -1173,10 +1217,51 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
   "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
  }
 }

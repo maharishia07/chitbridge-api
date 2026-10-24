@@ -222,6 +222,9 @@
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
   },
+  "POST /api/till/rate": {
+   "strict_input": true
+  },
   "POST /api/till/pair": {
    "output_allowlist": true
   },
