@@ -1554,7 +1554,7 @@ const server = http.createServer(async (req, res) => {
                    /* ⭐⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — this counter's own active groups and sold-out
                       items, and pushing a sold-out to the shop's other counters when asked (decision 3). */
                    '/api/till/quick-keys/state', '/api/till/quick-keys/hide', '/api/till/quick-keys/unhide',
-                   '/api/till/quick-keys/screen-config'];
+                   '/api/till/quick-keys/screen-config', '/api/till/rate' /* ⭐ F5 W1a: the ask-once rate — the SERVER decides who may (routes/till.js setsRate) */];
       if (!o.path || ALLOW.indexOf(o.path) < 0) return json(res, 400, { ok:false, why:'not an operation this counter may send' });
       try { const r = await cb.call('POST', o.path, o.body || {});
         return json(res, 200, Object.assign({ ok:true }, r || {}));

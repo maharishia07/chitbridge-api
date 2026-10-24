@@ -888,7 +888,7 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const cost = require('../lib/cost');
-    res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity' });
+    res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity', may_set_rate: require('../lib/rate-door').setsRate(req) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Read failed'));
   }

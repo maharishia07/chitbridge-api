@@ -74844,6 +74844,92 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/sec101-iddoc-hash.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-101: a national ID (Aadhaar) is stored as a keyed hash, never sha256(SCHEME:value); PHONE and EMAIL hashes unchanged.",
+   "claim": "SEC-101: a national ID (Aadhaar) is stored as a keyed hash, never sha256(SCHEME:value); PHONE and EMAIL hashes unchanged.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · offline. Run: node chitbridge-api/tests/sec101-iddoc-hash.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "routes/identity-docs.js",
+    "lib/vaultcrypto.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T12:00:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec101-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-101 truth on the local stack: an Aadhaar filed through the route has a keyed hash; same number again is one document; PHONE keeps the plain hash.",
+   "claim": "SEC-101 truth on the local stack: an Aadhaar filed through the route has a keyed hash; same number again is one document; PHONE keeps the plain hash.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · realstack T2 · written, run by S41. Run: node chitbridge-api/tests/sec101-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "e2e",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "routes/identity-docs.js",
+    "lib/vaultcrypto.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T12:00:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec106-staff-code-hash.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-106: a staff first sign-in code is stored as a keyed hash, never plain; verify, attempts reset, trail row, no idempotent replay of a code.",
+   "claim": "SEC-106: a staff first sign-in code is stored as a keyed hash, never plain; verify, attempts reset, trail row, no idempotent replay of a code.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · offline. Run: node chitbridge-api/tests/sec106-staff-code-hash.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/employee-code.js",
+    "lib/otp.js",
+    "lib/vaultcrypto.js",
+    "middleware/idempotency.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T14:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/sec3-device-keys.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -75738,6 +75824,39 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-19T16:17:13+05:30",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/books-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "BOOKS TRUTH (R106 · TSK006b · row R106), on the LOCAL stack: a short delivery from a LOCAL supplier is accepted at the COUNTED figure, the gap held or noted (OPS-60), a rate difference is a debit note, the books balance.",
+   "claim": "BOOKS TRUTH (R106 · TSK006b · row R106), on the LOCAL stack: a short delivery from a LOCAL supplier is accepted at the COUNTED figure, the gap held or noted (OPS-60), a rate difference is a debit note, the books balance.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 132 lines. Run: node chitbridge-api/tests/books-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js",
+    "lib/books-hooks.js",
+    "lib/books-manual.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T14:00:00+05:30",
    "needs": [
     "the API running (via truth-harness.cjs)"
    ]
@@ -95661,6 +95780,66 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-24T03:20:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/bills-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "UNPAID BILLS TRUTH (R124 · BKS011 / BIL002 · rows R124, R123), on the LOCAL stack: a paper bill received at the counter from a LOCAL supplier names the SUPPLIER and THEIR number on the Unpaid bills row and on the pay sheet; a plain goods receipt stays out; the shop's own sale still names its customer.",
+   "claim": "UNPAID BILLS TRUTH (R124 · BKS011 / BIL002 · rows R124, R123), on the LOCAL stack: a paper bill received at the counter from a LOCAL supplier names the SUPPLIER and THEIR number on the Unpaid bills row and on the pay sheet; a plain goods receipt stays out; the shop's own sale still names its customer.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 106 lines. Run: node chitbridge-api/tests/bills-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js",
+    "lib/select.js",
+    "lib/folder-inventory.js",
+    "lib/books-store.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T14:30:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/select-received-party.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "R124: a paper bill RECEIVED at the counter names its SUPPLIER and THEIR bill number (select.js counterparty + bill_no, the one theirNoSql helper, billNos for the pay sheet; never the frozen invoice).",
+   "claim": "R124: a paper bill RECEIVED at the counter names its SUPPLIER and THEIR bill number (select.js counterparty + bill_no, the one theirNoSql helper, billNos for the pay sheet; never the frozen invoice).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 37 lines. Run: node chitbridge-api/tests/select-received-party.test.cjs",
+   "layer": "api",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [
+    "lib/select.js",
+    "lib/folder-inventory.js",
+    "lib/books-store.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T14:30:00+05:30"
   }
  ]
 }

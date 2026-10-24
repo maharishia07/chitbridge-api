@@ -726,7 +726,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "3a5b4e78-cda0-46ca-b7ca-7bc55bce783c",
+      "snapshot_id": "1d5fd059-ea57-4719-9bd0-62cae9d4ddec",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -748,7 +748,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "3a5b4e78-cda0-46ca-b7ca-7bc55bce783c",
+     "snapshot_id": "1d5fd059-ea57-4719-9bd0-62cae9d4ddec",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1141,7 +1141,8 @@
            "why": "owner_confirms",
            "say": "Ask Kumar Traders for a GST credit note. You confirm it when it comes."
           }
-         }
+         },
+         "note": null
         }
        ]
       },
@@ -1224,6 +1225,9 @@
      ],
      "blocked_credit": [
       "food"
+     ],
+     "debit_reason": [
+      "rate"
      ]
     },
     "pending": [
@@ -1368,6 +1372,7 @@
     },
     "waiting": [
      {
+      "short": null,
       "id": 1,
       "chit_id": null,
       "ref": "chit:bill1",
@@ -1942,14 +1947,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-10-19T04:57:15.104Z",
+      "created_at": "2026-10-19T10:32:40.466Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-10-19T04:57:15.104Z"
+       "at": "2026-10-19T10:32:40.466Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -1982,7 +1987,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-22T04:57:13.398Z",
+      "last_at": "2026-10-22T10:32:37.603Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2030,13 +2035,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-23T04:57:13.373Z",
+      "due_at": "2026-10-23T10:32:37.569Z",
       "due_day": "2026-10-23",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-24T04:57:13.374Z",
+      "created_at": "2026-10-24T10:32:37.570Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2495,7 +2500,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-22T04:57:13.295Z",
+      "due_at": "2026-10-22T10:32:37.057Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -2713,9 +2718,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-10-19T04:57:15.104Z",
+      "sent_at": "2026-10-19T10:32:40.466Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-10-20T04:57:15.104Z",
+      "first_bill_at": "2026-10-20T10:32:40.467Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -2740,7 +2745,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-10-20T04:57:15.104Z",
+        "at": "2026-10-20T10:32:40.467Z",
         "value": 480,
         "currency": "INR"
        }
@@ -2969,7 +2974,7 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+      "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3111,7 +3116,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3381,7 +3386,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-24T03:57:13.658Z",
+    "created_at": "2026-10-24T09:32:38.107Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -3603,7 +3608,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-24T03:57:13.658Z",
+      "created_at": "2026-10-24T09:32:38.107Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -3692,7 +3697,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-24T04:57:15.653Z"
+     "shared_at": "2026-10-24T10:32:41.431Z"
     }
    },
    "optional": []
@@ -3751,13 +3756,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-23T04:57:13.373Z",
+     "due_at": "2026-10-23T10:32:37.569Z",
      "due_day": "2026-10-23",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-24T04:57:13.378Z",
-     "created_at": "2026-10-24T04:57:13.374Z",
+     "done_at": "2026-10-24T10:32:37.574Z",
+     "created_at": "2026-10-24T10:32:37.570Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -3980,7 +3985,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "3a5b4e78-cda0-46ca-b7ca-7bc55bce783c",
+    "snapshot_id": "1d5fd059-ea57-4719-9bd0-62cae9d4ddec",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4885,7 +4890,7 @@
     "bill": null,
     "flags": [],
     "refusals": [
-     "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+     "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
     ],
     "code": null,
     "duplicate": null
@@ -5048,13 +5053,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-23T04:57:13.373Z",
+     "due_at": "2026-10-23T10:32:37.569Z",
      "due_day": "2026-10-23",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-24T04:57:13.374Z",
+     "created_at": "2026-10-24T10:32:37.570Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -5212,9 +5217,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-24T04:57:13.372Z",
+     "at": "2026-10-24T10:32:37.568Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-24T04:57:13.372Z"
+     "created_at": "2026-10-24T10:32:37.568Z"
     }
    },
    "optional": []
@@ -5229,9 +5234,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-24T04:57:13.399Z",
+     "at": "2026-10-24T10:32:37.606Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-24T04:57:13.399Z"
+     "created_at": "2026-10-24T10:32:37.606Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -5246,7 +5251,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-24T04:57:13.399Z",
+     "created_at": "2026-10-24T10:32:37.606Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -5320,7 +5325,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "7b57f302-ffc1-41f0-bd3a-92ae3207b6cd",
+    "send_ref": "09050f12-c8f8-4eaa-bffe-300419b2b228",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
@@ -5386,7 +5391,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5490,7 +5495,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5575,7 +5580,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5667,7 +5672,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5755,7 +5760,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "83bc854b-0882-407c-90f8-2beec51330b6",
+     "agreement_id": "c058882b-1265-41c5-9920-8ff05f504093",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5833,7 +5838,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5940,7 +5945,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6032,7 +6037,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9d8a9712-4870-4e2f-885b-62a44b73bfc3",
+     "agreement_id": "68d8a6fa-ec45-4bd6-b78d-917f1385e95b",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6123,7 +6128,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6215,7 +6220,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -6322,7 +6327,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "152d0d3f-a9d6-41f2-ba92-1d88c42fd110",
+     "agreement_id": "ebc29b1d-677d-4291-b0bc-381a6bbe51a9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",

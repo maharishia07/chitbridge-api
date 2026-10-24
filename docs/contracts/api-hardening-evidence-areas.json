@@ -147,6 +147,9 @@
   "POST /api/repeat/:id/skip": {
    "foreign_id_404": true
   },
+  "POST /api/till/rate": {
+   "output_allowlist": true
+  },
   "PUT /api/actors/:id/delegate": {
    "foreign_id_404": true
   },
