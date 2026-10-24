@@ -1766,6 +1766,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MEMBERSHIP_SUSPENDED",
+   "status": "403",
+   "title": "Membership suspended",
+   "shopkeeper": "The network has suspended your membership, so you cannot send to it.",
+   "hint": "Ask the network to resume it, then send again.",
+   "owner_area": "network",
+   "since": "2026-10-24"
+  },
+  {
    "code": "MIGRATION",
    "status": "409",
    "title": "Migration",

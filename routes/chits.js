@@ -435,6 +435,7 @@ const SEND_STEPS = [
   sendTrace,
   sendPrefs,
   sendRecipients,
+  sendSuspended,
   sendSeller,
   sendOffers,
   sendMoney,
@@ -1078,6 +1079,39 @@ async function sendRecipients(st, req, res) {
     });
   }
   Object.assign(st, { hasSelf, receiverDetails });
+}
+
+/**
+ * NET-7: a member the network has SUSPENDED sends nothing to it. Any chit to a receiver whose network suspended the sender is refused
+ * here, in words, before anything is written (the edge itself says nothing of purpose, and a suspended member asking to be resumed
+ * does it by phone or the connection screen, not by a chit). The read is lib/network-membership.suspendedWith, which asks the one
+ * standing() reader; a receiver with no edge to the sender, a draft, and a brand writing to its own suspended store are unaffected.
+ */
+async function sendSuspended(state, req, res) {
+  const { sender_id, is_draft, receiverDetails } = state;
+  const ids = receiverDetails.map((receiver) => receiver.entity_id).filter((id) => id !== sender_id); /* the self copy is not a counterparty */
+  if (is_draft || !ids.length) return false;
+  const membership = require('../lib/network-membership');
+  let suspended;
+  try {
+    suspended = await membership.suspendedWith(sender_id, ids);
+  } catch (e) {
+    if (answerStandingReadFailed(res, e, sender_id, ids.length)) return true;
+    throw e;
+  }
+  if (!suspended) return false;
+  return problem(req, res, { status: 403, ...said({
+    code: 'MEMBERSHIP_SUSPENDED',
+    error: 'Membership suspended.',
+    message: 'The network has suspended your membership, so you cannot send to it. Ask the network to resume it, then send again.'
+  }, 'CHIT_CONFLICT') });
+}
+
+/** the standing read failed: logged with its code and ids only, answered 503 NETWORK_READ_FAILED in the row's words, nothing written; false for any other error */
+function answerStandingReadFailed(res, e, entity_id, receivers) {
+  const membership = require('../lib/network-membership');
+  if (e && e.code === membership.READ_FAILED) log.warn('send.standing-read-failed', { code: e.code, entity_id, receivers });
+  return membership.answerReadFailed(res, e);
 }
 
 /** one recipient → its identity row, by id, bridge id, user id, then typed name — never a minted party (sendRecipients) */
