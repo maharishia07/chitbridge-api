@@ -158,6 +158,7 @@ const GUARDS = [
   'sql-runner.test.js', // a tool that runs SQL at production: its WITH/WITHOUT RLS line must be true
   'stock-cycle.test.js', // the log and the cache must stay in step — through a replay, a minus, and a corrupted balance
   'storefront-stock-ledger.test.js', // ⭐⭐ T1-INV: one stock truth — a no-connector shop's storefront shows its OWN ledger; a connector shop its stamp
+  'made-to-order.test.cjs', // ⭐ R104: a dish made to order is not stock — one resolver (lib/stocked), one flags query, a NAMED skip not_stocked, onHand/asAt { counted_only }
   /* ⚠️⚠️ IT WAS NOT IN THIS LIST until 2026-09-10, so the one guard that asks 'is every module classified,
      and does everything unreachable say so' only ran when somebody remembered to. It caught an unclassified
      lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */

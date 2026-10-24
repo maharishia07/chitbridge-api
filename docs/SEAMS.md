@@ -11,11 +11,11 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 122 | `list` | `amend.js` |  |
 | 107 | `rows` | `crm.js` | still in them: |
-| 100 | `withEntity` | `books-hooks.js` |  |
-| 87 | `read` | `books-cashflow.js` | Trips: |
+| 101 | `withEntity` | `books-hooks.js` |  |
+| 88 | `read` | `books-cashflow.js` | Trips: |
 | 82 | `words` | `variant.browser.js` |  |
 | 75 | `money` | `bill-privacy.js` |  |
-| 73 | `answer` | `availability.js` | from March; then nearest. |
+| 74 | `answer` | `availability.js` | from March; then nearest. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 65 | `list` | `cap-settings.js` |  |
@@ -87,7 +87,7 @@ of file each thing is; this says what already does the job.
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
-| 25 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 26 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 26 | `gate` | `country-setup.js` | gate(h, entity): |
 | 25 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `load` | `cap-assist.js` |  |
@@ -134,7 +134,7 @@ of file each thing is; this says what already does the job.
 | 17 | `notMigrated` | `crm-followups.js` |  |
 | 17 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 17 | `governance` | `home-facts.js` |  |
-| 17 | `group` | `identity.js` | again in a different costume. |
+| 18 | `group` | `identity.js` | again in a different costume. |
 | 17 | `match` | `itemmatch.js` | actually state. |
 | 18 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 17 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |

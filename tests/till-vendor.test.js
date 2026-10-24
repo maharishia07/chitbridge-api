@@ -963,12 +963,13 @@ JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served 
   assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
   const vendor = fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8');
   assert.ok(/'\/app\/signin-ui\.js'/.test(vendor.slice(vendor.indexOf('const KEEP ='), vendor.indexOf('self.addEventListener'))), 'the window is not on the service worker\'s shelf');
-  assert.ok(/const SHELF = 'cb-till-v6'/.test(vendor), 'the shelf was not bumped');   /* v5: HX1 put /config.js on the boot path · v6: FX-F10W2 /app/their-bill.js */
+  assert.ok(/const SHELF = 'cb-till-v7'/.test(vendor), 'the shelf was not bumped');   /* v5: HX1 put /config.js on the boot path · v6: FX-F10W2 /app/their-bill.js · v7: F5 W1a /app/tax-slab-ui.js */
   /* read, not required — requiring the route would open the database */
   const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
   assert.ok(/'signin-ui\.js'/.test(kitNames), 'the kit zip does not carry the window');
   const sw = fs.readFileSync(path.join(WEB, 'till-sw.js'), 'utf8');
-  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v6/.test(sw) && /'\/config\.js'/.test(sw), 'the vendored service worker is stale');
+  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v7/.test(sw) && /'\/config\.js'/.test(sw), 'the vendored service worker is stale');
+  assert.ok(/'\/app\/tax-slab-ui\.js'/.test(sw), 'the rate menu (F5 W1a) is not on the shelf');
 }]);
 /**
  * ⭐⭐ FX-F10W2 · DOES THEIR BILL AGREE — ONE rule, both hosts and the books: the master is api lib/their-bill.js (books-hooks receiptBill
