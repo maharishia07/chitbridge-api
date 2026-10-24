@@ -45,7 +45,9 @@ async function call(method, path, body, token) {
   let j = null;
   try {
     j = await reply.json();
-  } catch (_) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('reference-stores: the reply was not JSON — j keeps its first value', parseError);
+  }
   return { status: reply.status, j };
 }
 

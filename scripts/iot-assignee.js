@@ -21,7 +21,9 @@ async function api(m, p, { token, key, body } = {}) {
   let j = null;
   try {
     j = await reply.json();
-  } catch (_) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('iot-assignee: the reply was not JSON — j keeps its first value', parseError);
+  }
   return { status: reply.status, json: j };
 }
 async function login(name) {

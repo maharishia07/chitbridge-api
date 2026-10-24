@@ -39,7 +39,9 @@ function req(method, path, token, body) {
           let j = null;
           try {
             j = JSON.parse(b);
-          } catch (_) {}
+          } catch (parseError) {
+            require('../lib/logger').fellBack('test-dev: the reply was not JSON — json stays null, raw is kept', parseError);
+          }
           resolve({ status: res.statusCode, json: j, raw: b });
         });
       }

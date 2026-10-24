@@ -51,7 +51,9 @@ async function api(path, { method = 'GET', token, body, headers = {} } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (_) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('prove-network-search: the reply was not JSON — json keeps its first value', parseError);
+  }
   return { status: res.status, json };
 }
 

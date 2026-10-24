@@ -1,27 +1,24 @@
 {
  "_about": "lint ratchet (MNT-1): eslint warnings per own-code file, 18 Oct = the baseline. A file may have FEWER warnings than its row, never more. Warn-only: no CI step reads this yet. Lower with `node tools/lint-ratchet.cjs --write`.",
  "_totals": {
-  "files": 431,
-  "eslintWarnings": 86,
+  "files": 467,
+  "eslintWarnings": 0,
   "parseErrors": 0,
-  "prettierFail": 12,
-  "prettierChecked": 431
+  "prettierFail": 67,
+  "prettierChecked": 467
  },
- "_rules": {
-  "no-unused-vars": 8,
-  "no-useless-escape": 1,
-  "no-control-regex": 2,
-  "no-empty": 73,
-  "no-dupe-keys": 1,
-  "no-shadow": 1
- },
+ "_rules": {},
  "lib/access-events.js": {
   "warnings": 0,
   "prettierOk": true
  },
  "lib/access.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
+ },
+ "lib/actors-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/adopt.js": {
   "warnings": 0,
@@ -42,6 +39,10 @@
  "lib/assign.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/assist-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/assist-kb.js": {
   "warnings": 0,
@@ -83,13 +84,17 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/books-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/books-engines.js": {
   "warnings": 0,
   "prettierOk": true
  },
  "lib/books-hooks.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "lib/books-manual.js": {
   "warnings": 0,
@@ -155,6 +160,10 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/catalogue-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/catalogue-read.js": {
   "warnings": 0,
   "prettierOk": true
@@ -172,6 +181,14 @@
   "prettierOk": true
  },
  "lib/channels.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "lib/chits-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "lib/chits-input.js": {
   "warnings": 0,
   "prettierOk": false
  },
@@ -207,6 +224,10 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/contract-kit.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/cost.js": {
   "warnings": 0,
   "prettierOk": true
@@ -222,6 +243,10 @@
  "lib/crm-calls.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/crm-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/crm-followups.js": {
   "warnings": 0,
@@ -246,6 +271,10 @@
  "lib/csv.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/ctp-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/ctpaddress.js": {
   "warnings": 0,
@@ -307,6 +336,10 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/entities-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/entity-header.js": {
   "warnings": 0,
   "prettierOk": true
@@ -322,6 +355,10 @@
  "lib/exposure.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/facts-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/field-ledger.js": {
   "warnings": 0,
@@ -343,6 +380,10 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/folders-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/form-handshake.js": {
   "warnings": 0,
   "prettierOk": true
@@ -358,6 +399,10 @@
  "lib/gherkin.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/governance-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/govresolve.js": {
   "warnings": 0,
@@ -377,7 +422,7 @@
  },
  "lib/home-facts.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "lib/iddoc-verify.js": {
   "warnings": 0,
@@ -385,7 +430,7 @@
  },
  "lib/identity-auth.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "lib/identity.js": {
   "warnings": 0,
@@ -398,6 +443,10 @@
  "lib/instruments.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/integrations-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/inventory.js": {
   "warnings": 0,
@@ -433,13 +482,17 @@
  },
  "lib/knownerr.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "lib/kyb.js": {
   "warnings": 0,
   "prettierOk": true
  },
  "lib/licence-rules.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "lib/limiter-key.js": {
   "warnings": 0,
   "prettierOk": true
  },
@@ -515,6 +568,10 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/network-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/network-membership.js": {
   "warnings": 0,
   "prettierOk": true
@@ -551,13 +608,17 @@
   "warnings": 0,
   "prettierOk": false
  },
+ "lib/orders-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/otp.js": {
   "warnings": 0,
   "prettierOk": true
  },
  "lib/owner.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "lib/pack-words.js": {
   "warnings": 0,
@@ -589,7 +650,7 @@
  },
  "lib/platformroot.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "lib/points.js": {
   "warnings": 0,
@@ -599,7 +660,19 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/pricing-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "lib/privacy.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "lib/problem.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "lib/products-contract.js": {
   "warnings": 0,
   "prettierOk": false
  },
@@ -632,7 +705,7 @@
   "prettierOk": true
  },
  "lib/raiseticket.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "lib/rates.js": {
@@ -641,7 +714,7 @@
  },
  "lib/readiness.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "lib/reference.js": {
   "warnings": 0,
@@ -686,6 +759,10 @@
  "lib/rootlink.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/safe-url.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/schedule.js": {
   "warnings": 0,
@@ -763,6 +840,10 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/storefront-contract.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
  "lib/stores.js": {
   "warnings": 0,
   "prettierOk": true
@@ -774,6 +855,10 @@
  "lib/supportcopy.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/tax-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/tax-copy.js": {
   "warnings": 0,
@@ -795,6 +880,10 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "lib/testing-contract.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
  "lib/testnews.js": {
   "warnings": 0,
   "prettierOk": true
@@ -806,6 +895,10 @@
  "lib/their-bill.js": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "lib/till-contract.js": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "lib/till-summary.js": {
   "warnings": 0,
@@ -905,11 +998,11 @@
  },
  "middleware/validate.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/actors.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/adopt.js": {
   "warnings": 0,
@@ -925,7 +1018,7 @@
  },
  "routes/books.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/capture.js": {
   "warnings": 0,
@@ -945,7 +1038,7 @@
  },
  "routes/chits.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/combo-templates.js": {
   "warnings": 0,
@@ -961,7 +1054,7 @@
  },
  "routes/counters.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/crm.js": {
   "warnings": 0,
@@ -973,7 +1066,7 @@
  },
  "routes/ctp.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/definitions.js": {
   "warnings": 0,
@@ -981,7 +1074,7 @@
  },
  "routes/entities.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/events.js": {
   "warnings": 0,
@@ -989,11 +1082,11 @@
  },
  "routes/facts.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/folders.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/forms.js": {
   "warnings": 0,
@@ -1001,7 +1094,7 @@
  },
  "routes/governance.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/identity-docs.js": {
   "warnings": 0,
@@ -1009,15 +1102,15 @@
  },
  "routes/integrations.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/invoice.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/keys.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/kyb.js": {
   "warnings": 0,
@@ -1053,7 +1146,7 @@
  },
  "routes/pricing.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/privacy.js": {
   "warnings": 0,
@@ -1061,7 +1154,7 @@
  },
  "routes/products.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/quick-keys.js": {
   "warnings": 0,
@@ -1073,7 +1166,7 @@
  },
  "routes/repeat-supply.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/schemas.js": {
   "warnings": 0,
@@ -1097,26 +1190,26 @@
  },
  "routes/tax.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "routes/testing.js": {
   "warnings": 0,
   "prettierOk": true
  },
  "routes/till.js": {
-  "warnings": 1,
-  "prettierOk": true
+  "warnings": 0,
+  "prettierOk": false
  },
  "routes/work.js": {
   "warnings": 0,
   "prettierOk": true
  },
  "scripts/_proof.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/actor-harness.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/add-catalogue-synonyms.js": {
@@ -1124,11 +1217,11 @@
   "prettierOk": true
  },
  "scripts/akums-demo.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/assimilate-standard.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/bills-folder-breaks.cjs": {
@@ -1144,7 +1237,7 @@
   "prettierOk": true
  },
  "scripts/cancel-request.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/cascade-diff.js": {
@@ -1152,7 +1245,7 @@
   "prettierOk": true
  },
  "scripts/catalogue-persist.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/category-cite.js": {
@@ -1176,7 +1269,7 @@
   "prettierOk": true
  },
  "scripts/conform-check.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/connector-gateway-sim.js": {
@@ -1184,11 +1277,11 @@
   "prettierOk": true
  },
  "scripts/container-model.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/container-wiring.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/copy-core.mjs": {
@@ -1204,11 +1297,11 @@
   "prettierOk": true
  },
  "scripts/demo-lifecycle.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/dept-store-demo.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/design-kit.cjs": {
@@ -1216,11 +1309,11 @@
   "prettierOk": true
  },
  "scripts/dispute-reads.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/dispute-scope.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/empty-catches.cjs": {
@@ -1228,15 +1321,15 @@
   "prettierOk": true
  },
  "scripts/entity-vertical.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/erp-connector.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/erp-handoff.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/fn-size.cjs": {
@@ -1244,11 +1337,11 @@
   "prettierOk": true
  },
  "scripts/gold-demo.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/gov-cascade.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/governance-report.cjs": {
@@ -1260,15 +1353,15 @@
   "prettierOk": true
  },
  "scripts/iot-assignee.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/journey-document-store.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/journey-supplier-hop.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/lib-make-form16-pdf.js": {
@@ -1276,7 +1369,7 @@
   "prettierOk": true
  },
  "scripts/lifecycle-iot.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/lint-copy.mjs": {
@@ -1288,11 +1381,11 @@
   "prettierOk": true
  },
  "scripts/matrix.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/multi-source.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/o1-seal.js": {
@@ -1300,7 +1393,7 @@
   "prettierOk": true
  },
  "scripts/penetration.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/powerplay-itr2.js": {
@@ -1308,7 +1401,7 @@
   "prettierOk": true
  },
  "scripts/prototype-form16-to-itr2.js": {
-  "warnings": 2,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-adoption-freeze.js": {
@@ -1332,7 +1425,7 @@
   "prettierOk": true
  },
  "scripts/prove-availability.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-b159-attachments.js": {
@@ -1340,7 +1433,7 @@
   "prettierOk": true
  },
  "scripts/prove-capture.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-channels.js": {
@@ -1352,11 +1445,11 @@
   "prettierOk": true
  },
  "scripts/prove-commerce-standards.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-commerce.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-cost-live.js": {
@@ -1364,7 +1457,7 @@
   "prettierOk": true
  },
  "scripts/prove-definer-guards.js": {
-  "warnings": 2,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-definitions.js": {
@@ -1384,7 +1477,7 @@
   "prettierOk": true
  },
  "scripts/prove-forms.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-groupsum.js": {
@@ -1392,7 +1485,7 @@
   "prettierOk": true
  },
  "scripts/prove-idempotency.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-itemmatch.js": {
@@ -1404,15 +1497,15 @@
   "prettierOk": true
  },
  "scripts/prove-kyb.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-lanes.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-lifecycle.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-line-events.js": {
@@ -1432,15 +1525,15 @@
   "prettierOk": true
  },
  "scripts/prove-network-cap.js": {
-  "warnings": 2,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-network-mint.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-network-search.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-nothing-dropped.js": {
@@ -1452,11 +1545,11 @@
   "prettierOk": true
  },
  "scripts/prove-one-roof.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-orderbind.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-outbound.js": {
@@ -1472,19 +1565,19 @@
   "prettierOk": true
  },
  "scripts/prove-private-shop.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-profile.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-readiness.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-reference.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-request-from-message.js": {
@@ -1496,11 +1589,11 @@
   "prettierOk": true
  },
  "scripts/prove-sectors.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-security-fixes.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-sla.js": {
@@ -1512,7 +1605,7 @@
   "prettierOk": true
  },
  "scripts/prove-storefront.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-three-party-messaging.js": {
@@ -1524,7 +1617,7 @@
   "prettierOk": true
  },
  "scripts/prove-verify.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-vision.js": {
@@ -1532,7 +1625,7 @@
   "prettierOk": true
  },
  "scripts/prove-whatsapp-live.js": {
-  "warnings": 2,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/prove-wholesaler-e2e.js": {
@@ -1544,23 +1637,23 @@
   "prettierOk": true
  },
  "scripts/reference-stores.cjs": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/regional-scatter.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/register-mint.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/regression.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/reset-and-seed.js": {
-  "warnings": 2,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/retention-logic-test.js": {
@@ -1576,15 +1669,15 @@
   "prettierOk": true
  },
  "scripts/sealed-guard.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/seed-2026-08-05.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/seed-bulk-catalogue.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/seed-catalogue-veg.js": {
@@ -1604,11 +1697,11 @@
   "prettierOk": true
  },
  "scripts/seed-test-entities.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/self-copy-pref.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/send-test-message.js": {
@@ -1616,11 +1709,11 @@
   "prettierOk": true
  },
  "scripts/source-entity.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/source-rules.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/sql.cjs": {
@@ -1632,7 +1725,7 @@
   "prettierOk": true
  },
  "scripts/test-dev.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "scripts/two-sided-breaks.cjs": {
@@ -1649,7 +1742,7 @@
  },
  "server.js": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "src/app.js": {
   "warnings": 0,
@@ -1668,7 +1761,7 @@
   "prettierOk": true
  },
  "src/routes/network.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "src/services/catalogue.js": {
@@ -1683,13 +1776,53 @@
   "warnings": 0,
   "prettierOk": true
  },
+ "tools/api-contract-tests.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/api-ratchet.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/api-register.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
  "tools/baseline-from-snapshot.cjs": {
   "warnings": 0,
   "prettierOk": false
  },
+ "tools/endpoint-usage-callers.cjs": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "tools/endpoint-usage-md.cjs": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "tools/endpoint-usage-page.cjs": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "tools/endpoint-usage-report.cjs": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "tools/endpoint-usage-run.cjs": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "tools/endpoint-usage-twins.cjs": {
+  "warnings": 0,
+  "prettierOk": true
+ },
  "tools/endpoint-usage.cjs": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "tools/error-codes.cjs": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "tools/fresh-db-check.cjs": {
   "warnings": 0,
@@ -1698,6 +1831,10 @@
  "tools/lint-ratchet.cjs": {
   "warnings": 0,
   "prettierOk": true
+ },
+ "tools/load-app.cjs": {
+  "warnings": 0,
+  "prettierOk": false
  },
  "tools/migrate.cjs": {
   "warnings": 0,
@@ -1717,7 +1854,7 @@
  },
  "tools/server-mounts.cjs": {
   "warnings": 0,
-  "prettierOk": true
+  "prettierOk": false
  },
  "tools/sim-load.cjs": {
   "warnings": 0,
@@ -1732,11 +1869,11 @@
   "prettierOk": true
  },
  "tools/simulate-years.cjs": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  },
  "tools/sql-inventory.cjs": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": true
  }
 }

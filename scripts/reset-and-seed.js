@@ -216,7 +216,9 @@ async function call(method, p, { token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (_) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('reset-and-seed: the reply was not JSON — json keeps its first value', parseError);
+  }
   return { status: res.status, json };
 }
 async function signIn(email, display_name) {
@@ -299,7 +301,9 @@ async function signIn(email, display_name) {
         await db.query('SET LOCAL row_security = off');
         try {
           await db.query('DELETE FROM schema_fields');
-        } catch (_) {}
+        } catch (clearError) {
+          require('../lib/logger').fellBack('reset-and-seed: schema_fields was not cleared — carrying on with the other tables', clearError);
+        }
         for (const { table_name } of cols.rows) await db.query(`DELETE FROM public."${table_name}"`);
         await db.query('DELETE FROM identities WHERE parent_entity_id IS NOT NULL');
         await db.query('DELETE FROM identities');

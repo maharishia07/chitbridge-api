@@ -9,7 +9,9 @@ const a = async (p, o = {}) => {
   let j = null;
   try {
     j = await reply.json();
-  } catch (e) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('prove-availability: the reply was not JSON — j keeps its first value', parseError);
+  }
   return { status: reply.status, json: j };
 };
 let pass = 0,

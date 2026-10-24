@@ -57,7 +57,9 @@ const walk = (dir, rel) => {
 for (const d of ['.', 'db', 'migrations']) {
   try {
     walk(d);
-  } catch (_) {}
+  } catch (missingFolder) {
+    require('../lib/logger').fellBack('sql-inventory: could not read ' + d + ' — it is left out of the list', missingFolder, 'debug');
+  }
 }
 const uniq = [...new Set(all)].filter((item) => !item.startsWith('node_modules'));
 

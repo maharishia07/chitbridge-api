@@ -38,7 +38,9 @@ async function api(method, path, body, token) {
   let data = {};
   try {
     data = await res.json();
-  } catch (_) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('akums-demo: the reply was not JSON — data keeps its first value', parseError);
+  }
   return { status: res.status, data };
 }
 

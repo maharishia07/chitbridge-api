@@ -69,7 +69,9 @@ if (!TO) need.push('WA_TEST_TO');
   let j1 = null;
   try {
     j1 = await reply.json();
-  } catch (_) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('prove-whatsapp-live: the reply was not JSON — j1 keeps its first value', parseError);
+  }
   if (!reply.ok) {
     console.log('  \x1b[31mXX\x1b[0m  Meta refused: ' + reply.status + ' ' + JSON.stringify(j1 && j1.error ? j1.error.message : j1));
     console.log('\n  That is your ACCOUNT, not our code — nothing of ours ran. Common causes:');
@@ -90,7 +92,7 @@ if (!TO) need.push('WA_TEST_TO');
   }
 
   console.log('\n── STEP 2 · did your reply reach the intake inbox? ──');
-  async function j(p, o = {}) {
+  async function fetchJson(p, o = {}) {
     const response = await fetch(API + p, {
       method: o.method || 'GET',
       headers: Object.assign({ 'Content-Type': 'application/json' }, o.token ? { Authorization: 'Bearer ' + o.token } : {}),
@@ -99,14 +101,16 @@ if (!TO) need.push('WA_TEST_TO');
     let b = null;
     try {
       b = await response.json();
-    } catch (_) {}
+    } catch (parseError) {
+      require('../lib/logger').fellBack('prove-whatsapp-live: the reply was not JSON — b keeps its first value', parseError);
+    }
     return { status: response.status, b };
   }
   const email = process.env.WA_TEST_ENTITY_EMAIL || 'beta@test-cb.com';
-  await j('/api/entities/register', { method: 'POST', body: { email, display_name: 'Beta Fresh' } });
-  const v = await j('/api/entities/verify', { method: 'POST', body: { email, otp: process.env.DEV_OTP || '123456' } });
+  await fetchJson('/api/entities/register', { method: 'POST', body: { email, display_name: 'Beta Fresh' } });
+  const v = await fetchJson('/api/entities/verify', { method: 'POST', body: { email, otp: process.env.DEV_OTP || '123456' } });
   const tok = (v.b && (v.b.token || (v.b.entity && v.b.entity.token))) || null;
-  const caps = (await j('/api/capture/pending', { token: tok })).b.captures || [];
+  const caps = (await fetchJson('/api/capture/pending', { token: tok })).b.captures || [];
   const mine = caps.filter((item) => item.channel === 'whatsapp');
   if (!mine.length) {
     console.log('  \x1b[31mXX\x1b[0m  nothing from WhatsApp in the intake inbox.');

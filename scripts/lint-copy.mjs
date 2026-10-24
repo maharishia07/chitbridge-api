@@ -8,7 +8,7 @@
  *   node scripts/lint-copy.mjs --detect   print the roots and file types it can see
  *   node scripts/lint-copy.mjs --quiet    counts only
  */
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { loadConfig, walk, extract, words, BANNED, BUDGET_FOR, isExempt, DEFAULTS, RAW_PATTERNS } from './copy-core.mjs';
 

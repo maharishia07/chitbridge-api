@@ -88,7 +88,9 @@ const rup = (minor) => (minor / 100).toFixed(2);
             let j = {};
             try {
               j = JSON.parse(raw || '{}');
-            } catch (_) {}
+            } catch (parseError) {
+              require('../lib/logger').fellBack('simulate-years: the reply was not JSON — body stays empty', parseError);
+            }
             done({ status: res.statusCode, body: j });
           });
         }

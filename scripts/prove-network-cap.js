@@ -50,7 +50,9 @@ async function api(path, { method = 'GET', token, body } = {}) {
   let json = null;
   try {
     json = await res.json();
-  } catch (_) {}
+  } catch (parseError) {
+    require('../lib/logger').fellBack('prove-network-cap: the reply was not JSON — json keeps its first value', parseError);
+  }
   return { status: res.status, json };
 }
 async function signIn(email, name) {
@@ -92,7 +94,9 @@ async function signIn(email, name) {
   try {
     resolve(c, { caps: { catalogue_visibility: 'public' } });
     widened = true;
-  } catch (_) {}
+  } catch (refusal) {
+    widened = false; // resolve() throwing IS the refusal this check expects; the next line asserts on it
+  }
   ok('★ a cap may only TIGHTEN — one that would widen is refused', !widened, 'a cap that can loosen what the constitution permits is not a cap');
 
   // ── 3 · a REAL provisioned node ─────────────────────────────────────────────────────────────────────────────

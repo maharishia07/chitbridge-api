@@ -50,7 +50,9 @@ async function api(method, path, { token, body } = {}) {
   } catch (_) {
     try {
       text = await res.text();
-    } catch (__) {}
+    } catch (textError) {
+      require('../lib/logger').fellBack('regression: the reply was neither JSON nor text — both stay null', textError);
+    }
   }
   return { status: res.status, json, text };
 }

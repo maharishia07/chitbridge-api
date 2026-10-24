@@ -1273,18 +1273,18 @@ router.post(
         });
       }
 
-      const failed = outcome.filter((item) => item.action === 'failed');
+      const failedItems = outcome.filter((item) => item.action === 'failed');
       res.json({
         message:
           `${outcome.filter((item) => item.action === 'created').length} added, ${outcome.filter((item) => item.action === 'updated').length} updated` +
-          (failed.length ? `, ${failed.length} failed` : '') +
+          (failedItems.length ? `, ${failedItems.length} failed` : '') +
           (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
         created_columns: created,
         outcome,
         summary: {
           created: outcome.filter((item) => item.action === 'created').length,
           updated: outcome.filter((item) => item.action === 'updated').length,
-          failed: failed.length
+          failed: failedItems.length
         }
       });
     } catch (e) {
