@@ -75799,6 +75799,39 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/books-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "BOOKS TRUTH (R106 · TSK006b · row R106), on the LOCAL stack: a short delivery from a LOCAL supplier is accepted at the COUNTED figure, the gap held or noted (OPS-60), a rate difference is a debit note, the books balance.",
+   "claim": "BOOKS TRUTH (R106 · TSK006b · row R106), on the LOCAL stack: a short delivery from a LOCAL supplier is accepted at the COUNTED figure, the gap held or noted (OPS-60), a rate difference is a debit note, the books balance.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 132 lines. Run: node chitbridge-api/tests/books-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js",
+    "lib/books-hooks.js",
+    "lib/books-manual.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T14:00:00+05:30",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/storage-s3-live.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
