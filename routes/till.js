@@ -721,8 +721,8 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
       require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) });
     }
 
-    const tillItem = (item_id, d) => {
-      const taxFacts = taxFactsOf(d); /* ⭐⭐ F5 A1: the facts tax-slab inputOf reads, named key by key below (hsn never from `code`) */
+    /* ⭐⭐ F5 A1: taxFacts = the facts tax-slab inputOf reads (taxFactsOf), named key by key below so the projection guard sees each; hsn never from `code` */
+    const tillItem = (item_id, d, taxFacts = taxFactsOf(d)) => {
       return {
         item_id,
         name: d.name,
