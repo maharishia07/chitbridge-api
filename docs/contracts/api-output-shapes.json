@@ -838,6 +838,89 @@
     "url": "/api/assist/whoami"
    }
   },
+  "GET /api/simulator/content": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "layers",
+     "items",
+     "shapes",
+     "rules",
+     "compare",
+     "usps"
+    ],
+    "properties": {
+     "layers": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "shapes": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "rules": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "compare": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "usps": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "layers[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "items[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "shapes[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "rules[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "compare[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "usps[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/simulator/content"
+   }
+  },
   "POST /api/assist": {
    "status": "200",
    "schema": {
@@ -1061,6 +1144,64 @@
     }
    }
   },
+  "POST /api/simulator/feedback": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "ok"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 22,
+   "open": [],
+   "example": {
+    "url": "/api/simulator/feedback",
+    "body": {
+     "id": "chosen-by-the-caller",
+     "created_at": "2020-01-01",
+     "admin": true,
+     "section": "pricing",
+     "rating": 4,
+     "message": "Test message",
+     "leadId": "3c9a1f52-7b1e-4d6a-8c2f-5e0a9b7d4c11"
+    }
+   }
+  },
+  "POST /api/simulator/lead": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "token",
+     "leadId"
+    ],
+    "properties": {
+     "token": {
+      "type": "string"
+     },
+     "leadId": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 19,
+   "open": [],
+   "example": {
+    "url": "/api/simulator/lead",
+    "body": {
+     "name": "Test Lead",
+     "email": "lead@example.invalid",
+     "org": "Test Org"
+    }
+   }
+  },
   "PUT /api/assist/catalogue-source": {
    "status": "200",
    "schema": {
@@ -1173,6 +1314,7 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
   "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
   "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",

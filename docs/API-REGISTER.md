@@ -562,8 +562,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/signin/renew | signin | routes/signin.js:69 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/signin/sessions/revoke | signin | routes/signin.js:152 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/signin/verify | signin | routes/signin.js:951 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
-| POST | /api/simulator/feedback | simulator | routes/simulator.js:94 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/simulator/lead | simulator | routes/simulator.js:69 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/simulator/feedback | simulator | routes/simulator.js:94 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/simulator/lead | simulator | routes/simulator.js:69 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/supplies | supplies | routes/supplies.js:53 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:116 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:97 | no | no | no | no | yes | no | no | no | no | yes | no | yes | yes | partial |

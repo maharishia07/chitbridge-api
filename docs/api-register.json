@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 609
    },
    "foreign_id_404": {
     "applies": 227,
@@ -11803,7 +11803,7 @@
    "owner_area": "simulator",
    "file": "routes/simulator.js",
    "line": 44,
-   "hash": "6f1e86a43a64be73",
+   "hash": "381d8655bc80219d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -26679,7 +26679,7 @@
    "owner_area": "simulator",
    "file": "routes/simulator.js",
    "line": 94,
-   "hash": "8c8b6092e1127471",
+   "hash": "1cea72366c798274",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -26689,7 +26689,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26726,7 +26726,7 @@
    "owner_area": "simulator",
    "file": "routes/simulator.js",
    "line": 69,
-   "hash": "dfcef9022e31958c",
+   "hash": "ef1c1dc647a9ede5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -26736,7 +26736,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
