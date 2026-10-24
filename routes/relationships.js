@@ -20,6 +20,7 @@ const A_BUSINESS = `identity_type = 'entity' AND parent_entity_id IS NULL`;
 
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem');
 const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
@@ -76,6 +77,30 @@ const ctx = (req) => auth.entityOf(req);
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
 
 /**
+ * RAIL-101 (NS-3), a step BEFORE the add: the address a person typed, pasted or scanned, when it names a business on ANOTHER installation.
+ * lib/remote-party asks that installation (ctpaddress + ctpquery, the existing seams) and makes the local party row linked to it, then the ordinary add
+ * carries on with that row's bridge id (req.body.supplier_bridge_id is rewritten to it; req.remoteShown adds the address to the answer).
+ * A bare id or an e-mail passes through untouched; nothing is written unless the far end confirmed the business.
+ */
+async function remoteAddress(req, res, next) {
+  const typed = String((req.body && req.body.supplier_bridge_id) || '').trim();
+  if (!(/^https?:\/\//i.test(typed) || typed.includes('@'))) return next();
+  try {
+    const adopted = await require('../lib/remote-party').adopt(ctx(req), typed);
+    if (adopted.error) {
+      const words = adopted.error.message;
+      return problem(req, res, { status: adopted.error.status, code: adopted.error.code, detail: words, legacy: { error: 'Not added', message: words } });
+    }
+    req.body.supplier_bridge_id = adopted.party ? adopted.party.bridge_id : adopted.bridge;
+    if (adopted.party) req.remoteShown = { address: adopted.party.address, installation_key: adopted.party.installation_key };
+    return next();
+  } catch (failure) {
+    console.error('Add supplier by address error:', failure.message);
+    return res.status(500).json({ error: 'Add supplier failed', message: safeErr(failure) });
+  }
+}
+
+/**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
  * Athi, 2026-09-10: *"still a non-CB person can be a supplier, we can set the flag again — he is not part of CB?"*
@@ -120,6 +145,7 @@ router.post(
   ],
   auth,
   validate,
+  remoteAddress,
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -215,7 +241,7 @@ router.post(
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         supplier: {
-          bridge_id: bridge,
+          bridge_id: bridge, ...req.remoteShown,
           display_name: sup.rows[0].display_name,
           on_rail: !!trade.ok,
           party_no: supNo,

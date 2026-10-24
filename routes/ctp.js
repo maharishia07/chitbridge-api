@@ -106,6 +106,8 @@ async function manifest() {
     installation_key: me ? me.installation_key : process.env.INSTALLATION_KEY || 'platform-0',
     label: me ? me.label : null,
     region: me ? me.region : null,
+    /* RAIL-100: the installation's own domain, so an answer can be written bridge_id@domain (lib/ctpaddress.format) */
+    domain: me ? me.domain : null,
     endpoint: (me && me.ctp_endpoint) || null,
     accepts_populations: pops,
     public_key: k.public_key,
