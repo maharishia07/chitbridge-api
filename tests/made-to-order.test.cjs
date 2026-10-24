@@ -69,7 +69,9 @@ const fromChit = require(API + '/lib/stock-from-chit');
   t('…no trade declared → counted (a default is not an answer to a question nobody asked)', [stocked.stockedFor(null, undefined).counted, stocked.stockedFor(null, undefined).source], [true, 'none']);
   t('…the item overrides both ways: ghee counted in a tiffin shop, water not counted in a veg shop', [stocked.stockedFor(tiffin, true).counted, stocked.stockedFor(veg, false).counted], [true, false]);
   t('…"tiffin" does not hit the food batch pack (the hazard is the word food-service)', [tiffin.pack, G.verticalFrom({ sectors: ['food-service'] }).pack.key], [null, 'food']);
-  t('…the default is forVertical\'s own key, no word list of our own', stocked.COOKED_LIST, 'hotel');
+  const BP = require(API + '/lib/catalogue-blueprint');
+  t('…the default is the starter data\'s own answer (catalogue-blueprint.cooksToOrder over its one word list), no list and no trade test of our own', [BP.cooksToOrder('tiffin'), BP.cooksToOrder('restaurant'), BP.cooksToOrder('vegetables'), BP.cooksToOrder(null)], [true, true, false, false]);
+  t('…lib/stocked.js never tests a trade key itself (VB-02)', /===\s*['"]hotel['"]/.test(require('fs').readFileSync(API + '/lib/stocked.js', 'utf8')), false);
 
   flagReads = 0;
   const f = await stocked.flagsFor('e1', [DOSA, GHEE, WATER], withEntity, {});
