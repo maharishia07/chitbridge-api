@@ -293,6 +293,24 @@ function create() {
       T.compare.push(r); return r.part_id;
     },
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
+    /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
+    async taxRegistration(db, e) { const i = T.identities.find((x) => x.identity_id === e) || {}; const flags = i.policy_flags || {};
+      return { gstin: i.gstn || null, country: i.country || null, reg_type: flags.gst_registration || null }; },
+    /* F5 A1 · the sale bills the books hold (an unreversed sale_bill or walk-in day entry) whose chit has a line with no rate — read only, newest first */
+    async unratedSaleBills(db, e, from, to, limit) {
+      const noRate = (l) => (l.gst_rate === undefined || l.gst_rate === null) && (l.rate === undefined || l.rate === null);
+      const homed = T.entries.filter((h) => h.entity_id === e && /^(sale_bill|walkin_day)$/.test(String(h.event_type)) && !h.reverses_entry_id
+        && h.posting_date >= from && h.posting_date <= to && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id));
+      const out = new Map(); /* one row per bill, however many entries name it (the SQL groups by chit) */
+      for (const h of homed) for (const chit_id of h.source_chit_id ? [h.source_chit_id] : h.source_chit_ids || []) {
+        const c = T.chits.find((x) => x.chit_id === chit_id && x.entity_id === e && x.direction !== 'received'); if (!c) continue;
+        const lines = c.line_items || [], bj = c.business_json || {}, unrated = lines.filter(noRate).length; if (!unrated) continue;
+        const seen = out.get(chit_id);
+        if (seen && seen.posting_date >= ymd(h.posting_date)) continue;
+        out.set(chit_id, { chit_id, entry_no: h.entry_no, posting_date: ymd(h.posting_date), printed_as: bj.printed_as || null, bill_no: bj.bill_no || null, billed_at: bj.billed_at || null, unrated, lines: lines.length });
+      }
+      return [...out.values()].sort((p, q) => (p.posting_date < q.posting_date ? 1 : p.posting_date > q.posting_date ? -1 : q.entry_no - p.entry_no)).slice(0, limit || 50);
+    },
     /* BR1 · the rail leg of the bank reconciliation: my advice + bank-question copies, as the SQL answers them */
     async bankRailChits(db, e, from, to, limit) {
       return clone(T.chits.filter((c) => c.entity_id === e && c.business_json && /^(payment_advice|bank_query)$/.test(c.business_json.kind) && c.direction))
@@ -314,6 +332,8 @@ const fakeDb = {
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
     /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] };
+    /* the repeating entries (b281, lib/books-recurring): in memory the table is NOT there unless a test hands R.use() its own store — the reader takes 42P01 as "not migrated" */
+    if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; }
     /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
     const T = fakeDb.T || { parties: [] };
     if (/^SELECT terms FROM books_setting/.test(t.trim())) return { rows: [{ terms: T.shopTerms || null }] };

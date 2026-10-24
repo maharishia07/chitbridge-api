@@ -24,6 +24,8 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* R2-4: the area tests' own evidence file, one writer per file */
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const MOUNT = '/api/till';
 const ROUTE_FILE = 'routes/till.js'; /* named in full so the graph links this test to the route file */
@@ -117,6 +119,17 @@ const PROGRAMME = ['lib/reward-store.js', 'programme', async () => ({ name: 'Poi
 const OFFER_ROW = (kind, status) => (sql) =>
   /FROM definition d/.test(sql) ? { rows: [{ definition_id: ITEM, name: 'Spring', current_version: 1, status, kind, rules: {} }], rowCount: 1 } : undefined;
 const PARTY = (country) => ['lib/profile.js', 'invoiceParty', async () => ({ country })];
+/* F5 A1 · the rate door's worlds: a shop's registration row (regular charges, composition does not), and a shelf holding one slab but no product */
+const SLAB = '00000000-0000-4000-8000-0000000001d1'; /* a slab's definition id (the generated hardening case plays this recorded request: tools/api-contract-tests PATH_ID) */
+const RATE_BODY = { item_id: ITEM, slab_id: SLAB };
+const RATE_SHOP = (registration) => (sql) =>
+  /FROM identities WHERE identity_id = \$1/.test(sql) ? { rows: [{ gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: registration } }], rowCount: 1 } : undefined;
+const RATE_SHELF = (sql) =>
+  RATE_SHOP('regular')(sql) || (/FROM definition d/.test(sql) ? { rows: [{ definition_id: SLAB, kind: 'tax', name: 'GST 5%', current_version: 1, status: 'live', rules: { rate: 5 } }], rowCount: 1 } : undefined);
+/* …and the product itself, unrated, so the door reaches its 200 (the success answer the output allow-list is derived from) */
+const RATE_ITEM = (sql) =>
+  RATE_SHELF(sql) ||
+  (/SELECT item_data FROM catalogue_items/.test(sql) ? { rows: [{ item_data: { name: 'Poori', price: 40 } }], rowCount: 1 } : /^\s*UPDATE catalogue_items/.test(sql) ? { rows: [{ item_id: ITEM }], rowCount: 1 } : undefined);
 /** the extras: an answer the generic worlds cannot reach (a named refusal inside a handler, a fault behind a body the handler accepts) */
 const EXTRAS = [
   X('snapshot-breaks', 'GET /api/till/snapshot', 500, { patch: [['lib/profile.js', 'countryOf', THROWS]] }),
@@ -161,6 +174,15 @@ const EXTRAS = [
   X('price-no-money', 'POST /api/till/price', 422, { body: { item_id: ITEM, price: 5 } }),
   X('price-item-not-there', 'POST /api/till/price', 404, { body: { item_id: ITEM, price: 5 }, setup: { sqlRows: SHOP_ROW } }),
   X('price-write-breaks', 'POST /api/till/price', 500, { body: { item_id: ITEM, price: 5 }, setup: { db: 'fail', sqlRows: SHOP_ROW } }),
+  /* F5 A1 · POST /rate: the door (a key, a cashier) with a full body, since the strict schema answers an empty one first; the shop that charges none; the slab and the product not there; the write breaking */
+  X('rate-key-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { key: ['till'] } }),
+  X('rate-cashier-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { who: STAFF } }),
+  X('rate-unknown-key-in-body', 'POST /api/till/rate', 400, { body: Object.assign({ colour: 'red' }, RATE_BODY) }),
+  X('rate-shop-charges-none', 'POST /api/till/rate', 409, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('composition') } }),
+  X('rate-slab-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('regular') } }),
+  X('rate-item-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHELF } }),
+  X('rate-write-breaks', 'POST /api/till/rate', 500, { body: RATE_BODY, setup: { db: 'fail', sqlRows: RATE_SHELF } }),
+  X('rate-set', 'POST /api/till/rate', 200, { body: RATE_BODY, setup: { sqlRows: RATE_ITEM } }),
   X('alias-no-words', 'POST /api/till/alias', 400, { body: { item_id: ITEM } }),
   X('alias-too-long', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'x'.repeat(121) } }),
   X('alias-bad-factor', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'SUNFL OIL', factor: -2 } }),
@@ -301,7 +323,8 @@ async function checkRoutes(port, scenarios, recording) {
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
+    /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer (R2-13) */
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, request: { url: scenario.url, body: scenario.body } };
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (capturing) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
@@ -318,6 +341,32 @@ async function checkRoutes(port, scenarios, recording) {
     else kit.checkLegacy(check, label, answer, kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id));
   }
   return tested;
+}
+
+/**
+ * API-3 output allow-list (S34), the way tests/api-problem-storefront.test.cjs proves it: a route whose 200 schema is CLOSED (additionalProperties false) and whose
+ * recorded 200 fits that schema is proved here, in the counter's own world — the generator's proxy world cannot seat a slab on the shelf, so POST /rate never
+ * reaches its 200 there. → { route: { output_allowlist: true } } for the routes that held (today: POST /api/till/rate, scenario rate-set)
+ */
+const ALLOW_LIST_SCENES = { 'POST /api/till/rate': 'rate-set' };
+function checkAllowList(recording) {
+  const proved = {};
+  const words = require(path.join(HERE, CONTRACT_FILE));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  Object.keys(ALLOW_LIST_SCENES).forEach((route) => {
+    const answer = recording[route + '|' + ALLOW_LIST_SCENES[route]];
+    const schema = words.operationFor(route.replace(' ' + MOUNT, ' ')).responses[200].content['application/json'].schema;
+    const fits = engine.compile(schema);
+    const closedAnswer = !!answer && answer.status === 200 && schema.additionalProperties === false && fits(answer.body);
+    check(route + ' · ' + ALLOW_LIST_SCENES[route] + ': the 200 holds only the keys its operation lists (a closed schema the answer fits)', closedAnswer, { status: answer && answer.status, errors: fits.errors, body: answer && answer.body });
+    if (closedAnswer) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the counter routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
 }
 
 /** the words of the contract as units: each helper answers the spec the routes spread into problem() */
@@ -365,6 +414,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkWords();
+  const proved = checkAllowList(recording);
   const coverage = Object.fromEntries(
     Object.keys(tested)
       .sort()
@@ -390,7 +440,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
         1
       ) + '\n'
     );
+    FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the counter routes whose 200 held closed here', kit.sameValue(allowListEvidenceOnDisk(), proved), {
+      onDisk: allowListEvidenceOnDisk(),
+      proved
+    });
     const mine = Object.fromEntries(
       Object.keys(onDisk)
         .filter(MINE)
