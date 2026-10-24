@@ -321,7 +321,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/relationships/suppliers/:id | relationships | routes/relationships.js:326 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | PATCH | /api/schemas/fields/:field_key | schemas | routes/schemas.js:305 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | PATCH | /api/schemas/fields/order | schemas | routes/schemas.js:246 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| PATCH | /api/schemas/visibility | schemas | routes/schemas.js:406 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| PATCH | /api/schemas/visibility | schemas | routes/schemas.js:406 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | PATCH | /api/supplies/:id | supplies | routes/supplies.js:77 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | PATCH | /api/testing/incidents/:id | testing | routes/testing.js:2422 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/testing/requirements/:id | testing | routes/testing.js:2038 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |

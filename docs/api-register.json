@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 611
+    "failing": 610
    },
    "foreign_id_404": {
     "applies": 227,
@@ -1127,7 +1127,7 @@
    "owner_area": "schemas",
    "file": "routes/schemas.js",
    "line": 188,
-   "hash": "f4aecf8e5377f90e",
+   "hash": "680c9ed819105397",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11591,7 +11591,7 @@
    "owner_area": "schemas",
    "file": "routes/schemas.js",
    "line": 90,
-   "hash": "5dbd96ff9c6c0242",
+   "hash": "6323a87fc0aa5778",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11639,7 +11639,7 @@
    "owner_area": "schemas",
    "file": "routes/schemas.js",
    "line": 29,
-   "hash": "6dd58ca2069a7e71",
+   "hash": "677bfce89941aa2e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14927,7 +14927,7 @@
    "owner_area": "schemas",
    "file": "routes/schemas.js",
    "line": 305,
-   "hash": "84b53613eaa652df",
+   "hash": "a5de8807e0b9826d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14978,7 +14978,7 @@
    "owner_area": "schemas",
    "file": "routes/schemas.js",
    "line": 246,
-   "hash": "9155d46b461e8a04",
+   "hash": "9389f29f5f100aba",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15028,7 +15028,7 @@
    "owner_area": "schemas",
    "file": "routes/schemas.js",
    "line": 406,
-   "hash": "37ba44f89405d662",
+   "hash": "6a6e1ccd21d59062",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15038,7 +15038,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26186,7 +26186,7 @@
    "owner_area": "schemas",
    "file": "routes/schemas.js",
    "line": 48,
-   "hash": "8b88924fcc29e2c1",
+   "hash": "3ff0b50aa54cfba7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
