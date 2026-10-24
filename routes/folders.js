@@ -222,10 +222,7 @@ router.post(
        */
       const doInsert = (withScope) =>
         withEntity(e, async (db) => {
-          if (parent) {
-            const p = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]);
-            if (!p.rows.length) return { badParent: true };
-          }
+          if (parent && !(await views.folderOwned(db, e, parent))) return { badParent: true }; /* SEC-100: the one lookup, under this shop */
           const r = withScope
             ? await db.query(`INSERT INTO folder (entity_id, parent_id, name, scope) VALUES ($1,$2,$3,$4) RETURNING folder_id, parent_id, name, sort, scope`, [
                 e,
@@ -263,6 +260,7 @@ router.patch(
       const sets = [];
       const params = [];
       let index = 0;
+      let newParent = null; /* SEC-100: a parent named in the body is looked up under this shop before it is stored */
       if (req.body.name !== undefined) {
         index++;
         sets.push(`name = $${index}`);
@@ -274,6 +272,7 @@ router.patch(
         index++;
         sets.push(`parent_id = $${index}`);
         params.push(par);
+        newParent = par;
       }
       if (!sets.length) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Nothing to update') });
       index++;
@@ -281,10 +280,12 @@ router.patch(
       params.push(req.params.id);
       index++;
       params.push(e);
-      const r = await withEntity(e, (db) =>
-        db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${index} RETURNING folder_id, parent_id, name`, params)
-      );
-      if (!r.rows.length) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found') });
+      const r = await withEntity(e, async (db) => {
+        if (newParent && !(await views.folderOwned(db, e, newParent))) return null;
+        return db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${index} RETURNING folder_id, parent_id, name`, params);
+      });
+      /* an unknown parent and another shop's parent are one answer, and the same as an unknown folder (SEC-100) */
+      if (!r || !r.rows.length) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found') });
       res.json({ folder: r.rows[0] });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
@@ -519,7 +520,9 @@ router.post('/:id/rules', auth, ...checked('POST /:id/rules'), async (req, res) 
   try {
     if (INV.byId(req.params.id))
       return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Fixed rule', "A system folder's rule is part of the folder inventory and cannot be changed here.") });
-    res.json(await rules.create(ent(req), req.params.id, req.body || {}));
+    const made = await rules.create(ent(req), req.params.id, req.body || {});
+    if (!made) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found') }); /* SEC-100: an unknown folder and another shop's folder are one answer */
+    res.json(made);
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rule create failed'));
   }
