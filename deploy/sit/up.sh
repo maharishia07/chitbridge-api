@@ -23,7 +23,9 @@ die() { echo "up.sh: $*" >&2; exit 1; }
 case "${1:-}" in
   in) SIT_HOST=sit-in.ondcpro.com; COUNTRY=IN; CURRENCY=INR; TZNAME=Asia/Kolkata;     KEY=sit-in ;;
   au) SIT_HOST=sit-au.ondcpro.com; COUNTRY=AU; CURRENCY=AUD; TZNAME=Australia/Sydney; KEY=sit-au ;;
-  *) die "usage: ./up.sh in|au" ;;
+  ae) SIT_HOST=sit-ae.ondcpro.com; COUNTRY=AE; CURRENCY=AED; TZNAME=Asia/Dubai;       KEY=sit-ae ;;
+  root) SIT_HOST=sit-root.ondcpro.com; COUNTRY=; CURRENCY=; TZNAME=Asia/Kolkata;      KEY=sit-root ;;  # the network master: it states no country (Grundfos style)
+  *) die "usage: ./up.sh in|au|ae|root" ;;
 esac
 # before DNS: SIT_HOST_AS=129-225-85-65.sslip.io (a public name that resolves to the VM's IP) stands in for the ondcpro.com name
 SIT_HOST=${SIT_HOST_AS:-$SIT_HOST}
@@ -83,7 +85,7 @@ set_kv PUBLIC_API_BASE "https://$SIT_HOST"
 set_kv TESTER_CODE_TZ "$TZNAME"
 # the api's own env file: the same file without what only this script, compose or the database owner needs (the owner's password stays out of the api)
 grep -E '^[A-Z][A-Z0-9_]*=.' "$ENVF" \
-  | grep -vE '^(POSTGRES_PASSWORD|CB_APP_PASSWORD|GIT_TOKEN|API_REF|WEB_REF|SIT_ROOT|SIT_HOST|SIT_COUNTRY|WEB_ORIGIN|CB_API_BASE|DB_PORT|ASK_CUSTOM_HOSTS|SIT_PEERS)=' \
+  | grep -vE '^(POSTGRES_PASSWORD|CB_APP_PASSWORD|GIT_TOKEN|API_REF|WEB_REF|SIT_ROOT|SIT_HOST|SIT_COUNTRY|WEB_ORIGIN|CB_API_BASE|DB_PORT|ASK_CUSTOM_HOSTS|SIT_PEERS|SIT_PROJECT)=' \
   > "$APIENV" || true
 chmod 600 "$APIENV"
 
@@ -122,7 +124,9 @@ SOURCE_COMMIT=$(git -C "$API_DIR" rev-parse HEAD)
 WEB_COMMIT=$(git -C "$WEB_DIR" rev-parse HEAD)
 export SOURCE_COMMIT CB_WEB_DIR="$WEB_DIR"
 
-DC="$DOCKER compose -p chitbridge -f ../compose.yml -f docker-compose.yml --env-file .env"
+# the compose project name: chitbridge, or SIT_PROJECT, so a second stack on the same VM never reuses the first one's volumes (the network spin keeps the old data aside this way)
+PROJECT=${SIT_PROJECT:-$(get_kv SIT_PROJECT)}; PROJECT=${PROJECT:-chitbridge}
+DC="$DOCKER compose -p $PROJECT -f ../compose.yml -f docker-compose.yml --env-file .env"
 
 # ---- 5. database + migrations (tools/migrate.cjs: empty = baseline + every bNNN; later = only the new files; also sets cb_app's password) ----
 say "database and migrations"
@@ -134,9 +138,9 @@ say "installation $KEY: $COUNTRY / $CURRENCY / $TZNAME"
 $DC exec -T db psql -X -q -U postgres -d chitbridge -v ON_ERROR_STOP=1 \
   -v k="$KEY" -v c="$COUNTRY" -v d="$SIT_HOST" -v cur="$CURRENCY" -v tz="$TZNAME" -v ep="https://$SIT_HOST/api/ctp/deliver" -f - <<'SQL'
 INSERT INTO installation (installation_key, label, purpose, cloud_provider, region, zone, domain, currency, timezone, vertical_key, country, ctp_endpoint)
-VALUES (:'k', :'k', 'sit', 'oracle', :'c', 'always-free', :'d', :'cur', :'tz', 'base', :'c', :'ep')
+VALUES (:'k', :'k', 'sit', 'oracle', NULLIF(:'c', ''), 'always-free', :'d', NULLIF(:'cur', ''), :'tz', 'base', NULLIF(:'c', ''), :'ep')
 ON CONFLICT (installation_key) DO UPDATE
-  SET country = EXCLUDED.country, domain = EXCLUDED.domain, currency = EXCLUDED.currency, timezone = EXCLUDED.timezone,
+  SET country = EXCLUDED.country, region = EXCLUDED.region, domain = EXCLUDED.domain, currency = EXCLUDED.currency, timezone = EXCLUDED.timezone,
       ctp_endpoint = EXCLUDED.ctp_endpoint, active = true;
 SQL
 
