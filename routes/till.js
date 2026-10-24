@@ -721,7 +721,7 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
       require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) });
     }
 
-    const tillItem = (item_id, d) => {
+    const tillItem = (item_id, d, taxFacts = taxFactsOf(d)) => {
       return {
         item_id,
         name: d.name,
@@ -731,8 +731,8 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
                   and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
         price: amountOf(d.price),
         mrp: amountOf(d.mrp),
-        /* ⭐⭐ F5 A1: hsn (never `code`) · tax_slab · gst_rate · tax_slab_name · cess_rate · categories[] — the facts tax-slab inputOf reads (taxFactsOf, above) */
-        ...taxFactsOf(d),
+        hsn: taxFacts.hsn, tax_slab: taxFacts.tax_slab, gst_rate: taxFacts.gst_rate /* ⭐⭐ F5 A1: taxFactsOf, the facts tax-slab inputOf reads; hsn never from `code` */,
+        tax_slab_name: taxFacts.tax_slab_name, cess_rate: taxFacts.cess_rate, categories: taxFacts.categories,
         /**
          * ⚠️⚠️⚠️ THE NAME, RESOLVED — not the legacy key ([TILL-114]). This was `d.category || null`, and
          * `category` is the key catalogue-columns calls *"legacy … read, never written again"*. A product
