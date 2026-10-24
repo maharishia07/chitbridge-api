@@ -29,7 +29,8 @@ const log = require('../lib/logger');
 const {
   round: roundMoney
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
-const { ownerOnly, isOwner } = require('../lib/owner');
+const { ownerOnly } = require('../lib/owner');
+const { setsRate, RATE_ASK_OWNER, RATE_OWNER_ONLY } = require('../lib/rate-door'); // CAT-210: who may set a rate, once for every door
 const taxSlab = require('../lib/tax-slab'); /* ⭐ F5 A1: categoryIdsOf for the counter's item, setOn for the rate door — the engine's one writer */
 const taxPacks = require('../lib/tax-packs'); /* the shop's tax pack (collect_without_tax_id) for tax-shelf.chargesTax */
 const router = express.Router();
@@ -1849,9 +1850,7 @@ router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price')
  * (tax-shelf.chargesTax: registration + tax id, the twin of the counter's shopTax().charges) — never "has a GSTIN". The words are the pack's
  * (tax-shelf.taxWordOf), never "GST" in code. Trips: readShelf (its transaction, the face, the governed slabs) + ONE transaction (shop · item · write).
  */
-const RATE_ASK_OWNER = 'Ask the owner or a manager to set the tax rate.';
-/** who may answer the counter's "which rate?": the business itself, or a co-assist whose hat is manager (lib/owner isOwner; the hat comes from the DB, never the token) */
-const setsRate = (req) => isOwner(req) || !!(req.identity && req.identity.hat === 'manager');
+/* who may answer the counter's "which rate?" is lib/rate-door setsRate: the business itself, or a co-assist whose hat is manager (one rule on every door, CAT-210) */
 /** the merge-patch setOn makes on this product: every key it changed; a key it removed travels as null (jsonb || keeps every other key) */
 function slabPatchOf(item_data, slab) {
   const before = Object.assign({}, item_data || {});
@@ -1898,7 +1897,7 @@ function rateAnswer(out) {
 router.post('/rate', auth, ...checked('POST /rate'), async (req, res) => {
   try {
     /* the door, before any lookup (cb-api round 1, rule 2): a key or a cashier is refused with the same sentence, and nothing is read */
-    if (!setsRate(req)) return problem(req, res, { status: 403, ...said('TILL_RATE_OWNER_ONLY', 'Forbidden', RATE_ASK_OWNER, { may: false, why: RATE_ASK_OWNER }) });
+    if (!setsRate(req)) return problem(req, res, { status: 403, ...said(RATE_OWNER_ONLY, 'Forbidden', RATE_ASK_OWNER, { may: false, why: RATE_ASK_OWNER }) });
     const entity_id = auth.entityOf(req);
     const { item_id, slab_id, missing } = rateBodyOf(req);
     if (missing) return problem(req, res, { status: 400, ...badRequest(missing) });

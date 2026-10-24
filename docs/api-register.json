@@ -845,7 +845,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1660,
+   "line": 1699,
    "hash": "ef5500ca995d3b4b",
    "columns": {
     "schema_in": true,
@@ -895,7 +895,7 @@
    "path": "/api/products/:id/media/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1810,
+   "line": 1849,
    "hash": "2c018b29c6dc0708",
    "columns": {
     "schema_in": true,
@@ -945,7 +945,7 @@
    "path": "/api/products/:id/schedule/:sid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1541,
+   "line": 1580,
    "hash": "d1ce481d9e75dc7a",
    "columns": {
     "schema_in": true,
@@ -6804,7 +6804,7 @@
    "owner_area": "entities",
    "file": "routes/entities.js",
    "line": 887,
-   "hash": "219ee8eb8cdb9428",
+   "hash": "1f9a50e743295f2d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6840,8 +6840,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1f9a50e743295f2d"
    },
    "status": "partial"
   },
@@ -10606,7 +10607,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 602,
+   "line": 641,
    "hash": "091f1ce75402d338",
    "columns": {
     "schema_in": true,
@@ -10655,7 +10656,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1502,
+   "line": 1535,
    "hash": "f27ee6ea29d22689",
    "columns": {
     "schema_in": true,
@@ -10705,7 +10706,7 @@
    "path": "/api/products/:id/versions",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1846,
+   "line": 1885,
    "hash": "6bc46a7033f4102a",
    "columns": {
     "schema_in": true,
@@ -10756,7 +10757,7 @@
    "path": "/api/products/export.csv",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 961,
+   "line": 1000,
    "hash": "e6c365a0051bb1fc",
    "columns": {
     "schema_in": true,
@@ -10804,7 +10805,7 @@
    "path": "/api/products/lists",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1961,
+   "line": 2000,
    "hash": "5d9fd08ccb9f8f04",
    "columns": {
     "schema_in": true,
@@ -10852,7 +10853,7 @@
    "path": "/api/products/media/:item_id/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1705,
+   "line": 1744,
    "hash": "37dfa7e57774ac5a",
    "columns": {
     "schema_in": true,
@@ -10901,7 +10902,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1302,
+   "line": 1331,
    "hash": "7fd15416d5433865",
    "columns": {
     "schema_in": true,
@@ -10950,7 +10951,7 @@
    "path": "/api/products/template",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 990,
+   "line": 1029,
    "hash": "4fa0397692601b3c",
    "columns": {
     "schema_in": true,
@@ -10998,7 +10999,7 @@
    "path": "/api/products/workbook.xlsx",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 890,
+   "line": 929,
    "hash": "f926495a5d767afd",
    "columns": {
     "schema_in": true,
@@ -12864,7 +12865,7 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2920,
+   "line": 2919,
    "hash": "3d6b2fc666d0eb0a",
    "columns": {
     "schema_in": true,
@@ -12913,7 +12914,7 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2819,
+   "line": 2818,
    "hash": "d10e6a6e1d2b604c",
    "columns": {
     "schema_in": true,
@@ -12962,7 +12963,7 @@
    "path": "/api/till/counters",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1470,
+   "line": 1471,
    "hash": "2076c6a23b42055a",
    "columns": {
     "schema_in": true,
@@ -13011,7 +13012,7 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3350,
+   "line": 3349,
    "hash": "4a422f34f38b13a0",
    "columns": {
     "schema_in": true,
@@ -13061,7 +13062,7 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3056,
+   "line": 3055,
    "hash": "be0d9bf2e28e212b",
    "columns": {
     "schema_in": true,
@@ -13110,7 +13111,7 @@
    "path": "/api/till/quick-keys/groups",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1479,
+   "line": 1480,
    "hash": "35f7ecacff13de4d",
    "columns": {
     "schema_in": true,
@@ -13159,7 +13160,7 @@
    "path": "/api/till/quick-keys/hidden",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1517,
+   "line": 1518,
    "hash": "58978b2c96355943",
    "columns": {
     "schema_in": true,
@@ -13208,7 +13209,7 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1561,
+   "line": 1562,
    "hash": "476b78ae0d50a3d6",
    "columns": {
     "schema_in": true,
@@ -13257,7 +13258,7 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1489,
+   "line": 1490,
    "hash": "07c6f23d46074c97",
    "columns": {
     "schema_in": true,
@@ -13307,7 +13308,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1954,
+   "line": 1953,
    "hash": "e51972ce8a02f1cf",
    "columns": {
     "schema_in": true,
@@ -13357,7 +13358,7 @@
    "path": "/api/till/screens",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2262,
+   "line": 2261,
    "hash": "fee1ffe46e308ce3",
    "columns": {
     "schema_in": true,
@@ -13406,7 +13407,7 @@
    "path": "/api/till/snapshot",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 185,
+   "line": 186,
    "hash": "c700573b160da8b8",
    "columns": {
     "schema_in": true,
@@ -13456,7 +13457,7 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2648,
+   "line": 2647,
    "hash": "879aa38ccc49a05e",
    "columns": {
     "schema_in": true,
@@ -13507,7 +13508,7 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2885,
+   "line": 2884,
    "hash": "2da4e820d2a1ee15",
    "columns": {
     "schema_in": true,
@@ -13557,7 +13558,7 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3027,
+   "line": 3026,
    "hash": "3699b1c90b1b4388",
    "columns": {
     "schema_in": true,
@@ -13606,7 +13607,7 @@
    "path": "/api/till/verify",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2421,
+   "line": 2420,
    "hash": "048543cabfe017b6",
    "columns": {
     "schema_in": true,
@@ -13655,7 +13656,7 @@
    "path": "/api/till/worth-an-offer",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1626,
+   "line": 1627,
    "hash": "16793d611dc5c4c7",
    "columns": {
     "schema_in": true,
@@ -14688,8 +14689,8 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1436,
-   "hash": "52a641631fb0088a",
+   "line": 1469,
+   "hash": "2cb19f337d86ef8c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14728,8 +14729,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2cb19f337d86ef8c"
    },
    "status": "partial"
   },
@@ -24782,8 +24784,8 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 390,
-   "hash": "1e0b83ef1f6c57a2",
+   "line": 395,
+   "hash": "4522908970c7bd15",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -24810,6 +24812,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -24820,8 +24823,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4522908970c7bd15"
    },
    "status": "partial"
   },
@@ -24831,7 +24835,7 @@
    "path": "/api/products/:id/media",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1745,
+   "line": 1784,
    "hash": "c82f2c2dbbf7c486",
    "columns": {
     "schema_in": true,
@@ -24883,8 +24887,8 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1509,
-   "hash": "670ad01c2c0b34da",
+   "line": 1548,
+   "hash": "6b487edc09786183",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -24924,8 +24928,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6b487edc09786183"
    },
    "status": "partial"
   },
@@ -24935,7 +24940,7 @@
    "path": "/api/products/availability/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1555,
+   "line": 1594,
    "hash": "e22e7ba9374b3ef4",
    "columns": {
     "schema_in": true,
@@ -24984,8 +24989,8 @@
    "path": "/api/products/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 450,
-   "hash": "8cc9e1bb30927555",
+   "line": 456,
+   "hash": "788b99d8d31e7593",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25012,6 +25017,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -25022,8 +25028,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "788b99d8d31e7593"
    },
    "status": "partial"
   },
@@ -25033,8 +25040,8 @@
    "path": "/api/products/bulk-update",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 550,
-   "hash": "fce1723e9819565b",
+   "line": 596,
+   "hash": "c171de3ebf354cea",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25061,6 +25068,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -25071,8 +25079,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c171de3ebf354cea"
    },
    "status": "partial"
   },
@@ -25082,8 +25091,8 @@
    "path": "/api/products/import",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1087,
-   "hash": "668511f633758dd5",
+   "line": 1126,
+   "hash": "ed75a55ba1d66a41",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25110,6 +25119,7 @@
    "declared": [
     400,
     401,
+    403,
     409,
     413,
     500
@@ -25122,8 +25132,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ed75a55ba1d66a41"
    },
    "status": "partial"
   },
@@ -25133,7 +25144,7 @@
    "path": "/api/products/import/preflight",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1014,
+   "line": 1053,
    "hash": "4345c2ea3bad5916",
    "columns": {
     "schema_in": true,
@@ -25182,7 +25193,7 @@
    "path": "/api/products/lists/adopt",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2082,
+   "line": 2121,
    "hash": "17aa750372131c9d",
    "columns": {
     "schema_in": true,
@@ -25231,7 +25242,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1311,
+   "line": 1340,
    "hash": "ea8cd5d6b378f465",
    "columns": {
     "schema_in": true,
@@ -25280,7 +25291,7 @@
    "path": "/api/products/status/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 499,
+   "line": 506,
    "hash": "224a58ec6a2e8d00",
    "columns": {
     "schema_in": true,
@@ -27648,7 +27659,7 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3241,
+   "line": 3240,
    "hash": "1b393f3ac10694ac",
    "columns": {
     "schema_in": true,
@@ -27698,7 +27709,7 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2710,
+   "line": 2709,
    "hash": "0b022d0054a67cb1",
    "columns": {
     "schema_in": true,
@@ -27750,7 +27761,7 @@
    "path": "/api/till/close",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1309,
+   "line": 1310,
    "hash": "220f807a69f0ef45",
    "columns": {
     "schema_in": true,
@@ -27801,7 +27812,7 @@
    "path": "/api/till/diagnostic",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1259,
+   "line": 1260,
    "hash": "b8af7e64143ede8b",
    "columns": {
     "schema_in": true,
@@ -27852,7 +27863,7 @@
    "path": "/api/till/enrol",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2163,
+   "line": 2162,
    "hash": "d3d29fb2332f13de",
    "columns": {
     "schema_in": true,
@@ -27902,7 +27913,7 @@
    "path": "/api/till/flags",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1396,
+   "line": 1397,
    "hash": "65214f74263076ca",
    "columns": {
     "schema_in": true,
@@ -27953,7 +27964,7 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3284,
+   "line": 3283,
    "hash": "93504ef849a926a2",
    "columns": {
     "schema_in": true,
@@ -28001,7 +28012,7 @@
    "path": "/api/till/offer-item",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1737,
+   "line": 1738,
    "hash": "d6ad7fcb17c22003",
    "columns": {
     "schema_in": true,
@@ -28052,7 +28063,7 @@
    "path": "/api/till/pair",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2110,
+   "line": 2109,
    "hash": "b8944df3397c8a0b",
    "columns": {
     "schema_in": true,
@@ -28102,7 +28113,7 @@
    "path": "/api/till/pair/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2217,
+   "line": 2216,
    "hash": "62505b6631fc9613",
    "columns": {
     "schema_in": true,
@@ -28151,7 +28162,7 @@
    "path": "/api/till/price",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1797,
+   "line": 1798,
    "hash": "3a149ca9b4b713e5",
    "columns": {
     "schema_in": true,
@@ -28203,7 +28214,7 @@
    "path": "/api/till/quick-keys/hide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1533,
+   "line": 1534,
    "hash": "c041346835b390b6",
    "columns": {
     "schema_in": true,
@@ -28253,7 +28264,7 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1572,
+   "line": 1573,
    "hash": "7073d24f16ce0ca0",
    "columns": {
     "schema_in": true,
@@ -28303,7 +28314,7 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1503,
+   "line": 1504,
    "hash": "668b1080ceb29326",
    "columns": {
     "schema_in": true,
@@ -28353,7 +28364,7 @@
    "path": "/api/till/quick-keys/unhide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1547,
+   "line": 1548,
    "hash": "dbbc8c561f7c33d7",
    "columns": {
     "schema_in": true,
@@ -28403,8 +28414,8 @@
    "path": "/api/till/rate",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1898,
-   "hash": "f9f621a00a06e8ef",
+   "line": 1897,
+   "hash": "dc5f3afec5d1eae1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28455,7 +28466,7 @@
    "path": "/api/till/reconcile",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2382,
+   "line": 2381,
    "hash": "fe056ad1a25bb4e7",
    "columns": {
     "schema_in": true,
@@ -28505,7 +28516,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1989,
+   "line": 1988,
    "hash": "e0244e6670840cab",
    "columns": {
     "schema_in": true,
@@ -28556,7 +28567,7 @@
    "path": "/api/till/reward/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2045,
+   "line": 2044,
    "hash": "aa0eb6ceeead07c5",
    "columns": {
     "schema_in": true,
@@ -28607,7 +28618,7 @@
    "path": "/api/till/screens/rename",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2314,
+   "line": 2313,
    "hash": "035453d24223f376",
    "columns": {
     "schema_in": true,
@@ -28658,7 +28669,7 @@
    "path": "/api/till/screens/revoke",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2281,
+   "line": 2280,
    "hash": "a282304c2a83381b",
    "columns": {
     "schema_in": true,
@@ -28709,7 +28720,7 @@
    "path": "/api/till/shop",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2511,
+   "line": 2510,
    "hash": "ecbd876fea2f9aed",
    "columns": {
     "schema_in": true,
@@ -28759,7 +28770,7 @@
    "path": "/api/till/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1370,
+   "line": 1371,
    "hash": "4f046894dfe93c93",
    "columns": {
     "schema_in": true,
@@ -28809,7 +28820,7 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1149,
+   "line": 1150,
    "hash": "23ce0464860c30d3",
    "columns": {
     "schema_in": true,
@@ -28860,7 +28871,7 @@
    "path": "/api/till/stock/bulk",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1195,
+   "line": 1196,
    "hash": "241047c4aa9d0ca5",
    "columns": {
     "schema_in": true,
@@ -30515,7 +30526,7 @@
    "path": "/api/products/:id/availability",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1600,
+   "line": 1639,
    "hash": "61175630388e5785",
    "columns": {
     "schema_in": true,
@@ -30565,7 +30576,7 @@
    "path": "/api/products/:id/status",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1630,
+   "line": 1669,
    "hash": "19e06763d0d328ee",
    "columns": {
     "schema_in": true,

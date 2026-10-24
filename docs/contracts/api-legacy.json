@@ -16688,6 +16688,22 @@
       "error": "Update failed",
       "message": "This catalogue is priced in INR; a price in USD cannot be stored on it. The currency comes from the business, not the request."
      }
+    },
+    {
+     "scenario": "edit-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },
@@ -16829,6 +16845,22 @@
      "fixture": {
       "error": "Add failed",
       "message": "Price must be a finite number, got \"abc\""
+     }
+    },
+    {
+     "scenario": "rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
      }
     }
    ]
@@ -17424,6 +17456,22 @@
       "error": "Bulk add failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "bulk-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },
@@ -17555,6 +17603,22 @@
      "fixture": {
       "error": "Bulk update failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "edit-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
      }
     }
    ]
@@ -17866,6 +17930,28 @@
         "field": "decisions",
         "message": "Invalid value"
        }
+      ]
+     }
+    },
+    {
+     "scenario": "import-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "rows": [
+       2
+      ]
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "rows": [
+       2
       ]
      }
     }
