@@ -19442,6 +19442,22 @@
       "error": "Save failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "face-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },

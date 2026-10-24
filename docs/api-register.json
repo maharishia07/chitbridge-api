@@ -650,8 +650,8 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 447,
-   "hash": "3196698bcd79d5fa",
+   "line": 476,
+   "hash": "1ef9e207e03706cb",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -3854,7 +3854,7 @@
    "path": "/api/catalogue-face",
    "owner_area": "catalogue-face",
    "file": "routes/catalogue-face.js",
-   "line": 21,
+   "line": 63,
    "hash": "2b179ff1d2e0cf6a",
    "columns": {
     "schema_in": true,
@@ -6476,7 +6476,7 @@
    "path": "/api/definitions",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 70,
+   "line": 72,
    "hash": "105fd127724d2cba",
    "columns": {
     "schema_in": false,
@@ -6520,7 +6520,7 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 212,
+   "line": 214,
    "hash": "0ddaa5756ba5174f",
    "columns": {
     "schema_in": false,
@@ -21914,8 +21914,8 @@
    "path": "/api/definitions",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 258,
-   "hash": "408b44fbe93dd45c",
+   "line": 287,
+   "hash": "3e3e5f0b3c255928",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -21958,7 +21958,7 @@
    "path": "/api/definitions/freeze",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 503,
+   "line": 534,
    "hash": "20e0cba3421722d6",
    "columns": {
     "schema_in": false,
@@ -29531,8 +29531,8 @@
    "path": "/api/catalogue-face",
    "owner_area": "catalogue-face",
    "file": "routes/catalogue-face.js",
-   "line": 32,
-   "hash": "db4c5014112c4211",
+   "line": 74,
+   "hash": "60556e63ece7748b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29559,6 +29559,7 @@
    "declared": [
     400,
     401,
+    403,
     413,
     422,
     500
@@ -29571,8 +29572,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bb557dd69da1228a"
    },
    "status": "partial"
   },
@@ -29985,8 +29987,8 @@
    "path": "/api/definitions/:id",
    "owner_area": "definitions",
    "file": "routes/definitions.js",
-   "line": 334,
-   "hash": "dd07ed26ef38ce82",
+   "line": 363,
+   "hash": "17c9d11f99180426",
    "columns": {
     "schema_in": false,
     "schema_out": false,

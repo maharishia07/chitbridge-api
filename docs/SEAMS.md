@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
 | 88 | `read` | `books-cashflow.js` | Trips: |
-| 82 | `words` | `variant.browser.js` |  |
+| 84 | `words` | `variant.browser.js` |  |
 | 75 | `money` | `bill-privacy.js` |  |
 | 74 | `answer` | `availability.js` | from March; then nearest. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -21,7 +21,7 @@ of file each thing is; this says what already does the job.
 | 65 | `list` | `cap-settings.js` |  |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 60 | `here` | `screen-id.js` |  |
-| 58 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 60 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 57 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 58 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 57 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
@@ -29,7 +29,7 @@ of file each thing is; this says what already does the job.
 | 54 | `items` | `books-store.js` | PERF1: |
 | 52 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 50 | `entry` | `books-store.js` |  |
-| 50 | `next` | `dayopen.js` | the next thing to do — |
+| 52 | `next` | `dayopen.js` | the next thing to do — |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 49 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
@@ -42,7 +42,7 @@ of file each thing is; this says what already does the job.
 | 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 39 | `view` | `books-payables.js` | group: |
 | 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 39 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 40 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 40 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `write` | `junitresults.js` | control characters are not legal XML at all — |
@@ -51,7 +51,7 @@ of file each thing is; this says what already does the job.
 | 36 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
-| 35 | `rules` | `docnumber.js` | the rule set for a country — |
+| 37 | `rules` | `docnumber.js` | the rule set for a country — |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 33 | `closeModal` | `app.html` |  |
@@ -83,7 +83,7 @@ of file each thing is; this says what already does the job.
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 26 | `sheet` | `cap-employees.js` |  |
 | 26 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 28 | `rate` | `convert.js` | A rate, with its evidence. |
+| 30 | `rate` | `convert.js` | A rate, with its evidence. |
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
