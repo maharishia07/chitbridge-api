@@ -695,6 +695,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CODE_ISSUE_LIMIT",
+   "status": "429",
+   "title": "Too many codes",
+   "shopkeeper": "Five codes were made for this person in the last 15 minutes.",
+   "hint": "Wait a few minutes, then make a new one.",
+   "owner_area": "employee-code",
+   "since": "2026-10-24"
+  },
+  {
    "code": "CODE_NOT_ASKED",
    "status": "400",
    "title": "No code asked for",
@@ -702,6 +711,15 @@
    "hint": "Tap \"Send code\", then type the code you get.",
    "owner_area": "catalogue",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CODE_SHOW_NOT_READY",
+   "status": "503",
+   "title": "Showing a code is not ready",
+   "shopkeeper": "This environment cannot show a first code yet, so none was made.",
+   "hint": "Add their e-mail, or try again later.",
+   "owner_area": "employee-code",
+   "since": "2026-10-24"
   },
   {
    "code": "COMMENT_ONLY",
@@ -1764,6 +1782,15 @@
    "hint": "Raise the limit in Settings first, or give fewer.",
    "owner_area": "actors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "MEMBERSHIP_SUSPENDED",
+   "status": "403",
+   "title": "Membership suspended",
+   "shopkeeper": "The network has suspended your membership, so you cannot send to it.",
+   "hint": "Ask the network to resume it, then send again.",
+   "owner_area": "network",
+   "since": "2026-10-24"
   },
   {
    "code": "MIGRATION",
@@ -3116,6 +3143,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "TILL_NO_TAX_SCHEME",
+   "status": "409",
+   "title": "Shop charges no tax",
+   "shopkeeper": "This shop charges no tax, so no rate is needed.",
+   "hint": "If that is wrong, check the registration in Country setup.",
+   "owner_area": "till",
+   "since": "2026-10-24"
+  },
+  {
+   "code": "TILL_RATE_OWNER_ONLY",
+   "status": "403",
+   "title": "Owner or manager sets the rate",
+   "shopkeeper": "Only the owner or a manager can set a tax rate.",
+   "hint": "Ask them to set it once; the sale goes on.",
+   "owner_area": "till",
+   "since": "2026-10-24"
+  },
+  {
    "code": "TILL_REFUSED",
    "status": "varies",
    "title": "Counter request refused",
@@ -3204,6 +3249,15 @@
    "hint": "Ask it to claim its place first.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "UNKNOWN_FIELD",
+   "status": "400",
+   "title": "Field not known here",
+   "shopkeeper": "Not saved: that detail cannot be changed here. Check the name and try again.",
+   "hint": "-",
+   "owner_area": "relationships",
+   "since": "2026-10-24"
   },
   {
    "code": "USER_ID_ENTITY_ONLY",

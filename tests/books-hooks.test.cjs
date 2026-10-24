@@ -269,11 +269,25 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     const d = await RCV(rcpt('r6', rbj({ party: { name: 'Sri Ganesh' } }), 'accepted'));
     eq('F11 · a typed name the books do not know → waits, named, with the fix ("Who is … Add them as a supplier")',
       [d.k.kind, d.k.wait, d.k.why], ['queue', 'party', 'Who is Sri Ganesh? Add them as a supplier — then bill SG-101 waits for you to accept it.']);
+    /* ══ R106 / OPS-60 (TSK006b) · THEIR BILL SAYS MORE THAN WAS COUNTED = a shortfall: the bill posts at the COUNT, the gap is NOTED — never posted and reversed ══ */
     const g = await RCV(rcpt('r7', rbj({ their_bill: { no: 'SG-101', total: 1300 } }), 'accepted'));
-    eq('F10 · their total differs from the lines by more than a rupee → waits with BOTH figures and the gap (never a silent post of either)',
-      [g.k.kind, g.k.wait, g.k.why], ['queue', 'gap', 'Their bill SG-101 says ₹1,300, goods ₹1,000 + tax ₹180 come to ₹1,180 — ₹120 apart. Ask Sri Ganesh Provisions to correct it, or reject it and record their bill by hand.']);
+    eq('R106 · accepted, their ₹1,300 against ₹1,180 counted → ONE purchase_bill at the count, round-off 0, the gap in the narration and on the bill\'s note',
+      [g.k.kind, g.k.event.type, g.k.event.round_off, g.k.event.by_rate, g.k.event.narration, g.k.event.note],
+      ['post', 'purchase_bill', 0, [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], 'Bill SG-101 from Sri Ganesh Provisions: ₹120 short against their ₹1,300.', '₹120 short against their ₹1,300']);
+    eq('R106 · …the figures ride the event as minor units (theirs · ours · short), never only words',
+      g.k.event.short, { theirs_minor: 130000, ours_minor: 118000, short_minor: 12000, words: '₹120 short against their ₹1,300', offer: 'Accept it at ₹1,180 (₹120 short, noted), or reject it.' });
     const gp = await RCV(rcpt('r7p', rbj({ their_bill: { no: 'SG-101', total: 1300 } }), 'pending'));
-    eq('F10 · …and says so BEFORE acceptance, so the Accept popup can grey Accept with that sentence', [gp.k.kind, gp.k.wait], ['queue', 'gap']);
+    eq('R106 · BEFORE acceptance it waits as a gap that asks ACCEPT (todo accept — the Accept action stays open), the figures as data, the offer in the sentence',
+      [gp.k.kind, gp.k.wait, gp.k.todo, gp.k.gap, gp.k.short.short_minor, gp.k.why],
+      ['queue', 'gap', 'accept', 120, 12000, 'Their bill SG-101 says ₹1,300, goods ₹1,000 + tax ₹180 come to ₹1,180 — ₹120 apart. Accept it at ₹1,180 (₹120 short, noted), or reject it.']);
+    eq('R106 · …and the parked row carries the three figures as integers (todoFields → books_outbox.event.short → waitingRow)',
+      [K.todoFields(gp.k), K.waitingRow({ id: 1, event: Object.assign({ job: 'chit' }, K.todoFields(gp.k)) }).short],
+      [{ todo: 'accept', short: { theirs_minor: 130000, ours_minor: 118000, short_minor: 12000 } }, { theirs_minor: 130000, ours_minor: 118000, short_minor: 12000 }]);
+    const gl = await RCV(rcpt('r7l', rbj({ their_bill: { no: 'SG-101', total: 1000 } }), 'accepted'));
+    eq('R106 · their bill BELOW the count (₹1,000 against ₹1,180) is no shortfall — posting the count would overstate the creditor: it still waits, accepted or not',
+      [gl.k.kind, gl.k.wait, gl.k.short, gl.k.why], ['queue', 'gap', undefined, 'Their bill SG-101 says ₹1,000, goods ₹1,000 + tax ₹180 come to ₹1,180 — ₹180 apart. Ask Sri Ganesh Provisions to correct it, or reject it and record their bill by hand.']);
+    const gd = await RCV(rcpt('r7d', rbj({ their_bill: { no: 'SG-101', total: 1300 } }), 'accepted'), { disputed: true });
+    eq('R106 · a shortfall on a bill with an open dispute waits for the dispute, as every bill does', [gd.k.kind, gd.k.wait], ['queue', 'dispute']);
     const ro = await RCV(rcpt('r8', rbj({ their_bill: { no: 'SG-101', total: 1180.6 } }), 'accepted'));
     eq('F10 · …within the one-rupee tolerance it posts, the gap as the round-off (the counter-bill rule)', [ro.k.kind, ro.k.event && ro.k.event.round_off], ['post', 0.6]);
     const ns = await RCV(rcpt('r9', rbj({ party: { name: 'Lakshmi Agencies' } }), 'accepted'), { party: SG });
@@ -297,8 +311,9 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     const in5 = await sg(441, [{ particulars: 'Toor dal', quantity: 4, unit: 'kg', price: 110.25, total: 441, gst_rate: 5 }], true);
     eq('FX-F10W2 · inclusive (their rates already carry 5%): lines ₹441 = taxable ₹420 + tax ₹21 — their ₹441 posts', [in5.k.kind, in5.k.event && in5.k.event.round_off, in5.k.event && in5.k.event.by_rate[0].taxable], ['post', 0, 420]);
     const ex18 = [{ particulars: 'Soap', quantity: 10, unit: 'piece', price: 100, total: 1000, gst_rate: 18 }];
-    eq('FX-F10W2 · IN 18%: ₹1,000 + ₹180 — their ₹1,181 is within one rupee → posts with round-off +1; ₹1,181.01 waits',
-      [(await sg(1181, ex18)).k.event.round_off, (await sg(1181.01, ex18)).k.kind, (await sg(1179, ex18)).k.event.round_off], [1, 'queue', -1]);
+    const s1181_01 = await sg(1181.01, ex18);
+    eq('FX-F10W2 · IN 18%: ₹1,000 + ₹180 — their ₹1,181 is within one rupee → posts with round-off +1; ₹1,181.01 is a shortfall (R106): posts at the count, noted, round-off 0',
+      [(await sg(1181, ex18)).k.event.round_off, s1181_01.k.kind, s1181_01.k.event.round_off, s1181_01.k.event.short.short_minor, (await sg(1179, ex18)).k.event.round_off], [1, 'post', 0, 101, -1]);
     /* the rule itself, every host: exclusive and inclusive operands (the engine's split), AU 10% and IN 5% / 18%, the one-unit edge */
     const Tx = require(path.join(H.API, 'lib', 'tax'));
     const sp = (v, r, inc) => Tx.splitLineTax({ net: v, rate: r, priceIncludesTax: inc });

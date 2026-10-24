@@ -3490,6 +3490,14 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/till/rate": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/till/reconcile": {
       "file": "till.js",
       "trips": 0,
