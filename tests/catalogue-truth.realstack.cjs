@@ -7,6 +7,7 @@
  * CA-07 a category with products is not retired under them (gap, W30) · CA-08 an own-use item is stocked, not sold (+ CA-08b the supplier-bill link, gap, 5b) · CA-09 a supply is never a product · CA-11 a clashing offer is refused in words.
  * NOT HERE: CA-06 (the cost gate for an employee: needs an actor sign-in on the stack, so it stays on tests/cost-never-to-employees.test.cjs, real routers with stubbed auth) · CA-10 and CA-13 (scans, How = S) · CA-14 (points.test.js: a type, no route).
  * A `gap:` FAIL is a RECORDED finding (CATALOGUE-BACKLOG "K-TRUTH-1 2026-10-19"), never fixed here.
+ * CA-16 + CA-17 (CAT-211): a cashier's PUT to the category-rate door and to the shop-default door is refused 403 in the one problem shape.
  * Shares tests/lib/truth-harness.cjs. LOCAL ONLY. Run: node tests/catalogue-truth.realstack.cjs   (one realstack file at a time on :3100)
  * CARD 06-catalogue-pim/README
  */
@@ -16,6 +17,23 @@ const { j, ok, pause, kase, expect, near, freshShop, finish } = H;
 const RUN = 'ca' + (Date.now() % 1e10).toString(36);
 /** the first object anywhere in `o` whose item_id is `id` */
 function find(o, id) { if (!o || typeof o !== 'object') return null; if (o.item_id === id) return o; for (const k of Object.keys(o)) { const f = find(o[k], id); if (f) return f; } return null; }
+/** the sentence every rate door says (lib/rate-door.js RATE_ASK_OWNER) and the code the client branches on */
+const RATE_SENTENCE = 'Ask the owner or a manager to set the tax rate.', RATE_CODE = 'TILL_RATE_OWNER_ONLY';
+/** a co-assist of the shop that is NOT a manager (hat 'act', the counter's cashier): added by the owner, signed in with the local code (DEV_OTP) */
+async function cashierOf(shop, tag) {
+  const key = 'cash' + tag, username = key + '@' + shop.name.split(' ').pop();
+  ok(await j('/api/actors', { method: 'POST', token: shop.token, body: { display_name: 'Cashier ' + tag, actor_key: key, email: key + '@local.test', access_level: 'editor', hat: 'act' } }), 'add the cashier');
+  ok(await j('/api/actors/check-login?username=' + encodeURIComponent(username)), 'ask for the cashier code');
+  return ok(await j('/api/actors/login', { method: 'POST', body: { username, otp: H.ENTITY_OTP } }), 'cashier signs in').b.token;
+}
+/** the ONE refusal shape of a rate door: 403, code + message + may/why + the Problem fields, and nothing of the caller's value echoed */
+function expectRateRefusal(r, echoed) {
+  const b = r.b || {};
+  expect(r.status === 403, 'HTTP ' + r.status + ' ' + JSON.stringify(b).slice(0, 200));
+  expect(b.code === RATE_CODE && b.message === RATE_SENTENCE && b.may === false && b.why === RATE_SENTENCE, 'shape ' + JSON.stringify({ code: b.code, message: b.message, may: b.may, why: b.why }));
+  expect(b.status === 403 && !!b.type && !!b.title && !!b.detail, 'not a Problem body: ' + JSON.stringify(Object.keys(b)));
+  expect(!JSON.stringify(b).includes(echoed), 'the answer echoes the caller value ' + echoed);
+}
 const num = (v) => (v && typeof v === 'object') ? (v.amount != null ? Number(v.amount) : NaN) : (v == null || v === '' ? NaN : Number(v));
 
 /* the constants every new case leans on (each fallback its own name) */
@@ -94,6 +112,28 @@ const productId = async (shop, item_data) => ok(await j('/api/products', { metho
     const a = mine && num((mine.item_data || mine).price), b = pub && num((pub.item_data || pub).price);
     expect(mine && a !== 0 && b !== 0, 'list price ' + a + ' · public price ' + b + ' (a number 0 reads as free)');
   });
+  const SEEDED = 'seed-slab-5', ASKED = 'asked-slab-18';
+  await kase('CA-16', "a cashier's PUT /api/definitions/:id that changes a category's rate is refused 403 in the one shape, and the category is untouched", async () => {
+    const owner = ok(await j('/api/definitions', { method: 'POST', token: A.token, body: { kind: 'category', name: 'Rate door ' + RUN, rules: { default_slab: SEEDED } } }), 'owner creates the category').b.definition;
+    const cashier = await cashierOf(A, 'a');
+    const r = await j('/api/definitions/' + owner.definition_id, { method: 'PUT', token: cashier, body: { rules: { default_slab: ASKED } } });
+    expectRateRefusal(r, ASKED);
+    const after = ok(await j('/api/definitions/' + owner.definition_id, { token: A.token }), 'read it back').b;
+    expect(after.definition.current_version === owner.current_version && after.versions.length === 1, 'a version was written: ' + JSON.stringify(after.versions.map((v) => v.version)));
+    const born = await j('/api/definitions', { method: 'POST', token: cashier, body: { kind: 'category', name: 'Cashier born ' + RUN, rules: { default_slab: ASKED } } });
+    expectRateRefusal(born, ASKED);
+  });
+  await kase('CA-17', "a cashier's PUT /api/catalogue-face that changes the shop default rate is refused 403 in the one shape, and the face is untouched", async () => {
+    ok(await j('/api/catalogue-face', { method: 'PUT', token: A.token, body: { face: { purpose: 'shop', tax: { default_slab: SEEDED } } } }), 'owner saves the face');
+    const cashier = await cashierOf(A, 'b');
+    const r = await j('/api/catalogue-face', { method: 'PUT', token: cashier, body: { face: { purpose: 'shop', tax: { default_slab: ASKED } } } });
+    expectRateRefusal(r, ASKED);
+    const after = ok(await j('/api/catalogue-face', { token: A.token }), 'read it back').b;
+    expect(after.face && after.face.tax && after.face.tax.default_slab === SEEDED, 'the default moved: ' + JSON.stringify(after.face));
+    const same = await j('/api/catalogue-face', { method: 'PUT', token: cashier, body: { face: { purpose: 'shop', tax: { default_slab: SEEDED }, note: 'edited by the cashier' } } });
+    expect(same.status === 200, 'a save that leaves the rate alone should pass: HTTP ' + same.status);
+  });
+
   /* ── CA-01 · CA-02 · CA-03: tax slabs, on a shop WITH a GSTIN (the tax shelf is read only for one: lib/tax-shelf.js "no GSTIN, no GST") ── */
   await kase('CA-01', 'a product with its own slab and one that only has a category slab: each resolves to its own, with the source named', async () => {
     const g = await gstFixture(), r = await rate(g.shop, [g.both, g.viaCategory]);
