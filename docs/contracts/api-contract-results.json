@@ -2410,6 +2410,22 @@
     422
    ]
   },
+  "POST /api/privacy/me/consent": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/privacy/me/requests": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/products": {
    "cases": 4,
    "failed": 0,

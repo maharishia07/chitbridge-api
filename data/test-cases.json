@@ -64652,6 +64652,62 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-privacy.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE PRIVACY ROUTES (ROUTES/PRIVACY.JS: THE PUBLIC FACTS AND THE SHOPPER'S OWN PAGE, CONSENT AND REQUESTS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR ANOTHER SHOPPER'S DATA; THE SHOPPER AND THE SHOP COME FROM THE TOKEN ALONE; A WRITE APPENDS ONE ROW.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE PRIVACY ROUTES (ROUTES/PRIVACY.JS: THE PUBLIC FACTS AND THE SHOPPER'S OWN PAGE, CONSENT AND REQUESTS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR ANOTHER SHOPPER'S DATA; THE SHOPPER AND THE SHOP COME FROM THE TOKEN ALONE; A WRITE APPENDS ONE ROW.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 351 lines. Run: node chitbridge-api/tests/api-problem-privacy.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 351,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/privacy-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "PRIVACY TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/privacy.js).",
+   "claim": "PRIVACY TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/privacy.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 96 lines. Run: node chitbridge-api/tests/privacy-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 96,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-till.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
