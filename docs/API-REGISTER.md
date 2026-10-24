@@ -597,7 +597,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/till/quick-keys/screen-config | till | routes/till.js:1572 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/till/quick-keys/state | till | routes/till.js:1503 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/till/quick-keys/unhide | till | routes/till.js:1547 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/till/rate | till | routes/till.js:1898 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| POST | /api/till/rate | till | routes/till.js:1898 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/till/reconcile | till | routes/till.js:2382 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/till/reward | till | routes/till.js:1989 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
 | POST | /api/till/reward/claim | till | routes/till.js:2045 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | no | partial |

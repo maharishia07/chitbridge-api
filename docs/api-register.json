@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 612
+    "failing": 611
    },
    "foreign_id_404": {
     "applies": 227,
@@ -28400,7 +28400,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1898,
-   "hash": "80b40e174131e2f5",
+   "hash": "f9f621a00a06e8ef",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28410,7 +28410,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,

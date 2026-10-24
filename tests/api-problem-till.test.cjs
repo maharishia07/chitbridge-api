@@ -24,6 +24,8 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* R2-4: the area tests' own evidence file, one writer per file */
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const MOUNT = '/api/till';
 const ROUTE_FILE = 'routes/till.js'; /* named in full so the graph links this test to the route file */
@@ -321,7 +323,8 @@ async function checkRoutes(port, scenarios, recording) {
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
+    /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer (R2-13) */
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, request: { url: scenario.url, body: scenario.body } };
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (capturing) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
@@ -338,6 +341,32 @@ async function checkRoutes(port, scenarios, recording) {
     else kit.checkLegacy(check, label, answer, kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id));
   }
   return tested;
+}
+
+/**
+ * API-3 output allow-list (S34), the way tests/api-problem-storefront.test.cjs proves it: a route whose 200 schema is CLOSED (additionalProperties false) and whose
+ * recorded 200 fits that schema is proved here, in the counter's own world — the generator's proxy world cannot seat a slab on the shelf, so POST /rate never
+ * reaches its 200 there. → { route: { output_allowlist: true } } for the routes that held (today: POST /api/till/rate, scenario rate-set)
+ */
+const ALLOW_LIST_SCENES = { 'POST /api/till/rate': 'rate-set' };
+function checkAllowList(recording) {
+  const proved = {};
+  const words = require(path.join(HERE, CONTRACT_FILE));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  Object.keys(ALLOW_LIST_SCENES).forEach((route) => {
+    const answer = recording[route + '|' + ALLOW_LIST_SCENES[route]];
+    const schema = words.operationFor(route.replace(' ' + MOUNT, ' ')).responses[200].content['application/json'].schema;
+    const fits = engine.compile(schema);
+    const closedAnswer = !!answer && answer.status === 200 && schema.additionalProperties === false && fits(answer.body);
+    check(route + ' · ' + ALLOW_LIST_SCENES[route] + ': the 200 holds only the keys its operation lists (a closed schema the answer fits)', closedAnswer, { status: answer && answer.status, errors: fits.errors, body: answer && answer.body });
+    if (closedAnswer) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the counter routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
 }
 
 /** the words of the contract as units: each helper answers the spec the routes spread into problem() */
@@ -385,6 +414,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkWords();
+  const proved = checkAllowList(recording);
   const coverage = Object.fromEntries(
     Object.keys(tested)
       .sort()
@@ -410,7 +440,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
         1
       ) + '\n'
     );
+    FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the counter routes whose 200 held closed here', kit.sameValue(allowListEvidenceOnDisk(), proved), {
+      onDisk: allowListEvidenceOnDisk(),
+      proved
+    });
     const mine = Object.fromEntries(
       Object.keys(onDisk)
         .filter(MINE)
