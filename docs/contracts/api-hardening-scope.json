@@ -1,0 +1,43 @@
+{
+ "about": "API-3 scope (API-STANDARD S33-S36). Curated by cb-api with the owning area. money_writes: routes that move or record money; each must require an Idempotency-Key. inbound: routes that take a peer's or a webhook's JSON; each must schema-check it before use. money_reviewed_not: routes whose path looks like money but that write nothing (a preview, a build). public_ids: routes whose path id is public by design (a public door, a counterparty door, platform reference), each with its reason; foreign_id_404 (S35) does not apply to them. tools/api-register.cjs --check fails when a mutating route that looks like money is in none of the lists.",
+ "money_writes": [
+  "DELETE /api/chits/:chit_id/payment",
+  "PATCH /api/books/payments/:id",
+  "POST /api/books/gst/pay",
+  "POST /api/books/payments",
+  "POST /api/books/payments/:id/confirm",
+  "POST /api/books/payments/:id/propose",
+  "POST /api/chits/:chit_id/payment",
+  "POST /api/supplies/purchase",
+  "POST /api/till/reward",
+  "POST /api/till/reward/claim",
+  "POST /api/connectors/ingest",
+  "POST /api/connectors/erp-ingest"
+ ],
+ "money_reviewed_not": [
+  "POST /api/books/payments/preview",
+  "POST /api/invoice/build"
+ ],
+ "inbound": [
+  "POST /api/capture/webhook/email",
+  "POST /api/capture/webhook/whatsapp",
+  "POST /api/connectors/erp-ingest",
+  "POST /api/connectors/ingest",
+  "POST /api/ctp/deliver",
+  "POST /api/ctp/query"
+ ],
+ "public_ids": {
+  "GET /api/catalogue/:bridge_id": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
+  "GET /api/catalogue/:bridge_id/capture-fields": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
+  "POST /api/catalogue/:bridge_id/order/start": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
+  "POST /api/catalogue/:bridge_id/support/start": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
+  "GET /api/catalogue/network-store/:networkId": "public door: a network store is published for every member and visitor",
+  "GET /api/governance/boilerplate/:key": "platform reference: a boilerplate is the platform's, offered to every shop, not one shop's",
+  "POST /api/governance/boilerplate/:key/adopt": "platform reference: the key names the platform's boilerplate; the adoption is written to the caller's own shop",
+  "GET /api/governance/source/:key": "platform reference: a catalogue source is shared by every shop it serves",
+  "GET /api/governance/readiness/:bridge_id": "counterparty door: the readiness passport is built for outsiders (Athi 2026-08-20); a stranger gets status and rung only, evidence_ref stripped (SEC-FIX3 S6)",
+  "GET /api/assist/container/:id": "platform reference: a container is shared catalogue reference that chits pin by version",
+  "POST /api/integrations/ask/:handle/stock": "public door: a shop's published handle answers stock to an asking peer",
+  "GET /api/integrations/stock/:handle": "public door: a shop's published handle answers stock to an asking peer"
+ }
+}
