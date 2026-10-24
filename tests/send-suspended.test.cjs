@@ -80,8 +80,8 @@ const send = (body, ctx) => h.run(app, { url: '/api/chits/send', body, identity:
   });
   await it('a failed network read answers 503 in words, never a silent pass', async () => {
     const nm = require(path.join(API, 'lib', 'network-membership')), real = nm.suspendedWith;
-    nm.suspendedWith = async () => { const e = new Error('We could not read who is in the network just now. Nothing was changed.'); e.code = 'NETWORK_READ_FAILED'; throw e; };
-    try { const r = await send(order(), {}); assert.strictEqual(r.status, 503, JSON.stringify(r.body)); assert.ok(/NETWORK_READ_FAILED/.test(JSON.stringify(r.body)), JSON.stringify(r.body)); }
+    nm.suspendedWith = async () => { const e = new Error('read failed'); e.code = 'NETWORK_READ_FAILED'; throw e; };
+    try { const r = await send(order(), {}); assert.strictEqual(r.status, 503, JSON.stringify(r.body)); assert.ok(/NETWORK_READ_FAILED/.test(JSON.stringify(r.body)) && /Try again in a minute/.test(JSON.stringify(r.body)), JSON.stringify(r.body)); }
     finally { nm.suspendedWith = real; }
   });
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed\n  ' + pass + ' checks');
