@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 622
+    "failing": 611
    },
    "foreign_id_404": {
     "applies": 227,
@@ -29,7 +29,7 @@
    },
    "trips_budgeted": {
     "applies": 633,
-    "failing": 245
+    "failing": 166
    }
   }
  },
@@ -1053,7 +1053,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -1185,7 +1185,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -1329,7 +1329,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -1497,7 +1497,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 331,
-   "hash": "16dce8eae9caf39f",
+   "hash": "cd9727f08fb618ef",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1535,8 +1535,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cd9727f08fb618ef"
    },
    "status": "partial"
   },
@@ -1547,7 +1548,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 605,
-   "hash": "0f72c5d40f9949c9",
+   "hash": "3b739df1cfe5c008",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1595,7 +1596,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 191,
-   "hash": "96ca0760e762a888",
+   "hash": "89e9e2e28d556f48",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1605,7 +1606,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1639,7 +1640,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 480,
-   "hash": "11f353aab6505d0a",
+   "hash": "fceee6110bab1d76",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1687,7 +1688,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 492,
-   "hash": "b60b13eba3d91e46",
+   "hash": "748b83451499c0b2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1697,11 +1698,11 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -1725,8 +1726,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "748b83451499c0b2"
    },
    "status": "partial"
   },
@@ -1737,7 +1739,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 727,
-   "hash": "6f348de8489a3952",
+   "hash": "d8cba703bbee9a55",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1747,11 +1749,11 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -1784,7 +1786,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 574,
-   "hash": "7106f68aa28906a3",
+   "hash": "86a70dc4f9954d3d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1798,7 +1800,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -1821,8 +1823,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "86a70dc4f9954d3d"
    },
    "status": "partial"
   },
@@ -1833,7 +1836,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 619,
-   "hash": "9251ef0f87aab8d5",
+   "hash": "8808b7d84df68a0c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1843,7 +1846,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1868,8 +1871,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8808b7d84df68a0c"
    },
    "status": "partial"
   },
@@ -1880,7 +1884,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 541,
-   "hash": "ea1369457eb8073d",
+   "hash": "390f9253644349e3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1894,7 +1898,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -1914,8 +1918,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "390f9253644349e3"
    },
    "status": "partial"
   },
@@ -1926,7 +1931,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 558,
-   "hash": "5239875ecd28dba4",
+   "hash": "462430efe946fbbf",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1974,7 +1979,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 188,
-   "hash": "893904eb8a477fa8",
+   "hash": "b36c489344b0d879",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1984,7 +1989,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2018,7 +2023,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 740,
-   "hash": "f375b1a18c6f8268",
+   "hash": "330f509bff08f482",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2028,7 +2033,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3688,7 +3693,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -3776,7 +3781,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -4531,7 +4536,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -4836,7 +4841,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -5278,7 +5283,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -5573,7 +5578,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -5669,7 +5674,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -5713,7 +5718,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -5762,7 +5767,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -6616,7 +6621,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -7681,7 +7686,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -7925,7 +7930,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8022,7 +8027,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8198,7 +8203,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8246,7 +8251,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8344,7 +8349,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8540,7 +8545,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8686,7 +8691,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8734,7 +8739,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8981,7 +8986,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -9029,7 +9034,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -9077,7 +9082,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -9266,7 +9271,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -9705,7 +9710,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -9749,7 +9754,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -9793,7 +9798,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -10316,7 +10321,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -10358,7 +10363,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -10400,7 +10405,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -10486,7 +10491,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -10663,7 +10668,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -10764,7 +10769,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -10812,7 +10817,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11006,7 +11011,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11054,7 +11059,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11098,7 +11103,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11274,7 +11279,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11318,7 +11323,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11636,7 +11641,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11812,7 +11817,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12095,7 +12100,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12144,7 +12149,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12341,7 +12346,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12438,7 +12443,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12487,7 +12492,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12536,7 +12541,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12683,7 +12688,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12828,7 +12833,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12921,7 +12926,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -12970,7 +12975,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13118,7 +13123,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13167,7 +13172,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13216,7 +13221,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13365,7 +13370,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13414,7 +13419,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13563,7 +13568,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13612,7 +13617,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13661,7 +13666,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13848,7 +13853,7 @@
    "owner_area": "server",
    "file": "server.js",
    "line": 486,
-   "hash": "717ec4ac7f9b3bd8",
+   "hash": "2dcfee7bd40c2b7a",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -14393,7 +14398,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -14788,7 +14793,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -15512,7 +15517,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 77,
-   "hash": "ea241c7a2519aa88",
+   "hash": "43ec3db496e1bf2a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15549,8 +15554,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "43ec3db496e1bf2a"
    },
    "status": "partial"
   },
@@ -15561,7 +15567,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 252,
-   "hash": "4a5e560282faac94",
+   "hash": "01efb016eb825fbb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15571,7 +15577,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15600,8 +15606,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "01efb016eb825fbb"
    },
    "status": "partial"
   },
@@ -15612,7 +15619,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 197,
-   "hash": "8d3562cbe07c42e2",
+   "hash": "7d940f0346a2dfb9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15648,8 +15655,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7d940f0346a2dfb9"
    },
    "status": "partial"
   },
@@ -15660,7 +15668,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 133,
-   "hash": "6f95b3bdafa9f9d8",
+   "hash": "eb4a657ee89de7d7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15696,8 +15704,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "eb4a657ee89de7d7"
    },
    "status": "partial"
   },
@@ -15708,7 +15717,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 655,
-   "hash": "9ae4e8a63a91587a",
+   "hash": "86ff97ac61ac9146",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15718,7 +15727,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15743,8 +15752,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "86ff97ac61ac9146"
    },
    "status": "partial"
   },
@@ -15755,7 +15765,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 672,
-   "hash": "72ff17bb8418b3d7",
+   "hash": "b2df6dc4cadf72b1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15765,7 +15775,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15793,8 +15803,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b2df6dc4cadf72b1"
    },
    "status": "partial"
   },
@@ -18430,7 +18441,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": false,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -18472,7 +18483,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": false,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -21766,7 +21777,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -22752,7 +22763,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -23350,7 +23361,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -23595,7 +23606,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -26460,7 +26471,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -27948,7 +27959,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -28398,7 +28409,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -28652,7 +28663,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -28702,7 +28713,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -29292,7 +29303,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 388,
-   "hash": "04b1fcb826d849fd",
+   "hash": "45850a50048a8d1f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29302,7 +29313,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -29331,8 +29342,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "45850a50048a8d1f"
    },
    "status": "partial"
   },
@@ -29343,7 +29355,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 450,
-   "hash": "37f873526d513655",
+   "hash": "d5b388a9f6f07d0f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29382,8 +29394,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d5b388a9f6f07d0f"
    },
    "status": "partial"
   },
@@ -29394,7 +29407,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 518,
-   "hash": "c58516cba4a81276",
+   "hash": "941db05fb558acda",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29404,7 +29417,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30553,7 +30566,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
