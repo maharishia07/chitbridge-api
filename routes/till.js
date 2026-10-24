@@ -721,17 +721,17 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
       require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) });
     }
 
-    const tillItem = (item_id, d, taxFacts = taxFactsOf(d)) => {
+    const tillItem = (item_id, d) => {
+      const taxFacts = taxFactsOf(d); /* ⭐⭐ F5 A1: the facts tax-slab inputOf reads, named key by key below (hsn never from `code`) */
       return {
         item_id,
         name: d.name,
         code: d.code || d.sku || null,
         unit: d.unit || 'piece',
-        /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
-                  and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
+        /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure, and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
         price: amountOf(d.price),
         mrp: amountOf(d.mrp),
-        hsn: taxFacts.hsn, tax_slab: taxFacts.tax_slab, gst_rate: taxFacts.gst_rate /* ⭐⭐ F5 A1: taxFactsOf, the facts tax-slab inputOf reads; hsn never from `code` */,
+        hsn: taxFacts.hsn, tax_slab: taxFacts.tax_slab, gst_rate: taxFacts.gst_rate,
         tax_slab_name: taxFacts.tax_slab_name, cess_rate: taxFacts.cess_rate, categories: taxFacts.categories,
         /**
          * ⚠️⚠️⚠️ THE NAME, RESOLVED — not the legacy key ([TILL-114]). This was `d.category || null`, and
