@@ -1892,6 +1892,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "MEMBERSHIP_SUSPENDED",
+   "status": "403",
+   "title": "Membership suspended",
+   "shopkeeper": "The network has suspended your membership, so you cannot send to it.",
+   "hint": "Ask the network to resume it, then send again.",
+   "owner_area": "chits",
+   "since": "2026-10-24"
+  },
+  {
    "code": "NETWORK_READ_FAILED",
    "status": "503",
    "title": "Network not read",
