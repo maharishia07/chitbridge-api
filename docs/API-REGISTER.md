@@ -42,16 +42,16 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:143 | yes | no | no | no | yes | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:331 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:605 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/assist/catalogue-sources | assist | routes/assist.js:191 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/assist/catalogue-sources | assist | routes/assist.js:191 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/assist/container/:id | assist | routes/assist.js:480 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/assist/erp-handoffs | assist | routes/assist.js:492 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/assist/gaps | assist | routes/assist.js:727 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/assist/erp-handoffs | assist | routes/assist.js:492 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/assist/gaps | assist | routes/assist.js:727 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/assist/penetration | assist | routes/assist.js:574 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/assist/questions | assist | routes/assist.js:619 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/assist/questions | assist | routes/assist.js:619 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/assist/regions | assist | routes/assist.js:541 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/assist/resolve | assist | routes/assist.js:558 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/assist/standards | assist | routes/assist.js:188 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/assist/whoami | assist | routes/assist.js:740 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/assist/standards | assist | routes/assist.js:188 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/assist/whoami | assist | routes/assist.js:740 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/attachments/:id | attachments | routes/attachments.js:78 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/books/accounts | books | routes/books.js:310 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/assets | books | routes/books.js:2295 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -333,11 +333,11 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/actors/suggest-key | actors | routes/actors.js:176 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/adopt/:chit_id | adopt | routes/adopt.js:183 | no | no | no | no | yes | no | no | no | no | no | yes | yes | yes | partial |
 | POST | /api/assist | assist | routes/assist.js:77 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/assist/catalogue-adopt | assist | routes/assist.js:252 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/assist/catalogue-adopt | assist | routes/assist.js:252 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/assist/catalogue-structure | assist | routes/assist.js:197 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/assist/conform | assist | routes/assist.js:133 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/assist/gap | assist | routes/assist.js:655 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/assist/publish | assist | routes/assist.js:672 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/assist/gap | assist | routes/assist.js:655 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/assist/publish | assist | routes/assist.js:672 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/assist/resolve | assist | routes/assist.js:734 | yes | yes | yes | yes | yes | no | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/attachments | attachments | routes/attachments.js:32 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/books/accounts | books | routes/books.js:339 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -615,9 +615,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/actors/break | actors | routes/actors.js:1163 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/actors/change-pin | actors | routes/actors.js:662 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/actors/settings | actors | routes/actors.js:1495 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/assist/catalogue-source | assist | routes/assist.js:388 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PUT | /api/assist/catalogue-source | assist | routes/assist.js:388 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | PUT | /api/assist/container | assist | routes/assist.js:450 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| PUT | /api/assist/region-override | assist | routes/assist.js:518 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PUT | /api/assist/region-override | assist | routes/assist.js:518 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | PUT | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:32 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:5693 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:5974 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
