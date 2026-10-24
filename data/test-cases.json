@@ -77747,6 +77747,32 @@
    "changed_at": "2026-10-09T14:28:09+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/till-who-signin.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "R132: a picked name carries who they are. Runs the page's OWN whoPick, usignAnswer, usignAfterIn and usignCounterLine text against stubs.",
+   "claim": "A picked worker is asked for a counter PIN or the first code from the owner, never to type an ID; the refusal names what to use; one PIN ask; no connect-to-a-shop line under a signed-in box.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 140 lines. Run: node chitbridge-api/tests/till-who-signin.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "connector",
+    "web"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T12:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/till-since-word.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
