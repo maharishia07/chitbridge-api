@@ -9,7 +9,7 @@
  * NW-07 a BOM item sells: the component moves (the consumes primitive is not built — VB3).
  * NW-08 a business with no part in an edge (and the store, which is not the network) is refused suspend, resume, disconnect, approve, decline ·
  * NW-03 a suspended member: both sides read it suspended, the store is handed no offers and cannot resume itself, the brand resumes it;
- * NW-03 (gap) a suspended member's order to the brand is still accepted (NET-7: the edge state is read by the network readers, not by send).
+ * NW-03 a suspended member's order to the brand is refused 403 MEMBERSHIP_SUSPENDED in words (NET-7, fixed by api #420).
  * Left to the stand-ins, no route on the stack proves them offline: NW-01 (lib/network-offer-scope.test: needs an authored source + a released offer),
  * NW-02 (till-network-unpriced.test: the counter snapshot needs a till key), NW-05 (network-build-golden.test: byte-equal over recorded SQL).
  * Setup: a business becomes a network node the first time it takes part (src/routes/network.js actorOf ensure), so the store makes one failed ask
@@ -133,8 +133,8 @@ const orderTo = (from, to, ref) => ({ recipients: [{ display_name: to.name, brid
       ok(await j('/api/chits/send', { method: 'POST', token: live.token, body: orderTo(live, A, RUN + '-ol') }), 'premise: an ACTIVE member orders from the brand');
       const { S } = await suspendedStore(A, 'x');
       const r = await j('/api/chits/send', { method: 'POST', token: S.token, body: orderTo(S, A, RUN + '-os') });
-      expect(r.status >= 400 && r.status < 500, 'the order from the suspended member answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 160));
-    }, 'NET-7: chits/send never asks the edge state (src/services/chit.js edgeBetween admits suspended; only the network readers ask lib/network-membership.standingSql); armed: the edge IS suspended through the route first (NETWORK-BACKLOG NET-7)');
+      expect(r.status === 403 && r.b && r.b.code === 'MEMBERSHIP_SUSPENDED' && /suspended/i.test(r.b.message || ''), 'the order from the suspended member answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 160));
+    });
 
     await kase('NW-07', 'a BOM item sold posts component movements (the component\'s stock falls by qty x recipe)', async () => {
       const comp = ok(await j('/api/products', { method: 'POST', token: A.token, body: { item_data: { name: 'Flour comp', unit: 'piece', price: 5 } } }), 'component').b;
