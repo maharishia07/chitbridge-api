@@ -549,10 +549,8 @@ router.get('/suppliers/availability', auth, async (req, res) => {
       viewer
     };
 
-    const matches = (p) => {
-      const d = (p && p.item_data) || p || {};
-      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(text) >= 0;
-    };
+    /* NET-39: ONE product matcher, shared with the cross-installation search (lib/business-search) */
+    const matches = (p) => require('../lib/business-search').productMatches(p, text);
 
     const one = async (s) => {
       const base = {

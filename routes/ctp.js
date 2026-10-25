@@ -171,6 +171,13 @@ async function alreadyHeld(failure, recipient, chit_id, sender) {
   return held.rows.length > 0;
 }
 
+/** NET-39: the `search` question — the SAME function the local search runs (lib/business-search): listed shops only, public fields only, limit clamped here again */
+async function answerSearch(question, refuse, res) {
+  const found = await require('../lib/business-search').find({ q: question.q, kind: question.kind, limit: question.limit });
+  if (!found.ok) return refuse({ status: 400, code: 'CTP_SEARCH_TOO_SHORT', why: found.why });
+  return res.json({ ok: true, found: found.results.length > 0, results: found.results, searched: found.searched });
+}
+
 /**
  * ── RAIL-106 · THE RETURN PATH: an EVENT is not a copy ───────────────────────────────────────────────────
  * Same door, same checks as a delivery (peer, key, crossing, seal, pass — all done by the caller). It carries one change a party on ANOTHER installation made to a chit both of you already hold,
@@ -430,7 +437,7 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
     const toKey = String((q.to || {}).installation_key || '');
     if (ctpquery.NETWORK_WANTS.includes(ask.want) && toKey && toKey !== net.ownKey())
       return refuse({ status: 409, code: 'CTP_NOT_THIS_INSTALLATION', why: 'this is ' + net.ownKey() + ', not ' + toKey + '; the address you hold for ' + toKey + ' is out of date' });
-    /* after the signature, the PASS (as in deliver): resolve, catalogue and locate need a valid certificate; renewing one and reading the directory do not */
+    /* after the signature, the PASS (as in deliver): resolve, catalogue, search and locate need a valid certificate; renewing one and reading the directory do not */
     const pass = net.needsMembership(ask.want) ? await net.doorVerdict(ik, peer, pk.manifest) : { ok: true };
     if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
     if (ctpquery.NETWORK_WANTS.includes(ask.want)) return res.json(await net.answer(ask, ik));
@@ -466,6 +473,7 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
       if (!view || !view.available) return res.json({ ok: true, found: false, why: ent.display_name + ' has no public catalogue' });
       return res.json(Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, cat.publicResponseFor(view, false)));
     }
+    if (ask.want === 'search') return await answerSearch(ask, refuse, res);
     return refuse({ status: 400, code: 'CTP_UNKNOWN_QUESTION', why: 'not a question this installation answers' });
   } catch (e) {
     safeErr(e, { id: req.id, path: req.path }); /* fail closed: which side failed, never why (QUERY_FAILED) */
