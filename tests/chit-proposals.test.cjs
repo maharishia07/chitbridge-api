@@ -81,7 +81,7 @@ function rowsFor(sql, p) {
     w.props.filter((r) => r.entity_id === p[0] && r.chit_id === p[1] && r.proposal_id !== p[2] && r.status === 'proposed').forEach((r) => (r.status = 'superseded'));
     return [];
   }
-  if (/^UPDATE chit_header SET business_json = CASE/.test(s)) {
+  if (/^UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) - 'invoice'/.test(s)) {
     const h = w.header[p[1]];
     const bj = Object.assign({}, h.business_json);
     if (p[2] == null) delete bj.invoice;
@@ -90,12 +90,12 @@ function rowsFor(sql, p) {
     h.summary_json = Object.assign({}, h.summary_json, p[3] ? JSON.parse(p[3]) : {});
     return [];
   }
-  if (/^UPDATE chit_header SET business_json = jsonb_set\(coalesce\(business_json, '\{\}'::jsonb\), '\{jurisdiction\}'/.test(s)) {
+  if (/^UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('jurisdiction'/.test(s)) {
     const h = w.header[p[1]];
     h.business_json = Object.assign({}, h.business_json, { jurisdiction: Object.assign({}, (h.business_json || {}).jurisdiction, JSON.parse(p[2])) });
     return [];
   }
-  if (/^UPDATE chit_header SET business_json = jsonb_set\(coalesce\(business_json, '\{\}'::jsonb\), '\{agreed\}'/.test(s)) {
+  if (/^UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('agreed'/.test(s)) {
     const h = w.header[p[1]];
     h.business_json = Object.assign({}, h.business_json, { agreed: JSON.parse(p[2]) });
     return [];
