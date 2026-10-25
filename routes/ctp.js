@@ -457,6 +457,9 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
       });
     }
 
+    /* RAIL-106: a file on a chit, to a party of that chit only (lib/ctpreturn attachmentFor decides who is a party) */
+    if (ask.want === 'attachment') return res.json(await returnPath.attachmentFor(ik, ask));
+
     if (ask.want === 'catalogue') {
       const ent = await cat.resolveEntity(ask.bridge_id);
       if (!ent) return res.json({ ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id });

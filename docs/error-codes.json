@@ -983,11 +983,29 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CTP_EVENT_ATTACHMENT_UNREADABLE",
+   "status": "502",
+   "title": "File not taken",
+   "shopkeeper": "The file announced for this chit could not be fetched or did not arrive as announced, so it was not stored.",
+   "hint": "The sending installation tries again; check it is reachable.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_EVENT_BAD",
    "status": "400",
    "title": "Change not readable",
    "shopkeeper": "The change sent for this chit could not be read.",
    "hint": "The sending installation must send a status or a message with its sequence.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_NOT_YET",
+   "status": "404",
+   "title": "Not here yet",
+   "shopkeeper": "What this change refers to has not arrived on this installation yet, so it was not applied.",
+   "hint": "The sender tries again in order.",
    "owner_area": "ctp",
    "since": "2026-10-25"
   },
@@ -1024,6 +1042,15 @@
    "title": "Business not known here",
    "shopkeeper": "No business here stands for the sender, so its change could not be applied.",
    "hint": "Add the business by its address first.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_TOO_LARGE",
+   "status": "413",
+   "title": "File too large",
+   "shopkeeper": "The file is larger than the limit, so it was not taken.",
+   "hint": "Send a smaller file (the limit is 6 MB).",
    "owner_area": "ctp",
    "since": "2026-10-25"
   },

@@ -81,6 +81,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_CROSS_DISPUTE | 409 | Retired: not raised | RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given. | - | ctp | 2026-10-25 |
 | CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
 | CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
+| CTP_EVENT_ATTACHMENT_UNREADABLE | 502 | File not taken | The file announced for this chit could not be fetched or did not arrive as announced, so it was not stored. | The sending installation tries again; check it is reachable. | ctp | 2026-10-25 |
+| CTP_EVENT_NOT_YET | 404 | Not here yet | What this change refers to has not arrived on this installation yet, so it was not applied. | The sender tries again in order. | ctp | 2026-10-25 |
+| CTP_EVENT_TOO_LARGE | 413 | File too large | The file is larger than the limit, so it was not taken. | Send a smaller file (the limit is 6 MB). | ctp | 2026-10-25 |
 | CTP_EVENT_NO_CHIT | 404 | Chit not held here | This business holds no copy of that chit, so the change was not applied. | Check the chit was delivered here first. | ctp | 2026-10-25 |
 | CTP_EVENT_PARTY_MISMATCH | 409 | Not a party to this chit | The sender is not one of the businesses on this chit, or not one of its installation's, so its change was refused. | Check the business is added with the right address. | ctp | 2026-10-25 |
 | CTP_EVENT_PARTY_UNKNOWN | 404 | Business not known here | No business here stands for the sender, so its change could not be applied. | Add the business by its address first. | ctp | 2026-10-25 |

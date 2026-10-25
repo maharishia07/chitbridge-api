@@ -57,7 +57,7 @@ const resetWorld = () => {
     inw: [],
     msgs: [],
     nextId: 1,
-    header: { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME, role: 'sender' }, { bridge_id: B_STUB, role: 'to' }] },
+    header: { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME, entity_id: ME, role: 'sender' }, { bridge_id: B_STUB, entity_id: STUB, role: 'to' }] },
     ident: {
       [B_ME]: { identity_id: ME, bridge_id: B_ME, display_name: 'IN Plant' },
       [B_STUB]: { identity_id: STUB, bridge_id: B_STUB, display_name: 'AU Pumps' },
@@ -78,6 +78,8 @@ function rowsFor(sql, p) {
   p = p || [];
   W.rec.push({ s, p, ent: ENT });
   if (/to_regprocedure/.test(s)) return [{ ok: true }];
+  if (/^SELECT 1 FROM cb_attachment WHERE id = \$1/.test(s)) return (W.heldAtt || []).includes(p[0]) ? [{}] : [];
+  if (/^SELECT visibility_entity_id FROM chit_messages/.test(s)) return [{ visibility_entity_id: W.internalNote ? ME : null }];
   if (/^SELECT role FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ role: 'sender' }];
   if (/^INSERT INTO chit_line_amendment/.test(s)) return [{ amendment_id: 'am-1', line_index: p[2], line_id: p[3], seq: 1, line: p[4] === null ? null : JSON.parse(p[4]), reason_code: p[5], reason: p[6], actor_name: p[8], created_at: new Date() }];
   if (/^SELECT line_items FROM chit_detail/.test(s)) return [{ line_items: [{ particulars: 'Pump seal', quantity: 10 }] }];
@@ -227,6 +229,20 @@ sc.hasColumn = async () => true;
 const FROM = { installation_key: 'sit-au', population: 'live', bridge_id: B_STUB, display_name: 'AU Pumps' };
 const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, from: FROM, to: { identity_id: ME } }, over || {}));
 const EDITOR = { level: 'editor' };
+const storage = require(root('lib/storage'));
+const STORED = [];
+storage.putForParticipants = async (args) => {
+  STORED.push(args);
+  return 'att-own-1';
+};
+const attachments = require(root('routes/attachments'));
+app.use('/api/attachments', attachments);
+const ctpquery = require(root('lib/ctpquery'));
+const crypto = require('crypto');
+const BYTES = Buffer.from('%PDF-1.4 a delivery note');
+const SHA = crypto.createHash('sha256').update(BYTES).digest('hex');
+const ATT = 'f0000000-0000-4000-8000-0000000000f1';
+const attEv = (over) => Object.assign({ kind: 'attachment', seq: 4, attachment_id: ATT, name: 'delivery-note.pdf', mime: 'application/pdf', size: BYTES.length, sha256: SHA, message_id: null, line_index: null }, over || {});
 const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.event.copy + ':' + r.event.status : ''));
 
 (async () => {
@@ -336,6 +352,103 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     assert.ok(writes.length > 0 && writes.every((x) => /chit_line_amendment|UPDATE chit_line /.test(x.s)), writes.map((x) => x.s.slice(0, 60)).join(' | '));
     assert.ok(writes.every((x) => x.ent === ME), 'every write is under the amender’s own context');
     assert.ok(!W.rec.some((x) => /business_json|summary_json|UPDATE chit_header|UPDATE chit_detail/.test(x.s) && /^(INSERT|UPDATE)/.test(x.s)), 'the invoice (business_json.invoice) and the money (summary_json) are untouched, so the receiver’s ValDtls are byte for byte what the origin issued');
+  });
+
+  console.log('\n== 3 · attachments: by reference, pulled over the CTP door, capped ==\n');
+  await t('a file put on a chit (the real upload route) is told BY REFERENCE: id, name, type, size and sha-256, never the bytes; one event per installation', async () => {
+    resetWorld();
+    STORED.length = 0;
+    const r = await call('POST', '/api/attachments', tok(ME), { chit_id: CHIT, name: 'delivery-note.pdf', mime: 'application/pdf', data_base64: BYTES.toString('base64') });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(STORED.length, 1, 'stored for the participants here as before');
+    assert.strictEqual(W.out.length, 1);
+    const ev = W.out[0].event;
+    assert.strictEqual(W.out[0].kind, 'attachment');
+    assert.deepStrictEqual([ev.attachment_id, ev.name, ev.mime, ev.size, ev.sha256], ['att-own-1', 'delivery-note.pdf', 'application/pdf', BYTES.length, SHA]);
+    assert.ok(!JSON.stringify(ev).includes(BYTES.toString('base64')), 'no bytes in the event');
+    assert.strictEqual(r.body.ctp.queued, 1);
+  });
+  await t('an internal note’s file stays here; an all-local chit queues nothing; a file over the limit is refused 413 and nothing is queued', async () => {
+    resetWorld();
+    W.place = {};
+    const local = await call('POST', '/api/attachments', tok(ME), { chit_id: CHIT, name: 'a.pdf', mime: 'application/pdf', data_base64: BYTES.toString('base64') });
+    assert.strictEqual(local.status, 200);
+    assert.strictEqual(W.out.length, 0);
+    assert.strictEqual(local.body.ctp, undefined);
+    resetWorld();
+    const big = await call('POST', '/api/attachments', tok(ME), { chit_id: CHIT, name: 'big.bin', mime: 'application/octet-stream', data_base64: Buffer.alloc(storage.MAX_ATTACHMENT_BYTES + 1).toString('base64') });
+    assert.strictEqual(big.status, 413, JSON.stringify(big.body).slice(0, 200));
+    assert.strictEqual(W.out.length, 0);
+  });
+  await t('the answerer gives the file to a party of that chit only: the asking installation must host one; an internal note’s file and a stranger get "not found" in words', async () => {
+    resetWorld();
+    storage.getBlob = async () => ({ name: 'delivery-note.pdf', mime: 'application/pdf', size: BYTES.length, data: BYTES, chit_id: CHIT, message_id: null });
+    const ask = { want: 'attachment', attachment_id: ATT, chit_id: CHIT, owner_bridge_id: B_ME };
+    const ok = await ret.attachmentFor('sit-au', ask);
+    assert.ok(ok.found && ok.sha256 === SHA && ok.size === BYTES.length && Buffer.from(ok.data_base64, 'base64').equals(BYTES), JSON.stringify(ok).slice(0, 200));
+    const stranger = await ret.attachmentFor('sit-other', ask);
+    assert.ok(stranger.ok && stranger.found === false && /not shared/.test(stranger.why), JSON.stringify(stranger));
+    storage.getBlob = async () => ({ name: 'n.pdf', mime: 'application/pdf', size: 1, data: BYTES, chit_id: CHIT, message_id: MSG });
+    W.internalNote = true;
+    const note = await ret.attachmentFor('sit-au', ask);
+    assert.ok(note.found === false && /internal note/.test(note.why), JSON.stringify(note));
+    storage.getBlob = async () => ({ name: 'x', mime: 'x', size: 1, data: BYTES, chit_id: 'another-chit', message_id: null });
+    W.internalNote = false;
+    assert.strictEqual((await ret.attachmentFor('sit-au', ask)).found, false, 'a file of another chit is not given for this one');
+    assert.strictEqual((await ret.attachmentFor('sit-au', Object.assign({}, ask, { owner_bridge_id: 'CBNOBODY01' }))).found, false);
+  });
+  await t('the receiver pulls the announced file, checks size and checksum, and stores OUR copy for each participant here under ids derived from the sender’s file (so twice stores once)', async () => {
+    resetWorld();
+    STORED.length = 0;
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }, { chit_id: CHIT, entity_id: STUB, direction: 'sent', current_status: 'delivered' }];
+    const asked = [];
+    ctpquery.ask = async (target, want) => {
+      asked.push(want);
+      return { ok: true, found: true, name: 'delivery-note.pdf', mime: 'application/pdf', size: BYTES.length, sha256: SHA, data_base64: BYTES.toString('base64') };
+    };
+    const first = await apply(attEv());
+    assert.ok(first.ok && first.applied, JSON.stringify(first));
+    assert.deepStrictEqual(asked, [{ want: 'attachment', attachment_id: ATT, chit_id: CHIT, owner_bridge_id: B_STUB }]);
+    assert.strictEqual(STORED.length, 1);
+    assert.deepStrictEqual(STORED[0].participants.sort(), [ME, STUB].sort());
+    assert.ok(STORED[0].buffer.equals(BYTES) && STORED[0].name === 'delivery-note.pdf' && STORED[0].uploaded_by === STUB);
+    assert.strictEqual(STORED[0].idFor(ME), STORED[0].idFor(ME), 'stable');
+    assert.notStrictEqual(STORED[0].idFor(ME), STORED[0].idFor(STUB), 'one per holder');
+    assert.ok(/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(STORED[0].idFor(ME)));
+    const again = await apply(attEv());
+    assert.ok(again.ok && again.applied === false);
+    assert.strictEqual(STORED.length, 1, 'not fetched or stored twice');
+    W.heldAtt = [STORED[0].idFor(ME)];
+    const later = await apply(attEv({ seq: 9 }));
+    assert.ok(later.ok, JSON.stringify(later));
+    assert.strictEqual(STORED.length, 1, 'a copy already held is not fetched again');
+  });
+  await t('a file that arrives other than announced (checksum, size), cannot be fetched, is over the limit, or whose message has not arrived is refused in words and NOT stored', async () => {
+    resetWorld();
+    STORED.length = 0;
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
+    ctpquery.ask = async () => ({ ok: true, found: true, size: BYTES.length, sha256: SHA, data_base64: Buffer.from('%PDF-1.4 a forged note!!').toString('base64') }); /* same length, other bytes */
+    const swapped = await apply(attEv());
+    assert.ok(!swapped.ok && swapped.status === 502 && swapped.code === 'CTP_EVENT_ATTACHMENT_UNREADABLE' && /did not arrive as announced/.test(swapped.why), JSON.stringify(swapped));
+    ctpquery.ask = async () => ({ ok: false, why: 'could not reach https://au.example/api/ctp/query: timed out' });
+    const down = await apply(attEv({ seq: 5 }));
+    assert.ok(!down.ok && down.code === 'CTP_EVENT_ATTACHMENT_UNREADABLE' && /timed out/.test(down.why), JSON.stringify(down));
+    const huge = await apply(attEv({ seq: 6, size: storage.MAX_ATTACHMENT_BYTES + 1 }));
+    assert.ok(!huge.ok && huge.status === 413 && huge.code === 'CTP_EVENT_TOO_LARGE' && /limit is 6 MB/.test(huge.why), JSON.stringify(huge));
+    const early = await apply(attEv({ seq: 7, message_id: MSG }));
+    assert.ok(!early.ok && early.status === 404 && early.code === 'CTP_EVENT_NOT_YET', JSON.stringify(early));
+    assert.strictEqual(STORED.length, 0);
+    for (const bad of [attEv({ sha256: 'zz' }), attEv({ size: 0 }), attEv({ attachment_id: 'x' }), attEv({ name: ' ' })]) {
+      const r = await apply(bad);
+      assert.ok(!r.ok && r.status === 400 && r.code === 'CTP_EVENT_BAD', JSON.stringify(bad));
+    }
+  });
+  await t('the pull is a question the door knows: attachment is a want, sealed with its three ids', async () => {
+    assert.ok(require(root('lib/ctpquery')).WANTS.includes('attachment'));
+    const q = require(root('lib/ctpquery')).build({ installation_key: 'sit-in' }, { installation_key: 'sit-au', domain: 'au.example' }, { want: 'attachment', attachment_id: ATT, chit_id: CHIT, owner_bridge_id: B_ME, extra: 'dropped' });
+    assert.deepStrictEqual(q.ask, { want: 'attachment', attachment_id: ATT, chit_id: CHIT, owner_bridge_id: B_ME });
+    assert.throws(() => require(root('lib/ctpquery')).build({ installation_key: 'sit-in' }, { domain: 'au.example' }, { want: 'attachment', chit_id: CHIT }), /attachment needs/);
   });
 
   //__END__
