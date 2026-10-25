@@ -1,7 +1,7 @@
 /**
  * tests/net-39-search.test.cjs — NET-39: FIND A BUSINESS (then a product) ON ANOTHER INSTALLATION. Here and There run the SAME function (lib/business-search.find).
  *
- *   A  the one search: a name finds LISTED shops only (private, capped, closed and "~" parties are not found); q < 2 characters is refused in words; limit 500 becomes 20;
+ *   A  the one search: THERE a name finds LISTED exporters only (private, capped, closed, non-exporter and "~" parties are not found), HERE it keeps the old entity_visibility rule (a private price list is still found); q < 2 characters is refused in words; limit 500 becomes 20;
  *      kind=product finds a product in a listed shop's PUBLIC view only; an exact handle or bridge id still resolves Here (A1: unchanged)
  *   B  the signed question `search` at the door: listed shops and public fields only (no contact, tax number, uuid); an asker without a certificate is refused; a short q is refused in words
  *   C  the asking side: where=here | one installation | all, one after another with a 5 s timeout; one installation silent → partial results and the why in words;
@@ -45,9 +45,10 @@ function rows(s, p) {
   if (/FROM identities WHERE \(LOWER\(user_id\) = LOWER\(\$1\) OR bridge_id = UPPER\(\$1\)\)/.test(s))
     return WORLD.shops.filter((x) => (x.user_id.toLowerCase() === p[0].toLowerCase() || x.bridge_id === String(p[0]).toUpperCase()) && !String(x.user_id).startsWith('~') && x.identity_id !== p[1]);
   if (/entity_schemas/.test(s)) return WORLD.shops.filter((x) => x.catalogue_visibility === 'public' && !String(x.user_id).startsWith('~'));
-  if (/catalogue_visibility = 'public'/.test(s)) {
+  if (/LOWER\(display_name\) LIKE \$1/.test(s)) {
     const text = p[0].replace(/%/g, '');
-    return WORLD.shops.filter((x) => x.catalogue_visibility === 'public' && !String(x.user_id).startsWith('~') && (x.display_name.toLowerCase().includes(text) || x.user_id.toLowerCase().includes(text)));
+    const onlyPublic = /catalogue_visibility = 'public'/.test(s);
+    return WORLD.shops.filter((x) => (!onlyPublic || x.catalogue_visibility === 'public') && !String(x.user_id).startsWith('~') && (x.display_name.toLowerCase().includes(text) || x.user_id.toLowerCase().includes(text)));
   }
   if (/to_jsonb\(i\) ->> 'network_role'/.test(s)) return [{ network_role: 'standalone' }];
   if (/FROM installation WHERE installation_key = \$1/.test(s)) return [{ installation_key: 'sit-au', domain: 'au.example.com', hosted_locally: false, active: true }];
@@ -105,9 +106,15 @@ const askStub = async (target, want, deps) => {
 
 (async () => {
   console.log('\n== NET-39 · A · the one search ==\n');
-  await t('a name finds listed shops only: private, capped, closed and minted parties are not found', async () => {
+  await t('Here: a name finds shops by entity_visibility as before, so a private price list is still found (production compose and CRM add-by-name); a minted party is not', async () => {
     const r = await bs.find({ q: 'timer' });
-    eq(names(r).sort(), ['Timer House', 'Timer Works']);
+    eq(names(r).sort(), ['Timer Capped', 'Timer Closed', 'Timer Hidden', 'Timer House', 'Timer Works']);
+  });
+  await t('There: a name lists only listed shops that sell outside; a private shop and a non-exporter are not listed', async () => {
+    const r = await bs.find({ q: 'timer' }, { abroad: true, openAbroad: async (x) => x.display_name !== 'Timer Works' });
+    eq(names(r), ['Timer House']);
+    eq(names(await bs.find({ q: 'timer hidden' }, { abroad: true, openAbroad: async () => true })), []);
+    eq(names(await bs.find({ q: 'timer works' }, { abroad: true, openAbroad: async () => false })), []);
   });
   await t('no contact, tax number, address or uuid is in a row', async () => {
     const r = await bs.find({ q: 'timer house' });
@@ -142,14 +149,14 @@ const askStub = async (target, want, deps) => {
     const r = await bs.find({ q: 'relay', kind: 'product' }, { viewFor: async () => ({ available: false }) });
     eq(r.results, []);
   });
-  await t('A1 Here: an exact handle or bridge id still resolves, even for a private shop; a name does not', async () => {
+  await t('A1 Here: an exact handle or bridge id resolves for a private shop, and so does its name', async () => {
     eq(names(await ns.searchHere({ q: 'timer-hidden', kind: 'business', limit: 10 }, ME)), ['Timer Hidden']);
     eq(names(await ns.searchHere({ q: 'cbpriv0002', kind: 'business', limit: 10 }, ME)), ['Timer Hidden']);
-    eq(names(await ns.searchHere({ q: 'hidden', kind: 'business', limit: 10 }, ME)), []);
+    eq(names(await ns.searchHere({ q: 'hidden', kind: 'business', limit: 10 }, ME)), ['Timer Hidden']);
   });
   await t('Here never returns the asker itself', async () => {
     const r = await ns.searchHere({ q: 'timer', kind: 'business', limit: 10 }, { identity_id: 'id-1', bridge_id: 'CBSHOP0001' });
-    eq(names(r).sort(), ['Timer Works']);
+    eq(names(r).sort(), ['Timer Capped', 'Timer Closed', 'Timer Hidden', 'Timer Works']);
   });
 
   console.log('\n== B · the signed question at the door ==\n');
