@@ -87,7 +87,7 @@ function env(from) {
   const e = envelope.sign(envelope.build({ installation_key: 'mx-1', population: 'live', bridge_id: 'CBSEND0001' }, { bridge_id: 'CBRECV0001' }, { chit_id: 'chit-1', copy: { sender_entity_id: 'sender-1', business_json: {} } }), signerOf(from || SENDER));
   return e;
 }
-const query = (ik, ask, kp) => ctpquery.sign(ctpquery.build({ installation_key: ik, population: 'live' }, { domain: 'me.example.com' }, ask), signerOf(kp));
+const query = (ik, ask, kp, toKey) => ctpquery.sign(ctpquery.build({ installation_key: ik, population: 'live' }, Object.assign({ domain: 'me.example.com' }, toKey ? { installation_key: toKey } : {}), ask), signerOf(kp));
 
 /* scenario setup: who WE are (the receiver) */
 function receiver(role, extra) {
@@ -138,6 +138,9 @@ D('deliver · master: a member with no certificate is refused', 'master', bare()
 const Q = (name, role, ik, ask, kp, ctx, manifest, status, code, why, check) => CASES.push([name, role, 'query', { ik, ask, kp }, Object.assign({ peer: Object.assign({}, PEER, { installation_key: ik }) }, ctx || {}), manifest, status, code, why, false, null, { check }]);
 
 const MASTER_ASKER = { peer: MASTER_PEER };
+/* SIT run 4: a domain changed hands; the master's pull for the retired member reached its successor, which answered */
+CASES.push(['query · a network question for ANOTHER installation (a domain that changed hands) is refused in words', 'member', 'query', { ik: 'master-1', ask: { want: 'registry_changes', after: 0 }, kp: MASTER, to: 'old-1' }, Object.assign({ peer: Object.assign({}, PEER, { installation_key: 'master-1' }) }, MASTER_ASKER), null, 409, 'CTP_NOT_THIS_INSTALLATION', /this is me-1, not old-1/, false, null, {}]);
+CASES.push(['query · the same question addressed to this installation is answered', 'member', 'query', { ik: 'master-1', ask: { want: 'registry_changes', after: 0 }, kp: MASTER, to: 'me-1' }, Object.assign({ peer: Object.assign({}, PEER, { installation_key: 'master-1' }) }, MASTER_ASKER, { changes: [] }), null, 200, undefined, undefined, false, null, {}]);
 Q('query · the master pulls registry changes (verified with the PINNED key)', 'member', 'master-1', { want: 'registry_changes', after: 0 }, MASTER, { peer: MASTER_PEER, changes: [{ seq: 1, bridge_id: 'CBROOT0001', entity_type: 'general', population: 'live', status: 'active', change: 'created' }] }, null, 200, undefined, undefined,
   (b) => b.ok === true && b.changes.length === 1 && b.changes[0].bridge_id === 'CBROOT0001' && b.entities === 1 && Object.keys(b.changes[0]).sort().join() === 'bridge_id,change,entity_type,population,seq,status');
 Q('query · registry changes signed with the master\'s CTP key (not the pinned one) are refused', 'member', 'master-1', { want: 'registry_changes', after: 0 }, MASTER_CTP, MASTER_ASKER, null, 403, 'CTP_QUERY_REFUSED', 'signature did not verify');
@@ -172,7 +175,7 @@ Q('query · member: resolve needs a certificate too', 'member', 'mx-1', { want: 
     manifestNow = manifest; manifestFresh = fresh || null;
     let body;
     if (door === 'deliver') body = env(extra && extra.fromKey ? extra.fromKey : SENDER);
-    else body = query(qspec.ik, qspec.ask, qspec.kp);
+    else body = query(qspec.ik, qspec.ask, qspec.kp, qspec.to);
     if (door === 'deliver' && extra && extra.from) body = envelope.sign(Object.assign({}, envelope.build({ installation_key: extra.from, population: 'live', bridge_id: 'CBSEND0001' }, { bridge_id: 'CBRECV0001' }, { chit_id: 'chit-1', copy: { sender_entity_id: 'sender-1', business_json: {} } })), signerOf(extra.fromKey));
     const r = await h.run(app, { url: '/api/ctp/' + door, body, identity: {}, ctx: Object.assign({ role }, ctx) });
     const b = r.body || {};

@@ -407,8 +407,13 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
       verify: (hash, sig, who) => who === ik && keys.verifyWith(pk.public_key, hash, sig)
     });
     if (!opened.ok) return refuse({ status: 403, code: 'CTP_QUERY_REFUSED', why: opened.why });
-
     const ask = opened.ask;
+    /* a network question names the installation it is for (signed, and the master assigned the key); a domain can change hands (a VM re-used), so a
+       question for another installation is not ours to answer (SIT run 4: the master's pull for a retired member was answered by its successor).
+       Only the network asks: an older hand-made peer row may name us differently, and resolve/catalogue keep working for it. */
+    const toKey = String((q.to || {}).installation_key || '');
+    if (ctpquery.NETWORK_WANTS.includes(ask.want) && toKey && toKey !== net.ownKey())
+      return refuse({ status: 409, code: 'CTP_NOT_THIS_INSTALLATION', why: 'this is ' + net.ownKey() + ', not ' + toKey + '; the address you hold for ' + toKey + ' is out of date' });
     /* after the signature, the PASS (as in deliver): resolve, catalogue and locate need a valid certificate; renewing one and reading the directory do not */
     const pass = net.needsMembership(ask.want) ? await net.doorVerdict(ik, peer, pk.manifest) : { ok: true };
     if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });

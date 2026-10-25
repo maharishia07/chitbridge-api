@@ -92,8 +92,8 @@ function self() {
   process.env.INSTALLATION_KEY = 'master-1'; process.env.CB_NETWORK_ROOT_KEY = MASTER.CB_NETWORK_ROOT_KEY; keys._reset(); net._reset();
   const calls = [];
   let script = [];
-  ctpquery.ask = async (target, want, deps) => { calls.push({ target, want, signedWithNetworkKey: deps && deps.signer && typeof deps.signer.sign === 'function' }); return script.shift() || { ok: false, why: 'script ran out' }; };
-  const ROW = { installation_key: 'au-1', domain: 'au.example.com' };
+  ctpquery.ask = async (target, want, deps) => { calls.push({ target, want, signedWithNetworkKey: deps && deps.signer && typeof deps.signer.sign === 'function', peer: deps && deps.resolvePeer ? await deps.resolvePeer(target) : null }); return script.shift() || { ok: false, why: 'script ran out' }; };
+  const ROW = { installation_key: 'au-1', domain: 'au.example.com', ctp_endpoint: 'https://au.example.com/api/ctp/deliver' };
   const ch = (seq, id, status, change) => ({ seq, bridge_id: id, entity_type: 'general', population: 'live', status, change: change || 'created' });
   const state = { cursor: 0, entries: 0 };
   const dbFor = (s, p) => {
@@ -105,6 +105,7 @@ function self() {
   script = [{ ok: true, changes: [ch(5, 'CBAAAAAAA1', 'pending'), ch(6, 'CBAAAAAAA1', 'active', 'status')], entities: 2, last_seq: 6 }];
   r = await sync.pullOne(ROW, false);
   t('it asks from the stored sequence, signed with the network key', calls[0].want.after === 4 && calls[0].want.want === 'registry_changes' && calls[0].signedWithNetworkKey === true && calls[0].target.domain === 'au.example.com');
+  t('the member is asked at ITS registered row (key + endpoint), never whoever answers the domain now (SIT run 4)', !!calls[0].peer && calls[0].peer.installation_key === 'au-1' && calls[0].peer.endpoint === 'https://au.example.com/api/ctp/deliver');
   t('each change is an idempotent upsert of ids, kind, world, status only', wrote(/INSERT INTO registry_entry/).length === 2 && /ON CONFLICT \(installation_key, bridge_id\) DO UPDATE/.test(wrote(/INSERT INTO registry_entry/)[0].s) && wrote(/INSERT INTO registry_entry/)[0].p.length === 5);
   t('no name, handle, contact or money column is ever written to the registry', !wrote(/INSERT INTO registry_entry/).some((x) => /display_name|user_id|email|phone|amount|total/i.test(x.s)));
   t('the cursor moves to the last sequence read', wrote(/INSERT INTO registry_cursor/)[0].p[1] === 6 && r.ok === true && r.entities === 2);
