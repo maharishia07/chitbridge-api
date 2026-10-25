@@ -357,6 +357,7 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
     const senderCtx = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
     if (!senderCtx) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
     const repeat = await deliverOrRepeat(senderCtx, opened.chit_id, copy, to.identity_id);
+    if (!repeat.duplicate) returnPath.onChitArrived(to.identity_id, opened.chit_id, opened.header); /* RAIL-106: the bell the local send rings for each recipient */
 
     res.json({
       accepted: true,
@@ -456,6 +457,9 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
         installation_key: me.installation_key
       });
     }
+
+    /* RAIL-106: a file on a chit, to a party of that chit only (lib/ctpreturn attachmentFor decides who is a party) */
+    if (ask.want === 'attachment') return res.json(await returnPath.attachmentFor(ik, ask));
 
     if (ask.want === 'catalogue') {
       const ent = await cat.resolveEntity(ask.bridge_id);

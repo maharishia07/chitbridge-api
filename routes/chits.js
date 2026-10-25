@@ -18,6 +18,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
+const messageLimit = require('../lib/message-limit'); // RAIL-106 — how long one message may be, checked where every message is written
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
@@ -4690,6 +4691,28 @@ function withdrawFailure(req, res, err) {
     message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.'
   }, 'CHIT_CANNOT_WITHDRAW') });
 }
+/** the flag "cancel requested" on ONE party's copy (b195): the void route sets it on each local recipient, lib/ctpreturn on the copy of a recipient the request was sent to */
+function stampCancelRequested(entity_id, chit_id, by_name, reason) {
+  return withEntity(entity_id, (db) =>
+    db.query(
+      `UPDATE chit_status
+          SET cancel_requested_at = NOW(), cancel_requested_by = $2, cancel_reason = $3
+        WHERE chit_id = $1 AND entity_id = $4`,
+      [chit_id, by_name, reason, entity_id]
+    )
+  );
+}
+/** the flag "cancel confirmed" on the SENDER's copy (b197): set when a recipient that was asked cancels */
+function stampCancelConfirmed(sender_id, chit_id, by_name) {
+  return withEntity(sender_id, (db) =>
+    db.query(
+      `UPDATE chit_status
+            SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
+          WHERE chit_id = $1 AND entity_id = $3`,
+      [chit_id, by_name, sender_id]
+    )
+  );
+}
 /**
  * the sender's own cancel leg (T1-RAIL + H3): my SENT copy goes through the same rail gate, the sale it posted is reversed in that SAME
  * transaction (a books refusal is SAID on the answer — { refused }, never swallowed), and the withdrawal message goes to the recipients.
@@ -4705,6 +4728,7 @@ async function cancelSentCopy(entity_id, chit_id, viewer, note, by) {
     return gate;
   });
   if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
+  if (sent.ok && !sent.noop) await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: sent.from, copy: 'sent', by_name: by.name, note }); // RAIL-106: the withdrawn sent copy is told like any status move
   await postMessageCopies({
     chit_id,
     sender_entity_id: entity_id,
@@ -4806,14 +4830,8 @@ async function confirmCancelToSender(entity_id, chit_id, header, action_by_name)
       );
       const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
       if (senderId && senderId !== entity_id && wasAsked) {
-        await withEntity(senderId, (db) =>
-          db.query(
-            `UPDATE chit_status
-                  SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
-                WHERE chit_id = $1 AND entity_id = $3`,
-            [chit_id, action_by_name, senderId]
-          )
-        );
+        await stampCancelConfirmed(senderId, chit_id, action_by_name);
+        await ctpReturn.onCancelConfirmed(entity_id, chit_id, { by_name: action_by_name }); // RAIL-106: a sender on another installation gets its flag set there
         await postMessageCopies({
           chit_id,
           sender_entity_id: entity_id,
@@ -5097,6 +5115,8 @@ router.put(
 //   internal → author only · external → all chit participants · dispute → the dispute roster). One logical message_id,
 //   replicated per audience entity; reads are RLS-scoped to "my own copies". Pass a tx `db` client to stay atomic.
 async function postMessageCopies(msg, db) {
+  const longer = messageLimit.tooLong(msg.message_text); // the one limit, in the one writer: every door, one installation or many
+  if (longer) throw longer;
   const message_id = msg.message_id || uuidv4(); /* RAIL-106: a message that arrived from another installation keeps the id it was sent with, so the same one twice is kept once */
   // ROOT FIX (reviewer 2026-07-13): the deliver definer must run with the sender's TRUSTED context set, so it can
   // verify the claimed sender = the caller (b50 pattern) instead of trusting the parameter. When no tx client is
@@ -5309,6 +5329,7 @@ router.post(
         ...ctpReturn.answerOf(result.ctp) // RAIL-106: queued for the party on another installation (resent until it accepts), or the words saying it could not be
       });
     } catch (err) {
+      if (answeredTooLong(req, res, err)) return;
       console.error('Send message error:', err.message);
       problem(req, res, failed(err, req, 'Send message failed'));
     }
@@ -5498,6 +5519,13 @@ function releaseAfterResolve(out, chit_id, extraIds) {
   }
 }
 
+/** RAIL-106: a message longer than lib/message-limit allows is refused 413 in words (the writer threw it); true when it answered */
+function answeredTooLong(req, res, err) {
+  if (!err || err.code !== 'MESSAGE_TOO_LONG') return false;
+  problem(req, res, { status: 413, ...said({ error: 'Message too long', message: err.message, code: 'MESSAGE_TOO_LONG', limit: err.limit }, 'MESSAGE_TOO_LONG') });
+  return true;
+}
+
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
 router.post(
   '/:chit_id/disputes',
@@ -5628,6 +5656,7 @@ router.post(
         ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
+      if (answeredTooLong(req, res, err)) return;
       console.error('Raise dispute error:', err.message);
       if (err.message.includes('chit_disputes'))
         return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
@@ -5874,6 +5903,7 @@ router.put(
         ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
+      if (answeredTooLong(req, res, err)) return;
       console.error('Resolve dispute error:', err.message);
       problem(req, res, failed(err, req, 'Resolve failed'));
     }
@@ -6340,13 +6370,14 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       }
       const refusedBy = gates.find((item) => !item.ok);
       if (refusedBy) return { refused: refusedBy };
-      for (const g of gates) await g.write();
+      const moved = [];
+      for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
       await db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
         [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]
       ); // own timeline only
-      return { refused: null, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
+      return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
     });
     if (gate.refused) {
       const g = gate.refused;
@@ -6361,6 +6392,9 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
         allowed_transitions: g.allowed
       })));
     }
+    /* ⭐ RAIL-106: each copy of mine that moved is told to the parties on other installations, by the same event a status move sends (the rail decided it above) */
+    const told = [];
+    for (const copy of gate.moved || []) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: req.identity.display_name, note: reason }));
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
       chit_id,
@@ -6426,15 +6460,9 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
         /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
              timestamp for no reason. */
         for (const rid of [...new Set(parties)]) {
-          await withEntity(rid, (db) =>
-            db.query(
-              `UPDATE chit_status
-                  SET cancel_requested_at = NOW(), cancel_requested_by = $2, cancel_reason = $3
-                WHERE chit_id = $1 AND entity_id = $4`,
-              [chit_id, req.identity.display_name, reason, rid]
-            )
-          );
+          await stampCancelRequested(rid, chit_id, req.identity.display_name, reason);
         }
+        told.push(await ctpReturn.onCancelRequested(entity_id, chit_id, { by_name: req.identity.display_name, reason })); // RAIL-106: the flag on a copy on another installation is set there, by the same stamp
       }
     } catch (e) {
       console.error('cancel flag:', e.message);
@@ -6442,7 +6470,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 
     /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */
-    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books });
+    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books, ...ctpReturn.answerOf(ctpReturn.firstOf(told)) });
   } catch (err) {
     withdrawFailure(req, res, err);
   }
@@ -7017,6 +7045,8 @@ router.get('/trace/networks', auth, async (req, res) => {
 });
 
 router.openapi = { paths: pathsOf(), schemas: {} };
+router.stampCancelRequested = stampCancelRequested; /* lib/ctpreturn sets the same flags on a copy a request or a confirmation was sent to */
+router.stampCancelConfirmed = stampCancelConfirmed;
 router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */
 router.recordResolve = recordResolve;
 router.releaseAfterResolve = releaseAfterResolve;
