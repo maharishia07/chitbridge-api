@@ -101,9 +101,10 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   t('chitWithdrawn: the ONE helper both doors call — reverses once; the second call answers duplicate', w.ok === true && w.reverses === posted3.entry_no && w2.duplicate === true && (await openOf(C2)) === 0, JSON.stringify([w, w2]));
   const moveSrc = srcRoute.slice(srcRoute.indexOf('async function moveStatus('), srcRoute.indexOf("router.put('/:chit_id/void'"));
   const cancelSrc = srcRoute.slice(srcRoute.indexOf('async function cancelSentCopy('), srcRoute.indexOf('async function moveStatus('));
+  const afterSrc = srcRoute.slice(srcRoute.indexOf('async function afterMoved('), srcRoute.indexOf('async function moveStatus(')); /* NET-40: the steps after a written move (the sender-cancel leg among them) live in afterMoved, so moveStatus does not grow */
   t('moveStatus: the sender-cancel leg (cancelSentCopy) calls chitWithdrawnSaid on the sent copy\'s handle, after g.write(), and carries `books` on the answer (a refusal in words, never swallowed)',
-    /if \(isSender && new_status === 'cancelled'\) booksOnCancel = await cancelSentCopy\(/.test(moveSrc) && cancelSrc.indexOf('chitWithdrawnSaid(db, entity_id, chit_id, note, by.id)') > cancelSrc.indexOf('await gate.write()')
-    && /books: booksOnCancel/.test(moveSrc) && /refused: err\.message/.test(fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8')));
+    /const booksOnCancel = isSender && cancelled \? await cancelSentCopy\(/.test(afterSrc) && /afterMoved\(entity_id, chit_id, new_status/.test(moveSrc) && cancelSrc.indexOf('chitWithdrawnSaid(db, entity_id, chit_id, note, by.id)') > cancelSrc.indexOf('await gate.write()')
+    && /books: after\.booksOnCancel/.test(moveSrc) && /refused: err\.message/.test(fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8')));
 
   console.log('\n— D · the walk-in day leaves a cancelled bill out —');
   const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
