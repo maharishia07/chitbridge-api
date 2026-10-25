@@ -1083,7 +1083,7 @@
    "path": "/api/relationships/suppliers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 447,
+   "line": 448,
    "hash": "1bb994c93cc08c72",
    "columns": {
     "schema_in": true,
@@ -11248,7 +11248,7 @@
    "path": "/api/relationships/customers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 690,
+   "line": 691,
    "hash": "4d2731e0f77fa20f",
    "columns": {
     "schema_in": false,
@@ -11292,7 +11292,7 @@
    "path": "/api/relationships/customers/:id/rewards",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 752,
+   "line": 753,
    "hash": "db4ab90709a5e354",
    "columns": {
     "schema_in": false,
@@ -11336,7 +11336,7 @@
    "path": "/api/relationships/customers/groups",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 683,
+   "line": 684,
    "hash": "d168fe00f44c29b5",
    "columns": {
     "schema_in": false,
@@ -11380,7 +11380,7 @@
    "path": "/api/relationships/scorecard",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 1007,
+   "line": 1008,
    "hash": "2e60168fb06c4fee",
    "columns": {
     "schema_in": false,
@@ -11424,7 +11424,7 @@
    "path": "/api/relationships/scorecard/:entity_id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 1019,
+   "line": 1020,
    "hash": "a81c31bf304826e0",
    "columns": {
     "schema_in": false,
@@ -11468,7 +11468,7 @@
    "path": "/api/relationships/suppliers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 250,
+   "line": 251,
    "hash": "92fa7e2a633ddd85",
    "columns": {
     "schema_in": true,
@@ -11517,7 +11517,7 @@
    "path": "/api/relationships/suppliers/:supplier_entity_id/catalogue",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 626,
+   "line": 627,
    "hash": "9371df8fb3343670",
    "columns": {
     "schema_in": true,
@@ -11567,7 +11567,7 @@
    "path": "/api/relationships/suppliers/availability",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 496,
+   "line": 497,
    "hash": "c9c5b5f31f9713bb",
    "columns": {
     "schema_in": true,
@@ -14958,7 +14958,7 @@
    "path": "/api/relationships/customers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 945,
+   "line": 946,
    "hash": "e5855c528c7fb1d0",
    "columns": {
     "schema_in": false,
@@ -15002,8 +15002,8 @@
    "path": "/api/relationships/suppliers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 348,
-   "hash": "050580604c6a005f",
+   "line": 349,
+   "hash": "c686db331e6e3f79",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -25777,7 +25777,7 @@
    "path": "/api/relationships/customers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 805,
+   "line": 806,
    "hash": "b23854a4a0bb85b8",
    "columns": {
     "schema_in": false,
@@ -25821,7 +25821,7 @@
    "path": "/api/relationships/customers/:id/groups",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 915,
+   "line": 916,
    "hash": "038c70940e4cc884",
    "columns": {
     "schema_in": false,
@@ -25865,7 +25865,7 @@
    "path": "/api/relationships/suppliers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 129,
+   "line": 130,
    "hash": "8a60f8e884b327de",
    "columns": {
     "schema_in": true,

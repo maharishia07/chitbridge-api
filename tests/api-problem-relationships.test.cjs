@@ -42,7 +42,7 @@ const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-eviden
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const tools = { OWNER, STAFF, SECRET_SQL, answering, raising, firstOf };
 const ADDED = new Set(scenes.extras(tools).filter((one) => one.after).map((one) => one.id));
-const BY_ID = new RegExp('/:(id|supplier_entity_id)(/|$)'); /* the doors that name a list row or a business by an id in the path */
+const BY_ID = new RegExp('^(DELETE /api/relationships/suppliers/:id|GET /api/relationships/suppliers/:supplier_entity_id/catalogue)' + String.fromCharCode(36)); /* the doors whose path id is a uuid by schema (PATCH keeps a bare id: its 400 is reachable through the body) */
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],

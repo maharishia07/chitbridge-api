@@ -2675,6 +2675,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "PARTY_CONTACT_NOT_YOURS",
+   "status": "403",
+   "title": "Their contact, not yours",
+   "shopkeeper": "That is their own ChitBridge business, so their phone and e-mail are theirs to change.",
+   "hint": "Ask them to change it on their side.",
+   "owner_area": "relationships",
+   "since": "2026-10-25"
+  },
+  {
    "code": "PAYMENT_ABOVE_QUOTE",
    "status": "422",
    "title": "Above the quoted amount",

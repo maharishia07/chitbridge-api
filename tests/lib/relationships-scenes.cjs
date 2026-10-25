@@ -106,6 +106,7 @@ function extras(tools) {
     X('patch-party-duplicate-by-index', PATCH, 409, { body: { tax_ids: { gstin: '27AAAAA0000A1Z5' } }, patch: partyPatch(throwing(Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' }))) }),
     X('patch-party-not-found', PATCH, 404, { body: { legal_name: 'Other Shop Pvt Ltd' }, patch: partyPatch(throwing(refusal('Not your party.', 404))) }),
     X('patch-party-conflict', PATCH, 409, { body: { merged_into: OTHER }, patch: partyPatch(throwing(refusal('Already merged.', 409))) }),
+    X('patch-party-their-own-contact', PATCH, 403, { body: { phone: '9000000003' }, patch: partyPatch(throwing(refusal('That is their own ChitBridge business. Their phone and e-mail are theirs to change, not yours.', 403))) }),
     X('patch-party-bad', PATCH, 400, { body: { credit_days: 'thirty' }, patch: partyPatch(throwing(refusal('Credit days must be a number.', 400))) }),
     X('patch-fails', PATCH, 500, { body: { nickname: 'Rice man' }, setup: failing }),
     /* ── removing one ── */

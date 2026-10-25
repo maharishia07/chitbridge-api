@@ -356,7 +356,8 @@ const askStub = async (target, want, deps) => {
   await t('the add route is still the old one: POST /suppliers { supplier_bridge_id: address } goes through remoteAddress → adopt', async () => {
     const src = require('fs').readFileSync(path.join(API, 'routes', 'relationships.js'), 'utf8');
     ok(/require\('\.\.\/lib\/remote-party'\)\.adopt\(ctx\(req\), typed\)/.test(src));
-    ok(/'\/suppliers',\s*\[/.test(src) && /remoteAddress/.test(src));
+    /* API-4 (25 Oct): the express-validator array became the door's schema check; the address gate still stands right after it */
+    ok(/'\/suppliers',\s*auth,[\s\S]{0,400}?\.\.\.checkedSupplier\('POST \/suppliers'\),\s*remoteAddress,/.test(src));
   });
 
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');

@@ -143,6 +143,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | PENDING | - | folder-inventory | 2026-10-22 |
 | DUPLICATE_PARTY | 409 | Duplicate party | Another party already has this tax id. | Check the tax id, or open the party that holds it. | relationships | 2026-10-22 |
+| PARTY_CONTACT_NOT_YOURS | 403 | Their contact, not yours | That is their own ChitBridge business, so their phone and e-mail are theirs to change. | Ask them to change it on their side. | relationships | 2026-10-25 |
 | SUPPLIER_NOT_YOURS | 403 | Their name, not yours | That is their own business name, so it cannot be changed from here. | Use "your name for them" (nickname) instead. | relationships | 2026-10-25 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | - | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |

@@ -46,6 +46,7 @@ async function partyPatch(req, res, side) {
     if (e && (e.code === 'DUPLICATE_PARTY' || e.code === '23505')) return (problem(req, res, { status: 409, ...words.partyRefused(e) }), false);
     if (e && e.status === 404) return (problem(req, res, { status: 404, ...words.partyRefused(e) }), false);
     if (e && e.status === 409) return (problem(req, res, { status: 409, ...words.partyRefused(e) }), false);
+    if (e && e.status === 403) return (problem(req, res, { status: 403, ...words.partyRefused(e) }), false); /* their own contact: theirs to change */
     if (e && e.status) return (problem(req, res, { status: 400, ...words.partyRefused(e) }), false);
     throw e;
   }

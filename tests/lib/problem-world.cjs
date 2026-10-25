@@ -186,12 +186,12 @@ function harness(options) {
 
   const legacyOf = (key, scenario) => (JSON.parse(fs.readFileSync(options.legacyFile, 'utf8')).routes[key] || { answers: [] }).answers.find((answer) => answer.scenario === scenario);
 
-  function checkProblemBody(label, answer) {
+  function checkProblemBody(label, answer, genericOk) {
     check(label + ': content-type is application/problem+json', /application\/problem\+json/.test(answer.type), answer.type);
     check(label + ': has every Problem field', answer.json && REQUIRED_FIELDS.every((name) => answer.json[name] !== undefined), answer.json);
     check(label + ': status in the body equals the HTTP status', answer.json && answer.json.status === answer.status);
     /* API-6 (25 Oct): a 4xx is a refusal the caller can act on, so its detail and message are the thrower's own sentence, never the generic words of a fault */
-    if (answer.status < 500 && answer.json) check(label + ': a 4xx says its own sentence, never the generic fault words', !GENERIC_SENTENCE.test(String(answer.json.detail)) && !GENERIC_SENTENCE.test(String(answer.json.message)), [answer.json.detail, answer.json.message]);
+    if (answer.status < 500 && answer.json && !genericOk) check(label + ': a 4xx says its own sentence, never the generic fault words', !GENERIC_SENTENCE.test(String(answer.json.detail)) && !GENERIC_SENTENCE.test(String(answer.json.message)), [answer.json.detail, answer.json.message]);
   }
 
   function checkLegacy(label, answer, frozen, givenUp) {
@@ -225,7 +225,7 @@ function harness(options) {
   function judgeRefusal(label, scenario, answer, allowed) {
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (options.inherited(scenario, answer)) return;
-    checkProblemBody(label, answer);
+    checkProblemBody(label, answer, scenario.genericOk); /* a scene whose thrower set no sentence says so */
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT|vault|relation "/.test(answer.text), answer.text);
     else if (!scenario.after && !(options.added && options.added(scenario.route, scenario.id))) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id), options.cannotRide ? options.cannotRide(scenario.route, scenario.id) : []); /* added(route, scenario): a generic world the sweep now refuses by schema (a non-uuid id), so nothing old is frozen for it */ /* `after`: a refusal the sweep adds, so nothing was frozen */
   }

@@ -34519,666 +34519,6 @@
     }
    ]
   },
-  "DELETE /api/relationships/suppliers/:id": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 403,
-     "body_keys": {
-      "code": "OWNER_ONLY",
-      "error": "Owner only",
-      "message": "Only the owner can remove a supplier."
-     },
-     "fixture": {
-      "code": "OWNER_ONLY",
-      "error": "Owner only",
-      "message": "Only the owner can remove a supplier."
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Remove supplier failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Remove supplier failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 404,
-     "body_keys": {
-      "error": "Not found"
-     },
-     "fixture": {
-      "error": "Not found"
-     }
-    },
-    {
-     "scenario": "remove-by-staff",
-     "status": 403,
-     "body_keys": {
-      "code": "OWNER_ONLY",
-      "error": "Owner only",
-      "message": "Only the owner can remove a supplier."
-     },
-     "fixture": {
-      "code": "OWNER_ONLY",
-      "error": "Owner only",
-      "message": "Only the owner can remove a supplier."
-     }
-    },
-    {
-     "scenario": "remove-row-not-mine",
-     "status": 404,
-     "body_keys": {
-      "error": "Not found"
-     },
-     "fixture": {
-      "error": "Not found"
-     }
-    },
-    {
-     "scenario": "remove-with-open-dues",
-     "status": 409,
-     "body_keys": {
-      "code": "HAS_DUES",
-      "error": "There are open dues on this party.",
-      "message": "There are open dues on this party."
-     },
-     "fixture": {
-      "code": "HAS_DUES",
-      "error": "There are open dues on this party.",
-      "message": "There are open dues on this party."
-     }
-    },
-    {
-     "scenario": "remove-not-your-party",
-     "status": 404,
-     "body_keys": {
-      "code": "NOT_FOUND",
-      "error": "Not your party.",
-      "message": "Not your party."
-     },
-     "fixture": {
-      "code": "NOT_FOUND",
-      "error": "Not your party.",
-      "message": "Not your party."
-     }
-    },
-    {
-     "scenario": "remove-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Remove supplier failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Remove supplier failed",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/relationships/suppliers": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Get suppliers failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Get suppliers failed",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
-   "answers": [
-    {
-     "scenario": "db-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Get catalogue failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Get catalogue failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "catalogue-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Get catalogue failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Get catalogue failed",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "GET /api/relationships/suppliers/availability": {
-   "answers": [
-    {
-     "scenario": "availability-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Supplier availability failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Supplier availability failed",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "PATCH /api/relationships/suppliers/:id": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 400,
-     "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     },
-     "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 400,
-     "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     },
-     "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 400,
-     "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     },
-     "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     }
-    },
-    {
-     "scenario": "patch-nothing-to-update",
-     "status": 400,
-     "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     },
-     "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
-     }
-    },
-    {
-     "scenario": "patch-bad-supply-kind",
-     "status": 400,
-     "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "supply_kind",
-        "message": "supply_kind must be resale or own_use"
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "supply_kind",
-        "message": "supply_kind must be resale or own_use"
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "patch-row-not-mine",
-     "status": 404,
-     "body_keys": {
-      "error": "Not found"
-     },
-     "fixture": {
-      "error": "Not found"
-     }
-    },
-    {
-     "scenario": "patch-rename-row-not-found",
-     "status": 404,
-     "body_keys": {
-      "error": "Not found"
-     },
-     "fixture": {
-      "error": "Not found"
-     }
-    },
-    {
-     "scenario": "patch-rename-their-own-name",
-     "status": 403,
-     "body_keys": {
-      "error": "Not yours",
-      "message": "That is their own business name. Use \"your name for them\" instead."
-     },
-     "fixture": {
-      "error": "Not yours",
-      "message": "That is their own business name. Use \"your name for them\" instead."
-     }
-    },
-    {
-     "scenario": "patch-rename-duplicate",
-     "status": 409,
-     "body_keys": {
-      "error": "Exists",
-      "message": "You already have a supplier called Corner Hardware & Sons."
-     },
-     "fixture": {
-      "error": "Exists",
-      "message": "You already have a supplier called Corner Hardware & Sons."
-     }
-    },
-    {
-     "scenario": "patch-party-duplicate-tax-id",
-     "status": 409,
-     "body_keys": {
-      "code": "DUPLICATE_PARTY",
-      "error": "Another party already has this tax id.",
-      "message": "Another party already has this tax id.",
-      "holder": "Rice man",
-      "scheme": "gstin"
-     },
-     "fixture": {
-      "code": "DUPLICATE_PARTY",
-      "error": "Another party already has this tax id.",
-      "message": "Another party already has this tax id.",
-      "holder": "Rice man",
-      "scheme": "gstin"
-     }
-    },
-    {
-     "scenario": "patch-party-duplicate-by-index",
-     "status": 409,
-     "body_keys": {
-      "code": "DUPLICATE_PARTY",
-      "error": "Another party already has this tax id.",
-      "message": "Another party already has this tax id."
-     },
-     "fixture": {
-      "code": "DUPLICATE_PARTY",
-      "error": "Another party already has this tax id.",
-      "message": "Another party already has this tax id."
-     }
-    },
-    {
-     "scenario": "patch-party-not-found",
-     "status": 404,
-     "body_keys": {
-      "error": "Not found",
-      "message": "Not your party."
-     },
-     "fixture": {
-      "error": "Not found",
-      "message": "Not your party."
-     }
-    },
-    {
-     "scenario": "patch-party-conflict",
-     "status": 409,
-     "body_keys": {
-      "error": "Conflict",
-      "message": "Already merged."
-     },
-     "fixture": {
-      "error": "Conflict",
-      "message": "Already merged."
-     }
-    },
-    {
-     "scenario": "patch-party-bad",
-     "status": 400,
-     "body_keys": {
-      "error": "validation",
-      "message": "Credit days must be a number."
-     },
-     "fixture": {
-      "error": "validation",
-      "message": "Credit days must be a number."
-     }
-    },
-    {
-     "scenario": "patch-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Update failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Update failed",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
-  "POST /api/relationships/suppliers": {
-   "answers": [
-    {
-     "scenario": "staff-asks",
-     "status": 400,
-     "body_keys": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     },
-     "fixture": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     }
-    },
-    {
-     "scenario": "db-fails",
-     "status": 400,
-     "body_keys": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     },
-     "fixture": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     }
-    },
-    {
-     "scenario": "nothing-found",
-     "status": 400,
-     "body_keys": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     },
-     "fixture": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     }
-    },
-    {
-     "scenario": "add-nothing-given",
-     "status": 400,
-     "body_keys": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     },
-     "fixture": {
-      "error": "Invalid",
-      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
-     }
-    },
-    {
-     "scenario": "add-minted-handle",
-     "status": 404,
-     "body_keys": {
-      "error": "Not found",
-      "message": "No business with that User ID, bridge ID, or email"
-     },
-     "fixture": {
-      "error": "Not found",
-      "message": "No business with that User ID, bridge ID, or email"
-     }
-    },
-    {
-     "scenario": "add-bad-supply-kind",
-     "status": 400,
-     "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "supply_kind",
-        "message": "supply_kind must be resale or own_use"
-       }
-      ]
-     },
-     "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "supply_kind",
-        "message": "supply_kind must be resale or own_use"
-       }
-      ]
-     }
-    },
-    {
-     "scenario": "add-local-name-refused",
-     "status": 400,
-     "body_keys": {
-      "error": "Invalid",
-      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
-     },
-     "fixture": {
-      "error": "Invalid",
-      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
-     }
-    },
-    {
-     "scenario": "add-local-id-busy",
-     "status": 409,
-     "body_keys": {
-      "error": "Busy",
-      "message": "Could not allocate an ID for Corner Hardware. Try once more."
-     },
-     "fixture": {
-      "error": "Busy",
-      "message": "Could not allocate an ID for Corner Hardware. Try once more."
-     }
-    },
-    {
-     "scenario": "add-local-name-twice",
-     "status": 409,
-     "body_keys": {
-      "error": "Exists",
-      "message": "Corner Hardware is already in your supplier list"
-     },
-     "fixture": {
-      "error": "Exists",
-      "message": "Corner Hardware is already in your supplier list"
-     }
-    },
-    {
-     "scenario": "add-local-name-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Add supplier failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Add supplier failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "add-unknown-business",
-     "status": 404,
-     "body_keys": {
-      "error": "Not found",
-      "message": "No business with that User ID, bridge ID, or email"
-     },
-     "fixture": {
-      "error": "Not found",
-      "message": "No business with that User ID, bridge ID, or email"
-     }
-    },
-    {
-     "scenario": "add-yourself",
-     "status": 400,
-     "body_keys": {
-      "error": "Invalid",
-      "message": "Cannot add yourself"
-     },
-     "fixture": {
-      "error": "Invalid",
-      "message": "Cannot add yourself"
-     }
-    },
-    {
-     "scenario": "add-business-twice",
-     "status": 409,
-     "body_keys": {
-      "error": "Exists",
-      "message": "Already in your supplier list"
-     },
-     "fixture": {
-      "error": "Exists",
-      "message": "Already in your supplier list"
-     }
-    },
-    {
-     "scenario": "add-business-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Add supplier failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Add supplier failed",
-      "message": "Something went wrong — please try again."
-     }
-    },
-    {
-     "scenario": "add-by-address-unreadable",
-     "status": 400,
-     "body_keys": {
-      "error": "Not added",
-      "message": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
-      "type": "https://chitbridge.com/problems/ctp_address_invalid",
-      "title": "Address not readable",
-      "status": 400,
-      "code": "CTP_ADDRESS_INVALID",
-      "detail": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
-      "hint": "Type it as id@domain, or paste the business's link.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Not added",
-      "message": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
-      "type": "https://chitbridge.com/problems/ctp_address_invalid",
-      "title": "Address not readable",
-      "status": 400,
-      "code": "CTP_ADDRESS_INVALID",
-      "detail": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
-      "hint": "Type it as id@domain, or paste the business's link.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "add-by-address-not-dealt-with",
-     "status": 404,
-     "body_keys": {
-      "error": "Not added",
-      "message": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
-      "type": "https://chitbridge.com/problems/ctp_address_unknown",
-      "title": "No such business there",
-      "status": 404,
-      "code": "CTP_ADDRESS_UNKNOWN",
-      "detail": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
-      "hint": "Check the address, or paste their shared link.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Not added",
-      "message": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
-      "type": "https://chitbridge.com/problems/ctp_address_unknown",
-      "title": "No such business there",
-      "status": 404,
-      "code": "CTP_ADDRESS_UNKNOWN",
-      "detail": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
-      "hint": "Check the address, or paste their shared link.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "add-by-address-sells-only-there",
-     "status": 409,
-     "body_keys": {
-      "error": "Not added",
-      "message": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
-      "type": "https://chitbridge.com/problems/supplier_sells_only_here",
-      "title": "Sells only on their own ChitBridge",
-      "status": 409,
-      "code": "SUPPLIER_SELLS_ONLY_HERE",
-      "detail": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
-      "hint": "Ask them to sell outside, or find another supplier.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Not added",
-      "message": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
-      "type": "https://chitbridge.com/problems/supplier_sells_only_here",
-      "title": "Sells only on their own ChitBridge",
-      "status": 409,
-      "code": "SUPPLIER_SELLS_ONLY_HERE",
-      "detail": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
-      "hint": "Ask them to sell outside, or find another supplier.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "add-by-address-unreachable",
-     "status": 502,
-     "body_keys": {
-      "error": "Not added",
-      "message": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
-      "type": "https://chitbridge.com/problems/ctp_unreachable",
-      "title": "The other installation did not answer",
-      "status": 502,
-      "code": "CTP_UNREACHABLE",
-      "detail": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
-      "hint": "Send it again when they are back.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Not added",
-      "message": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
-      "type": "https://chitbridge.com/problems/ctp_unreachable",
-      "title": "The other installation did not answer",
-      "status": 502,
-      "code": "CTP_UNREACHABLE",
-      "detail": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
-      "hint": "Send it again when they are back.",
-      "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "add-by-address-fails",
-     "status": 500,
-     "body_keys": {
-      "error": "Add supplier failed",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Add supplier failed",
-      "message": "Something went wrong — please try again."
-     }
-    }
-   ]
-  },
   "DELETE /api/chits/:chit_id": {
    "answers": [
     {
@@ -42505,6 +41845,704 @@
       "detail": "Your access is view-only. You can read this chit but not change it.",
       "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
       "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "DELETE /api/relationships/suppliers/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "remove-by-staff",
+     "status": 403,
+     "body_keys": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     },
+     "fixture": {
+      "code": "OWNER_ONLY",
+      "error": "Owner only",
+      "message": "Only the owner can remove a supplier."
+     }
+    },
+    {
+     "scenario": "remove-row-not-mine",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "remove-with-open-dues",
+     "status": 409,
+     "body_keys": {
+      "code": "HAS_DUES",
+      "error": "There are open dues on this party.",
+      "message": "There are open dues on this party."
+     },
+     "fixture": {
+      "code": "HAS_DUES",
+      "error": "There are open dues on this party.",
+      "message": "There are open dues on this party."
+     }
+    },
+    {
+     "scenario": "remove-not-your-party",
+     "status": 404,
+     "body_keys": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "code": "NOT_FOUND",
+      "error": "Not your party.",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "remove-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Remove supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/suppliers": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get suppliers failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get suppliers failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "catalogue-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get catalogue failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "answers": [
+    {
+     "scenario": "availability-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Supplier availability failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Supplier availability failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/relationships/suppliers/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "patch-nothing-to-update",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "patch-bad-supply-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-row-not-mine",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "patch-rename-row-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "patch-rename-their-own-name",
+     "status": 403,
+     "body_keys": {
+      "error": "Not yours",
+      "message": "That is their own business name. Use \"your name for them\" instead."
+     },
+     "fixture": {
+      "error": "Not yours",
+      "message": "That is their own business name. Use \"your name for them\" instead."
+     }
+    },
+    {
+     "scenario": "patch-rename-duplicate",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "You already have a supplier called Corner Hardware & Sons."
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "You already have a supplier called Corner Hardware & Sons."
+     }
+    },
+    {
+     "scenario": "patch-party-duplicate-tax-id",
+     "status": 409,
+     "body_keys": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id.",
+      "holder": "Rice man",
+      "scheme": "gstin"
+     },
+     "fixture": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id.",
+      "holder": "Rice man",
+      "scheme": "gstin"
+     }
+    },
+    {
+     "scenario": "patch-party-duplicate-by-index",
+     "status": 409,
+     "body_keys": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id."
+     },
+     "fixture": {
+      "code": "DUPLICATE_PARTY",
+      "error": "Another party already has this tax id.",
+      "message": "Another party already has this tax id."
+     }
+    },
+    {
+     "scenario": "patch-party-not-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Not your party."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Not your party."
+     }
+    },
+    {
+     "scenario": "patch-party-conflict",
+     "status": 409,
+     "body_keys": {
+      "error": "Conflict",
+      "message": "Already merged."
+     },
+     "fixture": {
+      "error": "Conflict",
+      "message": "Already merged."
+     }
+    },
+    {
+     "scenario": "patch-party-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Credit days must be a number."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Credit days must be a number."
+     }
+    },
+    {
+     "scenario": "patch-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     },
+     "fixture": {
+      "error": "Nothing to update",
+      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+     }
+    },
+    {
+     "scenario": "patch-party-their-own-contact",
+     "status": 403,
+     "body_keys": {
+      "error": "validation",
+      "message": "That is their own ChitBridge business. Their phone and e-mail are theirs to change, not yours.",
+      "type": "https://chitbridge.com/problems/party_contact_not_yours",
+      "title": "Their contact, not yours",
+      "status": 403,
+      "code": "PARTY_CONTACT_NOT_YOURS",
+      "detail": "That is their own ChitBridge business. Their phone and e-mail are theirs to change, not yours.",
+      "hint": "Ask them to change it on their side.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "That is their own ChitBridge business. Their phone and e-mail are theirs to change, not yours.",
+      "type": "https://chitbridge.com/problems/party_contact_not_yours",
+      "title": "Their contact, not yours",
+      "status": 403,
+      "code": "PARTY_CONTACT_NOT_YOURS",
+      "detail": "That is their own ChitBridge business. Their phone and e-mail are theirs to change, not yours.",
+      "hint": "Ask them to change it on their side.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/relationships/suppliers": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "add-nothing-given",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Give a User ID or email for a ChitBridge business, or a name for a local supplier"
+     }
+    },
+    {
+     "scenario": "add-minted-handle",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     }
+    },
+    {
+     "scenario": "add-bad-supply-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "supply_kind",
+        "message": "supply_kind must be resale or own_use"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "add-local-name-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "That looks like an email. Add them as a ChitBridge business, or type their name instead."
+     }
+    },
+    {
+     "scenario": "add-local-id-busy",
+     "status": 409,
+     "body_keys": {
+      "error": "Busy",
+      "message": "Could not allocate an ID for Corner Hardware. Try once more."
+     },
+     "fixture": {
+      "error": "Busy",
+      "message": "Could not allocate an ID for Corner Hardware. Try once more."
+     }
+    },
+    {
+     "scenario": "add-local-name-twice",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "Corner Hardware is already in your supplier list"
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "Corner Hardware is already in your supplier list"
+     }
+    },
+    {
+     "scenario": "add-local-name-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "add-unknown-business",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No business with that User ID, bridge ID, or email"
+     }
+    },
+    {
+     "scenario": "add-yourself",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid",
+      "message": "Cannot add yourself"
+     },
+     "fixture": {
+      "error": "Invalid",
+      "message": "Cannot add yourself"
+     }
+    },
+    {
+     "scenario": "add-business-twice",
+     "status": 409,
+     "body_keys": {
+      "error": "Exists",
+      "message": "Already in your supplier list"
+     },
+     "fixture": {
+      "error": "Exists",
+      "message": "Already in your supplier list"
+     }
+    },
+    {
+     "scenario": "add-business-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "add-by-address-unreadable",
+     "status": 400,
+     "body_keys": {
+      "error": "Not added",
+      "message": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
+      "type": "https://chitbridge.com/problems/ctp_address_invalid",
+      "title": "Address not readable",
+      "status": 400,
+      "code": "CTP_ADDRESS_INVALID",
+      "detail": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
+      "hint": "Type it as id@domain, or paste the business's link.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not added",
+      "message": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
+      "type": "https://chitbridge.com/problems/ctp_address_invalid",
+      "title": "Address not readable",
+      "status": 400,
+      "code": "CTP_ADDRESS_INVALID",
+      "detail": "That is not an address we can read: no bridge id in it. Type it as id@domain, or paste the business’s link.",
+      "hint": "Type it as id@domain, or paste the business's link.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "add-by-address-not-dealt-with",
+     "status": 404,
+     "body_keys": {
+      "error": "Not added",
+      "message": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
+      "type": "https://chitbridge.com/problems/ctp_address_unknown",
+      "title": "No such business there",
+      "status": 404,
+      "code": "CTP_ADDRESS_UNKNOWN",
+      "detail": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
+      "hint": "Check the address, or paste their shared link.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not added",
+      "message": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
+      "type": "https://chitbridge.com/problems/ctp_address_unknown",
+      "title": "No such business there",
+      "status": 404,
+      "code": "CTP_ADDRESS_UNKNOWN",
+      "detail": "We do not deal with nowhere.example, so nobody there can be added. no such installation.",
+      "hint": "Check the address, or paste their shared link.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "add-by-address-sells-only-there",
+     "status": 409,
+     "body_keys": {
+      "error": "Not added",
+      "message": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
+      "type": "https://chitbridge.com/problems/supplier_sells_only_here",
+      "title": "Sells only on their own ChitBridge",
+      "status": 409,
+      "code": "SUPPLIER_SELLS_ONLY_HERE",
+      "detail": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
+      "hint": "Ask them to sell outside, or find another supplier.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not added",
+      "message": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
+      "type": "https://chitbridge.com/problems/supplier_sells_only_here",
+      "title": "Sells only on their own ChitBridge",
+      "status": 409,
+      "code": "SUPPLIER_SELLS_ONLY_HERE",
+      "detail": "Far shop sells only on their own ChitBridge, so they cannot be your supplier from here.",
+      "hint": "Ask them to sell outside, or find another supplier.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "add-by-address-unreachable",
+     "status": 502,
+     "body_keys": {
+      "error": "Not added",
+      "message": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
+      "type": "https://chitbridge.com/problems/ctp_unreachable",
+      "title": "The other installation did not answer",
+      "status": 502,
+      "code": "CTP_UNREACHABLE",
+      "detail": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
+      "hint": "Send it again when they are back.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not added",
+      "message": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
+      "type": "https://chitbridge.com/problems/ctp_unreachable",
+      "title": "The other installation did not answer",
+      "status": 502,
+      "code": "CTP_UNREACHABLE",
+      "detail": "Could not ask far.example: timed out. Nothing was added; try again when they are reachable.",
+      "hint": "Send it again when they are back.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "add-by-address-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Add supplier failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
