@@ -192,7 +192,7 @@ function forbiddenWords(doc) {
 const VOCABULARY_ALLOWED = {
   'chit_proposal.currency_code': 'b796 already ran in PRODUCTION: the column carries the same value as chit_header/chit_detail.currency_code on the chit it proposes for (one name across the chit tables); never renamed',
   'chit_proposal.note': 'b796 already ran in PRODUCTION: the round’s own one-line note, a different fact from the chit’s notes column; never renamed',
-  'membership_certificate.note': 'b790 has not run yet and is cb-db’s (F3, RLS round): kept here so the stack is green; cb-db decides rename or keep and then deletes this line'
+  'membership_certificate.note': 'b790 already ran in PRODUCTION (25 Oct): the certificate’s one-line operator note (why it was suspended or revoked), a different fact from any chit notes column; never renamed (DB-85)'
 };
 const nearKey = (name) => name.toLowerCase().replace(/_/g, '').replace(/s$/, '');
 /** the problems with these new columns against the existing ones → ['table.column: why'] */
