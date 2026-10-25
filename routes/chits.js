@@ -5173,8 +5173,6 @@ router.post(
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
       const isDispute = req.body.is_dispute === true || req.body.is_dispute === 'true';
       const disputeId = req.body.dispute_id || null;
-      /* ⭐ RAIL-106 (decision 3): a dispute message on a chit with a party on another installation is refused in words, never kept here silently */
-      if (isDispute && (await answeredCrossDispute(req, res, entity_id, chit_id))) return;
       // M1 (reviewer 2026-07-13) — a dispute message needs MORE than chit-participation: the sender must be a PARTY to
       // THIS dispute, and the dispute must belong to THIS chit. RLS makes it one query — under withEntity(sender) the
       // policy returns only the sender's OWN chit_disputes copy, so a returned row proves BOTH roster membership AND
@@ -5222,6 +5220,8 @@ router.post(
         dispute_id: disputeId,
         line_id: req.body.line_id || null
       });
+
+      if (isDispute) result.ctp = await ctpReturn.onDisputeMessage(entity_id, chit_id, { dispute_id: disputeId, message_id: result.message_id, message_text, msg_type: req.body.msg_type, sender_display_name: senderName, line_id: req.body.line_id || null, to_ids: disputeRoster }); // RAIL-106: to the roster's parties elsewhere (targeted), or every party elsewhere (chit-wide)
 
       // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
       // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
@@ -5380,17 +5380,100 @@ async function holdersAmong(callerEntity, chit_id, ids) {
   return ids.filter((id) => holding.has(String(id)));
 }
 
-/** RAIL-106: true when it answered 409 CTP_CROSS_DISPUTE (the chit has a party on another installation); the route then stops. A failure to find out is not a refusal: it is logged and the route goes on as it always did. */
-async function answeredCrossDispute(req, res, entity_id, chit_id) {
-  let refusal = null;
-  try {
-    refusal = await ctpReturn.crossDisputeRefusal(entity_id, chit_id);
-  } catch (e) {
-    cbLog.fellBack('chits dispute: could not tell whether a party is on another installation — carried on as one installation', e);
+/**
+ * ⭐ RAIL-106 — THE ONE WRITER OF A RAISED DISPUTE: the per-party copies (chit_dispute_deliver), the raiser's timeline row, the parties' notices and the reason as a roster-scoped message.
+ * POST /:chit_id/disputes runs it for the person who raised it; lib/ctpreturn runs the SAME function on the installation that is told of it (as the remote raiser's stub, with the ids mapped
+ * to its own rows). The permission and scope decisions are made once, by the route, where the dispute originates — this only records.
+ * client = a transaction under withEntity(raiser). → { reason_message_id }
+ */
+async function recordRaise(client, args) {
+  await client.query(`SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`, [
+    args.dispute_id, args.chit_id, args.raiser_id, args.raiser_name, args.target_id, args.target_name, args.scope, args.parity.mode, args.parity.answerable, args.parity.parity_state, args.via, args.category, args.reason,
+    JSON.stringify(args.evidence), JSON.stringify(args.roster), args.audience
+  ]);
+  // raiser's own timeline
+  await client.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+     VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+    [args.chit_id, args.raiser_id, args.raiser_id, args.actor_name, `Dispute raised — ${args.category} (${args.parity.mode === 'one_sided' ? 'record-only' : args.scope}): ${args.reason.slice(0, 80)}`]
+  );
+  // per-party timeline notices — CROSS write into each party's own state_log copy
+  if (args.partyIds.length) {
+    const notice = `Dispute raised against you — ${args.category}: ${args.reason.slice(0, 80)}`;
+    if (args.ready !== undefined ? args.ready : await definersReady()) {
+      await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [args.chit_id, args.partyIds, 'dispute_raised', args.raiser_id, args.actor_name, notice]);
+    } else {
+      for (const pid of args.partyIds) {
+        await client.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+          [args.chit_id, pid, args.raiser_id, args.actor_name, notice]
+        );
+      }
+    }
   }
-  if (!refusal) return false;
-  problem(req, res, { status: refusal.status, ...said(refusal.body, refusal.code) });
-  return true;
+  // the dispute REASON as a per-copy dispute message (roster-scoped via chit_message_deliver)
+  const reason_message_id = args.reason_message_id || uuidv4();
+  await postMessageCopies(
+    { message_id: reason_message_id, chit_id: args.chit_id, sender_entity_id: args.raiser_id, sender_display_name: args.raiser_name, thread_type: 'external', message_text: `[${args.category}] ${args.reason}`, is_dispute: true, dispute_id: args.dispute_id },
+    client
+  );
+  return { reason_message_id };
+}
+
+/**
+ * ⭐ RAIL-106 — THE ONE WRITER OF A RESOLUTION: the definer that clears the party copy(ies) (and the raiser's when none is left open), the resolver's timeline row, the note as a roster-scoped
+ * message and the parties' notices. PUT …/resolve runs it after its own permission check; lib/ctpreturn runs the same function where the resolution is told of. client = a transaction under withEntity(resolver).
+ * → { allResolved, resolvedPartyIds, resolve_message_id }
+ */
+async function recordResolve(client, args) {
+  let resolvedPartyIds;
+  if (args.targetParty) resolvedPartyIds = [args.targetParty];
+  else {
+    const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [args.dispute_id]);
+    resolvedPartyIds = openR.rows.map((item) => item.entity_id);
+  }
+  // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
+  const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [args.dispute_id, args.resolver_id, args.targetParty || null, args.resolution_note]);
+  const allResolved = rr.rows[0].all_resolved;
+  await client.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+     VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+    [args.chit_id, args.resolver_id, args.resolver_id, args.actor_name, `Dispute resolved — ${args.category}: ${args.resolution_note.slice(0, 100)}`]
+  );
+  const resolve_message_id = args.resolve_message_id || uuidv4();
+  await postMessageCopies(
+    { message_id: resolve_message_id, chit_id: args.chit_id, sender_entity_id: args.resolver_id, sender_display_name: args.resolver_name, thread_type: 'external', message_text: `[resolved] ${args.resolution_note}`, is_dispute: true, dispute_id: args.dispute_id },
+    client
+  );
+  if (resolvedPartyIds.length) {
+    const notice = `Dispute resolved — ${args.category}: ${args.resolution_note.slice(0, 100)}`;
+    if (await definersReady()) {
+      await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [args.chit_id, resolvedPartyIds, 'dispute_resolved', args.resolver_id, args.actor_name, notice]);
+    } else {
+      for (const pid of resolvedPartyIds) {
+        await client.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+          [args.chit_id, pid, args.resolver_id, args.actor_name, notice]
+        );
+      }
+    }
+  }
+  return { allResolved, resolvedPartyIds, resolve_message_id };
+}
+
+/** ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits). The dispute carries no "in whose favour"; the buyer's own status says it. */
+function releaseAfterResolve(out, chit_id, extraIds) {
+  if (!out.allResolved) return;
+  try {
+    const hooks = require('../lib/books-hooks');
+    setImmediate(() => {
+      for (const party of (extraIds || []).concat(out.resolvedPartyIds || [])) hooks.afterChit(party, chit_id, null);
+    });
+  } catch (e) {
+    cbLog.fellBack('chits dispute resolve: the helper failed — carried on without it', e);
+  }
 }
 
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
@@ -5410,8 +5493,7 @@ router.post(
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
       if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
-      /* ⭐ RAIL-106 (decision 3): raising a dispute on a chit with a party on another installation is refused in words, never kept here silently */
-      if (await answeredCrossDispute(req, res, entity_id, chit_id)) return;
+      await ctpReturn.ensureShadows(entity_id, chit_id); // RAIL-106: a party on another installation is a participant here (its shadow row), so the roster below can hold it
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
       const _cs = access.rows[0].current_status;
@@ -5490,66 +5572,11 @@ router.post(
         partyIds.map((pid) => ({ entity_id: pid, display_name: partyNames[pid] || null, role: 'party' }))
       );
       const audience = [...new Set([entity_id, ...partyIds])];
-      await withEntity(entity_id, async (client) => {
-        await client.query(`SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`, [
-          dispute_id,
-          chit_id,
-          entity_id,
-          entityName,
-          scope === 'targeted' ? target_entity_id : null,
-          scope === 'targeted' ? parity.target_display_name : null,
-          scope,
-          parity.mode,
-          parity.answerable,
-          parity.parity_state,
-          via,
-          category,
-          reason,
-          JSON.stringify(evidence),
-          JSON.stringify(roster),
-          audience
-        ]);
-        // raiser's own timeline
-        await client.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-           VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-          [
-            chit_id,
-            entity_id,
-            entity_id,
-            display_name,
-            `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0, 80)}`
-          ]
-        );
-        // per-party timeline notices — CROSS write into each party's own state_log copy
-        if (partyIds.length) {
-          const notice = `Dispute raised against you — ${category}: ${reason.slice(0, 80)}`;
-          if (ready) {
-            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, partyIds, 'dispute_raised', entity_id, display_name, notice]);
-          } else {
-            for (const pid of partyIds) {
-              await client.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]
-              );
-            }
-          }
-        }
-        // the dispute REASON as a per-copy dispute message (roster-scoped via chit_message_deliver)
-        await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: entityName,
-            thread_type: 'external',
-            message_text: `[${category}] ${reason}`,
-            is_dispute: true,
-            dispute_id
-          },
-          client
-        );
-      });
+      const raised = await withEntity(entity_id, (client) =>
+        recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
+      );
+      /* RAIL-106: told to the roster's parties on other installations, who record it on their own copy (the decision above is not re-run there) */
+      const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, roster, partyIds, reason_message_id: raised.reason_message_id });
       const d = {
         dispute_id,
         mode: parity.mode,
@@ -5575,7 +5602,8 @@ router.post(
             : widened
               ? 'This category notifies all parties — raised chit-wide.'
               : 'Dispute raised with the selected party.',
-        message: 'Dispute raised'
+        message: 'Dispute raised',
+        ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
       console.error('Raise dispute error:', err.message);
@@ -5807,71 +5835,11 @@ router.put(
         }
       }
 
-      const ready = await definersReady();
-      const out = await withEntity(entity_id, async (client) => {
-        // who is being cleared (for their timeline notice): the target party, or every still-open party.
-        let resolvedPartyIds;
-        if (targetParty) resolvedPartyIds = [targetParty];
-        else {
-          const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [dispute_id]);
-          resolvedPartyIds = openR.rows.map((item) => item.entity_id);
-        }
-        // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
-        const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [
-          dispute_id,
-          entity_id,
-          targetParty || null,
-          resolution_note
-        ]);
-        const allResolved = rr.rows[0].all_resolved;
-        // resolver's own timeline
-        await client.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-           VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`]
-        );
-        // resolution note as a per-copy dispute message (roster-scoped)
-        await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: entityName,
-            thread_type: 'external',
-            message_text: `[resolved] ${resolution_note}`,
-            is_dispute: true,
-            dispute_id
-          },
-          client
-        );
-        // notify the cleared parties on their own timeline
-        if (resolvedPartyIds.length) {
-          const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`;
-          if (ready) {
-            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, resolvedPartyIds, 'dispute_resolved', entity_id, display_name, notice]);
-          } else {
-            for (const pid of resolvedPartyIds) {
-              await client.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]
-              );
-            }
-          }
-        }
-        return { allResolved, resolvedPartyIds };
-      });
-      /* ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits).
-         The dispute carries no "in whose favour"; the buyer's own status says it — accepted posts, rejected never does. */
-      if (out.allResolved) {
-        try {
-          const hooks = require('../lib/books-hooks');
-          setImmediate(() => {
-            for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null);
-          });
-        } catch (e) {
-          cbLog.fellBack('chits PUT /:chit_id/disputes/:dispute_id/resolve: the helper failed — carried on without it', e);
-        }
-      }
+      const out = await withEntity(entity_id, (client) =>
+        recordResolve(client, { dispute_id, chit_id, resolver_id: entity_id, resolver_name: entityName, actor_name: display_name, targetParty, resolution_note, category: d.category })
+      );
+      releaseAfterResolve(out, chit_id, [entity_id]);
+      const crossed = await ctpReturn.onDisputeResolved(entity_id, chit_id, { dispute_id, scope: d.scope, target_id: targetParty, resolution_note, category: d.category, actor_name: display_name, resolver_name: entityName, resolve_message_id: out.resolve_message_id });
 
       res.json({
         dispute_id,
@@ -5880,7 +5848,8 @@ router.put(
         fully_resolved: out.allResolved,
         resolution_note,
         resolved_by: display_name,
-        message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others'
+        message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others',
+        ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
       console.error('Resolve dispute error:', err.message);
@@ -7026,6 +6995,9 @@ router.get('/trace/networks', auth, async (req, res) => {
 });
 
 router.openapi = { paths: pathsOf(), schemas: {} };
+router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */
+router.recordResolve = recordResolve;
+router.releaseAfterResolve = releaseAfterResolve;
 router.postMessageCopies = postMessageCopies; /* lib/ctpreturn applies a message that arrived from another installation through the same function */
 router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
