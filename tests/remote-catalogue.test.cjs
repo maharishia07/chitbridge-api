@@ -35,7 +35,9 @@ const ask = (answer) => async (target, want, deps) => { ASKED.push({ target, wan
   await t('a remote supplier’s items come from the ask, in the local shape, with the seller’s currency and numbers as given', async () => {
     ASKED.length = 0;
     const out = await remoteCatalogue.forSupplier(FAR, { ask: ask(VIEW) });
-    ok(out.supplier === FAR && out.items.length === 2 && out.schema && out.fields.length === 1 && Array.isArray(out.groups) && Array.isArray(out.finishes));
+    ok(out.supplier.identity_id === FAR.identity_id && out.items.length === 2 && out.schema && out.fields.length === 1 && Array.isArray(out.groups) && Array.isArray(out.finishes));
+    /* walk 2026-10-25: the stub holds no money, so the supplier block carries the seller's currency from its answer (the screen read A$12.50 as ₹12.50) */
+    ok(out.supplier.currency_code === 'AUD' && FAR.currency_code === null, 'the supplier block carries the seller currency; the stub row is not changed');
     ok(out.shop.currency_code === 'AUD' && out.items[0].item_data.price === 450 && out.items[0].item_data.currency === 'AUD' && out.items[0].item_id === 'it-1', 'seller numbers must travel as given');
     ok(!('ok' in out) && !('found' in out) && out.remote.ok === true && out.remote.installation_key === 'sit-au');
     ok(ASKED[0].want.want === 'catalogue' && ASKED[0].want.bridge_id === FAR.bridge_id && ASKED[0].target.domain === 'au.example.com' && ASKED[0].deps.timeout === 5000);
