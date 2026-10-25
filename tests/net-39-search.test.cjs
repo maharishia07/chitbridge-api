@@ -22,13 +22,13 @@ const shop = (n, over) =>
     {
       identity_id: 'id-' + n, display_name: 'Shop ' + n, bridge_id: 'CBSHOP000' + n, user_id: 'shop-' + n, currency_code: 'INR', logo_url: null,
       business_status: 'open', population: 'live', catalogue_visibility: 'public', plan: 'free', params_override: {}, entity_visibility: 'public',
-      gstn: '29SECRET', address: '1 Hidden Road', email: 'x@y.z'
+      gstn: '29SECRET', address: '1 Hidden Road', email: 'x@y.z', trade_mode: 'domestic'
     },
     over || {}
   );
 const WORLD = {
   shops: [
-    shop(1, { display_name: 'Timer House' }),
+    shop(1, { display_name: 'Timer House', trade_mode: 'export' }),
     shop(2, { display_name: 'Timer Hidden', user_id: 'timer-hidden', catalogue_visibility: 'private', bridge_id: 'CBPRIV0002' }),
     shop(3, { display_name: 'Timer Capped', params_override: { caps: { catalogue_visibility: 'private' } }, bridge_id: 'CBCAPD0003' }),
     shop(4, { display_name: 'Timer Closed', business_status: 'closed', bridge_id: 'CBCLOS0004' }),
@@ -37,6 +37,11 @@ const WORLD = {
   ]
 };
 function rows(s, p) {
+  if (/FROM entity_profile WHERE entity_id = \$1/.test(s)) {
+    const owner = WORLD.shops.find((x) => x.identity_id === p[0]);
+    return owner ? [{ trade_mode: owner.trade_mode }] : [];
+  }
+  if (/FROM identities\s+WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/.test(s)) return WORLD.shops.filter((x) => x.bridge_id === p[0]);
   if (/FROM identities WHERE \(LOWER\(user_id\) = LOWER\(\$1\) OR bridge_id = UPPER\(\$1\)\)/.test(s))
     return WORLD.shops.filter((x) => (x.user_id.toLowerCase() === p[0].toLowerCase() || x.bridge_id === String(p[0]).toUpperCase()) && !String(x.user_id).startsWith('~') && x.identity_id !== p[1]);
   if (/entity_schemas/.test(s)) return WORLD.shops.filter((x) => x.catalogue_visibility === 'public' && !String(x.user_id).startsWith('~'));
@@ -94,7 +99,7 @@ const FAR_VIEW = async () => ({ available: true, items: [{ item_data: { name: 'T
 const askStub = async (target, want, deps) => {
   SEARCHES.push({ domain: target.domain, want, timeout: deps && deps.timeout });
   if (target.domain === 'za.example.com') return { ok: false, why: 'could not reach https://za.example.com/api/ctp/query: timed out' };
-  const found = await bs.find({ q: want.q, kind: want.kind, limit: want.limit }, { viewFor: FAR_VIEW });
+  const found = await bs.find({ q: want.q, kind: want.kind, limit: want.limit }, { viewFor: FAR_VIEW, abroad: true });
   return Object.assign({ ok: true, found: found.results.length > 0 }, found);
 };
 
@@ -166,10 +171,28 @@ const askStub = async (target, want, deps) => {
   };
   require(path.join(API, 'routes', 'catalogue')).publicViewFor = FAR_VIEW;
 
+  await t('a listed shop that did not opt in to sell outside (Timer Works) is not answered to another installation, but Here still finds it', async () => {
+    const abroad = await bs.find({ q: 'timer works' }, { abroad: true });
+    eq(abroad.results, []);
+    eq(names(await bs.find({ q: 'timer works' })), ['Timer Works']);
+    eq(names(await ns.searchHere({ q: 'timer works', kind: 'business', limit: 10 }, ME)), ['Timer Works']);
+  });
+  await t('a failed read of the switch fails closed: not shown abroad', async () => {
+    const abroad = await bs.find({ q: 'timer house' }, { abroad: true, openAbroad: async () => false });
+    eq(abroad.results, []);
+  });
+  await t('the catalogue question: an opted-in shop is answered; a domestic one is "not found", the same words as an unknown id', async () => {
+    const yes = await door(asked({ want: 'catalogue', bridge_id: 'CBSHOP0001' }));
+    ok(yes.body.found === true, JSON.stringify(yes.body));
+    const no = await door(asked({ want: 'catalogue', bridge_id: 'CBWORK0006' }));
+    const unknown = await door(asked({ want: 'catalogue', bridge_id: 'CBNONE0000' }));
+    ok(no.body.found === false && !no.body.items);
+    eq(no.body.why.replace('CBWORK0006', 'X'), unknown.body.why.replace('CBNONE0000', 'X'));
+  });
   await t('the answer gives listed shops only and public fields only', async () => {
     const r = await door(asked({ want: 'search', q: 'timer' }));
     eq(r.status, 200);
-    eq(r.body.results.map((x) => x.display_name).sort(), ['Timer House', 'Timer Works']);
+    eq(r.body.results.map((x) => x.display_name).sort(), ['Timer House']);
     ok(!/29SECRET|Hidden Road|x@y\.z|id-1/.test(JSON.stringify(r.body)), 'a private field left the installation');
     ok(r.body.ok === true && r.body.found === true);
   });
@@ -183,7 +206,7 @@ const askStub = async (target, want, deps) => {
   });
   await t('limit 500 asked over the wire is clamped to 20 by the answerer', async () => {
     const was = WORLD.shops;
-    WORLD.shops = Array.from({ length: 30 }, (_, i) => shop(200 + i, { display_name: 'Wire ' + i, bridge_id: 'CBWIRE0' + (200 + i), user_id: 'wire-' + i }));
+    WORLD.shops = Array.from({ length: 30 }, (_, i) => shop(200 + i, { display_name: 'Wire ' + i, bridge_id: 'CBWIRE0' + (200 + i), user_id: 'wire-' + i, trade_mode: 'export' }));
     const r = await door(asked({ want: 'search', q: 'wire' }, (q) => (q.ask.limit = 500)));
     WORLD.shops = was;
     eq(r.body.results.length, 20);
@@ -215,7 +238,7 @@ const askStub = async (target, want, deps) => {
     const r = await ns.search({ q: 'timer', kind: 'business', limit: 10 }, ME, 'sit-au', { ask: askStub });
     ok(r.ok);
     eq(r.answers, [{ installation_key: 'sit-au', ok: true, why: null }]);
-    eq(names(r).sort(), ['Timer House', 'Timer Works']);
+    eq(names(r).sort(), ['Timer House']);
     eq(r.results[0].address, book.format(r.results[0].bridge_id, 'au.example.com'));
     eq([r.results[0].installation_key, r.results[0].domain], ['sit-au', 'au.example.com']);
     eq(SEARCHES[0].timeout, 5000);
