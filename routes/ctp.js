@@ -173,7 +173,8 @@ async function alreadyHeld(failure, recipient, chit_id, sender) {
 
 /** NET-39: the `search` question — the SAME function the local search runs (lib/business-search): listed shops only, public fields only, limit clamped here again */
 async function answerSearch(question, refuse, res) {
-  const found = await require('../lib/business-search').find({ q: question.q, kind: question.kind, limit: question.limit });
+  /* another installation is asking: only shops that opted in to sell outside are answered (Athi, 2026-10-25) */
+  const found = await require('../lib/business-search').find({ q: question.q, kind: question.kind, limit: question.limit }, { abroad: true });
   if (!found.ok) return refuse({ status: 400, code: 'CTP_SEARCH_TOO_SHORT', why: found.why });
   return res.json({ ok: true, found: found.results.length > 0, results: found.results, searched: found.searched });
 }
@@ -466,7 +467,8 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
 
     if (ask.want === 'catalogue') {
       const ent = await cat.resolveEntity(ask.bridge_id);
-      if (!ent) return res.json({ ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id });
+      /* a shop that did not opt in to sell outside is "not found", the same words as an unknown id: its existence is not revealed (Athi, 2026-10-25) */
+      if (!ent || !(await require('../lib/profile').isExporter(ent.identity_id))) return res.json({ ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id });
       /* ⚠️ neither asOwner nor viewer — a peer installation is never the owner and is not a signed-in customer.
          The RAW view, then the SAME trim a storefront visitor gets: one view, one response, two doors. */
       const view = await cat.publicViewFor(ent, {});
