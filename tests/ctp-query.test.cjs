@@ -191,7 +191,7 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
 
   ok('⚠️ resolve answers only for a BUSINESS — the grammar decides before the database is asked', () => {
     const src = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
-    assert.ok(/resolveuserid'\)\.classify\(ask\.handle\)/.test(src), 'classify first');
+    assert.ok(/resolveuserid'\)\.classify\(question\.handle\)/.test(src), 'classify first');
     assert.ok(/c\.kind !== 'entity' && c\.kind !== 'network_node' && c\.kind !== 'bridge_id'/.test(src),
       'an employee, a customer or a minted party is never resolvable by another installation');
   });

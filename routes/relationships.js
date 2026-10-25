@@ -260,6 +260,11 @@ router.post(
   }
 );
 
+/* NET-39 (walk W6, 2026-10-25): a supplier on ANOTHER installation keeps its catalogue there, so no local schema row exists; it counts as "has a catalogue — ask them",
+   and GET /suppliers/:id/catalogue asks the far side (lib/remote-catalogue), which answers what is published and whether it is shown outside (trade_mode export). $1 = the asker. */
+const HAS_CATALOGUE_SQL = `(EXISTS (SELECT 1 FROM entity_schemas es WHERE es.entity_id = i.identity_id AND es.status = 'active' AND es.is_default = true)
+               OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1))`;
+
 // List my suppliers — has_catalogue reflects an active default schema only
 router.get('/suppliers', auth, async (req, res) => {
   try {
@@ -275,13 +280,7 @@ router.get('/suppliers', auth, async (req, res) => {
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
               i.gstn, i.country, i.policy_flags, i.currency_code AS supplier_money,
-              /* NET-39 (walk W6, 2026-10-25): a supplier on ANOTHER installation keeps its catalogue there, so no local schema
-                 row exists; it counts as "has a catalogue — ask them", and GET /suppliers/:id/catalogue asks the far side
-                 (lib/remote-catalogue), which answers what is published and whether it is shown outside (trade_mode export). */
-              (EXISTS (SELECT 1 FROM entity_schemas es
-                      WHERE es.entity_id = i.identity_id
-                        AND es.status = 'active' AND es.is_default = true)
-               OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)) AS has_catalogue
+              ${HAS_CATALOGUE_SQL} AS has_catalogue
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1

@@ -172,12 +172,60 @@ async function alreadyHeld(failure, recipient, chit_id, sender) {
   return held.rows.length > 0;
 }
 
+/** the `resolve` question — one BUSINESS by handle or bridge id, with the address built by lib/ctpaddress and whether it sells outside */
+async function answerResolve(question, catalogueRoute) {
+  /* ⭐ the grammar decides what MAY be resolved before the database is asked anything */
+  const c = require('../lib/resolveuserid').classify(question.handle);
+  if (c.kind !== 'entity' && c.kind !== 'network_node' && c.kind !== 'bridge_id') {
+    return { ok: true, found: false, why: '"' + question.handle + '" is not a business — only a business can be addressed across installations' };
+  }
+  const ent = await catalogueRoute.resolveEntity(c.kind === 'bridge_id' ? c.bridge_id : c.handle);
+  if (!ent) return { ok: true, found: false, why: 'no business here called ' + question.handle };
+  const me = await manifest();
+  /* ⚠️ the address is BUILT by lib/ctpaddress, never spelled here — tests/namespace fails any second "@" join */
+  return {
+    ok: true,
+    found: true,
+    bridge_id: ent.bridge_id,
+    display_name: ent.display_name,
+    user_id: ent.user_id,
+    address: require('../lib/ctpaddress').format(ent.bridge_id, me.domain),
+    installation_key: me.installation_key,
+    /* NET-39 (DECISIONS 14:50): whether this shop sells OUTSIDE its own installation, by the one rule (lib/profile isExporter, the same one search and catalogue answer by). An installation that adds this shop as a supplier asks nothing more. */
+    sells_outside: await require('../lib/profile').isExporter(ent.identity_id)
+  };
+}
+
+/** the `catalogue` question — the shop's PUBLIC view only, and only if it sells outside (a shop that does not is "not found", like an unknown id) */
+async function answerCatalogue(question, catalogueRoute) {
+  const ent = await catalogueRoute.resolveEntity(question.bridge_id);
+  /* a shop that did not opt in to sell outside is "not found", the same words as an unknown id: its existence is not revealed (Athi, 2026-10-25) */
+  if (!ent || !(await require('../lib/profile').isExporter(ent.identity_id))) return { ok: true, found: false, why: 'no business here with bridge id ' + question.bridge_id };
+  /* ⚠️ neither asOwner nor viewer — a peer installation is never the owner and is not a signed-in customer.
+     The RAW view, then the SAME trim a storefront visitor gets: one view, one response, two doors. */
+  const view = await catalogueRoute.publicViewFor(ent, {});
+  if (!view || !view.available) return { ok: true, found: false, why: ent.display_name + ' has no public catalogue' };
+  return Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, catalogueRoute.publicResponseFor(view, false));
+}
+
 /** NET-39: the `search` question — the SAME function the local search runs (lib/business-search): listed shops only, public fields only, limit clamped here again */
 async function answerSearch(question, refuse, res) {
   /* another installation is asking: only shops that opted in to sell outside are answered (Athi, 2026-10-25) */
   const found = await require('../lib/business-search').find({ q: question.q, kind: question.kind, limit: question.limit }, { abroad: true });
   if (!found.ok) return refuse({ status: 400, code: 'CTP_SEARCH_TOO_SHORT', why: found.why });
   return res.json({ ok: true, found: found.results.length > 0, results: found.results, searched: found.searched });
+}
+
+/** the question, once the door has checked who asks: a network question, one of ours, or a refusal in words */
+async function answerQuestion(question, { asker, ctpquery, refuse, res }) {
+  if (ctpquery.NETWORK_WANTS.includes(question.want)) return res.json(await net.answer(question, asker));
+  const catalogueRoute = require('./catalogue');
+  if (question.want === 'resolve') return res.json(await answerResolve(question, catalogueRoute));
+  /* RAIL-106: a file on a chit, to a party of that chit only (lib/ctpreturn attachmentFor decides who is a party) */
+  if (question.want === 'attachment') return res.json(await returnPath.attachmentFor(asker, question));
+  if (question.want === 'catalogue') return res.json(await answerCatalogue(question, catalogueRoute));
+  if (question.want === 'search') return answerSearch(question, refuse, res);
+  return refuse({ status: 400, code: 'CTP_UNKNOWN_QUESTION', why: 'not a question this installation answers' });
 }
 
 /**
@@ -466,47 +514,7 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
     /* after the signature, the PASS (as in deliver): resolve, catalogue, search and locate need a valid certificate; renewing one and reading the directory do not */
     const pass = net.needsMembership(ask.want) ? await net.doorVerdict(ik, peer, pk.manifest) : { ok: true };
     if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
-    if (ctpquery.NETWORK_WANTS.includes(ask.want)) return res.json(await net.answer(ask, ik));
-    const cat = require('./catalogue');
-
-    if (ask.want === 'resolve') {
-      /* ⭐ the grammar decides what MAY be resolved before the database is asked anything */
-      const c = require('../lib/resolveuserid').classify(ask.handle);
-      if (c.kind !== 'entity' && c.kind !== 'network_node' && c.kind !== 'bridge_id') {
-        return res.json({ ok: true, found: false, why: '"' + ask.handle + '" is not a business — only a business can be addressed across installations' });
-      }
-      const ent = await cat.resolveEntity(c.kind === 'bridge_id' ? c.bridge_id : c.handle);
-      if (!ent) return res.json({ ok: true, found: false, why: 'no business here called ' + ask.handle });
-      const me = await manifest();
-      /* ⚠️ the address is BUILT by lib/ctpaddress, never spelled here — tests/namespace fails any second "@" join */
-      return res.json({
-        ok: true,
-        found: true,
-        bridge_id: ent.bridge_id,
-        display_name: ent.display_name,
-        user_id: ent.user_id,
-        address: require('../lib/ctpaddress').format(ent.bridge_id, me.domain),
-        installation_key: me.installation_key,
-        /* NET-39 (DECISIONS 14:50): whether this shop sells OUTSIDE its own installation, by the one rule (lib/profile isExporter, the same one search and catalogue answer by). An installation that adds this shop as a supplier asks nothing more. */
-        sells_outside: await require('../lib/profile').isExporter(ent.identity_id)
-      });
-    }
-
-    /* RAIL-106: a file on a chit, to a party of that chit only (lib/ctpreturn attachmentFor decides who is a party) */
-    if (ask.want === 'attachment') return res.json(await returnPath.attachmentFor(ik, ask));
-
-    if (ask.want === 'catalogue') {
-      const ent = await cat.resolveEntity(ask.bridge_id);
-      /* a shop that did not opt in to sell outside is "not found", the same words as an unknown id: its existence is not revealed (Athi, 2026-10-25) */
-      if (!ent || !(await require('../lib/profile').isExporter(ent.identity_id))) return res.json({ ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id });
-      /* ⚠️ neither asOwner nor viewer — a peer installation is never the owner and is not a signed-in customer.
-         The RAW view, then the SAME trim a storefront visitor gets: one view, one response, two doors. */
-      const view = await cat.publicViewFor(ent, {});
-      if (!view || !view.available) return res.json({ ok: true, found: false, why: ent.display_name + ' has no public catalogue' });
-      return res.json(Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, cat.publicResponseFor(view, false)));
-    }
-    if (ask.want === 'search') return await answerSearch(ask, refuse, res);
-    return refuse({ status: 400, code: 'CTP_UNKNOWN_QUESTION', why: 'not a question this installation answers' });
+    return await answerQuestion(ask, { asker: ik, ctpquery, refuse, res });
   } catch (e) {
     safeErr(e, { id: req.id, path: req.path }); /* fail closed: which side failed, never why (QUERY_FAILED) */
     return problem(req, res, { status: 500, code: 'CTP_QUERY_FAILED', detail: QUERY_FAILED.why, legacy: QUERY_FAILED });
