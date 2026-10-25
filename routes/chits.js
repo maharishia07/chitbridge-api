@@ -1346,6 +1346,17 @@ function refuseCurrencyRequired(req, res) {
   });
 }
 
+/** ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (moneyOfLines asked nobody's tax engine here); the request and every priced round before acceptance are a QUOTATION. The chit
+   says whose country it was asked from; the seller's half is added by its priced rounds. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's. */
+async function stampQuotation(sendState, sellerPlace) {
+  const { sender_id, business_json } = sendState;
+  if (!business_json || typeof business_json !== 'object' || business_json.jurisdiction) return;
+  business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: sellerPlace.installation_key || null, buyer_duty_and_taxes: 'not_included' };
+}
+
+/** did the sender's screen state the money of the order? (a blank is not stated) */
+const statesCurrency = (business_json) => !!business_json && typeof business_json === 'object' && String(business_json.currency || '').trim().length > 0;
+
 /** the header's money — gross · savings · net · tax · total, provisional */
 async function sendMoney(st, req, res) {
   const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
@@ -1365,16 +1376,11 @@ async function sendMoney(st, req, res) {
     sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
     const buyerId = counterBill || sellerElsewhere ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
     ({ moneyBlock, invoice: originInvoice } = await moneyOfLines(Array.isArray(line_items) ? line_items : [], { sellerId, buyerId }, business_json, currency_code));
-    /* ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (moneyOfLines asked nobody's tax engine here); the request and every priced round before acceptance are a QUOTATION. The chit
-       says whose country it was asked from; the seller's half is added by its priced rounds. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's. */
-    if (sellerElsewhere && business_json && typeof business_json === 'object' && !business_json.jurisdiction) {
-      business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: sellerPlace.installation_key || null, buyer_duty_and_taxes: 'not_included' };
-    }
+    if (sellerElsewhere) await stampQuotation(st, sellerPlace);
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
   }
-  const statedCurrency = business_json && typeof business_json === 'object' && String(business_json.currency || '').trim();
-  if (sellerElsewhere && !statedCurrency && !req.body.is_draft) return refuseCurrencyRequired(req, res);
+  if (sellerElsewhere && !statesCurrency(business_json) && !req.body.is_draft) return refuseCurrencyRequired(req, res);
   Object.assign(st, { moneyBlock, originInvoice });
 }
 
@@ -3216,6 +3222,31 @@ router.get('/unread', auth, async (req, res) => {
 function orderBilledSql(header) {
   return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
 }
+/**
+ * Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
+ * Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
+ */
+async function markReadForActor(db, chit_id, identity) {
+  if (identity.identity_type !== 'actor') return;
+  // SAVEPOINT so a failure here (e.g. a missing table) can't poison the outer transaction and 500 the read.
+  try {
+    await db.query('SAVEPOINT mark_read');
+    await db.query(
+      `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
+       ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
+      [chit_id, identity.identity_id]
+    );
+    await db.query('RELEASE SAVEPOINT mark_read');
+  } catch (e) {
+    console.error('mark-read skipped:', e.message);
+    try {
+      await db.query('ROLLBACK TO SAVEPOINT mark_read');
+    } catch (rollbackError) {
+      cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', rollbackError);
+    }
+  }
+}
+
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
@@ -3256,27 +3287,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       const _draft = participation.rows.find((item) => item.role === 'Draft');
       if (_draft && _draft.created_by_actor_id !== req.identity.identity_id) return { notFound: true };
 
-      // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
-      // Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
-      if (req.identity.identity_type === 'actor') {
-        // SAVEPOINT so a failure here (e.g. a missing table) can't poison the outer transaction and 500 the read.
-        try {
-          await db.query('SAVEPOINT mark_read');
-          await db.query(
-            `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
-             ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
-            [chit_id, req.identity.identity_id]
-          );
-          await db.query('RELEASE SAVEPOINT mark_read');
-        } catch (e) {
-          console.error('mark-read skipped:', e.message);
-          try {
-            await db.query('ROLLBACK TO SAVEPOINT mark_read');
-          } catch (rollbackError) {
-            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', rollbackError);
-          }
-        }
-      }
+      await markReadForActor(db, chit_id, req.identity);
 
       // (the header was read above — the participation check and this are the same row)
 
@@ -4315,7 +4326,7 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
         db.query(
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
          VALUES ($1,$2,'assigned_line',$3,$4,$5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
+          [chit_id, entity_id, identity.identity_id, identity.display_name, detail]
         )
       );
     } catch (e) {
@@ -4348,6 +4359,76 @@ async function proposeAmendment(entity_id, chit_id, edits, req) {
   const lines = edits.map((item) => ({ line_index: item.line_index, line_id: item.line_id, line: item.line === undefined ? undefined : item.line, price: item.line && item.line.price, quantity: item.line && item.line.quantity, requested_price: item.line && item.line.price, remove: item.line === null, note: item.reason || null }));
   return require('../lib/chit-proposal').propose(entity_id, chit_id, { lines, note: null }, { id: req.identity.identity_id, name: req.identity.display_name });
 }
+/** the amendment shows in the chit's own history beside every other action */
+async function logAmended(entity_id, chit_id, identity, out) {
+  /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
+     every other action. Best-effort: a missing log must not lose a correction that already committed. */
+  try {
+    const detail = out.amendments
+      .map((item) =>
+        item.line === null
+          ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
+          : 'line ' +
+            (item.line_index + 1) +
+            ' → ' +
+            [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
+            ' (' +
+            item.reason_code +
+            ')'
+      )
+      .join('; ');
+    await withEntity(entity_id, (db) =>
+      db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+       VALUES ($1,$2,'amended',$3,$4,$5)`,
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
+      )
+    );
+  } catch (e) {
+    console.error('amend state_log skipped:', e.message);
+  }
+}
+
+/** the synonym candidates a correction reports (never written): a renamed item, once per misread line */
+async function synonymCandidates(entity_id, chit_id, out) {
+  /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A correction that renames an item ("thakkali" → Tomato) is
+     exactly the fact worth learning, but writing it into the catalogue unasked would permanently merge two words
+     on one person's typo, and nothing downstream would ever flag it. Athi's rule (2026-08-11): synonyms may
+     promote automatically, but only on N independent confirmations across entities — never on one. Units and
+     grades never promote automatically at all. */
+  const orig =
+    (
+      (await withEntity(entity_id, (db) => db.query('SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2 LIMIT 1', [chit_id, entity_id])))
+        .rows[0] || {}
+    ).line_items || [];
+  const norm = (s) =>
+    String(s || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  const candidates = out.amendments
+    .filter((item) => item.line && item.reason_code === 'misread_by_ai')
+    .map((item) => ({ was: (orig[item.line_index] || {}).particulars, now: item.line.particulars, amendment_id: item.amendment_id }))
+    .filter((item) => item.was && item.now && norm(item.was) !== norm(item.now))
+    .map((item) => ({ amendment_id: item.amendment_id, term: item.was, means: item.now }));
+  return candidates;
+}
+
+/** an amendment on a chit with other parties is a proposal: answers it (the proposal, or a refusal in words) and says true; false → the chit is amended directly, as it always was */
+async function answerWithProposal(req, res, entity_id, chit_id, edits) {
+  const proposed = await proposeAmendment(entity_id, chit_id, edits, req).catch((err) => {
+    if (err && err.refused) return { refusal: err };
+    throw err;
+  });
+  if (!proposed) return false;
+  if (proposed.refusal) {
+    const refusal = proposed.refusal;
+    problem(req, res, { status: refusal.status, ...said({ error: 'Not done', message: refusal.message, code: refusal.code }, refusal.code) });
+  } else {
+    res.json({ proposed: true, proposal: proposed, amendments: [], message: proposed.kind === 'request' ? 'Counter-proposal asked' : 'Change proposed' });
+  }
+  return true;
+}
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4364,64 +4445,15 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     /* ⭐ RAIL-106 (Athi, 25 Oct 11:15): an amendment is a change order. With another party on the chit it is PROPOSED (the seller prices it at the seller's installation; anyone else asks) and the agreed record
        stands until it is accepted — lib/chit-proposal. A chit with nobody else on it is amended directly, as it always was. */
     const edits = [].concat(req.body.edits || req.body).filter(Boolean);
-    const proposed = await proposeAmendment(entity_id, chit_id, edits, req).catch((err) => {
-      if (err && err.refused) return { refusal: err };
-      throw err;
-    });
-    if (proposed && proposed.refusal) return problem(req, res, { status: proposed.refusal.status, ...said({ error: 'Not done', message: proposed.refusal.message, code: proposed.refusal.code }, proposed.refusal.code) });
-    if (proposed) return res.json({ proposed: true, proposal: proposed, amendments: [], message: proposed.kind === 'request' ? 'Counter-proposal asked' : 'Change proposed' });
+    if (await answerWithProposal(req, res, entity_id, chit_id, edits)) return;
     const out = await amend.record(entity_id, chit_id, edits, {
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
 
-    /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
-       every other action. Best-effort: a missing log must not lose a correction that already committed. */
-    try {
-      const detail = out.amendments
-        .map((item) =>
-          item.line === null
-            ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
-            : 'line ' +
-              (item.line_index + 1) +
-              ' → ' +
-              [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
-              ' (' +
-              item.reason_code +
-              ')'
-        )
-        .join('; ');
-      await withEntity(entity_id, (db) =>
-        db.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1,$2,'amended',$3,$4,$5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
-        )
-      );
-    } catch (e) {
-      console.error('amend state_log skipped:', e.message);
-    }
+    await logAmended(entity_id, chit_id, req.identity, out);
 
-    /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A correction that renames an item ("thakkali" → Tomato) is
-       exactly the fact worth learning, but writing it into the catalogue unasked would permanently merge two words
-       on one person's typo, and nothing downstream would ever flag it. Athi's rule (2026-08-11): synonyms may
-       promote automatically, but only on N independent confirmations across entities — never on one. Units and
-       grades never promote automatically at all. */
-    const orig =
-      (
-        (await withEntity(entity_id, (db) => db.query('SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2 LIMIT 1', [chit_id, entity_id])))
-          .rows[0] || {}
-      ).line_items || [];
-    const norm = (s) =>
-      String(s || '')
-        .toLowerCase()
-        .replace(/\s+/g, ' ')
-        .trim();
-    const candidates = out.amendments
-      .filter((item) => item.line && item.reason_code === 'misread_by_ai')
-      .map((item) => ({ was: (orig[item.line_index] || {}).particulars, now: item.line.particulars, amendment_id: item.amendment_id }))
-      .filter((item) => item.was && item.now && norm(item.was) !== norm(item.now))
-      .map((item) => ({ amendment_id: item.amendment_id, term: item.was, means: item.now }));
+    const candidates = await synonymCandidates(entity_id, chit_id, out);
 
     res.json({ ...out, ...(candidates.length ? { synonym_candidates: candidates } : {}) });
   } catch (err) {
@@ -4902,11 +4934,11 @@ async function confirmCancelToSender(entity_id, chit_id, header, action_by_name)
  * RAIL-106 (Athi, 25 Oct 11:15): an accepted, rejected or cancelled status rings (every other status pushes quietly, F15) the OTHER parties, the same on one installation or many. Locally it is lib/events.emit to the people named on
  * my copy's header (a business on another installation has no subscriber here: it is rung when the event arrives, lib/ctpreturn). One bell per move.
  */
-async function ringStatus(entity_id, chit_id, new_status, header, who) {
+async function ringStatus(entity_id, chit_id, new_status, header, byName) {
   const row = header && header.rows && header.rows[0];
   if (!(await require('../lib/chit-proposal').usesRfq(entity_id, chit_id, row ? row.business_json || null : undefined))) return; /* only an international or proposal deal rings (DECISIONS 14:10): any other chit behaves as before */
   const others = (row && Array.isArray(row.all_recipients) ? row.all_recipients : []).map((item) => item && item.entity_id).filter((id) => id && String(id) !== String(entity_id));
-  if (others.length) require('../lib/events').emit([...new Set(others)], Object.assign({ id: chit_id }, require('../lib/ctpreturn').statusEvent(new_status, who || null))); /* F15: a status that does not ring is quiet — it repaints an open chit */
+  if (others.length) require('../lib/events').emit([...new Set(others)], Object.assign({ id: chit_id }, require('../lib/ctpreturn').statusEvent(new_status, byName || null))); /* F15: a status that does not ring is quiet — it repaints an open chit */
 }
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
   const action_by_id = by.id,
@@ -5220,6 +5252,23 @@ async function postMessageCopies(msg, db) {
   return out;
 }
 
+/**
+ * Who a dispute message's timeline line and bell go to (N02 / I2): the dispute's ROSTER when it is targeted, the whole chit when it is chit_wide (roster null). A sender who is not a party to THIS
+ * dispute (or a dispute of another chit) gets { notParty: true }. A roster that cannot be read fails closed: the poster's own timeline only, and no bell.
+ */
+async function disputeAudience(entity_id, chit_id, disputeId) {
+  const party = await withEntity(entity_id, (db) => db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id]));
+  if (party.rows.length === 0) return { notParty: true };
+  if ((party.rows[0].scope || 'targeted') === 'chit_wide') return { roster: null };
+  try {
+    const found = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
+    return { roster: [...new Set([entity_id].concat(found.rows.map((item) => String(item.entity_id))))] };
+  } catch (e) {
+    cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */
+    return { roster: [entity_id] };
+  }
+}
+
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5285,33 +5334,13 @@ router.post(
       /* ⭐ N02 / I2 — a DISPUTE message's timeline line and bell go to the dispute's ROSTER only, exactly the audience its
          per-copy message already has (chit_message_deliver: targeted → roster). A chit_wide dispute is deliberately the whole
          chit, so it keeps the plain-external audience. null = not a roster-scoped message (plain external, or chit_wide). */
-      let disputeRoster = null;
-      if (isDispute && disputeId) {
-        const party = await withEntity(entity_id, (db) =>
-          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id])
-        );
-        if (party.rows.length === 0) {
-          return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
-        }
-        if ((party.rows[0].scope || 'targeted') !== 'chit_wide') {
-          // fail closed: a roster that cannot be read means the poster's own timeline only, and no bell
-          disputeRoster = [entity_id];
-          try {
-            const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
-            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((item) => String(item.entity_id))))];
-          } catch (e) {
-            cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */
-          }
-        }
+      const audience = isDispute && disputeId ? await disputeAudience(entity_id, chit_id, disputeId) : { roster: null };
+      if (audience.notParty) {
+        return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
       }
+      const disputeRoster = audience.roster;
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
-      let senderName = display_name;
-      if (isDispute && req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
-          cbLog.orElse('chits POST /:chit_id/messages: the read failed — answered with none', { rows: [] })
-        );
-        if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
-      }
+      const senderName = isDispute ? await entityNameFor(req, entity_id, 'chits POST /:chit_id/messages') : display_name;
 
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
       const result = await postMessageCopies({
@@ -5589,6 +5618,41 @@ function answeredTooLong(req, res, err) {
   return true;
 }
 
+/** the words a dispute raised on an already-closed chit carries (C2: it is raised anyway), or null */
+function closedChitWarning(currentStatus) {
+  if (currentStatus !== 'completed' && currentStatus !== 'cancelled') return null;
+  return `This chit is already ${currentStatus} — the dispute is raised anyway. Bring it back to Act if it needs work.`;
+}
+
+/** the sentence the raiser is shown: one-sided (the other side cannot be reached), widened by obligation, or with the selected party */
+function raiseAlert(mode, parityState, widened) {
+  if (mode === 'one_sided') return `The other side is no longer reachable (${parityState}). This is lodged as a unilateral record on your own copy.`;
+  return widened ? 'This category notifies all parties — raised chit-wide.' : 'Dispute raised with the selected party.';
+}
+
+/** the business's own name when an actor of it acts (dispute records and messages carry the ENTITY's name; the actor stays as provenance), else the caller's */
+async function entityNameFor(req, entity_id, label) {
+  if (!req.identity.parent_entity_id) return req.identity.display_name;
+  const found = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(cbLog.orElse(label + ': the read failed — answered with none', { rows: [] }));
+  return (found.rows[0] && found.rows[0].display_name) || req.identity.display_name;
+}
+
+/** RAIL-106: a dispute raised or resolved rings the parties named on it — an international or proposal deal only (any other chit behaves as before 25 Oct) */
+async function ringDispute(entity_id, chit_id, partyIds, what, byName) {
+  if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what, who: byName });
+}
+
+/** { identity_id: display_name } for some identities */
+async function displayNamesOf(ids) {
+  const names = {};
+  if (!ids.length) return names;
+  const found = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [ids]);
+  found.rows.forEach((item) => {
+    names[item.identity_id] = item.display_name;
+  });
+  return names;
+}
+
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
 router.post(
   '/:chit_id/disputes',
@@ -5610,18 +5674,9 @@ router.post(
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
       const _cs = access.rows[0].current_status;
-      const closedWarning =
-        _cs === 'completed' || _cs === 'cancelled'
-          ? `This chit is already ${_cs} — the dispute is raised anyway. Bring it back to Act if it needs work.`
-          : null;
+      const closedWarning = closedChitWarning(_cs);
       // B3 (Athi): dispute records + messages carry the ENTITY's name; the acting actor stays as provenance in the timeline.
-      let entityName = display_name;
-      if (req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
-          cbLog.orElse('chits POST /:chit_id/disputes: the read failed — answered with none', { rows: [] })
-        );
-        if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;
-      }
+      const entityName = await entityNameFor(req, entity_id, 'chits POST /:chit_id/disputes');
 
       // 2. can't target yourself
       if (target_entity_id && target_entity_id === entity_id)
@@ -5655,13 +5710,7 @@ router.post(
       // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
       //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
       const partyIds = await holdersAmong(entity_id, chit_id, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
-      const partyNames = {};
-      if (partyIds.length) {
-        const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);
-        nm.rows.forEach((item) => {
-          partyNames[item.identity_id] = item.display_name;
-        });
-      }
+      const partyNames = await displayNamesOf(partyIds);
 
       // 6. evidence snapshot — "forward your chit" (survives counterparty erasure)
       const snap = await withEntity(entity_id, (db) =>
@@ -5688,7 +5737,7 @@ router.post(
       const raised = await withEntity(entity_id, (client) =>
         recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
       );
-      if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: display_name }); /* RAIL-106: an international or proposal deal only: the parties named on it are rung here; those elsewhere when it arrives */
+      await ringDispute(entity_id, chit_id, partyIds, 'raised', display_name); /* the parties named on it are rung here; those elsewhere when it arrives */
       /* RAIL-106: told to the roster's parties on other installations, who record it on their own copy (the decision above is not re-run there) */
       const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, roster, partyIds, reason_message_id: raised.reason_message_id });
       const d = {
@@ -5710,12 +5759,7 @@ router.post(
         parity_state: d.parity_state,
         target_display_name: d.target_display_name,
         raised_by_display_name: entityName,
-        alert:
-          d.mode === 'one_sided'
-            ? `The other side is no longer reachable (${d.parity_state}). This is lodged as a unilateral record on your own copy.`
-            : widened
-              ? 'This category notifies all parties — raised chit-wide.'
-              : 'Dispute raised with the selected party.',
+        alert: raiseAlert(d.mode, d.parity_state, widened),
         message: 'Dispute raised',
         ...ctpReturn.answerOf(crossed)
       });
@@ -5914,13 +5958,7 @@ router.put(
     const entity_id = entityId(req);
     const display_name = req.identity.display_name;
     // B3: the resolution message posts in the ENTITY name (the acting actor stays as provenance in the timeline).
-    let entityName = display_name;
-    if (req.identity.parent_entity_id) {
-      const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
-        cbLog.orElse('chits PUT /:chit_id/disputes/:dispute_id/resolve: the read failed — answered with none', { rows: [] })
-      );
-      if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;
-    }
+    const entityName = await entityNameFor(req, entity_id, 'chits PUT /:chit_id/disputes/:dispute_id/resolve');
 
     try {
       // b68 — per-copy: read the raiser's OWN dispute copy (RLS), then resolve across copies via the definer.
@@ -5954,7 +5992,7 @@ router.put(
         recordResolve(client, { dispute_id, chit_id, resolver_id: entity_id, resolver_name: entityName, actor_name: display_name, targetParty, resolution_note, category: d.category })
       );
       releaseAfterResolve(out, chit_id, [entity_id]);
-      if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(out.resolvedPartyIds || [], { kind: 'dispute', id: chit_id, what: 'resolved', who: display_name }); /* RAIL-106: an international or proposal deal only: the cleared parties are rung */
+      await ringDispute(entity_id, chit_id, out.resolvedPartyIds || [], 'resolved', display_name); /* the cleared parties are rung */
       const crossed = await ctpReturn.onDisputeResolved(entity_id, chit_id, { dispute_id, scope: d.scope, target_id: targetParty, resolution_note, category: d.category, actor_name: display_name, resolver_name: entityName, resolve_message_id: out.resolve_message_id });
 
       res.json({
@@ -6387,6 +6425,97 @@ router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), asy
 // rather than being overwritten. Never a cross-entity write: you cannot reach into somebody else's records.
 //
 // Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
+/** the sender's withdrawal was refused by the rail: the sentence, and the `why` code a screen branches on */
+function withdrawRefusal(req, res, g) {
+  if (g.why !== 'wrong_step') {
+    return problem(req, res, railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] })));
+  }
+  /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
+  return problem(req, res, railSaid(railActions.refusalOf(g, 409, {
+    error: 'Cannot withdraw',
+    message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
+    from: g.from,
+    allowed_transitions: g.allowed
+  })));
+}
+
+/** each copy of mine that moved is told to the parties on other installations (by the same event a status move sends), and the recipients are rung → the answers */
+async function tellMovedCopies(req, entity_id, chit_id, moved, reason) {
+  /* ⭐ RAIL-106: each copy of mine that moved is told to the parties on other installations, by the same event a status move sends (the rail decided it above) */
+  const told = [];
+  if (moved.length) {
+    const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
+    await ringStatus(entity_id, chit_id, 'cancelled', header, req.identity.display_name); /* RAIL-106: a withdrawal rings the recipients, as a cancelled status does */
+  }
+  for (const copy of moved) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: req.identity.display_name, note: reason }));
+  return told;
+}
+
+/**
+ * ⭐⭐ AND A FLAG ON THEIR COPY, NOT ONLY A MESSAGE (b195). Athi, 2026-09-02: *"it has to be flagged against
+ * the order right away, so we need a flag to show cancel requested."*
+ *
+ * The message alone lands in the Messages tab, behind a click, in a list with everything else — so the one
+ * fact that changes what a supplier should do next arrived looking like chatter. It could not be derived on
+ * the read path either: `msg_type` is CHECK-constrained to eight values, none meaning "cancel request", so
+ * the only marker was a PREFIX IN THE TEXT and every screen would have had to string-match message bodies.
+ *
+ * ⚠️⚠️ THIS IS NOT THE CROSS-ENTITY WRITE THIS ROUTE FORBIDS, and the line is worth being exact about.
+ * `postMessageCopies` directly above ALREADY writes into every recipient's copy — delivering INTO a copy is
+ * what the rail does. What it must never do is decide FOR them:
+ *     cancel_requested_at  — someone has asked. Inbound. Written here.        ✅
+ *     current_status       — their answer. Only they may write it.            ❌ untouched
+ * A supplier who cut the stock at 6am still refuses by leaving their status where it is.
+ *
+ * ⚠️ SCOPED TO THE OTHER PARTICIPANTS: `entity_id <> $2`. The sender's own row is already terminal-void
+ * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
+ * somebody who had been asked.
+ *
+ * ⚠️⚠️ ONE CONTEXT PER RECIPIENT — AND MY FIRST VERSION USED `withEntity(null)` AND WROTE NOTHING.
+ *
+ * The b49 policy on chit_status is `entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid`.
+ * With no context that expression is NULL, `entity_id = NULL` is never true, and the UPDATE matched ZERO
+ * rows — inside a catch, so nothing was raised and the withdrawal reported success. The flag simply never
+ * existed. ⭐ THE END-TO-END SPEC IS WHAT CAUGHT IT: every part was green (the button, the banner's render
+ * states, the column reaching the payload) and the join was dead.
+ *
+ * ⚠️ AND THE COMMENT I WROTE ARGUED FOR THE BUG — it said a null context was needed because the sender's
+ * context would filter the rows. A null context filters EVERYTHING. This is the same RLS-with-no-usable-
+ * context blackout diagnosed for the register earlier in this same session; writing it a second time, one
+ * day later, is why the rule is worth stating plainly: **RLS with no context is not "unrestricted", it is
+ * "matches nothing".**
+ *
+ * ⭐ The rail already had the answer beside this line: `postMessageCopies` reaches every copy through the
+ * SECURITY DEFINER `chit_message_deliver`. Without a definer for this, the honest equivalent is to set each
+ * recipient's own context and write their row — the server acting as delivery agent, one copy at a time,
+ * which is exactly what a per-copy rail does.
+ *
+ * ⚠️ Recipients come from the SENDER'S OWN header (`all_recipients`), readable under the sender's context —
+ * so nothing here needs to read across a boundary in order to write across one.
+ *
+ * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
+ * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
+ * an un-flagged request is a smaller fault than a withdrawal that reports failure after doing the work.
+ */
+async function flagCancelRequest(req, entity_id, chit_id, reason, told) {
+  try {
+    if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
+      const hdr = await withEntity(entity_id, (db) =>
+        db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+      );
+      const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || []).map((item) => item && item.entity_id).filter((id) => id && id !== entity_id);
+      /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
+           timestamp for no reason. */
+      for (const rid of [...new Set(parties)]) {
+        await stampCancelRequested(rid, chit_id, req.identity.display_name, reason);
+      }
+      told.push(await ctpReturn.onCancelRequested(entity_id, chit_id, { by_name: req.identity.display_name, reason })); // RAIL-106: the flag on a copy on another installation is set there, by the same stamp
+    }
+  } catch (e) {
+    console.error('cancel flag:', e.message);
+  }
+}
+
 router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody(['reason']), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6444,26 +6573,8 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       ); // own timeline only
       return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
     });
-    if (gate.refused) {
-      const g = gate.refused;
-      if (g.why !== 'wrong_step') {
-        return problem(req, res, railSaid(railActions.refusalOf(g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] })));
-      }
-      /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
-      return problem(req, res, railSaid(railActions.refusalOf(g, 409, {
-        error: 'Cannot withdraw',
-        message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
-        from: g.from,
-        allowed_transitions: g.allowed
-      })));
-    }
-    /* ⭐ RAIL-106: each copy of mine that moved is told to the parties on other installations, by the same event a status move sends (the rail decided it above) */
-    const told = [];
-    if ((gate.moved || []).length) {
-      const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
-      await ringStatus(entity_id, chit_id, 'cancelled', header, req.identity.display_name); /* RAIL-106: a withdrawal rings the recipients, as a cancelled status does */
-    }
-    for (const copy of gate.moved || []) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: req.identity.display_name, note: reason }));
+    if (gate.refused) return withdrawRefusal(req, res, gate.refused);
+    const told = await tellMovedCopies(req, entity_id, chit_id, gate.moved || [], reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
       chit_id,
@@ -6474,68 +6585,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       message_text: `[cancel requested] ${reason}`
     });
 
-    /**
-     * ⭐⭐ AND A FLAG ON THEIR COPY, NOT ONLY A MESSAGE (b195). Athi, 2026-09-02: *"it has to be flagged against
-     * the order right away, so we need a flag to show cancel requested."*
-     *
-     * The message alone lands in the Messages tab, behind a click, in a list with everything else — so the one
-     * fact that changes what a supplier should do next arrived looking like chatter. It could not be derived on
-     * the read path either: `msg_type` is CHECK-constrained to eight values, none meaning "cancel request", so
-     * the only marker was a PREFIX IN THE TEXT and every screen would have had to string-match message bodies.
-     *
-     * ⚠️⚠️ THIS IS NOT THE CROSS-ENTITY WRITE THIS ROUTE FORBIDS, and the line is worth being exact about.
-     * `postMessageCopies` directly above ALREADY writes into every recipient's copy — delivering INTO a copy is
-     * what the rail does. What it must never do is decide FOR them:
-     *     cancel_requested_at  — someone has asked. Inbound. Written here.        ✅
-     *     current_status       — their answer. Only they may write it.            ❌ untouched
-     * A supplier who cut the stock at 6am still refuses by leaving their status where it is.
-     *
-     * ⚠️ SCOPED TO THE OTHER PARTICIPANTS: `entity_id <> $2`. The sender's own row is already terminal-void
-     * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
-     * somebody who had been asked.
-     *
-     * ⚠️⚠️ ONE CONTEXT PER RECIPIENT — AND MY FIRST VERSION USED `withEntity(null)` AND WROTE NOTHING.
-     *
-     * The b49 policy on chit_status is `entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid`.
-     * With no context that expression is NULL, `entity_id = NULL` is never true, and the UPDATE matched ZERO
-     * rows — inside a catch, so nothing was raised and the withdrawal reported success. The flag simply never
-     * existed. ⭐ THE END-TO-END SPEC IS WHAT CAUGHT IT: every part was green (the button, the banner's render
-     * states, the column reaching the payload) and the join was dead.
-     *
-     * ⚠️ AND THE COMMENT I WROTE ARGUED FOR THE BUG — it said a null context was needed because the sender's
-     * context would filter the rows. A null context filters EVERYTHING. This is the same RLS-with-no-usable-
-     * context blackout diagnosed for the register earlier in this same session; writing it a second time, one
-     * day later, is why the rule is worth stating plainly: **RLS with no context is not "unrestricted", it is
-     * "matches nothing".**
-     *
-     * ⭐ The rail already had the answer beside this line: `postMessageCopies` reaches every copy through the
-     * SECURITY DEFINER `chit_message_deliver`. Without a definer for this, the honest equivalent is to set each
-     * recipient's own context and write their row — the server acting as delivery agent, one copy at a time,
-     * which is exactly what a per-copy rail does.
-     *
-     * ⚠️ Recipients come from the SENDER'S OWN header (`all_recipients`), readable under the sender's context —
-     * so nothing here needs to read across a boundary in order to write across one.
-     *
-     * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
-     * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
-     * an un-flagged request is a smaller fault than a withdrawal that reports failure after doing the work.
-     */
-    try {
-      if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
-        const hdr = await withEntity(entity_id, (db) =>
-          db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
-        );
-        const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || []).map((item) => item && item.entity_id).filter((id) => id && id !== entity_id);
-        /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
-             timestamp for no reason. */
-        for (const rid of [...new Set(parties)]) {
-          await stampCancelRequested(rid, chit_id, req.identity.display_name, reason);
-        }
-        told.push(await ctpReturn.onCancelRequested(entity_id, chit_id, { by_name: req.identity.display_name, reason })); // RAIL-106: the flag on a copy on another installation is set there, by the same stamp
-      }
-    } catch (e) {
-      console.error('cancel flag:', e.message);
-    }
+    await flagCancelRequest(req, entity_id, chit_id, reason, told);
 
     /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */

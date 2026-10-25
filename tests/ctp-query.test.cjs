@@ -162,7 +162,7 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
     const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
     const code = strip(src);
     /* neither asOwner nor viewer: the RAW view with no widening, then the SAME trim a visitor gets */
-    assert.ok(/publicViewFor\(ent, \{\}\)/.test(code), 'the peer must get exactly the anonymous view');
+    assert.ok(/publicViewFor\(business, \{\}\)/.test(code), 'the peer must get exactly the anonymous view');
     assert.ok(/publicResponseFor\(view, false\)/.test(code), 'and exactly the response a visitor is sent');
     assert.ok(!/buildPublicView/.test(code), 'a second call into the view builder is a second visibility policy');
     assert.ok(/verifyWith\(pk\.public_key/.test(code), 'and the signature is checked against the key on THEIR domain');
@@ -191,8 +191,8 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
 
   ok('⚠️ resolve answers only for a BUSINESS — the grammar decides before the database is asked', () => {
     const src = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
-    assert.ok(/resolveuserid'\)\.classify\(ask\.handle\)/.test(src), 'classify first');
-    assert.ok(/c\.kind !== 'entity' && c\.kind !== 'network_node' && c\.kind !== 'bridge_id'/.test(src),
+    assert.ok(/resolveuserid'\)\.classify\(question.handle\)/.test(src), 'classify first');
+    assert.ok(/kind\.kind !== 'entity' && kind\.kind !== 'network_node' && kind\.kind !== 'bridge_id'/.test(src),
       'an employee, a customer or a minted party is never resolvable by another installation');
   });
 
@@ -206,7 +206,7 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
   ok('⭐⭐ an arriving copy is stamped with its origin, and the stamp changes no behaviour', () => {
     const src = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
     assert.ok(/ctp_arrival/.test(src), 'the arrival stamp must be applied to the arriving copy');
-    assert.ok(/via_ctp: true/.test(src) && /from_installation: ik/.test(src) && /from_domain: peer\.domain/.test(src),
+    assert.ok(/via_ctp: true/.test(src) && /from_installation: installationKey/.test(src) && /from_domain: peer\.domain/.test(src),
       'it records which installation and domain the copy came from');
     /* ⚠️ it lands in business_json — a jsonb column that already rides on the copy, so no migration and no new
        column. And nothing in the delivery path may branch on it: a marker, not a switch. */
