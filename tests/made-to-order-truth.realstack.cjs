@@ -90,7 +90,9 @@ async function cases() {
   });
   await kase('MTO-04', "closing stock from the ledger: the month closes with the ghee's value (9 × 200 = 1,800), no STOCK_BELOW_ZERO", async () => {
     ok(await j('/api/books/enable', { method: 'POST', token: SHOP.token, body: { walkin_grain: 'day' } }), 'books on'); /* as scripts/seed-local.cjs switches the ledger on */
-    const today = new Date().toISOString().slice(0, 10);
+    /* the shop's OWN day (Asia/Kolkata, the default zone): a UTC date read between 18:30 and 24:00 UTC is the day BEFORE the
+       movements, and the ledger is empty up to it (CI on main failed this at 22:38Z, 24 Oct) */
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
     const r = await j('/api/books/closing-stock', { method: 'POST', token: SHOP.token, body: { date: today, method: 'automatic', client_ref: RUN + '-cs' } });
     const led = r.b && r.b.from_ledger;
     expect(r.status === 200 && led && led.value_minor === 180000 && led.lines === 1, seen('closing stock ' + r.status, r.b));
