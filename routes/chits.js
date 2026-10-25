@@ -4899,15 +4899,14 @@ async function confirmCancelToSender(entity_id, chit_id, header, action_by_name)
   }
 }
 /**
- * RAIL-106 (Athi, 25 Oct 11:15): an accepted, rejected or cancelled status rings the OTHER parties, the same on one installation or many. Locally it is lib/events.emit to the people named on
+ * RAIL-106 (Athi, 25 Oct 11:15): an accepted, rejected or cancelled status rings (every other status pushes quietly, F15) the OTHER parties, the same on one installation or many. Locally it is lib/events.emit to the people named on
  * my copy's header (a business on another installation has no subscriber here: it is rung when the event arrives, lib/ctpreturn). One bell per move.
  */
 async function ringStatus(entity_id, chit_id, new_status, header, who) {
-  if (!/^(accepted|rejected|cancelled)$/.test(String(new_status))) return;
   const row = header && header.rows && header.rows[0];
   if (!(await require('../lib/chit-proposal').usesRfq(entity_id, chit_id, row ? row.business_json || null : undefined))) return; /* only an international or proposal deal rings (DECISIONS 14:10): any other chit behaves as before */
   const others = (row && Array.isArray(row.all_recipients) ? row.all_recipients : []).map((item) => item && item.entity_id).filter((id) => id && String(id) !== String(entity_id));
-  if (others.length) require('../lib/events').emit([...new Set(others)], { kind: 'status', id: chit_id, status: new_status, who: who || null });
+  if (others.length) require('../lib/events').emit([...new Set(others)], Object.assign({ id: chit_id }, require('../lib/ctpreturn').statusEvent(new_status, who || null))); /* F15: a status that does not ring is quiet — it repaints an open chit */
 }
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
   const action_by_id = by.id,
