@@ -29,7 +29,7 @@
    },
    "trips_budgeted": {
     "applies": 634,
-    "failing": 166
+    "failing": 164
    }
   }
  },
@@ -16703,7 +16703,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -17472,7 +17472,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
