@@ -1514,6 +1514,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/network/installations": {
+      "file": "netpanel.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": false,
+      "extra": true,
+      "why": "written by hand (control panel slice 1): the role read (memoised for a minute) then ONE installations read (lib/netmember.listMembers, subselects, no N+1); the offline harness cannot make the stub a master"
+    },
     "GET /api/notifications": {
       "file": "notifications.js",
       "trips": 3,
