@@ -37,7 +37,8 @@ function extras(tools) {
   const REMOVE = 'DELETE ' + R + '/suppliers/:id';
   const CATALOGUE = 'GET ' + R + '/suppliers/:supplier_entity_id/catalogue';
   /* the rows */
-  const listRow = { supplier_list_id: LIST_ID, category: null, nickname: null, preferred: false, notes: null, created_at: '2026-10-01T00:00:00.000Z', supply_kind: 'resale', on_rail: true, bridge_id: 'CBOTHER001', user_id: 'other-shop', display_name: 'Other shop', supplier_entity_id: OTHER, gstn: null, country: 'IN', policy_flags: {}, supplier_money: 'INR', has_catalogue: true };
+  /* the two columns the SQL computes per row (Postgres does; the stand-in states them): a supplier here carries null, one on another installation its key and label */
+  const listRow = { installation_key: null, installation_label: null, supplier_list_id: LIST_ID, category: null, nickname: null, preferred: false, notes: null, created_at: '2026-10-01T00:00:00.000Z', supply_kind: 'resale', on_rail: true, bridge_id: 'CBOTHER001', user_id: 'other-shop', display_name: 'Other shop', supplier_entity_id: OTHER, gstn: null, country: 'IN', policy_flags: {}, supplier_money: 'INR', has_catalogue: true };
   const listed = answering(/FROM supplier_list sl\s+JOIN identities i ON i\.identity_id = sl\.supplier_entity_id\s+WHERE sl\.owner_entity_id = \$1\s+ORDER BY/, [listRow]);
   const business = (identity_id) => answering(/SELECT identity_id, display_name FROM identities/, [{ identity_id, display_name: 'Other shop' }]);
   const alreadyListed = answering(/SELECT 1 FROM supplier_list WHERE owner_entity_id = \$1 AND supplier_entity_id = \$2/, [{ '?column?': 1 }]);
@@ -61,6 +62,7 @@ function extras(tools) {
     /* ── the list ── */
     X('suppliers-listed', LIST, 200, { setup: withRows(listed) }),
     X('suppliers-listed-one-sided', LIST, 200, { setup: withRows(answering(/FROM supplier_list sl\s+JOIN identities i ON i\.identity_id = sl\.supplier_entity_id\s+WHERE sl\.owner_entity_id = \$1\s+ORDER BY/, [Object.assign({}, listRow, { on_rail: false })])) }),
+    X('suppliers-listed-remote', LIST, 200, { setup: withRows(answering(/FROM supplier_list sl\s+JOIN identities i ON i\.identity_id = sl\.supplier_entity_id\s+WHERE sl\.owner_entity_id = \$1\s+ORDER BY/, [Object.assign({}, listRow, { installation_key: 'far', installation_label: 'Far side', country: null, supplier_money: null })])) }),
     N('suppliers-list-doubled-page', LIST, 422, { url: at('/suppliers?page=1&page=2') }),
     /* ── adding one ── */
     X('add-nothing-given', ADD, 400, { body: {} }),

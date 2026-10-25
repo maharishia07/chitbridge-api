@@ -129,6 +129,12 @@ function checkAnswers(recording) {
   check('POST /suppliers · a shop that sells only on its own installation is refused 409 SUPPLIER_SELLS_ONLY_HERE in words', !!sellsOnlyThere && sellsOnlyThere.status === 409 && sellsOnlyThere.body.code === 'SUPPLIER_SELLS_ONLY_HERE' && /sells only/.test(sellsOnlyThere.body.message), sellsOnlyThere && sellsOnlyThere.body);
   const unknownKey = recording['POST /api/relationships/suppliers|add-unknown-key'];
   check('POST /suppliers · a key the door never reads is refused by name in the old 400 body (S33)', !!unknownKey && unknownKey.status === 400 && unknownKey.body.error === 'Validation failed' && (unknownKey.body.errors || []).some((one) => one.field === 'colour'), unknownKey && unknownKey.body);
+  const here = recording['GET /api/relationships/suppliers|suppliers-listed'];
+  const there = recording['GET /api/relationships/suppliers|suppliers-listed-remote'];
+  check('GET /suppliers · a supplier here carries installation_key null (the key is in the row, not dropped)', !!here && here.status === 200 && here.body.suppliers.length === 1 && 'installation_key' in here.body.suppliers[0] && here.body.suppliers[0].installation_key === null, here && here.body.suppliers);
+  check('GET /suppliers · a supplier on another installation carries its installation_key and installation_label (the web decides "far" from it)', !!there && there.status === 200 && there.body.suppliers[0].installation_key === 'far' && there.body.suppliers[0].installation_label === 'Far side', there && there.body.suppliers);
+  const sql = fs.readFileSync(path.join(HERE, ROUTE_FILE), 'utf8');
+  check('GET /suppliers · the SQL names installation_key as the installation when it IS DISTINCT FROM this one (ops.f_installation_of), else null', /CASE WHEN ops\.f_installation_of\(i\.identity_id\) IS DISTINCT FROM ops\.f_installation_of\(\$1\) THEN ops\.f_installation_of\(i\.identity_id\) END AS installation_key/.test(sql));
   const remote = recording['GET /api/relationships/suppliers/:supplier_entity_id/catalogue|catalogue-remote-supplier'];
   check("GET …/catalogue · a remote supplier's view is answered as the seller states it (its money, its items), with remote.installation_key", !!remote && remote.body.supplier.currency_code === 'AUD' && remote.body.remote.installation_key === 'far' && remote.body.items.length === 1, remote && remote.body);
 }

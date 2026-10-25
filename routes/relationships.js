@@ -267,7 +267,13 @@ router.get('/suppliers', auth, ...checkedSupplier('GET /suppliers'), async (req,
               (EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
                         AND es.status = 'active' AND es.is_default = true)
-               OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)) AS has_catalogue
+               OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)) AS has_catalogue,
+              /* API-6 (network owner, 25 Oct): WHERE the supplier lives, named only when it is another installation (null here), with that installation's label.
+                 The web's money-promise confirm before a cross-installation send (supCrossParty → CBQuotes.askCross) decides "far" from it: a stub made from an
+                 address carries no country or currency, so without this the confirm never fired (browser R16 on SIT). */
+              CASE WHEN ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1) THEN ops.f_installation_of(i.identity_id) END AS installation_key,
+              CASE WHEN ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)
+                   THEN (SELECT inst.label FROM installation inst WHERE inst.installation_key = ops.f_installation_of(i.identity_id)) END AS installation_label
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
