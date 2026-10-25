@@ -90,13 +90,27 @@ function mountsOf(src) {
   return out;
 }
 
+/**
+ * a router mounted INSIDE another router (routes/chits.js: router.use(require('./chit-proposals'))) is not in server.js, but its doors are reachable and are swept
+ * through the parent's walk below. Returns { child file → parent file } read from the source, so the "mounted" check follows the real mount instead of exempting the file.
+ */
+function subMountsOf(files) {
+  const out = {};
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(API, 'routes', f), 'utf8'), re = /\brouter\.use\(\s*require\('\.\/([\w-]+)'\)\s*\)/g; let m;
+    while ((m = re.exec(src))) out[m[1]] = f.replace(/\.js$/, '');
+  }
+  return out;
+}
+
 /** every write route of every router: { file, method, full, auth, gated, names } */
 function writeRoutes() {
   const auth = require(path.join(API, 'middleware', 'auth')), access = require(path.join(API, 'lib', 'access'));
   const mounts = mountsOf(fs.readFileSync(path.join(API, 'server.js'), 'utf8'));
-  const rows = [], unmounted = [];
-  for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWith('.js'))) {
+  const rows = [], unmounted = [], files = fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWith('.js')), inside = subMountsOf(files);
+  for (const f of files) {
     const base = f.replace(/\.js$/, ''), router = require(path.join(API, 'routes', f));
+    if (inside[base] && mounts[inside[base]]) continue; /* swept through its parent's walk, which recurses into a router mounted inside it */
     if (!mounts[base]) { unmounted.push(f); continue; }
     const walk = (r) => (r && r.stack ? r.stack : []).forEach((l) => {
       if (l.handle && l.handle.stack && !l.route) return walk(l.handle);
@@ -133,6 +147,10 @@ function verdict(r, selfScoped) {
   const { rows, unmounted } = writeRoutes();
   ok('every routes/*.js file is mounted in server.js (a new router must be mounted to be swept)', unmounted.length === 0, unmounted.join(', '));
   ok('the sweep sees the write routes (> 300)', rows.length > 300, rows.length);
+  /* F2 (critic 25 Oct): routes/chit-proposals.js is mounted inside the chits router — its four write doors must be IN the swept rows, not exempted from them */
+  const seen = new Set(rows.map((r) => r.method + ' ' + r.full));
+  const proposalDoors = ['POST /api/chits/:chit_id/proposals', 'POST /api/chits/:chit_id/proposals/:proposal_id/accept', 'POST /api/chits/:chit_id/proposals/:proposal_id/reject', 'POST /api/chits/:chit_id/proposals/:proposal_id/counter'];
+  ok('the proposal doors (a router mounted inside the chits router) are swept', proposalDoors.every((d) => seen.has(d)), proposalDoors.filter((d) => !seen.has(d)).join(', '));
 
   /* 1 · the GUARD: no write route is uncovered */
   const bad = rows.map((r) => [r, verdict(r, selfScoped)]).filter(([, v]) => !['gated', 'default', 'allowed'].includes(v));
