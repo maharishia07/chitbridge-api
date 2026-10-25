@@ -564,6 +564,49 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     }
   });
 
+  console.log('\n== 6 · the message size limit, in the one writer ==\n');
+  const limit = require(root('lib/message-limit'));
+  await t('the limit is one number in one place: 10,000 characters fit, 10,001 are refused in words by the writer itself', async () => {
+    assert.strictEqual(limit.MESSAGE_MAX_CHARS, 10000);
+    assert.strictEqual(limit.tooLong('x'.repeat(10000)), null);
+    const err = limit.tooLong('x'.repeat(10001));
+    assert.ok(err && err.code === 'MESSAGE_TOO_LONG' && err.status === 413 && /10,001 characters/.test(err.message) && /10,000/.test(err.message) && /Nothing was sent/.test(err.message), err && err.message);
+    resetWorld();
+    let thrown = null;
+    try {
+      await chits.postMessageCopies({ chit_id: CHIT, sender_entity_id: ME, sender_display_name: 'IN Plant', thread_type: 'external', message_text: 'y'.repeat(100000) });
+    } catch (e) {
+      thrown = e;
+    }
+    assert.ok(thrown && thrown.code === 'MESSAGE_TOO_LONG', 'the writer refuses any door’s 100,000-character message');
+    assert.strictEqual(sqlOf(/chit_message_deliver/).length, 0, 'nothing written');
+  });
+  await t('the message route answers 413 MESSAGE_TOO_LONG in words, writes nothing and queues nothing; a message at the limit goes and crosses', async () => {
+    resetWorld();
+    const big = await call('POST', '/api/chits/' + CHIT + '/messages', tok(ME), { message_text: 'z'.repeat(100000), thread_type: 'external' });
+    assert.strictEqual(big.status, 413, JSON.stringify(big.body).slice(0, 300));
+    assert.strictEqual(big.body.code, 'MESSAGE_TOO_LONG');
+    assert.ok(/most one message can hold/.test(big.body.message || big.body.detail), JSON.stringify(big.body).slice(0, 300));
+    assert.strictEqual(sqlOf(/chit_message_deliver/).length, 0);
+    assert.strictEqual(W.out.length, 0);
+    const ok = await call('POST', '/api/chits/' + CHIT + '/messages', tok(ME), { message_text: 'z'.repeat(10000), thread_type: 'external' });
+    assert.strictEqual(ok.status, 200, JSON.stringify(ok.body).slice(0, 300));
+    assert.strictEqual(W.out.length, 1);
+  });
+  await t('a dispute reason over the limit is refused the same way and nothing is raised or queued', async () => {
+    resetWorld();
+    const r = await call('POST', '/api/chits/' + CHIT + '/disputes', tok(ME), { category: 'quantity', reason: 'q'.repeat(10001), target_entity_id: STUB });
+    assert.strictEqual(r.status, 413, JSON.stringify(r.body).slice(0, 300));
+    assert.strictEqual(r.body.code, 'MESSAGE_TOO_LONG');
+    assert.strictEqual(W.out.length, 0);
+  });
+  await t('an event that arrives from another installation is held to the same limit (refused 400 in words, nothing posted)', async () => {
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
+    const r = await apply({ kind: 'message', seq: 2, message_id: MSG, message_text: 'm'.repeat(10001), msg_type: 'info' });
+    assert.ok(!r.ok && r.status === 400 && r.code === 'CTP_EVENT_BAD' && /10000 characters/.test(r.why), JSON.stringify(r));
+  });
+
   //__END__
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

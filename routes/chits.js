@@ -18,6 +18,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
+const messageLimit = require('../lib/message-limit'); // RAIL-106 — how long one message may be, checked where every message is written
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
@@ -5092,6 +5093,8 @@ router.put(
 //   internal → author only · external → all chit participants · dispute → the dispute roster). One logical message_id,
 //   replicated per audience entity; reads are RLS-scoped to "my own copies". Pass a tx `db` client to stay atomic.
 async function postMessageCopies(msg, db) {
+  const longer = messageLimit.tooLong(msg.message_text); // the one limit, in the one writer: every door, one installation or many
+  if (longer) throw longer;
   const message_id = msg.message_id || uuidv4(); /* RAIL-106: a message that arrived from another installation keeps the id it was sent with, so the same one twice is kept once */
   // ROOT FIX (reviewer 2026-07-13): the deliver definer must run with the sender's TRUSTED context set, so it can
   // verify the claimed sender = the caller (b50 pattern) instead of trusting the parameter. When no tx client is
@@ -5304,6 +5307,7 @@ router.post(
         ...ctpReturn.answerOf(result.ctp) // RAIL-106: queued for the party on another installation (resent until it accepts), or the words saying it could not be
       });
     } catch (err) {
+      if (answeredTooLong(req, res, err)) return;
       console.error('Send message error:', err.message);
       problem(req, res, failed(err, req, 'Send message failed'));
     }
@@ -5493,6 +5497,13 @@ function releaseAfterResolve(out, chit_id, extraIds) {
   }
 }
 
+/** RAIL-106: a message longer than lib/message-limit allows is refused 413 in words (the writer threw it); true when it answered */
+function answeredTooLong(req, res, err) {
+  if (!err || err.code !== 'MESSAGE_TOO_LONG') return false;
+  problem(req, res, { status: 413, ...said({ error: 'Message too long', message: err.message, code: 'MESSAGE_TOO_LONG', limit: err.limit }, 'MESSAGE_TOO_LONG') });
+  return true;
+}
+
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
 router.post(
   '/:chit_id/disputes',
@@ -5623,6 +5634,7 @@ router.post(
         ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
+      if (answeredTooLong(req, res, err)) return;
       console.error('Raise dispute error:', err.message);
       if (err.message.includes('chit_disputes'))
         return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
@@ -5869,6 +5881,7 @@ router.put(
         ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
+      if (answeredTooLong(req, res, err)) return;
       console.error('Resolve dispute error:', err.message);
       problem(req, res, failed(err, req, 'Resolve failed'));
     }

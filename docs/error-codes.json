@@ -1937,6 +1937,15 @@
    "since": "2026-10-24"
   },
   {
+   "code": "MESSAGE_TOO_LONG",
+   "status": "413",
+   "title": "Message too long",
+   "shopkeeper": "That message is longer than one message can hold, so nothing was sent.",
+   "hint": "Shorten it, or attach it as a file.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
    "code": "MIGRATION",
    "status": "409",
    "title": "Migration",
