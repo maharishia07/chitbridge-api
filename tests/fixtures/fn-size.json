@@ -407,7 +407,6 @@
     "routes/entities.js": [
       "GET /me",
       "GET /mis",
-      "GET /search",
       "PATCH /profile"
     ],
     "routes/folders.js": [

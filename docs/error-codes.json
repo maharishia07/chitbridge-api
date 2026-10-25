@@ -1199,6 +1199,15 @@
    "since": "2026-10-25"
   },
   {
+   "code": "CTP_SEARCH_TOO_SHORT",
+   "status": "400",
+   "title": "Search too short",
+   "shopkeeper": "Enter at least 2 characters to search.",
+   "hint": "Type a little more of the name.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_STORE_FAILED",
    "status": "500",
    "title": "Could not store the chit",
@@ -3069,6 +3078,24 @@
    "hint": "Leave them be, unless they say yes later.",
    "owner_area": "crm",
    "since": "2026-10-23"
+  },
+  {
+   "code": "SEARCH_PLACE_UNKNOWN",
+   "status": "404",
+   "title": "Place not searchable",
+   "shopkeeper": "We do not deal with that installation, so there is nothing to search there.",
+   "hint": "Pick a place from the list.",
+   "owner_area": "network",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "SEARCH_TOO_SHORT",
+   "status": "400",
+   "title": "Search too short",
+   "shopkeeper": "Enter at least 2 characters to search.",
+   "hint": "Type a little more of the name.",
+   "owner_area": "network",
+   "since": "2026-10-25"
   },
   {
    "code": "SELF",
