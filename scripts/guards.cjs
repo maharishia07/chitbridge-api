@@ -82,6 +82,10 @@ const GUARDS = [
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
+  'network-door.test.cjs', // PLT-45/RAIL-97: the pass at CTP's door — a member/master accepts a chit only with a certificate signed by the PINNED key (lapsed, revoked, wrong key, copy: refused in words); the master's questions; standalone unchanged
+  'network-cert.test.cjs', // PLT-45: the second key slot (CB_NETWORK_ROOT_KEY), the certificate (seal, bind, in date, 10-minute lapse), the cb<scope><nn>-root handles, the network wants
+  'network-sync.test.cjs', // PLT-45/RAIL-96: the pulls — certificate and directory only if signed by the pinned key; registry by sequence, ids only, resync on a gap; locate verified at the far domain
+  'installer-token.test.cjs', // PLT-45: the installer's one-time token through the one verify: its handle only, before any registered business is active, fail-closed
   'ctp-ssrf-guard.test.cjs', // SEC-80: CTP outbound fetches refuse non-https and any private, loopback, link-local or CGNAT address (DNS stubbed)
   'products-safe-errors.test.cjs', // SEC-83: products.js sends no raw error text; a 5xx 'Bad status' gets the safeErr line
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
@@ -213,11 +217,15 @@ const GUARDS = [
      matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
      BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
+  'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
+  'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its
      own machine. open(sign(build(copy))) must deep-equal copy, or the two transports write different rows and
      lifting a world silently changes behaviour. Also holds the population boundary, which across a wire is a
      PROTOCOL rule because b247 cannot see the far entity. */
   'ctp-conformance.test.cjs',
+  'remote-catalogue.test.cjs', // NET-39: a supplier on another installation shows its catalogue (signed ask, local shape, words when silent)
+  'net-39-search.test.cjs', // NET-39: find a business/product on another installation - ONE search Here and There, listed shops and public fields only
   /* ⭐ Athi’s test: two shops with the SAME user id, display name AND bridge id, in two countries. The
      collision is expected — bridge ids are minted per installation — and the address carries the namespace,
      so CBAAAAAAAA@in.example is not CBAAAAAAAA@ae.example. The dangerous case it holds: a QUALIFIED address

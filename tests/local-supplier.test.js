@@ -254,14 +254,14 @@ it('⭐⭐⭐ the business search excludes them — asserted in the file that do
    * ⭐ Bounded by the NEXT ROUTE instead, which is the real end of this handler. A handler can now grow
    * without silencing its own guard.
    */
-  const s = src('routes/entities.js');
-  const from = s.indexOf("router.get('/search'");
-  assert.ok(from >= 0, 'GET /entities/search moved — this guard is now blind and must be repointed');
-  const next = s.indexOf('\nrouter.', from + 10);
-  const m = [s.slice(from, next < 0 ? s.length : next)];
-  assert.ok(/ORDER BY/.test(m[0]), 'the search handler no longer has an ORDER BY — repoint this guard');
-  assert.ok(/NOT LIKE '~%'/.test(m[0]),
-    'the business search no longer excludes minted parties — every local supplier is now public');
+  /* NET-39: the search moved out of routes/entities.js — a NAME is read by lib/business-search (Here and There), an exact handle by lib/network-search; each must exclude them */
+  const files = ['lib/business-search.js', 'lib/network-search.js'];
+  for (const file of files) {
+    const text = src(file);
+    assert.ok(/ORDER BY|LIMIT/.test(text), file + ' no longer reads identities — repoint this guard');
+    assert.ok(/NOT LIKE '~%'/.test(text), file + ' no longer excludes minted parties — every local supplier is now public');
+  }
+  assert.ok(/router\.get\('\/search'[\s\S]*?lib\/network-search/.test(src('routes/entities.js')), 'GET /entities/search no longer goes through lib/network-search — this guard is now blind');
 });
 
 it('⭐⭐ and one shop cannot add another shop\'s minted party', () => {

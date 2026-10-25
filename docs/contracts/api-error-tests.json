@@ -602,7 +602,11 @@
  "GET /api/entities/search": [
   400,
   401,
+  404,
   500
+ ],
+ "GET /api/entities/search/places": [
+  401
  ],
  "GET /api/entities/sides": [
   401,

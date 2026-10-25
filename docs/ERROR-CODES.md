@@ -78,6 +78,25 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | 400 | Cover conflict | Going off would leave someone without cover. | Wait until the other person is back, or change who covers. | actors | 2026-10-22 |
 | CRM_NOT_MIGRATED | 503 | Crm not migrated | Follow-ups and call notes are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
+| CTP_CROSS_DISPUTE | 409 | Retired: not raised | RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given. | - | ctp | 2026-10-25 |
+| CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
+| CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
+| MESSAGE_TOO_LONG | 413 | Message too long | That message is longer than one message can hold, so nothing was sent. | Shorten it, or attach it as a file. | rail | 2026-10-25 |
+| PROPOSAL_BAD | 400 | Proposal not usable | That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take. | Read the sentence shown, fix it and try again. | rail | 2026-10-25 |
+| PROPOSAL_CLOSED | 409 | Proposal already decided | That proposal is already decided, so it cannot be decided again. | Look at the newest round. | rail | 2026-10-25 |
+| PROPOSAL_DOMESTIC | 409 | Not an RFQ | Quotation rounds are for deals with a business on another installation, or a chit made as a request for a quote. | Change this chit directly, or ask for a quote when you compose it. | rail | 2026-10-25 |
+| PROPOSAL_NO_COUNTERPARTY | 409 | Nobody to propose to | This chit has no other party, so there is nothing to propose. | Change it directly. | rail | 2026-10-25 |
+| PROPOSAL_NOT_FOUND | 404 | No such proposal | There is no such proposal on this chit. | Open the chit again and pick one of its rounds. | rail | 2026-10-25 |
+| PROPOSAL_NOT_SETUP | 503 | Proposals not set up | Proposals are not set up on this installation yet. | Ask the operator to apply the update. | rail | 2026-10-25 |
+| PROPOSAL_NOT_YOURS | 403 | Your own proposal | You made this proposal, so the other side decides it. | Wait for the other side. | rail | 2026-10-25 |
+| PROPOSAL_STALE | 409 | Proposal out of date | A newer round has replaced this one, or the lines or the invoice changed since it was proposed, so it cannot be accepted as it stands. | Look at the newest round, or ask for a new one. | rail | 2026-10-25 |
+| CTP_EVENT_CHANGE_NOT_APPLIED | 409 | Change not applied here | This installation could not apply the agreed version to its own copy. | Check the lines on this side; the sender can propose again. | ctp | 2026-10-25 |
+| CTP_EVENT_ATTACHMENT_UNREADABLE | 502 | File not taken | The file announced for this chit could not be fetched or did not arrive as announced, so it was not stored. | The sending installation tries again; check it is reachable. | ctp | 2026-10-25 |
+| CTP_EVENT_NOT_YET | 404 | Not here yet | What this change refers to has not arrived on this installation yet, so it was not applied. | The sender tries again in order. | ctp | 2026-10-25 |
+| CTP_EVENT_TOO_LARGE | 413 | File too large | The file is larger than the limit, so it was not taken. | Send a smaller file (the limit is 6 MB). | ctp | 2026-10-25 |
+| CTP_EVENT_NO_CHIT | 404 | Chit not held here | This business holds no copy of that chit, so the change was not applied. | Check the chit was delivered here first. | ctp | 2026-10-25 |
+| CTP_EVENT_PARTY_MISMATCH | 409 | Not a party to this chit | The sender is not one of the businesses on this chit, or not one of its installation's, so its change was refused. | Check the business is added with the right address. | ctp | 2026-10-25 |
+| CTP_EVENT_PARTY_UNKNOWN | 404 | Business not known here | No business here stands for the sender, so its change could not be applied. | Add the business by its address first. | ctp | 2026-10-25 |
 | CTP_CROSSING_REFUSED | 409 | Crossing refused | This business does not take chits from that installation. | The two installations must name each other as peers first. | ctp | 2026-10-23 |
 | CTP_CROSSING_UNCHECKABLE | 503 | Crossing cannot be checked | We could not check whether this chit may cross, so we refused it. | Try again later; nothing was written. | ctp | 2026-10-23 |
 | CTP_ENVELOPE_REFUSED | 409 | Envelope refused | The chit did not open here: its signature or its contents were refused. | Check the sending installation signs with the key it publishes. | ctp | 2026-10-23 |
@@ -87,12 +106,21 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_NO_SENDER | 400 | No sender named | The chit does not say which business sent it. | The sending installation must name its sender. | ctp | 2026-10-23 |
 | CTP_NOT_A_QUERY | 400 | Not a CTP query | This is not a question this door understands. | Send a CTP/1 query. | ctp | 2026-10-23 |
 | CTP_NOT_AN_ENVELOPE | 400 | Not a CTP envelope | This is not a chit this door understands. | Send a CTP/1 envelope. | ctp | 2026-10-23 |
+| CTP_ADDRESS_CLASH | 409 | Id already used here | A different business here already uses that id, so the one you typed cannot be added under it. | Ask them to share their link, and tell us. | ctp | 2026-10-25 |
+| CTP_ADDRESS_INVALID | 400 | Address not readable | That is not an address we can read. | Type it as id@domain, or paste the business's link. | ctp | 2026-10-25 |
+| CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |
+| CTP_REFUSED | 409 | The other business refused it | The other installation answered no, and the chit was not sent or saved. | Read the reason, fix the chit or the address, send again. | ctp | 2026-10-25 |
+| SUPPLIER_SELLS_ONLY_HERE | 409 | Sells only on their own ChitBridge | That business sells only on its own ChitBridge, so it cannot be your supplier from here. | Ask them to sell outside, or find another supplier. | ctp | 2026-10-25 |
+| CTP_UNREACHABLE | 502 | The other installation did not answer | We could not reach the other installation, so nothing was sent or saved. | Send it again when they are back. | ctp | 2026-10-25 |
+| CTP_PEER_INACTIVE | 409 | Not sent | That business is on an installation we do not deal with now (suspended or retired), so nothing was sent or saved. | Ask the operator whether that installation is coming back. | ctp | 2026-10-25 |
+| CTP_NOT_THIS_INSTALLATION | 409 | Asked the wrong installation | This installation is not the one the question was for; the address held for it is out of date. | Refresh the network directory and ask again. | ctp | 2026-10-25 |
 | CTP_PEER_HOSTED_HERE | 409 | Installation is hosted here | That installation lives on this server, so its chits must not come over the internet. | Deliver it locally. | ctp | 2026-10-23 |
 | CTP_PEER_KEY_UNREADABLE | 403 | Peer's key cannot be read | We could not read the other installation's public key, so we cannot trust the message. | Check the other installation's manifest is reachable. | ctp | 2026-10-23 |
 | CTP_PEER_REFUSED | 403 | Installation not known | We do not deal with that installation. | The owners of both installations must agree to connect first. | ctp | 2026-10-23 |
 | CTP_QUERY_FAILED | 500 | Question failed | This installation could not answer just now. | Try again later. | ctp | 2026-10-23 |
 | CTP_QUERY_REFUSED | 403 | Question refused | The question was not signed by the installation that sent it. | Check the asking installation signs with the key it publishes. | ctp | 2026-10-23 |
 | CTP_RECIPIENT_NOT_HERE | 404 | Recipient not here | There is no active business here with that bridge id. | Check the address of the business. | ctp | 2026-10-23 |
+| CTP_SEARCH_TOO_SHORT | 400 | Search too short | Enter at least 2 characters to search. | Type a little more of the name. | ctp | 2026-10-25 |
 | CTP_STORE_FAILED | 500 | Could not store the chit | This installation could not store the chit just now. | Try again later; it was not written. | ctp | 2026-10-23 |
 | CTP_UNKNOWN_QUESTION | 400 | Unknown question | This installation does not answer that question. | Ask to resolve a business or for its catalogue. | ctp | 2026-10-23 |
 | CURRENCY_ENTITY_ONLY | 403 | Currency is the business’s | The currency your prices are written in belongs to the business. | Ask whoever runs the account to change it in Settings. | entities | 2026-10-22 |
@@ -393,6 +421,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PURPOSE_FIXED | 400 | Offers only | A message to a group is an offer, so it needs their consent for offers. | Send only to people who agreed to offers. | crm | 2026-10-23 |
 | REFUSED | varies | Refused | That could not be done as asked. | Read the line shown, change what you sent and try again. | crm | 2026-10-23 |
 | SAID_NO | 403 | Said no | They said no to this. | Leave them be, unless they say yes later. | crm | 2026-10-23 |
+| SEARCH_PLACE_UNKNOWN | 404 | Place not searchable | We do not deal with that installation, so there is nothing to search there. | Pick a place from the list. | network | 2026-10-25 |
+| SEARCH_TOO_SHORT | 400 | Search too short | Enter at least 2 characters to search. | Type a little more of the name. | network | 2026-10-25 |
 | TOO_LONG | 400 | Message too long | The message is too long. | Shorten it and send again. | crm | 2026-10-23 |
 | TOO_MANY | 400 | Too many | That is too many at a time. | Send fewer, or make a smaller group. | crm | 2026-10-23 |
 | TOO_MANY_GROUPS | 400 | Too many groups | A customer can be in at most 20 groups. | Take them out of one group first. | crm | 2026-10-23 |

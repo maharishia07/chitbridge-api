@@ -206,6 +206,12 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* NET-39: find a business or a product here or on another installation (one search, public fields only), the far side's catalogue read, and the Here+There wrapper — directory plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
+  'business-search.js',
+  'network-search.js',
+  'remote-catalogue.js',
+  /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
+  'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
   'problem.js',
   /* API-4 sweep: the contract of the ledger, tax and invoice routes (their OpenAPI operations and the words of their refusals) and the kit that builds an area's operations — the contract of a door, not a rule of the platform. (2026-10-23) */

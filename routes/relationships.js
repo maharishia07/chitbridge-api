@@ -20,6 +20,7 @@ const A_BUSINESS = `identity_type = 'entity' AND parent_entity_id IS NULL`;
 
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem');
 const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
@@ -76,6 +77,30 @@ const ctx = (req) => auth.entityOf(req);
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
 
 /**
+ * RAIL-101 (NS-3), a step BEFORE the add: the address a person typed, pasted or scanned, when it names a business on ANOTHER installation.
+ * lib/remote-party asks that installation (ctpaddress + ctpquery, the existing seams) and makes the local party row linked to it, then the ordinary add
+ * carries on with that row's bridge id (req.body.supplier_bridge_id is rewritten to it; req.remoteShown adds the address to the answer).
+ * A bare id or an e-mail passes through untouched; nothing is written unless the far end confirmed the business.
+ */
+async function remoteAddress(req, res, next) {
+  const typed = String((req.body && req.body.supplier_bridge_id) || '').trim();
+  if (!(/^https?:\/\//i.test(typed) || typed.includes('@'))) return next();
+  try {
+    const adopted = await require('../lib/remote-party').adopt(ctx(req), typed);
+    if (adopted.error) {
+      const words = adopted.error.message;
+      return problem(req, res, { status: adopted.error.status, code: adopted.error.code, detail: words, legacy: { error: 'Not added', message: words } });
+    }
+    req.body.supplier_bridge_id = adopted.party ? adopted.party.bridge_id : adopted.bridge;
+    if (adopted.party) req.remoteShown = { address: adopted.party.address, installation_key: adopted.party.installation_key };
+    return next();
+  } catch (failure) {
+    console.error('Add supplier by address error:', failure.message);
+    return res.status(500).json({ error: 'Add supplier failed', message: safeErr(failure) });
+  }
+}
+
+/**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
  * Athi, 2026-09-10: *"still a non-CB person can be a supplier, we can set the flag again — he is not part of CB?"*
@@ -120,6 +145,7 @@ router.post(
   ],
   auth,
   validate,
+  remoteAddress,
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -215,7 +241,7 @@ router.post(
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         supplier: {
-          bridge_id: bridge,
+          bridge_id: bridge, ...req.remoteShown,
           display_name: sup.rows[0].display_name,
           on_rail: !!trade.ok,
           party_no: supNo,
@@ -234,6 +260,11 @@ router.post(
   }
 );
 
+/* NET-39 (walk W6, 2026-10-25): a supplier on ANOTHER installation keeps its catalogue there, so no local schema row exists; it counts as "has a catalogue — ask them",
+   and GET /suppliers/:id/catalogue asks the far side (lib/remote-catalogue), which answers what is published and whether it is shown outside (trade_mode export). $1 = the asker. */
+const HAS_CATALOGUE_SQL = `(EXISTS (SELECT 1 FROM entity_schemas es WHERE es.entity_id = i.identity_id AND es.status = 'active' AND es.is_default = true)
+               OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1))`;
+
 // List my suppliers — has_catalogue reflects an active default schema only
 router.get('/suppliers', auth, async (req, res) => {
   try {
@@ -249,9 +280,7 @@ router.get('/suppliers', auth, async (req, res) => {
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
               i.gstn, i.country, i.policy_flags, i.currency_code AS supplier_money,
-              EXISTS (SELECT 1 FROM entity_schemas es
-                      WHERE es.entity_id = i.identity_id
-                        AND es.status = 'active' AND es.is_default = true) AS has_catalogue
+              ${HAS_CATALOGUE_SQL} AS has_catalogue
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
@@ -523,10 +552,8 @@ router.get('/suppliers/availability', auth, async (req, res) => {
       viewer
     };
 
-    const matches = (p) => {
-      const d = (p && p.item_data) || p || {};
-      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(text) >= 0;
-    };
+    /* NET-39: ONE product matcher, shared with the cross-installation search (lib/business-search) */
+    const matches = (p) => require('../lib/business-search').productMatches(p, text);
 
     const one = async (s) => {
       const base = {
@@ -620,6 +647,9 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     );
     const supplier = sup.rows[0] || null;
     if (!supplier) return res.json({ supplier: null, schema: null, fields: [], items: [], finishes: [] });
+    /* NET-39: a supplier on ANOTHER installation is a stub row here; its catalogue is the seller's own public view, asked for over the signed door */
+    const remote = await require('../lib/remote-catalogue').forSupplier(supplier);
+    if (remote) return res.json(remote);
     // ── ONE CATALOGUE READ (SPEC-one-path-many-principals) ────────────────────────────────────────────────────
     // This used to be a second, older implementation of "read a catalogue": it returned only the supplier's OWN
     // catalogue_items and knew nothing of `finishes` (where published/adopted TEMPLATES live) or `order_input` (the
