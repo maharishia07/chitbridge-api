@@ -50,7 +50,7 @@ const R14 = {
     rec.check(cat.status === 200 && cat.items.length > 0, 'the catalogue answers with items (' + cat.items.length + ')', JSON.stringify(cat.remote || cat.body).slice(0, 200));
     rec.check(cat.currency === a.pair.seller.currency, 'the catalogue currency is the seller\'s ' + a.pair.seller.currency, 'got ' + cat.currency);
     const item = flow.pickItem(cat.items, a.pair.seller.fixture && a.pair.seller.fixture.item_match);
-    rec.check(item && (item.item_data || {}).currency === a.pair.seller.currency, 'an item is priced in ' + a.pair.seller.currency + ' (' + (item && flow.nameOf(item)) + ')', JSON.stringify(item && item.item_data));
+    rec.check(item && flow.currencyOf(item) === a.pair.seller.currency, 'an item is priced in ' + a.pair.seller.currency + ' (' + (item && flow.nameOf(item)) + ')', JSON.stringify(item && item.item_data));
     ctx.state.cat = ctx.state.cat || {};
     ctx.state.cat[a.pair.name] = { stub, item };
   }

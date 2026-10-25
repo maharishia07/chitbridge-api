@@ -53,7 +53,10 @@ async function catalogue(buyer, supplierEntityId) {
 }
 
 const nameOf = (item) => String((item.item_data && (item.item_data.name || item.item_data.code)) || item.name || 'item');
-const priceOf = (item) => Number(item.item_data && item.item_data.price != null ? item.item_data.price : item.price);
+/** the catalogue answers price as { amount, currency }; a bare number is still read */
+const priceRaw = (item) => (item.item_data && item.item_data.price != null ? item.item_data.price : item.price);
+const priceOf = (item) => { const p = priceRaw(item); return Number(p && typeof p === 'object' ? p.amount : p); };
+const currencyOf = (item) => { const p = priceRaw(item); return (p && typeof p === 'object' && p.currency) || (item.item_data && item.item_data.currency) || null; };
 
 /** the catalogue item whose name matches (case-insensitive), else null */
 function pickItem(items, match) {
@@ -87,7 +90,7 @@ function generalBody(ctx, stub, seller, text) {
 async function copy(ctx, shopKey, chitId) {
   const id = await ctx.entityId(shopKey);
   const sql =
-    "SELECT h.chit_id, h.subject, h.business_json, h.summary_json, md5((h.summary_json->'money')::text) AS money_md5, md5((h.business_json->'invoice')::text) AS invoice_md5, " +
+    "SELECT h.chit_id, h.business_json, h.summary_json, md5((h.summary_json->'money')::text) AS money_md5, md5((h.business_json->'invoice')::text) AS invoice_md5, " +
     's.current_status, s.cancel_requested_at IS NOT NULL AS cancel_requested, s.cancel_confirmed_at IS NOT NULL AS cancel_confirmed ' +
     'FROM chit_header h LEFT JOIN chit_status s ON s.chit_id = h.chit_id AND s.entity_id = h.entity_id ' +
     'WHERE h.chit_id = ' + db.uuid(chitId) + ' AND h.entity_id = ' + db.uuid(id) + ' LIMIT 1';
@@ -191,7 +194,7 @@ async function bothCopies(ctx, chitId, buyerKey, sellerKey) {
 const num = (v) => (v === null || v === undefined ? null : Number(v));
 
 module.exports = {
-  actors, statusAt, addressOf, addSupplier, findSupplier, catalogue, pickItem, nameOf, priceOf, orderBody, generalBody,
+  actors, statusAt, addressOf, addSupplier, findSupplier, catalogue, pickItem, nameOf, priceOf, currencyOf, orderBody, generalBody,
   copy, proposals, queueOut, messages, disputes, attachments,
   shopState, dbKeyOf, bothCopies, waitCopy, waitCopyWhere, waitProposals, waitMessage, waitDisputes, num
 };

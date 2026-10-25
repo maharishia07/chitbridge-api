@@ -21,7 +21,7 @@ const G1 = {
     const cat = await flow.catalogue(a.buyer, stub.supplier_entity_id);
     rec.check(cat.items.length > 0, 'the catalogue lists items (' + cat.items.length + ')', JSON.stringify(cat.remote || {}));
     const item = flow.pickItem(cat.items, a.pair.seller.fixture && a.pair.seller.fixture.item_match);
-    rec.check(item && (item.item_data || {}).currency === a.pair.seller.currency && flow.priceOf(item) === 45000, 'GC-80 is HUF 45,000 (G1b)', JSON.stringify(item && item.item_data));
+    rec.check(item && flow.currencyOf(item) === a.pair.seller.currency && flow.priceOf(item) === 45000, 'GC-80 is HUF 45,000 (G1b)', JSON.stringify(item && item.item_data));
     ctx.state.g1 = { stub, item };
   }
 };
@@ -81,7 +81,7 @@ const G3 = {
     /* G3b: the contrast - the same /amend on the plain G2 order is a DIRECT amendment, no proposal */
     const plain = ctx.state.g2;
     if (!plain) return;
-    const direct = await a.buyer.post('/api/chits/' + plain.chit_id + '/amend', { edits: [{ line_index: 0, line: { quantity: 1 }, reason_code: 'quantity' }] });
+    const direct = await a.buyer.post('/api/chits/' + plain.chit_id + '/amend', { edits: [{ line_index: 0, line: { particulars: flow.nameOf(plain.item), quantity: 1, price: flow.priceOf(plain.item) }, reason_code: 'quantity' }] });
     rec.check(direct.ok && !direct.body.proposed, 'G3b: a domestic /amend is a direct amendment (HTTP ' + direct.status + ')', JSON.stringify(direct.body).slice(0, 240));
     rec.check((await flow.proposals(ctx, a.bk, plain.chit_id)).length === 0, 'G3b: still 0 proposal rows', 'a proposal was written');
     rec.known('W-amend-reason', direct.ok && Array.isArray(direct.body.amendments) && direct.body.amendments.every((x) => x.reason_code === 'quantity'), 'reason_code quantity is kept (walk: it was filed as other)');

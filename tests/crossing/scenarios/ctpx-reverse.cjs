@@ -45,7 +45,7 @@ const R25 = {
     rec.check(cat.status === 200 && cat.items.length > 0, 'items listed (' + cat.items.length + ')', JSON.stringify(cat.remote || {}));
     rec.check(cat.currency === a.pair.seller.currency, 'the catalogue states ' + a.pair.seller.currency, 'got ' + cat.currency);
     const item = flow.pickItem(cat.items, a.pair.seller.fixture && a.pair.seller.fixture.item_match);
-    rec.check(item && (item.item_data || {}).currency === a.pair.seller.currency && flow.priceOf(item) > 0, 'the item is priced in ' + a.pair.seller.currency + ' (' + (item && flow.nameOf(item)) + ' ' + (item && flow.priceOf(item)) + ')', JSON.stringify(item && item.item_data));
+    rec.check(item && flow.currencyOf(item) === a.pair.seller.currency && flow.priceOf(item) > 0, 'the item is priced in ' + a.pair.seller.currency + ' (' + (item && flow.nameOf(item)) + ' ' + (item && flow.priceOf(item)) + ')', JSON.stringify(item && item.item_data));
   }
 };
 

@@ -2,7 +2,7 @@
   "_about": "THE one description of the crossing test topology (QA, 25 Oct 2026). Installations, the shops on them, and which pair of shops each walk scenario drives. The headless runner (tests/crossing/run.cjs) and the browser spec (web e2e/tests/crossing.spec.js) both read THIS file; nothing else names a host. Only SIT hosts may appear here: every base URL must start with 'staging.' (lib/topology.cjs refuses anything else). The tester code is NOT here; it is read over ssh at run time (lib/secret.cjs).",
   "ssh": { "user": "ubuntu", "key": "~/.ssh/sit_oracle" },
   "installations": {
-    "root":     { "host": "staging.144-24-145-121.sslip.io", "ip": "144.24.145.121", "project": "cbnet",   "role": "root, no shops" },
+    "root":     { "host": "staging.144-24-145-121.sslip.io", "ip": "144.24.145.121", "project": "cbnet",   "db_key": "sit-root", "role": "root, no shops" },
     "sit-in":   { "host": "staging.129-225-85-65.sslip.io",  "ip": "129.225.85.65",  "project": "cbnet",   "role": "India" },
     "sit-au":   { "host": "staging.129-225-90-80.sslip.io",  "ip": "129.225.90.80",  "project": "cbnet",   "role": "Australia" },
     "sit-grund":{ "host": "staging.140-245-252-156.sslip.io","ip": "140.245.252.156","project": "cbgrund", "role": "Grundfos, several currencies on one installation" }
