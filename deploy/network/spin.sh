@@ -27,6 +27,7 @@ done
 HERE=$(cd "$(dirname "$0")" && pwd)
 MASTER_DIR=${MASTER_DIR:-$HERE/../sit}
 PROJECT=${SPIN_MASTER_PROJECT:-cbnet}
+TARGET_PROJECT=${SPIN_TARGET_PROJECT:-$PROJECT}   # a new name when the target VM already ran another installation, so its volumes are never reused
 SSH_KEY=${SPIN_SSH_KEY:-$HOME/.ssh/spin_ed25519}
 SEED_BUNDLE=${SPIN_SEED_BUNDLE:-$HOME/net/seed.bundle}   # set on a master whose SIT branch is a bundle, not a GitHub branch
 SSH="ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=15 $TARGET"
@@ -62,7 +63,7 @@ $SSH 'mkdir -p ~/net && chmod 700 ~/net'
   echo "SPIN_KIT='$KIT'"
   echo "SPIN_HANDLE='$HANDLE'"
   echo "SPIN_HOST='$HOST'"
-  echo "SPIN_PROJECT='$PROJECT'"
+  echo "SPIN_PROJECT='$TARGET_PROJECT'"
   [ ! -f "$SEED_BUNDLE" ] || echo 'SPIN_SEED=$HOME/net/seed.bundle'
   echo "CB_INSTALLER_TOKEN='$TOKEN'"
   echo "API_REF='${SPIN_API_REF:-$(sed -n 's/^API_REF=//p' .env | head -n 1)}'"
@@ -82,5 +83,5 @@ say "the master registers $KEY and issues its certificate"
 $MC register "$KEY" "$HOST" ${COUNTRY:+--country "$COUNTRY"} --root-handle "$HANDLE" --root-bridge "$ROOT_BRIDGE" >/dev/null
 $MC issue "$KEY" ${MINUTES:+--minutes "$MINUTES"}
 $DOCKER compose -p "$PROJECT" -f ../compose.yml -f docker-compose.yml --env-file .env exec -T api node tools/network-sync.cjs master || true
-$SSH "cd ~/net/chitbridge-api/deploy/sit && $DOCKER compose -p $PROJECT -f ../compose.yml -f docker-compose.yml --env-file .env exec -T api node tools/network-sync.cjs member" || true
+$SSH "cd ~/net/chitbridge-api/deploy/sit && $DOCKER compose -p $TARGET_PROJECT -f ../compose.yml -f docker-compose.yml --env-file .env exec -T api node tools/network-sync.cjs member" || true
 echo "SPIN_DONE $OUT"

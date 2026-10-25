@@ -34,13 +34,14 @@ fi
 
 # ---- 2. an OLD stack on this VM is put aside, never deleted ------------------------------------------------------------------------------------
 mkdir -p "$NET"
-OLD=$($DOCKER ps -q --filter "label=com.docker.compose.project=chitbridge" | tr '\n' ' ')
-if [ -n "$OLD" ]; then
-  say "stopping the old stack (project chitbridge): containers and volumes are KEPT"
-  # shellcheck disable=SC2086
-  $DOCKER stop $OLD >/dev/null
-fi
-{ echo "kept aside on $(date -u +%FT%TZ) (this script never removes a volume):"; $DOCKER volume ls --format '{{.Name}}' | grep -E '^chitbridge_' || true; ls -d "$HOME/sit" 2>/dev/null || true; } > "$NET/KEPT.txt"
+# any running compose project that is not the one being installed (chitbridge from the SIT kit, or an earlier spin under another name)
+OLDP=$($DOCKER ps --format '{{.Label "com.docker.compose.project"}}' | sort -u | grep -vx "$PROJECT" | grep . || true)
+for p in $OLDP; do
+  say "stopping the old stack (project $p): containers and volumes are KEPT"
+  # shellcheck disable=SC2046
+  $DOCKER stop $($DOCKER ps -q --filter "label=com.docker.compose.project=$p") >/dev/null
+done
+{ echo "kept aside on $(date -u +%FT%TZ) (this script never removes a volume):"; $DOCKER volume ls --format '{{.Name}}' | grep -v "^${PROJECT}_" || true; ls -d "$HOME/sit" "$HOME"/net-*-kept 2>/dev/null || true; } >> "$NET/KEPT.txt"
 
 # ---- 3. the api repo (the kit and this tooling live in it) ------------------------------------------------------------------------------------
 API_DIR=$NET/chitbridge-api
