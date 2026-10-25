@@ -89,7 +89,7 @@ function installStubs() {
         ? { ok: false, why: world.openWhy }
         : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: 'sender-1' }), header: {} }
   });
-  mock('lib/ctpquery', { open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
+  mock('lib/ctpquery', { NETWORK_WANTS: require('../lib/ctpquery').NETWORK_WANTS, open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
   mock('lib/mint', {
     deliver: async () => {
       if (world.storeFails) throw Object.assign(new Error(SECRET_SQL), { code: '53100' });
