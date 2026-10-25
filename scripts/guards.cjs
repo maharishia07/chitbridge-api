@@ -220,6 +220,7 @@ const GUARDS = [
   'money-origin.test.cjs', // ACC-192
   'rollup-currency.test.cjs', // REP-50
   'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
+  'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its
      own machine. open(sign(build(copy))) must deep-equal copy, or the two transports write different rows and
      lifting a world silently changes behaviour. Also holds the population boundary, which across a wire is a

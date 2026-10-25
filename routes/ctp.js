@@ -42,6 +42,7 @@ const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
 const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
+const remoteParty = require('../lib/remote-party'); /* RAIL-107: a party named on an arriving chit is found or made by bridge id, never stored by a foreign uuid */
 const returnPath = require('../lib/ctpreturn'); /* RAIL-106: a change to a chit that already crossed (a status, an external message) is applied to OUR rows */
 const net = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
 const { problem } = require('../lib/problem');
@@ -192,6 +193,26 @@ async function answerEvent(res, refuse, ctx) {
   return res.json({ accepted: true, applied: done.applied, why: done.why, chit_id: ctx.opened.chit_id, to: ctx.toBridge });
 }
 
+/**
+ * RAIL-107 · the parties of an arriving copy, as OUR rows. The sender is found by its bridge id from the signed envelope; this installation holds no row for it when the buyer added the seller
+ * and the seller never added the buyer ("window-shopping"), so one is made (lib/remote-party stubFor: placed on the sending installation, in the recipient's world, no relationship). A different
+ * local business holding that bridge id is refused in words (CTP_ADDRESS_CLASH, RAIL-102), nothing written.
+ * @returns {Promise<{refusal}|{header}>}
+ */
+async function localParties(ctx) {
+  const { env, opened, peer, ik, to } = ctx;
+  const sender = String((env.from || {}).bridge_id || '');
+  if (!sender) return { refusal: { status: 400, code: 'CTP_NO_SENDER', why: 'the envelope does not name the sending business' } };
+  const copy = opened.copy || {};
+  const stub = await remoteParty.stubFor({ bridge_id: sender, display_name: (env.from || {}).display_name || copy.sender_entity_display_name, installation_key: ik, domain: peer.domain, owner: to.identity_id });
+  if (!stub.ok) return { refusal: { status: stub.status, code: stub.code, why: stub.why } };
+  const recipients = Array.isArray(copy.all_recipients) ? copy.all_recipients : [];
+  const toRow = await query('SELECT bridge_id FROM identities WHERE identity_id = $1', [to.identity_id]);
+  const toBridge = toRow.rows[0] && toRow.rows[0].bridge_id;
+  const others = await remoteParty.holdersOf(recipients.map((entry) => entry && entry.bridge_id));
+  return { header: remoteParty.localizeParties({ all_recipients: recipients }, { senderId: stub.identity_id, senderBridge: sender, toId: to.identity_id, toBridge, others }) };
+}
+
 router.get('/.well-known/ctp.json', async (req, res) => {
   try {
     res.set('Cache-Control', 'public, max-age=900');
@@ -329,7 +350,11 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
       sender_bridge_id: (env.from && env.from.bridge_id) || null,
       at: new Date().toISOString()
     };
-    const copy = Object.assign({}, opened.copy, {
+    /* ⭐ RAIL-107: the sender (and every party the copy names) is a row of OUR database, found or made by bridge id — the copy's entity ids are the sender's own and mean nothing here */
+    if (!(opened.copy.sender_entity_id || (opened.header && opened.header.sender_entity_id))) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
+    const parties = await localParties({ env, opened, peer, ik, to });
+    if (parties.refusal) return refuse(parties.refusal);
+    const copy = Object.assign({}, opened.copy, parties.header, {
       entity_id: to.identity_id,
       business_json: Object.assign({}, opened.copy.business_json || {}, { ctp_arrival: arrivalStamp })
     });
@@ -362,8 +387,7 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
      * is never theirs to choose. `chit_header.sender_entity_id` has no foreign key precisely so that a
      * counterparty on another machine can be named without existing here.
      */
-    const senderCtx = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
-    if (!senderCtx) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
+    const senderCtx = copy.sender_entity_id; /* the LOCAL stub of the sender (localParties above), never the sender's own uuid */
     const repeat = await deliverOrRepeat(senderCtx, opened.chit_id, copy, to.identity_id);
     if (!repeat.duplicate) returnPath.onChitArrived(to.identity_id, opened.chit_id, opened.header); /* RAIL-106: the bell the local send rings for each recipient */
 

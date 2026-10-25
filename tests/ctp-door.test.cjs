@@ -17,6 +17,10 @@ const API = G.API;
 const TO = '11111111-1111-4111-8111-111111111111';
 function rows(s, p, ctx) {
   if (/FROM installation WHERE installation_key = \$1/.test(s)) { if (ctx.peerThrows) throw new Error('no table'); return ctx.peer ? [ctx.peer] : []; }
+  /* RAIL-107: the sender is looked up by bridge id (stubFor); a window-shopping sender has no row here yet and one is made */
+  if (/f_installation_of/.test(s) && /FROM identities WHERE bridge_id/.test(s)) return ctx.sender ? [ctx.sender] : [];
+  if (/^INSERT INTO identities/.test(s)) return [{ identity_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', display_name: 'MX Pumps' }];
+  if (/f_place_entity/.test(s)) return [];
   if (/FROM identities WHERE bridge_id = \$1/.test(s)) return ctx.to ? [ctx.to] : [];
   if (/f_ctp_may_deliver/.test(s)) { if (ctx.crossThrows) throw new Error('fn missing'); return [{ ok: !!ctx.mayCross }]; }
   return [];
