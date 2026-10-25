@@ -25,6 +25,7 @@ node tests/crossing/run.cjs --single sit-grund           only scenarios whose sh
 node tests/crossing/run.cjs --multi --only R16,G3        those ids; their prerequisites (R16 needs none; R21 needs R16 R17 R18 R20) run first and are marked "(prerequisite)"
 node tests/crossing/run.cjs --multi --dry-run            print the plan; signs in nothing, opens no ssh
 node tests/crossing/run.cjs --multi --allow-outage       also R8 (stops <project>-api-1 on the far installation for about a minute; starts it again in a finally)
+   --cases                                                  print the test-library case rows (one per walk id); case-rows.json is that output, filed with: node toolset/test-library.cjs --add-cases tests/crossing/case-rows.json
    --topology <file>  --out <file>  --run-id <id>
 ```
 Output: a pass/fail table, a JSON file (default `%TEMP%/crossing-<run id>.json`), exit code **0** nothing failed (SKIP and KNOWN do not fail) · **1** a scenario failed · **2** wrong command line · **3** a tester code could not be read.

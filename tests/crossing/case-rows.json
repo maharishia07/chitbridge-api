@@ -1,0 +1,580 @@
+[
+ {
+  "id": "CTPX-R1",
+  "screen": "Trading across installations",
+  "pass": "seller status Open -> Act crosses (queue accepted, buyer sees the seller in_progress)",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R1',"
+  },
+  "walk": [
+   "R1"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R2",
+  "screen": "Trading across installations",
+  "pass": "buyer internal note stays home; an external marker sent after it arrives without it",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R2',"
+  },
+  "walk": [
+   "R2"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R3",
+  "screen": "Trading across installations",
+  "pass": "external message with ₹ é — arrives intact, one message id, one row per party",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R3',"
+  },
+  "walk": [
+   "R3"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R4",
+  "screen": "Trading across installations",
+  "pass": "seller reply arrives at the buyer",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R4',"
+  },
+  "walk": [
+   "R4"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R5",
+  "screen": "Trading across installations",
+  "pass": "dispute raised (Docs, targeted) appears with the same id on both sides",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R5',"
+  },
+  "walk": [
+   "R5"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R6",
+  "screen": "Trading across installations",
+  "pass": "dispute message from the seller reaches the raiser",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R6',"
+  },
+  "walk": [
+   "R6"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R7",
+  "screen": "Trading across installations",
+  "pass": "dispute resolved by the raiser: both sides resolved, same note",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R7',"
+  },
+  "walk": [
+   "R7"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R8",
+  "screen": "Trading across installations",
+  "pass": "far side down, two messages: held in order, delivered after it returns",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R8',"
+  },
+  "walk": [
+   "R8"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R9",
+  "screen": "Trading across installations",
+  "pass": "attachment crosses by reference and is byte-identical (sha256)",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R9',"
+  },
+  "walk": [
+   "R9"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R10",
+  "screen": "Trading across installations",
+  "pass": "buyer withdraws (cancel request): seller copy not cancelled, request stamped",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R10',"
+  },
+  "walk": [
+   "R10"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R11",
+  "screen": "Trading across installations",
+  "pass": "seller confirms the cancel: cancelled and confirmed on both sides",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rails.cjs",
+   "test": "id: 'R11',"
+  },
+  "walk": [
+   "R11"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R12",
+  "screen": "Trading across installations",
+  "pass": "variant: search on another installation hides a shop that does not sell outside",
+  "level": "R",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "test": "id: 'R12',"
+  },
+  "walk": [
+   "R12"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R13",
+  "screen": "Trading across installations",
+  "pass": "the opt-in is on for every exporter in the topology, off for the rest",
+  "level": "R",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "test": "id: 'R13',"
+  },
+  "walk": [
+   "R13"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R14",
+  "screen": "Trading across installations",
+  "pass": "buyer opens the remote catalogue: items in the SELLER's currency",
+  "level": "R",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "test": "id: 'R14',"
+  },
+  "walk": [
+   "R14"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R15",
+  "screen": "Trading across installations",
+  "pass": "variant: adding a shop that sells only on its own ChitBridge is refused in words",
+  "level": "R",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "test": "id: 'R15',"
+  },
+  "walk": [
+   "R15"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R16",
+  "screen": "Trading across installations",
+  "pass": "order from the remote catalogue in the seller's currency: quotation, jurisdiction, no invoice",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rounds.cjs",
+   "test": "id: 'R16',"
+  },
+  "walk": [
+   "R16"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R17",
+  "screen": "Trading across installations",
+  "pass": "round 2: the seller prices; same proposal id and invoice bytes on both sides",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rounds.cjs",
+   "test": "id: 'R17',"
+  },
+  "walk": [
+   "R17"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R18",
+  "screen": "Trading across installations",
+  "pass": "round 3: the buyer counters 12 at \"11.50\" as TEXT: a request, money null",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rounds.cjs",
+   "test": "id: 'R18',"
+  },
+  "walk": [
+   "R18"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R19",
+  "screen": "Trading across installations",
+  "pass": "accepting the replaced round 2 is refused: PROPOSAL_CLOSED",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rounds.cjs",
+   "test": "id: 'R19',"
+  },
+  "walk": [
+   "R19"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R20",
+  "screen": "Trading across installations",
+  "pass": "round 4: the seller re-quotes 12 x 11.50 = 138",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rounds.cjs",
+   "test": "id: 'R20',"
+  },
+  "walk": [
+   "R20"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R21",
+  "screen": "Trading across installations",
+  "pass": "the buyer accepts round 4: both copies pro_forma, header and invoice byte-identical",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rounds.cjs",
+   "test": "id: 'R21',"
+  },
+  "walk": [
+   "R21"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R22",
+  "screen": "Trading across installations",
+  "pass": "round 5: a money-free terms round is agreed; the invoice is untouched",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/rounds.cjs",
+   "test": "id: 'R22',"
+  },
+  "walk": [
+   "R22"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R23",
+  "screen": "Trading across installations",
+  "pass": "the Indian seller: exporter, public price list, INR",
+  "level": "R",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R23',"
+  },
+  "walk": [
+   "R23"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R24",
+  "screen": "Trading across installations",
+  "pass": "the buyer adds the Indian seller by address; one stub, no duplicate",
+  "level": "R",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R24',"
+  },
+  "walk": [
+   "R24"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R25",
+  "screen": "Trading across installations",
+  "pass": "the buyer's screen reads the price list in rupees",
+  "level": "R",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R25',"
+  },
+  "walk": [
+   "R25"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R26",
+  "screen": "Trading across installations",
+  "pass": "an order that states NO currency (an api client, not the screen): the seller's money must still win",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R26',"
+  },
+  "walk": [
+   "R26"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R27",
+  "screen": "Trading across installations",
+  "pass": "the order that states the cart's currency is filed in INR on both copies, as a quotation",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R27',"
+  },
+  "walk": [
+   "R27"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R28",
+  "screen": "Trading across installations",
+  "pass": "rounds, seller Indian: price 620 x 20, counter 25 at \"600\" (text), re-price 600 x 25, accept: byte-identical",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R28',"
+  },
+  "walk": [
+   "R28"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R29",
+  "screen": "Trading across installations",
+  "pass": "reject: the seller prices, the buyer rejects; both rejected, the chit is unchanged",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R29',"
+  },
+  "walk": [
+   "R29"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-R30",
+  "screen": "Trading across installations",
+  "pass": "status from the Indian seller reaches the Australian buyer",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/reverse.cjs",
+   "test": "id: 'R30',"
+  },
+  "walk": [
+   "R30"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-G1",
+  "screen": "Trading across installations",
+  "pass": "plant (INR) adds the HUF supplier by User ID; its catalogue is in HUF",
+  "level": "T2",
+  "owner": "cb-network",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "test": "id: 'G1',"
+  },
+  "walk": [
+   "G1"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-G2",
+  "screen": "Trading across installations",
+  "pass": "same-installation cart order stays domestic: HUF both copies, no deal_type, no jurisdiction, no proposal rows",
+  "level": "T2",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "test": "id: 'G2',"
+  },
+  "walk": [
+   "G2"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-G3",
+  "screen": "Trading across installations",
+  "pass": "RFQ by choice: /amend becomes a request round, the seller counters, accept copies the invoice; domestic /amend stays direct",
+  "level": "T2",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "test": "id: 'G3',"
+  },
+  "walk": [
+   "G3"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ },
+ {
+  "id": "CTPX-G4",
+  "screen": "Trading across installations",
+  "pass": "AUD buyer to the DKK exporter across installations: search lists only exporters, DKK catalogue, quotation, pro-forma crosses, accept is byte-identical",
+  "level": "R",
+  "owner": "cb-rail",
+  "state": "automated",
+  "auto": {
+   "repo": "api",
+   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "test": "id: 'G4',"
+  },
+  "walk": [
+   "G4"
+  ],
+  "next": "browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)"
+ }
+]

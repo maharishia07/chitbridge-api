@@ -1,4 +1,5 @@
 'use strict';
+// @type: system
 /**
  * tests/crossing/scenarios/grundfos.cjs — G1-G4 of the walk: Grundfos on its own installation (several currencies on ONE installation) and across installations.
  * OWNS      G1 add by User ID + the HUF catalogue · G2 the same-installation cart order stays domestic · G3 RFQ by choice (amend becomes a request round; domestic amend stays direct) · G4 AUD buyer <-> DKK exporter across installations

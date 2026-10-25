@@ -1,4 +1,5 @@
 'use strict';
+// @type: system
 /**
  * tests/crossing/scenarios/catalogue.cjs — R12-R15 of the walk: window-shopping across installations, the export opt-in, and the refusal for a shop that sells only at home.
  * OWNS      R12 (a shop that does not sell outside is hidden from another installation's search - the replayable form of "hidden before the opt-in") · R13 (the opt-in state matches the topology)

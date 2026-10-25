@@ -12,6 +12,7 @@
  *   node tests/crossing/run.cjs --single sit-grund          only scenarios whose shops all live on sit-grund (G1-G3)
  *   node tests/crossing/run.cjs --multi --only R16,G3       those ids (+ their prerequisites, shown as such)
  *   node tests/crossing/run.cjs --multi --dry-run           print the plan; sign in nothing, open no ssh
+ *   --cases             print the test-library case rows (one per walk id) as JSON: node tests/crossing/run.cjs --cases > tests/crossing/case-rows.json
  *   --allow-outage      also run R8 (it STOPS the api container on the far installation for about a minute and starts it again, even when a check throws)
  *   --topology <file>   another topology file  --out <file>   where the JSON result goes (default: the temp folder)  --run-id <id>
  * Exit: 0 no scenario failed (KNOWN and SKIP do not fail) - 1 a scenario failed - 2 wrong command line - 3 the preflight could not read a tester code.
@@ -30,7 +31,7 @@ const USAGE = 'usage: node tests/crossing/run.cjs (--single <installation> | --m
 
 /** the command line as options; throws a usage error in words */
 function parseArgs(argv) {
-  const o = { mode: null, installation: null, only: [], dryRun: false, flags: {}, topology: null, out: null, runId: null };
+  const o = { cases: false, mode: null, installation: null, only: [], dryRun: false, flags: {}, topology: null, out: null, runId: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--multi') o.mode = 'multi';
@@ -39,13 +40,14 @@ function parseArgs(argv) {
       o.installation = argv[++i];
     } else if (a === '--only') o.only = String(argv[++i] || '').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean);
     else if (a === '--dry-run') o.dryRun = true;
+    else if (a === '--cases') o.cases = true;
     else if (a === '--allow-outage') o.flags.allowOutage = true;
     else if (a === '--topology') o.topology = argv[++i];
     else if (a === '--out') o.out = argv[++i];
     else if (a === '--run-id') o.runId = argv[++i];
     else throw new Error('unknown argument ' + a + '\n' + USAGE);
   }
-  if (!o.mode) throw new Error('say --single <installation> or --multi\n' + USAGE);
+  if (!o.mode && !o.cases) throw new Error('say --single <installation> or --multi\n' + USAGE);
   if (o.mode === 'single' && !o.installation) throw new Error('--single needs an installation key\n' + USAGE);
   return o;
 }
@@ -64,6 +66,19 @@ function planText(topo, plan, o) {
   return lines.join('\n');
 }
 
+/** the case rows for the test library (toolset/test-library.cjs --add-cases): one per walk id, proof = the scenario in its file; levels: R when two installations, T2 when one */
+const OWNER = { R12: 'cb-network', R13: 'cb-network', R14: 'cb-network', R15: 'cb-network', R23: 'cb-network', R24: 'cb-network', R25: 'cb-network', G1: 'cb-network' };
+function caseRows(topo) {
+  const plan = planLib.buildPlan(topo, registry.all, { mode: 'multi', flags: { allowOutage: true } });
+  return registry.all.filter((s) => s.id !== 'R0').map((s) => {
+    const row = plan.find((p) => p.id === s.id);
+    return {
+      id: 'CTPX-' + s.id, screen: 'Trading across installations', pass: s.title, level: row.installations.length > 1 ? 'R' : 'T2', owner: OWNER[s.id] || 'cb-rail', state: 'automated',
+      auto: { repo: 'api', file: 'tests/crossing/scenarios/' + registry.fileOf[s.id] + '.cjs', test: "id: '" + s.id + "'," }, walk: [s.id], next: 'browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)'
+    };
+  });
+}
+
 /** run one scenario; its recorder is turned into a row; a thrown error is a FAIL row, never a crash */
 async function runOne(ctx, scenario, plan) {
   const rec = ctx.recorder(scenario.id);
@@ -80,6 +95,10 @@ async function runOne(ctx, scenario, plan) {
 async function main(argv) {
   const o = parseArgs(argv);
   const topo = topology.load(o.topology || undefined);
+  if (o.cases) {
+    console.log(JSON.stringify(caseRows(topo), null, 1));
+    return 0;
+  }
   const plan = planLib.buildPlan(topo, registry.all, { mode: o.mode, installation: o.installation, only: o.only, flags: o.flags });
   if (o.mode === 'single' && !topo.installations[o.installation]) throw new Error('unknown installation ' + o.installation + ' (known: ' + Object.keys(topo.installations).join(', ') + ')');
   if (o.dryRun) {
@@ -133,4 +152,4 @@ if (require.main === module) {
   );
 }
 
-module.exports = { parseArgs, planText, main };
+module.exports = { parseArgs, planText, caseRows, main };

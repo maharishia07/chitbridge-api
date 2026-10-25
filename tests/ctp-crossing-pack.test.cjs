@@ -225,6 +225,13 @@ cp.spawn = (...a) => {
   const runId = ctxLib.newRunId(Date.UTC(2026, 9, 25, 13, 30, 5));
   t('a run id sorts by time and is unique', /^x261025133005[0-9a-f]{3}$/.test(runId) && runId !== ctxLib.newRunId(Date.UTC(2026, 9, 25, 13, 30, 5)));
 
+  /* ── 8b · the case rows for the test library ─────────────────────────────────────────────────── */
+  const caseRows = runner.caseRows(topo);
+  t('--cases: one row per walk id (R1-R30, G1-G4 = 34), none for the R0 setup', caseRows.length === 34 && !caseRows.some((r) => r.id === 'CTPX-R0'));
+  t('every case row names a scenario file that contains its id', caseRows.every((r) => fs.readFileSync(path.join(API, r.auto.file), 'utf8').includes(r.auto.test)));
+  t('case rows carry the library\'s fields and levels (R = two installations, T2 = one)', caseRows.every((r) => r.id && r.screen && r.pass && r.owner && r.state === 'automated' && ['R', 'T2'].includes(r.level)) && caseRows.find((r) => r.id === 'CTPX-G3').level === 'T2' && caseRows.find((r) => r.id === 'CTPX-R16').level === 'R');
+  t('the committed tests/crossing/case-rows.json is what --cases prints now', JSON.stringify(require(path.join(PACK, 'case-rows.json'))) === JSON.stringify(caseRows));
+
   /* ── 9 · nothing secret on disk, nothing alarming in the pack ──────────────────────────────── */
   const files = [];
   (function walk(dir) {

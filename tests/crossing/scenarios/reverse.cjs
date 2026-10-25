@@ -1,4 +1,5 @@
 'use strict';
+// @type: system
 /**
  * tests/crossing/scenarios/reverse.cjs — R23-R30 of the walk: the reverse direction, AU buys and IN sells (the seller's currency is INR, so the rupee shows on the Australian screen).
  * OWNS      R23 seller standing facts · R24 add by address (no duplicate stub) · R25 the remote catalogue in INR · R26 an order that STATES no currency (known gap) · R27 the order that states it

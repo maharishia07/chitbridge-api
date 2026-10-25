@@ -1,4 +1,5 @@
 'use strict';
+// @type: system
 /**
  * tests/crossing/scenarios/rounds.cjs — R16-R22 of the walk: an RFQ across installations, round by round (IN buys, AU sells), and the step functions the reverse direction (R28) and Grundfos (G3, G4) reuse.
  * OWNS      the order step (quotation + jurisdiction + seller currency) · sellerQuotes · buyerCounters · buyerAccepts · identicalOnBothSides · the terms round
