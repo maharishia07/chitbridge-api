@@ -78,6 +78,9 @@ function rowsFor(sql, p) {
   p = p || [];
   W.rec.push({ s, p, ent: ENT });
   if (/to_regprocedure/.test(s)) return [{ ok: true }];
+  if (/^SELECT role FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ role: 'sender' }];
+  if (/^INSERT INTO chit_line_amendment/.test(s)) return [{ amendment_id: 'am-1', line_index: p[2], line_id: p[3], seq: 1, line: p[4] === null ? null : JSON.parse(p[4]), reason_code: p[5], reason: p[6], actor_name: p[8], created_at: new Date() }];
+  if (/^SELECT line_items FROM chit_detail/.test(s)) return [{ line_items: [{ particulars: 'Pump seal', quantity: 10 }] }];
   if (/^SELECT last_seq FROM ctp_event_in/.test(s)) return W.inw.filter((r) => r.chit_id === p[0] && r.remote_entity_id === p[1] && r.entity_id === p[2]).map((r) => ({ last_seq: r.last_seq }));
   if (/^INSERT INTO ctp_event_in/.test(s)) {
     const cur = W.inw.find((r) => r.chit_id === p[0] && r.remote_entity_id === p[1] && r.entity_id === p[2]);
@@ -319,6 +322,20 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     const r = await apply({ kind: 'status', seq: 2, status: 'cancelled', previous_status: 'delivered', copy: 'sent', by_name: 'Raj' });
     assert.ok(r.ok && r.applied, JSON.stringify(r));
     assert.strictEqual(W.status.find((x) => x.entity_id === STUB && x.direction === 'sent').current_status, 'cancelled');
+  });
+
+  console.log('\n== 2 · amendment: private to the amending copy, so it crosses nowhere ==\n');
+  await t('an amendment is recorded on the amender’s OWN copy only: no event, no write to the header, the detail, the invoice or the money, no write under another entity', async () => {
+    resetWorld();
+    const LINE = 'e0000000-0000-4000-8000-0000000000e1';
+    const r = await call('POST', '/api/chits/' + CHIT + '/amend', tok(ME), { edits: [{ line_index: 0, line_id: LINE, line: { particulars: 'Pump seal', quantity: 12, price: 410 }, reason_code: 'rate_agreed' }] });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(W.out.length, 0, 'nothing is queued: the other party’s copy is not changed on one installation, so it is not on many');
+    assert.strictEqual(r.body.ctp, undefined);
+    const writes = W.rec.filter((x) => /^(INSERT|UPDATE|DELETE)/.test(x.s) && !/state_log/.test(x.s));
+    assert.ok(writes.length > 0 && writes.every((x) => /chit_line_amendment|UPDATE chit_line /.test(x.s)), writes.map((x) => x.s.slice(0, 60)).join(' | '));
+    assert.ok(writes.every((x) => x.ent === ME), 'every write is under the amender’s own context');
+    assert.ok(!W.rec.some((x) => /business_json|summary_json|UPDATE chit_header|UPDATE chit_detail/.test(x.s) && /^(INSERT|UPDATE)/.test(x.s)), 'the invoice (business_json.invoice) and the money (summary_json) are untouched, so the receiver’s ValDtls are byte for byte what the origin issued');
   });
 
   //__END__
