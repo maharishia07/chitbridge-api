@@ -122,7 +122,7 @@ function checkContractShape(routes) {
   const operations = Object.keys(contract.OPERATIONS);
   const swept = Object.keys(routes).filter((key) => !SIGN_IN.includes(key));
   check('every route the router holds but sign-in has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 23 operations: the 25 routes less POST /register and POST /verify', operations.length === 23 && Object.keys(routes).length === 25, [operations.length, Object.keys(routes).length]);
+  check('the contract holds 24 operations: the 26 routes less POST /register and POST /verify', operations.length === 24 && Object.keys(routes).length === 26, [operations.length, Object.keys(routes).length]);
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that is an object (a list is the schema\'s 400)', bodies.every((key) => contract.OPERATIONS[key].requestBody.content['application/json'].schema.type === 'object'), bodies);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
