@@ -514,9 +514,10 @@ const call = (method, url, id, body) =>
   });
   await t('at send, a seller on another installation is not priced by the buyer’s installation: no tax rule runs, and the request is stamped a quotation with the buyer’s country', async () => {
     const { A } = twoInstallations();
-    const st = { sender_id: BUY, line_items: clone(ITEMS), business_json: {}, currency_code: 'INR', orderLike: true, toIds: [SELL_STUB], counterBill: false, sellerId: SELL_STUB };
+    /* F7: a seller elsewhere needs the money stated by the buyer's screen (else 400 CURRENCY_REQUIRED) */
+    const st = { sender_id: BUY, line_items: clone(ITEMS), business_json: { currency: 'INR' }, currency_code: 'INR', orderLike: true, toIds: [SELL_STUB], counterBill: false, sellerId: SELL_STUB };
     CUR = A;
-    await chits.sendMoney(st, {}, {});
+    await chits.sendMoney(st, { body: {} }, {});
     assert.strictEqual(A.taxCalls.length, 0, 'the buyer’s installation ran no tax of its own on someone else’s goods');
     assert.strictEqual(st.originInvoice, null);
     assert.strictEqual(st.moneyBlock.tax, null);
@@ -524,7 +525,7 @@ const call = (method, url, id, body) =>
     const local = oneInstallation();
     const st2 = { sender_id: BUY, line_items: clone(ITEMS), business_json: {}, currency_code: 'INR', orderLike: true, toIds: [SELL], counterBill: false, sellerId: SELL };
     CUR = local;
-    await chits.sendMoney(st2, {}, {});
+    await chits.sendMoney(st2, { body: {} }, {});
     assert.strictEqual(local.taxCalls.length, 1, 'a seller on the same installation is priced at send as before');
     assert.strictEqual(st2.business_json.jurisdiction, undefined);
   });
