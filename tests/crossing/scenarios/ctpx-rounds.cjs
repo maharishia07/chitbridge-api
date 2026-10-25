@@ -1,9 +1,9 @@
 'use strict';
 // @type: system
 /**
- * tests/crossing/scenarios/rounds.cjs — R16-R22 of the walk: an RFQ across installations, round by round (IN buys, AU sells), and the step functions the reverse direction (R28) and Grundfos (G3, G4) reuse.
+ * tests/crossing/scenarios/ctpx-rounds.cjs — R16-R22 of the walk: an RFQ across installations, round by round (IN buys, AU sells), and the step functions the reverse direction (R28) and Grundfos (G3, G4) reuse.
  * OWNS      the order step (quotation + jurisdiction + seller currency) · sellerQuotes · buyerCounters · buyerAccepts · identicalOnBothSides · the terms round
- * CALLED BY scenarios/index.cjs · scenarios/reverse.cjs · scenarios/grundfos.cjs
+ * CALLED BY scenarios/ctpx-registry.cjs · scenarios/ctpx-reverse.cjs · scenarios/ctpx-grundfos.cjs
  * FLOW      /api/chits/send -> /proposals (+ /counter, /accept, /reject) -> read both installations' chit_header + chit_proposal -> compare (md5 of the invoice and of the header money, byte for byte)
  * The seller computes every price (lib/chit-proposal): a buyer's counter is a REQUEST in text, money null. These steps assert exactly that, so a regression in who computes shows here.
  */

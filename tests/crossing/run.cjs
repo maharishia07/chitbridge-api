@@ -25,7 +25,7 @@ const topology = require('./lib/topology.cjs');
 const planLib = require('./lib/plan.cjs');
 const report = require('./lib/report.cjs');
 const { makeCtx } = require('./lib/ctx.cjs');
-const registry = require('./scenarios/index.cjs');
+const registry = require('./scenarios/ctpx-registry.cjs');
 
 const USAGE = 'usage: node tests/crossing/run.cjs (--single <installation> | --multi) [--only R16,G3] [--dry-run] [--allow-outage] [--topology f] [--out f] [--run-id id]';
 
@@ -74,7 +74,7 @@ function caseRows(topo) {
     const row = plan.find((p) => p.id === s.id);
     return {
       id: 'CTPX-' + s.id, screen: 'Trading across installations', pass: s.title, level: row.installations.length > 1 ? 'R' : 'T2', owner: OWNER[s.id] || 'cb-rail', state: 'automated',
-      auto: { repo: 'api', file: 'tests/crossing/scenarios/' + registry.fileOf[s.id] + '.cjs', test: "id: '" + s.id + "'," }, walk: [s.id], next: 'browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)'
+      auto: { repo: 'api', file: 'tests/crossing/scenarios/ctpx-' + registry.fileOf[s.id] + '.cjs', test: "id: '" + s.id + "'," }, walk: [s.id], next: 'browser: web e2e/tests/crossing.spec.js (screen rows, fixme where the screen is missing)'
     };
   });
 }

@@ -8,7 +8,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R1',"
   },
   "walk": [
@@ -25,7 +25,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R2',"
   },
   "walk": [
@@ -42,7 +42,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R3',"
   },
   "walk": [
@@ -59,7 +59,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R4',"
   },
   "walk": [
@@ -76,7 +76,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R5',"
   },
   "walk": [
@@ -93,7 +93,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R6',"
   },
   "walk": [
@@ -110,7 +110,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R7',"
   },
   "walk": [
@@ -127,7 +127,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R8',"
   },
   "walk": [
@@ -144,7 +144,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R9',"
   },
   "walk": [
@@ -161,7 +161,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R10',"
   },
   "walk": [
@@ -178,7 +178,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rails.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rails.cjs",
    "test": "id: 'R11',"
   },
   "walk": [
@@ -195,7 +195,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "file": "tests/crossing/scenarios/ctpx-catalogue.cjs",
    "test": "id: 'R12',"
   },
   "walk": [
@@ -212,7 +212,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "file": "tests/crossing/scenarios/ctpx-catalogue.cjs",
    "test": "id: 'R13',"
   },
   "walk": [
@@ -229,7 +229,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "file": "tests/crossing/scenarios/ctpx-catalogue.cjs",
    "test": "id: 'R14',"
   },
   "walk": [
@@ -246,7 +246,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/catalogue.cjs",
+   "file": "tests/crossing/scenarios/ctpx-catalogue.cjs",
    "test": "id: 'R15',"
   },
   "walk": [
@@ -263,7 +263,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rounds.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rounds.cjs",
    "test": "id: 'R16',"
   },
   "walk": [
@@ -280,7 +280,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rounds.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rounds.cjs",
    "test": "id: 'R17',"
   },
   "walk": [
@@ -297,7 +297,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rounds.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rounds.cjs",
    "test": "id: 'R18',"
   },
   "walk": [
@@ -314,7 +314,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rounds.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rounds.cjs",
    "test": "id: 'R19',"
   },
   "walk": [
@@ -331,7 +331,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rounds.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rounds.cjs",
    "test": "id: 'R20',"
   },
   "walk": [
@@ -348,7 +348,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rounds.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rounds.cjs",
    "test": "id: 'R21',"
   },
   "walk": [
@@ -365,7 +365,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/rounds.cjs",
+   "file": "tests/crossing/scenarios/ctpx-rounds.cjs",
    "test": "id: 'R22',"
   },
   "walk": [
@@ -382,7 +382,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R23',"
   },
   "walk": [
@@ -399,7 +399,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R24',"
   },
   "walk": [
@@ -416,7 +416,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R25',"
   },
   "walk": [
@@ -433,7 +433,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R26',"
   },
   "walk": [
@@ -450,7 +450,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R27',"
   },
   "walk": [
@@ -467,7 +467,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R28',"
   },
   "walk": [
@@ -484,7 +484,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R29',"
   },
   "walk": [
@@ -501,7 +501,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/reverse.cjs",
+   "file": "tests/crossing/scenarios/ctpx-reverse.cjs",
    "test": "id: 'R30',"
   },
   "walk": [
@@ -518,7 +518,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "file": "tests/crossing/scenarios/ctpx-grundfos.cjs",
    "test": "id: 'G1',"
   },
   "walk": [
@@ -535,7 +535,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "file": "tests/crossing/scenarios/ctpx-grundfos.cjs",
    "test": "id: 'G2',"
   },
   "walk": [
@@ -552,7 +552,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "file": "tests/crossing/scenarios/ctpx-grundfos.cjs",
    "test": "id: 'G3',"
   },
   "walk": [
@@ -569,7 +569,7 @@
   "state": "automated",
   "auto": {
    "repo": "api",
-   "file": "tests/crossing/scenarios/grundfos.cjs",
+   "file": "tests/crossing/scenarios/ctpx-grundfos.cjs",
    "test": "id: 'G4',"
   },
   "walk": [

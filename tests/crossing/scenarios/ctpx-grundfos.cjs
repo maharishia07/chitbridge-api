@@ -1,14 +1,14 @@
 'use strict';
 // @type: system
 /**
- * tests/crossing/scenarios/grundfos.cjs — G1-G4 of the walk: Grundfos on its own installation (several currencies on ONE installation) and across installations.
+ * tests/crossing/scenarios/ctpx-grundfos.cjs — G1-G4 of the walk: Grundfos on its own installation (several currencies on ONE installation) and across installations.
  * OWNS      G1 add by User ID + the HUF catalogue · G2 the same-installation cart order stays domestic · G3 RFQ by choice (amend becomes a request round; domestic amend stays direct) · G4 AUD buyer <-> DKK exporter across installations
- * CALLED BY scenarios/index.cjs
- * FLOW      same steps as rounds.cjs; the DATABASE on each installation is the judge (deal_type, jurisdiction, chit_proposal count, invoice md5, ctp queue)
+ * CALLED BY scenarios/ctpx-registry.cjs
+ * FLOW      same steps as ctpx-rounds.cjs; the DATABASE on each installation is the judge (deal_type, jurisdiction, chit_proposal count, invoice md5, ctp queue)
  * DECISIONS 25 Oct 14:10: a same-installation chit is domestic unless composed as deal_type 'rfq'; only an international deal or an rfq chit has rounds, quotation / jurisdiction fields and the status/dispute bells.
  */
 const flow = require('../lib/flow.cjs');
-const rounds = require('./rounds.cjs').steps;
+const rounds = require('./ctpx-rounds.cjs').steps;
 const { sameDigest } = require('../lib/compare.cjs');
 
 const G1 = {

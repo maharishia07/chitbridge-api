@@ -54,7 +54,7 @@ cp.spawn = (...a) => {
   out('\nCTP crossing pack · offline self-test\n');
   const topology = req('lib/topology.cjs');
   const topo = topology.load();
-  const registry = req('scenarios/index.cjs');
+  const registry = req('scenarios/ctpx-registry.cjs');
 
   /* ── 1 · the topology ─────────────────────────────────────────────────────────────────────── */
   t('topology.json parses and validates', !!topo && Object.keys(topo.installations).length === 4);

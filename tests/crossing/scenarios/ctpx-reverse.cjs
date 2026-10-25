@@ -1,15 +1,15 @@
 'use strict';
 // @type: system
 /**
- * tests/crossing/scenarios/reverse.cjs — R23-R30 of the walk: the reverse direction, AU buys and IN sells (the seller's currency is INR, so the rupee shows on the Australian screen).
+ * tests/crossing/scenarios/ctpx-reverse.cjs — R23-R30 of the walk: the reverse direction, AU buys and IN sells (the seller's currency is INR, so the rupee shows on the Australian screen).
  * OWNS      R23 seller standing facts · R24 add by address (no duplicate stub) · R25 the remote catalogue in INR · R26 an order that STATES no currency (known gap) · R27 the order that states it
  *           · R28 rounds (seller prices, buyer counters in text, seller re-prices, buyer accepts, byte-identical) · R29 reject · R30 status from the Indian seller
- * CALLED BY scenarios/index.cjs
- * FLOW      same steps as rounds.cjs, with the roles swapped by the topology binding (pair au_buys_in)
+ * CALLED BY scenarios/ctpx-registry.cjs
+ * FLOW      same steps as ctpx-rounds.cjs, with the roles swapped by the topology binding (pair au_buys_in)
  */
 const flow = require('../lib/flow.cjs');
 const db = require('../lib/db.cjs');
-const rounds = require('./rounds.cjs').steps;
+const rounds = require('./ctpx-rounds.cjs').steps;
 const { waitFor } = require('../lib/compare.cjs');
 
 const R23 = {

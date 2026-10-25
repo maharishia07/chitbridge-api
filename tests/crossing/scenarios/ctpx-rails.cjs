@@ -1,9 +1,9 @@
 'use strict';
 // @type: system
 /**
- * tests/crossing/scenarios/rails.cjs — R0-R11 of the 25 Oct walk (WALK-2026-10-25-IN-AU.md, "Rigorous pass"): the return path between two installations.
+ * tests/crossing/scenarios/ctpx-rails.cjs — R0-R11 of the 25 Oct walk (WALK-2026-10-25-IN-AU.md, "Rigorous pass"): the return path between two installations.
  * OWNS      R0 (setup: a tagged chit from the buyer to the seller) · R1 status · R2 internal note stays home · R3/R4 messages · R5-R7 dispute cycle · R8 far side down (opt-in) · R9 attachment · R10/R11 cancel
- * CALLED BY scenarios/index.cjs
+ * CALLED BY scenarios/ctpx-registry.cjs
  * FLOW      each scenario: API as a shop (the screen's own routes) → wait for the ctp-return cron → read BOTH installations' rows (lib/flow.cjs) → compare
  * A scenario returns nothing; it records checks on `rec`. It may leave ids in ctx.state for the next one (the index lists `requires`).
  */
