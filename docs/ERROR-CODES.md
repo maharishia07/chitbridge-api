@@ -110,6 +110,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_ADDRESS_INVALID | 400 | Address not readable | That is not an address we can read. | Type it as id@domain, or paste the business's link. | ctp | 2026-10-25 |
 | CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |
 | CTP_REFUSED | 409 | The other business refused it | The other installation answered no, and the chit was not sent or saved. | Read the reason, fix the chit or the address, send again. | ctp | 2026-10-25 |
+| SUPPLIER_SELLS_ONLY_HERE | 409 | Sells only on their own ChitBridge | That business sells only on its own ChitBridge, so it cannot be your supplier from here. | Ask them to sell outside, or find another supplier. | ctp | 2026-10-25 |
 | CTP_UNREACHABLE | 502 | The other installation did not answer | We could not reach the other installation, so nothing was sent or saved. | Send it again when they are back. | ctp | 2026-10-25 |
 | CTP_PEER_INACTIVE | 409 | Not sent | That business is on an installation we do not deal with now (suspended or retired), so nothing was sent or saved. | Ask the operator whether that installation is coming back. | ctp | 2026-10-25 |
 | CTP_NOT_THIS_INSTALLATION | 409 | Asked the wrong installation | This installation is not the one the question was for; the address held for it is out of date. | Refresh the network directory and ask again. | ctp | 2026-10-25 |

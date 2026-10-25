@@ -1204,7 +1204,6 @@ Written by: `routes/ctp.js manifest()` from `lib/netmember` (`ownMembership`, `n
 
 Tables (b790): `installation.network_role` (`standalone` default · `member` · `master`), `installation.root_handle`, `installation.root_bridge_id`; `membership_certificate`, `network_revoked`, `registry_change` (written only by `ops.f_registry_change`), `registry_entry` (installation_key, bridge_id, entity_type, population, status), `registry_cursor` (last_seq, entities, pulled_at, last_error). Environment: `CB_NETWORK_ROOT_KEY` (master's private network key), `CB_MASTER_DOMAIN` · `CB_MASTER_INSTALLATION` · `CB_MASTER_KEY` (a member's pin), `CB_INSTALLER_TOKEN` · `CB_INSTALLER_HANDLE` (the one-time root seed; dead once a registered business is active).
 
-<<<<<<< HEAD
 ## chit_proposal · the proposal mechanism's keys (RAIL-106 part 4, 2026-10-25) — GET/POST /api/chits/:id/proposals…
 
 One mechanism on ONE chit for the seller's pro-forma, the buyer's counter, an amendment after agreement and a money-free agreement (lib/chit-proposal.js). The chit is round 1; every version after it is the next round.
@@ -1222,5 +1221,4 @@ One mechanism on ONE chit for the seller's pro-forma, the buyer's counter, an am
 | `business_json.jurisdiction` | `{ document: 'quotation' \| 'pro_forma', buyer_country, buyer_installation, seller_country, seller_currency, seller_installation, buyer_duty_and_taxes: 'not_included' }` | Stamped at send when the seller is on another installation (document: quotation); the seller's side adds its half on each priced round; the accepted round sets `document: 'pro_forma'`. The wording on the screen is the web's ("Quotation · priced under <seller country> rules · <buyer country>'s import duty and taxes not included"). The buyer's duty is never computed. |
 | event `proposal` payload | `{ proposal_id, round, version: pro_forma \| change \| request \| terms, edits, request, terms, invoice, summary, currency_code, tax_note, base_hash, note, by_name, replaces, replaces_status }` | CTP return path (lib/ctpreturn onProposal / applyProposal). The receiver keeps it as issued. |
 | event `proposal_decide` payload | `{ proposal_id, decision: accept \| reject, by_name, note }` | CTP return path (onProposalDecided / applyProposalDecision): the receiver applies the SAME stored version, never recomputing. |
-1207d
 | `entity_profile.trade_mode` (NET-39, 2026-10-25) | `'domestic'` (default) \| `'export'` | The ONE "sells outside" switch (Settings → Your business → Selling abroad). `export` also means the shop may be answered to ANOTHER installation (CTP `search` and `catalogue`); `domestic` is found on its own installation only. Read by `lib/profile.isExporter`, fails closed. No second field. |

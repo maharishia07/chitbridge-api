@@ -293,7 +293,7 @@ const askStub = async (target, want, deps) => {
     const sql = [];
     const adopted = await remoteParty.adopt('owner-1', row.address, {
       resolveAddress: async (a) => ({ ok: true, local: false, installation_key: 'sit-au', domain: 'au.example.com', endpoint: 'x', why: a }),
-      ask: async () => ({ ok: true, found: true, bridge_id: row.bridge_id, display_name: row.display_name, installation_key: 'sit-au' }),
+      ask: async () => ({ ok: true, found: true, bridge_id: row.bridge_id, display_name: row.display_name, installation_key: 'sit-au', sells_outside: true }),
       query: async (s, p) => {
         sql.push([s.replace(/\s+/g, ' '), p]);
         return { rows: /INSERT INTO identities/.test(s) ? [{ identity_id: 'new-1', display_name: row.display_name }] : [] };
@@ -303,6 +303,55 @@ const askStub = async (target, want, deps) => {
     eq(adopted.party.installation_key, 'sit-au');
     eq(adopted.party.address, row.address);
     ok(sql.some(([s, p]) => /f_place_entity/.test(s) && p[1] === 'sit-au'), 'the party was not placed on sit-au');
+  });
+  await t('DECISIONS 14:50 · a shop that does NOT sell outside cannot be added as a supplier from another installation: by address, 409 in words, nothing written', async () => {
+    const sql = [];
+    const refused = await remoteParty.adopt('owner-1', 'CBMZ5MN34G@au.example.com', {
+      resolveAddress: async () => ({ ok: true, local: false, installation_key: 'sit-au', domain: 'au.example.com', endpoint: 'x' }),
+      ask: async () => ({ ok: true, found: true, bridge_id: 'CBMZ5MN34G', display_name: 'Sydney Spice', installation_key: 'sit-au', sells_outside: false }),
+      query: async (s) => {
+        sql.push(s);
+        return { rows: [] };
+      }
+    });
+    eq(refused.error.status, 409);
+    eq(refused.error.code, 'SUPPLIER_SELLS_ONLY_HERE');
+    eq(refused.error.message, 'Sydney Spice sells only on their own ChitBridge, so they cannot be your supplier from here.');
+    ok(!sql.some((s) => /INSERT INTO identities|f_place_entity/.test(s)), 'nothing was added');
+    /* a far side that does not say is treated as not selling outside: fails closed */
+    const silent = await remoteParty.adopt('owner-1', 'CBMZ5MN34G@au.example.com', {
+      resolveAddress: async () => ({ ok: true, local: false, installation_key: 'sit-au', domain: 'au.example.com', endpoint: 'x' }),
+      ask: async () => ({ ok: true, found: true, bridge_id: 'CBMZ5MN34G', display_name: 'Sydney Spice', installation_key: 'sit-au' }),
+      query: async () => ({ rows: [] })
+    });
+    eq(silent.error.code, 'SUPPLIER_SELLS_ONLY_HERE');
+  });
+  await t('…the same from a SEARCH result: the result’s address goes to the same adopt, and a shop that has since stopped selling outside is refused the same way', async () => {
+    const r = await ns.search({ q: 'timer house', kind: 'business', limit: 10 }, ME, 'sit-au', { ask: askStub });
+    const row = r.results[0];
+    const refused = await remoteParty.adopt('owner-1', row.address, {
+      resolveAddress: async () => ({ ok: true, local: false, installation_key: 'sit-au', domain: 'au.example.com', endpoint: 'x' }),
+      ask: async () => ({ ok: true, found: true, bridge_id: row.bridge_id, display_name: row.display_name, installation_key: 'sit-au', sells_outside: false }),
+      query: async () => ({ rows: [] })
+    });
+    eq(refused.error.code, 'SUPPLIER_SELLS_ONLY_HERE');
+    ok(refused.error.message.indexOf(row.display_name) === 0, refused.error.message);
+  });
+  await t('…a supplier on the SAME installation is unchanged: nothing is asked of any far side, the ordinary path continues', async () => {
+    let asked = 0;
+    const out = await remoteParty.adopt('owner-1', 'CBLOCAL001@au.example.com', {
+      resolveAddress: async () => ({ ok: true, local: true, bridge_id: 'CBLOCAL001' }),
+      ask: async () => {
+        asked++;
+        return {};
+      },
+      query: async () => ({ rows: [] })
+    });
+    ok(out.local === true && asked === 0, JSON.stringify(out));
+  });
+  await t('the far side’s resolve answer carries sells_outside from the one rule (lib/profile isExporter), not a second check', async () => {
+    const src = require('fs').readFileSync(path.join(__dirname, '..', 'routes', 'ctp.js'), 'utf8');
+    ok(/sells_outside: await require\('\.\.\/lib\/profile'\)\.isExporter\(ent\.identity_id\)/.test(src));
   });
   await t('the add route is still the old one: POST /suppliers { supplier_bridge_id: address } goes through remoteAddress → adopt', async () => {
     const src = require('fs').readFileSync(path.join(API, 'routes', 'relationships.js'), 'utf8');
