@@ -1259,6 +1259,22 @@ async function sendOffers(st, req, res) {
   Object.assign(st, { line_items, offersApplied });
 }
 
+/** the invoice for a chit between two parties, computed ONCE at send (the origin) from the seller's own flags; null when a party is not on record */
+async function invoiceAtSend(li, sellerId, buyerId, business_json, currency_code) {
+  const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [[String(sellerId), String(buyerId)]]);
+  const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
+  const sRow = rowOf(sellerId),
+    bRow = rowOf(buyerId);
+  if (!sRow || !bRow) return null;
+  /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent, so priceIncludesTax arrived as undefined
+     and !!undefined taxed a GST-inclusive shelf price as if it were ex-tax. flagOf() reads the SELLER's own setting, no second query. */
+  const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax', sRow.country) === 'yes';
+  /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever reaches DocDtls.Dt (metadata, no rate
+     lookup keys on it), but a bill queued offline and sent days later must say when it was actually billed. */
+  const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
+  return taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: invAt, priceIncludesTax }).invoice;
+}
+
 /** the header's money — gross · savings · net · tax · total, provisional */
 async function sendMoney(st, req, res) {
   const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
@@ -1274,6 +1290,7 @@ async function sendMoney(st, req, res) {
    * "—" is honest, a column showing zero tax is a lie.
    */
   let moneyBlock = null;
+  let originInvoice = null;
   try {
     const r2m = (n) => roundMoney(Number(n) || 0);
     const li = Array.isArray(line_items) ? line_items : [];
@@ -1286,36 +1303,12 @@ async function sendMoney(st, req, res) {
       total = null;
     /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
     const buyerId = counterBill ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
-    if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
-      const ids = [String(sellerId), String(buyerId)];
-      const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
-      const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
-      const sRow = rowOf(sellerId),
-        bRow = rowOf(buyerId);
-      if (sRow && bRow) {
-        /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
-           so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
-           if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
-           the SELLER's own setting from it, no second query. */
-        const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax', sRow.country) === 'yes';
-        /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
-           reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
-           later must say when it was actually billed, same reasoning as the offers guard just above. */
-        const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
-        const inv = taxLines.invoiceFor({
-          lines: li,
-          seller: taxLines.partyOf(sRow),
-          buyer: taxLines.partyOf(bRow),
-          currency: currency_code,
-          at: invAt,
-          priceIncludesTax
-        });
-        const h = taxLines.heads(inv.invoice);
-        if (h && Number.isFinite(h.tax)) {
-          tax = r2m(h.tax);
-          total = r2m(h.total || net + tax);
-        }
-      }
+    const invoice = li.length && buyerId && String(sellerId) !== String(buyerId) ? await invoiceAtSend(li, sellerId, buyerId, business_json, currency_code) : null;
+    const h = invoice && taxLines.heads(invoice);
+    if (h && Number.isFinite(h.tax)) {
+      tax = r2m(h.tax);
+      total = r2m(h.total || net + tax);
+      originInvoice = invoice; /* ACC-192: computed here, the origin; sendIssued carries it with the chit */
     }
     moneyBlock = {
       gross,
@@ -1329,7 +1322,7 @@ async function sendMoney(st, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
   }
-  Object.assign(st, { moneyBlock });
+  Object.assign(st, { moneyBlock, originInvoice });
 }
 
 /** a counter bill carries its invoice — the header maps it, the server only checks it */
@@ -1346,35 +1339,47 @@ async function sendIssued(st, req, res) {
    * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
    */
   let issuedTotal = null;
+  /* ⭐⭐⭐ ACC-192 (Athi 2026-10-25): "the computation happens in only one place where it originates, rest of the places it just displays it as
+     a record". The invoice sendMoney computed at send travels with the chit exactly as a counter bill's does — business_json.invoice, read by
+     tax-copy and carried over CTP — so no copy computes it again. Never over an invoice already carried, never on a draft. */
+  if (business_json && !business_json.invoice && st.originInvoice && !is_draft) business_json.invoice = st.originInvoice;
   const carried = business_json && business_json.invoice;
-  if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
+  /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
+     counter's is checked, because only the counter computed it somewhere other than here */
+  if (!is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
     moneyBlock = moneyOfInvoice(carried, currency_code);
     issuedTotal = moneyBlock.total;
-    try {
-      const e = await taxCopy.entryFor(
-        {
-          chit_id: null,
-          sender_entity_id: sender_id,
-          purpose,
-          business_json,
-          line_items,
-          currency_code,
-          all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
-            receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
-          ),
-          sent_at: business_json.billed_at || null
-        },
-        sender_id
-      );
-      if (e && e.tax_check && !e.tax_check.ok) {
-        business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-        require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
-      }
-    } catch (e) {
-      cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
-    }
   }
+  if (counterBill && issuedTotal != null) await checkCounterInvoice(st);
   Object.assign(st, { moneyBlock, issuedTotal });
+}
+
+/** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
+async function checkCounterInvoice(sendState) {
+  const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
+  try {
+    const e = await taxCopy.entryFor(
+      {
+        chit_id: null,
+        sender_entity_id: sender_id,
+        purpose,
+        business_json,
+        line_items,
+        currency_code,
+        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
+          receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
+        ),
+        sent_at: business_json.billed_at || null
+      },
+      sender_id
+    );
+    if (e && e.tax_check && !e.tax_check.ok) {
+      business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+      require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
+    }
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
+  }
 }
 
 /** which copies a self-chit or a numbered document keeps — declared, never silent */
