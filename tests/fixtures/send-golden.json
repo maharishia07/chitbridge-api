@@ -103,6 +103,11 @@
    },
    {
     "via": "query",
+    "sql": "SELECT installation_key, ctp_endpoint, region, active FROM installation WHERE hosted_locally = false",
+    "params": null
+   },
+   {
+    "via": "query",
     "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [

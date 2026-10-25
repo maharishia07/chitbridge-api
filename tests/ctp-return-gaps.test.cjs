@@ -99,7 +99,7 @@ function rowsFor(sql, p) {
     return hit.map((r) => ({ chit_id: r.chit_id }));
   }
   if (/^SELECT sender_entity_id FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ sender_entity_id: W.senderId || ME }];
-  if (/^SELECT sender_entity_id, purpose, business_json(, all_recipients)? FROM chit_header/.test(s)) return [{ sender_entity_id: W.senderId || STUB, purpose: 'order', business_json: {}, all_recipients: W.header.all_recipients }];
+  if (/^SELECT sender_entity_id, purpose, business_json(, all_recipients)? FROM chit_header/.test(s)) return [{ sender_entity_id: W.senderId || STUB, purpose: 'order', business_json: W.businessJson || {}, all_recipients: W.header.all_recipients }];
   if (/^SELECT all_recipients FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ all_recipients: W.header.all_recipients.map((x) => ({ entity_id: (W.ident[x.bridge_id] || {}).identity_id })) }];
   if (/^SELECT cancel_requested_at FROM chit_status/.test(s)) return W.asked ? [{ cancel_requested_at: new Date() }] : [{}];
   if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s) && /all_recipients/.test(s)) return [W.header];
@@ -632,20 +632,37 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     await apply(Object.assign({}, ev, { seq: 5, status: 'in_progress' }));
     assert.strictEqual(RUNG.length, 0, 'a status that rings nothing locally rings nothing here');
   });
-  await t('a dispute raised (the real route) rings the parties named on it; resolved rings the cleared parties; here, once each', async () => {
-    resetWorld();
-    RUNG.length = 0;
-    W.header = { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME, entity_id: ME, role: 'sender' }, { bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'receiver' }] };
-    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'sent', current_status: 'delivered' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
-    const r = await call('POST', '/api/chits/' + CHIT + '/disputes', tok(ME), { category: 'quantity', reason: 'Short by forty units', target_entity_id: LOCAL2 });
-    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
-    assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), [[[LOCAL2], 'dispute', 'raised']]);
-    RUNG.length = 0;
-    W.disputeRow = { dispute_id: DISPUTE, chit_id: CHIT, status: 'open', raised_by_entity_id: ME, category: 'quantity', scope: 'targeted' };
-    W.roster = [{ entity_id: ME, role: 'raiser', status: 'open' }, { entity_id: LOCAL2, role: 'party', status: 'open' }];
-    const done = await call('PUT', '/api/chits/' + CHIT + '/disputes/' + DISPUTE + '/resolve', tok(ME), { resolution_note: 'Credit note issued' });
-    assert.strictEqual(done.status, 200, JSON.stringify(done.body));
-    assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), [[[LOCAL2], 'dispute', 'resolved']]);
+  await t('a dispute raised (the real route) rings the parties named on it — on an international deal only; a domestic chit rings nothing, exactly as before 25 Oct', async () => {
+    for (const international of [false, true]) {
+      resetWorld();
+      RUNG.length = 0;
+      W.header = { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME, entity_id: ME, role: 'sender' }, { bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'receiver' }].concat(international ? [{ bridge_id: B_STUB, entity_id: STUB, role: 'cc' }] : []) };
+      if (!international) W.place = {};
+      W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'sent', current_status: 'delivered' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
+      const r = await call('POST', '/api/chits/' + CHIT + '/disputes', tok(ME), { category: 'quantity', reason: 'Short by forty units', target_entity_id: LOCAL2 });
+      assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+      assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), international ? [[[LOCAL2], 'dispute', 'raised']] : [], 'raised ' + (international ? 'international' : 'domestic'));
+      RUNG.length = 0;
+      W.disputeRow = { dispute_id: DISPUTE, chit_id: CHIT, status: 'open', raised_by_entity_id: ME, category: 'quantity', scope: 'targeted' };
+      W.roster = [{ entity_id: ME, role: 'raiser', status: 'open' }, { entity_id: LOCAL2, role: 'party', status: 'open' }];
+      const done = await call('PUT', '/api/chits/' + CHIT + '/disputes/' + DISPUTE + '/resolve', tok(ME), { resolution_note: 'Credit note issued' });
+      assert.strictEqual(done.status, 200, JSON.stringify(done.body));
+      assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), international ? [[[LOCAL2], 'dispute', 'resolved']] : [], 'resolved ' + (international ? 'international' : 'domestic'));
+    }
+  });
+  await t('a status move on a DOMESTIC chit (all parties here) rings nobody, as before; one composed as an RFQ rings like an international deal', async () => {
+    for (const dealType of [undefined, 'rfq']) {
+      resetWorld();
+      RUNG.length = 0;
+      W.place = {};
+      W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }];
+      W.header = { sender_entity_bridge_id: B_LOCAL2, all_recipients: [{ bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'sender' }, { bridge_id: B_ME, entity_id: ME, role: 'receiver' }] };
+      W.senderId = LOCAL2;
+      W.businessJson = dealType ? { deal_type: dealType } : {};
+      const mv = await chits.moveStatus(ME, CHIT, 'accepted', { id: ME, name: 'Asha' }, '', EDITOR);
+      assert.strictEqual(mv.code, 200, JSON.stringify(mv.body));
+      assert.strictEqual(RUNG.filter((x) => x.evt.kind === 'status').length, dealType ? 1 : 0, String(dealType));
+    }
   });
   await t('a dispute raised or resolved on another installation rings the local parties on arrival, once', async () => {
     resetWorld();

@@ -1328,15 +1328,15 @@ async function sendMoney(st, req, res) {
   try {
     /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
     /* ⭐ RAIL-106 (Athi, 25 Oct 12:05): a seller on ANOTHER installation prices its own goods — price, currency and tax by its own pack, at its side (lib/chit-proposal). The buyer's installation sends what and how many and runs no tax of its own on someone else's goods. */
-    const sellerElsewhere = !counterBill && String(sellerId) !== String(sender_id) && (await require('../lib/ctpaddress').resolve(sellerId)).local === false;
+    const sellerPlace = !counterBill && String(sellerId) !== String(sender_id) ? await require('../lib/ctpaddress').resolve(sellerId) : null;
+    const sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
     const buyerId = counterBill || sellerElsewhere ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
-    /* ⭐ RAIL-106 (DECISIONS 13:10): the request and every priced round before acceptance are a QUOTATION when the seller is on another installation; the chit says whose country it will be priced under
-       and whose it was asked from. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's. */
-    if (sellerElsewhere && business_json && typeof business_json === 'object' && !business_json.jurisdiction) {
-      const place = await require('../lib/ctpaddress').resolve(sellerId);
-      business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: place.installation_key || null, buyer_duty_and_taxes: 'not_included' };
-    }
     ({ moneyBlock, invoice: originInvoice } = await moneyOfLines(Array.isArray(line_items) ? line_items : [], { sellerId, buyerId }, business_json, currency_code));
+    /* ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (moneyOfLines asked nobody's tax engine here); the request and every priced round before acceptance are a QUOTATION. The chit
+       says whose country it was asked from; the seller's half is added by its priced rounds. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's. */
+    if (sellerElsewhere && business_json && typeof business_json === 'object' && !business_json.jurisdiction) {
+      business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: sellerPlace.installation_key || null, buyer_duty_and_taxes: 'not_included' };
+    }
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
   }
@@ -4326,6 +4326,7 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
 /** the amend route's edits as a proposal (lib/chit-proposal propose); null when the chit has nobody else on it */
 async function proposeAmendment(entity_id, chit_id, edits, req) {
   if (!(await schema.hasTable('chit_proposal'))) return null; /* b796 not run: an amendment is direct, as it always was */
+  if (!(await require('../lib/chit-proposal').usesRfq(entity_id, chit_id))) return null; /* a domestic chit that was not made a proposal deal is amended directly, exactly as before 25 Oct (DECISIONS 14:10) */
   const lines = edits.map((item) => ({ line_index: item.line_index, line_id: item.line_id, line: item.line === undefined ? undefined : item.line, price: item.line && item.line.price, quantity: item.line && item.line.quantity, requested_price: item.line && item.line.price, remove: item.line === null, note: item.reason || null }));
   return require('../lib/chit-proposal').propose(entity_id, chit_id, { lines, note: null }, { id: req.identity.identity_id, name: req.identity.display_name });
 }
@@ -4883,9 +4884,10 @@ async function confirmCancelToSender(entity_id, chit_id, header, action_by_name)
  * RAIL-106 (Athi, 25 Oct 11:15): an accepted, rejected or cancelled status rings the OTHER parties, the same on one installation or many. Locally it is lib/events.emit to the people named on
  * my copy's header (a business on another installation has no subscriber here: it is rung when the event arrives, lib/ctpreturn). One bell per move.
  */
-function ringStatus(entity_id, chit_id, new_status, header, who) {
+async function ringStatus(entity_id, chit_id, new_status, header, who) {
   if (!/^(accepted|rejected|cancelled)$/.test(String(new_status))) return;
   const row = header && header.rows && header.rows[0];
+  if (!(await require('../lib/chit-proposal').usesRfq(entity_id, chit_id, row ? row.business_json || null : undefined))) return; /* only an international or proposal deal rings (DECISIONS 14:10): any other chit behaves as before */
   const others = (row && Array.isArray(row.all_recipients) ? row.all_recipients : []).map((item) => item && item.entity_id).filter((id) => id && String(id) !== String(entity_id));
   if (others.length) require('../lib/events').emit([...new Set(others)], { kind: 'status', id: chit_id, status: new_status, who: who || null });
 }
@@ -5021,7 +5023,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
 
   // The header came back with the same transaction, above — read to check sender and propagate a cancel.
   const header = _pre.header;
-  ringStatus(entity_id, chit_id, new_status, header, action_by_name); /* RAIL-106: accepted · rejected · cancelled ring the other parties */
+  await ringStatus(entity_id, chit_id, new_status, header, action_by_name); /* RAIL-106: accepted · rejected · cancelled ring the other parties */
 
   const isSender = header.rows.length > 0 && header.rows[0].sender_entity_id === entity_id;
 
@@ -5669,7 +5671,7 @@ router.post(
       const raised = await withEntity(entity_id, (client) =>
         recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
       );
-      require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: display_name }); /* RAIL-106: the parties named on it are rung, here; those on other installations when it arrives */
+      if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: display_name }); /* RAIL-106: an international or proposal deal only: the parties named on it are rung here; those elsewhere when it arrives */
       /* RAIL-106: told to the roster's parties on other installations, who record it on their own copy (the decision above is not re-run there) */
       const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, roster, partyIds, reason_message_id: raised.reason_message_id });
       const d = {
@@ -5935,7 +5937,7 @@ router.put(
         recordResolve(client, { dispute_id, chit_id, resolver_id: entity_id, resolver_name: entityName, actor_name: display_name, targetParty, resolution_note, category: d.category })
       );
       releaseAfterResolve(out, chit_id, [entity_id]);
-      require('../lib/events').emit(out.resolvedPartyIds || [], { kind: 'dispute', id: chit_id, what: 'resolved', who: display_name }); /* RAIL-106: the cleared parties are rung */
+      if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(out.resolvedPartyIds || [], { kind: 'dispute', id: chit_id, what: 'resolved', who: display_name }); /* RAIL-106: an international or proposal deal only: the cleared parties are rung */
       const crossed = await ctpReturn.onDisputeResolved(entity_id, chit_id, { dispute_id, scope: d.scope, target_id: targetParty, resolution_note, category: d.category, actor_name: display_name, resolver_name: entityName, resolve_message_id: out.resolve_message_id });
 
       res.json({
@@ -6442,7 +6444,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
     const told = [];
     if ((gate.moved || []).length) {
       const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
-      ringStatus(entity_id, chit_id, 'cancelled', header, req.identity.display_name); /* RAIL-106: a withdrawal rings the recipients, as a cancelled status does */
+      await ringStatus(entity_id, chit_id, 'cancelled', header, req.identity.display_name); /* RAIL-106: a withdrawal rings the recipients, as a cancelled status does */
     }
     for (const copy of gate.moved || []) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: req.identity.display_name, note: reason }));
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
