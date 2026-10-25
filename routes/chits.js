@@ -1167,7 +1167,7 @@ async function sendLookupRecipient(r) {
  *   1. the seller's identities.currency_code, when this installation holds it;
  *   2. lib/regional.currencyFor(seller) — the one resolver — when the seller lives on THIS installation;
  *   3. nothing: a seller on another installation is a stub with NULL money on purpose (the business is elsewhere; regional would invent this installation's default). The caller then keeps what the
- *      buyer's screen stated (business_json.currency, the seller's price list as it showed it), else the sender's, as before.
+ *      buyer's screen stated (business_json.currency, the seller's price list as it showed it). With none stated sendMoney REFUSES the send (400 CURRENCY_REQUIRED, F7, 25 Oct): it never files the sender's money.
  * A self-chit, a counter bill, and anything that is not an order never come here (sendSeller decides who sells).
  * @returns {Promise<string|null>} an upper-case code, or null when this installation does not know the seller's money
  */
@@ -1334,6 +1334,18 @@ async function moneyOfLines(li, parties, business_json, currency_code) {
   };
 }
 
+/**
+ * ⭐ F7 (critic 25 Oct, Athi: "if the stuff is not there, we should not fall back, rather reject"): an order to a seller on ANOTHER installation, with no money stated by the sender's screen
+ * (business_json.currency), is refused in words. This installation holds a stub with NULL money for that seller on purpose, so it cannot know the money of their price list and must not
+ * file the order in the sender's money. A draft is the author's own copy and is let through.
+ */
+function refuseCurrencyRequired(req, res) {
+  return problem(req, res, {
+    status: 400,
+    ...said({ error: 'Currency required', code: 'CURRENCY_REQUIRED', message: 'Say which money their price list is in, then send again.' }, codeOfStatus(400))
+  });
+}
+
 /** the header's money — gross · savings · net · tax · total, provisional */
 async function sendMoney(st, req, res) {
   const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
@@ -1345,11 +1357,12 @@ async function sendMoney(st, req, res) {
    */
   let moneyBlock = null;
   let originInvoice = null;
+  let sellerElsewhere = false;
   try {
     /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
     /* ⭐ RAIL-106 (Athi, 25 Oct 12:05): a seller on ANOTHER installation prices its own goods — price, currency and tax by its own pack, at its side (lib/chit-proposal). The buyer's installation sends what and how many and runs no tax of its own on someone else's goods. */
     const sellerPlace = !counterBill && String(sellerId) !== String(sender_id) ? await require('../lib/ctpaddress').resolve(sellerId) : null;
-    const sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
+    sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
     const buyerId = counterBill || sellerElsewhere ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
     ({ moneyBlock, invoice: originInvoice } = await moneyOfLines(Array.isArray(line_items) ? line_items : [], { sellerId, buyerId }, business_json, currency_code));
     /* ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (moneyOfLines asked nobody's tax engine here); the request and every priced round before acceptance are a QUOTATION. The chit
@@ -1360,6 +1373,8 @@ async function sendMoney(st, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
   }
+  const statedCurrency = business_json && typeof business_json === 'object' && String(business_json.currency || '').trim();
+  if (sellerElsewhere && !statedCurrency && !req.body.is_draft) return refuseCurrencyRequired(req, res);
   Object.assign(st, { moneyBlock, originInvoice });
 }
 
