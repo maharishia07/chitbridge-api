@@ -11,10 +11,11 @@
  *   suspend <key> [--reason words]           its certificates stop counting at the next pull; its own shops and data are untouched
  *   reinstate <key>                          the opposite of suspend (a revoked one stays revoked)
  *   revoke <key> [--reason words]            permanent
- *   list                                     members, their certificate state and how many businesses the registry holds (ids and counts only)
+ *   list                                     this installation and its members: certificate state, businesses held (ids and counts only), last pull, version and last seen (lib/netmember.listMembers, the panel's reader too)
  *
  * ⚠️ Prints no secret: the private network key never leaves the environment; a fingerprint and a public key are public by design.
  * OWNS: nothing (a thin caller of lib/netmember.js and lib/netcert.js). CALLED BY: the operator; deploy/sit/spin.sh.
+ * FLOW  argv verb → VERBS[verb](args) → lib/netmember (the one reader and the one writer of standing) → JSON on stdout
  * CARD 28-platform-and-operations/network-control-panel
  */
 'use strict';
@@ -23,7 +24,6 @@ const API = path.join(__dirname, '..');
 const net = require(path.join(API, 'lib', 'netmember'));
 const netcert = require(path.join(API, 'lib', 'netcert'));
 const keys = require(path.join(API, 'lib', 'ctpkeys'));
-const { query } = require(path.join(API, 'db'));
 
 const flag = (args, name) => {
   const i = args.indexOf('--' + name);
@@ -33,17 +33,6 @@ const need = (v, what) => {
   if (!v) throw new Error('missing ' + what);
   return v;
 };
-
-async function listMembers() {
-  const r = await query(
-    `SELECT i.installation_key, i.domain, i.country, i.network_role, i.root_handle, i.active,
-            (SELECT count(*)::int FROM registry_entry e WHERE e.installation_key = i.installation_key) AS entities,
-            (SELECT c.status || ' to ' || c.not_after::text FROM membership_certificate c WHERE c.installation_key = i.installation_key ORDER BY c.issued_at DESC LIMIT 1) AS certificate,
-            (SELECT k.last_seq FROM registry_cursor k WHERE k.installation_key = i.installation_key) AS pulled_to
-       FROM installation i WHERE NOT i.hosted_locally ORDER BY i.installation_key`
-  );
-  return r.rows;
-}
 
 const VERBS = {
   async show() {
@@ -84,7 +73,7 @@ const VERBS = {
     return net.setStanding(need(args[0], 'the installation key'), 'revoked', flag(args, 'reason') || 'revoked by the master');
   },
   async list() {
-    return listMembers();
+    return net.listMembers();
   }
 };
 

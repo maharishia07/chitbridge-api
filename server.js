@@ -431,6 +431,7 @@ app.use('/api/combo-templates', comboTemplatesRouter); // b266 [OFFR-06] — per
 // The cb_chit TABLE is kept dormant; src/services/chit still backs network.js's
 // disconnect settle-guard (edgeHasOpenChit), so the service stays — only the route is gone.
 // (jest uses src/app.js; this exposes the same routers on the live server.js entry)
+app.use('/api/network/installations', require('./routes/netpanel')); // PLT control panel slice 1: the master's read-only list of installations
 app.use('/api/network', require('./src/routes/network'));
 // ARCHIVED 2026-08-06 — the cb_* catalogue routes. A network aggregates its members' catalogues and holds
 // none of its own; these served a third, unread catalogue model. See src/routes/catalogue.js and

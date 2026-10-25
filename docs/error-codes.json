@@ -2009,6 +2009,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NETWORK_MASTER_ONLY",
+   "status": "403",
+   "title": "Network master only",
+   "shopkeeper": "This installation is controlled by another one, or controls none.",
+   "hint": "Open the control panel on the master.",
+   "owner_area": "netpanel",
+   "since": "2026-10-25"
+  },
+  {
    "code": "NETWORK_NAME_TAKEN",
    "status": "409",
    "title": "Network name taken",
@@ -2304,6 +2313,15 @@
    "hint": "Set the money in Country setup.",
    "owner_area": "catalogue-view",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NO_NETWORK_KEY",
+   "status": "varies",
+   "title": "No network key",
+   "shopkeeper": "This installation holds no network key, so it cannot sign.",
+   "hint": "Run this on the network master.",
+   "owner_area": "netcert",
+   "since": "2026-10-25"
   },
   {
    "code": "NO_OPERATOR",

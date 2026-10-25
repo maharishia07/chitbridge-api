@@ -190,6 +190,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NAME_REQUIRED | 400 | Name needed | A business needs a name. | Send a name. | network | 2026-10-23 |
 | NAME_THE_PERSON | 400 | Name the person | Say who is away. | Pick the person. | actors | 2026-10-22 |
 | NETWORK_BAD_REQUEST | 400 | Network request not usable | What was sent to the network is missing something or cannot be used. | Read the sentence, fix it and try again. | network | 2026-10-23 |
+| NETWORK_MASTER_ONLY | 403 | Network master only | This installation is controlled by another one, or controls none. | Open the control panel on the master. | netpanel | 2026-10-25 |
+| NO_NETWORK_KEY | varies | No network key | This installation holds no network key, so it cannot sign. | Run this on the network master. | netcert | 2026-10-25 |
 | NETWORK_NAME_TAKEN | 409 | Network name taken | One of these names was taken while the network was being built. Nothing was created. | Try again. | network | 2026-10-23 |
 | NETWORK_ORDERS_OFF | 403 | Network orders off | Ordering across this network is not switched on here. | Order from the shop itself instead. | catalogue | 2026-10-22 |
 | NETWORK_OWNER_ONLY | 403 | Owner only | Only the business owner can do this. | Sign in as the business itself. | network | 2026-10-23 |

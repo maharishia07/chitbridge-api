@@ -1203,3 +1203,23 @@ Written by: `routes/ctp.js manifest()` from `lib/netmember` (`ownMembership`, `n
 | ask `locate` `{ bridge_id }` → `{ found, hints[] }` | `hints[]` = `{ installation_key, domain }` | A LIST (a bridge id is unique inside one database only). A hint is only a hint: the caller asks that domain to resolve it (`lib/netsync.locate`). Needs a valid certificate. |
 
 Tables (b790): `installation.network_role` (`standalone` default · `member` · `master`), `installation.root_handle`, `installation.root_bridge_id`; `membership_certificate`, `network_revoked`, `registry_change` (written only by `ops.f_registry_change`), `registry_entry` (installation_key, bridge_id, entity_type, population, status), `registry_cursor` (last_seq, entities, pulled_at, last_error). Environment: `CB_NETWORK_ROOT_KEY` (master's private network key), `CB_MASTER_DOMAIN` · `CB_MASTER_INSTALLATION` · `CB_MASTER_KEY` (a member's pin), `CB_INSTALLER_TOKEN` · `CB_INSTALLER_HANDLE` (the one-time root seed; dead once a registered business is active).
+
+## `GET /api/network/installations` · `installation.version` · `last_seen` · `seen_error` · `listed` (network control panel slice 1, 25 Oct 2026)
+
+Written by: `lib/netsync.noteSeen` (version, last_seen, seen_error; the master's pull, one read of the member's `/health` through `lib/ctpdirectory.healthFor`) · nothing yet writes `listed`. Read by: `lib/netmember.listMembers` (the ONE reader: `network-cert list` and this route) → `lib/netpanel.answer`. Migration b794 (draft, additive). The route makes no outbound call.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `installation.version` | text, null | `<package version>+<commit 7>` the master last read at `/health`. A failed read keeps it. Null = never read (or b794 not run). |
+| `installation.last_seen` | timestamptz, null | When `/health` last answered. Kept on a failed read, so the page can say "not seen since". |
+| `installation.seen_error` | text, null | Why the last read failed, in words. Null after a good one. |
+| `installation.listed` | boolean, null | In the public directory? Null = NOT RECORDED (default); the page never guesses. |
+| answer `counts` | `{ total, by_role{}, by_status{} }` | `total` = every installation row the master lists (itself included, a cut-off one too). `by_status` keys: master · active · expiring · lapsed · paused · cut_off · uncertified. |
+| `installations[].key · domain · country · role` | text | From `installation`. Country null when not stated. |
+| `installations[].status` · `status_label` | code · words | FROM THE NEWEST `membership_certificate` (status and `not_after`), never `installation.active`. Active · Expiring soon (under 10 days) · Lapsed · Paused (suspended) · Cut off (revoked) · No certificate · Master. |
+| `installations[].certificate` | `{ status, expires }` or null | The newest certificate's raw status and expiry. Null on the master's own row. |
+| `installations[].listed` · `listed_label` | boolean/null · words | `listed` · `unlisted` · `not recorded`. |
+| `installations[].entities_held` · `entities_claimed` | integer · integer/null | `count(registry_entry)` the master holds · `registry_cursor.entities`, what the member says it has. A difference is a pull in progress or a gap. |
+| `installations[].last_pull` | `{ at, error }` or null | `registry_cursor.pulled_at` / `last_error`. |
+| `installations[].version` · `last_seen` · `seen_error` | text · ISO time · text | As recorded above. The master's own row carries this process's version and now. |
+| `installations[].actions` | `{ suspend, reinstate, revoke }` each `{ may, why }` | Data from the server. `may` is false in this slice; `why` is the command that does it (`node tools/network-cert.cjs suspend <key>`). Empty on the master's own row. |
