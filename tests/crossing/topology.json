@@ -1,0 +1,35 @@
+{
+  "_about": "THE one description of the crossing test topology (QA, 25 Oct 2026). Installations, the shops on them, and which pair of shops each walk scenario drives. The headless runner (tests/crossing/run.cjs) and the browser spec (web e2e/tests/crossing.spec.js) both read THIS file; nothing else names a host. Only SIT hosts may appear here: every base URL must start with 'staging.' (lib/topology.cjs refuses anything else). The tester code is NOT here; it is read over ssh at run time (lib/secret.cjs).",
+  "ssh": { "user": "ubuntu", "key": "~/.ssh/sit_oracle" },
+  "installations": {
+    "root":     { "host": "staging.144-24-145-121.sslip.io", "ip": "144.24.145.121", "project": "cbnet",   "role": "root, no shops" },
+    "sit-in":   { "host": "staging.129-225-85-65.sslip.io",  "ip": "129.225.85.65",  "project": "cbnet",   "role": "India" },
+    "sit-au":   { "host": "staging.129-225-90-80.sslip.io",  "ip": "129.225.90.80",  "project": "cbnet",   "role": "Australia" },
+    "sit-grund":{ "host": "staging.140-245-252-156.sslip.io","ip": "140.245.252.156","project": "cbgrund", "role": "Grundfos, several currencies on one installation" }
+  },
+  "shops": {
+    "chennai":   { "user_id": "qa-chennaistores",   "bridge_id": "CBTM75MZQX", "currency": "INR", "installation": "sit-in",    "exporter": true,  "fixture": { "item_match": "basmati" } },
+    "sydney":    { "user_id": "qa-sydneyspice",     "bridge_id": "CBMZ5MN34G", "currency": "AUD", "installation": "sit-au",    "exporter": true,  "fixture": { "item_match": "chil" } },
+    "grund-hq":  { "user_id": "qa-grund-hq-dk",     "bridge_id": "CBFNPYY2M7", "currency": "DKK", "installation": "sit-grund", "exporter": true,  "fixture": { "item_match": "CR" } },
+    "grund-plant":{ "user_id": "qa-grund-plant-in", "bridge_id": "CBCYZ2PKAZ", "currency": "INR", "installation": "sit-grund", "exporter": false },
+    "grund-hu":  { "user_id": "qa-grund-sup-hu",    "bridge_id": "CBNC2BDN93", "currency": "HUF", "installation": "sit-grund", "exporter": false, "public": true, "fixture": { "item_match": "GC-80" } },
+    "grund-none":{ "user_id": "qa-grund-sup-none",  "bridge_id": null,         "currency": null,  "installation": "sit-grund", "exporter": false }
+  },
+  "pairs": {
+    "in_buys_au":     { "buyer": "chennai",     "seller": "sydney",    "note": "R1-R22: IN buys, AU sells" },
+    "au_buys_in":     { "buyer": "sydney",      "seller": "chennai",   "note": "R23-R30: the reverse direction" },
+    "plant_buys_hu":  { "buyer": "grund-plant", "seller": "grund-hu",  "note": "G1-G3: same installation, INR buyer and HUF seller" },
+    "au_buys_hq":     { "buyer": "sydney",      "seller": "grund-hq",  "note": "G4: AUD buyer across to the DKK exporter" },
+    "au_vs_hu":       { "buyer": "sydney",      "seller": "grund-hu",  "note": "the refusal: a shop that sells only on its own ChitBridge (R15 variant)" }
+  },
+  "bindings": {
+    "R0": "in_buys_au", "R1": "in_buys_au", "R2": "in_buys_au", "R3": "in_buys_au", "R4": "in_buys_au", "R5": "in_buys_au", "R6": "in_buys_au", "R7": "in_buys_au",
+    "R8": "in_buys_au", "R9": "in_buys_au", "R10": "in_buys_au", "R11": "in_buys_au",
+    "R12": "au_vs_hu", "R13": "in_buys_au", "R14": "in_buys_au", "R15": "au_vs_hu",
+    "R16": "in_buys_au", "R17": "in_buys_au", "R18": "in_buys_au", "R19": "in_buys_au", "R20": "in_buys_au", "R21": "in_buys_au", "R22": "in_buys_au",
+    "R23": "au_buys_in", "R24": "au_buys_in", "R25": "au_buys_in", "R26": "au_buys_in", "R27": "au_buys_in", "R28": "au_buys_in", "R29": "au_buys_in", "R30": "au_buys_in",
+    "G1": "plant_buys_hu", "G2": "plant_buys_hu", "G3": "plant_buys_hu",
+    "G4": "au_buys_hq"
+  },
+  "waits": { "crossMs": 120000, "everyMs": 3000, "outageMs": 100000 }
+}
