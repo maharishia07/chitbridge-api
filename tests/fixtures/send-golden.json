@@ -110,7 +110,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT installation_key, ctp_endpoint, region, active FROM installation WHERE hosted_locally = false",
+    "sql": "SELECT installation_key, ctp_endpoint, region, active, domain, label FROM installation WHERE hosted_locally = false",
     "params": null
    },
    {
