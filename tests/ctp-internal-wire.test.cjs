@@ -187,7 +187,7 @@ function mintWith(transport, place) {
       {
         query: w.q,
         resolveAddress: async () => known,
-        ask: async () => ({ ok: true, found: true, bridge_id: 'CBSQRH9ASH', display_name: 'QA Rish Pty', installation_key: 'sit-au' })
+        ask: async () => ({ ok: true, found: true, bridge_id: 'CBSQRH9ASH', display_name: 'QA Rish Pty', installation_key: 'sit-au', sells_outside: true })
       },
       extra || {}
     );
@@ -218,7 +218,7 @@ function mintWith(transport, place) {
       deps(w, {
         ask: async (target, want) => {
           asked = { target, want };
-          return { ok: true, found: true, bridge_id: 'CBSQRH9ASH', display_name: 'QA Rish Pty', installation_key: 'sit-au' };
+          return { ok: true, found: true, bridge_id: 'CBSQRH9ASH', display_name: 'QA Rish Pty', installation_key: 'sit-au', sells_outside: true };
         }
       })
     );

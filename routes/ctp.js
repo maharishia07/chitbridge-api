@@ -461,7 +461,9 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
         display_name: ent.display_name,
         user_id: ent.user_id,
         address: require('../lib/ctpaddress').format(ent.bridge_id, me.domain),
-        installation_key: me.installation_key
+        installation_key: me.installation_key,
+        /* NET-39 (DECISIONS 14:50): whether this shop sells OUTSIDE its own installation, by the one rule (lib/profile isExporter, the same one search and catalogue answer by). An installation that adds this shop as a supplier asks nothing more. */
+        sells_outside: await require('../lib/profile').isExporter(ent.identity_id)
       });
     }
 

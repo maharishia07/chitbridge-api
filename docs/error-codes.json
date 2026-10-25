@@ -3134,6 +3134,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "SUPPLIER_SELLS_ONLY_HERE",
+   "status": "409",
+   "title": "Sells only on their own ChitBridge",
+   "shopkeeper": "That business sells only on its own ChitBridge, so it cannot be your supplier from here.",
+   "hint": "Ask them to sell outside, or find another supplier.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "SUPPORT_NOT_TAKEN",
    "status": "502",
    "title": "Report not delivered",
