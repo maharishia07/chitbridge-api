@@ -967,9 +967,9 @@
   {
    "code": "CTP_CROSS_DISPUTE",
    "status": "409",
-   "title": "Not raised",
-   "shopkeeper": "A party on this chit is on another installation, and disputes do not cross installations yet, so nothing was raised or saved.",
-   "hint": "Say it in a message instead, or ask them to raise it on their side.",
+   "title": "Retired: not raised",
+   "shopkeeper": "RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given.",
+   "hint": "-",
    "owner_area": "ctp",
    "since": "2026-10-25"
   },
@@ -997,6 +997,15 @@
    "title": "Chit not held here",
    "shopkeeper": "This business holds no copy of that chit, so the change was not applied.",
    "hint": "Check the chit was delivered here first.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_NO_DISPUTE",
+   "status": "404",
+   "title": "Dispute not held here",
+   "shopkeeper": "This installation holds no such dispute for that business, so the change was not applied.",
+   "hint": "The dispute must reach this side first; the sender tries again.",
    "owner_area": "ctp",
    "since": "2026-10-25"
   },

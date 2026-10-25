@@ -9,7 +9,7 @@
  *   C  the queue: a change is queued once per remote party with a shared sequence per (chit, sender); a local-only chit queues nothing; the resend accepts, backs off, gives up in words,
  *      and goes oldest first; an accepted row clears the "not yet confirmed" mark
  *   D  moveStatus (the ONE status writer) emits for a remote party and not for a local one, and a bill step never crosses
- *   E  disputes: refused 409 CTP_CROSS_DISPUTE when a party is elsewhere, null when all are here
+ *   E  the dispute refusal is retired (disputes now cross: tests/ctp-return-disputes.test.cjs)
  *   F  the new codes are registered (the door itself is tests/ctp-return-door.test.cjs)
  *
  * Offline: the database, the address book and the transport are stubs. Run: node tests/ctp-return-path.test.cjs
@@ -487,34 +487,17 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
   });
   console.error = origErr;
 
-  console.log('\n== E · a dispute across installations is refused in words ==\n');
-  await t('a party elsewhere: 409 CTP_CROSS_DISPUTE naming who and where, nothing saved', async () => {
-    resetWorld();
-    const r = await ret.crossDisputeRefusal(ME, CHIT);
-    assert.strictEqual(r.status, 409);
-    assert.strictEqual(r.code, 'CTP_CROSS_DISPUTE');
-    assert.ok(/AU Pumps/.test(r.body.message) && /sit-au/.test(r.body.message) && /nothing was raised or saved/.test(r.body.message), r.body.message);
-  });
-  await t('all parties here: no refusal', async () => {
-    resetWorld();
-    W.headers[ME].all_recipients = [{ bridge_id: B_ME }, { bridge_id: B_LOCAL2 }];
-    assert.strictEqual(await ret.crossDisputeRefusal(ME, CHIT), null);
-    resetWorld();
-    W.place = {};
-    assert.strictEqual(await ret.crossDisputeRefusal(ME, CHIT), null);
-  });
-  await t('both dispute doors ask (POST /:chit_id/disputes and a dispute message), before anything is written', async () => {
-    const fs = require('fs');
-    const src = fs.readFileSync(root('routes/chits.js'), 'utf8');
-    assert.ok(/isDispute && \(await answeredCrossDispute\(req, res, entity_id, chit_id\)\)/.test(src), 'the message door');
-    const raise = src.slice(src.indexOf("'/:chit_id/disputes',"), src.indexOf('// C2 (Athi)'));
-    assert.ok(/await answeredCrossDispute\(req, res, entity_id, chit_id\)/.test(raise), 'the raise door asks right after the participant check');
+  console.log('\n== E · disputes now cross (tests/ctp-return-disputes.test.cjs); the retired refusal is gone ==\n');
+  await t('CTP_CROSS_DISPUTE is retired in the register, not raised by any code', async () => {
+    const row = require(root('docs/error-codes.json')).codes.find((c) => c.code === 'CTP_CROSS_DISPUTE');
+    assert.ok(row && /RETIRED/.test(row.shopkeeper), 'kept in the register, marked retired');
+    assert.ok(!/CTP_CROSS_DISPUTE/.test(require('fs').readFileSync(root('routes/chits.js'), 'utf8') + require('fs').readFileSync(root('lib/ctpreturn.js'), 'utf8')));
   });
 
   console.log('\n== F · the registered words ==\n');
   await t('the new refusal codes are registered (docs/ERROR-CODES.md)', async () => {
     const codes = require(root('docs/error-codes.json')).codes.map((c) => c.code);
-    for (const c of ['CTP_CROSS_DISPUTE', 'CTP_EVENT_BAD', 'CTP_EVENT_NO_CHIT', 'CTP_EVENT_PARTY_MISMATCH', 'CTP_EVENT_PARTY_UNKNOWN']) assert.ok(codes.indexOf(c) >= 0, c + ' is registered');
+    for (const c of ['CTP_EVENT_NO_DISPUTE', 'CTP_EVENT_BAD', 'CTP_EVENT_NO_CHIT', 'CTP_EVENT_PARTY_MISMATCH', 'CTP_EVENT_PARTY_UNKNOWN']) assert.ok(codes.indexOf(c) >= 0, c + ' is registered');
   });
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

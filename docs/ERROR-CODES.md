@@ -78,8 +78,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | 400 | Cover conflict | Going off would leave someone without cover. | Wait until the other person is back, or change who covers. | actors | 2026-10-22 |
 | CRM_NOT_MIGRATED | 503 | Crm not migrated | Follow-ups and call notes are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
-| CTP_CROSS_DISPUTE | 409 | Not raised | A party on this chit is on another installation, and disputes do not cross installations yet, so nothing was raised or saved. | Say it in a message instead, or ask them to raise it on their side. | ctp | 2026-10-25 |
+| CTP_CROSS_DISPUTE | 409 | Retired: not raised | RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given. | - | ctp | 2026-10-25 |
 | CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
+| CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
 | CTP_EVENT_NO_CHIT | 404 | Chit not held here | This business holds no copy of that chit, so the change was not applied. | Check the chit was delivered here first. | ctp | 2026-10-25 |
 | CTP_EVENT_PARTY_MISMATCH | 409 | Not a party to this chit | The sender is not one of the businesses on this chit, or not one of its installation's, so its change was refused. | Check the business is added with the right address. | ctp | 2026-10-25 |
 | CTP_EVENT_PARTY_UNKNOWN | 404 | Business not known here | No business here stands for the sender, so its change could not be applied. | Add the business by its address first. | ctp | 2026-10-25 |
