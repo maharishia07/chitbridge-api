@@ -413,4 +413,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TOO_LONG | 400 | Message too long | The message is too long. | Shorten it and send again. | crm | 2026-10-23 |
 | TOO_MANY | 400 | Too many | That is too many at a time. | Send fewer, or make a smaller group. | crm | 2026-10-23 |
 | TOO_MANY_GROUPS | 400 | Too many groups | A customer can be in at most 20 groups. | Take them out of one group first. | crm | 2026-10-23 |
+| CUSTOMER_INVITE_PENDING | 409 | Already invited | You already invited this business and are waiting for their answer. | Wait for them to accept, or ask them to check their inbox. | crm | 2026-10-25 |
+| CUSTOMER_INVITE_NOT_SENT | 4xx/502 | Invitation not sent | The invitation could not be sent, so nothing was added. | Try again in a moment. | crm | 2026-10-25 |
+| CUSTOMER_INVITE_UNREACHABLE | 409 | They cannot get an invitation | That business cannot receive an invitation right now. | Read the reason, then try again when it is fixed. | crm | 2026-10-25 |
 <!-- codes:end -->

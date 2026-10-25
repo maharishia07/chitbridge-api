@@ -82,23 +82,28 @@ const ctx = (req) => auth.entityOf(req);
  * carries on with that row's bridge id (req.body.supplier_bridge_id is rewritten to it; req.remoteShown adds the address to the answer).
  * A bare id or an e-mail passes through untouched; nothing is written unless the far end confirmed the business.
  */
-async function remoteAddress(req, res, next) {
-  const typed = String((req.body && req.body.supplier_bridge_id) || '').trim();
-  if (!(/^https?:\/\//i.test(typed) || typed.includes('@'))) return next();
-  try {
-    const adopted = await require('../lib/remote-party').adopt(ctx(req), typed);
-    if (adopted.error) {
-      const words = adopted.error.message;
-      return problem(req, res, { status: adopted.error.status, code: adopted.error.code, detail: words, legacy: { error: 'Not added', message: words } });
+/** the same step for any add door: `field` is the body key that holds what was typed (a supplier's supplier_bridge_id, a customer's handle) */
+function remoteAddressFor(field, doing) {
+  return async function remoteAddress(req, res, next) {
+    const typed = String((req.body && req.body[field]) || '').trim();
+    if (!(/^https?:\/\//i.test(typed) || typed.includes('@'))) return next();
+    try {
+      const adopted = await require('../lib/remote-party').adopt(ctx(req), typed);
+      if (adopted.error) {
+        const words = adopted.error.message;
+        return problem(req, res, { status: adopted.error.status, code: adopted.error.code, detail: words, legacy: { error: 'Not added', message: words } });
+      }
+      req.body[field] = adopted.party ? adopted.party.bridge_id : adopted.bridge;
+      if (adopted.party) req.remoteShown = { address: adopted.party.address, installation_key: adopted.party.installation_key };
+      return next();
+    } catch (failure) {
+      console.error(doing + ' by address error:', failure.message);
+      return res.status(500).json({ error: doing + ' failed', message: safeErr(failure) });
     }
-    req.body.supplier_bridge_id = adopted.party ? adopted.party.bridge_id : adopted.bridge;
-    if (adopted.party) req.remoteShown = { address: adopted.party.address, installation_key: adopted.party.installation_key };
-    return next();
-  } catch (failure) {
-    console.error('Add supplier by address error:', failure.message);
-    return res.status(500).json({ error: 'Add supplier failed', message: safeErr(failure) });
-  }
+  };
 }
+const remoteAddress = remoteAddressFor('supplier_bridge_id', 'Add supplier');
+const remoteCustomerAddress = remoteAddressFor('handle', 'Add customer');
 
 /**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
@@ -807,6 +812,45 @@ router.get('/customers/:id/rewards', auth, async (req, res) => {
 });
 
 /**
+ * ⭐⭐ A BUSINESS ON THE RAIL IS INVITED, NOT ADDED (NET-40, Athi 2026-10-25: "to be a customer, customer should be willing").
+ * The handle is resolved as before (User ID · bridge id · e-mail, or a remote address already adopted by remoteCustomerAddress). Nothing is written to
+ * customer_list: an invitation chit goes to them (lib/customer-invite, the one send path) and the row is made when they accept - on this installation or another.
+ * A name-only walk-in never reaches here (it is added at once, above): nobody has to be willing for a record only the shop keeps.
+ */
+async function inviteBusiness(req, res, owner, handle) {
+  /* ⚠️ Same fence as the supplier add: a `~` handle is a party some OTHER business minted; answer as if it does not exist */
+  if (require('../lib/handle').isMinted(handle)) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
+  const who = await query(
+    `SELECT identity_id, display_name, user_id, bridge_id FROM identities
+      WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)) AND ${A_BUSINESS}
+      LIMIT 1`,
+    [handle]
+  );
+  if (who.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
+  const c = who.rows[0];
+  if (c.identity_id === owner) return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
+  const known = await withEntity(owner, (db) => db.query(`SELECT 1 FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2`, [owner, c.identity_id]));
+  if (known.rows.length) return res.status(409).json({ error: 'Exists', message: 'Already in your customer list' });
+  /* an invitation they cannot receive (not active, another sandbox) is said now, before anything is sent: lib/istest mayTrade, b249's rule */
+  const trade = await require('../lib/istest').mayTrade(owner, c.identity_id);
+  if (!trade.ok)
+    return problem(req, res, { status: 409, code: 'CUSTOMER_INVITE_UNREACHABLE', detail: c.display_name + ' cannot receive an invitation: ' + trade.why, legacy: { error: 'Not invited', message: c.display_name + ' cannot receive an invitation: ' + trade.why } });
+  const mine = await query('SELECT display_name FROM identities WHERE identity_id = $1', [owner]); /* the business invites, not the actor who pressed the button */
+  const sent = await require('../lib/customer-invite').invite(owner, (mine.rows[0] || {}).display_name || 'A business', c);
+  if (sent.refused) {
+    const no = sent.refused;
+    return problem(req, res, { status: no.status, code: no.code, detail: no.message, legacy: { error: 'Not invited', message: no.message } });
+  }
+  res.json({
+    invited: true,
+    chit_id: sent.chit_id,
+    message: sent.words,
+    invitee: { customer_identity_id: c.identity_id, display_name: c.display_name, user_id: c.user_id, bridge_id: c.bridge_id },
+    ...(req.remoteShown ? { remote: req.remoteShown } : {})
+  });
+}
+
+/**
  * ⭐ ADD A CUSTOMER BY HAND (Athi, 2026-09-06: "Chola Auto Care should be coming as a customer — can we add a + icon to include a customer?").
  * The list filled itself only from trades (storefront order, a bill, since today a Suppliers-menu order). A seller who knows their customer
  * before the first order — to give them an "Only for" offer — adds them here: resolved the way a supplier is (User ID · bridge id · email),
@@ -825,6 +869,7 @@ router.post(
   ],
   auth,
   validate,
+  remoteCustomerAddress,
   async (req, res) => {
     try {
       const owner = ctx(req),
@@ -868,49 +913,7 @@ router.post(
           }
         });
       }
-      /* ⚠️ Same fence as the supplier add: a `~` handle is a party some OTHER business minted, and it resolves by
-         user_id like any entity. Answer as if it does not exist rather than confirming the guess. */
-      if (require('../lib/handle').isMinted(handle))
-        return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
-      const who = await query(
-        `SELECT identity_id, display_name, user_id, bridge_id FROM identities
-          WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)) AND ${A_BUSINESS}
-          LIMIT 1`,
-        [handle]
-      );
-      if (who.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
-      const c = who.rows[0];
-      if (c.identity_id === owner) return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
-      const r = await withEntity(owner, (db) =>
-        db.query(
-          `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-         VALUES ($1, $2, 'entity', 'manual', 0, NULL)
-         ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING
-         RETURNING customer_list_id`,
-          [owner, c.identity_id]
-        )
-      );
-      if (r.rows.length === 0) return res.status(409).json({ error: 'Exists', message: 'Already in your customer list' });
-      /* ⭐ ADDED, AND TOLD WHETHER BILLS CAN REACH THEM (Athi, 2026-10-02 — two bills sat pending for customers this door let
-         in without a word). lib/istest mayTrade, b249's rule: inactive or another sandbox → the sale is still recorded and
-         booked, only their copy is not sent. Said here, before the first bill, not discovered at the counter. */
-      const trade = await require('../lib/istest').mayTrade(owner, c.identity_id);
-      const custNo = await numberParty(owner, c.identity_id);
-      res.json({
-        message: trade.ok ? 'Customer added' : 'Customer added — bills to them stay here only: ' + trade.why,
-        customer: {
-          customer_list_id: r.rows[0].customer_list_id,
-          customer_identity_id: c.identity_id,
-          display_name: c.display_name,
-          user_id: c.user_id,
-          bridge_id: c.bridge_id,
-          segment: 'new',
-          added_via: 'manual',
-          party_no: custNo,
-          on_rail: !!trade.ok,
-          ...(trade.ok ? {} : { one_sided: { why: trade.why } })
-        }
-      });
+      return inviteBusiness(req, res, owner, handle);
     } catch (err) {
       console.error('Add customer error:', err.message);
       res.status(500).json({ error: 'Add customer failed', message: safeErr(err) });

@@ -401,7 +401,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -878,7 +878,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -1331,7 +1331,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "SHOP"
@@ -1347,7 +1347,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -1942,7 +1942,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -2573,7 +2573,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -2589,7 +2589,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST2"
@@ -3074,7 +3074,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -3731,7 +3731,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "SHOP"
@@ -4433,7 +4433,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "SHOP"
@@ -4898,7 +4898,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "SHOP"
@@ -5590,7 +5590,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "SHOP"
@@ -5606,7 +5606,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -6256,7 +6256,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "SHOP"
@@ -6844,7 +6844,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "SHOP"
@@ -7621,7 +7621,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -8289,7 +8289,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -8773,7 +8773,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -9615,7 +9615,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -10309,7 +10309,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -10839,7 +10839,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -12069,7 +12069,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -12137,6 +12137,422 @@
         "seq": 20
        }
       ],
+      "created_at": "TS"
+     }
+    }
+   },
+   {
+    "via": "books.afterChit",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "UUID#1",
+     "who": "SHOP"
+    }
+   },
+   {
+    "via": "books.afterChit",
+    "payload": {
+     "eid": "CUST",
+     "cid": "UUID#1",
+     "who": null
+    }
+   }
+  ]
+ },
+ "an invitation to be a customer — a general chit with no lines": {
+  "status": 200,
+  "body": {
+   "message": "Chit sent successfully",
+   "chit_id": "UUID#1",
+   "auto_subject": "Message from Mayur Traders — 01 Oct 2026",
+   "is_draft": false,
+   "recipients": 1,
+   "fan_out": {
+    "to": 1,
+    "cc": 0,
+    "for": 0
+   },
+   "summary": {
+    "line_item_count": 0,
+    "total_value": 0,
+    "currency_code": "INR",
+    "priority_external": "normal",
+    "purpose": "general",
+    "is_promotion": false,
+    "forwarded_from": null,
+    "governed": {
+     "pattern": "send-chit@code",
+     "capability": null,
+     "constitution": "base@v1",
+     "standard": "iso-9001@v1",
+     "standards": {
+      "quality": "iso-9001@v1"
+     },
+     "boilerplate": null
+    },
+    "money": {
+     "gross": 0,
+     "savings": 0,
+     "net": 0,
+     "tax": null,
+     "total": null,
+     "currency_code": "INR",
+     "provisional": true
+    }
+   }
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active' AND COALESCE(user_id, '') NOT LIKE '~%'",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "WITH s AS (SELECT c.id, c.path FROM identities i JOIN cb_entity c ON c.bridge_id = i.bridge_id WHERE i.identity_id = $1) SELECT bi.identity_id::text AS brand_id, bc.id::text AS brand_node, s.id::text AS store_node, bi.bridge_id AS brand_bridge_id, (SELECT r.bridge_id FROM cb_entity r WHERE r.path = subpath(bc.path, 0, 1) LIMIT 1) AS root_bridge_id, (SELECT g.parent_id::text FROM cb_edge g WHERE g.child_id = s.id AND g.type = 'governance' AND g.state IN ('active','suspended') LIMIT 1) AS tree_parent, (s.path <@ bc.path AND s.id <> bc.id) AS built, (SELECT g.state FROM cb_edge g WHERE g.child_id = s.id AND g.type = 'governance' AND g.state IN ('active','suspended') LIMIT 1) AS tree_state, (SELECT g.id::text FROM cb_edge g WHERE g.child_id = s.id AND g.type = 'governance' AND g.state IN ('active','suspended') LIMIT 1) AS tree_edge, e.id::text AS edge_id, e.state AS edge_state, CASE WHEN e.requested_by = bc.id THEN 'brand' WHEN e.requested_by = s.id THEN 'store' ELSE NULL END AS asked_by FROM unnest($2::uuid[]) AS want(id) JOIN identities bi ON bi.identity_id = want.id LEFT JOIN cb_entity bc ON bc.bridge_id = bi.bridge_id LEFT JOIN s ON true LEFT JOIN LATERAL (SELECT * FROM cb_edge x WHERE x.parent_id = bc.id AND x.child_id = s.id AND x.type = 'commercial' AND x.state IN ('requested','active','suspended') ORDER BY x.created_at DESC LIMIT 1) e ON true",
+    "params": [
+     "SHOP",
+     [
+      "CUST"
+     ]
+    ]
+   },
+   {
+    "via": "readShelf",
+    "payload": {
+     "sellerId": "SHOP"
+    }
+   },
+   {
+    "via": "events.notifyAfter",
+    "payload": {
+     "ids": [
+      "CUST"
+     ],
+     "ev": {
+      "kind": "chit",
+      "id": "UUID#1",
+      "who": "Mayur Traders",
+      "note": "general"
+     }
+    }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT boilerplate_key FROM entity_governance WHERE entity_id = $1 LIMIT 1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT DISTINCT standard_key FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce'",
+    "params": null
+   },
+   {
+    "via": "query",
+    "sql": "SELECT DISTINCT standard_key FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce'",
+    "params": null
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT standard_key, doc_key, status, evidence_ref, valid_until, verification FROM entity_compliance WHERE entity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT policy_flags, self_copy_pref FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT policy_flags, self_copy_pref FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT schema_id, schema_version FROM entity_schemas WHERE entity_id = $1 AND status = 'active' AND is_default = true ORDER BY created_at DESC LIMIT 1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "mint.deliver",
+    "payload": {
+     "sender": "SHOP",
+     "chit_id": "UUID#1",
+     "copies": [
+      {
+       "sender_entity_id": "SHOP",
+       "sender_entity_bridge_id": "CBSHOP0001",
+       "sender_entity_display_name": "Mayur Traders",
+       "all_recipients": [
+        {
+         "entity_id": "SHOP",
+         "bridge_id": "CBSHOP0001",
+         "display_name": "Mayur Traders",
+         "role": "sender"
+        },
+        {
+         "entity_id": "CUST",
+         "bridge_id": "CBCUST0001",
+         "display_name": "Chola Auto Care",
+         "role": "receiver"
+        }
+       ],
+       "purpose": "general",
+       "auto_subject": "Message from Mayur Traders — 01 Oct 2026",
+       "manual_subject": "Mayur Traders invites you to be their customer",
+       "summary_json": {
+        "line_item_count": 0,
+        "total_value": 0,
+        "currency_code": "INR",
+        "priority_external": "normal",
+        "purpose": "general",
+        "is_promotion": false,
+        "forwarded_from": null,
+        "governed": {
+         "pattern": "send-chit@code",
+         "capability": null,
+         "constitution": "base@v1",
+         "standard": "iso-9001@v1",
+         "standards": {
+          "quality": "iso-9001@v1"
+         },
+         "boilerplate": null
+        },
+        "money": {
+         "gross": 0,
+         "savings": 0,
+         "net": 0,
+         "tax": null,
+         "total": null,
+         "currency_code": "INR",
+         "provisional": true
+        }
+       },
+       "schema_version": 3,
+       "schema_id": "SCHEMA-1",
+       "created_by_actor_id": "SHOP",
+       "detail_type": "general",
+       "line_item_count": 0,
+       "total_value": 0,
+       "currency_code": "INR",
+       "sent_at": "TS",
+       "created_at": "TS",
+       "entity_id": "SHOP",
+       "direction": "sent",
+       "role": "Act",
+       "current_status": "delivered",
+       "priority_flag": "normal",
+       "business_json": {
+        "kind": "customer_invite",
+        "invite": {
+         "for": "customer",
+         "words": "Mayur Traders invites you to be their customer."
+        },
+        "page": "chit.base.detail@1.0"
+       },
+       "payload_delivered": true,
+       "log": {
+        "action": "created",
+        "action_by_identity_id": "SHOP",
+        "action_by_display_name": "Mayur Traders",
+        "new_status": "delivered",
+        "detail": "Chit created and sent to Chola Auto Care"
+       }
+      },
+      {
+       "sender_entity_id": "SHOP",
+       "sender_entity_bridge_id": "CBSHOP0001",
+       "sender_entity_display_name": "Mayur Traders",
+       "all_recipients": [
+        {
+         "entity_id": "SHOP",
+         "bridge_id": "CBSHOP0001",
+         "display_name": "Mayur Traders",
+         "role": "sender"
+        },
+        {
+         "entity_id": "CUST",
+         "bridge_id": "CBCUST0001",
+         "display_name": "Chola Auto Care",
+         "role": "receiver"
+        }
+       ],
+       "purpose": "general",
+       "auto_subject": "Message from Mayur Traders — 01 Oct 2026",
+       "manual_subject": "Mayur Traders invites you to be their customer",
+       "summary_json": {
+        "line_item_count": 0,
+        "total_value": 0,
+        "currency_code": "INR",
+        "priority_external": "normal",
+        "purpose": "general",
+        "is_promotion": false,
+        "forwarded_from": null,
+        "governed": {
+         "pattern": "send-chit@code",
+         "capability": null,
+         "constitution": "base@v1",
+         "standard": "iso-9001@v1",
+         "standards": {
+          "quality": "iso-9001@v1"
+         },
+         "boilerplate": null
+        },
+        "money": {
+         "gross": 0,
+         "savings": 0,
+         "net": 0,
+         "tax": null,
+         "total": null,
+         "currency_code": "INR",
+         "provisional": true
+        }
+       },
+       "schema_version": 3,
+       "schema_id": "SCHEMA-1",
+       "created_by_actor_id": "SHOP",
+       "detail_type": "general",
+       "line_item_count": 0,
+       "total_value": 0,
+       "currency_code": "INR",
+       "sent_at": "TS",
+       "created_at": "TS",
+       "entity_id": "CUST",
+       "direction": "received",
+       "role": "Act",
+       "current_status": "pending",
+       "priority_flag": "normal",
+       "business_json": {
+        "kind": "customer_invite",
+        "invite": {
+         "for": "customer",
+         "words": "Mayur Traders invites you to be their customer."
+        },
+        "page": "chit.base.detail@1.0"
+       },
+       "log": {
+        "action": "delivered",
+        "action_by_identity_id": "SHOP",
+        "action_by_display_name": "Mayur Traders",
+        "new_status": "pending",
+        "detail": "Chit received from Mayur Traders (TO)"
+       }
+      }
+     ],
+     "opts": {
+      "is_draft": false
+     }
+    }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2",
+    "params": [
+     "SHOP",
+     "CUST"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
+    "params": [
+     "SHOP",
+     "CUST"
+    ]
+   },
+   {
+    "via": "withEntity:CUST",
+    "sql": "SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks FROM entity_actor_settings WHERE entity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
+    "via": "meter",
+    "payload": {
+     "eid": "SHOP",
+     "what": "chit.send",
+     "o": {
+      "detail": "UUID#1",
+      "quantity": 1,
+      "basis": 0,
+      "currency": "INR",
+      "meta": {
+       "purpose": "general"
+      }
+     }
+    }
+   },
+   {
+    "via": "stock.postFor",
+    "payload": {
+     "eid": "SHOP",
+     "chit": {
+      "chit_id": "UUID#1",
+      "purpose": "general",
+      "is_draft": false,
+      "business_json": {
+       "kind": "customer_invite",
+       "invite": {
+        "for": "customer",
+        "words": "Mayur Traders invites you to be their customer."
+       },
+       "page": "chit.base.detail@1.0"
+      },
+      "line_items": [],
       "created_at": "TS"
      }
     }
@@ -12679,7 +13095,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"
@@ -13192,7 +13608,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at) VALUES ($1, $2, 'entity', 'transaction', 1, NOW()) ON CONFLICT (owner_entity_id, customer_identity_id) DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()",
+    "sql": "UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2",
     "params": [
      "SHOP",
      "CUST"

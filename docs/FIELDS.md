@@ -1203,3 +1203,15 @@ Written by: `routes/ctp.js manifest()` from `lib/netmember` (`ownMembership`, `n
 | ask `locate` `{ bridge_id }` → `{ found, hints[] }` | `hints[]` = `{ installation_key, domain }` | A LIST (a bridge id is unique inside one database only). A hint is only a hint: the caller asks that domain to resolve it (`lib/netsync.locate`). Needs a valid certificate. |
 
 Tables (b790): `installation.network_role` (`standalone` default · `member` · `master`), `installation.root_handle`, `installation.root_bridge_id`; `membership_certificate`, `network_revoked`, `registry_change` (written only by `ops.f_registry_change`), `registry_entry` (installation_key, bridge_id, entity_type, population, status), `registry_cursor` (last_seq, entities, pulled_at, last_error). Environment: `CB_NETWORK_ROOT_KEY` (master's private network key), `CB_MASTER_DOMAIN` · `CB_MASTER_INSTALLATION` · `CB_MASTER_KEY` (a member's pin), `CB_INSTALLER_TOKEN` · `CB_INSTALLER_HANDLE` (the one-time root seed; dead once a registered business is active).
+
+## chit header · `business_json.invite` (NET-40, 2026-10-25 · DECISIONS 2026-10-25 10:30)
+
+An invitation to be a customer is an ordinary chit (purpose `general`, no lines) - no new table, no new status.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `business_json.kind` | `'customer_invite'` | Source. Written ONCE by `lib/customer-invite.sendBody` on the invitation (both copies carry it, like every `business_json`). Read by web (the inbox words). |
+| `business_json.invite` | `{ for: 'customer', words }` | Source. `words` = "<Seller> invites you to be their customer. Accept to join their customer list; decline to stay as you are." The slot's presence is the test (`lib/customer-invite.inviteOf`). Written by `POST /api/relationships/customers` (a business on the rail, here or by address) through the one send path. Read by: `moveStatus` (`customer-invite.afterMove`), `ctpreturn.applyStatus` (the same hook, over there), `customer-invite.listFor`. |
+| `customer_list.added_via` = `'invite'` | text | Derived. Written ONLY by `customer-invite.afterStatus` when the invitee's copy reaches `accepted`, on the SELLER's side (here, or on the seller's installation when the status event arrives). Needs b795; before it runs the row is written as `manual`. Read by the CRM record ("Added from"). |
+| `GET /api/crm/parties` → `invites[]` | `{ chit_id, customer_id, name, bridge_id, state: 'waiting' \| 'declined', words, at }` | Derived by `customer-invite.listFor` from the seller's own invitation chits and the invitee's status (`chit_participants`). `accepted` = a customer now, `cancelled` = withdrawn: neither is listed; a declined one is listed for 30 days. Read by web cap-crm.js (the notice line "Invited · waiting"). |
+| `POST /api/relationships/customers` answer | `{ invited: true, chit_id, message, invitee, remote? }` | A business on the rail (User ID, bridge id, e-mail, or `id@domain` / link on another installation) is INVITED, never added: no `customer_list` row. A name-only walk-in still answers `{ message, customer }` at once. |

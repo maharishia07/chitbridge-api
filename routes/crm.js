@@ -95,6 +95,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
     const out = await crm.list(ctx(req), {
       actor: byOf(req),
       view: req.query.view === 'leads' ? 'leads' : null,
+      invites: true, /* NET-40: the customer invitations waiting or declined ride beside the parties */
       consent:
         String(req.query.with || '')
           .split(',')

@@ -775,7 +775,7 @@
     "GET /api/crm/parties": {
       "file": "crm.js",
       "trips": 3,
-      "wire": 14,
+      "wire": 18,
       "fired": true,
       "status": 200
     },

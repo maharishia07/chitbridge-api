@@ -1,7 +1,8 @@
 /**
  * ⭐ A PARTY IS NUMBERED WHEN IT IS ADDED (Athi, 2026-10-02: "each customer / supplier will have a customer id, and it should
  * be used in ledger"). Before, party-fields.ensureNo ran only on a field save, books setup or the nightly job — a customer
- * added today had no number until tonight. And the add says whether bills can reach them (lib/istest mayTrade).
+ * added today had no number until tonight. NET-40 (2026-10-25): a business on the rail is no longer ADDED but INVITED; it is numbered when it
+ * accepts (lib/customer-invite, tests/net-40-consent.test.cjs). This test holds the invitation's answer, and that an unreachable business is refused in words.
  * No database: db, auth, party-fields.ensureNo and istest.mayTrade are stubbed; the route is the real one.
  * Run: node tests/party-no-at-add.test.cjs
  */
@@ -26,6 +27,8 @@ require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, expo
 const pf = require(path.join(API, 'lib', 'party-fields'));
 pf.ensureNo = async (db, owner, id) => { NUMBERED.push([owner, id]); return 'P-0042'; };
 let TRADE = { ok: true };
+const SENT = [];
+require(path.join(API, 'lib', 'customer-invite')).setSender(async (seller, body) => { SENT.push({ seller, body }); return { ok: true, status: 200, body: { chit_id: 'CHIT-1' } }; });
 require(path.join(API, 'lib', 'istest')).mayTrade = async () => TRADE;
 
 const express = require('express');
@@ -40,18 +43,14 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   const add = async () => { const r = await fetch('http://127.0.0.1:' + port + '/api/relationships/customers', { method: 'POST',
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ handle: 'chola' }) }); return { status: r.status, body: await r.json() }; };
   try {
-    console.log('\n══ A PARTY IS NUMBERED WHEN IT IS ADDED ══\n');
+    console.log('\n== A BUSINESS ON THE RAIL IS INVITED (NET-40): numbered when it accepts, not when it is asked ==\n');
     const a = await add();
-    ok('Add customer answers 200 with the new party number', a.status === 200 && a.body.customer && a.body.customer.party_no === 'P-0042', a.status + ' ' + JSON.stringify(a.body));
-    ok('…numbered through party-fields.ensureNo, for THIS shop and THIS customer (the one numbering path)', NUMBERED.length === 1 && NUMBERED[0][0] === SHOP && NUMBERED[0][1] === CUST, JSON.stringify(NUMBERED));
-    ok('…and a customer bills can reach is marked on ChitBridge, with no one-sided note', a.body.customer.on_rail === true && !a.body.customer.one_sided, JSON.stringify(a.body.customer));
+    ok('Add customer by handle answers 200 INVITED, with the words and the chit', a.status === 200 && a.body.invited === true && a.body.chit_id === 'CHIT-1' && /Invitation sent\. They become your customer when they accept\./.test(a.body.message || ''), a.status + ' ' + JSON.stringify(a.body));
+    ok('...no customer is claimed and nobody is numbered yet (the number comes with the customer, at their Accept: tests/net-40-consent.test.cjs)', a.body.customer === undefined && NUMBERED.length === 0, JSON.stringify(a.body) + JSON.stringify(NUMBERED));
+    ok('...the invitation went from THIS shop to THAT business as an ordinary general chit', SENT.length === 1 && SENT[0].seller === SHOP && SENT[0].body.purpose === 'general' && SENT[0].body.recipients[0].entity_id === CUST, JSON.stringify(SENT));
     TRADE = { ok: false, why: 'Chola Auto Care is in the test sandbox and this shop is in live' };
     const b = await add();
-    ok('a customer in another sandbox is still added — and told: "bills to them stay here only" with the reason', b.status === 200 && /stay here only: Chola Auto Care is in the test sandbox/.test(b.body.message || '')
-      && b.body.customer.on_rail === false && b.body.customer.one_sided && /sandbox/.test(b.body.customer.one_sided.why), JSON.stringify(b.body));
-    pf.ensureNo = async () => { throw new Error('no series yet (before b272)'); };
-    const c = await add();
-    ok('numbering that cannot run never fails the add (party_no null; the nightly job catches up)', c.status === 200 && c.body.customer.party_no === null, c.status + ' ' + JSON.stringify(c.body));
+    ok('a business in another sandbox cannot be invited: 409 in words with the reason, nothing sent', b.status === 409 && b.body.code === 'CUSTOMER_INVITE_UNREACHABLE' && /sandbox/.test(b.body.message || b.body.detail || '') && SENT.length === 1, JSON.stringify(b.body));
   } finally { srv.close(); }
   console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
   if (fail) process.exitCode = 1;

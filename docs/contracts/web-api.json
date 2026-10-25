@@ -2264,10 +2264,22 @@
      }
     },
     "consent_migrated": false,
-    "leads_migrated": false
+    "leads_migrated": false,
+    "invites": [
+     {
+      "chit_id": "20000000-0000-4000-8000-000000000001",
+      "customer_id": "10000000-0000-4000-8000-000000000003",
+      "name": "Ravi Stores",
+      "bridge_id": "CBY",
+      "state": "waiting",
+      "words": "Invited · waiting",
+      "at": "2026-10-25T04:00:00.000Z"
+     }
+    ]
    },
    "optional": [
     "consent_migrated",
+    "invites",
     "leads_migrated",
     "parties[].contact_prefs",
     "parties[].customer",

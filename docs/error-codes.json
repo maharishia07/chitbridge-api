@@ -1253,6 +1253,33 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CUSTOMER_INVITE_NOT_SENT",
+   "status": "4xx/502",
+   "title": "Invitation not sent",
+   "shopkeeper": "The invitation could not be sent, so nothing was added.",
+   "hint": "Try again in a moment.",
+   "owner_area": "crm",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CUSTOMER_INVITE_PENDING",
+   "status": "409",
+   "title": "Already invited",
+   "shopkeeper": "You already invited this business and are waiting for their answer.",
+   "hint": "Wait for them to accept, or ask them to check their inbox.",
+   "owner_area": "crm",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CUSTOMER_INVITE_UNREACHABLE",
+   "status": "409",
+   "title": "They cannot get an invitation",
+   "shopkeeper": "That business cannot receive an invitation right now.",
+   "hint": "Read the reason, then try again when it is fixed.",
+   "owner_area": "crm",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CYCLE",
    "status": "409",
    "title": "Would loop",

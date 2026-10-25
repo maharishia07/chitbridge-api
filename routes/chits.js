@@ -20,6 +20,7 @@ const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engi
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const messageLimit = require('../lib/message-limit'); // RAIL-106 — how long one message may be, checked where every message is written
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
+const customerInvite = require('../lib/customer-invite'); // NET-40: the invitation to be a customer; its hook runs after the one status writer
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
@@ -2309,7 +2310,7 @@ async function sendLegacyReceiverRows(client, st, receiver) {
 /** after the commit: the customer lists (the sender's, and an order's seller's) */
 async function sendCustomers(st, req, res) {
   const { sender_id, is_draft, receiverDetails, orderLike, sellerId } = st;
-  // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
+  // ── Best-effort CRM count - AFTER commit; a CRM write must never fail a guaranteed chit (D-065). NET-40: it counts for an existing customer, it no longer adds one ──
   // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
   // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
   if (!is_draft)
@@ -2322,18 +2323,17 @@ async function sendCustomers(st, req, res) {
             [sender_id, receiver.entity_id]
           );
           if (isSupplier.rows.length === 0) {
+            /* ⭐ NET-40: A SELLER'S SEND NO LONGER MAKES A CUSTOMER (Athi, 2026-10-25: "to be a customer, customer should be willing"). It only counts the trade
+               for someone who already is one - the link is made by the buyer's own act (the order below, the storefront) or by accepting an invitation (lib/customer-invite). */
             await db.query(
-              `INSERT INTO customer_list
-               (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-             VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
-             ON CONFLICT (owner_entity_id, customer_identity_id)
-             DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
+              `UPDATE customer_list SET txn_count = txn_count + 1, last_txn_at = NOW()
+                WHERE owner_entity_id = $1 AND customer_identity_id = $2`,
               [sender_id, receiver.entity_id]
             );
           }
         });
       } catch (e) {
-        console.log('customer auto-add skipped:', e.message);
+        console.log('customer trade count skipped:', e.message);
       }
     }
   /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
@@ -4824,11 +4824,24 @@ async function confirmCancelToSender(entity_id, chit_id, header, action_by_name)
     console.error('cancel confirm:', e.message);
   }
 }
+/**
+ * what follows a written move, for the copy that moved (the header came back with the same transaction): a sender's cancel is a REQUEST, never a cross-entity write (Athi) - the sender
+ * cancels ITS OWN copy and delivers a flagged "[cancel requested]" message, each recipient cancels its own at its own will; a recipient's cancel is confirmed back (b197); an invitation
+ * to be a customer accepted here makes the SELLER's customer row (NET-40, lib/customer-invite: the one hook, here and on the event path - a chit that is not one costs nothing).
+ * → { booksOnCancel: what the books did with a sender's cancel (the reversal, or its refusal in words) or null, invited }
+ */
+async function afterMoved(entity_id, chit_id, new_status, header, moveFacts) {
+  const isSender = header.rows.length > 0 && header.rows[0].sender_entity_id === entity_id;
+  const cancelled = new_status === 'cancelled';
+  const booksOnCancel = isSender && cancelled ? await cancelSentCopy(entity_id, chit_id, moveFacts.me, moveFacts.note, moveFacts.by) : null; /* H3 */
+  if (!isSender && cancelled) await confirmCancelToSender(entity_id, chit_id, header, moveFacts.by.name); // the return leg (b197)
+  const invited = await customerInvite.afterMove(entity_id, chit_id, new_status, header.rows[0]);
+  return { booksOnCancel, invited };
+}
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
   const action_by_id = by.id,
     action_by_name = by.name;
   let disputeWarning = null;
-  let booksOnCancel = null; /* H3: what the books did with a sender's cancel (the reversal, or its refusal in words) */
   /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
          decision is rail.move — the same function GET /chits/:id answers `actions` with. `me` = railActions.meOf(req). */
   if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
@@ -4954,16 +4967,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
    */
   const crossed = _hrow && billPrivacy.isBill(_hrow, entity_id) ? null : await ctpReturn.onStatusMoved(entity_id, chit_id, { status: new_status, previous_status, by_name: action_by_name, note });
 
-  // The header came back with the same transaction, above — read to check sender and propagate a cancel.
-  const header = _pre.header;
-
-  const isSender = header.rows.length > 0 && header.rows[0].sender_entity_id === entity_id;
-
-  // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
-  // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
-  if (isSender && new_status === 'cancelled') booksOnCancel = await cancelSentCopy(entity_id, chit_id, me, note, by);
-
-  if (!isSender && new_status === 'cancelled') await confirmCancelToSender(entity_id, chit_id, header, action_by_name); // the return leg (b197)
+  const after = await afterMoved(entity_id, chit_id, new_status, _pre.header, { me, note, by });
 
   return {
     code: 200,
@@ -4975,7 +4979,8 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       previous_status,
       new_status,
       ...ctpReturn.answerOf(crossed), // RAIL-106: { ctp: { queued, seq } } when a party on another installation was told (resent until it accepts), { ctp: { queued: 0, why } } when it could not be queued
-      ...(booksOnCancel ? { books: booksOnCancel } : {}) // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
+      ...(after.invited && after.invited.made ? { customer_added: true } : {}), // NET-40: the invitee's Accept made the seller's customer row
+      ...(after.booksOnCancel ? { books: after.booksOnCancel } : {}) // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
     }
   };
 }
@@ -7029,6 +7034,7 @@ router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on a
 router.recordResolve = recordResolve;
 router.releaseAfterResolve = releaseAfterResolve;
 router.postMessageCopies = postMessageCopies; /* lib/ctpreturn applies a message that arrived from another installation through the same function */
+router.sendCustomers = sendCustomers; /* NET-40: tests/net-40-consent.test.cjs drives the after-commit customer step on its own */
 router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;

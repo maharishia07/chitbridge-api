@@ -126,6 +126,8 @@ const SCENARIOS = [
   ['a lost race on the bill number → the chit that exists', { body: order({ client_ref: 'C1/26-27/0050', recipients: [{ self: true }], business_json: counterBj() }), ctx: { deliverThrows: { code: '23505', constraint: 'chit_header_client_ref_uq', message: 'dup' }, seenAfter: true } }],
   ['a delivery that fails → 500 in words', { body: order(), ctx: { deliverThrows: { code: 'XX000', message: 'boom' } } }],
   ['retention and priority ride on the summary', { body: order({ retention_days: 30, external_priority: 'urgent', forwarded_from: 'abc' }) }],
+  /* NET-40: the invitation to be a customer is an ordinary general chit with NO lines - this is the proof the one send path takes it (and it makes no customer row) */
+  ['an invitation to be a customer — a general chit with no lines', { body: order({ purpose: 'general', manual_subject: 'Mayur Traders invites you to be their customer', line_items: [], business_json: { kind: 'customer_invite', invite: { for: 'customer', words: 'Mayur Traders invites you to be their customer.' } } }) }],
   ['a captured message carries its provenance', { body: order({ purpose: 'general', business_json: { via: { channel: 'whatsapp', from: '+9198', sender_verified: 'yes', priced: { from_catalogue: 3, ambiguous: [{ name: 'x', matches: 2 }] } } } }) }],
   ['no currency on the sender → the regional resolver', { body: order(), ctx: { noCurrency: true } }],
 ];
