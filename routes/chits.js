@@ -2806,6 +2806,20 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
   }
 });
 
+/** REP-50: (key, currency) rows → one group per key, busiest first: { key, chits, total_value (null when it mixes currencies), by_currency[] } */
+function rollupGroups(rows) {
+  const byKey = new Map();
+  for (const row of rows) {
+    const group = byKey.get(row.key) || { key: row.key, chits: 0, by_currency: [] };
+    group.chits += row.chits;
+    group.by_currency.push({ currency_code: row.currency_code || null, chits: row.chits, total_value: row.total_value });
+    byKey.set(row.key, group);
+  }
+  return [...byKey.values()]
+    .map((group) => Object.assign(group, { total_value: group.by_currency.length === 1 ? group.by_currency[0].total_value : null }))
+    .sort((first, second) => second.chits - first.chits);
+}
+
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
 router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
@@ -2833,16 +2847,19 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
     }
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { result, disp } = await withEntity(entity_id, async (db) => {
-      const outcome = await db.query(
-        `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
+      /* REP-50 (SIT 2026-10-25): summed PER CURRENCY, never across. One SUM over every chit added an IN chit's rupees to an AU shop's
+         dollars at face value. Each group now carries by_currency [{ currency_code, chits, total_value }]; total_value stays for the old
+         readers but only where the group holds one currency, and is null where it mixes (a sum across currencies is no number). */
+      const perCur = await db.query(
+        `SELECT ${keyExpr} AS key, NULLIF(ch.summary_json->>'currency_code', '') AS currency_code, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
-        GROUP BY ${keyExpr}
-        ORDER BY chits DESC`,
+        GROUP BY 1, 2`,
         params
       );
+      const outcome = { rows: rollupGroups(perCur.rows) };
       // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
       // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
       const nestedDisp = await db
@@ -6994,4 +7011,5 @@ router.openapi = { paths: pathsOf(), schemas: {} };
 router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
+module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
