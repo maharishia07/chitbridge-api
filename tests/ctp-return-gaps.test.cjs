@@ -451,6 +451,73 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     assert.throws(() => require(root('lib/ctpquery')).build({ installation_key: 'sit-in' }, { domain: 'au.example' }, { want: 'attachment', chit_id: CHIT }), /attachment needs/);
   });
 
+  console.log('\n== 4 · the bell on the receiver, through lib/events (no res) ==\n');
+  const events = require(root('lib/events'));
+  const RUNG = [];
+  events.emit = (ids, evt) => {
+    RUNG.push({ ids, evt });
+    return ids.length;
+  };
+  const stubMessages = () => {
+    const chitsPath = require.resolve(root('routes/chits.js'));
+    const real = chits.postMessageCopies;
+    chits.postMessageCopies = async (m) => {
+      W.msgs.push({ message_id: m.message_id, entity_id: ME });
+      return { message_id: m.message_id };
+    };
+    return () => (chits.postMessageCopies = real);
+  };
+  await t('an arrived external message rings the people on the chit who are not the sender, once, with the local message bell (kind message, chit id, who)', async () => {
+    resetWorld();
+    RUNG.length = 0;
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }, { bridge_id: B_LOCAL2 }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
+    const restore = stubMessages();
+    try {
+      const ev = { kind: 'message', seq: 2, message_id: MSG, message_text: 'Shipping tomorrow', msg_type: 'info', sender_display_name: 'Raj' };
+      const first = await apply(ev);
+      assert.ok(first.ok && first.applied, JSON.stringify(first));
+      assert.strictEqual(RUNG.length, 1);
+      assert.deepStrictEqual(RUNG[0].ids.sort(), [ME, LOCAL2].sort(), 'both people here, not the remote sender’s stub');
+      assert.deepStrictEqual(RUNG[0].evt, { kind: 'message', id: CHIT, who: 'Raj' });
+      await apply(ev);
+      assert.strictEqual(RUNG.length, 1, 'a repeated event rings nothing');
+    } finally {
+      restore();
+    }
+  });
+  await t('a dispute reply rings the dispute’s roster here when targeted, the whole chit when chit-wide', async () => {
+    resetWorld();
+    RUNG.length = 0;
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }, { bridge_id: B_LOCAL2 }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
+    W.disputes = [DISPUTE];
+    W.roster = [{ entity_id: STUB, role: 'raiser', status: 'open' }, { entity_id: ME, role: 'party', status: 'open' }];
+    const restore = stubMessages();
+    try {
+      W.scope = 'targeted';
+      await apply({ kind: 'dispute_message', seq: 3, dispute_id: DISPUTE, message_id: MSG, message_text: 'We shipped 200', sender_display_name: 'Raj' });
+      assert.deepStrictEqual(RUNG[0].ids, [ME], 'only the roster member here');
+      RUNG.length = 0;
+      W.scope = 'chit_wide';
+      W.msgs.length = 0;
+      await apply({ kind: 'dispute_message', seq: 4, dispute_id: DISPUTE, message_id: 'a0000000-0000-4000-8000-0000000000a2', message_text: 'And the rest', sender_display_name: 'Raj' });
+      assert.deepStrictEqual(RUNG[0].ids.sort(), [ME, LOCAL2].sort());
+    } finally {
+      restore();
+    }
+  });
+  await t('a chit that arrives over the wire rings the recipient the way a local send does (kind chit, who, note)', async () => {
+    RUNG.length = 0;
+    ret.onChitArrived(ME, CHIT, { sender_entity_display_name: 'AU Pumps', purpose: 'order' });
+    assert.deepStrictEqual(RUNG, [{ ids: [ME], evt: { kind: 'chit', id: CHIT, who: 'AU Pumps', note: 'order' } }]);
+  });
+  await t('the bell is res-free: events.emit is the function, and routes/chits notifyAfter only defers it', async () => {
+    const src = require('fs').readFileSync(root('lib/events.js'), 'utf8');
+    assert.ok(/function notifyAfter\(res, entity_ids, evt\)[\s\S]*emit\(ids, e\)/.test(src), 'notifyAfter calls emit');
+    assert.ok(!/\bres\b/.test(require('fs').readFileSync(root('lib/ctpreturn.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').replace(/'[^'\n]*'/g, '').replace(/`[^`]*`/g, '')), 'ctpreturn needs no response object');
+  });
+
   //__END__
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
