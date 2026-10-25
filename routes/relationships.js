@@ -644,6 +644,9 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     );
     const supplier = sup.rows[0] || null;
     if (!supplier) return res.json({ supplier: null, schema: null, fields: [], items: [], finishes: [] });
+    /* NET-39: a supplier on ANOTHER installation is a stub row here; its catalogue is the seller's own public view, asked for over the signed door */
+    const remote = await require('../lib/remote-catalogue').forSupplier(supplier);
+    if (remote) return res.json(remote);
     // ── ONE CATALOGUE READ (SPEC-one-path-many-principals) ────────────────────────────────────────────────────
     // This used to be a second, older implementation of "read a catalogue": it returned only the supplier's OWN
     // catalogue_items and knew nothing of `finishes` (where published/adopted TEMPLATES live) or `order_input` (the
