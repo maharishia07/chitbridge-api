@@ -82,7 +82,6 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/amend": {
-   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/catalogue-overlay": {

@@ -2819,6 +2819,15 @@
    "since": "2026-10-25"
   },
   {
+   "code": "PROPOSAL_DOMESTIC",
+   "status": "409",
+   "title": "Not an RFQ",
+   "shopkeeper": "Quotation rounds are for deals with a business on another installation, or a chit made as a request for a quote.",
+   "hint": "Change this chit directly, or ask for a quote when you compose it.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
    "code": "PROPOSAL_NOT_FOUND",
    "status": "404",
    "title": "No such proposal",

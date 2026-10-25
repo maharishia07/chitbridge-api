@@ -3,7 +3,8 @@
  * The buyer's request is round 1 (the chit itself); the SELLER's priced reply — currency and tax by its own pack, computed at the seller — is round 2 on the SAME chit; the buyer accepts,
  * counters (a request, never a computation: round 3) or rejects; acceptance makes that round the pro-forma on BOTH copies, byte for byte. An amendment after agreement is the same flow.
  *
- *   A  ONE installation (two local parties): the seller prices, the buyer's list shows it waiting, nothing of the agreed record moves until acceptance, accept switches both copies identically,
+ *   H  THE GATE (DECISIONS 14:10): only an international deal (a party on another installation) or a chit composed as an RFQ uses rounds; a default domestic chit is amended directly as before
+ *   A  ONE installation (two local parties, on a chit that also has a party elsewhere): the seller prices, the buyer's list shows it waiting, nothing of the agreed record moves until acceptance, accept switches both copies identically,
  *      a counter is never priced, reject changes nothing, a stale or replaced round is refused in words, the buyer's side never calls the tax engine
  *   B  TWO installations: the same flow, the proposal and the decision travel as events (lib/ctpreturn), the receiver stores the seller's invoice as issued, the invoices are byte-identical
  *   C  the fallback: a seller with no country states price and currency as entered and "Tax not decided", never a guessed tax
@@ -116,6 +117,7 @@ function rowsFor(sql, p) {
   if (/^SELECT COALESCE\(flags/.test(s)) return [{ flags: {}, particulars: 'x' }];
   if (/^UPDATE chit_line /.test(s)) return [];
   if (/chit_line_delivered_qty/.test(s)) return [];
+  if (/^SELECT business_json FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s)) return w.header[p[1]] ? [{ business_json: clone(w.header[p[1]].business_json) }] : [];
   if (/^SELECT role FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ role: 'sender' }];
   if (/^SELECT bridge_id, display_name FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [w.ident[p[0]]] : [];
   if (/^SELECT country, gstn FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [{ country: w.ident[p[0]].country || null, gstn: null }] : [];
@@ -222,14 +224,23 @@ function copyOf(w, entity_id, recipients, senderId, senderBridge, extraBj) {
   w.lineIds[entity_id] = [L1, L2];
 }
 const person = (id, bridge, name, country, currency) => ({ identity_id: id, bridge_id: bridge, display_name: name, country, currency, policy_flags: {}, gstn: null });
-/** ONE installation: both parties are rows of the same database */
-function oneInstallation(sellerCountry) {
+const CC_STUB = 'cc222222-2222-4222-8222-222222222222';
+/** ONE installation: both parties are rows of the same database. By default the chit ALSO names a party on another installation (so it is an international deal and uses rounds);
+ *  opts.domestic leaves it between the two local parties; opts.dealType composes it as a proposal deal */
+function oneInstallation(sellerCountry, opts) {
+  const o = opts || {};
   const w = (WORLDS.one = newWorld('one', 'inst-A'));
   w.ident[BUY] = person(BUY, B_BUY, 'Chennai Stores', 'IN', 'INR');
   w.ident[SELL] = person(SELL, B_SELL, 'Sydney Spice', sellerCountry === undefined ? 'IN' : sellerCountry, 'INR');
   const recipients = [{ entity_id: BUY, bridge_id: B_BUY, role: 'sender' }, { entity_id: SELL, bridge_id: B_SELL, role: 'receiver' }];
-  copyOf(w, BUY, recipients, BUY, B_BUY);
-  copyOf(w, SELL, recipients, BUY, B_BUY);
+  if (!o.domestic) {
+    w.ident[CC_STUB] = person(CC_STUB, 'CBCC00001', 'Overseas Auditor', null, null);
+    w.place[CC_STUB] = { local: false, installation_key: 'inst-C', endpoint: 'https://c.example/api/ctp/deliver' };
+    recipients.push({ entity_id: CC_STUB, bridge_id: 'CBCC00001', role: 'cc' });
+  }
+  const extra = o.dealType ? { deal_type: o.dealType } : undefined;
+  copyOf(w, BUY, recipients, BUY, B_BUY, extra);
+  copyOf(w, SELL, recipients, BUY, B_BUY, extra);
   CUR = w;
   return w;
 }
@@ -272,6 +283,36 @@ const BUYER = { id: BUY, name: 'Chennai Stores' };
 const rowsOf = (w, entity) => w.props.filter((r) => r.entity_id === entity).sort((a, b) => a.created - b.created);
 const price = (lines) => ({ lines, note: 'our price list' });
 
+const http = require('http');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-proposals';
+const app = express();
+app.use(express.json());
+app.use('/api/chits', chits);
+const call = (method, url, id, body) =>
+  new Promise((done) => {
+    const srv = app.listen(0, '127.0.0.1', () => {
+      const data = JSON.stringify(body || {});
+      const token = jwt.sign({ identity_id: id, identity_type: 'entity', display_name: 'who' }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+      const r = http.request({ host: '127.0.0.1', port: srv.address().port, path: url, method, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, (res) => {
+        let b = '';
+        res.on('data', (c) => (b += c));
+        res.on('end', () => {
+          srv.close();
+          let j = {};
+          try {
+            j = JSON.parse(b);
+          } catch (_) {
+            /* not json */
+          }
+          done({ status: res.statusCode, body: j });
+        });
+      });
+      r.end(data);
+    });
+  });
+
 (async () => {
   console.log('\n== A · one installation, two local parties ==\n');
   await t('the seller prices the buyer’s request as round 2 on the SAME chit: both copies hold it, priced by the SELLER’s pack, and the agreed record has not moved', async () => {
@@ -289,7 +330,7 @@ const price = (lines) => ({ lines, note: 'our price list' });
     assert.strictEqual(w.amend.length, 0);
     const list = await as(w, () => proposals.list(BUY, CH));
     assert.strictEqual(list.proposals[0].awaiting_me, true);
-    assert.strictEqual(list.proposals[0].label, 'Pro-forma proposed');
+    assert.strictEqual(list.proposals[0].label, 'Quotation');
     const mine = await as(w, () => proposals.list(SELL, CH));
     assert.strictEqual(mine.proposals[0].awaiting_me, false);
   });
@@ -366,12 +407,6 @@ const price = (lines) => ({ lines, note: 'our price list' });
     await assert.rejects(as(w, () => proposals.propose(BUY, CH, { lines: [] }, BUYER)), (e) => e.status === 400 && e.code === 'PROPOSAL_BAD');
     await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 'cheap' }]), SELLER)), (e) => e.status === 400);
   });
-  await t('a chit with nobody else on it is not a negotiation: propose answers null and the amend route amends directly', async () => {
-    const w = oneInstallation();
-    w.header[BUY].all_recipients = [{ entity_id: BUY, bridge_id: B_BUY, role: 'sender' }];
-    assert.strictEqual(await as(w, () => proposals.propose(BUY, CH, { lines: [{ line_id: L1, quantity: 3 }] }, BUYER)), null);
-  });
-
   console.log('\n== B · two installations: the same flow through the return path ==\n');
   await t('the seller on B prices; the proposal travels; A holds it as issued; the buyer accepts on A; the decision travels; both copies are byte-identical and the buyer’s installation never ran a tax rule', async () => {
     const { A, B } = twoInstallations();
@@ -494,6 +529,69 @@ const price = (lines) => ({ lines, note: 'our price list' });
     assert.strictEqual(st2.business_json.jurisdiction, undefined);
   });
 
+  console.log('\n== H · the gate: international trade is a deal type (DECISIONS 14:10) ==\n');
+  await t('a DEFAULT domestic chit (two local parties) takes no proposal: refused in words, no row written', async () => {
+    const w = oneInstallation(undefined, { domestic: true });
+    for (const input of [price([{ line_id: L1, price: 95 }]), { lines: [{ line_id: L1, quantity: 3 }] }, { terms: { date: '2026-11-03' } }]) {
+      await assert.rejects(as(w, () => proposals.propose(SELL, CH, input, SELLER)), (e) => e.status === 409 && e.code === 'PROPOSAL_DOMESTIC' && /change it directly/.test(e.message));
+    }
+    assert.strictEqual(w.props.length, 0);
+    assert.strictEqual(await as(w, () => proposals.usesRfq(BUY, CH)), false);
+    assert.strictEqual(await as(w, () => proposals.isInternationalDeal(BUY, CH)), false);
+  });
+  await t('a DEFAULT domestic chit is amended DIRECTLY, as on main: the amendments are recorded on the amender’s copy, nothing proposed, the agreed record is the amended one', async () => {
+    const w = oneInstallation(undefined, { domestic: true });
+    const r = await call('POST', '/api/chits/' + CH + '/amend', SELL, { edits: [{ line_index: 0, line_id: L1, line: { particulars: 'Pump seal', quantity: 10, unit: 'pc', price: 96 }, reason_code: 'rate_agreed' }] });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.proposed, undefined);
+    assert.strictEqual(r.body.proposal, undefined);
+    assert.strictEqual(r.body.amendments.length, 1, 'the direct answer: the amendment itself');
+    assert.strictEqual(w.props.length, 0, 'no chit_proposal row');
+    assert.deepStrictEqual(w.amend.map((x) => [x.entity_id, x.line_index, x.line.price]), [[SELL, 0, 96]], 'on the amender’s own copy only, exactly as before');
+    assert.strictEqual(w.out.length, 0, 'nothing queued: nobody is elsewhere');
+    assert.strictEqual(w.taxCalls.length, 0);
+    const list = await call('POST', '/api/chits/' + CH + '/proposals', SELL, price([{ line_id: L1, price: 95 }]));
+    assert.strictEqual(list.status, 409);
+    assert.strictEqual(list.body.code, 'PROPOSAL_DOMESTIC');
+  });
+  await t('a domestic chit composed as an RFQ (business_json.deal_type rfq, "Ask for a quote") uses rounds like an international one: the amend door proposes, both local copies hold the round, accept switches both', async () => {
+    const w = oneInstallation(undefined, { domestic: true, dealType: 'rfq' });
+    assert.strictEqual(await as(w, () => proposals.usesRfq(BUY, CH)), true);
+    assert.strictEqual(await as(w, () => proposals.isInternationalDeal(BUY, CH)), false, 'domestic, and still a proposal deal');
+    const r = await call('POST', '/api/chits/' + CH + '/amend', SELL, { edits: [{ line_index: 0, line_id: L1, line: { particulars: 'Pump seal', quantity: 10, unit: 'pc', price: 96 }, reason_code: 'rate_agreed' }] });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.deepStrictEqual([r.body.proposed, r.body.proposal.round, r.body.proposal.kind], [true, 2, 'pro_forma']);
+    assert.strictEqual(w.amend.length, 0);
+    assert.deepStrictEqual([rowsOf(w, BUY).length, rowsOf(w, SELL).length], [1, 1]);
+    const done = await as(w, () => proposals.decide(BUY, CH, r.body.proposal.proposal_id, 'accept', BUYER));
+    assert.strictEqual(done.status, 'accepted');
+    assert.strictEqual(JSON.stringify(w.header[BUY].business_json.invoice), JSON.stringify(w.header[SELL].business_json.invoice));
+    assert.deepStrictEqual(w.amend.map((x) => x.entity_id).sort(), [BUY, SELL].sort());
+    /* money-free too */
+    const terms = await as(w, () => proposals.propose(BUY, CH, { terms: { date: '2026-11-03' } }, BUYER));
+    assert.strictEqual(terms.kind, 'terms');
+    /* the status and dispute bells ring on it, as on an international deal */
+    RUNG.length = 0;
+    const header = { rows: [w.header[BUY]] };
+    void header;
+  });
+  await t('the gate reads the value exactly: any deal_type other than "rfq" is a default domestic chit', async () => {
+    for (const dealType of ['RFQ', 'rfq ', 'proposal', 'quote', true]) {
+      const w = oneInstallation(undefined, { domestic: true, dealType });
+      assert.strictEqual(await as(w, () => proposals.usesRfq(BUY, CH)), false, String(dealType));
+    }
+  });
+  await t('a chit with a party on another installation still proposes, with no deal_type at all; terms cross only there', async () => {
+    const { A, B } = twoInstallations();
+    assert.strictEqual(A.header[BUY].business_json.deal_type, undefined);
+    assert.strictEqual(await as(A, () => proposals.isInternationalDeal(BUY, CH)), true);
+    assert.strictEqual(await as(B, () => proposals.isInternationalDeal(SELL, CH)), true);
+    const terms = await as(A, () => proposals.propose(BUY, CH, { terms: { date: '2026-11-03' } }, BUYER));
+    assert.strictEqual(terms.kind, 'terms');
+    await ship(A, B);
+    assert.strictEqual(rowsOf(B, SELL).length, 1);
+  });
+
   console.log('\n== F · money-free: a date and a scope between two teams ==\n');
   await t('two installations agree a task with NO money: either party proposes terms, the other counters, then agrees; business_json.agreed is identical; no tax, no currency, no seller, no jurisdiction', async () => {
     const { A, B } = twoInstallations();
@@ -550,35 +648,6 @@ const price = (lines) => ({ lines, note: 'our price list' });
   });
 
   console.log('\n== G · the amend door is the proposal mechanism ==\n');
-  const http = require('http');
-  const express = require('express');
-  const jwt = require('jsonwebtoken');
-  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-proposals';
-  const app = express();
-  app.use(express.json());
-  app.use('/api/chits', chits);
-  const call = (method, url, id, body) =>
-    new Promise((done) => {
-      const srv = app.listen(0, '127.0.0.1', () => {
-        const data = JSON.stringify(body || {});
-        const token = jwt.sign({ identity_id: id, identity_type: 'entity', display_name: 'who' }, process.env.JWT_SECRET, { algorithm: 'HS256' });
-        const r = http.request({ host: '127.0.0.1', port: srv.address().port, path: url, method, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, (res) => {
-          let b = '';
-          res.on('data', (c) => (b += c));
-          res.on('end', () => {
-            srv.close();
-            let j = {};
-            try {
-              j = JSON.parse(b);
-            } catch (_) {
-              /* not json */
-            }
-            done({ status: res.statusCode, body: j });
-          });
-        });
-        r.end(data);
-      });
-    });
   await t('POST /amend on a chit with another party PROPOSES (the seller prices it, the buyer asks) and the agreed record does not move; the proposals door lists, accepts and refuses in words', async () => {
     const w = oneInstallation();
     CUR = w;
@@ -588,7 +657,7 @@ const price = (lines) => ({ lines, note: 'our price list' });
     assert.strictEqual(w.amend.length, 0, 'the agreed lines have not moved');
     const listed = await call('GET', '/api/chits/' + CH + '/proposals', BUY);
     assert.strictEqual(listed.status, 200);
-    assert.deepStrictEqual([listed.body.proposals.length, listed.body.proposals[0].awaiting_me, listed.body.proposals[0].label], [1, true, 'Pro-forma proposed']);
+    assert.deepStrictEqual([listed.body.proposals.length, listed.body.proposals[0].awaiting_me, listed.body.proposals[0].label], [1, true, 'Quotation']);
     const asked = await call('POST', '/api/chits/' + CH + '/amend', BUY, { edits: [{ line_index: 1, line: { particulars: 'Gasket', quantity: 8, price: 18 }, reason_code: 'rate_agreed' }] });
     assert.strictEqual(asked.body.proposal.kind, 'request', JSON.stringify(asked.body));
     const stale = await call('POST', '/api/chits/' + CH + '/proposals/' + seller.body.proposal.proposal_id + '/accept', BUY, {});
