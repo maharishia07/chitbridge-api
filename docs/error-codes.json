@@ -1001,6 +1001,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CTP_NOT_THIS_INSTALLATION",
+   "status": "409",
+   "title": "Asked the wrong installation",
+   "shopkeeper": "This installation is not the one the question was for; the address held for it is out of date.",
+   "hint": "Refresh the network directory and ask again.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_NO_INSTALLATION",
    "status": "400",
    "title": "No installation named",
@@ -1035,6 +1044,15 @@
    "hint": "Deliver it locally.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_INACTIVE",
+   "status": "409",
+   "title": "Not sent",
+   "shopkeeper": "That business is on an installation we do not deal with now (suspended or retired), so nothing was sent or saved.",
+   "hint": "Ask the operator whether that installation is coming back.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
   },
   {
    "code": "CTP_PEER_KEY_UNREADABLE",
