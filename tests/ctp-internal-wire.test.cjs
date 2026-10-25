@@ -37,12 +37,12 @@ function load(file, stubs) {
 const RECIP = 'r-entity-1';
 /* ⚠️ no bridge_id on the copy, exactly as a real send copy */
 const copy = { entity_id: RECIP, direction: 'received', sender_entity_id: 's1' };
-const remote = () => ({
+const remote = (place) => ({
   resolveAll: async (ids) =>
-    new Map(ids.map((i) => [String(i), { local: false, installation_key: 'sit-au', endpoint: 'https://au.example/api/ctp/deliver' }]))
+    new Map(ids.map((i) => [String(i), place || { local: false, installation_key: 'sit-au', endpoint: 'https://au.example/api/ctp/deliver' }]))
 });
 
-function mintWith(transport) {
+function mintWith(transport, place) {
   const db = {
     withEntity: async () => {
       throw new Error('a local write must not happen');
@@ -54,7 +54,7 @@ function mintWith(transport) {
     }
   };
   /* deliver() requires its helpers lazily, so the stubs sit in the module cache for the whole test */
-  for (const [file, exp] of [['db/index.js', db], ['lib/ctpaddress.js', remote()], ['lib/ctptransport.js', transport]]) {
+  for (const [file, exp] of [['db/index.js', db], ['lib/ctpaddress.js', remote(place)], ['lib/ctptransport.js', transport]]) {
     const id = require.resolve(root(file));
     require.cache[id] = { id, filename: id, loaded: true, exports: exp };
   }
@@ -111,6 +111,22 @@ function mintWith(transport) {
     const known = require(root('lib/knownerr')).known(err);
     assert.ok(known && known.status === 502 && known.body.code === 'CTP_UNREACHABLE', JSON.stringify(known));
     assert.ok(/timed out/.test(known.body.message) && /again/.test(known.body.message));
+  });
+
+  /* SIT run 4 (RAIL-112): a business on a suspended or retired installation was "sent" into this database and never left */
+  await t('RAIL-112: a recipient on an INACTIVE installation is refused 409 CTP_PEER_INACTIVE, nothing sent, nothing written', async () => {
+    let sent = 0;
+    const mint = mintWith({ send: async () => { sent++; return { accepted: true }; } }, { local: false, inactive: true, installation_key: 'sit-grund', endpoint: null, why: 'installation sit-grund is not active here' });
+    let err;
+    try {
+      await mint.deliver('s1', 'chit-9', [copy], {});
+    } catch (e) {
+      err = e;
+    }
+    const known = require(root('lib/knownerr')).known(err);
+    assert.ok(known && known.status === 409 && known.body.code === 'CTP_PEER_INACTIVE', JSON.stringify(known));
+    assert.ok(/sit-grund/.test(known.body.message) && /Nothing was sent and nothing was saved here/.test(known.body.message));
+    assert.strictEqual(sent, 0, 'nothing may go on the wire');
   });
 
   await t('RAIL-99: an ordinary error is still not dressed up as a far-end refusal', async () => {

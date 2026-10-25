@@ -92,6 +92,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |
 | CTP_REFUSED | 409 | The other business refused it | The other installation answered no, and the chit was not sent or saved. | Read the reason, fix the chit or the address, send again. | ctp | 2026-10-25 |
 | CTP_UNREACHABLE | 502 | The other installation did not answer | We could not reach the other installation, so nothing was sent or saved. | Send it again when they are back. | ctp | 2026-10-25 |
+| CTP_PEER_INACTIVE | 409 | Not sent | That business is on an installation we do not deal with now (suspended or retired), so nothing was sent or saved. | Ask the operator whether that installation is coming back. | ctp | 2026-10-25 |
+| CTP_NOT_THIS_INSTALLATION | 409 | Asked the wrong installation | This installation is not the one the question was for; the address held for it is out of date. | Refresh the network directory and ask again. | ctp | 2026-10-25 |
 | CTP_PEER_HOSTED_HERE | 409 | Installation is hosted here | That installation lives on this server, so its chits must not come over the internet. | Deliver it locally. | ctp | 2026-10-23 |
 | CTP_PEER_KEY_UNREADABLE | 403 | Peer's key cannot be read | We could not read the other installation's public key, so we cannot trust the message. | Check the other installation's manifest is reachable. | ctp | 2026-10-23 |
 | CTP_PEER_REFUSED | 403 | Installation not known | We do not deal with that installation. | The owners of both installations must agree to connect first. | ctp | 2026-10-23 |

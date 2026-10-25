@@ -65,11 +65,11 @@ function loadAddress(dbStub) {
       query: async (sql, args) => {
         calls.push(sql);
         if (/FROM installation/i.test(sql)) {
-          return { rows: [{ installation_key: 'platform-ae', ctp_endpoint: 'https://ae.example/ctp', region: 'AE' }] };
+          return { rows: [{ installation_key: 'platform-ae', ctp_endpoint: 'https://ae.example/ctp', region: 'AE', active: true }, { installation_key: 'platform-gone', ctp_endpoint: 'https://gone.example/ctp', region: null, active: false }] };
         }
         /* ⚠️ through the SECURITY DEFINER function — a plain entity_governance read would answer nothing */
         if (/ops\.f_installation_of/.test(sql)) {
-          return { rows: [{ installation_key: args[0] === 'far' ? 'platform-ae' : 'platform-0' }] };
+          return { rows: [{ installation_key: args[0] === 'far' ? 'platform-ae' : args[0] === 'gone' ? 'platform-gone' : 'platform-0' }] };
         }
         return { rows: [] };
       },
@@ -80,6 +80,14 @@ function loadAddress(dbStub) {
       const a = await A.resolve('far');
       assert.strictEqual(a.local, false, 'expected remote');
       assert.strictEqual(a.endpoint, 'https://ae.example/ctp');
+    });
+
+    /* SIT run 4 (RAIL-112): a suspended or retired installation dropped out of the map, so its businesses looked LOCAL and their chits never left */
+    await okAsync('an entity on an INACTIVE remote installation stays REMOTE and is marked inactive, never local', async () => {
+      const a = await A.resolve('gone');
+      assert.strictEqual(a.local, false, 'a business on a retired installation is still somebody else');
+      assert.strictEqual(a.inactive, true);
+      assert.strictEqual(a.endpoint, null, 'nothing is sent to it');
     });
 
     await okAsync('an entity on a local installation still resolves LOCAL', async () => {
