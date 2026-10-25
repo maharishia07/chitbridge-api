@@ -602,8 +602,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": true
@@ -905,6 +904,66 @@
   },
   "GET /api/chits/trace/networks": {
    "output_allowlist": {
+    "pass": true
+   }
+  },
+  "GET /api/chits/:chit_id/proposals": {
+   "output_allowlist": {
+    "pass": true
+   },
+   "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "strict_input": {
+    "pass": false,
+    "why": "the route has no body schema check, so an unknown key is never looked at"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
+   },
+   "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "strict_input": {
+    "pass": false,
+    "why": "the route has no body schema check, so an unknown key is never looked at"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 403"
+   },
+   "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "strict_input": {
+    "pass": false,
+    "why": "the route has no body schema check, so an unknown key is never looked at"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 403"
+   },
+   "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "strict_input": {
+    "pass": false,
+    "why": "the route has no body schema check, so an unknown key is never looked at"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
+   },
+   "foreign_id_404": {
     "pass": true
    }
   },

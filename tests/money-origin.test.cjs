@@ -21,10 +21,12 @@ const ok = (name, fn) => {
 
 console.log('\n══ MONEY AT THE ORIGIN (ACC-192) ══\n');
 const money = fnBody(chits, 'async function sendMoney(');
+const moneyCore = fnBody(chits, 'async function moneyOfLines('); /* RAIL-106: the calculation sendMoney used to hold, now shared with a change order (lib/chit-proposal) */
 const issued = fnBody(chits, 'async function sendIssued(');
 
 ok('the sender\'s invoice travels with the chit (business_json.invoice), unless one is already carried or it is a draft', () => {
-  assert.ok(/originInvoice = invoice/.test(money) && /await invoiceAtSend\(/.test(money), 'sendMoney must hand over the invoice it computed at send');
+  assert.ok(/await moneyOfLines\(/.test(money) && /invoice: originInvoice/.test(money), 'sendMoney must hand over the invoice it computed at send');
+  assert.ok(/originInvoice = invoice/.test(moneyCore) && /await invoiceAtSend\(/.test(moneyCore), 'the one calculation computes it');
   assert.ok(/business_json\.invoice = st\.originInvoice/.test(issued), 'sendIssued must carry it with the chit');
   assert.ok(/!business_json\.invoice && st\.originInvoice && !is_draft/.test(issued), 'never over a carried invoice, never on a draft');
 });

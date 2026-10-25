@@ -1001,6 +1001,15 @@
    "since": "2026-10-25"
   },
   {
+   "code": "CTP_EVENT_CHANGE_NOT_APPLIED",
+   "status": "409",
+   "title": "Change not applied here",
+   "shopkeeper": "This installation could not apply the agreed version to its own copy.",
+   "hint": "Check the lines on this side; the sender can propose again.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_EVENT_NOT_YET",
    "status": "404",
    "title": "Not here yet",
@@ -2790,6 +2799,69 @@
    "hint": "Send less at a time: split the file, or use a smaller picture.",
    "owner_area": "products",
    "since": "2026-10-23"
+  },
+  {
+   "code": "PROPOSAL_BAD",
+   "status": "400",
+   "title": "Proposal not usable",
+   "shopkeeper": "That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_CLOSED",
+   "status": "409",
+   "title": "Proposal already decided",
+   "shopkeeper": "That proposal is already decided, so it cannot be decided again.",
+   "hint": "Look at the newest round.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NOT_FOUND",
+   "status": "404",
+   "title": "No such proposal",
+   "shopkeeper": "There is no such proposal on this chit.",
+   "hint": "Open the chit again and pick one of its rounds.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NOT_SETUP",
+   "status": "503",
+   "title": "Proposals not set up",
+   "shopkeeper": "Proposals are not set up on this installation yet.",
+   "hint": "Ask the operator to apply the update.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NOT_YOURS",
+   "status": "403",
+   "title": "Your own proposal",
+   "shopkeeper": "You made this proposal, so the other side decides it.",
+   "hint": "Wait for the other side.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NO_COUNTERPARTY",
+   "status": "409",
+   "title": "Nobody to propose to",
+   "shopkeeper": "This chit has no other party, so there is nothing to propose.",
+   "hint": "Change it directly.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_STALE",
+   "status": "409",
+   "title": "Proposal out of date",
+   "shopkeeper": "A newer round has replaced this one, or the lines or the invoice changed since it was proposed, so it cannot be accepted as it stands.",
+   "hint": "Look at the newest round, or ask for a new one.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
   },
   {
    "code": "PURPOSE_FIXED",

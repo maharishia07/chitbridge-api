@@ -1275,42 +1275,34 @@ async function invoiceAtSend(li, sellerId, buyerId, business_json, currency_code
   return taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: invAt, priceIncludesTax }).invoice;
 }
 
-/** the header's money — gross · savings · net · tax · total, provisional */
-async function sendMoney(st, req, res) {
-  const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
-  /**
-   * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
-   * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
-   * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total.
-   *   · gross and savings are free — the offers engine has just run and the line keeps its listed price beside its total.
-   *   · tax is `taxLines.invoiceFor`, a PURE function over the lines that `decorate` has already rated, plus one row per party.
-   *     ONE query for both identities (his "why do you need another query?"), never one per line.
-   * ⚠️ PROVISIONAL, AND IT SAYS SO. The invoice freezes at completed (G3); this is a display summary carrying the same
-   * caveat as the invoice tab, not a second source of truth. A tax we cannot compute is `null`, never 0 — a column showing
-   * "—" is honest, a column showing zero tax is a lie.
-   */
-  let moneyBlock = null;
-  let originInvoice = null;
-  try {
-    const r2m = (n) => roundMoney(Number(n) || 0);
-    const li = Array.isArray(line_items) ? line_items : [];
-    const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
-    const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
-    const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-    const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
-    const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
-    let tax = null,
-      total = null;
-    /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
-    const buyerId = counterBill ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
-    const invoice = li.length && buyerId && String(sellerId) !== String(buyerId) ? await invoiceAtSend(li, sellerId, buyerId, business_json, currency_code) : null;
-    const h = invoice && taxLines.heads(invoice);
-    if (h && Number.isFinite(h.tax)) {
-      tax = r2m(h.tax);
-      total = r2m(h.total || net + tax);
-      originInvoice = invoice; /* ACC-192: computed here, the origin; sendIssued carries it with the chit */
-    }
-    moneyBlock = {
+/**
+ * The header's money and the invoice behind it, for ONE set of lines — gross · savings · net · tax · total, provisional, and the INV-01 invoice when the tax can be decided. The ONE
+ * calculation: a send uses it (sendMoney), and so does a CHANGE ORDER (lib/change-order.js, RAIL-106) when the amending side re-issues the invoice for the proposed lines. Computed here, at the
+ * origin; every other copy reads what this returned.
+ * @param parties { sellerId, buyerId|null }   buyerId null (a counter bill, several recipients) = no server-side tax
+ * @returns {Promise<{moneyBlock, invoice}>}   invoice is null when the tax could not be decided (tax then null, never 0)
+ */
+async function moneyOfLines(li, parties, business_json, currency_code) {
+  const r2m = (n) => roundMoney(Number(n) || 0);
+  const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
+  const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
+  const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
+  const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
+  const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
+  let tax = null,
+    total = null,
+    originInvoice = null;
+  const { sellerId, buyerId } = parties;
+  const invoice = li.length && buyerId && String(sellerId) !== String(buyerId) ? await invoiceAtSend(li, sellerId, buyerId, business_json, currency_code) : null;
+  const h = invoice && taxLines.heads(invoice);
+  if (h && Number.isFinite(h.tax)) {
+    tax = r2m(h.tax);
+    total = r2m(h.total || net + tax);
+    originInvoice = invoice; /* ACC-192: computed here, the origin; sendIssued carries it with the chit */
+  }
+  return {
+    invoice: originInvoice,
+    moneyBlock: {
       gross,
       savings: r2m(gross - net),
       net,
@@ -1318,7 +1310,33 @@ async function sendMoney(st, req, res) {
       total: total != null ? total : tax != null ? r2m(net + tax) : null,
       currency_code,
       provisional: true
-    };
+    }
+  };
+}
+
+/** the header's money — gross · savings · net · tax · total, provisional */
+async function sendMoney(st, req, res) {
+  const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
+  /**
+   * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
+   * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
+   * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total (moneyOfLines above).
+   * ⚠️ PROVISIONAL, AND IT SAYS SO. A tax we cannot compute is `null`, never 0 — a column showing "—" is honest, a column showing zero tax is a lie.
+   */
+  let moneyBlock = null;
+  let originInvoice = null;
+  try {
+    /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
+    /* ⭐ RAIL-106 (Athi, 25 Oct 12:05): a seller on ANOTHER installation prices its own goods — price, currency and tax by its own pack, at its side (lib/chit-proposal). The buyer's installation sends what and how many and runs no tax of its own on someone else's goods. */
+    const sellerElsewhere = !counterBill && String(sellerId) !== String(sender_id) && (await require('../lib/ctpaddress').resolve(sellerId)).local === false;
+    const buyerId = counterBill || sellerElsewhere ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
+    /* ⭐ RAIL-106 (DECISIONS 13:10): the request and every priced round before acceptance are a QUOTATION when the seller is on another installation; the chit says whose country it will be priced under
+       and whose it was asked from. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's. */
+    if (sellerElsewhere && business_json && typeof business_json === 'object' && !business_json.jurisdiction) {
+      const place = await require('../lib/ctpaddress').resolve(sellerId);
+      business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: place.installation_key || null, buyer_duty_and_taxes: 'not_included' };
+    }
+    ({ moneyBlock, invoice: originInvoice } = await moneyOfLines(Array.isArray(line_items) ? line_items : [], { sellerId, buyerId }, business_json, currency_code));
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
   }
@@ -4288,6 +4306,12 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
 //                        reason_code, reason }] }
 // ⚠️ `line: null` REMOVES the line — Athi: "old line deleted and new line is nothing". It stays visible on the
 //    chit and counts in nothing. That is NOT quantity:0, which is a real zero and would leak into totals.
+/** the amend route's edits as a proposal (lib/chit-proposal propose); null when the chit has nobody else on it */
+async function proposeAmendment(entity_id, chit_id, edits, req) {
+  if (!(await schema.hasTable('chit_proposal'))) return null; /* b796 not run: an amendment is direct, as it always was */
+  const lines = edits.map((item) => ({ line_index: item.line_index, line_id: item.line_id, line: item.line === undefined ? undefined : item.line, price: item.line && item.line.price, quantity: item.line && item.line.quantity, requested_price: item.line && item.line.price, remove: item.line === null, note: item.reason || null }));
+  return require('../lib/chit-proposal').propose(entity_id, chit_id, { lines, note: null }, { id: req.identity.identity_id, name: req.identity.display_name });
+}
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4301,7 +4325,16 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
-    const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
+    /* ⭐ RAIL-106 (Athi, 25 Oct 11:15): an amendment is a change order. With another party on the chit it is PROPOSED (the seller prices it at the seller's installation; anyone else asks) and the agreed record
+       stands until it is accepted — lib/chit-proposal. A chit with nobody else on it is amended directly, as it always was. */
+    const edits = [].concat(req.body.edits || req.body).filter(Boolean);
+    const proposed = await proposeAmendment(entity_id, chit_id, edits, req).catch((err) => {
+      if (err && err.refused) return { refusal: err };
+      throw err;
+    });
+    if (proposed && proposed.refusal) return problem(req, res, { status: proposed.refusal.status, ...said({ error: 'Not done', message: proposed.refusal.message, code: proposed.refusal.code }, proposed.refusal.code) });
+    if (proposed) return res.json({ proposed: true, proposal: proposed, amendments: [], message: proposed.kind === 'request' ? 'Counter-proposal asked' : 'Change proposed' });
+    const out = await amend.record(entity_id, chit_id, edits, {
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
@@ -4756,7 +4789,7 @@ async function readMoveHeader(db, chit_id, entity_id, new_status) {
       ? { rows: copy ? [copy] : [] }
       : await db.query(
           /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
-          `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
+          `SELECT sender_entity_id, purpose, business_json, all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
           [chit_id, entity_id]
         );
   return { copy, header };
@@ -4828,6 +4861,16 @@ async function confirmCancelToSender(entity_id, chit_id, header, action_by_name)
   } catch (e) {
     console.error('cancel confirm:', e.message);
   }
+}
+/**
+ * RAIL-106 (Athi, 25 Oct 11:15): an accepted, rejected or cancelled status rings the OTHER parties, the same on one installation or many. Locally it is lib/events.emit to the people named on
+ * my copy's header (a business on another installation has no subscriber here: it is rung when the event arrives, lib/ctpreturn). One bell per move.
+ */
+function ringStatus(entity_id, chit_id, new_status, header, who) {
+  if (!/^(accepted|rejected|cancelled)$/.test(String(new_status))) return;
+  const row = header && header.rows && header.rows[0];
+  const others = (row && Array.isArray(row.all_recipients) ? row.all_recipients : []).map((item) => item && item.entity_id).filter((id) => id && String(id) !== String(entity_id));
+  if (others.length) require('../lib/events').emit([...new Set(others)], { kind: 'status', id: chit_id, status: new_status, who: who || null });
 }
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
   const action_by_id = by.id,
@@ -4961,6 +5004,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
 
   // The header came back with the same transaction, above — read to check sender and propagate a cancel.
   const header = _pre.header;
+  ringStatus(entity_id, chit_id, new_status, header, action_by_name); /* RAIL-106: accepted · rejected · cancelled ring the other parties */
 
   const isSender = header.rows.length > 0 && header.rows[0].sender_entity_id === entity_id;
 
@@ -5608,6 +5652,7 @@ router.post(
       const raised = await withEntity(entity_id, (client) =>
         recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
       );
+      require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: display_name }); /* RAIL-106: the parties named on it are rung, here; those on other installations when it arrives */
       /* RAIL-106: told to the roster's parties on other installations, who record it on their own copy (the decision above is not re-run there) */
       const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, roster, partyIds, reason_message_id: raised.reason_message_id });
       const d = {
@@ -5873,6 +5918,7 @@ router.put(
         recordResolve(client, { dispute_id, chit_id, resolver_id: entity_id, resolver_name: entityName, actor_name: display_name, targetParty, resolution_note, category: d.category })
       );
       releaseAfterResolve(out, chit_id, [entity_id]);
+      require('../lib/events').emit(out.resolvedPartyIds || [], { kind: 'dispute', id: chit_id, what: 'resolved', who: display_name }); /* RAIL-106: the cleared parties are rung */
       const crossed = await ctpReturn.onDisputeResolved(entity_id, chit_id, { dispute_id, scope: d.scope, target_id: targetParty, resolution_note, category: d.category, actor_name: display_name, resolver_name: entityName, resolve_message_id: out.resolve_message_id });
 
       res.json({
@@ -6377,6 +6423,10 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
     }
     /* ⭐ RAIL-106: each copy of mine that moved is told to the parties on other installations, by the same event a status move sends (the rail decided it above) */
     const told = [];
+    if ((gate.moved || []).length) {
+      const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
+      ringStatus(entity_id, chit_id, 'cancelled', header, req.identity.display_name); /* RAIL-106: a withdrawal rings the recipients, as a cancelled status does */
+    }
     for (const copy of gate.moved || []) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: req.identity.display_name, note: reason }));
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
@@ -7030,6 +7080,10 @@ router.get('/trace/networks', auth, async (req, res) => {
 router.openapi = { paths: pathsOf(), schemas: {} };
 router.stampCancelRequested = stampCancelRequested; /* lib/ctpreturn sets the same flags on a copy a request or a confirmation was sent to */
 router.stampCancelConfirmed = stampCancelConfirmed;
+router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
+router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
+router.moneyOfLines = moneyOfLines; /* lib/change-order re-issues the invoice for proposed lines by the very same calculation */
+router.moneyOfInvoice = moneyOfInvoice;
 router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */
 router.recordResolve = recordResolve;
 router.releaseAfterResolve = releaseAfterResolve;

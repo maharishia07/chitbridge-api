@@ -4,7 +4,7 @@
  *
  *   1  CANCEL / WITHDRAW: the void route and the sender's cancel move a SENT copy through the rail gate and tell the parties elsewhere by the status event (copy 'sent'); the flag
  *      "cancel requested" (b195) and "cancel confirmed" (b197) are set where the copy is, by the same stamps; assigning back to pending is a status move and crosses
- *   2  AMENDMENT: a correction is private to the amending copy on one installation (chit_line_amendment is per copy), so it crosses nowhere on many either; the invoice is not touched
+ *   2  AMENDMENT: first pinned private to the amender (part 3); Athi then decided it is a change order — the proposal mechanism (tests/chit-proposals.test.cjs)
  *   3  ATTACHMENTS: carried by reference, pulled over the CTP door, size-capped
  *   4  THE BELL on the receiver, through lib/events (no res)
  *   5  a second local party gets its timeline row
@@ -99,7 +99,7 @@ function rowsFor(sql, p) {
     return hit.map((r) => ({ chit_id: r.chit_id }));
   }
   if (/^SELECT sender_entity_id FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ sender_entity_id: W.senderId || ME }];
-  if (/^SELECT sender_entity_id, purpose, business_json FROM chit_header/.test(s)) return [{ sender_entity_id: W.senderId || STUB, purpose: 'order', business_json: {} }];
+  if (/^SELECT sender_entity_id, purpose, business_json(, all_recipients)? FROM chit_header/.test(s)) return [{ sender_entity_id: W.senderId || STUB, purpose: 'order', business_json: {}, all_recipients: W.header.all_recipients }];
   if (/^SELECT all_recipients FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ all_recipients: W.header.all_recipients.map((x) => ({ entity_id: (W.ident[x.bridge_id] || {}).identity_id })) }];
   if (/^SELECT cancel_requested_at FROM chit_status/.test(s)) return W.asked ? [{ cancel_requested_at: new Date() }] : [{}];
   if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s) && /all_recipients/.test(s)) return [W.header];
@@ -340,19 +340,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     assert.strictEqual(W.status.find((x) => x.entity_id === STUB && x.direction === 'sent').current_status, 'cancelled');
   });
 
-  console.log('\n== 2 · amendment: private to the amending copy, so it crosses nowhere ==\n');
-  await t('an amendment is recorded on the amender’s OWN copy only: no event, no write to the header, the detail, the invoice or the money, no write under another entity', async () => {
-    resetWorld();
-    const LINE = 'e0000000-0000-4000-8000-0000000000e1';
-    const r = await call('POST', '/api/chits/' + CHIT + '/amend', tok(ME), { edits: [{ line_index: 0, line_id: LINE, line: { particulars: 'Pump seal', quantity: 12, price: 410 }, reason_code: 'rate_agreed' }] });
-    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
-    assert.strictEqual(W.out.length, 0, 'nothing is queued: the other party’s copy is not changed on one installation, so it is not on many');
-    assert.strictEqual(r.body.ctp, undefined);
-    const writes = W.rec.filter((x) => /^(INSERT|UPDATE|DELETE)/.test(x.s) && !/state_log/.test(x.s));
-    assert.ok(writes.length > 0 && writes.every((x) => /chit_line_amendment|UPDATE chit_line /.test(x.s)), writes.map((x) => x.s.slice(0, 60)).join(' | '));
-    assert.ok(writes.every((x) => x.ent === ME), 'every write is under the amender’s own context');
-    assert.ok(!W.rec.some((x) => /business_json|summary_json|UPDATE chit_header|UPDATE chit_detail/.test(x.s) && /^(INSERT|UPDATE)/.test(x.s)), 'the invoice (business_json.invoice) and the money (summary_json) are untouched, so the receiver’s ValDtls are byte for byte what the origin issued');
-  });
+  console.log('\n== 2 · amendment: superseded by the proposal mechanism (tests/chit-proposals.test.cjs) ==\n');
 
   console.log('\n== 3 · attachments: by reference, pulled over the CTP door, capped ==\n');
   await t('a file put on a chit (the real upload route) is told BY REFERENCE: id, name, type, size and sha-256, never the bytes; one event per installation', async () => {
@@ -605,6 +593,80 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
     const r = await apply({ kind: 'message', seq: 2, message_id: MSG, message_text: 'm'.repeat(10001), msg_type: 'info' });
     assert.ok(!r.ok && r.status === 400 && r.code === 'CTP_EVENT_BAD' && /10000 characters/.test(r.why), JSON.stringify(r));
+  });
+
+  console.log('\n== 7 · the bell for accepted, rejected, cancelled and for a dispute raised or resolved ==\n');
+  const rungKinds = () => RUNG.map((x) => [x.ids.slice().sort(), x.evt.kind, x.evt.status || x.evt.what]);
+  await t('a status move to accepted, rejected or cancelled rings the OTHER parties once (here); any other move rings nothing', async () => {
+    for (const status of ['accepted', 'rejected', 'cancelled']) {
+      resetWorld();
+      RUNG.length = 0;
+      W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }];
+      W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB, entity_id: STUB, role: 'sender' }, { bridge_id: B_ME, entity_id: ME, role: 'receiver' }, { bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'cc' }] };
+      W.senderId = STUB;
+      const mv = await chits.moveStatus(ME, CHIT, status, { id: ME, name: 'Asha' }, status === 'rejected' ? 'wrong item' : '', EDITOR);
+      assert.strictEqual(mv.code, 200, status + ' ' + JSON.stringify(mv.body));
+      const bells = RUNG.filter((x) => x.evt.kind === 'status');
+      assert.strictEqual(bells.length, 1, status);
+      assert.deepStrictEqual(bells[0].ids.slice().sort(), [STUB, LOCAL2].sort(), 'everyone named on the chit except the one who moved it');
+      assert.deepStrictEqual([bells[0].evt.status, bells[0].evt.id], [status, CHIT]);
+    }
+    resetWorld();
+    RUNG.length = 0;
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'accepted' }];
+    await chits.moveStatus(ME, CHIT, 'in_progress', { id: ME, name: 'Asha' }, '', EDITOR);
+    assert.strictEqual(RUNG.filter((x) => x.evt.kind === 'status').length, 0, 'in progress rings nobody');
+  });
+  await t('a status that arrives from another installation rings the local people on the chit once; a repeat rings nothing', async () => {
+    resetWorld();
+    RUNG.length = 0;
+    W.header = { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME, entity_id: ME, role: 'sender' }, { bridge_id: B_STUB, entity_id: STUB, role: 'receiver' }, { bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'cc' }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'sent', current_status: 'delivered' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
+    const ev = { kind: 'status', seq: 4, status: 'accepted', previous_status: 'pending', copy: 'received', by_name: 'Raj' };
+    const first = await apply(ev);
+    assert.ok(first.ok && first.applied, JSON.stringify(first));
+    assert.deepStrictEqual(rungKinds(), [[[ME, LOCAL2].sort(), 'status', 'accepted']]);
+    RUNG.length = 0;
+    await apply(ev);
+    assert.strictEqual(RUNG.length, 0);
+    await apply(Object.assign({}, ev, { seq: 5, status: 'in_progress' }));
+    assert.strictEqual(RUNG.length, 0, 'a status that rings nothing locally rings nothing here');
+  });
+  await t('a dispute raised (the real route) rings the parties named on it; resolved rings the cleared parties; here, once each', async () => {
+    resetWorld();
+    RUNG.length = 0;
+    W.header = { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME, entity_id: ME, role: 'sender' }, { bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'receiver' }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'sent', current_status: 'delivered' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
+    const r = await call('POST', '/api/chits/' + CHIT + '/disputes', tok(ME), { category: 'quantity', reason: 'Short by forty units', target_entity_id: LOCAL2 });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), [[[LOCAL2], 'dispute', 'raised']]);
+    RUNG.length = 0;
+    W.disputeRow = { dispute_id: DISPUTE, chit_id: CHIT, status: 'open', raised_by_entity_id: ME, category: 'quantity', scope: 'targeted' };
+    W.roster = [{ entity_id: ME, role: 'raiser', status: 'open' }, { entity_id: LOCAL2, role: 'party', status: 'open' }];
+    const done = await call('PUT', '/api/chits/' + CHIT + '/disputes/' + DISPUTE + '/resolve', tok(ME), { resolution_note: 'Credit note issued' });
+    assert.strictEqual(done.status, 200, JSON.stringify(done.body));
+    assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), [[[LOCAL2], 'dispute', 'resolved']]);
+  });
+  await t('a dispute raised or resolved on another installation rings the local parties on arrival, once', async () => {
+    resetWorld();
+    RUNG.length = 0;
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB, entity_id: STUB, role: 'sender' }, { bridge_id: B_ME, entity_id: ME, role: 'receiver' }] };
+    const raise = {
+      kind: 'dispute_raise', seq: 6, dispute_id: DISPUTE, category: 'quantity', reason: 'Short by forty units', scope: 'targeted', mode: 'two_sided', answerable: true, parity_state: 'present', via: 'chit', evidence: {}, actor_name: 'Raj',
+      raiser: { bridge_id: B_STUB, display_name: 'AU Pumps' }, target: { bridge_id: B_ME, display_name: 'IN Plant', target_name: 'IN Plant' },
+      roster: [{ bridge_id: B_STUB, display_name: 'AU Pumps', role: 'raiser' }, { bridge_id: B_ME, display_name: 'IN Plant', role: 'party' }], reason_message_id: 'a0000000-0000-4000-8000-0000000000b1'
+    };
+    const first = await apply(raise);
+    assert.ok(first.ok && first.applied, JSON.stringify(first));
+    assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), [[[ME], 'dispute', 'raised']]);
+    RUNG.length = 0;
+    W.disputes = [DISPUTE]; /* the database now holds it */
+    await apply(raise);
+    assert.strictEqual(RUNG.length, 0, 'a repeat rings nothing');
+    W.roster = [{ entity_id: STUB, role: 'raiser', status: 'open' }, { entity_id: ME, role: 'party', status: 'open' }];
+    const resolved = await apply({ kind: 'dispute_resolve', seq: 7, dispute_id: DISPUTE, target: null, resolution_note: 'Credit note issued', category: 'quantity', actor_name: 'Raj', resolver_name: 'AU Pumps' });
+    assert.ok(resolved.ok && resolved.applied, JSON.stringify(resolved));
+    assert.deepStrictEqual(rungKinds().filter((x) => x[1] === 'dispute'), [[[ME], 'dispute', 'resolved']]);
   });
 
   //__END__

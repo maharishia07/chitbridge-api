@@ -82,6 +82,7 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/amend": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/catalogue-overlay": {
@@ -154,6 +155,22 @@
   },
   "GET /api/chits/trace/networks": {
    "output_allowlist": true
+  },
+  "GET /api/chits/:chit_id/proposals": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "foreign_id_404": true
   },
   "POST /api/events/ticket": {
    "output_allowlist": true
