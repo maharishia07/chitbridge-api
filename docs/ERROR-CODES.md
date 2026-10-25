@@ -82,6 +82,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
 | CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
 | MESSAGE_TOO_LONG | 413 | Message too long | That message is longer than one message can hold, so nothing was sent. | Shorten it, or attach it as a file. | rail | 2026-10-25 |
+| PROPOSAL_BAD | 400 | Proposal not usable | That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take. | Read the sentence shown, fix it and try again. | rail | 2026-10-25 |
+| PROPOSAL_CLOSED | 409 | Proposal already decided | That proposal is already decided, so it cannot be decided again. | Look at the newest round. | rail | 2026-10-25 |
+| PROPOSAL_NO_COUNTERPARTY | 409 | Nobody to propose to | This chit has no other party, so there is nothing to propose. | Change it directly. | rail | 2026-10-25 |
+| PROPOSAL_NOT_FOUND | 404 | No such proposal | There is no such proposal on this chit. | Open the chit again and pick one of its rounds. | rail | 2026-10-25 |
+| PROPOSAL_NOT_SETUP | 503 | Proposals not set up | Proposals are not set up on this installation yet. | Ask the operator to apply the update. | rail | 2026-10-25 |
+| PROPOSAL_NOT_YOURS | 403 | Your own proposal | You made this proposal, so the other side decides it. | Wait for the other side. | rail | 2026-10-25 |
+| PROPOSAL_STALE | 409 | Proposal out of date | A newer round has replaced this one, or the lines or the invoice changed since it was proposed, so it cannot be accepted as it stands. | Look at the newest round, or ask for a new one. | rail | 2026-10-25 |
+| CTP_EVENT_CHANGE_NOT_APPLIED | 409 | Change not applied here | This installation could not apply the agreed version to its own copy. | Check the lines on this side; the sender can propose again. | ctp | 2026-10-25 |
 | CTP_EVENT_ATTACHMENT_UNREADABLE | 502 | File not taken | The file announced for this chit could not be fetched or did not arrive as announced, so it was not stored. | The sending installation tries again; check it is reachable. | ctp | 2026-10-25 |
 | CTP_EVENT_NOT_YET | 404 | Not here yet | What this change refers to has not arrived on this installation yet, so it was not applied. | The sender tries again in order. | ctp | 2026-10-25 |
 | CTP_EVENT_TOO_LARGE | 413 | File too large | The file is larger than the limit, so it was not taken. | Send a smaller file (the limit is 6 MB). | ctp | 2026-10-25 |

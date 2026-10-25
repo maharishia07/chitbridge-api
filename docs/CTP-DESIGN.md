@@ -529,3 +529,5 @@ step 3**, which costs a day, not a deployment.
   `project-chitbridge-canon-hardening` · `reference-rail-metaphor` · `project-jurisdiction-pivot`
 - **Blocked on:** the nine decisions in §9. Four of them (2, 4, 5, 7) change the shape of the envelope or the
   trust model, so they are not implementation details to be discovered later.
+
+> **Part 4 (2026-10-25):** one proposal mechanism on one chit (lib/chit-proposal.js, b796): the seller's installation prices the buyer's request as round 2; the buyer accepts, counters or rejects; acceptance makes the round the agreed record on both copies, byte for byte; an amendment after agreement and a money-free agreement are the same flow; accepted/rejected/cancelled statuses and disputes ring the other party here and on arrival. See docs/FIELDS.md "chit_proposal".
