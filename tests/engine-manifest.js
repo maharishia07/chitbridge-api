@@ -206,6 +206,16 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* RAIL-106/107: the CTP return path and the proposal mechanism — database plumbing over the rail's one status writer and the one calculation (routes/chits moneyOfLines); the rules they apply live in the rail engine and the tax pack, not here. (2026-10-25) */
+  'chit-proposal.js',
+  'ctpreturn.js',
+  'ctp-repair.js',
+  'message-limit.js',
+  /* PLT-45: the network's membership certificate, its pulls and the installer token — signing and database plumbing of the control panel, not a rule of the rail. (2026-10-25) */
+  'installer-token.js',
+  'netcert.js',
+  'netmember.js',
+  'netsync.js',
   /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
   'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
