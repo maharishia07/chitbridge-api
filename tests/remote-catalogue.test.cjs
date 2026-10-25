@@ -54,6 +54,13 @@ const ask = (answer) => async (target, want, deps) => { ASKED.push({ target, wan
     const out = await remoteCatalogue.forSupplier(FAR, { ask: ask({ ok: true, found: false, why: 'AU Pumps has no public catalogue' }) });
     ok(out.remote.ok === false && /does not show a catalogue/.test(out.remote.why) && out.items.length === 0);
   });
+  await t('DECISIONS 14:50 · an EXISTING supplier row is kept; when its shop no longer sells outside the far side answers "no business here" and the catalogue says the sentence, not "does not show a catalogue"', async () => {
+    const out = await remoteCatalogue.forSupplier(FAR, { ask: ask({ ok: true, found: false, why: 'no business here with bridge id CBMZ5MN34G' }) });
+    ok(out.remote.ok === false && out.remote.why === 'AU Pumps sells only on their own ChitBridge, so they cannot be your supplier from here.', out.remote.why);
+    ok(out.supplier.identity_id === FAR.identity_id && out.items.length === 0, 'the row is kept, with nothing to order');
+    const nothing = await remoteCatalogue.forSupplier(FAR, { ask: ask({ ok: true, found: false, why: 'AU Pumps has no public catalogue' }) });
+    ok(/does not show a catalogue/.test(nothing.remote.why), 'a shop that sells outside but shows nothing keeps its own words');
+  });
   await t('an installation that is not active is said in words, nothing asked', async () => {
     ACTIVE = false; ASKED.length = 0;
     const out = await remoteCatalogue.forSupplier(FAR, { ask: ask(VIEW) });
