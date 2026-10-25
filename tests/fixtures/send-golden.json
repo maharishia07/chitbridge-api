@@ -74,6 +74,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -568,6 +575,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -1604,6 +1618,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -9161,6 +9182,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -9756,6 +9784,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -9846,6 +9881,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -9968,6 +10010,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -10506,6 +10555,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -11322,6 +11378,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -11726,6 +11789,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -12859,6 +12929,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
