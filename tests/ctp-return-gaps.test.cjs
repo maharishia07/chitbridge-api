@@ -1,0 +1,328 @@
+/**
+ * tests/ctp-return-gaps.test.cjs — RAIL-106 part 3: THE REMAINING CROSSING GAPS, each by the one approach (decided at the origin, emitted from inside the existing writer, applied through the
+ * same writer, never re-decided at the receiver).
+ *
+ *   1  CANCEL / WITHDRAW: the void route and the sender's cancel move a SENT copy through the rail gate and tell the parties elsewhere by the status event (copy 'sent'); the flag
+ *      "cancel requested" (b195) and "cancel confirmed" (b197) are set where the copy is, by the same stamps; assigning back to pending is a status move and crosses
+ *   2  AMENDMENT: a correction is private to the amending copy on one installation (chit_line_amendment is per copy), so it crosses nowhere on many either; the invoice is not touched
+ *   3  ATTACHMENTS: carried by reference, pulled over the CTP door, size-capped
+ *   4  THE BELL on the receiver, through lib/events (no res)
+ *   5  a second local party gets its timeline row
+ *   6  the message size limit, in the one message writer
+ *
+ * Offline: database, address book, transport are stubs. Run: node tests/ctp-return-gaps.test.cjs
+ */
+'use strict';
+const assert = require('assert');
+const http = require('http');
+const path = require('path');
+
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-ctp-gaps';
+process.env.DATABASE_URL = '';
+process.env.NODE_ENV = 'test';
+process.env.INSTALLATION_KEY = 'sit-in';
+const API = path.join(__dirname, '..');
+const root = (p) => path.join(API, p);
+
+let pass = 0,
+  fail = 0;
+const t = async (name, fn) => {
+  try {
+    await fn();
+    pass++;
+    console.log('   ok   ' + name);
+  } catch (e) {
+    fail++;
+    console.log('   FAIL ' + name + '\n          ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join('\n          ') : e));
+  }
+};
+
+const ME = '11111111-1111-4111-8111-111111111111'; /* the business that acts here (sit-in) */
+const STUB = '22222222-2222-4222-8222-222222222222'; /* the stub of the business on sit-au */
+const LOCAL2 = '33333333-3333-4333-8333-333333333333';
+const CHIT = 'c0000000-0000-4000-8000-0000000000c1';
+const DISPUTE = 'd0000000-0000-4000-8000-0000000000d1';
+const MSG = 'a0000000-0000-4000-8000-0000000000a1';
+const B_ME = 'CBME00001A',
+  B_STUB = 'CBAU00001B',
+  B_LOCAL2 = 'CBLO00001C';
+
+let W;
+let ENT = null;
+const resetWorld = () => {
+  W = {
+    rec: [],
+    status: [{ chit_id: CHIT, entity_id: ME, direction: 'sent', current_status: 'delivered' }],
+    out: [],
+    inw: [],
+    msgs: [],
+    nextId: 1,
+    header: { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME, role: 'sender' }, { bridge_id: B_STUB, role: 'to' }] },
+    ident: {
+      [B_ME]: { identity_id: ME, bridge_id: B_ME, display_name: 'IN Plant' },
+      [B_STUB]: { identity_id: STUB, bridge_id: B_STUB, display_name: 'AU Pumps' },
+      [B_LOCAL2]: { identity_id: LOCAL2, bridge_id: B_LOCAL2, display_name: 'IN Neighbour' }
+    },
+    place: { [STUB]: { local: false, installation_key: 'sit-au', endpoint: 'https://au.example/api/ctp/deliver' } },
+    disputes: [], // dispute ids held (by the acting copy)
+    disputeRow: null, // what SELECT * FROM chit_disputes returns for the resolve route
+    disputeRole: 'raiser',
+    scope: 'targeted',
+    roster: [] // chit_dispute_roster rows
+  };
+};
+resetWorld();
+const one = (s) => String(s).replace(/\s+/g, ' ').trim();
+function rowsFor(sql, p) {
+  const s = one(sql);
+  p = p || [];
+  W.rec.push({ s, p, ent: ENT });
+  if (/to_regprocedure/.test(s)) return [{ ok: true }];
+  if (/^SELECT last_seq FROM ctp_event_in/.test(s)) return W.inw.filter((r) => r.chit_id === p[0] && r.remote_entity_id === p[1] && r.entity_id === p[2]).map((r) => ({ last_seq: r.last_seq }));
+  if (/^INSERT INTO ctp_event_in/.test(s)) {
+    const cur = W.inw.find((r) => r.chit_id === p[0] && r.remote_entity_id === p[1] && r.entity_id === p[2]);
+    if (cur && cur.last_seq >= p[3]) return [];
+    if (cur) cur.last_seq = p[3];
+    else W.inw.push({ chit_id: p[0], remote_entity_id: p[1], entity_id: p[2], last_seq: p[3] });
+    return [{ last_seq: p[3] }];
+  }
+  const dir = (s.match(/direction = '(received|sent)'/) || [])[1];
+  if (/^SELECT current_status FROM chit_status WHERE chit_id = \$1 AND entity_id = \$2 AND direction/.test(s)) return W.status.filter((r) => r.chit_id === p[0] && r.entity_id === p[1] && r.direction === dir).map((r) => ({ current_status: r.current_status }));
+  if (/^UPDATE chit_status SET current_status = \$1/.test(s)) {
+    const hit = W.status.filter((r) => r.chit_id === p[1] && r.entity_id === p[2] && r.direction === dir && r.current_status === p[3]);
+    hit.forEach((r) => (r.current_status = p[0]));
+    return hit.map((r) => ({ chit_id: r.chit_id }));
+  }
+  if (/^SELECT sender_entity_id FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ sender_entity_id: W.senderId || ME }];
+  if (/^SELECT sender_entity_id, purpose, business_json FROM chit_header/.test(s)) return [{ sender_entity_id: W.senderId || STUB, purpose: 'order', business_json: {} }];
+  if (/^SELECT all_recipients FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ all_recipients: W.header.all_recipients.map((x) => ({ entity_id: (W.ident[x.bridge_id] || {}).identity_id })) }];
+  if (/^SELECT cancel_requested_at FROM chit_status/.test(s)) return W.asked ? [{ cancel_requested_at: new Date() }] : [{}];
+  if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s) && /all_recipients/.test(s)) return [W.header];
+  if (/FROM identities WHERE bridge_id = ANY/.test(s)) return p[0].map((b) => W.ident[b]).filter(Boolean);
+  if (/FROM identities WHERE identity_id = ANY/.test(s)) return Object.values(W.ident).filter((i) => p[0].includes(i.identity_id));
+  if (/^SELECT display_name, status, is_erased FROM identities WHERE identity_id=\$1/.test(s)) return [{ display_name: 'AU Pumps', status: 'active', is_erased: false }];
+  if (/FROM identities WHERE bridge_id = \$1 AND identity_type = 'entity'/.test(s)) return W.ident[p[0]] ? [W.ident[p[0]]] : [];
+  if (/FROM chit_participants/.test(s)) return [...new Set(W.status.map((r) => r.entity_id))].map((entity_id) => ({ entity_id }));
+  if (/chit_participant_parity/.test(s)) return [{ present: true, deleted_at: null }];
+  if (/^SELECT current_status FROM chit_status WHERE chit_id=\$1 AND entity_id=\$2$/.test(s)) return W.status.filter((r) => r.chit_id === p[0] && r.entity_id === p[1]).map((r) => ({ current_status: r.current_status }));
+  if (/^INSERT INTO chit_status \(chit_id, entity_id, current_status, direction\)/.test(s)) {
+    if (!W.status.find((r) => r.chit_id === p[0] && r.entity_id === p[1] && r.direction === p[3])) W.status.push({ chit_id: p[0], entity_id: p[1], current_status: p[2], direction: p[3] });
+    return [];
+  }
+  if (/^SELECT dispute_id FROM chit_disputes/.test(s)) return [];
+  if (/^SELECT ch\.auto_subject/.test(s)) return [{ auto_subject: 'PO', summary_json: {}, my_status: 'pending' }];
+  if (/^SELECT \* FROM chit_disputes WHERE dispute_id = \$1 AND chit_id = \$2/.test(s)) return W.disputeRow ? [W.disputeRow] : [];
+  if (/^SELECT scope FROM chit_disputes/.test(s)) return [{ scope: W.scope }];
+  if (/^SELECT 1 FROM chit_disputes WHERE dispute_id = \$1 AND chit_id = \$2/.test(s)) return W.disputes.includes(p[0]) ? [{}] : [];
+  if (/^SELECT role, category FROM chit_disputes/.test(s)) return W.disputes.includes(p[0]) ? [{ role: W.disputeRole, category: 'quantity' }] : [];
+  if (/FROM chit_dispute_roster/.test(s)) {
+    let rows = W.roster;
+    if (/role='party' AND status='open'/.test(s)) rows = rows.filter((r) => r.role === 'party' && r.status === 'open');
+    return rows;
+  }
+  if (/chit_dispute_resolve/.test(s)) return [{ all_resolved: true }];
+  if (/^SELECT entity_id FROM chit_status WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return W.status.filter((r) => r.entity_id === p[1]).map((r) => ({ entity_id: r.entity_id }));
+  if (/pg_advisory_xact_lock/.test(s)) return [{}];
+  if (/coalesce\(max\(seq\), 0\) \+ 1 AS seq FROM ctp_event_out/.test(s)) return [{ seq: Math.max(0, ...W.out.filter((r) => r.chit_id === p[0] && r.from_entity_id === p[1]).map((r) => r.seq)) + 1 }];
+  if (/^INSERT INTO ctp_event_out/.test(s)) {
+    W.out.push({ id: W.nextId++, chit_id: p[0], from_entity_id: p[1], seq: p[2], kind: p[3], event: JSON.parse(p[4]), to_entity_id: p[5], to_bridge_id: p[6], to_installation_key: p[7] });
+    return [];
+  }
+  if (/^SELECT 1 FROM chit_messages WHERE message_id/.test(s)) return W.msgs.filter((m) => m.message_id === p[0] && m.entity_id === p[1]).map(() => ({}));
+  if (/^SELECT chit_message_deliver/.test(s)) return [{ created_at: new Date() }];
+  return [];
+}
+const q = async (sql, p) => {
+  const rows = rowsFor(sql, p);
+  return { rows, rowCount: rows.length };
+};
+const stub = (file, exp) => {
+  const id = require.resolve(root(file));
+  require.cache[id] = { id, filename: id, loaded: true, exports: exp };
+};
+const tx = { query: q };
+stub('db/index.js', {
+  query: q,
+  pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) },
+  withEntity: async (id, fn) => {
+    ENT = id;
+    return fn(tx);
+  },
+  withTransaction: async (fn) => fn(tx),
+  onEntity: async (id, db, fn) => fn(tx),
+  readBatch: async () => ({}),
+  trySavepoint: async (db, fn, fb) => {
+    try {
+      return await fn(db);
+    } catch (_) {
+      return fb;
+    }
+  }
+});
+const book = {
+  remoteInstallations: async () => (Object.keys(W.place).length ? new Map([['sit-au', { endpoint: 'x', active: true }]]) : new Map()),
+  resolve: async (id) => W.place[id] || { entity_id: id, local: true, installation_key: null, endpoint: null },
+  resolveAll: async () => new Map(),
+  peerByKey: async () => ({ peer: null, status: 403, why: 'stub' }),
+  invalidate() {}
+};
+stub('lib/ctpaddress.js', book);
+const sc = require(root('lib/schema'));
+sc.hasTable = async () => true;
+sc.hasColumn = async () => false;
+require(root('lib/books-hooks')).afterChit = () => Promise.resolve({});
+try {
+  require(root('lib/whatsapp-out')).notifyChitStatus = async () => null;
+} catch (_) {
+  /* optional */
+}
+const origErr = console.error;
+console.error = () => {};
+
+const ret = require(root('lib/ctpreturn'));
+const chits = require(root('routes/chits'));
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const app = express();
+app.use(express.json());
+app.use('/api/chits', chits);
+const tok = (id) => jwt.sign({ identity_id: id, identity_type: 'entity', display_name: 'who-' + id.slice(0, 5) }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+function call(method, url, token, body) {
+  return new Promise((done) => {
+    const srv = app.listen(0, '127.0.0.1', () => {
+      const data = body ? JSON.stringify(body) : '';
+      const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) };
+      const r = http.request({ host: '127.0.0.1', port: srv.address().port, path: url, method, headers }, (res) => {
+        let b = '';
+        res.on('data', (c) => (b += c));
+        res.on('end', () => {
+          srv.close();
+          let j = null;
+          try {
+            j = JSON.parse(b);
+          } catch (_) {
+            /* not json */
+          }
+          done({ status: res.statusCode, body: j || {} });
+        });
+      });
+      r.on('error', (e) => {
+        srv.close();
+        done({ status: 'ERR ' + e.code, body: {} });
+      });
+      r.end(data);
+    });
+  });
+}
+const sqlOf = (re) => W.rec.filter((x) => re.test(x.s));
+
+
+const books = require(root('lib/books-hooks'));
+books.chitWithdrawn = async () => null;
+books.chitWithdrawnSaid = async () => null;
+sc.hasColumn = async () => true;
+const FROM = { installation_key: 'sit-au', population: 'live', bridge_id: B_STUB, display_name: 'AU Pumps' };
+const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, from: FROM, to: { identity_id: ME } }, over || {}));
+const EDITOR = { level: 'editor' };
+const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.event.copy + ':' + r.event.status : ''));
+
+(async () => {
+  console.log('\n== 1 · cancel / withdraw / the flags / back to pending ==\n');
+  await t('withdrawing a sent order (the real void route) tells the parties elsewhere: the sent copy cancelled, and the cancel request; the flag is stamped by the shared stamp', async () => {
+    resetWorld();
+    W.senderId = ME;
+    const r = await call('PUT', '/api/chits/' + CHIT + '/void', tok(ME), { reason: 'Ordered twice by mistake' });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.deepStrictEqual(kinds().sort(), ['cancel_request', 'message', 'status:sent:cancelled'].sort());
+    const status = W.out.find((x) => x.kind === 'status');
+    assert.strictEqual(status.event.previous_status, 'delivered');
+    assert.strictEqual(status.to_bridge_id, B_STUB);
+    assert.strictEqual(W.out.find((x) => x.kind === 'cancel_request').event.reason, 'Ordered twice by mistake');
+    assert.ok(sqlOf(/SET cancel_requested_at = NOW\(\)/).some((x) => x.ent === STUB), 'the flag on the shadow of the recipient, as in one database');
+    assert.ok(r.body.ctp && r.body.ctp.queued >= 1, JSON.stringify(r.body));
+    assert.strictEqual(sqlOf(/^UPDATE chit_status SET current_status/).length, 1, 'one status write, by the one writer');
+  });
+  await t('a withdrawal the rail refuses (the sent copy is completed) is refused 409 at the origin and nothing is queued', async () => {
+    resetWorld();
+    W.status[0].current_status = 'completed';
+    const r = await call('PUT', '/api/chits/' + CHIT + '/void', tok(ME), { reason: 'Changed my mind later on' });
+    assert.strictEqual(r.status, 409, JSON.stringify(r.body));
+    assert.strictEqual(W.out.length, 0);
+  });
+  await t('a withdrawal between parties who are all here queues nothing and the answer has no ctp key', async () => {
+    resetWorld();
+    W.place = {};
+    const r = await call('PUT', '/api/chits/' + CHIT + '/void', tok(ME), { reason: 'Ordered twice by mistake' });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(W.out.length, 0);
+    assert.strictEqual(r.body.ctp, undefined);
+  });
+  await t('a recipient that was asked cancels (moveStatus): its status, the confirmation flag for the sender elsewhere, and the "[cancel confirmed]" message all cross', async () => {
+    resetWorld();
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }];
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB, role: 'sender' }, { bridge_id: B_ME, role: 'to' }] };
+    W.asked = true;
+    const mv = await chits.moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
+    assert.strictEqual(mv.code, 200, JSON.stringify(mv.body));
+    assert.deepStrictEqual(kinds().sort(), ['cancel_confirm', 'message', 'status:received:cancelled'].sort());
+    assert.strictEqual(W.out.find((x) => x.kind === 'cancel_confirm').to_bridge_id, B_STUB);
+  });
+  await t('a recipient that was NOT asked cancels: no confirmation crosses (it would credit the sender with an agreement nobody made)', async () => {
+    resetWorld();
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }];
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
+    W.asked = false;
+    await chits.moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
+    assert.ok(!kinds().includes('cancel_confirm'), kinds().join());
+  });
+  await t('assigning a chit back to pending is a status move and is told like one', async () => {
+    resetWorld();
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'accepted' }];
+    const assign = require(root('lib/assign-chit'));
+    const out = await assign.assignChit(tx, ME, CHIT, { identity_id: LOCAL2, display_name: 'Asha' }, 'push', { copy: 'received', me: EDITOR, from: 'accepted' });
+    assert.ok(out.moved, JSON.stringify(out));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    assert.deepStrictEqual(kinds(), ['status:received:pending']);
+  });
+  await t('the receiver sets the flag "cancel requested" on OUR copy once, only for the chit’s sender', async () => {
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
+    const ev = { kind: 'cancel_request', seq: 2, by_name: 'Raj', reason: 'Ordered twice by mistake' };
+    const first = await apply(ev);
+    assert.ok(first.ok && first.applied, JSON.stringify(first));
+    const stamp = sqlOf(/SET cancel_requested_at = NOW\(\)/)[0];
+    assert.deepStrictEqual([stamp.p[0], stamp.p[1], stamp.p[2], stamp.p[3], stamp.ent], [CHIT, 'Raj', 'Ordered twice by mistake', ME, ME]);
+    const again = await apply(ev);
+    assert.ok(again.ok && again.applied === false);
+    assert.strictEqual(sqlOf(/SET cancel_requested_at = NOW\(\)/).length, 1);
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME }, { bridge_id: B_STUB }] };
+    const notSender = await apply(ev);
+    assert.ok(!notSender.ok && notSender.status === 409, JSON.stringify(notSender));
+  });
+  await t('the receiver sets the flag "cancel confirmed" on the sender’s copy (ours), only from a recipient', async () => {
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_ME, all_recipients: [{ bridge_id: B_ME }, { bridge_id: B_STUB }] };
+    const ok = await apply({ kind: 'cancel_confirm', seq: 3, by_name: 'Raj' });
+    assert.ok(ok.ok && ok.applied, JSON.stringify(ok));
+    const stamp = sqlOf(/SET cancel_confirmed_at = NOW\(\)/)[0];
+    assert.deepStrictEqual([stamp.p[0], stamp.p[1], stamp.p[2]], [CHIT, 'Raj', ME]);
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
+    const wrong = await apply({ kind: 'cancel_confirm', seq: 3, by_name: 'Raj' });
+    assert.ok(!wrong.ok && wrong.status === 409);
+  });
+  await t('a sent-copy status event mirrors the shadow of the sender’s SENT row', async () => {
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }, { chit_id: CHIT, entity_id: STUB, direction: 'sent', current_status: 'delivered' }];
+    const r = await apply({ kind: 'status', seq: 2, status: 'cancelled', previous_status: 'delivered', copy: 'sent', by_name: 'Raj' });
+    assert.ok(r.ok && r.applied, JSON.stringify(r));
+    assert.strictEqual(W.status.find((x) => x.entity_id === STUB && x.direction === 'sent').current_status, 'cancelled');
+  });
+
+  //__END__
+  console.error = origErr;
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  process.exit(fail ? 1 : 0);
+})();
