@@ -217,6 +217,7 @@ const GUARDS = [
      matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
      BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
+  'rollup-currency.test.cjs', // REP-50
   'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its
      own machine. open(sign(build(copy))) must deep-equal copy, or the two transports write different rows and
