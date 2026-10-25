@@ -24,7 +24,9 @@ async function statusAt(ctx, installation, entityId, chitId) {
 /** the address the screen builds: bridge_id@host-of-that-installation (same-installation sellers are added by User ID, as the walk did) */
 function addressOf(ctx, buyer, seller) {
   if (seller.installation === buyer.installation) return seller.user_id;
-  return seller.bridge_id + '@' + ctx.topo.installations[seller.installation].host;
+  /* the address is the installation's DOMAIN (installation.domain), never the staging sign-in host */
+  const inst = ctx.topo.installations[seller.installation];
+  return seller.bridge_id + '@' + (inst.domain || inst.host);
 }
 
 /** add a supplier (an existing row is fine: 409 Exists) and find its row in my list. → { add, stub } */

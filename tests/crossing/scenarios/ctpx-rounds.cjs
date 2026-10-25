@@ -11,6 +11,9 @@ const flow = require('../lib/flow.cjs');
 const { sameDigest } = require('../lib/compare.cjs');
 
 /** buyer orders `qty` of the seller's matching item from the remote catalogue, stating the CART's currency (what the screen does). → { chit_id, stub, item, cat } | null */
+/** what was agreed, without the per-installation `at` stamp */
+const agreedTerms = (c) => { const a = (c && c.business_json.agreed) || {}; return { by: a.by, round: a.round, terms: a.terms, agreed_with: a.agreed_with }; };
+
 async function placeOrder(ctx, rec, id, qty, opts) {
   const a = await flow.actors(ctx, id);
   const { stub } = await flow.addSupplier(ctx, a.bk, a.sk);
@@ -172,10 +175,10 @@ const R22 = {
     rec.check(there.ok, 'the terms arrived on the seller\'s installation (' + there.waitedMs + ' ms)', 'never arrived');
     const agreed = await a.seller.post('/api/chits/' + chitId + '/proposals/' + out.body.proposal_id + '/accept', {});
     rec.check(agreed.ok, 'the seller agrees (HTTP ' + agreed.status + ')', JSON.stringify(agreed.body).slice(0, 200));
-    const done = await flow.waitCopyWhere(ctx, a.bk, chitId, (c) => c.business_json.agreed && c.business_json.agreed.scope === terms.scope);
+    const done = await flow.waitCopyWhere(ctx, a.bk, chitId, (c) => c.business_json.agreed && (c.business_json.agreed.terms || c.business_json.agreed).scope === terms.scope);
     rec.check(done.ok, 'the buyer\'s copy carries business_json.agreed (' + done.waitedMs + ' ms)', 'no agreed terms on the buyer');
     const pair = await flow.bothCopies(ctx, chitId, a.bk, a.sk);
-    rec.check(pair.buyer && pair.seller && JSON.stringify(pair.buyer.business_json.agreed) === JSON.stringify(pair.seller.business_json.agreed), 'the same terms on both copies', JSON.stringify({ b: pair.buyer && pair.buyer.business_json.agreed, s: pair.seller && pair.seller.business_json.agreed }));
+    rec.check(pair.buyer && pair.seller && JSON.stringify(agreedTerms(pair.buyer)) === JSON.stringify(agreedTerms(pair.seller)), 'the same terms on both copies (each installation stamps its own at)', JSON.stringify({ b: pair.buyer && pair.buyer.business_json.agreed, s: pair.seller && pair.seller.business_json.agreed }));
     rec.check(before && pair.seller && sameDigest(before.invoice_md5, pair.seller.invoice_md5), 'the invoice md5 did not change', 'before ' + (before && before.invoice_md5) + ' after ' + (pair.seller && pair.seller.invoice_md5));
   }
 };

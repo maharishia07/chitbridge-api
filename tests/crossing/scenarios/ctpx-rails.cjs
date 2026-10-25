@@ -208,7 +208,8 @@ const R10 = {
     rec.check(there.ok, 'the seller\'s copy carries the cancel request (' + there.waitedMs + ' ms)', 'cancel_requested never stamped on the seller');
     rec.check(there.ok && there.value.current_status !== 'cancelled', 'the seller\'s copy is NOT cancelled (it must confirm)', 'status ' + (there.value && there.value.current_status));
     const mine = await flow.copy(ctx, a.bk, made.chit_id);
-    rec.check(mine && mine.cancel_requested, 'the request is stamped on the buyer\'s copy too', JSON.stringify(mine && mine.cancel_requested));
+    /* routes/chits.js PUT /:chit_id/void: the sender withdraws ITS OWN copy (cancelled at once) and REQUESTS cancellation from the recipients */
+    rec.check(mine && mine.current_status === 'cancelled', 'the buyer copy is withdrawn (cancelled)', JSON.stringify(mine && { status: mine.current_status, req: mine.cancel_requested }));
   }
 };
 
