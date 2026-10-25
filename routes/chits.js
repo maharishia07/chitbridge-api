@@ -1161,6 +1161,25 @@ async function sendLookupRecipient(r) {
 }
 
 /** who sells (an order: the recipient; anything else: the sender) and the rate on every line the shelf can answer */
+/**
+ * ⭐ THE SELLER'S CURRENCY (Athi, 25 Oct, DECISIONS 14:50, walk W24: "always use the seller currency"). An order is priced in the money of the business that SELLS it: Sydney (AUD) ordering ₹650 goods
+ * from Chennai (INR) was stored as 13000.00 AUD on both copies because the chit took the SENDER's money. For an order-like send (seller ≠ sender) the seller's own money is, in order:
+ *   1. the seller's identities.currency_code, when this installation holds it;
+ *   2. lib/regional.currencyFor(seller) — the one resolver — when the seller lives on THIS installation;
+ *   3. nothing: a seller on another installation is a stub with NULL money on purpose (the business is elsewhere; regional would invent this installation's default). The caller then keeps what the
+ *      buyer's screen stated (business_json.currency, the seller's price list as it showed it), else the sender's, as before.
+ * A self-chit, a counter bill, and anything that is not an order never come here (sendSeller decides who sells).
+ * @returns {Promise<string|null>} an upper-case code, or null when this installation does not know the seller's money
+ */
+async function sellerMoney(sellerId) {
+  const row = await query('SELECT currency_code FROM identities WHERE identity_id = $1', [sellerId]);
+  const stated = row.rows[0] && row.rows[0].currency_code;
+  if (stated) return String(stated).toUpperCase();
+  if ((await require('../lib/ctpaddress').resolve(sellerId)).local === false) return null;
+  const known = await require('../lib/regional').currencyFor(sellerId);
+  return known ? String(known).toUpperCase() : null;
+}
+
 async function sendSeller(st, req, res) {
   const { sender_id, purpose, business_json, receiverDetails } = st;
   let { line_items } = st;
@@ -1183,6 +1202,7 @@ async function sendSeller(st, req, res) {
      offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
   const counterBill = taxCopy.counterIssued(business_json);
   const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
+  if (sellerId !== sender_id) st.currency_code = (await sellerMoney(sellerId)) || st.currency_code; /* DECISIONS 14:50: the seller's money, when this installation knows it */
   /**
    * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
    * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
@@ -7083,6 +7103,7 @@ router.openapi = { paths: pathsOf(), schemas: {} };
 router.stampCancelRequested = stampCancelRequested; /* lib/ctpreturn sets the same flags on a copy a request or a confirmation was sent to */
 router.stampCancelConfirmed = stampCancelConfirmed;
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
+router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
 router.moneyOfLines = moneyOfLines; /* lib/change-order re-issues the invoice for proposed lines by the very same calculation */
 router.moneyOfInvoice = moneyOfInvoice;
