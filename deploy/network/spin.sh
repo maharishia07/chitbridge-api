@@ -70,7 +70,7 @@ $SSH 'mkdir -p ~/net && chmod 700 ~/net'
   echo "GIT_TOKEN='$(sed -n 's/^GIT_TOKEN=//p' .env | head -n 1)'"
   echo "CB_MASTER_DOMAIN='$MASTER_HOST'"
   echo "CB_MASTER_INSTALLATION='$MASTER_KEY_ID'"
-  echo "CB_MASTER_KEY='$PIN'"
+  printf "CB_MASTER_KEY='%s'\n" "$PIN"   # printf, not echo: dash's echo turns the PEM's literal \n into real newlines and breaks the .env
   echo "SPIN_MASTER_FINGERPRINT='$FINGERPRINT'"
 } | $SSH 'umask 077; cat > ~/net/spin.env'
 [ ! -f "$SEED_BUNDLE" ] || scp -q -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o BatchMode=yes "$SEED_BUNDLE" "$TARGET:net/seed.bundle"
