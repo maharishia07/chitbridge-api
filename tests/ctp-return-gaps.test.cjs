@@ -462,7 +462,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     const chitsPath = require.resolve(root('routes/chits.js'));
     const real = chits.postMessageCopies;
     chits.postMessageCopies = async (m) => {
-      W.msgs.push({ message_id: m.message_id, entity_id: ME });
+      W.msgs.push({ message_id: m.message_id, entity_id: ME }, { message_id: m.message_id, entity_id: LOCAL2 }); /* the fan-out writes a copy for every party here */
       return { message_id: m.message_id };
     };
     return () => (chits.postMessageCopies = real);
@@ -516,6 +516,52 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     const src = require('fs').readFileSync(root('lib/events.js'), 'utf8');
     assert.ok(/function notifyAfter\(res, entity_ids, evt\)[\s\S]*emit\(ids, e\)/.test(src), 'notifyAfter calls emit');
     assert.ok(!/\bres\b/.test(require('fs').readFileSync(root('lib/ctpreturn.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').replace(/'[^'\n]*'/g, '').replace(/`[^`]*`/g, '')), 'ctpreturn needs no response object');
+  });
+
+  console.log('\n== 5 · a second local party gets its own timeline row ==\n');
+  const logRows = () => sqlOf(/^INSERT INTO state_log/).map((x) => ({ entity: x.p[1], action: /'message_sent'/.test(x.s) ? 'message_sent' : x.p[2] }));
+  await t('a message for two people here: each one’s own event writes that person’s row (the message itself is held once)', async () => {
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }, { bridge_id: B_LOCAL2 }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
+    const restore = stubMessages();
+    try {
+      const ev = { kind: 'message', seq: 5, message_id: MSG, message_text: 'Shipping tomorrow', msg_type: 'info', sender_display_name: 'Raj' };
+      const first = await apply(ev);
+      const second = await apply(ev, { to: { identity_id: LOCAL2 } });
+      assert.ok(first.applied && second.applied, JSON.stringify([first, second]));
+      assert.deepStrictEqual(logRows().filter((x) => x.action === 'message_sent').map((x) => x.entity).sort(), [ME, LOCAL2].sort());
+      const again = await apply(ev, { to: { identity_id: LOCAL2 } });
+      assert.ok(again.ok && again.applied === false, 'the same event again writes nothing more');
+      assert.strictEqual(logRows().filter((x) => x.action === 'message_sent').length, 2);
+    } finally {
+      restore();
+    }
+  });
+  await t('a dispute reply writes the timeline row for the dispute’s whole audience here: the roster through chit_log_targets, the chit through chit_log_all', async () => {
+    resetWorld();
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }, { bridge_id: B_LOCAL2 }] };
+    W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }, { chit_id: CHIT, entity_id: LOCAL2, direction: 'received', current_status: 'pending' }];
+    W.disputes = [DISPUTE];
+    W.roster = [{ entity_id: STUB, role: 'raiser', status: 'open' }, { entity_id: ME, role: 'party', status: 'open' }, { entity_id: LOCAL2, role: 'party', status: 'open' }];
+    const restore = stubMessages();
+    try {
+      W.scope = 'targeted';
+      const r = await apply({ kind: 'dispute_message', seq: 6, dispute_id: DISPUTE, message_id: MSG, message_text: 'We shipped 200', sender_display_name: 'Raj' });
+      assert.ok(r.ok && r.applied, JSON.stringify(r));
+      const targets = sqlOf(/SELECT chit_log_targets/).filter((x) => x.p[2] === 'message_sent');
+      assert.strictEqual(targets.length, 1);
+      assert.deepStrictEqual(targets[0].p[1].slice().sort(), [STUB, ME, LOCAL2].sort(), 'every roster member here, not only the one the event was addressed to');
+      W.scope = 'chit_wide';
+      const wide = await apply({ kind: 'dispute_message', seq: 7, dispute_id: DISPUTE, message_id: 'a0000000-0000-4000-8000-0000000000a3', message_text: 'And the rest', sender_display_name: 'Raj' });
+      assert.ok(wide.applied);
+      assert.strictEqual(sqlOf(/SELECT chit_log_all/).length, 1);
+      const again = await apply({ kind: 'dispute_message', seq: 7, dispute_id: DISPUTE, message_id: 'a0000000-0000-4000-8000-0000000000a3', message_text: 'And the rest', sender_display_name: 'Raj' });
+      assert.ok(again.ok && again.applied === false);
+      assert.strictEqual(sqlOf(/SELECT chit_log_all/).length, 1, 'once');
+    } finally {
+      restore();
+    }
   });
 
   //__END__
