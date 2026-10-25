@@ -25,7 +25,8 @@ case "${1:-}" in
   au) SIT_HOST=sit-au.ondcpro.com; COUNTRY=AU; CURRENCY=AUD; TZNAME=Australia/Sydney; KEY=sit-au ;;
   ae) SIT_HOST=sit-ae.ondcpro.com; COUNTRY=AE; CURRENCY=AED; TZNAME=Asia/Dubai;       KEY=sit-ae ;;
   root) SIT_HOST=sit-root.ondcpro.com; COUNTRY=; CURRENCY=; TZNAME=Asia/Kolkata;      KEY=sit-root ;;  # the network master: it states no country (Grundfos style)
-  *) die "usage: ./up.sh in|au|ae|root" ;;
+  grund) SIT_HOST=sit-grund.ondcpro.com; COUNTRY=; CURRENCY=; TZNAME=;          KEY=sit-grund ;;  # a private global installation (Grundfos): no country, no money, no zone; each business brings its own
+  *) die "usage: ./up.sh in|au|ae|root|grund" ;;
 esac
 # before DNS: SIT_HOST_AS=129-225-85-65.sslip.io (a public name that resolves to the VM's IP) stands in for the ondcpro.com name
 SIT_HOST=${SIT_HOST_AS:-$SIT_HOST}
@@ -82,7 +83,7 @@ set_kv INSTALLATION_KEY "$KEY"
 set_kv WEB_ORIGIN "https://$SIT_HOST"
 set_kv CB_API_BASE "https://$SIT_HOST"
 set_kv PUBLIC_API_BASE "https://$SIT_HOST"
-set_kv TESTER_CODE_TZ "$TZNAME"
+set_kv TESTER_CODE_TZ "${TZNAME:-UTC}"   # the tester code needs a clock; an installation that states no zone uses UTC for it
 # the api's own env file: the same file without what only this script, compose or the database owner needs (the owner's password stays out of the api)
 grep -E '^[A-Z][A-Z0-9_]*=.' "$ENVF" \
   | grep -vE '^(POSTGRES_PASSWORD|CB_APP_PASSWORD|GIT_TOKEN|API_REF|WEB_REF|SIT_ROOT|SIT_HOST|SIT_COUNTRY|WEB_ORIGIN|CB_API_BASE|DB_PORT|ASK_CUSTOM_HOSTS|SIT_PEERS|SIT_PROJECT)=' \
@@ -138,7 +139,7 @@ say "installation $KEY: $COUNTRY / $CURRENCY / $TZNAME"
 $DC exec -T db psql -X -q -U postgres -d chitbridge -v ON_ERROR_STOP=1 \
   -v k="$KEY" -v c="$COUNTRY" -v d="$SIT_HOST" -v cur="$CURRENCY" -v tz="$TZNAME" -v ep="https://$SIT_HOST/api/ctp/deliver" -f - <<'SQL'
 INSERT INTO installation (installation_key, label, purpose, cloud_provider, region, zone, domain, currency, timezone, vertical_key, country, ctp_endpoint)
-VALUES (:'k', :'k', 'sit', 'oracle', NULLIF(:'c', ''), 'always-free', :'d', NULLIF(:'cur', ''), :'tz', 'base', NULLIF(:'c', ''), :'ep')
+VALUES (:'k', :'k', 'sit', 'oracle', NULLIF(:'c', ''), 'always-free', :'d', NULLIF(:'cur', ''), NULLIF(:'tz', ''), 'base', NULLIF(:'c', ''), :'ep')
 ON CONFLICT (installation_key) DO UPDATE
   SET country = EXCLUDED.country, region = EXCLUDED.region, domain = EXCLUDED.domain, currency = EXCLUDED.currency, timezone = EXCLUDED.timezone,
       ctp_endpoint = EXCLUDED.ctp_endpoint, active = true;
@@ -205,7 +206,7 @@ $DC ps --format 'table {{.Service}}\t{{.Status}}'
 if [ "$FIRST" = 1 ]; then
   say "first run: tester sign-in"
   FIXED=$(get_kv TESTER_CODE | sed 's/{yymmdd}$//')
-  echo "Today's code (in $TZNAME): ${FIXED}$(TZ=$TZNAME date +%y%m%d). The fixed part is in $ENVF (TESTER_CODE); keep that file private."
+  echo "Today's code (in ${TZNAME:-UTC}): ${FIXED}$(TZ=${TZNAME:-UTC} date +%y%m%d). The fixed part is in $ENVF (TESTER_CODE); keep that file private."
   echo "Sign in with a name that matches TESTER_NAMES ($(get_kv TESTER_NAMES))."
 fi
 [ "$ok_api" = 1 ] && [ "$ok_web" = 1 ] || die "api or web did not come up: $DC logs --tail 80 api web"
