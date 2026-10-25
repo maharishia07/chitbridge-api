@@ -58,6 +58,10 @@ function rowsFor(sql) {
     if (world.peerThrows) throw new Error(SECRET_SQL);
     return { rows: world.peer ? [world.peer] : [] };
   }
+  if (/f_installation_of/.test(sql) && /FROM identities/.test(sql)) return { rows: [] }; /* RAIL-107: the sender has no row here yet: a stub is made */
+  if (/^INSERT INTO identities/.test(sql)) return { rows: [{ identity_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', display_name: 'MX' }] };
+  if (/f_place_entity/.test(sql)) return { rows: [] };
+  if (/FROM identities WHERE bridge_id = ANY/.test(sql)) return { rows: [] };
   if (/FROM identities/.test(sql)) return { rows: world.to ? [world.to] : [] };
   if (/f_ctp_may_deliver/.test(sql)) {
     if (world.crossThrows) throw new Error(SECRET_SQL);
