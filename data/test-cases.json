@@ -64652,6 +64652,56 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-chit-proposals.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE PROPOSAL DOORS (routes/chit-proposals.js, 5 routes) IS A PROBLEM BODY WITH ITS KEYS FROZEN AT THE FIRST CONTRACT; EVERY BODY CLOSED; NO ANSWER SAYS A FAILURE'S CAUSE; ANOTHER SHOP'S CHIT ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE PROPOSAL DOORS (routes/chit-proposals.js, 5 routes) IS A PROBLEM BODY WITH ITS KEYS FROZEN AT THE FIRST CONTRACT; EVERY BODY CLOSED; NO ANSWER SAYS A FAILURE'S CAUSE; ANOTHER SHOP'S CHIT ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 170 lines. Run: node chitbridge-api/tests/api-problem-chit-proposals.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 179,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-25T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-relationships.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE SIX SUPPLIER DOORS (/api/relationships/suppliers) IS A PROBLEM BODY WITH ITS OLD KEYS FROZEN; A 4XX SAYS ITS OWN SENTENCE; BOTH WRITE BODIES CLOSED; THE ADD ANSWERS supplier_entity_id; ANOTHER SHOP'S LIST ROW ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE SIX SUPPLIER DOORS (/api/relationships/suppliers) IS A PROBLEM BODY WITH ITS OLD KEYS FROZEN; A 4XX SAYS ITS OWN SENTENCE; BOTH WRITE BODIES CLOSED; THE ADD ANSWERS supplier_entity_id; ANOTHER SHOP'S LIST ROW ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 190 lines. Run: node chitbridge-api/tests/api-problem-relationships.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 180,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-25T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-till.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

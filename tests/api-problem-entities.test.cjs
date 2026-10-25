@@ -63,7 +63,8 @@ const sources = () => ({
   platform: require(path.join(HERE, 'lib', 'platformroot')),
   header: require(path.join(HERE, 'lib', 'entity-header')),
   sides: require(path.join(HERE, 'lib', 'sides')),
-  plans: require(path.join(HERE, 'lib', 'plans'))
+  plans: require(path.join(HERE, 'lib', 'plans')),
+  search: require(path.join(HERE, 'lib', 'network-search')) /* NET-39: the Where picker's places, so its 500 can be shown */
 });
 const contractModule = () => require(path.join(HERE, 'lib', 'entities-contract.js'));
 

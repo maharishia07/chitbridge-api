@@ -182,7 +182,9 @@ router.get('/search', auth, async (req, res) => {
     if (q.length < 2) return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     const kind = req.query.kind === 'product' ? 'product' : 'business';
     const found = await require('../lib/network-search').search({ q, kind, limit: req.query.limit }, req.identity, req.query.where);
-    if (!found.ok) return problem(req, res, { status: found.code === 'SEARCH_PLACE_UNKNOWN' ? 404 : 400, code: found.code, detail: found.why });
+    /* both statuses written in full: a place we do not deal with is a 404, a question too short is the 400 (tools/api-register.cjs reads the literals) */
+    if (!found.ok && found.code === 'SEARCH_PLACE_UNKNOWN') return problem(req, res, { status: 404, code: found.code, detail: found.why });
+    if (!found.ok) return problem(req, res, { status: 400, code: found.code, detail: found.why });
     res.json({ results: found.results, count: found.count, answers: found.answers });
   } catch (err) {
     console.error('Search error:', err.message);

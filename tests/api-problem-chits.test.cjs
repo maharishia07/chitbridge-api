@@ -30,11 +30,14 @@ const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json')
 const MOUNT = '/api/chits';
 /** the route file this mount serves (named in full so the graph links this test to it) */
 const ROUTE_FILE = 'routes/chits.js';
-const MINE = (route) => route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT);
+/** this file's routes: the chits router's own; the proposal doors it mounts (/:chit_id/proposals…) are tests/api-problem-chit-proposals.test.cjs's */
+const PROPOSAL_DOOR = new RegExp('/proposals(/|$)');
+const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route);
 const argv = process.argv.slice(2);
 const flagValue = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
 const REQUIRED_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id'];
+const GENERIC_SENTENCE = /^Something went wrong( — please try again\.| on our side\.)$/; /* lib/respond SAFE_SENTENCE · lib/problem INTERNAL_DETAIL: the words of a fault, never of a refusal */
 
 let passed = 0;
 let failed = 0;
@@ -372,6 +375,11 @@ const EXTRAS = [
   X('amend-a-delivered-line', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('That line has been delivered.'), { code: 'LINE_DELIVERED' }); } } } }),
   X('amend-a-value-the-database-refuses', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('check'), { code: '23514', constraint: 'amendment_reason_code_check' }); } } } }),
   X('amend-by-a-viewer', 'POST ' + C + '/:chit_id/amend', 403, { body: { edits: [] }, setup: { who: VIEWER } }),
+  /* API-6 finding (25 Oct): lib/amend's input refusals reach the caller as the sentence under their own code, never "Something went wrong" */
+  X('amend-line-without-item', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [{ line_index: 0, line: { quantity: 2 }, reason_code: 'misread_by_ai' }] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) } }),
+  X('amend-quantity-not-a-number', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [{ line_index: 0, line: { particulars: 'Tea', quantity: 'two' }, reason_code: 'misread_by_ai' }] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) } }),
+  X('amend-nothing', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) } }),
+  X('amend-bad-line-number', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [{ line: { particulars: 'Tea' }, reason_code: 'misread_by_ai' }] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) } }),
   X('amend-fails', 'POST ' + C + '/:chit_id/amend', 500, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw new Error(SECRET_SQL); } } } }),
   X('amend-done', 'POST ' + C + '/:chit_id/amend', 200, { body: [], setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => ({ amendments: [] }) } } }),
   X('networks-listed', 'GET ' + C + '/trace/networks', 200, { setup: { sqlRows: answering(/network_id/, [{ network_id: 'net1', is_operator: true, edges: '2' }]) } })
@@ -446,6 +454,8 @@ function checkProblemBody(label, answer) {
   check(label + ': content-type is application/problem+json', /application\/problem\+json/.test(answer.type), answer.type);
   check(label + ': has every Problem field', answer.json && REQUIRED_FIELDS.every((name) => answer.json[name] !== undefined), answer.json);
   check(label + ': status in the body equals the HTTP status', answer.json && answer.json.status === answer.status);
+  /* API-6 (25 Oct): a 4xx is a refusal the caller can act on, so its detail and message are the thrower's own sentence, never the generic words of a fault (amend hid lib/amend's sentence this way) */
+  if (answer.status < 500 && answer.json) check(label + ': a 4xx says its own sentence, never the generic fault words', !GENERIC_SENTENCE.test(String(answer.json.detail)) && !GENERIC_SENTENCE.test(String(answer.json.message)), [answer.json.detail, answer.json.message]);
 }
 
 function checkLegacy(label, answer, frozen) {

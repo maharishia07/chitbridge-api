@@ -61,6 +61,7 @@ function extras(tools) {
     X('search-found', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b', created_at: '2026-10-01T00:00:00.000Z' }]) } }),
     N('search-place-unknown', 'GET ' + at('/search'), 404, { url: at('/search?q=shop&where=sit-nowhere') }),
     N('search-places-listed', 'GET ' + at('/search/places'), 200, {}),
+    N('search-places-fails', 'GET ' + at('/search/places'), 500, { patch: { search: { places: async () => { throw new Error(SECRET_SQL); } } } }),
     X('search-db-fails', 'GET ' + at('/search'), 500, { url: at('/search?q=shop'), setup: failing }),
     X('header-read', 'GET ' + at('/header'), 200, { patch: { header: { read: async () => ({ business: { name: 'Shop A' }, licences: [], trade_ready: false }) } } }),
     X('header-fails', 'GET ' + at('/header'), 500, { patch: { header: { read: async () => { throw new Error(SECRET_SQL); } } } }),

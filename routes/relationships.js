@@ -21,6 +21,7 @@ const A_BUSINESS = `identity_type = 'entity' AND parent_entity_id IS NULL`;
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem');
+const words = require('../lib/relationships-contract'); /* API-4: the three supplier doors' contract (operations, the words of their refusals, the schema check) */
 const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
@@ -41,18 +42,11 @@ async function partyPatch(req, res, side) {
   try {
     return await withEntity(owner, (db) => partyFields.patch(db, owner, side, req.params.id, req.body, req.identity && req.identity.identity_id));
   } catch (e) {
-    if (e && e.code === 'DUPLICATE_PARTY') {
-      res.status(409).json({ code: 'DUPLICATE_PARTY', error: e.message, message: e.message, holder: e.holder || null, scheme: e.scheme || null });
-      return false;
-    }
-    if (e && e.status) {
-      res.status(e.status).json({ error: e.status === 404 ? 'Not found' : e.status === 409 ? 'Conflict' : 'validation', message: e.message });
-      return false;
-    }
-    if (e && e.code === '23505') {
-      res.status(409).json({ code: 'DUPLICATE_PARTY', error: partyFields.DUPLICATE_PARTY, message: partyFields.DUPLICATE_PARTY });
-      return false;
-    }
+    /* each refusal in the one Problem shape, its old keys kept (lib/relationships-contract partyRefused); the status written in full */
+    if (e && (e.code === 'DUPLICATE_PARTY' || e.code === '23505')) return (problem(req, res, { status: 409, ...words.partyRefused(e) }), false);
+    if (e && e.status === 404) return (problem(req, res, { status: 404, ...words.partyRefused(e) }), false);
+    if (e && e.status === 409) return (problem(req, res, { status: 409, ...words.partyRefused(e) }), false);
+    if (e && e.status) return (problem(req, res, { status: 400, ...words.partyRefused(e) }), false);
     throw e;
   }
 }
@@ -73,6 +67,8 @@ async function numberParty(owner, party_id) {
 
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
+/** the schema check of one supplier door (its own operation in lib/relationships-contract.js), as a list to spread after the gates; POST keeps its old 400 words */
+const checkedSupplier = (route) => (/^(POST|PATCH) \/suppliers/.test(route) ? [require('../middleware/validate').schemaValidate(words.operationFor(route), words.schemaOptions)] : words.checked(route));
 
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
 
@@ -87,18 +83,16 @@ async function remoteAddress(req, res, next) {
   if (!(/^https?:\/\//i.test(typed) || typed.includes('@'))) return next();
   try {
     const adopted = await require('../lib/remote-party').adopt(ctx(req), typed);
-    if (adopted.error) {
-      const words = adopted.error.message;
-      return problem(req, res, { status: adopted.error.status, code: adopted.error.code, detail: words, legacy: { error: 'Not added', message: words } });
-    }
+    if (adopted.error) return problem(req, res, words.remoteRefused(adopted.error));
     req.body.supplier_bridge_id = adopted.party ? adopted.party.bridge_id : adopted.bridge;
     if (adopted.party) req.remoteShown = { address: adopted.party.address, installation_key: adopted.party.installation_key };
     return next();
   } catch (failure) {
     console.error('Add supplier by address error:', failure.message);
-    return res.status(500).json({ error: 'Add supplier failed', message: safeErr(failure) });
+    return problem(req, res, words.failed(failure, req, 'Add supplier failed'));
   }
 }
+remoteAddress.addsStatuses = words.ADDRESS_GATE_STATUSES; /* tools/api-register.cjs reads the statuses a gate answers from here */
 
 /**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
@@ -134,17 +128,9 @@ async function remoteAddress(req, res, next) {
  */
 router.post(
   '/suppliers',
-  [
-    body('supplier_bridge_id').optional({ nullable: true }).trim(),
-    body('name').optional({ nullable: true }).trim().isLength({ max: 120 }),
-    body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
-    body('category').optional().trim().isLength({ max: 50 }),
-    body('nickname').optional().trim().isLength({ max: 80 }),
-    body('notes').optional().trim().isLength({ max: 2000 }),
-    body('preferred').optional().isBoolean()
-  ],
   auth,
-  validate,
+  /* the body against the door's own schema (lib/relationships-contract ADD_BODY): the same fields the old chain checked, refused in its old words (400 Validation failed), and a key the door never reads refused by name (S33) */
+  ...checkedSupplier('POST /suppliers'),
   remoteAddress,
   async (req, res) => {
     try {
@@ -157,24 +143,23 @@ router.post(
       const notes = sanitise(req.body.notes || '') || null;
       const preferred = req.body.preferred === true || req.body.preferred === 'true';
 
-      if (!bridge && !localName)
-        return res.status(400).json({ error: 'Invalid', message: 'Give a User ID or email for a ChitBridge business, or a name for a local supplier' });
+      if (!bridge && !localName) return problem(req, res, { status: 400, ...words.invalid('Give a User ID or email for a ChitBridge business, or a name for a local supplier') });
 
       /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
          user_id — it is an ordinary entity row — so without this a competitor who guessed the handle could add
          acmetraders' private supplier to their own list. Who supplies you is a competitive fact, and the guess is
          not hard: the handle is the shop's own name plus their supplier's. */
-      if (require('../lib/handle').isMinted(bridge))
-        return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
+      if (require('../lib/handle').isMinted(bridge)) return problem(req, res, { status: 404, ...words.notFound() });
 
       /* ── OFF THE RAIL: a name, and an id minted for it. ─────────────────────────────────────────────────── */
       if (!bridge) {
         const local = await require('../lib/local-identity').mint(owner, localName, { query });
-        if (local.error) return res.status(local.status).json(local.error);
+        if (local.error && local.status === 409) return problem(req, res, { status: 409, ...words.mintRefused(local) }); /* no id could be allocated */
+        if (local.error) return problem(req, res, { status: 400, ...words.mintRefused(local) }); /* an empty, over-long or e-mail-shaped name */
         const dupL = await withEntity(owner, (db) =>
           db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, local.identity_id])
         );
-        if (dupL.rows.length > 0) return res.status(409).json({ error: 'Exists', message: localName + ' is already in your supplier list' });
+        if (dupL.rows.length > 0) return problem(req, res, { status: 409, ...words.exists(localName + ' is already in your supplier list') });
         await withEntity(owner, (db) =>
           db.query(
             /**
@@ -217,13 +202,13 @@ router.post(
          LIMIT 1`,
         [bridge]
       );
-      if (sup.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
-      if (sup.rows[0].identity_id === owner) return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
+      if (sup.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
+      if (sup.rows[0].identity_id === owner) return problem(req, res, { status: 400, ...words.invalid('Cannot add yourself') });
 
       const dup = await withEntity(owner, (db) =>
         db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, sup.rows[0].identity_id])
       );
-      if (dup.rows.length > 0) return res.status(409).json({ error: 'Exists', message: 'Already in your supplier list' });
+      if (dup.rows.length > 0) return problem(req, res, { status: 409, ...words.exists('Already in your supplier list') });
 
       await withEntity(owner, (db) =>
         db.query(
@@ -241,6 +226,7 @@ router.post(
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         supplier: {
+          supplier_entity_id: sup.rows[0].identity_id /* API-6 (25 Oct): the id the list and the catalogue read are addressed by, on every add */,
           bridge_id: bridge, ...req.remoteShown,
           display_name: sup.rows[0].display_name,
           on_rail: !!trade.ok,
@@ -255,13 +241,13 @@ router.post(
       });
     } catch (err) {
       console.error('Add supplier error:', err.message);
-      res.status(500).json({ error: 'Add supplier failed', message: safeErr(err) });
+      problem(req, res, words.failed(err, req, 'Add supplier failed'));
     }
   }
 );
 
 // List my suppliers — has_catalogue reflects an active default schema only
-router.get('/suppliers', auth, async (req, res) => {
+router.get('/suppliers', auth, ...checkedSupplier('GET /suppliers'), async (req, res) => {
   try {
     const owner = ctx(req);
     const r = await withEntity(owner, (db) =>
@@ -347,7 +333,7 @@ router.get('/suppliers', auth, async (req, res) => {
     res.json(Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     console.error('Get suppliers error:', err.message);
-    res.status(500).json({ error: 'Get suppliers failed', message: safeErr(err) });
+    problem(req, res, words.failed(err, req, 'Get suppliers failed'));
   }
 });
 
@@ -355,16 +341,8 @@ router.get('/suppliers', auth, async (req, res) => {
 // Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
 router.patch(
   '/suppliers/:id',
-  [
-    body('nickname').optional({ nullable: true }).trim().isLength({ max: 80 }),
-    body('category').optional({ nullable: true }).trim().isLength({ max: 50 }),
-    body('notes').optional({ nullable: true }).trim().isLength({ max: 2000 }),
-    body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
-    body('display_name').optional({ nullable: true }).trim().isLength({ max: 120 }),
-    body('preferred').optional().isBoolean()
-  ],
   auth,
-  validate,
+  ...checkedSupplier('PATCH /suppliers/:id'), /* the same fields the old chain checked, refused in its old words (400 Validation failed); a key the door never reads refused by name (S33) */
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -422,20 +400,19 @@ router.patch(
           )
         );
         const row = who.rows[0];
-        if (!row) return res.status(404).json({ error: 'Not found' });
-        if (!require('../lib/handle').isMinted(row.user_id))
-          return res.status(403).json({ error: 'Not yours', message: 'That is their own business name. Use "your name for them" instead.' });
+        if (!row) return problem(req, res, { status: 404, ...words.rowNotFound() });
+        if (!require('../lib/handle').isMinted(row.user_id)) return problem(req, res, { status: 403, ...words.notYours() });
         const nm = sanitise(String(req.body.display_name).trim().replace(/\s+/g, ' ')).slice(0, 120);
         try {
           await query(`UPDATE identities SET display_name = $1 WHERE identity_id = $2`, [nm, row.identity_id]);
         } catch (e) {
-          if (e && e.code === '23505') return res.status(409).json({ error: 'Exists', message: 'You already have a supplier called ' + nm + '.' });
+          if (e && e.code === '23505') return problem(req, res, { status: 409, ...words.exists('You already have a supplier called ' + nm + '.') });
           throw e;
         }
         if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm });
       }
       if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
-      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide nickname, category, notes, supply_kind, or preferred' });
+      if (!sets.length) return problem(req, res, { status: 400, ...words.nothingToUpdate() });
       vals.push(req.params.id, owner);
       const r = await withEntity(owner, (db) =>
         db.query(
@@ -444,11 +421,11 @@ router.patch(
           vals
         )
       );
-      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+      if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.rowNotFound() });
       res.json({ message: 'Supplier updated', ...(party ? { party } : {}) });
     } catch (err) {
       console.error('Update supplier error:', err.message);
-      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
+      problem(req, res, words.failed(err, req, 'Update failed'));
     }
   }
 );
@@ -461,20 +438,22 @@ router.patch(
  * unreferenced row and buys something useful: re-adding the same name finds the same id again (local-identity.mint
  * looks before it mints), so the history reconnects instead of starting over.
  */
-router.delete('/suppliers/:id', auth, async (req, res) => {
+router.delete('/suppliers/:id', auth, ...checkedSupplier('DELETE /suppliers/:id'), async (req, res) => {
   try {
     /* R8: owner only, refused with money open, and it HIDES (CRM's own remove) — a staff login can no longer delete a supplier the shop owes */
-    if (!isOwner(req)) return res.status(403).json({ code: 'OWNER_ONLY', error: 'Owner only', message: 'Only the owner can remove a supplier.' });
+    if (!isOwner(req)) return problem(req, res, { status: 403, ...words.ownerOnly() });
     const owner = ctx(req);
     const row = await withEntity(owner, (db) =>
       db.query(`SELECT supplier_entity_id FROM supplier_list WHERE supplier_list_id = $1 AND owner_entity_id = $2`, [req.params.id, owner])
     );
-    if (row.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    if (row.rows.length === 0) return problem(req, res, { status: 404, ...words.rowNotFound() });
     await require('../lib/crm').removeParty(owner, row.rows[0].supplier_entity_id);
     res.json({ message: 'Supplier removed' });
   } catch (err) {
-    if (err && err.status && err.status < 500) return res.status(err.status).json({ code: err.code || 'REFUSED', error: err.message, message: err.message });
-    res.status(500).json({ error: 'Remove supplier failed', message: safeErr(err) });
+    /* lib/crm removeParty's refusals, each status written in full: not this shop's party (404) · open dues either way (409) */
+    if (err && err.status === 404) return problem(req, res, { status: 404, ...words.removeRefused(err) });
+    if (err && err.status === 409) return problem(req, res, { status: 409, ...words.removeRefused(err) });
+    problem(req, res, words.failed(err, req, 'Remove supplier failed'));
   }
 });
 
@@ -508,7 +487,7 @@ router.delete('/suppliers/:id', auth, async (req, res) => {
  */
 const AVAIL_CONCURRENCY = 6; // enough to hide latency, low enough not to stampede our own DB
 const AVAIL_HITS_PER_SUPPLIER = 6;
-router.get('/suppliers/availability', auth, async (req, res) => {
+router.get('/suppliers/availability', auth, ...checkedSupplier('GET /suppliers/availability'), async (req, res) => {
   try {
     const owner = ctx(req);
     const text = String(req.query.q || '')
@@ -632,13 +611,13 @@ router.get('/suppliers/availability', auth, async (req, res) => {
       )
     );
   } catch (err) {
-    res.status(500).json({ error: 'Supplier availability failed', message: safeErr(err) });
+    problem(req, res, words.failed(err, req, 'Supplier availability failed'));
   }
 });
 
 // Fetch a supplier's catalogue (schema fields + products) to draft an order chit (D-059).
 // Mirrors the PHP supplierCompose flow: select supplier -> see their catalogue -> compose.
-router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) => {
+router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checkedSupplier('GET /suppliers/:supplier_entity_id/catalogue'), async (req, res) => {
   try {
     const sid = req.params.supplier_entity_id;
     const sup = await query(
@@ -688,7 +667,7 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
        while the storefront — the same view — did. One source of truth means one projection: everything the view says. */
     res.json(Object.assign({ supplier }, view));
   } catch (err) {
-    res.status(500).json({ error: 'Get catalogue failed', message: safeErr(err) });
+    problem(req, res, words.failed(err, req, 'Get catalogue failed'));
   }
 });
 
@@ -1042,5 +1021,8 @@ router.get('/scorecard/:entity_id', auth, async (req, res) => {
     res.status(500).json({ error: 'Scorecard failed', message: safeErr(err) });
   }
 });
+
+/* the contract of the three supplier doors beside the code (the register and /api/openapi.json read it from here); the other routes of this file are not declared yet */
+router.openapi = { paths: words.pathsOf(), schemas: {} };
 
 module.exports = router;

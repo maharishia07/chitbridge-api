@@ -13,6 +13,9 @@
   "DELETE /api/crm/parties/:id": {
    "foreign_id_404": true
   },
+  "DELETE /api/relationships/suppliers/:id": {
+   "foreign_id_404": true
+  },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
@@ -34,6 +37,9 @@
   },
   "GET /api/catalogue/network/:bridge_id": {
    "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "GET /api/chits/:chit_id/proposals": {
    "foreign_id_404": true
   },
   "GET /api/crm/parties/:id": {
@@ -61,6 +67,9 @@
    "foreign_id_404": true
   },
   "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/relationships/suppliers/:id": {
    "foreign_id_404": true
   },
   "PATCH /api/testing/incidents/:id": {
@@ -94,6 +103,18 @@
   },
   "POST /api/catalogue/network-store/:networkId/order": {
    "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
    "foreign_id_404": true
   },
   "POST /api/counters/:id/assign": {

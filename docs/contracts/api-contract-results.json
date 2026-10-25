@@ -122,6 +122,14 @@
     400
    ]
   },
+  "DELETE /api/relationships/suppliers/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/actors/:id/tasks": {
    "cases": 3,
    "failed": 0,
@@ -427,6 +435,14 @@
    ]
   },
   "GET /api/chits/:chit_id/messages": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/chits/:chit_id/proposals": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -906,6 +922,30 @@
     400
    ]
   },
+  "GET /api/relationships/suppliers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/repeat/:id": {
    "cases": 3,
    "failed": 0,
@@ -1252,6 +1292,14 @@
   },
   "PATCH /api/products/:id": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/relationships/suppliers/:id": {
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1848,6 +1896,38 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/chits/:chit_id/raida": {
@@ -2492,6 +2572,14 @@
   },
   "POST /api/products/status/bulk": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/relationships/suppliers": {
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

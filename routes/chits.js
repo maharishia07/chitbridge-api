@@ -3736,7 +3736,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
     );
   } catch (err) {
     console.error('Reprice error:', err.message);
-    problem(req, res, faultOf(err, req, 'Reprice failed'));
+    problem(req, res, faultOf(err, req, 'Reprice failed', { words: true }));
   }
 });
 
@@ -3764,7 +3764,7 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
     );
   } catch (err) {
     console.error('Cost record error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to record cost'));
+    problem(req, res, faultOf(err, req, 'Failed to record cost', { words: true }));
   }
 });
 
@@ -3958,7 +3958,7 @@ router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, r
     );
   } catch (err) {
     console.error('Raida report error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to read the register'));
+    problem(req, res, faultOf(err, req, 'Failed to read the register', { words: true }));
   }
 });
 
@@ -3970,7 +3970,7 @@ router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (re
     res.json(await raida.list(entity_id, req.params.chit_id, line_id));
   } catch (err) {
     console.error('Raida read error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to read the register'));
+    problem(req, res, faultOf(err, req, 'Failed to read the register', { words: true }));
   }
 });
 
@@ -4137,7 +4137,7 @@ router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-
     res.json(out);
   } catch (err) {
     console.error('Deliver lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to record delivery'));
+    problem(req, res, faultOf(err, req, 'Failed to record delivery', { words: true }));
   }
 });
 
@@ -4327,7 +4327,7 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
     res.json(out);
   } catch (err) {
     console.error('Assign lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to assign'));
+    problem(req, res, faultOf(err, req, 'Failed to assign', { words: true }));
   }
 });
 
@@ -4443,6 +4443,10 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     if (err && ['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
       return problem(req, res, { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') });
     }
+    /* an input the caller can fix (lib/amend AMEND_*: a line with no item, a quantity that is not a number, nothing to amend, a bad line number): the sentence reaches the screen under its own code (API-6 finding, 25 Oct) */
+    if (err && err.status === 400 && /^AMEND_/.test(String(err.code))) {
+      return problem(req, res, { status: 400, ...said({ error: 'Failed to amend', message: err.message, code: err.code }, err.code) });
+    }
     if (err && err.code === '23514') {
       console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
       return problem(req, res, { status: 409, ...said({
@@ -4453,7 +4457,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
       }, 'CHIT_VALUE_NOT_ACCEPTED') });
     }
     console.error('Amend error:', err.code || '', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to amend'));
+    problem(req, res, faultOf(err, req, 'Failed to amend', { words: true }));
   }
 });
 

@@ -128,6 +128,42 @@
    "since": "2026-10-22"
   },
   {
+   "code": "AMEND_LINE_INDEX",
+   "status": "400",
+   "title": "Bad line number",
+   "shopkeeper": "The correction does not say which line it corrects.",
+   "hint": "Send the line number (line_index) or the line id.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "AMEND_LINE_NEEDS_ITEM",
+   "status": "400",
+   "title": "Replacement line has no item",
+   "shopkeeper": "A replacement line needs an item. To remove the line, send line: null.",
+   "hint": "Name the item on the line, or remove the line.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "AMEND_NOTHING",
+   "status": "400",
+   "title": "Nothing to amend",
+   "shopkeeper": "The correction names no line.",
+   "hint": "Send at least one line to correct.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "AMEND_NOT_A_NUMBER",
+   "status": "400",
+   "title": "Quantity or price not a number",
+   "shopkeeper": "A quantity or a price on the correction is not a number.",
+   "hint": "Type a plain number and try again.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
    "code": "ANSWERED",
    "status": "409",
    "title": "Already answered",
@@ -1364,8 +1400,8 @@
    "code": "DUPLICATE_PARTY",
    "status": "409",
    "title": "Duplicate party",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Another party already has this tax id.",
+   "hint": "Check the tax id, or open the party that holds it.",
    "owner_area": "relationships",
    "since": "2026-10-22"
   },
@@ -2360,6 +2396,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_NETWORK_KEY",
+   "status": "500",
+   "title": "No network key here",
+   "shopkeeper": "This installation holds no network root key, so it cannot sign for the network.",
+   "hint": "Set CB_NETWORK_ROOT_KEY on the master installation.",
+   "owner_area": "platform",
+   "since": "2026-10-25"
+  },
+  {
    "code": "NO_OPERATOR",
    "status": "409",
    "title": "Network has no operator",
@@ -3249,6 +3294,42 @@
    "hint": "Fix what it names and send it again; if it says try again, wait a minute.",
    "owner_area": "catalogue",
    "since": "2026-10-23"
+  },
+  {
+   "code": "SUPPLIER_EXISTS",
+   "status": "409",
+   "title": "Already a supplier",
+   "shopkeeper": "That business is already in your supplier list.",
+   "hint": "Open Suppliers to find them.",
+   "owner_area": "relationships",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "SUPPLIER_ID_BUSY",
+   "status": "409",
+   "title": "Could not give an id",
+   "shopkeeper": "We could not give that supplier an id just now.",
+   "hint": "Try once more.",
+   "owner_area": "relationships",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "SUPPLIER_INVALID",
+   "status": "400",
+   "title": "Supplier details not valid",
+   "shopkeeper": "Something about the supplier you typed is missing or not valid.",
+   "hint": "Read the line shown, change it and try again.",
+   "owner_area": "relationships",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "SUPPLIER_NOT_YOURS",
+   "status": "403",
+   "title": "Their name, not yours",
+   "shopkeeper": "That is their own business name, so it cannot be changed from here.",
+   "hint": "Use \"your name for them\" (nickname) instead.",
+   "owner_area": "relationships",
+   "since": "2026-10-25"
   },
   {
    "code": "SUPPLIER_SELLS_ONLY_HERE",

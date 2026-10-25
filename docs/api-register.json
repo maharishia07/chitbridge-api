@@ -2,22 +2,22 @@
  "version": 1,
  "stage": "2",
  "counts": {
-  "routes": 634,
-  "not_started": 143,
-  "partial": 490,
+  "routes": 640,
+  "not_started": 138,
+  "partial": 501,
   "meets": 1,
   "columns": {
    "strict_input": {
-    "applies": 345,
-    "failing": 338
+    "applies": 349,
+    "failing": 335
    },
    "output_allowlist": {
-    "applies": 634,
-    "failing": 611
+    "applies": 640,
+    "failing": 616
    },
    "foreign_id_404": {
-    "applies": 227,
-    "failing": 119
+    "applies": 232,
+    "failing": 117
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -28,8 +28,8 @@
     "failing": 4
    },
    "trips_budgeted": {
-    "applies": 634,
-    "failing": 166
+    "applies": 640,
+    "failing": 163
    }
   }
  },
@@ -258,7 +258,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5963,
+   "line": 6091,
    "hash": "b1621a61d6a1f385",
    "columns": {
     "schema_in": true,
@@ -308,7 +308,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4579,
+   "line": 4663,
    "hash": "f1e5c5ac7a0e6422",
    "columns": {
     "schema_in": true,
@@ -358,7 +358,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6224,
+   "line": 6352,
    "hash": "045463184137e6f1",
    "columns": {
     "schema_in": true,
@@ -1083,19 +1083,19 @@
    "path": "/api/relationships/suppliers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 434,
-   "hash": "a42b0dc55df15ed9",
+   "line": 441,
+   "hash": "1bb994c93cc08c72",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -1108,9 +1108,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -1171,7 +1179,7 @@
    "path": "/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 119,
+   "line": 216,
    "hash": "d9ef786ac86d43eb",
    "columns": {
     "schema_in": true,
@@ -2071,7 +2079,7 @@
    "path": "/api/attachments/:id",
    "owner_area": "attachments",
    "file": "routes/attachments.js",
-   "line": 78,
+   "line": 87,
    "hash": "0edee6d57085b0f5",
    "columns": {
     "schema_in": false,
@@ -4425,8 +4433,8 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3159,
-   "hash": "cbd798d37d6ccc9d",
+   "line": 3221,
+   "hash": "1626fcc7c91e708a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4476,7 +4484,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4392,
+   "line": 4476,
    "hash": "336f23691ee01d37",
    "columns": {
     "schema_in": true,
@@ -4525,7 +4533,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3708,
+   "line": 3772,
    "hash": "7f5ffff524fed108",
    "columns": {
     "schema_in": true,
@@ -4576,7 +4584,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5648,
+   "line": 5833,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -4627,7 +4635,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5602,
+   "line": 5787,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -4678,8 +4686,8 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5279,
-   "hash": "670ecd88a1125b2d",
+   "line": 5411,
+   "hash": "5082f360a150eb56",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4724,13 +4732,64 @@
    "status": "partial"
   },
   {
+   "key": "GET /api/chits/:chit_id/proposals",
+   "method": "GET",
+   "path": "/api/chits/:chit_id/proposals",
+   "owner_area": "chit-proposals",
+   "file": "routes/chit-proposals.js",
+   "line": 55,
+   "hash": "bcb64b42baacd216",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial"
+  },
+  {
    "key": "GET /api/chits/:chit_id/raida",
    "method": "GET",
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3901,
-   "hash": "3431da4ab22159e0",
+   "line": 3965,
+   "hash": "bc9a95f1d0e9ea0d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4779,7 +4838,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4008,
+   "line": 4072,
    "hash": "be91d2bc805731af",
    "columns": {
     "schema_in": true,
@@ -4830,7 +4889,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6523,
+   "line": 6653,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -4881,7 +4940,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6550,
+   "line": 6680,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -4932,7 +4991,7 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5868,
+   "line": 5996,
    "hash": "46daea8f32caa803",
    "columns": {
     "schema_in": true,
@@ -4981,7 +5040,7 @@
    "path": "/api/chits/folder",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2733,
+   "line": 2778,
    "hash": "f44d902821914d77",
    "columns": {
     "schema_in": true,
@@ -5030,7 +5089,7 @@
    "path": "/api/chits/inbox",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2905,
+   "line": 2967,
    "hash": "897736af9a9c708d",
    "columns": {
     "schema_in": true,
@@ -5079,7 +5138,7 @@
    "path": "/api/chits/pulse",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3103,
+   "line": 3165,
    "hash": "67e2a779765f3c7d",
    "columns": {
     "schema_in": true,
@@ -5126,8 +5185,8 @@
    "path": "/api/chits/raida/report",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3885,
-   "hash": "565d3b192b7015a8",
+   "line": 3949,
+   "hash": "e4a6cc3ef500297f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5164,8 +5223,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e4a6cc3ef500297f"
    },
    "status": "partial"
   },
@@ -5175,7 +5235,7 @@
    "path": "/api/chits/register/attachables",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3736,
+   "line": 3800,
    "hash": "979cb6a933b53c47",
    "columns": {
     "schema_in": true,
@@ -5223,7 +5283,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3744,
+   "line": 3808,
    "hash": "c301e82efd66c02d",
    "columns": {
     "schema_in": true,
@@ -5272,7 +5332,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3785,
+   "line": 3849,
    "hash": "e43efc96f747efa8",
    "columns": {
     "schema_in": true,
@@ -5320,7 +5380,7 @@
    "path": "/api/chits/register/walk/:from",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3844,
+   "line": 3908,
    "hash": "600c2cdb5a83af1a",
    "columns": {
     "schema_in": true,
@@ -5370,8 +5430,8 @@
    "path": "/api/chits/rollup",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2811,
-   "hash": "2fcdcf06a8c66b94",
+   "line": 2870,
+   "hash": "1f9993aee8f34ab2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5408,8 +5468,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1f9993aee8f34ab2"
    },
    "status": "partial"
   },
@@ -5419,7 +5480,7 @@
    "path": "/api/chits/sent",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2668,
+   "line": 2713,
    "hash": "5040e600e5cfbf70",
    "columns": {
     "schema_in": true,
@@ -5468,7 +5529,7 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6750,
+   "line": 6880,
    "hash": "6f3dc35905e3296e",
    "columns": {
     "schema_in": true,
@@ -5517,7 +5578,7 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6791,
+   "line": 6921,
    "hash": "7fd343a2fc790048",
    "columns": {
     "schema_in": true,
@@ -5567,7 +5628,7 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6972,
+   "line": 7102,
    "hash": "fb7da6818f541830",
    "columns": {
     "schema_in": true,
@@ -5615,7 +5676,7 @@
    "path": "/api/chits/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3130,
+   "line": 3192,
    "hash": "83ccb19f48fcdd4c",
    "columns": {
     "schema_in": true,
@@ -6432,7 +6493,7 @@
    "path": "/api/ctp/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 119,
+   "line": 216,
    "hash": "d9ef786ac86d43eb",
    "columns": {
     "schema_in": true,
@@ -6610,7 +6671,7 @@
    "path": "/api/entities/entitlements",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 2424,
+   "line": 2365,
    "hash": "49d996ff5c656145",
    "columns": {
     "schema_in": true,
@@ -6658,7 +6719,7 @@
    "path": "/api/entities/header",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 317,
+   "line": 258,
    "hash": "3ae3d5630359c01f",
    "columns": {
     "schema_in": true,
@@ -6706,7 +6767,7 @@
    "path": "/api/entities/lookup",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 904,
+   "line": 845,
    "hash": "4fa9ad17575badb4",
    "columns": {
     "schema_in": true,
@@ -6756,7 +6817,7 @@
    "path": "/api/entities/me",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 340,
+   "line": 281,
    "hash": "0821fc7bb18cde9b",
    "columns": {
     "schema_in": true,
@@ -6805,7 +6866,7 @@
    "path": "/api/entities/me/can-see-costs",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 887,
+   "line": 828,
    "hash": "1f9a50e743295f2d",
    "columns": {
     "schema_in": true,
@@ -6854,7 +6915,7 @@
    "path": "/api/entities/mis",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1739,
+   "line": 1680,
    "hash": "3911ad98eab24dfa",
    "columns": {
     "schema_in": true,
@@ -6904,7 +6965,7 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 288,
+   "line": 229,
    "hash": "5aeb90e77e8a43e3",
    "columns": {
     "schema_in": true,
@@ -6952,7 +7013,7 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1629,
+   "line": 1570,
    "hash": "386d6272740a5072",
    "columns": {
     "schema_in": true,
@@ -7002,7 +7063,7 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1494,
+   "line": 1435,
    "hash": "cd54d77895b144b2",
    "columns": {
     "schema_in": true,
@@ -7050,7 +7111,7 @@
    "path": "/api/entities/routing/preview",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1478,
+   "line": 1419,
    "hash": "c0ac046521b15eac",
    "columns": {
     "schema_in": true,
@@ -7097,8 +7158,8 @@
    "path": "/api/entities/search",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 171,
-   "hash": "ebc90f56bb0a7114",
+   "line": 179,
+   "hash": "f79298a1bd6c8c46",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7125,6 +7186,7 @@
    "declared": [
     400,
     401,
+    404,
     500
    ],
    "notes": [
@@ -7135,8 +7197,56 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f79298a1bd6c8c46"
+   },
+   "status": "partial"
+  },
+  {
+   "key": "GET /api/entities/search/places",
+   "method": "GET",
+   "path": "/api/entities/search/places",
+   "owner_area": "entities",
+   "file": "routes/entities.js",
+   "line": 196,
+   "hash": "01d70f4bd8eeb16d",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
    },
    "status": "partial"
   },
@@ -7146,7 +7256,7 @@
    "path": "/api/entities/sides",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 331,
+   "line": 272,
    "hash": "8c9d2c5f400475c4",
    "columns": {
     "schema_in": true,
@@ -7194,7 +7304,7 @@
    "path": "/api/entities/usage",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1301,
+   "line": 1242,
    "hash": "4b70911dad3abcd6",
    "columns": {
     "schema_in": true,
@@ -7301,7 +7411,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -11138,7 +11248,7 @@
    "path": "/api/relationships/customers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 674,
+   "line": 684,
    "hash": "4d2731e0f77fa20f",
    "columns": {
     "schema_in": false,
@@ -11182,7 +11292,7 @@
    "path": "/api/relationships/customers/:id/rewards",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 736,
+   "line": 746,
    "hash": "db4ab90709a5e354",
    "columns": {
     "schema_in": false,
@@ -11226,7 +11336,7 @@
    "path": "/api/relationships/customers/groups",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 667,
+   "line": 677,
    "hash": "d168fe00f44c29b5",
    "columns": {
     "schema_in": false,
@@ -11270,7 +11380,7 @@
    "path": "/api/relationships/scorecard",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 991,
+   "line": 1001,
    "hash": "2e60168fb06c4fee",
    "columns": {
     "schema_in": false,
@@ -11314,7 +11424,7 @@
    "path": "/api/relationships/scorecard/:entity_id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 1003,
+   "line": 1013,
    "hash": "a81c31bf304826e0",
    "columns": {
     "schema_in": false,
@@ -11358,16 +11468,16 @@
    "path": "/api/relationships/suppliers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 238,
-   "hash": "2703fbd4274c61f1",
+   "line": 250,
+   "hash": "0e8440156a3edfe4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -11383,9 +11493,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11394,7 +11509,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/suppliers/:supplier_entity_id/catalogue",
@@ -11402,16 +11517,16 @@
    "path": "/api/relationships/suppliers/:supplier_entity_id/catalogue",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 613,
-   "hash": "4db206b548a0c7bd",
+   "line": 620,
+   "hash": "9371df8fb3343670",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -11427,9 +11542,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11438,7 +11559,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/suppliers/availability",
@@ -11446,16 +11567,16 @@
    "path": "/api/relationships/suppliers/availability",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 481,
-   "hash": "9c4886a8fa4dff35",
+   "line": 490,
+   "hash": "c9c5b5f31f9713bb",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -11471,9 +11592,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11482,7 +11608,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/repeat",
@@ -14291,7 +14417,7 @@
    "path": "/api/entities/:id/erase",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1273,
+   "line": 1214,
    "hash": "e0c040a82e4ebfc4",
    "columns": {
     "schema_in": true,
@@ -14342,7 +14468,7 @@
    "path": "/api/entities/me/exposure",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 860,
+   "line": 801,
    "hash": "7d19b7065fef8cc8",
    "columns": {
     "schema_in": true,
@@ -14391,7 +14517,7 @@
    "path": "/api/entities/me/locale",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 900,
+   "line": 841,
    "hash": "e55ea05cc2141a4a",
    "columns": {
     "schema_in": true,
@@ -14440,7 +14566,7 @@
    "path": "/api/entities/me/prefs/:kind",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 854,
+   "line": 795,
    "hash": "3a7c9f99a608bfbf",
    "columns": {
     "schema_in": true,
@@ -14490,7 +14616,7 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 299,
+   "line": 240,
    "hash": "e190a37baf2cd8ee",
    "columns": {
     "schema_in": true,
@@ -14540,7 +14666,7 @@
    "path": "/api/entities/profile",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 952,
+   "line": 893,
    "hash": "21b4715aa77e270e",
    "columns": {
     "schema_in": true,
@@ -14832,7 +14958,7 @@
    "path": "/api/relationships/customers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 929,
+   "line": 939,
    "hash": "e5855c528c7fb1d0",
    "columns": {
     "schema_in": false,
@@ -14876,19 +15002,19 @@
    "path": "/api/relationships/suppliers/:id",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 326,
-   "hash": "7ee0c90a275f1190",
+   "line": 342,
+   "hash": "050580604c6a005f",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -14901,9 +15027,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -14912,7 +15046,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/schemas/fields/:field_key",
@@ -15877,8 +16011,8 @@
    "path": "/api/attachments",
    "owner_area": "attachments",
    "file": "routes/attachments.js",
-   "line": 32,
-   "hash": "646a123b84899e0e",
+   "line": 33,
+   "hash": "89b1bd979e7065a4",
    "columns": {
     "schema_in": false,
     "schema_out": false,
@@ -19227,8 +19361,8 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4282,
-   "hash": "a9675c91b063f337",
+   "line": 4353,
+   "hash": "5c045ceecb80e338",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19237,7 +19371,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -19253,6 +19387,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     404,
     409,
@@ -19267,8 +19402,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "48fb0fd1a16d2a2a"
    },
    "status": "partial"
   },
@@ -19278,7 +19414,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6116,
+   "line": 6244,
    "hash": "bb57518baa5d6aee",
    "columns": {
     "schema_in": true,
@@ -19328,8 +19464,8 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4227,
-   "hash": "033ba1833edc157a",
+   "line": 4291,
+   "hash": "3717ca3d1719582e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19367,8 +19503,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3717ca3d1719582e"
    },
    "status": "partial"
   },
@@ -19378,7 +19515,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4630,
+   "line": 4714,
    "hash": "f1261716ab50b218",
    "columns": {
     "schema_in": true,
@@ -19429,8 +19566,8 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3689,
-   "hash": "2b38b28b578677cd",
+   "line": 3753,
+   "hash": "aad720fa5de9c638",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19468,8 +19605,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "aad720fa5de9c638"
    },
    "status": "partial"
   },
@@ -19479,8 +19617,8 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4036,
-   "hash": "7c6fe581bbb94181",
+   "line": 4100,
+   "hash": "12ca9a2c3cbbcf92",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19518,8 +19656,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "12ca9a2c3cbbcf92"
    },
    "status": "partial"
   },
@@ -19529,8 +19668,8 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5364,
-   "hash": "b751da3f4c8f8917",
+   "line": 5600,
+   "hash": "f2c8809ef9dde226",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19580,8 +19719,8 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5102,
-   "hash": "caeca2235a33877a",
+   "line": 5230,
+   "hash": "15cd0151ab40b858",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19631,7 +19770,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4537,
+   "line": 4621,
    "hash": "e01c8002cbcabc9c",
    "columns": {
     "schema_in": true,
@@ -19677,12 +19816,218 @@
    "status": "partial"
   },
   {
+   "key": "POST /api/chits/:chit_id/proposals",
+   "method": "POST",
+   "path": "/api/chits/:chit_id/proposals",
+   "owner_area": "chit-proposals",
+   "file": "routes/chit-proposals.js",
+   "line": 65,
+   "hash": "bc5361b2419ec40c",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial"
+  },
+  {
+   "key": "POST /api/chits/:chit_id/proposals/:proposal_id/accept",
+   "method": "POST",
+   "path": "/api/chits/:chit_id/proposals/:proposal_id/accept",
+   "owner_area": "chit-proposals",
+   "file": "routes/chit-proposals.js",
+   "line": 85,
+   "hash": "7ac3c62df99d299d",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial"
+  },
+  {
+   "key": "POST /api/chits/:chit_id/proposals/:proposal_id/counter",
+   "method": "POST",
+   "path": "/api/chits/:chit_id/proposals/:proposal_id/counter",
+   "owner_area": "chit-proposals",
+   "file": "routes/chit-proposals.js",
+   "line": 88,
+   "hash": "0143a811429ac986",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial"
+  },
+  {
+   "key": "POST /api/chits/:chit_id/proposals/:proposal_id/reject",
+   "method": "POST",
+   "path": "/api/chits/:chit_id/proposals/:proposal_id/reject",
+   "owner_area": "chit-proposals",
+   "file": "routes/chit-proposals.js",
+   "line": 86,
+   "hash": "6b32d0890d28f119",
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial"
+  },
+  {
    "key": "POST /api/chits/:chit_id/raida",
    "method": "POST",
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3913,
+   "line": 3977,
    "hash": "659c6ddb81952ef4",
    "columns": {
     "schema_in": true,
@@ -19732,7 +20077,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3969,
+   "line": 4033,
    "hash": "91cf212eca7f8069",
    "columns": {
     "schema_in": true,
@@ -19782,7 +20127,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3988,
+   "line": 4052,
    "hash": "1a2adac71f1176a0",
    "columns": {
     "schema_in": true,
@@ -19832,8 +20177,8 @@
    "path": "/api/chits/:chit_id/reprice",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3653,
-   "hash": "b8739cdb69130686",
+   "line": 3717,
+   "hash": "57613e5fd00102cf",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19871,8 +20216,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "57613e5fd00102cf"
    },
    "status": "partial"
   },
@@ -19882,7 +20228,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6195,
+   "line": 6323,
    "hash": "bff670d16c1973fc",
    "columns": {
     "schema_in": true,
@@ -19932,7 +20278,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6174,
+   "line": 6302,
    "hash": "53214e1f816dbb5d",
    "columns": {
     "schema_in": true,
@@ -19982,7 +20328,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6156,
+   "line": 6284,
    "hash": "cc6a9bccb319682e",
    "columns": {
     "schema_in": true,
@@ -20032,7 +20378,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6426,
+   "line": 6556,
    "hash": "a5ce4d89eefc0a51",
    "columns": {
     "schema_in": true,
@@ -20081,7 +20427,7 @@
    "path": "/api/chits/register/entries/:raida_id/accept",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3862,
+   "line": 3926,
    "hash": "f38f901b020ba047",
    "columns": {
     "schema_in": true,
@@ -20131,7 +20477,7 @@
    "path": "/api/chits/register/entries/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3836,
+   "line": 3900,
    "hash": "e30bfd0747fe6ca0",
    "columns": {
     "schema_in": true,
@@ -20181,7 +20527,7 @@
    "path": "/api/chits/register/entries/:raida_id/revise",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3853,
+   "line": 3917,
    "hash": "cdd19d12dfb65e3a",
    "columns": {
     "schema_in": true,
@@ -20231,7 +20577,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3757,
+   "line": 3821,
    "hash": "91ef772a2c9c80d6",
    "columns": {
     "schema_in": true,
@@ -20280,7 +20626,7 @@
    "path": "/api/chits/register/subjects/:subject_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3776,
+   "line": 3840,
    "hash": "57091b17e2671ef3",
    "columns": {
     "schema_in": true,
@@ -20330,7 +20676,7 @@
    "path": "/api/chits/register/subjects/:subject_id/entries",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3813,
+   "line": 3877,
    "hash": "2f000d4fac8318c9",
    "columns": {
     "schema_in": true,
@@ -20380,7 +20726,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3793,
+   "line": 3857,
    "hash": "7783fd2adbe4f1d4",
    "columns": {
     "schema_in": true,
@@ -20429,7 +20775,7 @@
    "path": "/api/chits/send",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 346,
+   "line": 348,
    "hash": "0deba8ed2fed4a3e",
    "columns": {
     "schema_in": true,
@@ -21817,8 +22163,8 @@
    "path": "/api/ctp/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 131,
-   "hash": "e66d6e5fbc20dda3",
+   "line": 228,
+   "hash": "91f16529579a6876",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21868,8 +22214,8 @@
    "path": "/api/ctp/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 333,
-   "hash": "1678af41fa18644b",
+   "line": 436,
+   "hash": "8f5ca5da5f5416c7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22005,7 +22351,7 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1713,
+   "line": 1654,
    "hash": "c303d29a52083779",
    "columns": {
     "schema_in": true,
@@ -25431,7 +25777,7 @@
    "path": "/api/relationships/customers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 789,
+   "line": 799,
    "hash": "b23854a4a0bb85b8",
    "columns": {
     "schema_in": false,
@@ -25475,7 +25821,7 @@
    "path": "/api/relationships/customers/:id/groups",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 899,
+   "line": 909,
    "hash": "038c70940e4cc884",
    "columns": {
     "schema_in": false,
@@ -25519,17 +25865,17 @@
    "path": "/api/relationships/suppliers",
    "owner_area": "relationships",
    "file": "routes/relationships.js",
-   "line": 110,
-   "hash": "5afa4963d07921c2",
+   "line": 129,
+   "hash": "8a60f8e884b327de",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -25544,9 +25890,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500,
+    502
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -25555,7 +25909,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/repeat",
@@ -28924,8 +29278,8 @@
    "path": "/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 131,
-   "hash": "e66d6e5fbc20dda3",
+   "line": 228,
+   "hash": "91f16529579a6876",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28975,8 +29329,8 @@
    "path": "/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 333,
-   "hash": "1678af41fa18644b",
+   "line": 436,
+   "hash": "8f5ca5da5f5416c7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29090,7 +29444,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -29243,7 +29597,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -29587,8 +29941,8 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5727,
-   "hash": "c2325cbe73f259fc",
+   "line": 5912,
+   "hash": "588173f159d4a3e2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29627,8 +29981,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "588173f159d4a3e2"
    },
    "status": "partial"
   },
@@ -29638,7 +29993,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6008,
+   "line": 6136,
    "hash": "59600f5511771cf4",
    "columns": {
     "schema_in": true,
@@ -29688,7 +30043,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6064,
+   "line": 6192,
    "hash": "bdcc6791026b87ae",
    "columns": {
     "schema_in": true,
@@ -29739,7 +30094,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6139,
+   "line": 6267,
    "hash": "63dac164e0864b45",
    "columns": {
     "schema_in": true,
@@ -29789,7 +30144,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4959,
+   "line": 5081,
    "hash": "dbf1814d4f83fa55",
    "columns": {
     "schema_in": true,
@@ -29839,7 +30194,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4026,
+   "line": 4090,
    "hash": "7ee86b115feec09f",
    "columns": {
     "schema_in": true,
@@ -29889,8 +30244,8 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6269,
-   "hash": "66ea83dae3a68cd1",
+   "line": 6397,
+   "hash": "d59b6337dcc43f6e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29929,8 +30284,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d59b6337dcc43f6e"
    },
    "status": "partial"
   },
@@ -30034,7 +30390,7 @@
    "path": "/api/entities/populations/:code/desk",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1684,
+   "line": 1625,
    "hash": "bcdf0a12050562df",
    "columns": {
     "schema_in": true,
@@ -30086,7 +30442,7 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1603,
+   "line": 1544,
    "hash": "32cc84a8d189bddd",
    "columns": {
     "schema_in": true,

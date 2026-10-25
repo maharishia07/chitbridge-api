@@ -10,6 +10,9 @@
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
+  "GET /api/entities/search/places": {
+   "output_allowlist": true
+  },
   "GET /api/entities/policy": {
    "output_allowlist": true
   },
@@ -37,6 +40,9 @@
   "PUT /api/connections/:id/respond": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "GET /api/chits/rollup": {
+   "output_allowlist": true
   },
   "GET /api/chits/pulse": {
    "output_allowlist": true
@@ -82,6 +88,7 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/amend": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/catalogue-overlay": {
@@ -160,15 +167,17 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/proposals": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
-   "foreign_id_404": true
+   "strict_input": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
-   "foreign_id_404": true
+   "strict_input": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/events/ticket": {
@@ -387,6 +396,12 @@
   },
   "GET /api/folders/mis": {
    "output_allowlist": true
+  },
+  "POST /api/relationships/suppliers": {
+   "strict_input": true
+  },
+  "PATCH /api/relationships/suppliers/:id": {
+   "strict_input": true
   },
   "GET /api/relationships/suppliers/availability": {
    "output_allowlist": true

@@ -68,11 +68,13 @@ function rowsFor(sql) {
     return { rows: [{ ok: !!world.mayCross }] };
   }
   if (/ops\.population/.test(sql)) return { rows: [{ code: 'live' }] };
+  if (/SELECT trade_mode FROM entity_profile/.test(sql)) return { rows: [{ trade_mode: 'export' }] }; /* NET-39: the shop asked about sells outside, so its catalogue is answered */
   return { rows: [] };
 }
 
 function installStubs() {
-  const db = { query: async (sql) => rowsFor(sql) };
+  const client = { query: async (sql) => rowsFor(sql) };
+  const db = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client) }; /* lib/profile isExporter reads through withEntity */
   mock('db', db);
   mock('db/index', db);
   mock('lib/ctpdirectory', { publicKeyFor: async (domain, ik) => (world.noKey ? { ok: false, why: 'no manifest at ' + domain } : { ok: true, public_key: 'PK-' + ik }) });
@@ -89,7 +91,9 @@ function installStubs() {
         ? { ok: false, why: world.openWhy }
         : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: 'sender-1' }), header: {} }
   });
-  mock('lib/ctpquery', { open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
+  /* RAIL-96/97: the route reads which questions are the network's (NETWORK_WANTS) from the real module; the stand-in keeps those lists and replaces only the opener */
+  const realQuery = require(path.join(API, 'lib', 'ctpquery'));
+  mock('lib/ctpquery', { WANTS: realQuery.WANTS, NETWORK_WANTS: realQuery.NETWORK_WANTS, open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
   mock('lib/mint', {
     deliver: async () => {
       if (world.storeFails) throw Object.assign(new Error(SECRET_SQL), { code: '53100' });

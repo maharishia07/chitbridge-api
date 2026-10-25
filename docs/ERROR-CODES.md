@@ -111,6 +111,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |
 | CTP_REFUSED | 409 | The other business refused it | The other installation answered no, and the chit was not sent or saved. | Read the reason, fix the chit or the address, send again. | ctp | 2026-10-25 |
 | SUPPLIER_SELLS_ONLY_HERE | 409 | Sells only on their own ChitBridge | That business sells only on its own ChitBridge, so it cannot be your supplier from here. | Ask them to sell outside, or find another supplier. | ctp | 2026-10-25 |
+| SUPPLIER_INVALID | 400 | Supplier details not valid | Something about the supplier you typed is missing or not valid. | Read the line shown, change it and try again. | relationships | 2026-10-25 |
+| AMEND_LINE_NEEDS_ITEM | 400 | Replacement line has no item | A replacement line needs an item. To remove the line, send line: null. | Name the item on the line, or remove the line. | chits | 2026-10-25 |
+| AMEND_NOT_A_NUMBER | 400 | Quantity or price not a number | A quantity or a price on the correction is not a number. | Type a plain number and try again. | chits | 2026-10-25 |
+| AMEND_NOTHING | 400 | Nothing to amend | The correction names no line. | Send at least one line to correct. | chits | 2026-10-25 |
+| AMEND_LINE_INDEX | 400 | Bad line number | The correction does not say which line it corrects. | Send the line number (line_index) or the line id. | chits | 2026-10-25 |
+| NO_NETWORK_KEY | 500 | No network key here | This installation holds no network root key, so it cannot sign for the network. | Set CB_NETWORK_ROOT_KEY on the master installation. | platform | 2026-10-25 |
+| SUPPLIER_EXISTS | 409 | Already a supplier | That business is already in your supplier list. | Open Suppliers to find them. | relationships | 2026-10-25 |
+| SUPPLIER_ID_BUSY | 409 | Could not give an id | We could not give that supplier an id just now. | Try once more. | relationships | 2026-10-25 |
 | CTP_UNREACHABLE | 502 | The other installation did not answer | We could not reach the other installation, so nothing was sent or saved. | Send it again when they are back. | ctp | 2026-10-25 |
 | CTP_PEER_INACTIVE | 409 | Not sent | That business is on an installation we do not deal with now (suspended or retired), so nothing was sent or saved. | Ask the operator whether that installation is coming back. | ctp | 2026-10-25 |
 | CTP_NOT_THIS_INSTALLATION | 409 | Asked the wrong installation | This installation is not the one the question was for; the address held for it is out of date. | Refresh the network directory and ask again. | ctp | 2026-10-25 |
@@ -134,7 +142,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DISPUTES_NOT_SET_UP | 200 | Disputes not set up yet | Disputes are not switched on on this server yet, so there are none to show. | Nothing to do; they will appear once the update has run. | chits | 2026-10-23 |
 | DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | PENDING | - | folder-inventory | 2026-10-22 |
-| DUPLICATE_PARTY | 409 | Duplicate party | PENDING | - | relationships | 2026-10-22 |
+| DUPLICATE_PARTY | 409 | Duplicate party | Another party already has this tax id. | Check the tax id, or open the party that holds it. | relationships | 2026-10-22 |
+| SUPPLIER_NOT_YOURS | 403 | Their name, not yours | That is their own business name, so it cannot be changed from here. | Use "your name for them" (nickname) instead. | relationships | 2026-10-25 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | - | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
