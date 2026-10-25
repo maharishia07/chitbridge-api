@@ -317,6 +317,20 @@ catalogue — the same data already on your public storefront, and never the own
 
 ## 6.5 ⚠️⚠️ THE RETURN PATH — the unbuilt half, and the authority that shapes it (2026-09-16)
 
+> **DECIDED AND BUILT 2026-10-25 (RAIL-106, takes in RAIL-114; Athi: "either one installation or multiple installations, it has to behave the same way", DECISIONS.md 2026-10-25 09:10).**
+> The four questions below are answered; the text under them is kept as the history of the question.
+> 1. **What crosses: a shadow copy.** A change travels as a signed EVENT envelope (`kind: 'event'`, an `event` where a delivery has a `copy`; lib/ctpenvelope.js `buildEvent`) through the same door as a delivery
+>    (POST /api/ctp/deliver: peer, key, crossing rule, seal, membership pass). The receiver applies it to ITS OWN rows (lib/ctpreturn.js `apply`): a shadow of the other party's `chit_status` row
+>    (written by lib/rail-status.js `mirror`, the one file that sets a status) and its own copy of an external message (`postMessageCopies`, with the id it was sent with). Nobody writes into another database;
+>    nothing owned crosses (an internal note, a workflow stage, a membership never do).
+> 2. **Queue and say so.** Saved locally first, then queued (`ctp_event_out`, migration b791) and resent by tools/ctp-return.cjs until the far side accepts (30 s doubling to 15 min; about ten hours, then `failed` and the row says why).
+>    The sequence runs per (chit, sending party); the oldest event of a stream goes first. An older or repeated STATUS event is acknowledged and ignored (`ctp_event_in`, last-writer-wins by seq); a MESSAGE is idempotent on its message id,
+>    so a late earlier message is still kept. Until accepted the sender's own copy carries `ctp_unconfirmed` (GET /chits/:id; `ctp_unconfirmed` on each message of GET /chits/:id/messages): "Not yet confirmed to the other side".
+> 3. **Disputes after.** Raising a dispute, and a dispute message, on a chit with a party on another installation is refused 409 `CTP_CROSS_DISPUTE` in words. Disputes cross when status and messages have been proved on two installations.
+> 4. **Where it leaves from.** Inside `moveStatus` (the one status writer) after the local write, once for every party on another installation; inside `postMessageCopies` for an external, non-dispute message. A bill step (the holder's own) never crosses.
+>    A party is "on another installation" by bridge id (lib/ctpreturn.js `remoteParties` over ctpaddress.resolve); with nothing hosted elsewhere it costs one memoised lookup and no query.
+> Not yet: attachments on a crossed message, the cancel-request flag on the other copy (the `[cancel requested]` message does cross), the bell for the receiver, a crash between the local save and the queue write (one statement wide).
+
 Athi: *"catalogue reading never should be the problem. reaching a chit back to the domain and the status update
 across another domain will be the problem — because you are accessing another domain, you do not have
 authority."*

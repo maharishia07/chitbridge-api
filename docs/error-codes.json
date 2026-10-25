@@ -965,6 +965,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CTP_CROSS_DISPUTE",
+   "status": "409",
+   "title": "Not raised",
+   "shopkeeper": "A party on this chit is on another installation, and disputes do not cross installations yet, so nothing was raised or saved.",
+   "hint": "Say it in a message instead, or ask them to raise it on their side.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_ENVELOPE_REFUSED",
    "status": "409",
    "title": "Envelope refused",
@@ -972,6 +981,42 @@
    "hint": "Check the sending installation signs with the key it publishes.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_EVENT_BAD",
+   "status": "400",
+   "title": "Change not readable",
+   "shopkeeper": "The change sent for this chit could not be read.",
+   "hint": "The sending installation must send a status or a message with its sequence.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_NO_CHIT",
+   "status": "404",
+   "title": "Chit not held here",
+   "shopkeeper": "This business holds no copy of that chit, so the change was not applied.",
+   "hint": "Check the chit was delivered here first.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_PARTY_MISMATCH",
+   "status": "409",
+   "title": "Not a party to this chit",
+   "shopkeeper": "The sender is not one of the businesses on this chit, or not one of its installation's, so its change was refused.",
+   "hint": "Check the business is added with the right address.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_PARTY_UNKNOWN",
+   "status": "404",
+   "title": "Business not known here",
+   "shopkeeper": "No business here stands for the sender, so its change could not be applied.",
+   "hint": "Add the business by its address first.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
   },
   {
    "code": "CTP_MANIFEST_UNAVAILABLE",

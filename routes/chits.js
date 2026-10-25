@@ -18,6 +18,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
+const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
@@ -3604,8 +3605,10 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
+    const _ctpMark = await ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id: the read failed — answered with none', null)); // RAIL-106: null, and no query, when nothing is hosted elsewhere
     res.json({
       ...(_wantTiming ? { _timing: _T } : {}),
+      ...ctpReturn.markOf(_ctpMark), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
       participants: _red.participants,
@@ -4773,6 +4776,53 @@ async function readThenWriteMove(db, press) {
     return { stop: 'reason', previous_status };
   return writeOrConflict(verdict, { previous_status, openCount, header, copy });
 }
+/**
+ * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
+ * and his flag to set as cancelled, change from cancel requested to cancelled in the order copy as well."*
+ *
+ * A withdrawal without this is a request with no reply: the sender could see that they had ASKED and never
+ * that anyone AGREED. b195 answers "somebody asked me"; this answers the opposite question, which is the
+ * one the person who withdrew is actually holding.
+ *
+ * ⚠️ ONLY WHEN THIS COPY WAS ACTUALLY ASKED. A recipient may cancel for their own reasons and that is not a
+ * reply to anything — reporting it to the sender as a confirmation would credit them with an agreement
+ * nobody made. `cancel_requested_at` being set is what makes this an answer rather than a coincidence.
+ *
+ * ⚠️ WITHIN THE SENDER'S CONTEXT, NOT A NULL ONE. The b49 policy is `entity_id = NULLIF(current_setting(…),
+ * '')::uuid`, so a null context matches NOTHING and the UPDATE would write nowhere, silently — the exact
+ * mistake b195 shipped with, caught only by the end-to-end spec.
+ */
+async function confirmCancelToSender(entity_id, chit_id, header, action_by_name) {
+  try {
+    if (await schema.hasColumn('chit_status', 'cancel_confirmed_at')) {
+      const senderId = header.rows.length ? header.rows[0].sender_entity_id : null;
+      const asked = await withEntity(entity_id, (db) =>
+        db.query(`SELECT cancel_requested_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+      );
+      const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
+      if (senderId && senderId !== entity_id && wasAsked) {
+        await withEntity(senderId, (db) =>
+          db.query(
+            `UPDATE chit_status
+                  SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
+                WHERE chit_id = $1 AND entity_id = $3`,
+            [chit_id, action_by_name, senderId]
+          )
+        );
+        await postMessageCopies({
+          chit_id,
+          sender_entity_id: entity_id,
+          sender_display_name: action_by_name,
+          thread_type: 'external',
+          msg_type: 'action',
+          message_text: `[cancel confirmed] ${action_by_name} has cancelled their copy.`
+        });
+      }
+    }
+  } catch (e) {
+    console.error('cancel confirm:', e.message);
+  }
+}
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
   const action_by_id = by.id,
     action_by_name = by.name;
@@ -4896,6 +4946,13 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         )
     );
 
+  /**
+   * ⭐⭐ RAIL-106 · THE RETURN PATH — emitted HERE, from the one status writer, after the local write, for every party on ANOTHER installation (never from a route, never for a local party:
+   * remoteParties answers [] when nothing is hosted elsewhere, before any query). Saved first, then queued and resent until the far side accepts (lib/ctpreturn). A bill step is the holder's
+   * own and never crosses (above). The answer says so when something is waiting or could not be queued: `ctp` (ctpReturn.answerOf).
+   */
+  const crossed = _hrow && billPrivacy.isBill(_hrow, entity_id) ? null : await ctpReturn.onStatusMoved(entity_id, chit_id, { status: new_status, previous_status, by_name: action_by_name, note });
+
   // The header came back with the same transaction, above — read to check sender and propagate a cancel.
   const header = _pre.header;
 
@@ -4905,53 +4962,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
   // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
   if (isSender && new_status === 'cancelled') booksOnCancel = await cancelSentCopy(entity_id, chit_id, me, note, by);
 
-  /**
-   * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
-   * and his flag to set as cancelled, change from cancel requested to cancelled in the order copy as well."*
-   *
-   * A withdrawal without this is a request with no reply: the sender could see that they had ASKED and never
-   * that anyone AGREED. b195 answers "somebody asked me"; this answers the opposite question, which is the
-   * one the person who withdrew is actually holding.
-   *
-   * ⚠️ ONLY WHEN THIS COPY WAS ACTUALLY ASKED. A recipient may cancel for their own reasons and that is not a
-   * reply to anything — reporting it to the sender as a confirmation would credit them with an agreement
-   * nobody made. `cancel_requested_at` being set is what makes this an answer rather than a coincidence.
-   *
-   * ⚠️ WITHIN THE SENDER'S CONTEXT, NOT A NULL ONE. The b49 policy is `entity_id = NULLIF(current_setting(…),
-   * '')::uuid`, so a null context matches NOTHING and the UPDATE would write nowhere, silently — the exact
-   * mistake b195 shipped with, caught only by the end-to-end spec.
-   */
-  if (!isSender && new_status === 'cancelled') {
-    try {
-      if (await schema.hasColumn('chit_status', 'cancel_confirmed_at')) {
-        const senderId = header.rows.length ? header.rows[0].sender_entity_id : null;
-        const asked = await withEntity(entity_id, (db) =>
-          db.query(`SELECT cancel_requested_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
-        );
-        const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
-        if (senderId && senderId !== entity_id && wasAsked) {
-          await withEntity(senderId, (db) =>
-            db.query(
-              `UPDATE chit_status
-                    SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
-                  WHERE chit_id = $1 AND entity_id = $3`,
-              [chit_id, action_by_name, senderId]
-            )
-          );
-          await postMessageCopies({
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: action_by_name,
-            thread_type: 'external',
-            msg_type: 'action',
-            message_text: `[cancel confirmed] ${action_by_name} has cancelled their copy.`
-          });
-        }
-      }
-    } catch (e) {
-      console.error('cancel confirm:', e.message);
-    }
-  }
+  if (!isSender && new_status === 'cancelled') await confirmCancelToSender(entity_id, chit_id, header, action_by_name); // the return leg (b197)
 
   return {
     code: 200,
@@ -4962,6 +4973,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       chit_id,
       previous_status,
       new_status,
+      ...ctpReturn.answerOf(crossed), // RAIL-106: { ctp: { queued, seq } } when a party on another installation was told (resent until it accepts), { ctp: { queued: 0, why } } when it could not be queued
       ...(booksOnCancel ? { books: booksOnCancel } : {}) // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
     }
   };
@@ -5080,7 +5092,7 @@ router.put(
 //   internal → author only · external → all chit participants · dispute → the dispute roster). One logical message_id,
 //   replicated per audience entity; reads are RLS-scoped to "my own copies". Pass a tx `db` client to stay atomic.
 async function postMessageCopies(msg, db) {
-  const message_id = uuidv4();
+  const message_id = msg.message_id || uuidv4(); /* RAIL-106: a message that arrived from another installation keeps the id it was sent with, so the same one twice is kept once */
   // ROOT FIX (reviewer 2026-07-13): the deliver definer must run with the sender's TRUSTED context set, so it can
   // verify the claimed sender = the caller (b50 pattern) instead of trusting the parameter. When no tx client is
   // passed, establish withEntity(sender) here (all callers pass sender = their authenticated entity_id).
@@ -5113,7 +5125,11 @@ async function postMessageCopies(msg, db) {
     }
   };
   const r = db ? await run((t, p) => db.query(t, p)) : await withEntity(msg.sender_entity_id, (c) => run((t, p) => c.query(t, p)));
-  return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
+  const out = { message_id, created_at: r.rows[0] && r.rows[0].created_at };
+  /* ⭐ RAIL-106: an EXTERNAL message to a party on another installation is queued here, the one place every message is posted (not when a caller holds a transaction open: that one
+     is not saved yet; not an internal note; not a dispute, which is refused before it gets here; not a message that itself arrived over CTP). Never throws. */
+  if (!db) out.ctp = await ctpReturn.onMessagePosted(msg.sender_entity_id, msg, out);
+  return out;
 }
 
 router.post(
@@ -5174,6 +5190,8 @@ router.post(
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
       const isDispute = req.body.is_dispute === true || req.body.is_dispute === 'true';
       const disputeId = req.body.dispute_id || null;
+      /* ⭐ RAIL-106 (decision 3): a dispute message on a chit with a party on another installation is refused in words, never kept here silently */
+      if (isDispute && (await answeredCrossDispute(req, res, entity_id, chit_id))) return;
       // M1 (reviewer 2026-07-13) — a dispute message needs MORE than chit-participation: the sender must be a PARTY to
       // THIS dispute, and the dispute must belong to THIS chit. RLS makes it one query — under withEntity(sender) the
       // policy returns only the sender's OWN chit_disputes copy, so a returned row proves BOTH roster membership AND
@@ -5282,7 +5300,8 @@ router.post(
         thread_type,
         message_text,
         sender_display_name: display_name,
-        created_at: result.created_at
+        created_at: result.created_at,
+        ...ctpReturn.answerOf(result.ctp) // RAIL-106: queued for the party on another installation (resent until it accepts), or the words saying it could not be
       });
     } catch (err) {
       console.error('Send message error:', err.message);
@@ -5332,6 +5351,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     for (const m of result.rows) {
       m.attachments = byMsg[m.message_id] || [];
     }
+    ctpReturn.markMessages(result.rows, await ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id/messages: the read failed — answered with none', null))); // RAIL-106: a message of mine the other installation has not confirmed carries ctp_unconfirmed (the sentence to show)
     res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     console.error('Get messages error:', err.message);
@@ -5377,6 +5397,19 @@ async function holdersAmong(callerEntity, chit_id, ids) {
   return ids.filter((id) => holding.has(String(id)));
 }
 
+/** RAIL-106: true when it answered 409 CTP_CROSS_DISPUTE (the chit has a party on another installation); the route then stops. A failure to find out is not a refusal: it is logged and the route goes on as it always did. */
+async function answeredCrossDispute(req, res, entity_id, chit_id) {
+  let refusal = null;
+  try {
+    refusal = await ctpReturn.crossDisputeRefusal(entity_id, chit_id);
+  } catch (e) {
+    cbLog.fellBack('chits dispute: could not tell whether a party is on another installation — carried on as one installation', e);
+  }
+  if (!refusal) return false;
+  problem(req, res, { status: refusal.status, ...said(refusal.body, refusal.code) });
+  return true;
+}
+
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
 router.post(
   '/:chit_id/disputes',
@@ -5394,6 +5427,8 @@ router.post(
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
       if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
+      /* ⭐ RAIL-106 (decision 3): raising a dispute on a chit with a party on another installation is refused in words, never kept here silently */
+      if (await answeredCrossDispute(req, res, entity_id, chit_id)) return;
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
       const _cs = access.rows[0].current_status;
@@ -7008,6 +7043,7 @@ router.get('/trace/networks', auth, async (req, res) => {
 });
 
 router.openapi = { paths: pathsOf(), schemas: {} };
+router.postMessageCopies = postMessageCopies; /* lib/ctpreturn applies a message that arrived from another installation through the same function */
 router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;

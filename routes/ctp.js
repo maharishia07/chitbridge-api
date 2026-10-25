@@ -42,6 +42,7 @@ const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
 const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
+const returnPath = require('../lib/ctpreturn'); /* RAIL-106: a change to a chit that already crossed (a status, an external message) is applied to OUR rows */
 const net = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
 const { problem } = require('../lib/problem');
 const { safeErr } = require('../lib/respond');
@@ -170,6 +171,19 @@ async function alreadyHeld(failure, recipient, chit_id, sender) {
   return held.rows.length > 0;
 }
 
+/**
+ * ── RAIL-106 · THE RETURN PATH: an EVENT is not a copy ───────────────────────────────────────────────────
+ * Same door, same checks as a delivery (peer, key, crossing, seal, pass — all done by the caller). It carries one change a party on ANOTHER installation made to a chit both of you already hold,
+ * and it is applied to OUR rows only (lib/ctpreturn apply: a shadow of that party's status row, our copy of its message), never forwarded. An older or repeated event is acknowledged and
+ * ignored, so the sender's queue can stop resending it. `accepted: true` means the sender may stop; `applied` says whether this call changed anything.
+ * @param ctx { opened, from, to, toBridge } the opened envelope, its signed `from`, the recipient row WE resolved (never the envelope's id), and its bridge id
+ */
+async function answerEvent(res, refuse, ctx) {
+  const done = await returnPath.apply({ chit_id: ctx.opened.chit_id, event: ctx.opened.event, from: ctx.from, to: { identity_id: ctx.to.identity_id } });
+  if (!done.ok) return refuse({ status: done.status, code: done.code, why: done.why });
+  return res.json({ accepted: true, applied: done.applied, why: done.why, chit_id: ctx.opened.chit_id, to: ctx.toBridge });
+}
+
 router.get('/.well-known/ctp.json', async (req, res) => {
   try {
     res.set('Cache-Control', 'public, max-age=900');
@@ -276,6 +290,8 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
        it pinned (the pinned master itself is trusted by that key). A standalone installation skips this and behaves exactly as before. */
     const pass = await net.doorVerdict(ik, peer, pk.manifest);
     if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
+
+    if (opened.kind === 'event') return await answerEvent(res, refuse, { opened, from: env.from, to, toBridge }); /* RAIL-106: an event is not a copy */
 
     /**
      * ── ⚠️ THE COPY IS WRITTEN AS THE RECIPIENT'S, WITH THE ENTITY WE RESOLVED — never the entity_id the
