@@ -31,27 +31,37 @@ function who(req, res) {
 }
 
 router.get('/list', auth, async (req, res) => {
-  const ctx = who(req, res); if (!ctx) return;
+  const ctx = who(req, res);
+  if (!ctx) return;
   const q = req.query || {};
   try {
     res.json(await work.list(ctx, { view: q.view, status: q.status, assigned: q.assigned, q: q.q, page: q.page, limit: q.limit }));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /* before /:chit_id, which would call it a chit */
 router.get('/facts', auth, async (req, res) => {
-  const ctx = who(req, res); if (!ctx) return;
-  try { res.json(await work.facts(ctx)); }
-  catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  const ctx = who(req, res);
+  if (!ctx) return;
+  try {
+    res.json(await work.facts(ctx));
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/:chit_id', auth, async (req, res) => {
-  const ctx = who(req, res); if (!ctx) return;
+  const ctx = who(req, res);
+  if (!ctx) return;
   try {
     const row = await work.one(ctx, req.params.chit_id);
     if (!row) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
     res.json(row);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 module.exports = router;

@@ -4,13 +4,13 @@
 require('dotenv').config();
 
 const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
-const helmet  = require('helmet');
+const cors = require('cors');
+const path = require('path');
+const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const log     = require('./lib/logger');
+const log = require('./lib/logger');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Boot preflight (INT7c): in a sealed environment EVERY missing/invalid setting (JWT_SECRET, DATABASE_URL, the OTP posture, the mailer) is listed
@@ -18,7 +18,10 @@ const PORT = process.env.PORT || 3000;
 // healthy one. NODE_ENV is trimmed inside isSealed() (production has carried ' development'); the one definition of sealed is lib/dev-otp.js.
 {
   const preflight = require('./lib/dev-otp').bootPreflightErrors();
-  if (preflight.length) { log.critical('boot aborted: ' + preflight.length + ' setting(s) to fix — ' + preflight.join(' · '), { reasons: preflight }); process.exit(1); }
+  if (preflight.length) {
+    log.critical('boot aborted: ' + preflight.length + ' setting(s) to fix — ' + preflight.join(' · '), { reasons: preflight });
+    process.exit(1);
+  }
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
     log.warn('weak JWT_SECRET', { reason: 'JWT_SECRET is missing or shorter than 32 chars — set a strong JWT_SECRET before any real deploy' });
 }
@@ -37,12 +40,15 @@ const PORT = process.env.PORT || 3000;
      stack also opted in (mayExposeOtp). DEV_OTP on any other host does nothing, and says so. */
   if (devOtp.armed()) {
     const local = !!devOtp.fixedOtp('entity');
-    log.warn(local ? 'fixed test OTPs active' : 'DEV_OTP ignored', { reason: local
-      ? 'DEV_OTP is set on a local stack — entity/customer/connector OTPs are FIXED' + (devOtp.mayExposeOtp() ? ' and echoed in API responses (DEV_OTP_IN_RESPONSE).' : ', never echoed.')
-        + ' Dev/test ONLY. To seal: see the checklist at the top of lib/dev-otp.js.'
-      : 'DEV_OTP is set but this is not a local stack — every code is random. Testers use TESTER_CODE (lib/dev-otp.js). Delete DEV_OTP here.' });
+    log.warn(local ? 'fixed test OTPs active' : 'DEV_OTP ignored', {
+      reason: local
+        ? 'DEV_OTP is set on a local stack — entity/customer/connector OTPs are FIXED' +
+          (devOtp.mayExposeOtp() ? ' and echoed in API responses (DEV_OTP_IN_RESPONSE).' : ', never echoed.') +
+          ' Dev/test ONLY. To seal: see the checklist at the top of lib/dev-otp.js.'
+        : 'DEV_OTP is set but this is not a local stack — every code is random. Testers use TESTER_CODE (lib/dev-otp.js). Delete DEV_OTP here.'
+    });
   }
-  devOtp.testerNotices().forEach((n) => log[n.level](n.msg, { reason: n.reason }));   // SEC1b: TEMPORARY tester code — never its value
+  devOtp.testerNotices().forEach((item) => log[item.level](item.msg, { reason: item.reason })); // SEC1b: TEMPORARY tester code — never its value
 }
 
 // Trust Railway's proxy
@@ -51,9 +57,10 @@ app.set('trust proxy', 1);
 // ── CORS — locked to known origins ───────────────────────────
 // Extend/override the allowlist via ALLOWED_ORIGINS (comma-separated) on the host.
 // Requests with no Origin header (server-to-server, curl, PowerShell smoke tests) are allowed.
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ||
-  'https://chitbridge-web.vercel.app,http://localhost:5173,http://localhost:3000')
-  .split(',').map(s => s.trim()).filter(Boolean);
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://chitbridge-web.vercel.app,http://localhost:5173,http://localhost:3000')
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean);
 const corsOptions = {
   origin(origin, cb) {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
@@ -104,8 +111,8 @@ const corsOptions = {
    */
   /* ⭐ X-Api-Key (2026-09-07): the counter page runs in a browser on the web origin and signs its calls with a till key, not a
      session. The very failure this comment block describes happened again on [TILL-01]'s first run — a bare 'Failed to fetch'. */
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key', 'X-Device-Id'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
-  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key', 'X-Device-Id'], // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
+  credentials: true
 };
 /* ⭐ MEASURE BEFORE CHANGING (Athi, 2026-09-07: "look at each of the API for round trips and enhance"). Off unless CB_TRIPS=1. */
 /**
@@ -141,23 +148,27 @@ app.use(require('./lib/trips').middleware());
  * caller marks `no-transform` is left exactly as it is.
  */
 const compression = require('compression');
-app.use(compression({
-  threshold: 1024,
-  filter: (req, res) => {
-    const type = String(res.getHeader('Content-Type') || '');
-    if (type.indexOf('text/event-stream') >= 0) return false;
-    if (String(res.getHeader('Cache-Control') || '').indexOf('no-transform') >= 0) return false;
-    return compression.filter(req, res);
-  },
-}));
+app.use(
+  compression({
+    threshold: 1024,
+    filter: (req, res) => {
+      const type = String(res.getHeader('Content-Type') || '');
+      if (type.indexOf('text/event-stream') >= 0) return false;
+      if (String(res.getHeader('Cache-Control') || '').indexOf('no-transform') >= 0) return false;
+      return compression.filter(req, res);
+    }
+  })
+);
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // ── Security middleware ───────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginResourcePolicy: false,
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: false
+  })
+);
 
 /**
  * ⚠️ THE PROVIDER WEBHOOKS NEED THE RAW BODY, AND MUST CLAIM IT BEFORE express.json DOES.
@@ -192,13 +203,20 @@ app.use((req, res, next) => {
      taken and any refusal code (res.locals.code) — a 401/403/409 is now visible in the log, not guessed at. */
   const t0 = Date.now();
   res.on('finish', () => {
-    log.info('request', { id: req.id, method: req.method, path: req.path, status: res.statusCode,
-                          ms: Date.now() - t0, code: (res.locals && res.locals.code) || null,
-                          kind: (res.locals && res.locals.kind) || null /* M05: 'person' (listed session) · 'legacy' (no jti) */, origin: req.headers.origin || null,
-                          /* E07: whose request — the business (entity) and who acted (person); the body's size, for E01's budgets */
-                          entity: (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
-                          person: (req.identity && req.identity.identity_id) || null,
-                          bytes: Number(req.headers['content-length']) || 0 });
+    log.info('request', {
+      id: req.id,
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      ms: Date.now() - t0,
+      code: (res.locals && res.locals.code) || null,
+      kind: (res.locals && res.locals.kind) || null /* M05: 'person' (listed session) · 'legacy' (no jti) */,
+      origin: req.headers.origin || null,
+      /* E07: whose request — the business (entity) and who acted (person); the body's size, for E01's budgets */
+      entity: (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
+      person: (req.identity && req.identity.identity_id) || null,
+      bytes: Number(req.headers['content-length']) || 0
+    });
   });
   next();
 });
@@ -231,12 +249,23 @@ const authLimiter = rateLimit({
 });
 /* M06: the new sign-in doors share the same budget (one IP, one 30/15 min) — renew/logout/sessions stay outside it, so a
    busy counter refreshing its session is never refused for it. check-login / pair-claim / storefront join in PR 7. */
-app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', '/api/actors/set-pin',
-         '/api/signin/ask', '/api/signin/verify', '/api/signin/pin',
-         /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
+app.use(
+  [
+    '/api/entities/register',
+    '/api/entities/verify',
+    '/api/actors/login',
+    '/api/actors/set-pin',
+    '/api/signin/ask',
+    '/api/signin/verify',
+    '/api/signin/pin',
+    /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
-         '/api/till/pair/claim', '/api/catalogue/:bridge_id/login/verify'], authLimiter);
+    '/api/till/pair/claim',
+    '/api/catalogue/:bridge_id/login/verify'
+  ],
+  authLimiter
+);
 
 /* M07 — check-login has its OWN budget: app.html asks it before EVERY sign-in and a shop's staff share one Wi-Fi IP, so it must not
    share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
@@ -250,11 +279,29 @@ app.use('/api/actors/check-login', checkLoginLimiter);
 /* M07 — the remaining doors that need no sign-in: a looser, per-caller limiter (240 per minute, the services' own style,
    keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).
    tests/limiter-paths.test.cjs walks the real app and fails if a public door is ever added without one. */
-const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
-  keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) });
-app.use(['/.well-known', '/api/ctp/.well-known', '/api/openapi.json', '/api/entities/constitutions', '/api/events/stream',
-         '/api/simulator', '/api/testing/vocabulary', '/api/connectors/ingest', '/api/connectors/erp-ingest', '/api/capture/webhook', '/api/privacy/facts'],
-        publicLimiter);
+const publicLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 240,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64)
+});
+app.use(
+  [
+    '/.well-known',
+    '/api/ctp/.well-known',
+    '/api/openapi.json',
+    '/api/entities/constitutions',
+    '/api/events/stream',
+    '/api/simulator',
+    '/api/testing/vocabulary',
+    '/api/connectors/ingest',
+    '/api/connectors/erp-ingest',
+    '/api/capture/webhook',
+    '/api/privacy/facts'
+  ],
+  publicLimiter
+);
 
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
@@ -284,18 +331,18 @@ app.use(authFirst.authThenParse);
 app.use('/api', require('./middleware/idempotency'));
 
 // ── Routes ───────────────────────────────────────────────────
-const entitiesRouter    = require('./routes/entities');
+const entitiesRouter = require('./routes/entities');
 const connectionsRouter = require('./routes/connections');
-const chitsRouter       = require('./routes/chits');
-const schemasRouter     = require('./routes/schemas');
-const actorsRouter      = require('./routes/actors');
-const connectorsRouter  = require('./routes/connectors');   // L3.1 connector actors + connections
-const foldersRouter     = require('./routes/folders');      // b63 folders — per-entity chit-organising tree
+const chitsRouter = require('./routes/chits');
+const schemasRouter = require('./routes/schemas');
+const actorsRouter = require('./routes/actors');
+const connectorsRouter = require('./routes/connectors'); // L3.1 connector actors + connections
+const foldersRouter = require('./routes/folders'); // b63 folders — per-entity chit-organising tree
 const relationshipsRouter = require('./routes/relationships');
-const catalogueRouter   = require('./routes/catalogue');
-const productsRouter    = require('./routes/products');
-const comboTemplatesRouter = require('./routes/combo-templates');   // b266 [OFFR-06] — saved, reusable combo/modifier group sets
-const governanceRouter  = require('./routes/governance');
+const catalogueRouter = require('./routes/catalogue');
+const productsRouter = require('./routes/products');
+const comboTemplatesRouter = require('./routes/combo-templates'); // b266 [OFFR-06] — saved, reusable combo/modifier group sets
+const governanceRouter = require('./routes/governance');
 const attachmentsRouter = require('./routes/attachments');
 
 /**
@@ -308,46 +355,52 @@ const attachmentsRouter = require('./routes/attachments');
  * ⚠️ The manifest path is OUTSIDE /api and therefore outside the /api limiter, so routes/ctp.js carries its own.
  */
 const ctpRouter = require('./routes/ctp');
-app.use('/', ctpRouter);                    // GET /.well-known/ctp.json
-app.use('/api/ctp', ctpRouter);             // POST /api/ctp/deliver
+app.use('/', ctpRouter); // GET /.well-known/ctp.json
+app.use('/api/ctp', ctpRouter); // POST /api/ctp/deliver
 
-app.use('/api/entities',    entitiesRouter);
+app.use('/api/entities', entitiesRouter);
 app.use('/api/connections', connectionsRouter);
-app.use('/api/chits',       chitsRouter);
-app.use('/api/events',      require('./routes/events'));
-const serviceLimiter = () => rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
-                                        keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) });
-app.use('/api/offers',      serviceLimiter(), require('./routes/offers'));    // ⭐ THE GOVERNED CAPABILITIES AS SERVICES (rung 2): offers
-app.use('/api/pricing',     serviceLimiter(), require('./routes/pricing'));   //   pricing structure → unit price at a quantity
-app.use('/api/invoice',     serviceLimiter(), require('./routes/invoice'));   //   pricing → offers → tax → INV-01, built not issued
+app.use('/api/chits', chitsRouter);
+app.use('/api/events', require('./routes/events'));
+const serviceLimiter = () =>
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 240,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64)
+  });
+app.use('/api/offers', serviceLimiter(), require('./routes/offers')); // ⭐ THE GOVERNED CAPABILITIES AS SERVICES (rung 2): offers
+app.use('/api/pricing', serviceLimiter(), require('./routes/pricing')); //   pricing structure → unit price at a quantity
+app.use('/api/invoice', serviceLimiter(), require('./routes/invoice')); //   pricing → offers → tax → INV-01, built not issued
 app.use('/api/integrations', serviceLimiter(), require('./routes/integrations'));
-app.use('/api/till', serviceLimiter(), require('./routes/till'));   //   the counter's whole world in one call (TILL-SPEC-2026-09-07)   //   the home of connectors: catalogue · download · heartbeat · status
-app.use('/api',             require('./routes/openapi'));                     //   /api/openapi.json — one contract for all of them
-app.use('/api/counters',    require('./routes/counters'));
-app.use('/api/quick-keys',  require('./routes/quick-keys'));   // Level 1 quick-key groups, back-office only (b262, 2026-09-18)
-app.use('/api/network-offers', require('./routes/network-offers'));   // a brand releases offers to its stores; a store takes them or not   // the shop's counters as standing identities — open / close / one PC at a time
-app.use('/api/signin',      require('./routes/signin'));   // M05: a person's sessions — renew · logout · list · revoke (routes/signin.js)
-app.use('/api/keys',        require('./routes/keys'));     // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
-app.use('/api/schemas',     schemasRouter);
-app.use('/api/actors',      actorsRouter);
-app.use('/api/identity',    require('./routes/identity-docs'));   // b174 — a person's own documents + verification stamp
-app.use('/api/people',      require('./routes/people'));   // P1: the shop's people with may/why per action (routes/people.js)
-app.use('/api/connectors',  connectorsRouter);
-app.use('/api/folders',     foldersRouter);
+app.use('/api/till', serviceLimiter(), require('./routes/till')); //   the counter's whole world in one call (TILL-SPEC-2026-09-07)   //   the home of connectors: catalogue · download · heartbeat · status
+app.use('/api', require('./routes/openapi')); //   /api/openapi.json — one contract for all of them
+app.use('/api/counters', require('./routes/counters'));
+app.use('/api/quick-keys', require('./routes/quick-keys')); // Level 1 quick-key groups, back-office only (b262, 2026-09-18)
+app.use('/api/network-offers', require('./routes/network-offers')); // a brand releases offers to its stores; a store takes them or not   // the shop's counters as standing identities — open / close / one PC at a time
+app.use('/api/signin', require('./routes/signin')); // M05: a person's sessions — renew · logout · list · revoke (routes/signin.js)
+app.use('/api/keys', require('./routes/keys')); // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
+app.use('/api/schemas', schemasRouter);
+app.use('/api/actors', actorsRouter);
+app.use('/api/identity', require('./routes/identity-docs')); // b174 — a person's own documents + verification stamp
+app.use('/api/people', require('./routes/people')); // P1: the shop's people with may/why per action (routes/people.js)
+app.use('/api/connectors', connectorsRouter);
+app.use('/api/folders', foldersRouter);
 app.use('/api/relationships', relationshipsRouter);
-app.use('/api/catalogue',   catalogueRouter);
+app.use('/api/catalogue', catalogueRouter);
 /**
  * ⚠️⚠️ THE ONLY ONE OF ITS SIBLINGS WITHOUT A LIMITER, until [TILL-112]. offers, pricing, invoice,
  * integrations and till all carry serviceLimiter(); products carried only the global 500 per 15 min — on the
  * router that holds the catalogue IMPORT, where one request writes up to 2000 products.
  * ⭐ Keyed by the API key, not the IP, so one shop's counters are not lumped in with the next shop's.
  */
-app.use('/api/products',    serviceLimiter(), productsRouter);
-app.use('/api/governance',  governanceRouter);
+app.use('/api/products', serviceLimiter(), productsRouter);
+app.use('/api/governance', governanceRouter);
 app.use('/api/attachments', attachmentsRouter);
-app.use('/api/network-design', require('./routes/network-design'));   // b111 — per-entity design persistence (RLS)
-app.use('/api/catalogue-face', require('./routes/catalogue-face'));    // b112 — per-entity catalogue face persistence (RLS)
-app.use('/api/combo-templates', comboTemplatesRouter);                 // b266 [OFFR-06] — per-entity saved combo/modifier sets (RLS)
+app.use('/api/network-design', require('./routes/network-design')); // b111 — per-entity design persistence (RLS)
+app.use('/api/catalogue-face', require('./routes/catalogue-face')); // b112 — per-entity catalogue face persistence (RLS)
+app.use('/api/combo-templates', comboTemplatesRouter); // b266 [OFFR-06] — per-entity saved combo/modifier sets (RLS)
 
 // ── NET (feat/net-full): network + catalogue on /api/network ──
 // cb_chit chit-loop RETIRED in consolidation: all chit writes live on /api/chits (chit_header).
@@ -374,7 +427,7 @@ app.use('/api/testing', require('./routes/testing'));
 
 // ── Capture connector — inbound channels (WhatsApp/email/web) → capture → AI structure → confirm → chit (b104) ───
 app.use('/api/capture', require('./routes/capture'));
-app.use('/api/channels', require('./routes/channels'));   // b123 — Settings → Channels: the inbound number/address map
+app.use('/api/channels', require('./routes/channels')); // b123 — Settings → Channels: the inbound number/address map
 
 // ── "Know your business" value panel — Yourself/Position/Risk (free, computed from owned data) + Field (metered, b107) ───
 app.use('/api/kyb', require('./routes/kyb'));
@@ -390,11 +443,11 @@ app.use('/api/tax', require('./routes/tax'));
 /* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
    switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
 app.use('/api/books', require('./routes/books'));
-app.use('/api/facts', require('./routes/facts'));   // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
-app.use('/api/work', require('./routes/work'));   // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
-app.use('/api/crm', require('./routes/crm'));   // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
-app.use('/api/repeat', require('./routes/repeat-supply'));   // RI1 — repeat supply as an AGREEMENT both parties hold: accept · counter · skip · pause · end; each run a normal chit (lib/repeat-supply.js)
-app.use('/api/privacy', require('./routes/privacy'));   // CO1 — public privacy facts: sub-processors + regions, notice, contact (lib/privacy.js)
+app.use('/api/facts', require('./routes/facts')); // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
+app.use('/api/work', require('./routes/work')); // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
+app.use('/api/crm', require('./routes/crm')); // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
+app.use('/api/repeat', require('./routes/repeat-supply')); // RI1 — repeat supply as an AGREEMENT both parties hold: accept · counter · skip · pause · end; each run a normal chit (lib/repeat-supply.js)
+app.use('/api/privacy', require('./routes/privacy')); // CO1 — public privacy facts: sub-processors + regions, notice, contact (lib/privacy.js)
 /* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
    reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */
 app.use('/api/supplies', require('./routes/supplies'));
@@ -408,25 +461,30 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/health', async (req, res) => {
   /* E07: one `SELECT 1`, given 2 s — db 'ok' under DB_SLOW_MS, 'slow' over it, 'down' when it fails or never answers.
      The status stays 200 either way: this says how the database is, it does not take the API out of rotation. */
-  let db = 'down', db_ms = null;
+  let db = 'down',
+    db_ms = null;
   try {
     const t0 = Date.now();
     await Promise.race([require('./db').query('SELECT 1'), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 2000).unref())]);
-    db_ms = Date.now() - t0; db = db_ms > require('./lib/dbwatch').slowMs() ? 'slow' : 'ok';
-  } catch (_) { /* 'down' */ }
+    db_ms = Date.now() - t0;
+    db = db_ms > require('./lib/dbwatch').slowMs() ? 'slow' : 'ok';
+  } catch (_) {
+    /* 'down' */
+  }
   res.json({
     status: 'OK',
     platform: 'Chit and Bridge',
-    version: require('./package.json').version,   /* E07: from package.json, not a literal */
-    db, db_ms,
+    version: require('./package.json').version /* E07: from package.json, not a literal */,
+    db,
+    db_ms,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     /* which build answers — Railway sets this; it is how a spec that fails right after a push tells 'not deployed yet' from 'broken' */
     commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.SOURCE_COMMIT || null,
     region: process.env.RAILWAY_REPLICA_REGION || process.env.RAILWAY_REGION || null,
-    web: require('./lib/public-base').webBase() || null,   /* HX1: the site this api serves (PUBLIC_WEB_BASE) — a counter learns it here */
+    web: require('./lib/public-base').webBase() || null /* HX1: the site this api serves (PUBLIC_WEB_BASE) — a counter learns it here */,
     /* SEC-SMALL: IAM audit rows this process could not write since boot (lib/access-events.lostCount) — a reviewer wants to see 0 */
-    audit_lost: require('./lib/access-events').lostCount(),
+    audit_lost: require('./lib/access-events').lostCount()
   });
 });
 
@@ -453,17 +511,25 @@ app.use((err, req, res, next) => {
   /* ⭐ the translation now lives in lib/knownerr.js, so the routes that CATCH their own errors — which is all of
      them; none calls next(err) — give the same answer (external review §23) */
   const _known = require('./lib/knownerr').known(err);
-  if (_known) { res.locals.code = _known.body.code || null; return res.status(_known.status).json(_known.body); }   /* E01: the code reaches the request log */
+  if (_known) {
+    res.locals.code = _known.body.code || null;
+    return res.status(_known.status).json(_known.body);
+  } /* E01: the code reaches the request log */
   /**
    * ⭐ A DECISION THIS API MADE ANSWERS AS A DECISION. Only an error that declares this code reaches this
    * branch — an ordinary throw still gets the generic 500 below, so nothing new leaks. The origin is echoed
    * back because the caller already knows it; what they do not know is that it was refused on purpose.
    */
   if (err && err.code === 'ORIGIN_NOT_ALLOWED') {
-    log.warn('origin refused', { id: req.id, path: req.path, origin: req.headers.origin || null,
-      reason: 'not in ALLOWED_ORIGINS — add it on the host to permit this caller' });
-    return res.status(403).json({ error: 'Origin not allowed',
-      message: `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.` });
+    log.warn('origin refused', {
+      id: req.id,
+      path: req.path,
+      origin: req.headers.origin || null,
+      reason: 'not in ALLOWED_ORIGINS — add it on the host to permit this caller'
+    });
+    return res
+      .status(403)
+      .json({ error: 'Origin not allowed', message: `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.` });
   }
   // Full detail stays in server logs (with the request id for traceability); client gets a generic message.
   log.error('unhandled', { id: req.id, path: req.path, err: err.message, stack: err.stack });
@@ -481,7 +547,9 @@ async function checkDbRole() {
     const verdictNow = dbRole.verdict(await dbRole.roleFacts((sql) => require('./db').query(sql)), require('./lib/dev-otp').isLocalStack());
     log[verdictNow.level === 'fatal' ? 'critical' : verdictNow.level === 'ok' ? 'info' : 'warn'](verdictNow.msg, { reason: verdictNow.reason });
     if (verdictNow.level === 'fatal') process.exit(1);
-  } catch (e) { log.warn('database role not checked', { reason: 'the read failed (' + e.message + ') — the pool retries; run npm run db:role by hand' }); }
+  } catch (e) {
+    log.warn('database role not checked', { reason: 'the read failed (' + e.message + ') — the pool retries; run npm run db:role by hand' });
+  }
 }
 
 function startServing() {
@@ -490,12 +558,19 @@ function startServing() {
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`Health: http://localhost:${PORT}/health`);
     /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
-    try { require('./lib/books-nightly').start(); } catch (e) { console.warn('books nightly not started:', e.message); }
+    try {
+      require('./lib/books-nightly').start();
+    } catch (e) {
+      console.warn('books nightly not started:', e.message);
+    }
     /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
-    try { require('./lib/crm-followups').start(); } catch (e) { console.warn('crm sweep not started:', e.message); }
+    try {
+      require('./lib/crm-followups').start();
+    } catch (e) {
+      console.warn('crm sweep not started:', e.message);
+    }
   });
 }
 checkDbRole().then(startServing);
-
 
 module.exports = app;

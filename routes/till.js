@@ -19,16 +19,19 @@
  */
 'use strict';
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
 const { safeErr } = require('../lib/respond');
 const log = require('../lib/logger');
-const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
+const {
+  round: roundMoney
+} = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const { ownerOnly } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
-const catwrite = require('../lib/catalogue-write');   /* ⭐ CAT-W1: the one product writer (patchItems) */
+const catwrite = require('../lib/catalogue-write'); /* ⭐ CAT-W1: the one product writer (patchItems) */
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 /**
@@ -38,16 +41,16 @@ const taxShelf = require('../lib/tax-shelf');
  */
 const categories = require('../lib/categories');
 const regional = require('../lib/regional');
-const countrySetup = require('../lib/country-setup');   /* W1-TILL: shopMoney + MONEY_UNSTATED — the one reader of a shop's money */
+const countrySetup = require('../lib/country-setup'); /* W1-TILL: shopMoney + MONEY_UNSTATED — the one reader of a shop's money */
 const policy = require('../lib/policy');
-const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
+const itemstatus = require('../lib/itemstatus'); /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
 /* ⭐ BOOKS v2: is this shop's ledger on (the hooks' one cached read), and the ledger's one reader of a `date` column */
 const booksHooks = require('../lib/books-hooks');
 const booksYmd = require('../lib/books-engines').ymd;
-const variantEngine = require('../lib/variant.browser.js');   /* the same shape-guard the Modifiers tab authors through */
+const variantEngine = require('../lib/variant.browser.js'); /* the same shape-guard the Modifiers tab authors through */
 const keys = require('./keys');
-const { isScreenKey } = require('../lib/holder');   /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
+const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
 const rateLimit = require('express-rate-limit');
 /**
@@ -56,15 +59,16 @@ const rateLimit = require('express-rate-limit');
  * ⭐ Keyed by the API key the way every other limit here is, so one counter cannot spend another's allowance.
  */
 const catalogueMintLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: parseInt(process.env.TILL_CATALOGUE_MAX || '20'),
-  standardHeaders: true, legacyHeaders: false,
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.TILL_CATALOGUE_MAX || '20'),
+  standardHeaders: true,
+  legacyHeaders: false,
   keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64),
-  message: { error: 'Too many requests',
-    message: 'That is a lot of attempts in a short time. Nothing has been changed — try again in a few minutes.' },
-});   /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
-const rewards = require('../lib/rewards');       /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
+  message: { error: 'Too many requests', message: 'That is a lot of attempts in a short time. Nothing has been changed — try again in a few minutes.' }
+}); /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */ /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
+const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
 const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
-const speech = require('../lib/speech');            /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */      /* ⭐ what THIS vertical must capture about a consignment */
+const speech = require('../lib/speech'); /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */ /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
 /** the figure out of a price, whether the catalogue stored a number or { amount, currency } (lib/pricing-engine reads it the same way) */
@@ -103,21 +107,30 @@ function deltaPage(rows, cap) {
  */
 const SCREEN_SHOP = ['name', 'address', 'phone', 'currency', 'country', 'tax_id_word', 'money_why', 'fy_start_month'];
 const SCREEN_ITEM = ['item_id', 'name', 'code', 'unit', 'price', 'mrp', 'category', 'image', 'screen', 'status'];
-const pickKeys = (o, ks) => { const out = {}; ks.forEach((k) => { if (o && o[k] !== undefined) out[k] = o[k]; }); return out; };
+const pickKeys = (o, list) => {
+  const out = {};
+  list.forEach((item) => {
+    if (o && o[item] !== undefined) out[item] = o[item];
+  });
+  return out;
+};
 function screenView(body) {
   const all = Array.isArray(body.items) ? body.items : [];
-  const shown = all.filter((i) => i && i.status === 'available');
-  const gone = body.delta ? all.filter((i) => i && i.status !== 'available').map((i) => i.item_id) : [];
+  const shown = all.filter((item) => item && item.status === 'available');
+  const gone = body.delta ? all.filter((item) => item && item.status !== 'available').map((item) => item.item_id) : [];
   return {
-    at: body.at, more: body.more, entity_id: body.entity_id,
+    at: body.at,
+    more: body.more,
+    entity_id: body.entity_id,
     shop: pickKeys(body.shop || {}, SCREEN_SHOP),
-    items: shown.map((i) => pickKeys(i, SCREEN_ITEM)),
+    items: shown.map((item) => pickKeys(item, SCREEN_ITEM)),
     removed: (Array.isArray(body.removed) ? body.removed : []).concat(gone),
-    delta: body.delta, since: body.since,
-    offers: Array.isArray(body.offers) ? body.offers : [],
+    delta: body.delta,
+    since: body.since,
+    offers: Array.isArray(body.offers) ? body.offers : []
   };
 }
-router.screenView = screenView;   /* tests/screen-snapshot.test.cjs asserts the allow-list directly too */
+router.screenView = screenView; /* tests/screen-snapshot.test.cjs asserts the allow-list directly too */
 
 /**
  * M127: DOES THIS SHOP HOLD STOCK? The shop's own DATA decides, never its trade (Athi: "the data decides, not the trade").
@@ -129,12 +142,18 @@ router.screenView = screenView;   /* tests/screen-snapshot.test.cjs asserts the 
 async function holdsStockOf(entity_id) {
   try {
     if (!(await require('../lib/schema').hasTable('stock_movement'))) return null;
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT (EXISTS (SELECT 1 FROM stock_movement WHERE entity_id = $1 AND reason IN ('opening','purchase'))
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT (EXISTS (SELECT 1 FROM stock_movement WHERE entity_id = $1 AND reason IN ('opening','purchase'))
             OR EXISTS (SELECT 1 FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data->>'batch_tracked' = 'true')) AS held`,
-      [entity_id]));
+        [entity_id]
+      )
+    );
     return !!(r.rows[0] && r.rows[0].held);
-  } catch (e) { log.fellBack('till holdsStockOf: the read failed — answered with nothing', e); return null; }
+  } catch (e) {
+    log.fellBack('till holdsStockOf: the read failed — answered with nothing', e);
+    return null;
+  }
 }
 router.get('/snapshot', auth, async (req, res) => {
   try {
@@ -154,13 +173,12 @@ router.get('/snapshot', auth, async (req, res) => {
     const screen = isScreenKey(req.till && req.till.key);
     /* the moment the till last read the shop — anything touched after it is what it does not have */
     const sinceRaw = typeof req.query.since === 'string' ? req.query.since.trim() : '';
-    const since = (sinceRaw && !Number.isNaN(Date.parse(sinceRaw))) ? new Date(sinceRaw).toISOString() : null;
+    const since = sinceRaw && !Number.isNaN(Date.parse(sinceRaw)) ? new Date(sinceRaw).toISOString() : null;
 
     /* the shop, as its own books know it — the slip's header, and what decides tax invoice vs cash memo */
-    const me = await query(
-      `SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id]);
+    const me = await query(`SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = me.rows[0] || {};
-    const flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', ({})));
+    const flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', {}));
 
     /**
      * ⭐⭐⭐ WHICH COUNTER IS THIS — decided by the SERVER, from the thing that is already unique.
@@ -195,23 +213,35 @@ router.get('/snapshot', auth, async (req, res) => {
       const holds = !screen && req.till && ((req.till.key && req.till.key.jti) || req.till.device_id);
       if (holds) {
         const c = await keys.claimSeries(entity_id, req.till, {
-          id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true',
+          id: req.query.till,
+          issued: req.query.issued === '1' || req.query.issued === 'true',
           /* ⭐ the engine releases this counter runs — kept on its key (keys.cleanEngines) */
-          engines: req.query.eng });
+          engines: req.query.eng
+        });
         if (c) {
           const all = await keys.listOf(entity_id);
-          const tills = all.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
-          till = { suggested_id: c.id, assigned_id: c.id, clash: c.clash || null, counters: tills.length,
-                   /* ⭐ said out loud, so the shop learns WHY its numbers changed shape */
-                   moved_from: c.moved_from || null, held_by: c.held_by || null,
-                   /* ⭐ a named counter, and where its series stopped — see claimTill */
-                   counter: c.counter || null, counter_name: c.name || null,
-                   resume_next: c.resume_next || null, resume_period: c.resume_period || null };
+          const tills = all.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
+          till = {
+            suggested_id: c.id,
+            assigned_id: c.id,
+            clash: c.clash || null,
+            counters: tills.length,
+            /* ⭐ said out loud, so the shop learns WHY its numbers changed shape */
+            moved_from: c.moved_from || null,
+            held_by: c.held_by || null,
+            /* ⭐ a named counter, and where its series stopped — see claimTill */
+            counter: c.counter || null,
+            counter_name: c.name || null,
+            resume_next: c.resume_next || null,
+            resume_period: c.resume_period || null
+          };
           /* M11: a phone is told once, in words, which label it bills under ("This phone bills as C4.") */
           if (c.said) till.said = c.said;
         }
       }
-    } catch (e) { log.fellBack('till GET /snapshot: failed — carried on without it', e); /* ⚠ best effort — a counter must open whatever this says */ }
+    } catch (e) {
+      log.fellBack('till GET /snapshot: failed — carried on without it', e); /* ⚠ best effort — a counter must open whatever this says */
+    }
     /**
      * ⭐⭐ THE ROUTE'S OWN FIVE READS, IN ONE TRANSACTION (2026-09-29, M36). entity_profile, the items, the live count, the
      * customers and the adoptions were five withEntity transactions — BEGIN · set_config · the read · COMMIT each, twenty
@@ -224,8 +254,7 @@ router.get('/snapshot', auth, async (req, res) => {
      * Measured: tests/round-trips-till.test.cjs.
      */
     const OWN = {
-      profile: (db) => db.query(
-        `SELECT trade_mode, markets, sectors, adopted FROM entity_profile WHERE entity_id = $1`, [entity_id]),
+      profile: (db) => db.query(`SELECT trade_mode, markets, sectors, adopted FROM entity_profile WHERE entity_id = $1`, [entity_id]),
       /**
        * ⭐ A DELTA WHEN THE TILL SAYS WHEN IT LAST LOOKED (2026-09-08). A shop with 10,000 items should not send them all every fifteen
        * minutes to say nothing changed. With ?since= we return only rows touched after that moment — and, separately, the ids of rows
@@ -234,16 +263,23 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ The stamp we hand back is the SERVER's clock (body.at), never the till's — two clocks a few seconds apart would silently
        * skip a row that changed in between.
        */
-      items: (db) => (since
-        /* ⚠️⚠️ OLDEST FIRST, AND ONE MORE THAN THE CAP (external review 2026-09-25, fixed 2026-09-28). It was newest-first
+      items: (db) =>
+        since
+          ? /* ⚠️⚠️ OLDEST FIRST, AND ONE MORE THAN THE CAP (external review 2026-09-25, fixed 2026-09-28). It was newest-first
            LIMIT 20000 with the cursor at readAt: past the cap the OLDEST changes were cut and the cursor jumped over them,
            so a counter never received them. Now a cut delta hands back the LAST row sent as its cursor (see DELTA_CAP). */
-        ? db.query('SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at ASC LIMIT $3', [entity_id, since, DELTA_CAP + 1])
-        /* ⚠️⚠️ THE FULL READ PAGES THE SAME WAY (SEC-SMALL item 5, 2026-10-14). It was `ORDER BY updated_at DESC LIMIT 20000`, cut in
+            db.query(
+              'SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at ASC LIMIT $3',
+              [entity_id, since, DELTA_CAP + 1]
+            )
+          : /* ⚠️⚠️ THE FULL READ PAGES THE SAME WAY (SEC-SMALL item 5, 2026-10-14). It was `ORDER BY updated_at DESC LIMIT 20000`, cut in
            silence: a shop past the cap never received its oldest items, and its total check then pulled the whole shop again on
            every refresh — for ever. Now oldest-first, one past the cap, through the same deltaPage: a cut full read says `more`
            and hands back its last row as `at`, and the counter's next ?since= carries on from there (updated_at is NOT NULL). */
-        : db.query('SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at ASC LIMIT $2', [entity_id, DELTA_CAP + 1])),
+            db.query(
+              'SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at ASC LIMIT $2',
+              [entity_id, DELTA_CAP + 1]
+            ),
       /**
        * ⚠️⚠️ A DELETE IS INVISIBLE TO A DELTA, AND THAT IS WHY THE COUNTER KEPT SHOWING STOCK THAT NO LONGER EXISTS.
        *
@@ -261,18 +297,22 @@ router.get('/snapshot', auth, async (req, res) => {
        * unrecognised status, so the SQL excludes the three blocked statuses rather than requiring 'available'. Requiring it would
        * under-count every product that never had the field, and the counter would then refresh itself in a loop for ever.
        */
-      count: (db) => db.query(
-        `SELECT count(*)::int AS n FROM catalogue_items
+      count: (db) =>
+        db.query(
+          `SELECT count(*)::int AS n FROM catalogue_items
            WHERE entity_id = $1 AND is_active = true
              AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
-                 NOT IN ('redundant', 'retired')`, [entity_id]),
+                 NOT IN ('redundant', 'retired')`,
+          [entity_id]
+        ),
       /**
        * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
        * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
        * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
        */
-      customers: (db) => db.query(
-        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, i.gstn, c.groups, c.last_txn_at,
+      customers: (db) =>
+        db.query(
+          `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, i.gstn, c.groups, c.last_txn_at,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
@@ -285,21 +325,25 @@ router.get('/snapshot', auth, async (req, res) => {
            JOIN identities i ON i.identity_id = c.customer_identity_id
           WHERE c.owner_entity_id = $1
           ORDER BY c.last_txn_at DESC NULLS LAST
-          LIMIT 2000`, [entity_id]),
-      adoption: (db) => db.query(
-        'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [entity_id]),
+          LIMIT 2000`,
+          [entity_id]
+        ),
+      adoption: (db) => db.query('SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [entity_id]),
       /**
        * ⭐ F11 (14 Oct): THE SHOP'S SUPPLIERS, BY NAME — the Receive form suggests them as the door types ("Sri Ganesh" → Sri Ganesh
        * Provisions) and a pick carries the party's id on the receipt (business_json.party.party_id), so their bill reaches the books as
        * THAT supplier. ⚠️ WHO, never what is owed: a counter device must never read what the shop pays its suppliers (see /match).
        * The GSTIN rides only for its state (CGST/SGST vs IGST at the door). party_no through to_jsonb — absent before its column exists.
        */
-      suppliers: (db) => db.query(
-        `SELECT s.supplier_entity_id AS id, i.display_name AS name, s.nickname, i.gstn, i.country, to_jsonb(s)->>'party_no' AS party_no
+      suppliers: (db) =>
+        db.query(
+          `SELECT s.supplier_entity_id AS id, i.display_name AS name, s.nickname, i.gstn, i.country, to_jsonb(s)->>'party_no' AS party_no
            FROM supplier_list s JOIN identities i ON i.identity_id = s.supplier_entity_id
           WHERE s.owner_entity_id = $1
           ORDER BY i.display_name
-          LIMIT 2000`, [entity_id]),
+          LIMIT 2000`,
+          [entity_id]
+        ),
       /**
        * ⭐⭐ IS THIS SHOP'S LEDGER ON (critic M5, 2026-09-30). The counter offered "On credit" and "Received" to any shop with a
        * known customer; with the ledger off the server posts nothing, so the debt existed only as words on a chit.
@@ -307,13 +351,13 @@ router.get('/snapshot', auth, async (req, res) => {
        * savepoint (so "table not there yet" cannot abort the shared read). It never throws: unreadable = not on, and logged.
        * ⚠️ LAST in this list on purpose: the five reads above stay back to back (tests/round-trips-till.test.cjs).
        */
-      books: (db) => booksHooks.isOn(entity_id, db),
+      books: (db) => booksHooks.isOn(entity_id, db)
     };
     let own = null;
     try {
       own = await withEntity(entity_id, async (db) => {
         const out = {};
-        for (const k of Object.keys(OWN)) out[k] = await OWN[k](db);   /* ⚠️ in turn — one client runs one statement at a time */
+        for (const k of Object.keys(OWN)) out[k] = await OWN[k](db); /* ⚠️ in turn — one client runs one statement at a time */
         return out;
       });
     } catch (e) {
@@ -322,12 +366,13 @@ router.get('/snapshot', auth, async (req, res) => {
     }
     const ownRead = (k) => (own ? own[k] : withEntity(entity_id, OWN[k]));
 
-    let profile = {}, sectors = [];
+    let profile = {},
+      sectors = [];
     try {
       /**
        * ⭐ SECTORS ARE A COLUMN, not something inside profile_json — and this line SAID SO while selecting
        * profile_json anyway. There is no such column, so the query threw on every snapshot, the catch below
-       * swallowed it, and sectors was ALWAYS []. 
+       * swallowed it, and sectors was ALWAYS [].
        * ⚠️⚠️ WHICH MEANS lot_fields HAS NEVER WORKED. No counter has ever asked for a batch or an expiry,
        * for any vertical, since the day it was written — a pharma shop received medicine and was asked
        * nothing. Found 2026-09-10 in the Railway log, by an error nobody was reading.
@@ -349,11 +394,20 @@ router.get('/snapshot', auth, async (req, res) => {
      * is asked only for slabs, categories and the face; the items come from the catalogue, whoever the shop is.
      */
     const [shelf, itemRows, liveCount] = await Promise.all([
-      taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
-        getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(log.orElse('till GET /snapshot: the read failed — answered with nothing', null)),
+      taxShelf
+        .readShelf(
+          entity_id,
+          { withEntity, query, regionLayer: regional.regionLayer, getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) },
+          { withItems: false }
+        )
+        .catch(log.orElse('till GET /snapshot: the read failed — answered with nothing', null)),
       /* ⭐ the items and the live count — read in the shared transaction above (OWN.items, OWN.count), each on its own if it failed */
-      Promise.resolve().then(() => ownRead('items')).catch(log.orElse('till GET /snapshot: the read failed — answered with none', ({ rows: [] }))),
-      Promise.resolve().then(() => ownRead('count')).catch(() => ({ rows: [{ n: null }] })),
+      Promise.resolve()
+        .then(() => ownRead('items'))
+        .catch(log.orElse('till GET /snapshot: the read failed — answered with none', { rows: [] })),
+      Promise.resolve()
+        .then(() => ownRead('count'))
+        .catch(() => ({ rows: [{ n: null }] }))
     ]);
 
     /**
@@ -369,16 +423,23 @@ router.get('/snapshot', auth, async (req, res) => {
         `SELECT sf.field_key, sf.field_name
            FROM entity_schemas es JOIN schema_fields sf ON sf.schema_id = es.schema_id
           WHERE es.entity_id = $1 AND es.status = 'active' AND es.is_default = true
-          ORDER BY sf.display_order LIMIT 3`, [entity_id]);
+          ORDER BY sf.display_order LIMIT 3`,
+        [entity_id]
+      );
       declared = sc.rows.map((x) => ({ k: x.field_key, n: x.field_name || x.field_key }));
-    } catch (e) { log.fellBack('till GET /snapshot: the read failed — answered with none', e); declared = []; }   /* a shop that declared nothing shows nothing — the ordinary case */
+    } catch (e) {
+      log.fellBack('till GET /snapshot: the read failed — answered with none', e);
+      declared = [];
+    } /* a shop that declared nothing shows nothing — the ordinary case */
 
     /* the live offers this shop is running — the same rows the storefront and the chit read */
     let offers = [];
     try {
       const live = await catalogueView.liveOffers({ entity_id, withEntity, viewer: null, groups: [], all: false });
       offers = Array.isArray(live) ? live : (live && live.offers) || [];
-    } catch (e) { log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no offers bills fine */ }
+    } catch (e) {
+      log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no offers bills fine */
+    }
 
     /**
      * ⭐⭐ THE REWARD PROGRAMME — a definition of kind 'reward', read exactly like an offer, because it IS the same
@@ -398,14 +459,15 @@ router.get('/snapshot', auth, async (req, res) => {
     }
 
     /* the counter's customer list — a name and a phone, nothing more; the till looks up a repeat customer, it does not hold history */
-    let customers = [], snapshotBooksOn = false;
+    let customers = [],
+      snapshotBooksOn = false;
     try {
       /**
        * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
        * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
        * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
        */
-      const c = await ownRead('customers');   /* OWN.customers — the name and number are on identities, see there */
+      const c = await ownRead('customers'); /* OWN.customers — the name and number are on identities, see there */
       /* ⚠️ THE ID TRAVELS because points hang from it. A name is not a holder — two customers can be called
          Kumar, and a reward balance addressed by name would eventually be paid to the wrong one. */
       /**
@@ -424,8 +486,14 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ ORDERED before the limit (oldest due first): a LIMIT with no ORDER BY cuts an arbitrary part away.
        */
       let booksOn = false;
-      try { booksOn = !!(await ownRead('books')); } catch (e) { log.fellBack('till GET /snapshot: failed — answered no', e); booksOn = false; }
-      let dues = { rows: [] }, duesCut = false;   /* SEC-SMALL: a snapshot over the cap says unknown, never a short sum */
+      try {
+        booksOn = !!(await ownRead('books'));
+      } catch (e) {
+        log.fellBack('till GET /snapshot: failed — answered no', e);
+        booksOn = false;
+      }
+      let dues = { rows: [] },
+        duesCut = false; /* SEC-SMALL: a snapshot over the cap says unknown, never a short sum */
       if (booksOn && c.rows.some((x) => x.has_party_item)) {
         try {
           /* ⚠️ ONE PAST THE CAP (SEC-SMALL item 5). It was LIMIT 20000 in silence, and a cut aggregate is a WRONG balance — the bills
@@ -433,8 +501,9 @@ router.get('/snapshot', auth, async (req, res) => {
              be paged. So past the cap nothing is pretended: balances are left ABSENT (the slot's own word for "unknown", below),
              the counter shows no figure, and the warn line names the shop. A shop with 20,000 open receivable bills is one Athi
              should hear about, not one the counter should guess for. */
-          dues = await withEntity(entity_id, (db) => db.query(
-            `SELECT party_id, against_ref, SUM(amount_minor)::bigint AS balance_minor,
+          dues = await withEntity(entity_id, (db) =>
+            db.query(
+              `SELECT party_id, against_ref, SUM(amount_minor)::bigint AS balance_minor,
                     MIN(due_date) FILTER (WHERE ref_kind = 'bill') AS due_date,
                     MIN(doc_date) FILTER (WHERE ref_kind = 'bill') AS doc_date,
                     COALESCE((array_agg(status ORDER BY item_id DESC) FILTER (WHERE status IN ('disputed', 'undisputed')))[1] = 'disputed', false) AS disputed
@@ -443,37 +512,55 @@ router.get('/snapshot', auth, async (req, res) => {
               GROUP BY party_id, against_ref
              HAVING SUM(amount_minor) <> 0
               ORDER BY MIN(due_date) FILTER (WHERE ref_kind = 'bill') NULLS LAST, against_ref
-              LIMIT $2`, [entity_id, DELTA_CAP + 1]));
+              LIMIT $2`,
+              [entity_id, DELTA_CAP + 1]
+            )
+          );
           if (dues.rows.length > DELTA_CAP) {
-            duesCut = true; dues = { rows: [] };
-            require('../lib/logger').warn('till.snapshot.dues.cut', { entity_id, cap: DELTA_CAP,
-              says: 'more open receivable bills than one snapshot carries — customer balances sent as unknown, never as a short sum' });
+            duesCut = true;
+            dues = { rows: [] };
+            require('../lib/logger').warn('till.snapshot.dues.cut', {
+              entity_id,
+              cap: DELTA_CAP,
+              says: 'more open receivable bills than one snapshot carries — customer balances sent as unknown, never as a short sum'
+            });
           }
-        } catch (e) { require('../lib/logger').warn('till.snapshot.dues', { entity_id, why: String(e && e.message) }); }   /* never an empty catch: the dues read failing is logged, the counter gets no balances */
+        } catch (e) {
+          require('../lib/logger').warn('till.snapshot.dues', { entity_id, why: String(e && e.message) });
+        } /* never an empty catch: the dues read failing is logged, the counter gets no balances */
       }
       const owe = {};
       for (const d of dues.rows) {
-        const k = String(d.party_id), o = owe[k] || (owe[k] = { balance_minor: 0, open_bills: [] });
+        const k = String(d.party_id),
+          o = owe[k] || (owe[k] = { balance_minor: 0, open_bills: [] });
         o.balance_minor += Number(d.balance_minor) || 0;
-        if (Number(d.balance_minor) > 0) o.open_bills.push({ ref: d.against_ref, balance_minor: Number(d.balance_minor),
-          /* ⚠️ `date` columns, read by the ledger's ONE date reader — toISOString() was the day before, east of UTC (critic M8) */
-          due_date: booksYmd(d.due_date), date: booksYmd(d.doc_date), disputed: !!d.disputed });
+        if (Number(d.balance_minor) > 0)
+          o.open_bills.push({
+            ref: d.against_ref,
+            balance_minor: Number(d.balance_minor),
+            /* ⚠️ `date` columns, read by the ledger's ONE date reader — toISOString() was the day before, east of UTC (critic M8) */
+            due_date: booksYmd(d.due_date),
+            date: booksYmd(d.doc_date),
+            disputed: !!d.disputed
+          });
       }
       const num = (v) => (v == null || v === '' || !isFinite(Number(v)) ? null : Number(v));
       snapshotBooksOn = booksOn;
       customers = c.rows.map((x) => {
         const o = owe[String(x.identity_id)];
-        const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null,
-                      groups: Array.isArray(x.groups) ? x.groups : [] };
+        const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] };
         /* ⭐ present only for a business on the rail — absent = the bill stays the shop's own record (never sent) */
         if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
         /* ⭐ the customer's GSTIN, so the counter's invoice names its buyer (CBTax.determine BuyerDtls — GSTR-1 b2b, Rule 46) */
         if (x.gstn && String(x.gstn).trim()) out.gstin = String(x.gstn).trim().toUpperCase();
         if (num(x.credit_days) != null) out.credit_days = num(x.credit_days);
         if (num(x.credit_limit_minor) != null) out.credit_limit_minor = num(x.credit_limit_minor);
-        if (booksOn && x.has_party_item && !duesCut) {   /* absent = unknown (no ledger, not read, or more dues than one answer carries) — never a 0 that reads as "owes nothing" */
+        if (booksOn && x.has_party_item && !duesCut) {
+          /* absent = unknown (no ledger, not read, or more dues than one answer carries) — never a 0 that reads as "owes nothing" */
           out.balance_minor = o ? o.balance_minor : 0;
-          out.open_bills = o ? o.open_bills.sort((a, b) => String(a.due_date || '').localeCompare(String(b.due_date || ''))).slice(0, 20) : [];
+          out.open_bills = o
+            ? o.open_bills.sort((first, second) => String(first.due_date || '').localeCompare(String(second.due_date || ''))).slice(0, 20)
+            : [];
         }
         return out;
       });
@@ -490,17 +577,21 @@ router.get('/snapshot', auth, async (req, res) => {
     let suppliers = [];
     try {
       const sr = await ownRead('suppliers');
-      suppliers = sr.rows.filter((x) => x.id && x.name).map((x) => {
-        const o = { party_id: String(x.id), name: String(x.name) };
-        if (x.nickname) o.nickname = String(x.nickname);
-        const g = x.gstn ? String(x.gstn).trim().toUpperCase() : '';
-        /* STD2: the state read off the tax number only under the pack's supply rule (tax-lines.stateUnder) — a supplier with no country is the shop's (walkIn's rule) */
-        const st = require('../lib/tax-lines').stateUnder(g, x.country || row.country);
-        if (st) o.state = st;
-        if (x.party_no) o.party_no = String(x.party_no);
-        return o;
-      });
-    } catch (e) { require('../lib/logger').warn('till.suppliers', { entity_id, why: String(e && e.message) }); }
+      suppliers = sr.rows
+        .filter((x) => x.id && x.name)
+        .map((x) => {
+          const o = { party_id: String(x.id), name: String(x.name) };
+          if (x.nickname) o.nickname = String(x.nickname);
+          const g = x.gstn ? String(x.gstn).trim().toUpperCase() : '';
+          /* STD2: the state read off the tax number only under the pack's supply rule (tax-lines.stateUnder) — a supplier with no country is the shop's (walkIn's rule) */
+          const st = require('../lib/tax-lines').stateUnder(g, x.country || row.country);
+          if (st) o.state = st;
+          if (x.party_no) o.party_no = String(x.party_no);
+          return o;
+        });
+    } catch (e) {
+      require('../lib/logger').warn('till.suppliers', { entity_id, why: String(e && e.message) });
+    }
 
     /**
      * ⭐ THE PEOPLE WHO MAY STAND AT A COUNTER (2026-09-07). The shop's own co-assists — never the connectors, which are actors too
@@ -513,9 +604,13 @@ router.get('/snapshot', auth, async (req, res) => {
         `SELECT identity_id, display_name, hat FROM identities
           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND status = 'active'
             AND (actor_type IS NULL OR actor_type <> 'connector') AND connector_type IS NULL
-          ORDER BY display_name LIMIT 200`, [entity_id]);
-      staff = st.rows.map((a) => ({ id: a.identity_id, name: a.display_name, hat: a.hat || null }));
-    } catch (e) { log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no co-assists bills as the shop itself */ }
+          ORDER BY display_name LIMIT 200`,
+        [entity_id]
+      );
+      staff = st.rows.map((item) => ({ id: item.identity_id, name: item.display_name, hat: item.hat || null }));
+    } catch (e) {
+      log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no co-assists bills as the shop itself */
+    }
 
     /* ⚠️ A CAP, AND IT IS A REAL LIMIT. 20,000 items is about 5 MB in one answer — heavy but workable on a shop line. Beyond that
        the snapshot must PAGE (a cursor beside ?since=), because no counter should wait on a 26 MB download; measured 2026-09-08. */
@@ -527,9 +622,15 @@ router.get('/snapshot', auth, async (req, res) => {
      * ask again now. ⚠️ The cursor is ≤ that row's timestamp (a JS Date keeps milliseconds, Postgres keeps microseconds), so
      * rows sharing it may be sent twice: a repeat is a no-op merge by item_id, a skip would be permanent.
      */
-    let deltaMore = false, deltaCursor = null;
+    let deltaMore = false,
+      deltaCursor = null;
     /* ⭐ a delta AND a full read: both asked for DELTA_CAP + 1 oldest-first, so both page by the one rule (SEC-SMALL item 5) */
-    { const pg = deltaPage(all, DELTA_CAP); all = pg.rows; deltaMore = pg.more; deltaCursor = pg.cursor; }
+    {
+      const pg = deltaPage(all, DELTA_CAP);
+      all = pg.rows;
+      deltaMore = pg.more;
+      deltaCursor = pg.cursor;
+    }
     /**
      * ⚠️ SELLABLE, NOT MERELY ALIVE. `is_active` says the row exists; itemstatus.isOfferable says a customer may take one — retired,
      * unavailable and redundant are all alive and all unsellable. Filtering on the wrong one put retired stock on the counter
@@ -549,10 +650,9 @@ router.get('/snapshot', auth, async (req, res) => {
      * snapshot's job is to say what is true; deciding what may be BILLED is the counter's, and it was already doing it.
      */
     const sellable = (r) => r.is_active !== false && itemstatus.isOfferable(r.item_data || {});
-    const onTheCounter = (r) => r.is_active !== false
-      && ['available', 'unavailable'].indexOf(itemstatus.statusOf(r.item_data || {})) >= 0;
+    const onTheCounter = (r) => r.is_active !== false && ['available', 'unavailable'].indexOf(itemstatus.statusOf(r.item_data || {})) >= 0;
     /* a removal is now "no longer on the counter at all" — retired or redundant — not merely "not sellable today" */
-    const removed = since ? all.filter((r) => !onTheCounter(r)).map((r) => r.item_id) : [];
+    const removed = since ? all.filter((item) => !onTheCounter(item)).map((item) => item.item_id) : [];
     /* ⭐ ONE GSTIN, READ ONCE — see the note where it is used. It may be on the identity row or in the profile; whichever it
        is, the state code is its first two digits and must not be derived from the other field. */
     /**
@@ -563,8 +663,11 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     const cbProfile = require('../lib/profile');
     let party = {};
-    try { party = (await cbProfile.invoiceParty(entity_id)) || {}; }
-    catch (e) { console.warn('[till] snapshot could not read the shop particulars — the bill header will be thin:', e.message); }
+    try {
+      party = (await cbProfile.invoiceParty(entity_id)) || {};
+    } catch (e) {
+      console.warn('[till] snapshot could not read the shop particulars — the bill header will be thin:', e.message);
+    }
     const gstin = row.gstn || party.gstin || null;
     /* ⚠️ ONE DERIVATION, read by the shop block AND by payWays — two answers about which country a shop is in would
        eventually mean one screen offering a payment method another refuses. */
@@ -573,7 +676,7 @@ router.get('/snapshot', auth, async (req, res) => {
        An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
     const stateSplit = require('../lib/tax-lines').splitsByState(cbCountry);
     /* CX0 + STD2: the money the counter bills in — the shop's own, else its PACK's; neither → null and the ONE sentence (country-setup.MONEY_UNSTATED) */
-    const shopMoney = require('../lib/country-setup').shopMoney(party.currency, cbCountry);   /* SEC3: the one reader */
+    const shopMoney = require('../lib/country-setup').shopMoney(party.currency, cbCountry); /* SEC3: the one reader */
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
     /**
@@ -585,126 +688,155 @@ router.get('/snapshot', auth, async (req, res) => {
      * an empty Map and every product falls back to the legacy key, which is precisely today's behaviour — and
      * the reason is said out loud rather than swallowed.
      */
-    let catNames = new Map(), catList = [];
+    let catNames = new Map(),
+      catList = [];
     try {
       /* ⚠️ ONE READ, BOTH SHAPES — the list travels to the counter, the Map resolves names here. Reading
          twice would be two round trips for one small table. */
       catList = await categories.listCategories(entity_id, { withEntity });
       for (const c of catList) catNames.set(String(c.id), c.name);
-    }
-    catch (e) {
+    } catch (e) {
       /* ⚠️ SAID OUT LOUD, the way this router already says it for sectors, rewards and customers — the shop
          still bills, and every product falls back to its stored category, which is today's behaviour. */
       require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) });
     }
 
     const tillItem = (item_id, d) => {
-      return { item_id, name: d.name, code: d.code || d.sku || null, unit: d.unit || 'piece',
-               /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
+      return {
+        item_id,
+        name: d.name,
+        code: d.code || d.sku || null,
+        unit: d.unit || 'piece',
+        /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
                   and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
-               price: amountOf(d.price), mrp: amountOf(d.mrp),
-               hsn: d.hsn || d.hs_code || d.hsn_code || null, tax_slab: d.tax_slab || null,
-               /**
-                * ⚠️⚠️⚠️ THE NAME, RESOLVED — not the legacy key ([TILL-114]). This was `d.category || null`, and
-                * `category` is the key catalogue-columns calls *"legacy … read, never written again"*. A product
-                * that cites `categories: [id]`, which is the CORRECT way, arrived here with nothing — so it
-                * vanished from the chips and the By-category view with no error anywhere.
-                * ⭐ categories.nameOf tries the master first, then a counterparty's travelling copy, then the
-                * legacy key — one order, in one place, rather than the copy of it in lib/network-catalogue.
-                */
-               category: categories.nameOf(d, catNames),
-               /**
-                * ⭐⭐ AND THE RELATION, not only the answer ([TILL-114]). Athi: *"we need to have those relations
-                * in local systems as well, so mapping shouldn't be an issue."* With the name alone a counter
-                * could display a group and nothing more — it could not cite one back without sending a string
-                * and hoping the server matched it, which is how a master acquires a second "vegetables".
-                */
-               category_id: (Array.isArray(d.categories) && d.categories[0]) || null,
-               /* ⭐ THE SHOP'S OWN PICTURE. Already a PUBLIC url (routes/products mediaUrl → /api/products/media/…), so the
+        price: amountOf(d.price),
+        mrp: amountOf(d.mrp),
+        hsn: d.hsn || d.hs_code || d.hsn_code || null,
+        tax_slab: d.tax_slab || null,
+        /**
+         * ⚠️⚠️⚠️ THE NAME, RESOLVED — not the legacy key ([TILL-114]). This was `d.category || null`, and
+         * `category` is the key catalogue-columns calls *"legacy … read, never written again"*. A product
+         * that cites `categories: [id]`, which is the CORRECT way, arrived here with nothing — so it
+         * vanished from the chips and the By-category view with no error anywhere.
+         * ⭐ categories.nameOf tries the master first, then a counterparty's travelling copy, then the
+         * legacy key — one order, in one place, rather than the copy of it in lib/network-catalogue.
+         */
+        category: categories.nameOf(d, catNames),
+        /**
+         * ⭐⭐ AND THE RELATION, not only the answer ([TILL-114]). Athi: *"we need to have those relations
+         * in local systems as well, so mapping shouldn't be an issue."* With the name alone a counter
+         * could display a group and nothing more — it could not cite one back without sending a string
+         * and hoping the server matched it, which is how a master acquires a second "vegetables".
+         */
+        category_id: (Array.isArray(d.categories) && d.categories[0]) || null,
+        /* ⭐ THE SHOP'S OWN PICTURE. Already a PUBLIC url (routes/products mediaUrl → /api/products/media/…), so the
                   counter and the shop screen can draw it without a key and without a second round trip. Null for most rows and
                   that is fine — the screen falls back to the category emblem rather than leaving a hole. */
-               image: d.image || null,
-               /**
-                * ⚠️⚠️ WHAT A COUNTER IS TOLD IS EXACTLY THIS LIST, AND NOTHING ELSE (2026-09-18). The projection is
-                * deliberately narrow — a shelf of ten thousand crosses the wire on every pairing — but that means a
-                * feature whose data lives in item_data and is NOT named here does not exist at the counter at all.
-                * Modifiers, combos and age checks were each built, tested against injected rows, and then found dead on
-                * a real shop: Mayur Bhavan carried choices on eighteen dishes and the counter saw none of them, because
-                * tillItem() never copied the field. The engine can be perfect and the shop still sees nothing.
-                * ⭐ SO: anything a counter must ACT on belongs here the moment it is built.
-                *   modifiers — the choices a dish has, and which are required (modsOf, modOpen)
-                *   combo_of  — the parts a meal deal replaces, so the counter prices them off its own shelf
-                *   age_check — the minimum age in years; COTPA §6 and the state excise ages (ageOf, ageAllow)
-                *
-                * ⚠️⚠️ MODIFIERS GO THROUGH THE SAME SHAPE-GUARD AUTHORING DOES, NOT STRAIGHT THROUGH. This
-                * used to send the stored array raw to a device holding a till-scoped key — anything a shop or
-                * an importer had put on an option (a cost price, a supplier code) rode along, and the array
-                * was unbounded. normalize() strips every field outside {name,options:[{name,price}]}, and
-                * groupsOf() drops a group that is not actually sellable yet (no name, or no options) — the
-                * exact same two calls the Modifiers tab itself runs before saving, so what ships here is
-                * never wider than what authoring could produce in the first place.
-                */
-               modifiers: (function () {
-                 var g = variantEngine.groupsOf({ modifiers: variantEngine.normalize(d.modifiers) });
-                 return g.length ? g : null;
-               })(),
-               combo_of: Array.isArray(d.combo_of) ? d.combo_of : null,
-               age_check: (Number(d.age_check) > 0 ? Math.floor(Number(d.age_check)) : null),
-               barcode: d.barcode || d.ean || null, avail: d.avail || null,
-               /**
-                * ⚠️⚠️ "avail" IS NOT THE STATUS, AND THE COUNTER WAS READING IT AS ONE. lib/itemstatus.js says so in as many
-                * words: item_data.avail is a QUANTITY feed ({qty, source, as_of}) — how many are on the shelf — while the
-                * lifecycle (available · unavailable · retired · redundant) lives in item_data.status.
-                *
-                * The counter's Stock-out button compared i.avail against the string 'unavailable' and assigned the string back.
-                * Against an object that comparison is ALWAYS false, so:
-                *   · the button only ever toggled one way on the first press
-                *   · POST /api/till/stock correctly stamped item_data.status on the server — a field the snapshot never sent —
-                *     so the next re-read brought the row back looking available, and the shopkeeper's decision was gone
-                *   · the "off the shelf right now" list read the same wrong field, so it could never list anything
-                * The whole feature was writing to one field and reading another. Both now travel, each meaning its own thing.
-                */
-               status: itemstatus.statusOf(d),
-               /**
-                * ⚠️ READ FOR A WEEK, NEVER SENT. lib/offers-engine.js matches an offer against l.excluded, and the counter's
-                * lineOf() dutifully passed item.offers_excluded — a field the snapshot did not carry, so it was always
-                * undefined and a shop's opt-out of an offer has never once been honoured at a till. Found while giving it a
-                * switch to be set from.
-                */
-               offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [],
-               /**
-                * ⭐ THE PRICING STRUCTURE THE PRODUCT CITES, as its TRAVELLING COPY (lib/pricing-engine copyOf) —
-                * never the definition id alone. A counter that had to resolve a definition could not price with the
-                * line down, and a bill reprinted next year must say what it was priced by, not what that structure
-                * has since become.
-                */
-               pricing_kind: d.pricing_kind || null,
-               pricing_tiers: Array.isArray(d.pricing_tiers) ? d.pricing_tiers : null,
-               pricing_amount: d.pricing_amount == null ? null : Number(d.pricing_amount),
-               pricing_min: d.pricing_min == null ? null : Number(d.pricing_min),
-               pricing_max: d.pricing_max == null ? null : Number(d.pricing_max),
-               pricing_def_name: d.pricing_def_name || null,
-               /* ⭐ picked by hand for the shop screen — the one thing promo.html cannot work out from the catalogue itself */
-               screen: d.screen === true,
-               /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton
+        image: d.image || null,
+        /**
+         * ⚠️⚠️ WHAT A COUNTER IS TOLD IS EXACTLY THIS LIST, AND NOTHING ELSE (2026-09-18). The projection is
+         * deliberately narrow — a shelf of ten thousand crosses the wire on every pairing — but that means a
+         * feature whose data lives in item_data and is NOT named here does not exist at the counter at all.
+         * Modifiers, combos and age checks were each built, tested against injected rows, and then found dead on
+         * a real shop: Mayur Bhavan carried choices on eighteen dishes and the counter saw none of them, because
+         * tillItem() never copied the field. The engine can be perfect and the shop still sees nothing.
+         * ⭐ SO: anything a counter must ACT on belongs here the moment it is built.
+         *   modifiers — the choices a dish has, and which are required (modsOf, modOpen)
+         *   combo_of  — the parts a meal deal replaces, so the counter prices them off its own shelf
+         *   age_check — the minimum age in years; COTPA §6 and the state excise ages (ageOf, ageAllow)
+         *
+         * ⚠️⚠️ MODIFIERS GO THROUGH THE SAME SHAPE-GUARD AUTHORING DOES, NOT STRAIGHT THROUGH. This
+         * used to send the stored array raw to a device holding a till-scoped key — anything a shop or
+         * an importer had put on an option (a cost price, a supplier code) rode along, and the array
+         * was unbounded. normalize() strips every field outside {name,options:[{name,price}]}, and
+         * groupsOf() drops a group that is not actually sellable yet (no name, or no options) — the
+         * exact same two calls the Modifiers tab itself runs before saving, so what ships here is
+         * never wider than what authoring could produce in the first place.
+         */
+        modifiers: (function () {
+          var g = variantEngine.groupsOf({ modifiers: variantEngine.normalize(d.modifiers) });
+          return g.length ? g : null;
+        })(),
+        combo_of: Array.isArray(d.combo_of) ? d.combo_of : null,
+        age_check: Number(d.age_check) > 0 ? Math.floor(Number(d.age_check)) : null,
+        barcode: d.barcode || d.ean || null,
+        avail: d.avail || null,
+        /**
+         * ⚠️⚠️ "avail" IS NOT THE STATUS, AND THE COUNTER WAS READING IT AS ONE. lib/itemstatus.js says so in as many
+         * words: item_data.avail is a QUANTITY feed ({qty, source, as_of}) — how many are on the shelf — while the
+         * lifecycle (available · unavailable · retired · redundant) lives in item_data.status.
+         *
+         * The counter's Stock-out button compared i.avail against the string 'unavailable' and assigned the string back.
+         * Against an object that comparison is ALWAYS false, so:
+         *   · the button only ever toggled one way on the first press
+         *   · POST /api/till/stock correctly stamped item_data.status on the server — a field the snapshot never sent —
+         *     so the next re-read brought the row back looking available, and the shopkeeper's decision was gone
+         *   · the "off the shelf right now" list read the same wrong field, so it could never list anything
+         * The whole feature was writing to one field and reading another. Both now travel, each meaning its own thing.
+         */
+        status: itemstatus.statusOf(d),
+        /**
+         * ⚠️ READ FOR A WEEK, NEVER SENT. lib/offers-engine.js matches an offer against l.excluded, and the counter's
+         * lineOf() dutifully passed item.offers_excluded — a field the snapshot did not carry, so it was always
+         * undefined and a shop's opt-out of an offer has never once been honoured at a till. Found while giving it a
+         * switch to be set from.
+         */
+        offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [],
+        /**
+         * ⭐ THE PRICING STRUCTURE THE PRODUCT CITES, as its TRAVELLING COPY (lib/pricing-engine copyOf) —
+         * never the definition id alone. A counter that had to resolve a definition could not price with the
+         * line down, and a bill reprinted next year must say what it was priced by, not what that structure
+         * has since become.
+         */
+        pricing_kind: d.pricing_kind || null,
+        pricing_tiers: Array.isArray(d.pricing_tiers) ? d.pricing_tiers : null,
+        pricing_amount: d.pricing_amount == null ? null : Number(d.pricing_amount),
+        pricing_min: d.pricing_min == null ? null : Number(d.pricing_min),
+        pricing_max: d.pricing_max == null ? null : Number(d.pricing_max),
+        pricing_def_name: d.pricing_def_name || null,
+        /* ⭐ picked by hand for the shop screen — the one thing promo.html cannot work out from the catalogue itself */
+        screen: d.screen === true,
+        /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton
                   converts to our pieces. Capped: an alias list is a memory aid, not a place to accumulate. */
-               aliases: Array.isArray(d.aliases) ? d.aliases.slice(0, 20).map((a) => ({ by: a.by || null, text: a.text,
-                          unit: a.unit || null, factor: a.factor == null ? null : Number(a.factor) })) : null,
-               /**
-                * ⭐⭐ THE SHOP'S OWN WORDS — thakkali, vengayam, milagai. `synonyms` is a field lib/itemmatch.js has read since August
-                * for WhatsApp orders and consolidation, so the same word resolved in a message and failed at the counter. One
-                * authority, read by both now.
-                */
-               synonym_text: Array.isArray(d.synonyms) ? (d.synonyms.map((x) => String(x || '')).filter(Boolean).join(' ') || null) : null,
-               /* and flattened, because the counter's own search reads fields — so typing what the SUPPLIER calls it finds it */
-               alias_text: Array.isArray(d.aliases) ? (d.aliases.slice(0, 20).map((a) => a.text).filter(Boolean).join(' ') || null) : null,
-               brand: d.brand || null, variant: d.variant || d.grade || null,
-               /* the shop's own declared facts — a pharmacy's composition, a paint shop's shade. Trimmed: a row is read at a glance. */
-               facts: declared.map((f) => { const v = d[f.k];
-                          return (v == null || typeof v === 'object' || String(v) === '') ? null : { n: f.n, v: String(v).slice(0, 40) };
-                        }).filter(Boolean) };
+        aliases: Array.isArray(d.aliases)
+          ? d.aliases
+              .slice(0, 20)
+              .map((item) => ({ by: item.by || null, text: item.text, unit: item.unit || null, factor: item.factor == null ? null : Number(item.factor) }))
+          : null,
+        /**
+         * ⭐⭐ THE SHOP'S OWN WORDS — thakkali, vengayam, milagai. `synonyms` is a field lib/itemmatch.js has read since August
+         * for WhatsApp orders and consolidation, so the same word resolved in a message and failed at the counter. One
+         * authority, read by both now.
+         */
+        synonym_text: Array.isArray(d.synonyms)
+          ? d.synonyms
+              .map((x) => String(x || ''))
+              .filter(Boolean)
+              .join(' ') || null
+          : null,
+        /* and flattened, because the counter's own search reads fields — so typing what the SUPPLIER calls it finds it */
+        alias_text: Array.isArray(d.aliases)
+          ? d.aliases
+              .slice(0, 20)
+              .map((item) => item.text)
+              .filter(Boolean)
+              .join(' ') || null
+          : null,
+        brand: d.brand || null,
+        variant: d.variant || d.grade || null,
+        /* the shop's own declared facts — a pharmacy's composition, a paint shop's shade. Trimmed: a row is read at a glance. */
+        facts: declared
+          .map((item) => {
+            const v = d[item.k];
+            return v == null || typeof v === 'object' || String(v) === '' ? null : { n: item.n, v: String(v).slice(0, 40) };
+          })
+          .filter(Boolean)
+      };
     };
-    const items = all.filter(onTheCounter).map((it) => tillItem(it.item_id, it.item_data || {})).filter((x) => x.name);
+    const items = all
+      .filter(onTheCounter)
+      .map((item) => tillItem(item.item_id, item.item_data || {}))
+      .filter((x) => x.name);
 
     /**
      * ── ⭐⭐⭐ THE NETWORK'S PRODUCTS, AT THE COUNTER (2026-09-17) ───────────────────────────────────────────────────
@@ -732,19 +864,42 @@ router.get('/snapshot', auth, async (req, res) => {
       if (ado.rows.length) {
         const catalogueBuild = require('../lib/catalogue-build');
         const catalogueRead = require('../lib/catalogue-read');
-        let container = null; try { container = require('../lib/container'); } catch (e) { log.fellBack('till GET /snapshot: the helper failed — carried on without it', e); }
-        const resolved = await Promise.all(ado.rows.map((r) => catalogueBuild.resolve(r.source_key, r.commercials || {}, { entity_id }).catch(log.orElse('till GET /snapshot: failed — answered with nothing', null))));
+        let container = null;
+        try {
+          container = require('../lib/container');
+        } catch (e) {
+          log.fellBack('till GET /snapshot: the helper failed — carried on without it', e);
+        }
+        const resolved = await Promise.all(
+          ado.rows.map((item) =>
+            catalogueBuild
+              .resolve(item.source_key, item.commercials || {}, { entity_id })
+              .catch(log.orElse('till GET /snapshot: failed — answered with nothing', null))
+          )
+        );
         const srcs = [];
-        ado.rows.forEach((r, i) => { const x = resolved[i]; if (x) srcs.push({ source_key: r.source_key, title: x.title,
-          owner_entity_id: x.owner_entity_id || null, items: x.items || [] }); });
+        ado.rows.forEach((item, index) => {
+          const x = resolved[index];
+          if (x) srcs.push({ source_key: item.source_key, title: x.title, owner_entity_id: x.owner_entity_id || null, items: x.items || [] });
+        });
         let containers = {};
         if (container && container.resolveMany && container.itemContainerId) {
           const ids = [];
           for (const sx of srcs) for (const it of sx.items) if (it && it.name) ids.push(container.itemContainerId(sx.source_key, it.name));
-          try { containers = (await container.resolveMany(ids)) || {}; } catch (e) { log.fellBack('till GET /snapshot: failed — answered with an empty set', e); containers = {}; }
+          try {
+            containers = (await container.resolveMany(ids)) || {};
+          } catch (e) {
+            log.fellBack('till GET /snapshot: failed — answered with an empty set', e);
+            containers = {};
+          }
         }
-        const lines = catalogueRead.lines({ owned: [], sources: srcs, me: entity_id, containers,
-          containerIdFor: container ? container.itemContainerId : null });
+        const lines = catalogueRead.lines({
+          owned: [],
+          sources: srcs,
+          me: entity_id,
+          containers,
+          containerIdFor: container ? container.itemContainerId : null
+        });
         for (const l of lines) {
           const f = l.fields || {};
           if (['available', 'unavailable'].indexOf(itemstatus.statusOf(f)) < 0) continue;
@@ -752,13 +907,22 @@ router.get('/snapshot', auth, async (req, res) => {
              id is made safe here; the true reference rides beside it for the chit. */
           const row = tillItem(String(l.line_id).replace(/['"\\<>&\s]/g, '_'), f);
           if (!row.name) continue;
-          if (!catalogueRead.isPricedByStore(l, row.price)) { networkUnpriced++; continue; }
+          if (!catalogueRead.isPricedByStore(l, row.price)) {
+            networkUnpriced++;
+            continue;
+          }
           /* ⭐ where it came from — the slip, the chit and the shop screen can all say "from <brand>" */
           row.source = { key: l.source_key, title: l.source_title || null, owner: l.owner_entity_id || null, line: l.line_id };
           items.push(row);
         }
       }
-    } catch (e) { log.fellBack('till GET /snapshot: did not parse — carried on without it', e, 'debug'); /* a store with no network, or a source that cannot be read, still opens with its own products */ }
+    } catch (e) {
+      log.fellBack(
+        'till GET /snapshot: did not parse — carried on without it',
+        e,
+        'debug'
+      ); /* a store with no network, or a source that cannot be read, still opens with its own products */
+    }
 
     /**
      * ⭐⭐⭐ AND THE OFFERS ITS NETWORKS RELEASED (lib/network-offers). Opt-in or opt-out is the brand's model; the store's
@@ -767,17 +931,24 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     try {
       const byOwner = {};
-      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id, category: x.category }); });
+      items.forEach((x) => {
+        if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id, category: x.category });
+      });
       const owners = Object.keys(byOwner);
       if (owners.length) {
         const fromNetworks = await require('../lib/network-offers').forStore(entity_id, owners, byOwner);
         if (fromNetworks.length) offers = offers.concat(fromNetworks);
       }
-    } catch (e) { log.fellBack('till snapshot: the brand networks\' offers were not read — the counter bills with the store\'s own offers only', e); /* a network that cannot be read never stops the store's own offers */ }
+    } catch (e) {
+      log.fellBack(
+        "till snapshot: the brand networks' offers were not read — the counter bills with the store's own offers only",
+        e
+      ); /* a network that cannot be read never stops the store's own offers */
+    }
 
     const body = {
-      at: deltaCursor || readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler;
-                                      a delta sent in parts hands back its last row instead (see DELTA_CAP) */
+      at: deltaCursor || readAt /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler;
+                                      a delta sent in parts hands back its last row instead (see DELTA_CAP) */,
       more: deltaMore,
       /* ⭐ the most items one answer carries — with `total` and `more` · `at` this is the snapshot's pager, said (docs/FIELDS.md) */
       limit: DELTA_CAP,
@@ -832,7 +1003,8 @@ router.get('/snapshot', auth, async (req, res) => {
          * page already resolves (cbHome()) and the API does not know which front end asked.
          */
         handle: row.user_id || null,
-        state_code: String(gstin || '').slice(0, 2) && stateSplit ? String(gstin).slice(0, 2) : null,   /* CX0: only under a state-split pack (stateSplit above) */
+        state_code:
+          String(gstin || '').slice(0, 2) && stateSplit ? String(gstin).slice(0, 2) : null /* CX0: only under a state-split pack (stateSplit above) */,
         reg_type: String(flags.gst_registration || 'regular'),
         /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
         country: cbCountry,
@@ -852,21 +1024,28 @@ router.get('/snapshot', auth, async (req, res) => {
         /* STD2: no money stated and no pack to read it from → the ONE sentence with its code; the counter paints it beside "Money is …" */
         money_why: shopMoney ? null : { code: 'NO_MONEY', why: require('../lib/country-setup').MONEY_UNSTATED },
         /* STD2: the pack's word for the tax number (profile.taxIdWordOf — the ONE reader); null = no pack, the counter says "Tax number" */
-        tax_id_word: cbProfile.taxIdWordOf(cbCountry), fy_start_month: require('../lib/country-setup').fyStartOf(cbCountry),   /* N4: the year roll-up passes the pack's own start month (null = unstated), never April */
+        tax_id_word: cbProfile.taxIdWordOf(cbCountry),
+        fy_start_month:
+          require('../lib/country-setup').fyStartOf(cbCountry) /* N4: the year roll-up passes the pack's own start month (null = unstated), never April */
       },
-      items, removed, delta: !!since, since: since || null, offers, staff,
+      items,
+      removed,
+      delta: !!since,
+      since: since || null,
+      offers,
+      staff,
       /**
        * ⭐⭐⭐ THE CATEGORY MASTER, ON THE COUNTER ([TILL-114]). id → name for the shop's own categories, so the
        * relation exists locally and mapping is not a problem with the line down.
        * ⚠️ Small by nature — a shop has categories in the tens, not the thousands — so it rides every
        * snapshot rather than needing a door of its own.
        */
-      categories: catList.map((c) => ({ id: c.id, name: c.name, status: c.status })),
+      categories: catList.map((item) => ({ id: item.id, name: item.name, status: item.status })),
       /* how many sellable products the shop has right now — the counter checks its merged copy against this (see the note above) */
       /* ⚠️ INCLUDES THE NETWORK LINES, which ride on every read: the counter compares its merged copy against this, and a
          total that left them out would make every refresh look wrong and pull the whole shop again, for ever */
-      total: (liveCount && liveCount.rows && liveCount.rows[0] && liveCount.rows[0].n != null)
-        ? liveCount.rows[0].n + items.filter((x) => x.source).length : null,
+      total:
+        liveCount && liveCount.rows && liveCount.rows[0] && liveCount.rows[0].n != null ? liveCount.rows[0].n + items.filter((x) => x.source).length : null,
       /* ⭐ the network lines the store has not priced yet — named, so the gap is a fact and not a mystery */
       network: { lines: items.filter((x) => x.source).length, unpriced: networkUnpriced },
       /**
@@ -881,26 +1060,32 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ The type was fine at every boundary except the one that serialises, which is exactly the kind of bug a type nobody
        * checks produces: correct in four call sites and silently empty in the fifth.
        */
-      slabs: (shelf && shelf.slabs instanceof Map) ? [...shelf.slabs.values()] : ((shelf && shelf.slabs) || []),
-      categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
+      slabs: shelf && shelf.slabs instanceof Map ? [...shelf.slabs.values()] : (shelf && shelf.slabs) || [],
+      categories: (shelf && shelf.categories) || [],
+      face: (shelf && shelf.face) || {},
       customers,
       suppliers,
-      reward,                       /* ⚠️ null is the ordinary case — most shops run no programme, and the counter shows nothing */
-      policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
-                /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
-                price_includes_tax: policy.flagOf(row.policy_flags, 'price_includes_tax', row.country),   /* TILL-B2: unset → the country's convention (US: excluded) */
-                /* ⭐ CAN THIS SERVER TRANSCRIBE? The counter picks a recogniser without a round trip to find out. */
-                speech: speech.available() ? 'server' : 'browser',
-                tolerance: { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp),
-                             count_units: Number(flags.tol_count_units) || 0,
-                             rate_bp: Number(flags.tol_rate_bp) || 0 } },
+      reward /* ⚠️ null is the ordinary case — most shops run no programme, and the counter shows nothing */,
+      policy: {
+        books_at: flags.books_at || 'accepted',
+        qty_zero_hides: flags.qty_zero_hides || 'off',
+        /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
+        price_includes_tax: policy.flagOf(row.policy_flags, 'price_includes_tax', row.country) /* TILL-B2: unset → the country's convention (US: excluded) */,
+        /* ⭐ CAN THIS SERVER TRANSCRIBE? The counter picks a recogniser without a round trip to find out. */
+        speech: speech.available() ? 'server' : 'browser',
+        tolerance: {
+          weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp),
+          count_units: Number(flags.tol_count_units) || 0,
+          rate_bp: Number(flags.tol_rate_bp) || 0
+        }
+      },
       /**
        * ⭐⭐ THE VERTICAL, AS A FIELD PACK (2026-09-08). Athi: *"we have already vertical in our governance, so it can nicely tide
        * upon."* The shop's own sector decides what goods-in asks about a CONSIGNMENT — batch and expiry for medicine, a serial for
        * a warranty item, nothing at all for general trade. It travels with the snapshot, so a counter with the line down still
        * knows what to ask and what to refuse.
        */
-      lot_fields: lotfields.forEntity(sectors),
+      lot_fields: lotfields.forEntity(sectors)
     };
     /**
      * ⭐⭐ `books: true` — TOP LEVEL, PRESENT ONLY WHEN THE SHOP'S LEDGER IS ON (critic M5). The counter requires exactly
@@ -911,7 +1096,9 @@ router.get('/snapshot', auth, async (req, res) => {
     if (snapshotBooksOn) body.books = true;
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
     res.json(screen ? screenView(body) : body);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -949,15 +1136,18 @@ router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
        makes that call standing at a till with a customer waiting. The same two the bulk screen offers, for the same reason. */
     if (['available', 'unavailable'].indexOf(status) < 0)
       return res.status(400).json({ error: 'validation', message: "status must be 'available' or 'unavailable'" });
-    const rec = itemstatus.stamp({ status, until: (req.body && req.body.until) || undefined,
-                                   note: (req.body && req.body.note) || undefined },
-                                 { actor_name: (req.body && req.body.by) || 'the counter' });
+    const rec = itemstatus.stamp(
+      { status, until: (req.body && req.body.until) || undefined, note: (req.body && req.body.note) || undefined },
+      { actor_name: (req.body && req.body.by) || 'the counter' }
+    );
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id, merge: rec }], { returning: 'item_id, item_data' }));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     shopChanged(entity_id, 'stock ' + status);
     const d = r.rows[0].item_data || {};
     res.json({ ok: true, item_id, name: d.name || null, status });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -985,28 +1175,37 @@ const STOCK_BULK_MAX = 500;
 router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
     const ids = Array.isArray(b.item_ids) ? b.item_ids.map((x) => String(x || '')).filter(Boolean) : [];
     const status = String(b.status || '').toLowerCase();
     if (!ids.length) return res.status(400).json({ error: 'validation', message: 'item_ids required' });
     if (ids.length > STOCK_BULK_MAX) {
-      return res.status(400).json({ error: 'Too many',
-        message: 'At most ' + STOCK_BULK_MAX + ' products in one change.' });
+      return res.status(400).json({ error: 'Too many', message: 'At most ' + STOCK_BULK_MAX + ' products in one change.' });
     }
     if (['available', 'unavailable'].indexOf(status) < 0)
       return res.status(400).json({ error: 'validation', message: "status must be 'available' or 'unavailable'" });
 
-    const rec = itemstatus.stamp({ status, note: b.note || undefined },
-                                 { actor_name: b.by || 'the counter' });
+    const rec = itemstatus.stamp({ status, note: b.note || undefined }, { actor_name: b.by || 'the counter' });
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids, merge: rec }));
 
     shopChanged(entity_id, 'stock ' + status + ' ×' + r.rows.length);
     const n = r.rows.length;
-    res.json({ ok: true, moved: n, asked: ids.length, status,
-      message: n + ' product' + (n === 1 ? '' : 's')
-        + (status === 'available' ? ' put on the shelf' : ' taken off the shelf')
-        + (n < ids.length ? ' · ' + (ids.length - n) + ' could not be found' : '') + '.' });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    res.json({
+      ok: true,
+      moved: n,
+      asked: ids.length,
+      status,
+      message:
+        n +
+        ' product' +
+        (n === 1 ? '' : 's') +
+        (status === 'available' ? ' put on the shelf' : ' taken off the shelf') +
+        (n < ids.length ? ' · ' + (ids.length - n) + ' could not be found' : '') +
+        '.'
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1046,26 +1245,32 @@ router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => 
     const num = (v, cap) => Math.max(0, Math.min(Number(v) || 0, cap || 100000));
     const str = (v, n) => (v == null ? null : String(v).slice(0, n || 200));
     const patch = {
-      code:     str(b.code, 12),
-      verdict:  str(b.verdict, 400),
-      till_id:  str(b.till_id, 16),
-      online:   b.online === true,
-      storage:  b.storage === true,
-      queued:   num(b.queued, 100000),
-      foreign:  num(b.foreign, 100000),
-      bills:    num(b.bills, 1000000),
+      code: str(b.code, 12),
+      verdict: str(b.verdict, 400),
+      till_id: str(b.till_id, 16),
+      online: b.online === true,
+      storage: b.storage === true,
+      queued: num(b.queued, 100000),
+      foreign: num(b.foreign, 100000),
+      bills: num(b.bills, 1000000),
       last_why: str(b.last_why, 300),
       /* ⚠️ bill NUMBERS only — they are the shop's own reference and the thing a support call is about */
-      waiting:  (Array.isArray(b.waiting) ? b.waiting : []).slice(0, 20)
-                  .map((w) => ({ no: str(w && w.no, 32), tries: num(w && w.tries, 9999), why: str(w && w.why, 200) })),
+      waiting: (Array.isArray(b.waiting) ? b.waiting : [])
+        .slice(0, 20)
+        .map((item) => ({ no: str(item && item.no, 32), tries: num(item && item.tries, 9999), why: str(item && item.why, 200) })),
       /* ⭐ recorded because it is the one fact the counter cannot know about itself, and the shop may need it */
-      ip:       String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '').trim().slice(0, 45) || null,
-      agent:    str(req.headers['user-agent'], 160)
+      ip:
+        String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '')
+          .trim()
+          .slice(0, 45) || null,
+      agent: str(req.headers['user-agent'], 160)
     };
     const diag = await require('./keys').setDiag(entity_id, jti, patch);
     if (!diag) return res.status(404).json({ error: 'Not found', message: 'This key is not listed for the shop.' });
     res.json({ ok: true, code: diag.code, at: diag.at });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 /**
  * ── ⭐⭐⭐ POST /api/till/close — A COUNTER FINISHES, AND SAYS SO ────────────────────────────────────────────────
@@ -1088,7 +1293,7 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
     if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can close itself.' });
     const b = req.body || {};
     const list = await keys.listOf(entity_id);
-    const me = list.find((k) => k && String(k.jti) === String(jti));
+    const me = list.find((item) => item && String(item.jti) === String(jti));
     if (!me) return res.status(404).json({ error: 'Not found', message: 'This counter is not listed for the shop.' });
     const till = Object.assign({}, me.till || {}, {
       closed_at: new Date().toISOString(),
@@ -1097,10 +1302,10 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
       bills: Math.max(0, Math.min(Number(b.bills) || 0, 1000000)),
       /* ⭐ where this counter's run stopped — what a REOPEN on another PC would have to continue from, and the
          thing that makes reopening safe at all: the close has already proved nothing unsent is left behind */
-      next: Number(b.next) > 0 ? Math.min(Number(b.next), 1000000) : null,
+      next: Number(b.next) > 0 ? Math.min(Number(b.next), 1000000) : null
     });
     await keys.patchTill(entity_id, jti, till);
-    auth.forgetKey(jti);                     /* ⚠️ the auth cache would otherwise honour it for another minute */
+    auth.forgetKey(jti); /* ⚠️ the auth cache would otherwise honour it for another minute */
     /**
      * ⭐⭐ A NAMED COUNTER IS LET GO, NOT ENDED. Its record keeps where the run stopped, so it can be opened again —
      * on this PC or another — and continue. Only if THIS key still holds it; a counter already released or
@@ -1113,19 +1318,28 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
         const c = r.rows[0] && r.rows[0].c;
         if (!c) return;
         const patch = { closed_at: till.closed_at, last_no: till.last_no || c.last_no || null };
-        if (String(c.held_by || '') === String(jti)) { patch.held_by = null; patch.held_at = null; patch.status = null; patch.status_since = null; patch.status_by = null; }
+        if (String(c.held_by || '') === String(jti)) {
+          patch.held_by = null;
+          patch.held_at = null;
+          patch.status = null;
+          patch.status_since = null;
+          patch.status_by = null;
+        }
         const period = b.period != null ? String(b.period) : null;
         if (till.next && (c.period == null || c.period === period)) {
           patch.next = Math.max(Number(c.next) || 1, till.next);
           if (period != null) patch.period = period;
         } else if (till.next && period != null) {
-          patch.next = till.next; patch.period = period;
+          patch.next = till.next;
+          patch.period = period;
         }
         await require('./counters').patchCounter(db, entity_id, cid, patch);
       });
     }
     res.json({ ok: true, closed_at: till.closed_at, prefix: till.id || null });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 /**
  * ⭐⭐ POST /api/till/state — ON BREAK, OR BILLING (Athi, 2026-09-17: *"closing a counter need not be closing the sale
@@ -1140,7 +1354,7 @@ router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
     const b = req.body || {};
     const state = b.state === 'break' ? 'break' : 'billing';
     const list = await keys.listOf(entity_id);
-    const me = list.find((k) => k && String(k.jti) === String(jti));
+    const me = list.find((item) => item && String(item.jti) === String(jti));
     if (!me || !me.counter) return res.json({ ok: true, recorded: false });
     const cid = String(me.counter).toUpperCase();
     await require('../db').withTransaction(async (db) => {
@@ -1151,11 +1365,13 @@ router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
       await require('./counters').patchCounter(db, entity_id, cid, {
         status: state,
         status_since: state === 'break' ? (b.since ? String(b.since).slice(0, 40) : new Date().toISOString()) : null,
-        status_by: state === 'break' ? (b.by ? String(b.by).slice(0, 80) : null) : null,
+        status_by: state === 'break' ? (b.by ? String(b.by).slice(0, 80) : null) : null
       });
     });
     res.json({ ok: true, recorded: true, state });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
   try {
@@ -1165,7 +1381,7 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
     if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
 
     let merge;
-    if (b.offer_id != null) merge = null;   /* the list is read under the row lock below */
+    if (b.offer_id != null) merge = null; /* the list is read under the row lock below */
     else if (b.screen !== undefined) merge = { screen: b.screen === true || b.screen === 'true' };
     else return res.status(400).json({ error: 'validation', message: 'nothing to set — pass screen, or offer_id with excluded' });
 
@@ -1178,8 +1394,10 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
         const cur = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2 FOR UPDATE', [entity_id, item_id]);
         if (!cur.rows.length) return { rows: [] };
         const was = (cur.rows[0].item_data || {}).offers_excluded;
-        const kept = (Array.isArray(was) ? was : []).filter((x) => x != null)
-          .map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).filter((x) => x !== offer_id);
+        const kept = (Array.isArray(was) ? was : [])
+          .filter((x) => x != null)
+          .map((x) => (typeof x === 'string' ? x : JSON.stringify(x)))
+          .filter((x) => x !== offer_id);
         merge = { offers_excluded: excluded ? kept.concat([offer_id]) : kept };
       }
       return catwrite.patchItems(db, entity_id, [{ item_id, merge }], { returning: 'item_id, item_data' });
@@ -1188,9 +1406,16 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
     const d = r.rows[0].item_data || {};
     /* ⭐ the shop screen and every open counter hear about it on the same bell a price change rides */
     shopChanged(entity_id, b.offer_id != null ? 'offer opt-out' : 'screen pick');
-    res.json({ ok: true, item_id, name: d.name || null,
-               offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded : [], screen: d.screen === true });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    res.json({
+      ok: true,
+      item_id,
+      name: d.name || null,
+      offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded : [],
+      screen: d.screen === true
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1209,8 +1434,8 @@ async function counterOfReq(req) {
   const jti = req.till && req.till.key && req.till.key.jti;
   if (!jti) return null;
   const list = await keys.listOf(auth.entityOf(req));
-  const me = list.find((k) => k && String(k.jti) === String(jti));
-  return (me && me.counter) ? String(me.counter).toUpperCase() : null;
+  const me = list.find((item) => item && String(item.jti) === String(jti));
+  return me && me.counter ? String(me.counter).toUpperCase() : null;
 }
 const qk = require('../lib/quick-keys');
 
@@ -1226,7 +1451,9 @@ router.get('/counters', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const counters = await require('./counters').listNarrow(auth.entityOf(req));
     res.json({ counters, me: await counterOfReq(req) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/quick-keys/groups', auth, auth.requireScope('till'), async (req, res) => {
@@ -1234,7 +1461,9 @@ router.get('/quick-keys/groups', auth, auth.requireScope('till'), async (req, re
     const entity_id = auth.entityOf(req);
     const groups = await withEntity(entity_id, (db) => qk.listGroups(db, entity_id));
     res.json({ groups });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
@@ -1246,7 +1475,9 @@ router.get('/quick-keys/state', auth, auth.requireScope('till'), async (req, res
     if (!business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
     const state = await withEntity(entity_id, (db) => qk.getActiveGroups(db, entity_id, counter_id, business_date));
     res.json(state);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.post('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
@@ -1258,7 +1489,9 @@ router.post('/quick-keys/state', auth, auth.requireScope('till'), async (req, re
     if (!b.business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
     const state = await withEntity(entity_id, (db) => qk.setActiveGroups(db, entity_id, counter_id, b.business_date, b.shift_id, b.active_group_ids));
     res.json(state);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, res) => {
@@ -1269,7 +1502,9 @@ router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, re
     if (!counter_id) return res.json({ hidden: [] });
     const hidden = await withEntity(entity_id, (db) => qk.listHidden(db, entity_id, counter_id));
     res.json({ hidden });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /* ⚠️ IDEMPOTENT ON PURPOSE — a queued offline write can replay, and re-hiding an already-hidden item must be a
@@ -1282,9 +1517,11 @@ router.post('/quick-keys/hide', auth, auth.requireScope('till'), async (req, res
     if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
     const b = req.body || {};
     if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
-    const rows = await withEntity(entity_id, (db) => qk.hideItem(db, entity_id, counter_id, b.product_id, b.shift_id, (b.by || null), b.also_counters));
+    const rows = await withEntity(entity_id, (db) => qk.hideItem(db, entity_id, counter_id, b.product_id, b.shift_id, b.by || null, b.also_counters));
     res.json({ hidden: rows });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.post('/quick-keys/unhide', auth, auth.requireScope('till'), async (req, res) => {
@@ -1296,7 +1533,9 @@ router.post('/quick-keys/unhide', auth, auth.requireScope('till'), async (req, r
     if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
     const r = await withEntity(entity_id, (db) => qk.unhideItem(db, entity_id, counter_id, b.product_id, b.also_counters));
     res.json(r);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
@@ -1305,7 +1544,9 @@ router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), async (
     const counter_id = await counterOfReq(req);
     const cfg = await withEntity(entity_id, (db) => qk.getScreenConfig(db, entity_id, counter_id));
     res.json(cfg);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
@@ -1315,7 +1556,9 @@ router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), async 
     if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
     const cfg = await withEntity(entity_id, (db) => qk.setScreenConfig(db, entity_id, counter_id, (req.body || {}).config, null));
     res.json(cfg);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1366,8 +1609,9 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
     const days = Math.max(1, Math.min(180, Number(req.query.days) || 14));
     const quiet = Math.max(1, Math.min(365, Number(req.query.quiet) || 14));
 
-    const rows = await withEntity(entity_id, (db) => db.query(
-      `WITH lines AS (
+    const rows = await withEntity(entity_id, (db) =>
+      db.query(
+        `WITH lines AS (
          SELECT h.chit_id, h.created_at, h.direction, h.business_json, l AS line
            FROM chit_header h
            JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
@@ -1415,39 +1659,59 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
          AND EXISTS (SELECT 1 FROM catalogue_items ci
                       WHERE ci.entity_id = $1 AND ci.is_active = true
                         AND ci.item_id::text = COALESCE(line->>'item_id', line#>>'{item_data,item_id}'))
-       GROUP BY 1`, [entity_id]));
+       GROUP BY 1`,
+        [entity_id]
+      )
+    );
 
     const today = new Date();
     const dayOf = (d) => Math.floor((new Date(d) - today) / 86400000);
     const out = [];
     for (const r of rows.rows) {
-      const why = [];
+      const list = [];
       let urgency = 0;
       if (r.expiry) {
         const left = dayOf(r.expiry);
         /* ⚠️ "expires in 1 days" is the kind of thing that makes a shopkeeper stop trusting the rest of the sentence */
         const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
         if (left <= days) {
-          why.push(left < 0 ? ('expired ' + plural(Math.abs(left), 'day') + ' ago')
-                 : (left === 0 ? 'expires today'
-                 : (left === 1 ? 'expires tomorrow' : ('expires in ' + plural(left, 'day')))));
-          urgency += (days - left) + (left < 0 ? 100 : 0);
+          list.push(
+            left < 0
+              ? 'expired ' + plural(Math.abs(left), 'day') + ' ago'
+              : left === 0
+                ? 'expires today'
+                : left === 1
+                  ? 'expires tomorrow'
+                  : 'expires in ' + plural(left, 'day')
+          );
+          urgency += days - left + (left < 0 ? 100 : 0);
         }
       }
       if (r.last_sold) {
         const since = Math.abs(dayOf(r.last_sold));
-        if (since >= quiet) { why.push('not sold for ' + since + ' day' + (since === 1 ? '' : 's')); urgency += Math.min(since, 90) / 3; }
+        if (since >= quiet) {
+          list.push('not sold for ' + since + ' day' + (since === 1 ? '' : 's'));
+          urgency += Math.min(since, 90) / 3;
+        }
       } else {
-        why.push('never sold here'); urgency += 10;
+        list.push('never sold here');
+        urgency += 10;
       }
-      if (why.length) out.push({ item_id: r.item_id, name: r.name, expiry: r.expiry || null,
-                                 last_sold: r.last_sold || null, why, urgency: Math.round(urgency) });
+      if (list.length)
+        out.push({ item_id: r.item_id, name: r.name, expiry: r.expiry || null, last_sold: r.last_sold || null, why: list, urgency: Math.round(urgency) });
     }
-    out.sort((a, b) => b.urgency - a.urgency);
-    res.json({ ok: true, days, quiet, items: out.slice(0, 60),
-               /* ⚠️ said out loud: this is what the shop RECORDED, not a stock count nobody has taken */
-               basis: 'expiry recorded at goods-in, and the last time each product was on a bill' });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    out.sort((first, second) => second.urgency - first.urgency);
+    res.json({
+      ok: true,
+      days,
+      quiet,
+      items: out.slice(0, 60),
+      /* ⚠️ said out loud: this is what the shop RECORDED, not a stock count nobody has taken */
+      basis: 'expiry recorded at goods-in, and the last time each product was on a bill'
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => {
@@ -1465,35 +1729,39 @@ router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => 
            FROM definition d
            LEFT JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
-          WHERE d.entity_id = $1 AND d.definition_id = $2`, [entity_id, offer_id]);
+          WHERE d.entity_id = $1 AND d.definition_id = $2`,
+        [entity_id, offer_id]
+      );
       if (!cur.rows.length) return { missing: true };
       const d = cur.rows[0];
       /* ⚠️ an offer only — this route must never become a way to edit any other kind of definition */
       if (d.kind !== 'offer') return { refused: 'that is not an offer' };
       if (d.status !== 'live') return { refused: 'that offer is not live' };
 
-      const rules = (d.rules && typeof d.rules === 'object') ? d.rules : {};
-      const applies = (rules.applies_to && typeof rules.applies_to === 'object') ? rules.applies_to : {};
-      const had = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
-      const next = on ? (had.indexOf(item_id) >= 0 ? had : had.concat([item_id]))
-                      : had.filter((x) => x !== item_id);
+      const rules = d.rules && typeof d.rules === 'object' ? d.rules : {};
+      const applies = rules.applies_to && typeof rules.applies_to === 'object' ? rules.applies_to : {};
+      const list = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
+      const next = on ? (list.indexOf(item_id) >= 0 ? list : list.concat([item_id])) : list.filter((x) => x !== item_id);
       /* nothing to record is not an error, and a version for it would be noise in the one history that must stay readable */
-      if (next.length === had.length && next.every((x, n) => x === had[n]))
-        return { ok: true, unchanged: true, name: d.name };
+      if (next.length === list.length && next.every((x, index) => x === list[index])) return { ok: true, unchanged: true, name: d.name };
 
       /* ⭐ ONE KEY TOUCHED. Everything else about the offer is carried across exactly as it was. */
       const newRules = Object.assign({}, rules, { applies_to: Object.assign({}, applies, { item_ids: next }) });
       const version = d.current_version + 1;
-      const who = (b.by ? String(b.by).slice(0, 60) : null);
+      const who = b.by ? String(b.by).slice(0, 60) : null;
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, note, created_by)
          VALUES ($1,$2,$3,$4,$5,$6)`,
-        [offer_id, version, entity_id, newRules,
-         (on ? 'Product added at the counter' : 'Product removed at the counter') + (who ? ' by ' + who : ''),
-         req.identity && req.identity.identity_id]);
-      await db.query(
-        `UPDATE definition SET current_version = $2, updated_at = now() WHERE definition_id = $1`,
-        [offer_id, version]);
+        [
+          offer_id,
+          version,
+          entity_id,
+          newRules,
+          (on ? 'Product added at the counter' : 'Product removed at the counter') + (who ? ' by ' + who : ''),
+          req.identity && req.identity.identity_id
+        ]
+      );
+      await db.query(`UPDATE definition SET current_version = $2, updated_at = now() WHERE definition_id = $1`, [offer_id, version]);
       return { ok: true, name: d.name, version };
     });
 
@@ -1501,7 +1769,9 @@ router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => 
     if (out.refused) return res.status(400).json({ error: 'validation', message: out.refused });
     shopChanged(entity_id, 'offer ' + (on ? 'added to' : 'removed from') + ' a product');
     res.json(Object.assign({ ok: true, offer_id, item_id, on }, out));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
@@ -1510,8 +1780,7 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
     const item_id = String((req.body && req.body.item_id) || '');
     const price = Number(req.body && req.body.price);
     if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
-    if (!Number.isFinite(price) || price < 0)
-      return res.status(400).json({ error: 'validation', message: 'price must be a number, zero or more' });
+    if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'validation', message: 'price must be a number, zero or more' });
     /* [OFFR-04] a price typed at the counter is the same write as PATCH /products — the same gate (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['price']);
     if (refused) return res.status(403).json(refused);
@@ -1531,18 +1800,22 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
       const cur = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2', [entity_id, item_id]);
       if (!cur.rows.length) return null;
       const d = cur.rows[0].item_data || {};
-      const was = (d.price && typeof d.price === 'object') ? d.price.amount : d.price;
-      const patch = { price: { amount: price, currency },
-                      price_was: (was == null ? null : Number(was)),
-                      price_changed_at: new Date().toISOString(),
-                      price_changed_by: String((req.body && req.body.by) || 'the counter').slice(0, 80) };
+      const was = d.price && typeof d.price === 'object' ? d.price.amount : d.price;
+      const patch = {
+        price: { amount: price, currency },
+        price_was: was == null ? null : Number(was),
+        price_changed_at: new Date().toISOString(),
+        price_changed_by: String((req.body && req.body.by) || 'the counter').slice(0, 80)
+      };
       const u = await catwrite.patchItems(db, entity_id, [{ item_id, merge: patch }], { returning: 'item_data' });
       return { was, now: price, name: (u.rows[0].item_data || {}).name || null };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     shopChanged(entity_id, 'price changed');
     res.json({ ok: true, item_id, name: out.name, was: out.was, now: out.now, currency });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /* ═══ REWARDS ═════════════════════════════════════════════════════════════════════════════════════════════════
@@ -1589,15 +1862,21 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
     const prog = await progOf(entity_id);
     if (!prog) return res.json({ ok: true, holder, programme: null, points: 0, entries: [] });
     /* the balance is the SUM of every entry (lib/reward-store.balanceOn), never a fold of the newest page */
-    const bal = await store.balance(entity_id, holder, withEntity, prog), gone = bal.expired;
-    res.json({ ok: true, holder,
-               programme: { name: prog.name, earns: rewards.describeEarn(prog, {}),
-                            expires_months: prog.expires_months || null },
-               points: bal.points, negative: bal.negative,
-               worth: bal.worth,
-               expiring: gone.length ? gone.reduce((a, e) => a + Math.abs(e.points), 0) : 0,
-               entries: bal.entries });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    const bal = await store.balance(entity_id, holder, withEntity, prog),
+      gone = bal.expired;
+    res.json({
+      ok: true,
+      holder,
+      programme: { name: prog.name, earns: rewards.describeEarn(prog, {}), expires_months: prog.expires_months || null },
+      points: bal.points,
+      negative: bal.negative,
+      worth: bal.worth,
+      expiring: gone.length ? gone.reduce((total, e) => total + Math.abs(e.points), 0) : 0,
+      entries: bal.entries
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1614,13 +1893,14 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const body = req.body || {};
-    const ref = String(body.ref || '').trim().slice(0, 64);
+    const ref = String(body.ref || '')
+      .trim()
+      .slice(0, 64);
     if (!ref) return res.status(400).json({ error: 'validation', message: 'ref (the bill number) required' });
     const holder = holderFrom(body.holder || body.customer);
     /* ⚠️ NOT AN ERROR. A walk-in who gave no number is the commonest bill in the shop; it earns nothing and the
        counter says so in one line. Returning 400 here would put a red box on an ordinary sale. */
-    if (!holder) return res.json({ ok: true, holder: null, added: 0, spent: 0, points: 0,
-                                   why: 'no customer to hold the points' });
+    if (!holder) return res.json({ ok: true, holder: null, added: 0, spent: 0, points: 0, why: 'no customer to hold the points' });
 
     const prog = await progOf(entity_id);
     if (!prog) return res.json({ ok: true, holder, added: 0, spent: 0, points: 0, why: 'this shop runs no programme' });
@@ -1635,14 +1915,22 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
     /* ⭐ ONE transaction: the holder locked, the SERVER'S bill read and its points computed, the balance read (a SUM of every
        entry), the due expiries + spend + earning written together */
     const settled = await store.settle(entity_id, holder, prog, { ref, spend, earn: mayEarn, at: billedAt }, withEntity);
-    const before = settled.before, added = settled.added;
+    const before = settled.before,
+      added = settled.added;
 
     const after = before.points - spend + added;
-    res.json({ ok: true, holder: holder, programme: prog.name, added: added, spent: spend,
-               points: after, worth: rewards.liability(prog, after),
-               /* ⚠️ SAID, NOT HIDDEN: the spend was honoured because it had already come off the bill */
-               overspent: spend > before.points ? spend - before.points : 0,
-               says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {}) });
+    res.json({
+      ok: true,
+      holder: holder,
+      programme: prog.name,
+      added: added,
+      spent: spend,
+      points: after,
+      worth: rewards.liability(prog, after),
+      /* ⚠️ SAID, NOT HIDDEN: the spend was honoured because it had already come off the bill */
+      overspent: spend > before.points ? spend - before.points : 0,
+      says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {})
+    });
   } catch (e) {
     if (e && e.code === 'BILL_NOT_RECORDED') return res.status(409).json({ error: 'conflict', code: e.code, message: e.say });
     res.status(500).json({ error: 'Failed', message: safeErr(e) });
@@ -1661,11 +1949,12 @@ router.post('/reward/claim', auth, auth.requireScope('till'), async (req, res) =
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    const from = holderFrom(b.from), to = holderFrom(b.to);
+    const from = holderFrom(b.from),
+      to = holderFrom(b.to);
     if (!from || !to) return res.status(400).json({ error: 'validation', message: 'from and to holders required' });
     const prog = await progOf(entity_id);
     if (!prog) return res.status(400).json({ error: 'validation', message: 'this shop runs no programme' });
-    const ref = String(b.ref || ('claim-' + Date.now())).slice(0, 64);
+    const ref = String(b.ref || 'claim-' + Date.now()).slice(0, 64);
     /* ⭐ ALL OR NOTHING (lib/reward-store.claim): both holders locked, the balance read, both halves written in ONE transaction */
     const c = await store.claim(entity_id, from, to, ref, prog, withEntity);
     if (!c.ok) return res.status(400).json({ error: 'validation', message: c.why });
@@ -1700,8 +1989,8 @@ router.post('/reward/claim', auth, auth.requireScope('till'), async (req, res) =
  * migration and a cleanup job would all be carrying something that does not need to outlive a restart. A deploy in the middle
  * of pairing loses the code — you press the button again. Said out loud rather than discovered.
  */
-const PAIR = new Map();              /* code → { entity_id, name, expires } */
-const PAIR_MISSES = new Map();       /* ip → { n, until } */
+const PAIR = new Map(); /* code → { entity_id, name, expires } */
+const PAIR_MISSES = new Map(); /* ip → { n, until } */
 const PAIR_ALPHABET = 'ACDEFGHJKMNPQRTUVWXY2345678';
 const PAIR_TTL_MS = 10 * 60 * 1000;
 
@@ -1715,7 +2004,7 @@ function pairCode() {
   for (;;) {
     const b = crypto.randomBytes(6);
     let c = '';
-    for (let i = 0; i < 6; i++) c += PAIR_ALPHABET[b[i] % PAIR_ALPHABET.length];
+    for (let index = 0; index < 6; index++) c += PAIR_ALPHABET[b[index] % PAIR_ALPHABET.length];
     if (!PAIR.has(c)) return c;
   }
 }
@@ -1738,18 +2027,18 @@ router.post('/pair', auth, async (req, res) => {
      * parent — middleware/auth keyAlive() refuses it the moment the counter key is revoked or closed.
      * ⚠️ Any other key is still refused: a screen key cannot pair a screen, a connector key cannot pair anything.
      */
-    const tk = req.till && req.till.key;   /* M04 — the holder, not req.api_key (middleware/auth holderOf) */
+    const tk = req.till && req.till.key; /* M04 — the holder, not req.api_key (middleware/auth holderOf) */
     const viaCounter = !!(tk && tk.scopes.includes('till'));
-    if (!req.identity || (tk && !viaCounter))
-      return res.status(403).json({ error: 'Forbidden', message: 'Sign in to pair a screen.' });
+    if (!req.identity || (tk && !viaCounter)) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to pair a screen.' });
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
     const expires = Date.now() + PAIR_TTL_MS;
-    PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires,
-                     parent: viaCounter ? tk.jti : null });
+    PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires, parent: viaCounter ? tk.jti : null });
     res.json({ code, expires_at: new Date(expires).toISOString(), minutes: Math.round(PAIR_TTL_MS / 60000) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1774,15 +2063,17 @@ router.post('/pair', auth, async (req, res) => {
  * `bridge_id: null`. The counter names its own data folder from the bridge_id inside its key ([TILL-120]) so it
  * can tell one shop from another with no network at all — a key without one falls back to an unreadable hash.
  */
-router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), async (req, res) => {   /* SEC-FIX3 S9 */
+router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), async (req, res) => {
+  /* SEC-FIX3 S9 */
   try {
-    if (!req.identity || req.api_key)
-      return res.status(403).json({ error: 'Forbidden', message: 'Sign in to connect a counter.' });
+    if (!req.identity || req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to connect a counter.' });
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
     const id = me.rows[0] || {};
     /* ⚠️ THE NAME IS WHAT THE OWNER WILL REVOKE BY, on Settings › Integrations › Keys — so it says which PC. */
-    const label = String((req.body && req.body.name) || '').trim().slice(0, 40);
+    const label = String((req.body && req.body.name) || '')
+      .trim()
+      .slice(0, 40);
 
     /**
      * ── ⚠️⚠️⚠️ IT CLAIMS THE COUNTER, IT DOES NOT JUST MINT A KEY ([TILL-138]) ───────────────
@@ -1800,11 +2091,12 @@ router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), 
      */
     const counters = require('./counters');
     const claimed = await counters.claim({
-      entity_id, identity: id,
+      entity_id,
+      identity: id,
       id: String((req.body && req.body.counter) || 'C1'),
       label,
       /* ⚠️ ONLY WHEN ASKED IN WORDS. The counter shows who holds it and what taking it costs them first. */
-      takeover: !!(req.body && req.body.takeover),
+      takeover: !!(req.body && req.body.takeover)
     });
     if (claimed.status !== 200) return res.status(claimed.status).json(claimed.body);
     const minted = { key: claimed.key };
@@ -1817,7 +2109,7 @@ router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), 
        * ⚠️ THE SHOP COMES BACK NAMED. The counter shows it before it writes anything, so a person who signed
        * into the wrong account sees the wrong shop's name on screen rather than discovering it in the books.
        */
-      shop: { entity_id, bridge_id: id.bridge_id || null, name: id.display_name || null },
+      shop: { entity_id, bridge_id: id.bridge_id || null, name: id.display_name || null }
     });
   } catch (e) {
     res.status(e && e.status === 400 ? 400 : 500).json({ error: 'Failed', message: String(e && e.message) });
@@ -1833,23 +2125,31 @@ router.post('/pair/claim', async (req, res) => {
     if (miss && miss.n >= 8 && miss.until > Date.now())
       return res.status(429).json({ error: 'Too many', message: 'Too many wrong codes. Wait a minute and try again.' });
 
-    const code = String((req.body && req.body.code) || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const code = String((req.body && req.body.code) || '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
     const got = code && PAIR.get(code);
     if (!got || got.expires < Date.now()) {
       const m = PAIR_MISSES.get(ip) || { n: 0, until: 0 };
-      m.n += 1; m.until = Date.now() + 60000; PAIR_MISSES.set(ip, m);
-      return res.status(404).json({ error: 'No such code',
-        message: 'That code is wrong or has expired. Ask ChitBridge for a new one.' });
+      m.n += 1;
+      m.until = Date.now() + 60000;
+      PAIR_MISSES.set(ip, m);
+      return res.status(404).json({ error: 'No such code', message: 'That code is wrong or has expired. Ask ChitBridge for a new one.' });
     }
     /* ⚠️ SPENT THE MOMENT IT IS READ, before the key is even minted — if minting fails the code is still gone, which is the
        safe way round: a code that survives a failure is a code somebody can retry. */
     PAIR.delete(code);
-    const minted = await keys.mint(got.entity_id, null,
-      { name: 'shop screen · paired ' + new Date().toISOString().slice(0, 10), scopes: ['screen'], days: 365,
-        parent: got.parent || null });
+    const minted = await keys.mint(got.entity_id, null, {
+      name: 'shop screen · paired ' + new Date().toISOString().slice(0, 10),
+      scopes: ['screen'],
+      days: 365,
+      parent: got.parent || null
+    });
     PAIR_MISSES.delete(ip);
     res.json({ key: minted.key, shop: { entity_id: got.entity_id, name: got.name } });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1866,29 +2166,38 @@ router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const list = await keys.listOf(entity_id);
-    const screens = list.filter(isScreenKey).map((k) => ({
-      jti: k.jti, name: k.name || null, last4: k.last4 || null, paired_at: k.created_at || null,
-      seen_at: (k.seen && k.seen.at) || null,
+    const screens = list.filter(isScreenKey).map((item) => ({
+      jti: item.jti,
+      name: item.name || null,
+      last4: item.last4 || null,
+      paired_at: item.created_at || null,
+      seen_at: (item.seen && item.seen.at) || null,
       /* ⭐ whether it would be refused right now — a TV paired by a counter that has since been closed */
-      alive: !!auth.keyAlive(list, k.jti),
-      from_counter: !!k.parent,
+      alive: !!auth.keyAlive(list, item.jti),
+      from_counter: !!item.parent
     }));
-    res.json({ screens, count: screens.length, limit: 20, keys_used: list.filter((k) => !(k && k.till && k.till.closed_at)).length });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    res.json({ screens, count: screens.length, limit: 20, keys_used: list.filter((item) => !(item && item.till && item.till.closed_at)).length });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const jti = String((req.body && req.body.jti) || '');
     if (!jti) return res.status(400).json({ error: 'validation', message: 'Which screen?' });
-    let found = false, refused = false;
+    let found = false,
+      refused = false;
     await require('../db').withTransaction(async (db) => {
       const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
       const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
       const list = Array.isArray(pf.api_keys) ? pf.api_keys : [];
       const k = list.find((x) => x && String(x.jti) === jti);
       if (!k) return;
-      if (!isScreenKey(k)) { refused = true; return; }
+      if (!isScreenKey(k)) {
+        refused = true;
+        return;
+      }
       found = true;
       await policy.patchKey(db, entity_id, [], { api_keys: list.filter((x) => String(x.jti) !== jti) }, { op: 'merge' });
     });
@@ -1896,7 +2205,9 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res)
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
     auth.forgetKey(jti);
     res.json({ ok: true, jti, message: 'That screen is switched off. It stops showing the sign within a minute.' });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1907,16 +2218,22 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
   try {
     const entity_id = auth.entityOf(req);
     const jti = String((req.body && req.body.jti) || '');
-    const name = String((req.body && req.body.name) || '').trim().slice(0, 40);
+    const name = String((req.body && req.body.name) || '')
+      .trim()
+      .slice(0, 40);
     if (!jti) return res.status(400).json({ error: 'validation', message: 'Which screen?' });
-    let found = false, refused = false;
+    let found = false,
+      refused = false;
     await require('../db').withTransaction(async (db) => {
       const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
       const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
       const list = Array.isArray(pf.api_keys) ? pf.api_keys : [];
       const k = list.find((x) => x && String(x.jti) === jti);
       if (!k) return;
-      if (!isScreenKey(k)) { refused = true; return; }
+      if (!isScreenKey(k)) {
+        refused = true;
+        return;
+      }
       found = true;
       const next = list.map((x) => (String(x.jti) === jti ? Object.assign({}, x, { name: name || null }) : x));
       await policy.patchKey(db, entity_id, [], { api_keys: next }, { op: 'merge' });
@@ -1925,7 +2242,9 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
     auth.forgetKey(jti);
     res.json({ ok: true, jti, name: name || null });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -1966,68 +2285,85 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
 router.post('/reconcile', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const list = (Array.isArray(req.body && req.body.bills) ? req.body.bills : []).slice(0, 200)
-      .map((b) => ({ no: String((b && b.no) || '').slice(0, 64), at: (b && b.at) ? String(b.at) : null,
-                     chit_id: /^[0-9a-f-]{36}$/i.test(String((b && b.chit_id) || '')) ? String(b.chit_id) : null }))
-      .filter((b) => b.no);
-    const ids = [...new Set(list.map((b) => b.chit_id).filter(Boolean))];
+    const list = (Array.isArray(req.body && req.body.bills) ? req.body.bills : [])
+      .slice(0, 200)
+      .map((item) => ({
+        no: String((item && item.no) || '').slice(0, 64),
+        at: item && item.at ? String(item.at) : null,
+        chit_id: /^[0-9a-f-]{36}$/i.test(String((item && item.chit_id) || '')) ? String(item.chit_id) : null
+      }))
+      .filter((item) => item.no);
+    const ids = [...new Set(list.map((item) => item.chit_id).filter(Boolean))];
     const found = new Map();
     if (ids.length) {
-      const r = await withEntity(entity_id, (db) => db.query(
-        `SELECT DISTINCT ON (chit_id) chit_id::text AS chit_id,
+      const r = await withEntity(entity_id, (db) =>
+        db.query(
+          `SELECT DISTINCT ON (chit_id) chit_id::text AS chit_id,
                 business_json->>'client_ref' AS ref, business_json->>'billed_at' AS billed_at
            FROM chit_header WHERE entity_id = $1 AND chit_id = ANY($2::uuid[])
-          ORDER BY chit_id, created_at`, [entity_id, ids]));
+          ORDER BY chit_id, created_at`,
+          [entity_id, ids]
+        )
+      );
       r.rows.forEach((row) => found.set(row.chit_id, row));
     }
-    const out = list.map((b) => {
-      const c = b.chit_id ? found.get(b.chit_id) : null;
-      if (!c) return { no: b.no, verdict: 'missing' };
-      if (!c.billed_at || !b.at) return { no: b.no, verdict: 'unknown' };
+    const out = list.map((item) => {
+      const c = item.chit_id ? found.get(item.chit_id) : null;
+      if (!c) return { no: item.no, verdict: 'missing' };
+      if (!c.billed_at || !item.at) return { no: item.no, verdict: 'unknown' };
       /* ⚠️ same number AND same moment — a chit carrying this number but another moment is another PC's sale */
-      const same = String(c.ref || '') === b.no && String(c.billed_at) === b.at;
-      return { no: b.no, verdict: same ? 'ok' : 'absorbed', recorded_as: c.ref || null };
+      const same = String(c.ref || '') === item.no && String(c.billed_at) === item.at;
+      return { no: item.no, verdict: same ? 'ok' : 'absorbed', recorded_as: c.ref || null };
     });
     res.json({ checked: out.length, bills: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
-    const cnt = await withEntity(entity_id, (db) => db.query(
-      `SELECT count(*)::int AS n FROM catalogue_items
+    const cnt = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT count(*)::int AS n FROM catalogue_items
          WHERE entity_id = $1 AND is_active = true
            AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
-               NOT IN ('unavailable', 'redundant', 'retired')`, [entity_id]));
+               NOT IN ('unavailable', 'redundant', 'retired')`,
+        [entity_id]
+      )
+    );
     const total = (cnt.rows[0] && cnt.rows[0].n) || 0;
 
     /* eight rows spread across the shelf — first, last, and six evenly between */
     const want = Math.min(8, total);
     const offsets = [];
-    for (let i = 0; i < want; i++) offsets.push(Math.floor((total - 1) * (want === 1 ? 0 : i / (want - 1))));
+    for (let index = 0; index < want; index++) offsets.push(Math.floor((total - 1) * (want === 1 ? 0 : index / (want - 1))));
     /**
      * ⚠️ ONE QUERY, NOT EIGHT. The first cut ran a LIMIT 1 OFFSET n read per sample point, inside a loop — the textbook N+1, and
      * tests/query-shape caught it as "routes/till.js: 1 (budget 0)". A check that a counter is healthy must not itself cost the
      * server eight round trips across the Pacific every time somebody presses it.
      * row_number() numbers the shelf once and "= ANY" picks the wanted places out of it, which is exactly what the loop meant.
      */
-    const sampleRows = await withEntity(entity_id, (db) => db.query(
-      'WITH live AS (SELECT item_id, item_data, (row_number() OVER (ORDER BY item_id) - 1)::int AS n'
-      + '   FROM catalogue_items WHERE entity_id = $1 AND is_active = true'
-      + "     AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')"
-      + "         NOT IN ('unavailable', 'redundant', 'retired'))"
-      + ' SELECT item_id, item_data, n FROM live WHERE n = ANY($2::int[]) ORDER BY n',
-      [entity_id, [...new Set(offsets)]])).catch(log.orElse('till GET /verify: the read failed — answered with none', ({ rows: [] })));
+    const sampleRows = await withEntity(entity_id, (db) =>
+      db.query(
+        'WITH live AS (SELECT item_id, item_data, (row_number() OVER (ORDER BY item_id) - 1)::int AS n' +
+          '   FROM catalogue_items WHERE entity_id = $1 AND is_active = true' +
+          "     AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')" +
+          "         NOT IN ('unavailable', 'redundant', 'retired'))" +
+          ' SELECT item_id, item_data, n FROM live WHERE n = ANY($2::int[]) ORDER BY n',
+        [entity_id, [...new Set(offsets)]]
+      )
+    ).catch(log.orElse('till GET /verify: the read failed — answered with none', { rows: [] }));
     const sample = sampleRows.rows.map((row) => {
       const d = row.item_data || {};
-      return { at_offset: row.n, item_id: row.item_id, name: d.name || null,
-               price: amountOf(d.price), tax_slab: d.tax_slab || null };
+      return { at_offset: row.n, item_id: row.item_id, name: d.name || null, price: amountOf(d.price), tax_slab: d.tax_slab || null };
     });
-    res.json({ total, at: new Date().toISOString(),
-               shop: { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null }, sample });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    res.json({ total, at: new Date().toISOString(), shop: { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null }, sample });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2073,12 +2409,12 @@ const TILL_SHOP_REFUSED = {
    * entity_id, want) checks a wanted currency against the constitution's allowed set. It is simply not here.
    */
   currency: 'the currency belongs to the whole installation, not to a counter — changing it here would relabel every price rather than convert it',
-  reg_type: 'regular or composition is a registration held with the tax authority, and it decides whether tax is charged at all',
+  reg_type: 'regular or composition is a registration held with the tax authority, and it decides whether tax is charged at all'
 };
 router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
     const cbProfile = require('../lib/profile');
 
     /* ⚠️ WHAT IT IS NOW, READ BEFORE THE WRITE — so the reply can say what actually changed, and so a field
@@ -2093,7 +2429,11 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
     /* ⭐ WHO IS WRITING. counterOfReq reads it off the key's own register row — the page cannot be trusted to
        say which counter it is, and it does not have to. */
     let who = null;
-    try { who = await counterOfReq(req); } catch (e) { log.fellBack('till POST /shop: failed — carried on without it', e); }
+    try {
+      who = await counterOfReq(req);
+    } catch (e) {
+      log.fellBack('till POST /shop: failed — carried on without it', e);
+    }
     const source = 'counter' + (who ? ' ' + who : '');
     const as_of = new Date().toISOString();
 
@@ -2112,24 +2452,35 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
       /* ⭐ CX0: the shop's COUNTRY picks the check — India's GSTIN checksum, else the pack's own (reg-au abn.check · reg-ae trn.check) */
       const cc = String(before.country || '').toUpperCase();
       /* GOV-AU1: a shop with no country has no tax number check to run — it is asked, never checked as India's */
-      if (!cc) return res.status(400).json({ error: 'validation', field: 'gstin', code: 'NO_COUNTRY', message: 'Set the shop\u2019s country first (Country setup) — the tax number is checked by its law.' });
+      if (!cc)
+        return res.status(400).json({
+          error: 'validation',
+          field: 'gstin',
+          code: 'NO_COUNTRY',
+          message: 'Set the shop\u2019s country first (Country setup) — the tax number is checked by its law.'
+        });
       if (cc !== 'IN') {
-        const id = require('../lib/country').taxId(cc);   /* R5: the registry's check — AU/AE adapters, a new country's own taxId */
+        const id = require('../lib/country').taxId(cc); /* R5: the registry's check — AU/AE adapters, a new country's own taxId */
         const ck = id.check ? id.check(g) : { ok: true };
         if (!ck.ok) return res.status(400).json({ error: 'validation', field: 'gstin', message: ck.why || 'That tax number does not check out.' });
       } else {
         const chk = require('../lib/profile-map').gstinChecksum(g);
         if (!chk.ok) {
-          return res.status(400).json({ error: 'validation', field: 'gstin',
-            message: chk.reason === 'format'
-              ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
-              : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.' });
+          return res.status(400).json({
+            error: 'validation',
+            field: 'gstin',
+            message:
+              chk.reason === 'format'
+                ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
+                : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.'
+          });
         }
       }
-      b.gstin = g;   /* stored upper-cased, the one form every reader already assumes */
+      b.gstin = g; /* stored upper-cased, the one form every reader already assumes */
     }
 
-    const values = {}, changed = [];
+    const values = {},
+      changed = [];
     for (const k of TILL_SHOP_FIELDS) {
       if (!(k in b)) continue;
       const v = String(b[k] == null ? '' : b[k]).trim();
@@ -2140,22 +2491,32 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
        * not a thing anybody needs; leaving it out of the request is how you leave it alone.
        */
       if (!v) continue;
-      if (v === String(before[k] == null ? '' : before[k])) continue;   /* unchanged — do not re-stamp it */
+      if (v === String(before[k] == null ? '' : before[k])) continue; /* unchanged — do not re-stamp it */
       values[k] = { value: v.slice(0, 200), source: source, as_of: as_of, rung: 'declared' };
       changed.push({ field: k, from: before[k] || null, to: v.slice(0, 200) });
     }
 
     if (!changed.length) {
-      return res.json({ ok: true, changed: [], refused: refused, shop: before,
-        message: refused.length ? 'nothing changed — and ' + refused.length + ' field(s) a counter may not set were ignored'
-                                : 'nothing to change — every field already reads that way' });
+      return res.json({
+        ok: true,
+        changed: [],
+        refused: refused,
+        shop: before,
+        message: refused.length
+          ? 'nothing changed — and ' + refused.length + ' field(s) a counter may not set were ignored'
+          : 'nothing to change — every field already reads that way'
+      });
     }
 
     await cbProfile.applyProfileMap(entity_id, values, { by: source, at: as_of });
 
     /* ⭐ the bill header just changed, so every open counter and the shop screen hear it on the same bell a
        price change rides — rather than each discovering it whenever it next happens to re-read the shop. */
-    try { shopChanged(entity_id, 'shop profile'); } catch (e) { log.fellBack('till POST /shop: the signal was not sent — carried on without it', e); }
+    try {
+      shopChanged(entity_id, 'shop profile');
+    } catch (e) {
+      log.fellBack('till POST /shop: the signal was not sent — carried on without it', e);
+    }
 
     /* ⚠️ THE REPLY IS THE SERVER'S TRUTH, RE-READ — never the page's own optimism echoed back. A counter that
        painted what it SENT would show a GSTIN the vault had normalised differently. [[feedback-check-after-the-wire]] */
@@ -2184,7 +2545,7 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const stockStore = require('../lib/stock-store');
-    const inv = require('../lib/inventory');   /* ⭐ its own q3/m2 rounding — a total here must never disagree with the ledger it reads */
+    const inv = require('../lib/inventory'); /* ⭐ its own q3/m2 rounding — a total here must never disagree with the ledger it reads */
     /* ⭐ COLLAPSED TO ONE ROW PER PRODUCT — a tracked item's batches sum into the figure the Receive screen
        actually asks for; the till does not show stock in v1 (Athi, 2026-09-10) and a per-batch breakdown
        would be exactly that. The ONE stock reader (stock-store.onHand, T1-INV) — the storefront reads the same. */
@@ -2192,7 +2553,12 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
        batches with their expiry (onHand { lots }, the same read). Additive: the counter's call is unchanged. */
     const detail = req.query.detail === '1';
     if (detail && !(await require('../lib/schema').hasTable('stock_balance')))
-      return res.json({ balances: {}, at: new Date().toISOString(), not_ready: 'STOCK_LEDGER_MISSING', says: 'Stock is not switched on for this shop yet. Receive a delivery and it starts.' });
+      return res.json({
+        balances: {},
+        at: new Date().toISOString(),
+        not_ready: 'STOCK_LEDGER_MISSING',
+        says: 'Stock is not switched on for this shop yet. Receive a delivery and it starts.'
+      });
     const by = await stockStore.onHand(entity_id, withEntity, detail ? { lots: true } : {});
     const out = {};
     for (const id of Object.keys(by)) {
@@ -2203,12 +2569,18 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     if (detail && Object.keys(out).length) {
       const ids = Object.keys(out);
       const r = await withEntity(entity_id, (db) => db.query(require('../lib/catalogue-read').ITEM_NAMES_SQL, [entity_id, ids]));
-      for (const x of r.rows) if (out[x.id]) { out[x.id].name = x.name || null; out[x.id].unit = x.unit || null; }
+      for (const x of r.rows)
+        if (out[x.id]) {
+          out[x.id].name = x.name || null;
+          out[x.id].unit = x.unit || null;
+        }
     }
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
     res.json({ balances: out, at: new Date().toISOString() });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2236,7 +2608,7 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
 router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const text = req.body && typeof req.body === 'object' ? req.body : {};
     const BP = require('../lib/catalogue-blueprint');
     const catwrite = require('../lib/catalogue-write');
     const units = require('../lib/units');
@@ -2246,35 +2618,43 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
      * not the same Tomato. The refusal says what is already there rather than a bare 409.
      */
     const have = await catwrite.countItems(entity_id);
-    if (have > 0 && b.replace !== true) {
-      return res.status(409).json({ error: 'not empty',
-        message: 'This shop already has ' + have + ' product' + (have === 1 ? '' : 's') + '.'
-          + ' Starting a catalogue again would add a second copy of each one.',
-        have: have });
+    if (have > 0 && text.replace !== true) {
+      return res.status(409).json({
+        error: 'not empty',
+        message:
+          'This shop already has ' + have + ' product' + (have === 1 ? '' : 's') + '.' + ' Starting a catalogue again would add a second copy of each one.',
+        have: have
+      });
     }
 
     const existing = await catwrite.codesInUse(entity_id);
-    let items = [], from = null, refused = [];
+    let items = [],
+      from = null,
+      refused = [];
 
-    if (Array.isArray(b.products) && b.products.length) {
+    if (Array.isArray(text.products) && text.products.length) {
       /* ⚠️ ROWS A PERSON HAS ALREADY APPROVED. The header reconciliation is csv-preflight's job and it
          produces a report somebody agrees to; this is the step after that, never a second guess at it. */
-      const out = BP.rowsToProducts(b.products, b.blueprint, existing, { unitOf: units.unitOf });
-      items = out.products; refused = out.refused; from = 'file';
+      const out = BP.rowsToProducts(text.products, text.blueprint, existing, { unitOf: units.unitOf });
+      items = out.products;
+      refused = out.refused;
+      from = 'file';
       if (!items.length) {
-        return res.status(400).json({ error: 'nothing to add',
-          message: 'Not one row had both a name and a price.', refused: refused });
+        return res.status(400).json({ error: 'nothing to add', message: 'Not one row had both a name and a price.', refused: refused });
       }
     } else {
-      const bp = BP.blueprint(b.blueprint);
-      if (bp.key === 'general' && b.blueprint) {
-        return res.status(400).json({ error: 'unknown trade',
-          message: 'There is no product list called "' + String(b.blueprint).slice(0, 40) + '".',
-          choices: Object.keys(BP.BLUEPRINTS) });
+      const bp = BP.blueprint(text.blueprint);
+      if (bp.key === 'general' && text.blueprint) {
+        return res.status(400).json({
+          error: 'unknown trade',
+          message: 'There is no product list called "' + String(text.blueprint).slice(0, 40) + '".',
+          choices: Object.keys(BP.BLUEPRINTS)
+        });
       }
       if (!bp.starter.length) {
-        return res.status(400).json({ error: 'nothing to mint',
-          message: 'Choose a product list, or send the products you want added.', choices: Object.keys(BP.BLUEPRINTS) });
+        return res
+          .status(400)
+          .json({ error: 'nothing to mint', message: 'Choose a product list, or send the products you want added.', choices: Object.keys(BP.BLUEPRINTS) });
       }
       items = BP.mint(bp.key, existing);
       from = 'blueprint:' + BP.pin(bp);
@@ -2288,24 +2668,25 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
      * ⚠️ MATCHED CASE-INSENSITIVELY by lib/categories, so a shop that already has "Vegetables" does not
      * acquire "vegetables" beside it — which is the free-text pollution a master exists to prevent.
      */
-    const wantCats = [...new Set(items.map((p) => p.categoryName).filter(Boolean))];
+    const wantCats = [...new Set(items.map((item) => item.categoryName).filter(Boolean))];
     let catIds = new Map();
     if (wantCats.length) {
       /* ⚠️ THE SAME `created_by` routes/definitions.js writes — `req.identity.identity_id`. My first cut
          called `auth.userOf`, which does not exist, behind a guard that would have written null for ever.
          A counter authenticated by a KEY genuinely has no identity, so null here is honest, not a bug. */
-      try { catIds = await categories.ensureCategories(entity_id, wantCats,
-        { withEntity, by: (req.identity && req.identity.identity_id) || null }); }
-      catch (e) {
+      try {
+        catIds = await categories.ensureCategories(entity_id, wantCats, { withEntity, by: (req.identity && req.identity.identity_id) || null });
+      } catch (e) {
         /* ⚠⚠ SAID, NOT SWALLOWED. Without ids the products would be written uncategorised, and a shop would
            find a flat wall of goods with nothing to say why. */
-        return res.status(500).json({ error: 'Failed',
-          message: 'Your categories could not be set up, so nothing was added. ' + String(e && e.message).slice(0, 120) });
+        return res
+          .status(500)
+          .json({ error: 'Failed', message: 'Your categories could not be set up, so nothing was added. ' + String(e && e.message).slice(0, 120) });
       }
     }
-    items = items.map((p) => {
-      const out = Object.assign({}, p);
-      const id = p.categoryName ? catIds.get(p.categoryName) : null;
+    items = items.map((item) => {
+      const out = Object.assign({}, item);
+      const id = item.categoryName ? catIds.get(item.categoryName) : null;
       delete out.categoryName;
       /* ⚠️ CITED BY ID. `category_names` is NOT written: catalogue-columns reserves it as *"a positional copy
          … for counterparties who cannot resolve our ids"*, and we can resolve our own. */
@@ -2317,14 +2698,26 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
     if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
 
     /* ⭐ the shop screen and every open counter hear it on the same bell a price change rides */
-    try { shopChanged(entity_id, 'catalogue started'); } catch (e) { log.fellBack('till POST /catalogue: the signal was not sent — carried on without it', e); }
+    try {
+      shopChanged(entity_id, 'catalogue started');
+    } catch (e) {
+      log.fellBack('till POST /catalogue: the signal was not sent — carried on without it', e);
+    }
 
-    res.json({ ok: true, added: w.rows.length, from: from,
+    res.json({
+      ok: true,
+      added: w.rows.length,
+      from: from,
       /* ⚠️ REFUSALS TRAVEL BACK WITH THEIR ROW NUMBERS. An upload that quietly loses eleven of four hundred
          products is the worst outcome here — nobody finds out until a customer asks for one. */
       refused: refused,
-      message: w.rows.length + ' product' + (w.rows.length === 1 ? '' : 's') + ' added'
-        + (refused.length ? ', and ' + refused.length + ' row' + (refused.length === 1 ? '' : 's') + ' could not be' : '') });
+      message:
+        w.rows.length +
+        ' product' +
+        (w.rows.length === 1 ? '' : 's') +
+        ' added' +
+        (refused.length ? ', and ' + refused.length + ' row' + (refused.length === 1 ? '' : 's') + ' could not be' : '')
+    });
   } catch (e) {
     res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
@@ -2335,17 +2728,34 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
   try {
     const BP = require('../lib/catalogue-blueprint');
     const catwrite = require('../lib/catalogue-write');
-    let have = 0; try { have = await catwrite.countItems(auth.entityOf(req)); } catch (e) { log.fellBack('till GET /catalogue/blueprints: failed — carried on without it', e); }
+    let have = 0;
+    try {
+      have = await catwrite.countItems(auth.entityOf(req));
+    } catch (e) {
+      log.fellBack('till GET /catalogue/blueprints: failed — carried on without it', e);
+    }
     res.json({
-      version: BP.VERSION, axiom: BP.AXIOM, enrich: BP.ENRICH, have: have,
-      blueprints: Object.keys(BP.BLUEPRINTS).map((k) => {
-        const bp = BP.blueprint(k);
-        return { key: bp.key, label: bp.label, outcome: bp.outcome, pin: BP.pin(bp),
-                 products: bp.starter.length, units: bp.units, categories: bp.categories,
-                 sample: bp.starter.slice(0, 4).map((p) => p.name) };
-      }),
+      version: BP.VERSION,
+      axiom: BP.AXIOM,
+      enrich: BP.ENRICH,
+      have: have,
+      blueprints: Object.keys(BP.BLUEPRINTS).map((item) => {
+        const bp = BP.blueprint(item);
+        return {
+          key: bp.key,
+          label: bp.label,
+          outcome: bp.outcome,
+          pin: BP.pin(bp),
+          products: bp.starter.length,
+          units: bp.units,
+          categories: bp.categories,
+          sample: bp.starter.slice(0, 4).map((item) => item.name)
+        };
+      })
     });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2372,7 +2782,8 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
  * ⚠️ NO DIRECTION TEST, for the reason recorded on /bills below: a counter chit is one the shop sends to
  * ITSELF, and a self chit lands as 'received'. Asking for 'sent' is what made "Earlier bills" empty for weeks.
  */
-const SUMMARY_BILLS = 60, SUMMARY_BILLS_MAX = 400;   /* how many bills one period summary rolls up */
+const SUMMARY_BILLS = 60,
+  SUMMARY_BILLS_MAX = 400; /* how many bills one period summary rolls up */
 /*
  * ⭐ RPT2 (2026-10-17) · ?compare=1&period=week|month|quarter|year&n= → Reports › Trend: { period, n, currency, fy_start_month, slots } —
  * rollup.series (the ONE comparison calculation) over the same summaries, each slot beside the same slot last year. ONE trip (readBatch:
@@ -2381,16 +2792,17 @@ const SUMMARY_BILLS = 60, SUMMARY_BILLS_MAX = 400;   /* how many bills one perio
  */
 router.get('/summary', auth, async (req, res) => {
   try {
-    const rollup = require('../lib/rollup'), TS = require('../lib/till-summary');
+    const rollup = require('../lib/rollup'),
+      TS = require('../lib/till-summary');
     const entity_id = auth.entityOf(req);
     if (req.query.compare === '1') {
       const out = await TS.trend(entity_id, req.identity && req.identity.identity_id, { period: req.query.period, n: req.query.n, now: Date.now() });
       return res.status(out.status).json(out.body);
     }
     const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
-    const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX);   /* the one clamp */
+    const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX); /* the one clamp */
     const { withEntity } = require('../db');
-    const statement = TS.summaryStatement(entity_id, period, limit);   /* lib/till-summary: the ONE copy of the statement (its follow-up, done) */
+    const statement = TS.summaryStatement(entity_id, period, limit); /* lib/till-summary: the ONE copy of the statement (its follow-up, done) */
     const r = await withEntity(entity_id, (db) => db.query(statement.text, statement.params));
 
     /**
@@ -2400,27 +2812,33 @@ router.get('/summary', auth, async (req, res) => {
      * ⚠️ The query is ordered newest-first, which acrossCounters() relies on.
      */
     const rows = rollup.acrossCounters(r.rows.map((x) => (x.business_json || {}).summary)).slice(0, limit);
-    res.json({ period, rows, counters: Array.from(new Set(r.rows
-      .map((x) => (((x.business_json || {}).summary || {}).till || {}).id).filter(Boolean))).sort() });
+    res.json({
+      period,
+      rows,
+      counters: Array.from(new Set(r.rows.map((x) => (((x.business_json || {}).summary || {}).till || {}).id).filter(Boolean))).sort()
+    });
   } catch (e) {
     res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
-const BILLS_PAGE = 100, BILLS_MAX = 500;   /* the day report's bills: the statement always cuts at the page */
+const BILLS_PAGE = 100,
+  BILLS_MAX = 500; /* the day report's bills: the statement always cuts at the page */
 router.get('/bills', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
-    const pg = PL.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX), limit = pg.limit;   /* always a page: the statement cuts */
-    const by = (typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by)) ? req.query.by : null;
+    const pg = PL.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX),
+      limit = pg.limit; /* always a page: the statement cuts */
+    const by = typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by) ? req.query.by : null;
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
-    const till = (typeof req.query.till === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(req.query.till)) ? req.query.till : null;
+    const till = typeof req.query.till === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(req.query.till) ? req.query.till : null;
     const { withEntity } = require('../db');
-    const r = await withEntity(entity_id, (db) => db.query(
-      /* ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08) */
-      `SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        /* ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08) */
+        `SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json
          FROM chit_header h
          LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
        /**
@@ -2443,32 +2861,56 @@ router.get('/bills', auth, async (req, res) => {
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
-        ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit, till]));
-    const rows = r.rows.map((x) => {
-      const b = x.business_json || {}, t = b.till || {}, m = (x.summary_json || {}).money || {};
-      return { chit_id: x.chit_id, no: b.bill_no || null, at: b.billed_at || x.created_at,
-               customer: (b.customer && b.customer.name) || 'Walk-in',
-               by: t.by || null, till: { id: t.id || null, name: t.name || null },
-               total: counterBill.paidOf(x.summary_json),   /* the one pick of what was paid (lib/counter-bill paidOf) — the reward earns from the same figure */
-               saved: m.savings != null ? m.savings : null, taxable: m.taxable != null ? m.taxable : (m.net != null ? m.net : null),
-               tax: m.tax != null ? m.tax : null,
-               kind: b.slip || 'cash',
-               /* M41: a tax bill saved while the shop's details disagreed reprints as NOT a tax invoice, from any device */
-               not_invoice: b.not_invoice || null,
-               /* walk 2026-10-09 (BF3/BF8): where the order went and the chosen modifiers, so a reprint says them too */
-               order: (b.order && typeof b.order === 'object') ? b.order : null,
-               payments: (b.payment && b.payment.parts) || [],
-               /* ⭐⭐ THE STORED INVOICE, AS IT IS (2026-10-02) — the counter's CBTax.determine() result. The page reprints from it
+        ORDER BY h.created_at DESC LIMIT $3`,
+        [entity_id, String(days), limit, till]
+      )
+    );
+    const rows = r.rows
+      .map((x) => {
+        const b = x.business_json || {},
+          t = b.till || {},
+          m = (x.summary_json || {}).money || {};
+        return {
+          chit_id: x.chit_id,
+          no: b.bill_no || null,
+          at: b.billed_at || x.created_at,
+          customer: (b.customer && b.customer.name) || 'Walk-in',
+          by: t.by || null,
+          till: { id: t.id || null, name: t.name || null },
+          total: counterBill.paidOf(x.summary_json) /* the one pick of what was paid (lib/counter-bill paidOf) — the reward earns from the same figure */,
+          saved: m.savings != null ? m.savings : null,
+          taxable: m.taxable != null ? m.taxable : m.net != null ? m.net : null,
+          tax: m.tax != null ? m.tax : null,
+          kind: b.slip || 'cash',
+          /* M41: a tax bill saved while the shop's details disagreed reprints as NOT a tax invoice, from any device */
+          not_invoice: b.not_invoice || null,
+          /* walk 2026-10-09 (BF3/BF8): where the order went and the chosen modifiers, so a reprint says them too */
+          order: b.order && typeof b.order === 'object' ? b.order : null,
+          payments: (b.payment && b.payment.parts) || [],
+          /* ⭐⭐ THE STORED INVOICE, AS IT IS (2026-10-02) — the counter's CBTax.determine() result. The page reprints from it
                   (till.html slipOfRow → moneyOf), so a duplicate is the same document as the original: "Earlier bills → print"
                   of C2/26-27/0007 printed taxable ₹1,118.15 and GST ₹0.00 on a TAX INVOICE. null for a bill that never carried one. */
-               invoice: (b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null,
-               lines: (Array.isArray(x.line_items) ? x.line_items : []).map((l) => ({
-                 name: l.particulars || l.name, qty: l.quantity, unit: l.unit, price: l.price, net: l.total,
-                 save: (l.offer && l.offer.off) || 0, off: !!l.offer, off_label: (l.offer && l.offer.label) || '', gst_rate: l.gst_rate, hsn: l.hsn,
-                 mods: Array.isArray(l.mods) ? l.mods : null })) };
-    }).filter((x) => x.no && (!by || (x.by && x.by.id === by)));
+          invoice: b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls ? b.invoice : null,
+          lines: (Array.isArray(x.line_items) ? x.line_items : []).map((item) => ({
+            name: item.particulars || item.name,
+            qty: item.quantity,
+            unit: item.unit,
+            price: item.price,
+            net: item.total,
+            save: (item.offer && item.offer.off) || 0,
+            off: !!item.offer,
+            off_label: (item.offer && item.offer.label) || '',
+            gst_rate: item.gst_rate,
+            hsn: item.hsn,
+            mods: Array.isArray(item.mods) ? item.mods : null
+          }))
+        };
+      })
+      .filter((x) => x.no && (!by || (x.by && x.by.id === by)));
     res.json(Object.assign({ days, count: rows.length }, PL.pageOut('bills', rows, pg, rows.length)));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2484,18 +2926,21 @@ router.get('/bills', auth, async (req, res) => {
  * ⚠️ A chit whose lines are all complete is not a task. The screen must never show work that is done.
  */
 const deliverline = require('../lib/deliverline');
-const select = require('../lib/select');            /* ⭐ the shared selector: one definition of "my chits", counterparty included */
+const select = require('../lib/select'); /* ⭐ the shared selector: one definition of "my chits", counterparty included */
 
-const { sideOf } = require('../lib/open-orders');   /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
-const TASKS_PAGE = 40, TASKS_MAX = 100;   /* the counter's open-order tasks */
+const { sideOf } = require('../lib/open-orders'); /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
+const TASKS_PAGE = 40,
+  TASKS_MAX = 100; /* the counter's open-order tasks */
 router.get('/tasks', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
-    const limit = PL.limitOf(req.query.limit, TASKS_PAGE, TASKS_MAX);   /* the one clamp */
+    const limit = PL.limitOf(req.query.limit, TASKS_PAGE, TASKS_MAX); /* the one clamp */
     const out = await require('../lib/open-orders').tasks(entity_id, kind, limit);
     res.json({ kind, count: out.length, tasks: out, total: out.length, page: 1, limit });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2523,19 +2968,21 @@ router.get('/match', auth, async (req, res) => {
     /* both directions: a purchase order for an off-platform supplier is a SELF chit and lands as 'received' */
     const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
     /* what this trade absorbs — the same numbers the counter was given in its snapshot */
-    const flags = await policy.get(entity_id).catch(log.orElse('till GET /match: failed — answered with an empty set', ({})));
+    const flags = await policy.get(entity_id).catch(log.orElse('till GET /match: failed — answered with an empty set', {}));
     const tol = { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp), count_units: Number(flags.tol_count_units) || 0 };
     if (!heads.length) return res.json({ days, count: 0, orders: [], total: 0, page: 1, limit: 0 });
 
     const { withEntity } = require('../db');
     const out = await withEntity(entity_id, async (db) => {
-      const ids = heads.map((h) => h.chit_id);
+      const ids = heads.map((item) => item.chit_id);
       const det = await db.query(
         `SELECT h.chit_id, d.line_items, h.business_json
            FROM chit_header h
            LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
-          WHERE h.entity_id = $1 AND h.chit_id = ANY($2::uuid[])`, [entity_id, ids]);
-      const byId = new Map(det.rows.map((r) => [String(r.chit_id), r]));
+          WHERE h.entity_id = $1 AND h.chit_id = ANY($2::uuid[])`,
+        [entity_id, ids]
+      );
+      const byId = new Map(det.rows.map((item) => [String(item.chit_id), item]));
 
       /* the receipts our own counter wrote against these orders — that is where the supplier's bill figure was captured */
       const rec = await db.query(
@@ -2543,7 +2990,9 @@ router.get('/match', auth, async (req, res) => {
            FROM chit_header h
            LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
           WHERE h.entity_id = $1 AND h.purpose = 'receipt'   /* ⚠️ no direction: our own receipt is a SELF chit, which lands as 'received' */
-            AND h.created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
+            AND h.created_at > NOW() - ($2 || ' days')::interval`,
+        [entity_id, String(days + 30)]
+      );
       const receiptsFor = new Map();
       for (const r of rec.rows) {
         const bj = r.business_json || {};
@@ -2551,11 +3000,16 @@ router.get('/match', auth, async (req, res) => {
         const key = on ? String(on) : null;
         if (!key) continue;
         if (!receiptsFor.has(key)) receiptsFor.set(key, []);
-        receiptsFor.get(key).push({ chit_id: r.chit_id, no: bj.doc_no || null, at: bj.doc_at || r.created_at,
-                                    their_bill: bj.their_bill || null, goods: bj.goods == null ? null : Number(bj.goods),
-                                    extras: bj.extras == null ? null : Number(bj.extras),
-                                    landed: bj.landed_total == null ? null : Number(bj.landed_total),
-                                    lines: Array.isArray(r.line_items) ? r.line_items : [] });
+        receiptsFor.get(key).push({
+          chit_id: r.chit_id,
+          no: bj.doc_no || null,
+          at: bj.doc_at || r.created_at,
+          their_bill: bj.their_bill || null,
+          goods: bj.goods == null ? null : Number(bj.goods),
+          extras: bj.extras == null ? null : Number(bj.extras),
+          landed: bj.landed_total == null ? null : Number(bj.landed_total),
+          lines: Array.isArray(r.line_items) ? r.line_items : []
+        });
       }
 
       /* an invoice they SENT us, if they are on ChitBridge at all */
@@ -2564,49 +3018,63 @@ router.get('/match', auth, async (req, res) => {
            FROM chit_header h
            LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
           WHERE h.entity_id = $1 AND h.direction = 'received' AND h.purpose = 'invoice'
-            AND h.created_at > NOW() - ($2 || ' days')::interval`, [entity_id, String(days + 30)]);
+            AND h.created_at > NOW() - ($2 || ' days')::interval`,
+        [entity_id, String(days + 30)]
+      );
 
       const orders = [];
       for (const h of heads) {
         const d = byId.get(String(h.chit_id)) || {};
         const bj = d.business_json || {};
-        if (bj.bill_no) continue;                       /* a counter sale is not a purchase order */
-        if (sideOf(h, bj) !== 'buy') continue;          /* the match is about what we BUY */
+        if (bj.bill_no) continue; /* a counter sale is not a purchase order */
+        if (sideOf(h, bj) !== 'buy') continue; /* the match is about what we BUY */
         const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(log.orElse('till GET /match: failed — answered with nothing', null));
         const receipts = receiptsFor.get(String(h.chit_id)) || [];
         /* their invoice: a chit from this counterparty, else the figure keyed off their paper bill at the door */
         const theirChit = inv.rows.find((x) => h.counterparty_id && String(x.sender_entity_id) === String(h.counterparty_id)) || null;
-        const keyed = receipts.map((r) => (r.their_bill && r.their_bill.total != null) ? Number(r.their_bill.total) : null).filter((x) => x != null);
-        const invoiced_total = theirChit ? Number((theirChit.summary_json || {}).total_value || 0)
-                             : (keyed.length ? keyed.reduce((x, y) => x + y, 0) : null);
+        const keyed = receipts
+          .map((item) => (item.their_bill && item.their_bill.total != null ? Number(item.their_bill.total) : null))
+          .filter((x) => x != null);
+        const invoiced_total = theirChit ? Number((theirChit.summary_json || {}).total_value || 0) : keyed.length ? keyed.reduce((x, y) => x + y, 0) : null;
 
-        const lines = (Array.isArray(d.line_items) ? d.line_items : []).map((l) => {
-          const p = (prog && prog.get) ? prog.get(l.line_id) : null;
-          const ordered = Number(l.quantity) || 0;
-          const received = (p && p.delivered != null) ? Number(p.delivered) : 0;
+        const lines = (Array.isArray(d.line_items) ? d.line_items : []).map((item) => {
+          const p = prog && prog.get ? prog.get(item.line_id) : null;
+          const ordered = Number(item.quantity) || 0;
+          const received = p && p.delivered != null ? Number(p.delivered) : 0;
           /* the reason the person at the door gave, carried on the receipt's own line */
           let why = null;
-          for (const r of receipts) for (const rl of r.lines) {
-            const idm = rl.item_data || {};
-            if (idm.line_id === l.line_id || rl.particulars === (l.particulars || l.name)) { if (idm.reason) why = idm.reason; }
-          }
+          for (const r of receipts)
+            for (const rl of r.lines) {
+              const idm = rl.item_data || {};
+              if (idm.line_id === item.line_id || rl.particulars === (item.particulars || item.name)) {
+                if (idm.reason) why = idm.reason;
+              }
+            }
           const diff = Math.round((received - ordered) * 1000) / 1000;
           /* ⭐ THE SAME TOLERANCE THE DOOR APPLIED (lib/lotfields, one definition for both ends). A difference this trade absorbs is
              not a difference to chase — and both figures still show, because tolerance decides what is worth a conversation, never
              what is true. */
-          const absorbed = diff !== 0 && lotfields.withinTolerance(diff, ordered, l.unit, tol);
-          return { line_id: l.line_id, name: l.particulars || l.name || '', unit: l.unit || 'piece',
-                   rate: l.price == null ? null : Number(l.price),
-                   ordered, received, difference: diff, reason: why, absorbed,
-                   state: diff === 0 ? (received > 0 ? 'agreed' : 'awaited') : (absorbed ? 'agreed' : (diff < 0 ? 'short' : 'excess')) };
+          const absorbed = diff !== 0 && lotfields.withinTolerance(diff, ordered, item.unit, tol);
+          return {
+            line_id: item.line_id,
+            name: item.particulars || item.name || '',
+            unit: item.unit || 'piece',
+            rate: item.price == null ? null : Number(item.price),
+            ordered,
+            received,
+            difference: diff,
+            reason: why,
+            absorbed,
+            state: diff === 0 ? (received > 0 ? 'agreed' : 'awaited') : absorbed ? 'agreed' : diff < 0 ? 'short' : 'excess'
+          };
         });
         if (!lines.length) continue;
 
         const value = (n) => roundMoney(n);
-        const ordered_total = value(lines.reduce((t, l) => t + (l.ordered * (l.rate || 0)), 0));
-        const received_total = value(lines.reduce((t, l) => t + (l.received * (l.rate || 0)), 0));
-        const differences = lines.filter((l) => l.difference !== 0 && !l.absorbed).length;
-        const nothingYet = lines.every((l) => l.received === 0);
+        const ordered_total = value(lines.reduce((total, item) => total + item.ordered * (item.rate || 0), 0));
+        const received_total = value(lines.reduce((total, item) => total + item.received * (item.rate || 0), 0));
+        const differences = lines.filter((item) => item.difference !== 0 && !item.absorbed).length;
+        const nothingYet = lines.every((item) => item.received === 0);
         /**
          * ⭐ THE VERDICT IS ABOUT WHAT IS KNOWN, not about who is right.
          *   awaited   nothing has arrived yet
@@ -2614,29 +3082,53 @@ router.get('/match', auth, async (req, res) => {
          *   agreed    everything arrived as ordered, and the money agrees
          *   differs   something does not agree, and the line says what
          */
-        const money_gap = (invoiced_total == null) ? null : value(received_total - invoiced_total);
-        const verdict = nothingYet ? 'awaited'
-                      : (differences ? 'differs'
-                      : (lines.some((l) => l.received < l.ordered) ? 'open'
-                      : ((money_gap != null && money_gap !== 0) ? 'differs' : 'agreed')));
+        const money_gap = invoiced_total == null ? null : value(received_total - invoiced_total);
+        const verdict = nothingYet
+          ? 'awaited'
+          : differences
+            ? 'differs'
+            : lines.some((item) => item.received < item.ordered)
+              ? 'open'
+              : money_gap != null && money_gap !== 0
+                ? 'differs'
+                : 'agreed';
 
-        orders.push({ chit_id: h.chit_id, at: h.created_at,
-                      subject: h.manual_subject || h.auto_subject || '',
-                      party: h.counterparty_name || (bj.party && bj.party.name) || '', party_id: h.counterparty_id || null,
-                      lines, differences, verdict,
-                      ordered_total, received_total, invoiced_total,
-                      invoiced_from: theirChit ? 'their invoice' : (keyed.length ? 'their bill, keyed at the door' : null),
-                      money_gap,
-                      receipts: receipts.map((r) => ({ chit_id: r.chit_id, no: r.no, at: r.at, landed: r.landed,
-                                                       their_bill_no: (r.their_bill && r.their_bill.no) || null })) });
+        orders.push({
+          chit_id: h.chit_id,
+          at: h.created_at,
+          subject: h.manual_subject || h.auto_subject || '',
+          party: h.counterparty_name || (bj.party && bj.party.name) || '',
+          party_id: h.counterparty_id || null,
+          lines,
+          differences,
+          verdict,
+          ordered_total,
+          received_total,
+          invoiced_total,
+          invoiced_from: theirChit ? 'their invoice' : keyed.length ? 'their bill, keyed at the door' : null,
+          money_gap,
+          receipts: receipts.map((item) => ({
+            chit_id: item.chit_id,
+            no: item.no,
+            at: item.at,
+            landed: item.landed,
+            their_bill_no: (item.their_bill && item.their_bill.no) || null
+          }))
+        });
       }
       return orders;
     });
     /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
-      out.forEach((o) => (o.receipts || []).forEach((r) => { delete r.landed; }));
+      out.forEach((item) =>
+        (item.receipts || []).forEach((item) => {
+          delete item.landed;
+        })
+      );
     res.json(Object.assign({ days, count: out.length }, PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2663,8 +3155,9 @@ router.post('/alias', auth, async (req, res) => {
     if (!item_id || !text) return res.status(400).json({ error: 'an alias needs an item and the words the supplier uses' });
     if (text.length > 120 || by.length > 120) return res.status(400).json({ error: 'too long' });
     const unit = b.unit ? String(b.unit).trim().slice(0, 24) : null;
-    const factor = (b.factor == null || b.factor === '') ? null : Number(b.factor);
-    if (factor != null && (!Number.isFinite(factor) || factor <= 0 || factor > 100000)) return res.status(400).json({ error: 'a pack conversion is a positive number' });
+    const factor = b.factor == null || b.factor === '' ? null : Number(b.factor);
+    if (factor != null && (!Number.isFinite(factor) || factor <= 0 || factor > 100000))
+      return res.status(400).json({ error: 'a pack conversion is a positive number' });
 
     const out = await withEntity(entity_id, async (db) => {
       const r = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2', [entity_id, item_id]);
@@ -2672,14 +3165,16 @@ router.post('/alias', auth, async (req, res) => {
       const d = r.rows[0].item_data || {};
       const list = Array.isArray(d.aliases) ? d.aliases.slice(0, 50) : [];
       const same = (a) => String(a.text || '').toLowerCase() === text.toLowerCase() && String(a.by || '').toLowerCase() === by.toLowerCase();
-      const kept = list.filter((a) => !same(a));                 /* saying it again replaces what was said before */
+      const kept = list.filter((item) => !same(item)); /* saying it again replaces what was said before */
       kept.push({ by: by || null, text, unit, factor, at: new Date().toISOString() });
       await catwrite.patchItems(db, entity_id, [{ item_id, merge: { aliases: kept } }]);
       return kept;
     });
     if (!out) return res.status(404).json({ error: 'no such product' });
     res.json({ ok: true, aliases: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2699,11 +3194,17 @@ router.post('/listen', auth, async (req, res) => {
     const raw = String(b.audio || '');
     if (!raw) return res.json({ ok: false, why: 'nothing was recorded' });
     let buf;
-    try { buf = Buffer.from(raw, 'base64'); } catch (_) { return res.json({ ok: false, why: 'that recording could not be read' }); }
+    try {
+      buf = Buffer.from(raw, 'base64');
+    } catch (_) {
+      return res.json({ ok: false, why: 'that recording could not be read' });
+    }
     if (buf.length > speech.MAX_BYTES) return res.json({ ok: false, why: 'that is too long — say it in one short phrase' });
     const out = await speech.transcribe(buf, { mime: b.mime, format: b.format, lang: b.lang, hint: b.hint });
     res.json(out);
-  } catch (e) { res.json({ ok: false, why: safeErr(e) }); }   /* L2: ok:false in words (the counter falls back to the browser's recogniser), never the raw error text */
+  } catch (e) {
+    res.json({ ok: false, why: safeErr(e) });
+  } /* L2: ok:false in words (the counter falls back to the browser's recogniser), never the raw error text */
 });
 
 /**
@@ -2716,38 +3217,43 @@ router.post('/listen', auth, async (req, res) => {
  * through this map, so an engine missing from it works in a browser and is silently absent on the desktop counter — the worst kind
  * of difference, because it only shows up on the machine nobody is testing on. `lots` was missing exactly that way (2026-09-08).
  */
-const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js',
-                  gs1: '../lib/gs1.js' /* ADOPTED — one file for node and the page */,        /* what a pack's barcode carries — batch, expiry, serial */
-                  lots: '../lib/lotfields.js' /* ADOPTED — one file for node and the page */, /* what this trade must capture, and the difference it absorbs */
-                  nums: '../lib/numerals.js' /* ADOPTED — one file for node and the page */, /* "two kilo", "rendu kilo" — the closed class, in both */
-                  rewards: '../lib/rewards.js',      /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */
-                  /* ⭐ 2026-09-17: the rest of what the page loads — a shop PC had none of these (scripts/vendor-till.cjs) */
-                  screen: '../lib/screen-kit.js',     /* the screen library — a UMD, the master itself */
-                  money: '../lib/money.js',   /* ⭐ ADOPTED from chitbridge-engines — one file for node and the page, no wrapper */
-                  docnumber: '../lib/docnumber.js' /* ADOPTED — one file for node and the page */,
-                  locale: '../lib/locale.browser.js', pricing: '../lib/pricing-engine.js' /* ADOPTED — one file for node and the page */,
-                  /* ⭐ VARIANTS — what makes two combinations the SAME thing to sell. A shop PC bills
+const ENGINES = {
+  offers: '../lib/offers-engine.js',
+  tax: '../lib/tax-engine.browser.js',
+  search: '../lib/search-engine.js',
+  gs1: '../lib/gs1.js' /* ADOPTED — one file for node and the page */ /* what a pack's barcode carries — batch, expiry, serial */,
+  lots: '../lib/lotfields.js' /* ADOPTED — one file for node and the page */ /* what this trade must capture, and the difference it absorbs */,
+  nums: '../lib/numerals.js' /* ADOPTED — one file for node and the page */ /* "two kilo", "rendu kilo" — the closed class, in both */,
+  rewards: '../lib/rewards.js' /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */,
+  /* ⭐ 2026-09-17: the rest of what the page loads — a shop PC had none of these (scripts/vendor-till.cjs) */
+  screen: '../lib/screen-kit.js' /* the screen library — a UMD, the master itself */,
+  money: '../lib/money.js' /* ⭐ ADOPTED from chitbridge-engines — one file for node and the page, no wrapper */,
+  docnumber: '../lib/docnumber.js' /* ADOPTED — one file for node and the page */,
+  locale: '../lib/locale.browser.js',
+  pricing: '../lib/pricing-engine.js' /* ADOPTED — one file for node and the page */,
+  /* ⭐ VARIANTS — what makes two combinations the SAME thing to sell. A shop PC bills
                      combinations with the line down, so it needs the rule locally like every other engine. */
-                  variant: '../lib/variant.browser.js',
-                  /* ⭐ counted or measured — what stops a bill reading '0.25 items' ([TILL-104]) */
-                  units: '../lib/units.js' /* ADOPTED — one file for node and the page */,
-                  /* ⭐ the GSTIN / PAN / state table, so a shop PC confirms one offline too ([TILL-105]) */
-                  profilemap: '../lib/profile-map.js' /* ADOPTED — one file for node and the page */,
-                  /* ⚠️ THE MASTER ITSELF — already a classic script that assigns its own global, like rewards */
-                  jurisdiction: '../lib/jurisdiction.js',
-                  govcontext: '../lib/govcontext.browser.js',
-                  /* ⭐ what a day's takings are, and what a return does to them — one rule for the page, the
+  variant: '../lib/variant.browser.js',
+  /* ⭐ counted or measured — what stops a bill reading '0.25 items' ([TILL-104]) */
+  units: '../lib/units.js' /* ADOPTED — one file for node and the page */,
+  /* ⭐ the GSTIN / PAN / state table, so a shop PC confirms one offline too ([TILL-105]) */
+  profilemap: '../lib/profile-map.js' /* ADOPTED — one file for node and the page */,
+  /* ⚠️ THE MASTER ITSELF — already a classic script that assigns its own global, like rewards */
+  jurisdiction: '../lib/jurisdiction.js',
+  govcontext: '../lib/govcontext.browser.js',
+  /* ⭐ what a day's takings are, and what a return does to them — one rule for the page, the
                      shop PC and this server ([TILL-125]) */
-                  rollup: '../lib/rollup.js' /* ADOPTED — one file for node and the page */,
-                  orders: '../lib/orders.js' /* ADOPTED — one file for node and the page */,
-                  orderhub: '../lib/orderhub.js' /* ADOPTED — one file for node and the page */,
-                  dayopen: '../lib/dayopen.js' /* ADOPTED — one file for node and the page */,
-                  signin: '../lib/signin.js' /* ADOPTED — one file for node and the page */,
-                  scalecode: '../lib/scalecode.js' /* ADOPTED — one file for node and the page */,
-                  qty: '../lib/qty.js' /* ADOPTED — one file for node and the page */,
-                  /* ⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
-                  verdict: '../lib/verdict.js' /* ADOPTED — one file for node and the page */,
-                  qr: '../node_modules/qrcode-generator/qrcode.js' };
+  rollup: '../lib/rollup.js' /* ADOPTED — one file for node and the page */,
+  orders: '../lib/orders.js' /* ADOPTED — one file for node and the page */,
+  orderhub: '../lib/orderhub.js' /* ADOPTED — one file for node and the page */,
+  dayopen: '../lib/dayopen.js' /* ADOPTED — one file for node and the page */,
+  signin: '../lib/signin.js' /* ADOPTED — one file for node and the page */,
+  scalecode: '../lib/scalecode.js' /* ADOPTED — one file for node and the page */,
+  qty: '../lib/qty.js' /* ADOPTED — one file for node and the page */,
+  /* ⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
+  verdict: '../lib/verdict.js' /* ADOPTED — one file for node and the page */,
+  qr: '../node_modules/qrcode-generator/qrcode.js'
+};
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
   if (!rel) return res.status(404).json({ error: 'Not found' });
@@ -2757,10 +3263,23 @@ router.get('/engine/:name', auth, (req, res) => {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.send(body);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
-router.openapi = { paths: { '/api/till/snapshot': { get: { summary: 'Everything a counter needs to bill offline, in one call',
-  tags: ['till'], security: [{ apiKey: [] }], responses: { 200: { description: 'the shop, its items, offers, slabs and customers' } } } } }, schemas: {} };
+router.openapi = {
+  paths: {
+    '/api/till/snapshot': {
+      get: {
+        summary: 'Everything a counter needs to bill offline, in one call',
+        tags: ['till'],
+        security: [{ apiKey: [] }],
+        responses: { 200: { description: 'the shop, its items, offers, slabs and customers' } }
+      }
+    }
+  },
+  schemas: {}
+};
 
 module.exports = router;

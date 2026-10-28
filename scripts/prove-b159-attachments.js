@@ -21,10 +21,16 @@
 const P = require('./_proof');
 const crypto = require('crypto');
 
-let pass = 0, fail = 0;
+let pass = 0,
+  fail = 0;
 const ok = (name, cond, got) => {
-  if (cond) { pass++; console.log('  ok   ' + name); }
-  else { fail++; console.log('  FAIL ' + name + (got === undefined ? '' : '  → ' + JSON.stringify(got))); }
+  if (cond) {
+    pass++;
+    console.log('  ok   ' + name);
+  } else {
+    fail++;
+    console.log('  FAIL ' + name + (got === undefined ? '' : '  → ' + JSON.stringify(got)));
+  }
 };
 
 async function login(email, name) {
@@ -40,7 +46,8 @@ async function login(email, name) {
 
   /* A chit to hang it on. Self-chit: one party, so this proves the plain path without dragging in fan-out. */
   const chit = await P.j('/api/chits/send', {
-    method: 'POST', ...me,
+    method: 'POST',
+    ...me,
     body: {
       manual_subject: 'b159 attachment proof ' + Date.now(),
       recipients: [{ name: 'mytest', role: 'to' }],
@@ -49,14 +56,18 @@ async function login(email, name) {
   });
   ok('a chit to attach to', chit.status === 200 || chit.status === 201, chit.status);
   const chit_id = chit.b && (chit.b.chit_id || (chit.b.chit && chit.b.chit.chit_id));
-  if (!chit_id) { console.log('\n  cannot continue without a chit_id — ' + JSON.stringify(chit.b).slice(0, 200)); process.exit(1); }
+  if (!chit_id) {
+    console.log('\n  cannot continue without a chit_id — ' + JSON.stringify(chit.b).slice(0, 200));
+    process.exit(1);
+  }
 
   /* Deterministic bytes, so "identical" is provable rather than plausible. */
   const bytes = Buffer.from('b159 proof · ' + 'x'.repeat(500) + ' · end');
   const sha = crypto.createHash('sha256').update(bytes).digest('hex');
 
   const up = await P.j('/api/attachments', {
-    method: 'POST', ...me,
+    method: 'POST',
+    ...me,
     body: { chit_id, name: 'b159-proof.txt', mime: 'text/plain', data_base64: bytes.toString('base64') }
   });
   ok('upload accepted', up.status === 200 || up.status === 201, { status: up.status, body: JSON.stringify(up.b).slice(0, 160) });
@@ -65,7 +76,7 @@ async function login(email, name) {
 
   if (attId) {
     /* ⭐ THE ACTUAL PROOF — read the bytes back through the same route the app uses, and hash them. */
-    const got = await P.raw ? await P.raw('/api/attachments/' + attId, me) : null;
+    const got = (await P.raw) ? await P.raw('/api/attachments/' + attId, me) : null;
     if (got && got.buffer) {
       const back = crypto.createHash('sha256').update(got.buffer).digest('hex');
       ok('⭐ the bytes come back BYTE-IDENTICAL after b159', back === sha, { sent: sha.slice(0, 16), got: back.slice(0, 16) });
@@ -73,9 +84,9 @@ async function login(email, name) {
     } else {
       /* _proof has no binary helper — fall back to a plain fetch with the same auth. */
       const base = process.env.CB_API_BASE || 'https://chitbridge-api-production.up.railway.app';
-      const r = await fetch(base + '/api/attachments/' + attId, { headers: { Authorization: 'Bearer ' + me.token } });
-      ok('read returns 200', r.ok, r.status);
-      const buf = Buffer.from(await r.arrayBuffer());
+      const reply = await fetch(base + '/api/attachments/' + attId, { headers: { Authorization: 'Bearer ' + me.token } });
+      ok('read returns 200', reply.ok, reply.status);
+      const buf = Buffer.from(await reply.arrayBuffer());
       const back = crypto.createHash('sha256').update(buf).digest('hex');
       ok('⭐ the bytes come back BYTE-IDENTICAL after b159', back === sha, { sent: sha.slice(0, 16), got: back.slice(0, 16), len: buf.length });
     }
@@ -88,12 +99,18 @@ async function login(email, name) {
      */
     const det = await P.j('/api/chits/' + chit_id, me);
     const atts = (det.b && det.b.attachments) || [];
-    ok('the attachment is listed on the chit', atts.some((a) => a.id === attId),
-       { count: atts.length, ids: atts.map((a) => a.id).slice(0, 3) });
+    ok(
+      'the attachment is listed on the chit',
+      atts.some((item) => item.id === attId),
+      { count: atts.length, ids: atts.map((item) => item.id).slice(0, 3) }
+    );
   }
 
   console.log('\n⚠️  STORAGE_ADAPTER is still `db` — these bytes are in the ROW, not a bucket.');
   console.log('    That is the point: b159 must change NOTHING until a bucket and env exist.\n');
   console.log('== RESULT ==  PASS ' + pass + '  ·  FAIL ' + fail);
   process.exit(fail ? 1 : 0);
-})().catch((e) => { console.error('\nthrew: ' + e.message); process.exit(1); });
+})().catch((e) => {
+  console.error('\nthrew: ' + e.message);
+  process.exit(1);
+});

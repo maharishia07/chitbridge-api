@@ -5,12 +5,13 @@
 // entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
-const FOLDER_LIST_MAX = 100;   /* a filed folder's chit list when no page is asked — the ceiling it always had, now said in words (W2-RAIL R2) */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
+const FOLDER_LIST_MAX = 100; /* a filed folder's chit list when no page is asked — the ceiling it always had, now said in words (W2-RAIL R2) */
 const log = require('../lib/logger');
-const router  = express.Router();
-const { withEntity } = require('../db');   // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
+const router = express.Router();
+const { withEntity } = require('../db'); // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
 const { safeErr } = require('../lib/respond');
 const { body, param } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
@@ -35,16 +36,16 @@ const ent = (req) => auth.entityOf(req);
  *
  * Cost of getting it wrong this way round: one failed query per call until the column appears, then never again.
  */
-let SCOPE_OK = false;                       // latches TRUE once the column is really there; never latches false
+let SCOPE_OK = false; // latches TRUE once the column is really there; never latches false
 const missingCol = (e) => e && e.code === '42703';
 /* Always attempt the scoped form unless we have already proved it works — so a pre-b133 database pays one failed
    query per call (a transient state) and a migrated one pays nothing after the first success. */
-const views   = require('../lib/folder-views');      // ⭐ VIEW folders — contents = the rule's matches (system + a shop's own)
-const INV     = require('../lib/folder-inventory');  // the folder inventory, numbered with the ledger
+const views = require('../lib/folder-views'); // ⭐ VIEW folders — contents = the rule's matches (system + a shop's own)
+const INV = require('../lib/folder-inventory'); // the folder inventory, numbered with the ledger
 const { isOwner } = require('../lib/owner');
-const select  = require('../lib/select');    // WHICH chits — shared with the scorecard
-const measure = require('../lib/measure');   // ...and how they are counted
-const policy  = require('../lib/policy');    // overdue is a declared flag, not a magic number
+const select = require('../lib/select'); // WHICH chits — shared with the scorecard
+const measure = require('../lib/measure'); // ...and how they are counted
+const policy = require('../lib/policy'); // overdue is a declared flag, not a magic number
 
 /**
  * viewFolder(entity, id) → the VIEW folder behind an id: a system one (lib/folder-inventory; `false` when the shop switched it
@@ -53,8 +54,9 @@ const policy  = require('../lib/policy');    // overdue is a declared flag, not 
 async function viewFolder(e, id) {
   const sys = await views.systemById(e, id);
   if (sys) return sys.on ? sys : false;
-  const r = await withEntity(e, (db) => db.query(
-    `SELECT f.folder_id, f.name, to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [id, e])).catch(log.orElse('folders viewFolder: the read failed — answered with none', ({ rows: [] })));
+  const r = await withEntity(e, (db) =>
+    db.query(`SELECT f.folder_id, f.name, to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [id, e])
+  ).catch(log.orElse('folders viewFolder: the read failed — answered with none', { rows: [] }));
   const f = r.rows[0];
   return f && f.kind === 'view' ? f : null;
 }
@@ -63,29 +65,55 @@ async function viewFolder(e, id) {
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
-    const readFolders = (withScope) => withEntity(e, (db) => db.query(
-      `SELECT f.folder_id, f.parent_id, f.name, f.sort, ${withScope ? "f.scope" : "NULL::text AS scope"},
+    const readFolders = (withScope) =>
+      withEntity(e, (db) =>
+        db.query(
+          `SELECT f.folder_id, f.parent_id, f.name, f.sort, ${withScope ? 'f.scope' : 'NULL::text AS scope'},
               COALESCE(to_jsonb(f)->>'kind', 'filed') AS kind,      /* b275 — read through to_jsonb: before it, every folder is filed */
               (SELECT COUNT(*) FROM chit_status cs
                  WHERE cs.entity_id = f.entity_id AND cs.folder_id = f.folder_id
                    AND cs.deleted_at IS NULL AND cs.archived_at IS NULL) AS count
          FROM folder f
         WHERE f.entity_id = $1
-        ORDER BY f.parent_id NULLS FIRST, f.sort, f.name`, [e]));
+        ORDER BY f.parent_id NULLS FIRST, f.sort, f.name`,
+          [e]
+        )
+      );
     let r;
-    try { r = await readFolders(true); SCOPE_OK = true; }
-    catch (e1) { if (!missingCol(e1)) throw e1; r = await readFolders(false); }   // pre-b133 → retry in a FRESH tx
+    try {
+      r = await readFolders(true);
+      SCOPE_OK = true;
+    } catch (e1) {
+      if (!missingCol(e1)) throw e1;
+      r = await readFolders(false);
+    } // pre-b133 → retry in a FRESH tx
     /* a shop's own VIEW folder counts what its rules match, not what was filed into it (nothing can be) */
     const rows = r.rows;
-    for (const f of rows) if (f.kind === 'view') { try { f.count = (await views.members(e, f, {})).counts.open; } catch (e) { log.fellBack('folders GET /: failed — answered with nothing', e); f.count = null; } }
+    for (const f of rows)
+      if (f.kind === 'view') {
+        try {
+          f.count = (await views.members(e, f, {})).counts.open;
+        } catch (e) {
+          log.fellBack('folders GET /: failed — answered with nothing', e);
+          f.count = null;
+        }
+      }
     /**
      * ⭐ THE SYSTEM FOLDERS FIRST — the inventory's ON rows (lib/folder-inventory), each with its code, its ledger and the count
      * of its OPEN items. ⚠️ A failure reading them never blanks the shop's own tree, and it is SAID (system_error), not swallowed.
      */
-    let sys = [], sysErr = null;
-    try { sys = await views.systemFolders(e); } catch (e2) { sysErr = safeErr(e2); console.error('system folders:', e2.message); }
-    res.json(Object.assign(PL.pageOut('folders', sys.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
-  } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
+    let list = [],
+      sysErr = null;
+    try {
+      list = await views.systemFolders(e);
+    } catch (e2) {
+      sysErr = safeErr(e2);
+      console.error('system folders:', e2.message);
+    }
+    res.json(Object.assign(PL.pageOut('folders', list.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
+  } catch (err) {
+    res.status(500).json({ error: 'List failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -97,7 +125,9 @@ router.get('/inventory', auth, async (req, res) => {
   try {
     const e = ent(req);
     res.json({ rows: views.inventoryRows(await views.flagsOf(e)), can_change: isOwner(req) });
-  } catch (err) { res.status(500).json({ error: 'Inventory failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Inventory failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -114,189 +144,268 @@ router.put('/inventory/:code', auth, async (req, res) => {
     const f = INV.byCode(String(req.params.code || ''));
     if (!f) return res.status(404).json({ error: 'No such folder', message: 'There is no folder ' + req.params.code + ' in the inventory.' });
     const b = req.body || {};
-    const hasOn = b.on !== undefined, hasMsg = b.msg !== undefined;
+    const hasOn = b.on !== undefined,
+      hasMsg = b.msg !== undefined;
     if (!hasOn && !hasMsg) return res.status(400).json({ error: 'Bad request', message: 'Send on (true or false) or msg (external, internal or none).' });
     if (hasOn && typeof b.on !== 'boolean') return res.status(400).json({ error: 'Bad request', message: 'on must be true or false' });
     if (hasOn && f.fixed) return res.status(400).json({ error: 'Always on', message: f.name + ' is always on — it cannot be switched off.' });
     if (hasMsg) {
       if (INV.LEVELS.indexOf(b.msg) < 0) return res.status(400).json({ error: 'Bad request', message: 'msg must be external, internal or none.' });
-      if (f.msg_fixed || f.kind === 'track') return res.status(409).json({ error: 'Fixed', code: 'MSG_FIXED',
-        message: f.kind === 'track' ? f.name + ' has no messaging level of its own.' : f.name + ' are always shared with the other party — that cannot be changed.' });
+      if (f.msg_fixed || f.kind === 'track')
+        return res.status(409).json({
+          error: 'Fixed',
+          code: 'MSG_FIXED',
+          message:
+            f.kind === 'track' ? f.name + ' has no messaging level of its own.' : f.name + ' are always shared with the other party — that cannot be changed.'
+        });
       if (!INV.msgAllowed(f, b.msg)) {
         const how = f.msg === 'internal' ? 'kept internal or switched off' : 'switched off';
-        return res.status(409).json({ error: 'Above the default', code: 'MSG_ABOVE_CEILING',
-          message: f.name + ' can be ' + how + ', but not shared beyond the default.' });
+        return res
+          .status(409)
+          .json({ error: 'Above the default', code: 'MSG_ABOVE_CEILING', message: f.name + ' can be ' + how + ', but not shared beyond the default.' });
       }
     }
     const e = ent(req);
     const cur = (await policy.get(e)).system_folders || {};
     /* the stored row becomes { on, msg } — an older 'on'/'off' string is carried into it, never lost */
-    const was = cur[f.code], row = (was && typeof was === 'object') ? Object.assign({}, was) : (was === 'on' ? { on: true } : was === 'off' ? { on: false } : {});
+    const was = cur[f.code],
+      row = was && typeof was === 'object' ? Object.assign({}, was) : was === 'on' ? { on: true } : was === 'off' ? { on: false } : {};
     if (hasOn) row.on = b.on;
     if (hasMsg) row.msg = b.msg;
     await policy.set(e, { system_folders: Object.assign({}, cur, { [f.code]: row }) });
     res.json({ rows: views.inventoryRows(await views.flagsOf(e)), can_change: true });
-  } catch (err) { res.status(err.status || 500).json({ error: 'Switch failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Switch failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 // POST /api/folders — create { name, parent_id? }
-router.post('/', auth,
-  [ body('name').trim().isLength({ min: 1, max: 60 }).withMessage('Name required'),
-    body('parent_id').optional({ nullable: true }).isUUID() ],
-  validate, async (req, res) => {
-  try {
-    const e = ent(req); const name = sanitise(req.body.name); const parent = req.body.parent_id || null;
-    /* ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Task and Order are different lists with different actions; a folder
+router.post(
+  '/',
+  auth,
+  [body('name').trim().isLength({ min: 1, max: 60 }).withMessage('Name required'), body('parent_id').optional({ nullable: true }).isUUID()],
+  validate,
+  async (req, res) => {
+    try {
+      const e = ent(req);
+      const name = sanitise(req.body.name);
+      const parent = req.body.parent_id || null;
+      /* ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Task and Order are different lists with different actions; a folder
        that held both could inherit neither. Default 'task' — the track folders were built for. */
-    const scope = (req.body.scope === 'order') ? 'order' : 'task';
-    /**
-     * ⭐ A VIEW FOLDER (b275) — its contents are its rules' matches, so a chit shows in it AND keeps its own filing (a supplier's
-     * folder: rule { from: 'Mayur' }). Needs the kind column; before b275 it is refused by name, never made as a filed folder.
-     */
-    if (req.body.kind === 'view') {
-      try {
-        const r = await withEntity(e, (db) => db.query(
-          `INSERT INTO folder (entity_id, parent_id, name, scope, kind) VALUES ($1, NULL, $2, $3, 'view') RETURNING folder_id, parent_id, name, sort, scope, kind`,
-          [e, name, scope]));
-        return res.json({ folder: Object.assign({}, r.rows[0], { count: 0 }) });
-      } catch (ev) {
-        if (missingCol(ev)) return res.status(503).json({ error: 'Not migrated', message: 'View folders need b275 on this environment.' });
-        throw ev;
+      const scope = req.body.scope === 'order' ? 'order' : 'task';
+      /**
+       * ⭐ A VIEW FOLDER (b275) — its contents are its rules' matches, so a chit shows in it AND keeps its own filing (a supplier's
+       * folder: rule { from: 'Mayur' }). Needs the kind column; before b275 it is refused by name, never made as a filed folder.
+       */
+      if (req.body.kind === 'view') {
+        try {
+          const r = await withEntity(e, (db) =>
+            db.query(
+              `INSERT INTO folder (entity_id, parent_id, name, scope, kind) VALUES ($1, NULL, $2, $3, 'view') RETURNING folder_id, parent_id, name, sort, scope, kind`,
+              [e, name, scope]
+            )
+          );
+          return res.json({ folder: Object.assign({}, r.rows[0], { count: 0 }) });
+        } catch (ev) {
+          if (missingCol(ev)) return res.status(503).json({ error: 'Not migrated', message: 'View folders need b275 on this environment.' });
+          throw ev;
+        }
       }
+      /**
+       * ⚠️ A FALLBACK INSIDE A TRANSACTION IS NOT A FALLBACK. The first version caught 42703 (no `scope` column, i.e.
+       * pre-b133) and retried the plain INSERT on the SAME client — but Postgres had already aborted the transaction,
+       * so the retry died with "current transaction is aborted" and the create returned a folder with no id. The
+       * metrics call then 400'd on "id: Invalid value", which points nowhere near the actual cause.
+       *
+       * The retry must be a NEW transaction, and the negative is never cached (see the latch note above).
+       */
+      const doInsert = (withScope) =>
+        withEntity(e, async (db) => {
+          if (parent) {
+            const p = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]);
+            if (!p.rows.length) return { badParent: true };
+          }
+          const r = withScope
+            ? await db.query(`INSERT INTO folder (entity_id, parent_id, name, scope) VALUES ($1,$2,$3,$4) RETURNING folder_id, parent_id, name, sort, scope`, [
+                e,
+                parent,
+                name,
+                scope
+              ])
+            : await db.query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]);
+          return { folder: r.rows[0] };
+        });
+      let row;
+      try {
+        row = await doInsert(true);
+        SCOPE_OK = true;
+      } catch (e1) {
+        if (!missingCol(e1)) throw e1;
+        row = await doInsert(false);
+      }
+      if (row.badParent) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' });
+      res.json({ folder: { ...row.folder, count: 0 } });
+    } catch (err) {
+      res.status(500).json({ error: 'Create failed', message: safeErr(err) });
     }
-    /**
-     * ⚠️ A FALLBACK INSIDE A TRANSACTION IS NOT A FALLBACK. The first version caught 42703 (no `scope` column, i.e.
-     * pre-b133) and retried the plain INSERT on the SAME client — but Postgres had already aborted the transaction,
-     * so the retry died with "current transaction is aborted" and the create returned a folder with no id. The
-     * metrics call then 400'd on "id: Invalid value", which points nowhere near the actual cause.
-     *
-     * The retry must be a NEW transaction, and the negative is never cached (see the latch note above).
-     */
-    const doInsert = (withScope) => withEntity(e, async (db) => {
-      if (parent) { const p = await db.query(`SELECT 1 FROM folder WHERE folder_id = $1 AND entity_id = $2`, [parent, e]); if (!p.rows.length) return { badParent: true }; }
-      const r = withScope
-        ? await db.query(`INSERT INTO folder (entity_id, parent_id, name, scope) VALUES ($1,$2,$3,$4) RETURNING folder_id, parent_id, name, sort, scope`, [e, parent, name, scope])
-        : await db.query(`INSERT INTO folder (entity_id, parent_id, name) VALUES ($1,$2,$3) RETURNING folder_id, parent_id, name, sort`, [e, parent, name]);
-      return { folder: r.rows[0] };
-    });
-    let row;
-    try { row = await doInsert(true); SCOPE_OK = true; }
-    catch (e1) { if (!missingCol(e1)) throw e1; row = await doInsert(false); }
-    if (row.badParent) return res.status(400).json({ error: 'Bad parent', message: 'Parent folder not found.' });
-    res.json({ folder: { ...row.folder, count: 0 } });
-  } catch (err) { res.status(500).json({ error: 'Create failed', message: safeErr(err) }); }
-});
+  }
+);
 
 // PATCH /api/folders/:id — rename and/or re-parent (move a subtree)
-router.patch('/:id', auth,
-  [ param('id').isUUID(), body('name').optional().trim().isLength({ min: 1, max: 60 }),
-    body('parent_id').optional({ nullable: true }) ],
-  validate, async (req, res) => {
-  try {
-    const e = ent(req); const sets = []; const params = []; let n = 0;
-    if (req.body.name !== undefined) { n++; sets.push(`name = $${n}`); params.push(sanitise(req.body.name)); }
-    if (req.body.parent_id !== undefined) {
-      const par = req.body.parent_id || null;
-      if (par === req.params.id) return res.status(400).json({ error: 'A folder cannot be its own parent' });
-      n++; sets.push(`parent_id = $${n}`); params.push(par);
+router.patch(
+  '/:id',
+  auth,
+  [param('id').isUUID(), body('name').optional().trim().isLength({ min: 1, max: 60 }), body('parent_id').optional({ nullable: true })],
+  validate,
+  async (req, res) => {
+    try {
+      const e = ent(req);
+      const sets = [];
+      const params = [];
+      let index = 0;
+      if (req.body.name !== undefined) {
+        index++;
+        sets.push(`name = $${index}`);
+        params.push(sanitise(req.body.name));
+      }
+      if (req.body.parent_id !== undefined) {
+        const par = req.body.parent_id || null;
+        if (par === req.params.id) return res.status(400).json({ error: 'A folder cannot be its own parent' });
+        index++;
+        sets.push(`parent_id = $${index}`);
+        params.push(par);
+      }
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
+      index++;
+      const idIdx = index;
+      params.push(req.params.id);
+      index++;
+      params.push(e);
+      const r = await withEntity(e, (db) =>
+        db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${index} RETURNING folder_id, parent_id, name`, params)
+      );
+      if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+      res.json({ folder: r.rows[0] });
+    } catch (err) {
+      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
     }
-    if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
-    n++; const idIdx = n; params.push(req.params.id); n++; params.push(e);
-    const r = await withEntity(e, (db) => db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${n} RETURNING folder_id, parent_id, name`, params));
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
-    res.json({ folder: r.rows[0] });
-  } catch (err) { res.status(500).json({ error: 'Update failed', message: safeErr(err) }); }
-});
+  }
+);
 
 // DELETE /api/folders/:id — delete a folder (children cascade via FK); UNFILE its chits (folder_id -> NULL) so nothing is lost.
-router.delete('/:id', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+router.delete('/:id', auth, [param('id').isUUID()], validate, async (req, res) => {
   try {
     const e = ent(req);
     const deleted = await withEntity(e, async (db) => {
       await db.query(
         `UPDATE chit_status SET folder_id = NULL
           WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM folder WHERE entity_id = $1 AND (folder_id = $2 OR parent_id = $2))`,
-        [e, req.params.id]);
+        [e, req.params.id]
+      );
       const r = await db.query(`DELETE FROM folder WHERE folder_id = $1 AND entity_id = $2`, [req.params.id, e]);
       return r.rowCount;
     });
     res.json({ deleted });
-  } catch (err) { res.status(500).json({ error: 'Delete failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
+  }
 });
 
 // POST /api/folders/move — file / redirect a chit into a folder (folder_id=null => unfile). Sets MY copy only.
-router.post('/move', auth,
-  [ body('chit_id').isUUID(), body('folder_id').optional({ nullable: true }) ],
-  validate, async (req, res) => {
+router.post('/move', auth, [body('chit_id').isUUID(), body('folder_id').optional({ nullable: true })], validate, async (req, res) => {
   try {
-    const e = ent(req); const fid = req.body.folder_id || null;
+    const e = ent(req);
+    const fid = req.body.folder_id || null;
     /* ⚠️ A VIEW FOLDER IS NOT A PLACE — it shows what its rule matches, so nothing can be moved into it (a system folder or a
        shop's own view). Refused by name: a silent "moved: 0" would read as a filing that happened. */
-    if (fid && INV.byId(fid)) return res.status(400).json({ error: 'View folder', code: 'FOLDER_IS_VIEW',
-      message: 'That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches.' });
+    if (fid && INV.byId(fid))
+      return res.status(400).json({
+        error: 'View folder',
+        code: 'FOLDER_IS_VIEW',
+        message: 'That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches.'
+      });
     if (fid) {
-      const k = await withEntity(e, (db) => db.query(`SELECT to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [fid, e])).catch(log.orElse('folders: the read failed — answered with none', ({ rows: [] })));
-      if (k.rows[0] && k.rows[0].kind === 'view') return res.status(400).json({ error: 'View folder', code: 'FOLDER_IS_VIEW',
-        message: 'That folder shows what its rules match — it is not a place to move chits into.' });
+      const k = await withEntity(e, (db) =>
+        db.query(`SELECT to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [fid, e])
+      ).catch(log.orElse('folders: the read failed — answered with none', { rows: [] }));
+      if (k.rows[0] && k.rows[0].kind === 'view')
+        return res
+          .status(400)
+          .json({ error: 'View folder', code: 'FOLDER_IS_VIEW', message: 'That folder shows what its rules match — it is not a place to move chits into.' });
     }
-    const doMove = (scoped) => withEntity(e, async (db) => {
-      let fscope = null;
-      if (fid) {
-        let f;
-        /* Same rule as the create route: never retry inside an aborted transaction, and never cache the negative. */
-        f = await db.query(scoped
-          ? `SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2`
-          : `SELECT NULL::text AS scope FROM folder WHERE folder_id = $1 AND entity_id = $2`, [fid, e]).catch((err) => {
-            if (missingCol(err)) return null;
-            throw err;
-          });
-        if (f === null) return { retryNoScope: true };
-        if (!f.rows.length) return { noFolder: true };
-        fscope = f.rows[0].scope;
-      }
-      /**
-       * ⚠️ `direction` IS OPTIONAL, AND WITHOUT IT A SELF-CHIT MOVES BOTH COPIES.
-       *
-       * The comment above says "MY copy" — singular — but this UPDATE matched on (chit_id, entity_id) only. On an
-       * inter-entity chit you hold one copy, so there was never a difference. On a SELF-CHIT you hold two (the
-       * Order copy and the Task copy) and both moved together: filing 40 chits produced 80 filed rows, and the
-       * folder honestly reported 80 while a person would say 40.
-       *
-       * Found 2026-08-10 by seeding folders and reading the counts back. Fixed ADDITIVELY: omit `direction` and
-       * the old behaviour is unchanged; pass it and only that copy moves. The UI passes it now, because Task and
-       * Order are genuinely different things in the mailbox model — filing the Order copy into "Sent to suppliers"
-       * should not drag the Task copy along.
-       */
-      let dir = (req.body.direction === 'sent' || req.body.direction === 'received') ? req.body.direction : null;
-      /**
-       * ⚠️ THE FOLDER'S SIDE DECIDES (b133). A Task folder takes received copies; an Order folder takes sent ones.
-       * When the caller names no direction, the folder's scope supplies it — so an old client filing "the chit"
-       * into a Task folder now files the Task copy and leaves the Order copy alone, instead of dragging both.
-       * When the caller DOES name one and it contradicts the folder, that is refused rather than quietly ignored:
-       * silently filing into the wrong track is how a folder stops meaning anything.
-       */
-      const want = fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : null;
-      if (want && dir && dir !== want) return { wrongSide: { folder: fscope, chit: dir } };
-      if (want && !dir) dir = want;
+    const doMove = (scoped) =>
+      withEntity(e, async (db) => {
+        let fscope = null;
+        if (fid) {
+          let f;
+          /* Same rule as the create route: never retry inside an aborted transaction, and never cache the negative. */
+          f = await db
+            .query(
+              scoped
+                ? `SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2`
+                : `SELECT NULL::text AS scope FROM folder WHERE folder_id = $1 AND entity_id = $2`,
+              [fid, e]
+            )
+            .catch((err) => {
+              if (missingCol(err)) return null;
+              throw err;
+            });
+          if (f === null) return { retryNoScope: true };
+          if (!f.rows.length) return { noFolder: true };
+          fscope = f.rows[0].scope;
+        }
+        /**
+         * ⚠️ `direction` IS OPTIONAL, AND WITHOUT IT A SELF-CHIT MOVES BOTH COPIES.
+         *
+         * The comment above says "MY copy" — singular — but this UPDATE matched on (chit_id, entity_id) only. On an
+         * inter-entity chit you hold one copy, so there was never a difference. On a SELF-CHIT you hold two (the
+         * Order copy and the Task copy) and both moved together: filing 40 chits produced 80 filed rows, and the
+         * folder honestly reported 80 while a person would say 40.
+         *
+         * Found 2026-08-10 by seeding folders and reading the counts back. Fixed ADDITIVELY: omit `direction` and
+         * the old behaviour is unchanged; pass it and only that copy moves. The UI passes it now, because Task and
+         * Order are genuinely different things in the mailbox model — filing the Order copy into "Sent to suppliers"
+         * should not drag the Task copy along.
+         */
+        let dir = req.body.direction === 'sent' || req.body.direction === 'received' ? req.body.direction : null;
+        /**
+         * ⚠️ THE FOLDER'S SIDE DECIDES (b133). A Task folder takes received copies; an Order folder takes sent ones.
+         * When the caller names no direction, the folder's scope supplies it — so an old client filing "the chit"
+         * into a Task folder now files the Task copy and leaves the Order copy alone, instead of dragging both.
+         * When the caller DOES name one and it contradicts the folder, that is refused rather than quietly ignored:
+         * silently filing into the wrong track is how a folder stops meaning anything.
+         */
+        const want = fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : null;
+        if (want && dir && dir !== want) return { wrongSide: { folder: fscope, chit: dir } };
+        if (want && !dir) dir = want;
 
-      const r = await db.query(
-        `UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3` + (dir ? ` AND direction = $4` : ''),
-        dir ? [fid, req.body.chit_id, e, dir] : [fid, req.body.chit_id, e]);
-      return { moved: r.rowCount, scope: fscope };
-    });
+        const r = await db.query(
+          `UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3` + (dir ? ` AND direction = $4` : ''),
+          dir ? [fid, req.body.chit_id, e, dir] : [fid, req.body.chit_id, e]
+        );
+        return { moved: r.rowCount, scope: fscope };
+      });
     // The 42703 retry is a FRESH transaction — the aborted one can serve nothing further. At most once per process.
     let result = await doMove(true);
-    if (result.retryNoScope) result = await doMove(false);   // FRESH tx — the aborted one serves nothing
+    if (result.retryNoScope)
+      result = await doMove(false); // FRESH tx — the aborted one serves nothing
     else if (!result.noFolder) SCOPE_OK = true;
     if (result.noFolder) return res.status(400).json({ error: 'No such folder' });
-    if (result.wrongSide) return res.status(400).json({
-      error: 'Wrong side',
-      message: 'That is a ' + (result.wrongSide.folder === 'order' ? 'Order' : 'Task') + ' folder — it holds '
-             + (result.wrongSide.folder === 'order' ? 'chits you sent' : 'chits that came to you')
-             + '. Task and Order are separate tracks, so a folder belongs to one of them.',
-      code: 'FOLDER_WRONG_SIDE' });
+    if (result.wrongSide)
+      return res.status(400).json({
+        error: 'Wrong side',
+        message:
+          'That is a ' +
+          (result.wrongSide.folder === 'order' ? 'Order' : 'Task') +
+          ' folder — it holds ' +
+          (result.wrongSide.folder === 'order' ? 'chits you sent' : 'chits that came to you') +
+          '. Task and Order are separate tracks, so a folder belongs to one of them.',
+        code: 'FOLDER_WRONG_SIDE'
+      });
     res.json({ moved: result.moved, folder_id: fid, scope: result.scope });
-  } catch (err) { res.status(500).json({ error: 'Move failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Move failed', message: safeErr(err) });
+  }
 });
 
 // GET /api/folders/:id/chits?archived=0|1 — the chits filed in this folder.
@@ -304,9 +413,10 @@ router.post('/move', auth,
 // mixed BEFORE b133 still holds both, and this list would show them side by side with the wrong actions. The
 // folder's declared scope filters the read too, so the screen is consistent even where the data is not yet.
 // Isolated from the core inbox query on purpose. Lightweight shape for the folder list.
-router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+router.get('/:id/chits', auth, [param('id').isUUID()], validate, async (req, res) => {
   try {
-    const e = ent(req); const arch = (req.query.archived === '1' || req.query.archived === 'true');
+    const e = ent(req);
+    const arch = req.query.archived === '1' || req.query.archived === 'true';
     const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     /**
      * ⭐ A VIEW FOLDER answers with its rule's matches — a bill carrying its lifecycle (lib/bill-steps: step · code · label ·
@@ -323,20 +433,29 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
     /* ⭐ W2-RAIL R2: THE CAP SAYS SO. This list always cut at 100 and answered `total` = the rows it kept, so a folder's 101st chit
        was invisible and unsaid. Now the whole count rides in the same statement (COUNT(*) OVER(), no extra trip), the page is the
        pager's when asked (LIMIT/OFFSET) and the ceiling when not — and pageOut answers `capped` + `cap_note` whenever rows were cut. */
-    const limit = pg.asked ? pg.limit : FOLDER_LIST_MAX, offset = pg.asked ? pg.offset : 0;
-    const r = await withEntity(e, (db) => db.query(
-      `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
+    const limit = pg.asked ? pg.limit : FOLDER_LIST_MAX,
+      offset = pg.asked ? pg.offset : 0;
+    const r = await withEntity(e, (db) =>
+      db.query(
+        `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
               ch.business_json, ch.created_by_actor_id,
               (SELECT display_name FROM identities WHERE identity_id = ch.created_by_actor_id) AS raiser_name,
               cs.direction, cs.current_status, COUNT(*) OVER() AS _total
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${arch ? 'NOT NULL' : 'NULL'}
-        ORDER BY ch.created_at DESC LIMIT $3 OFFSET $4`, [e, req.params.id, limit, offset]));
+        ORDER BY ch.created_at DESC LIMIT $3 OFFSET $4`,
+        [e, req.params.id, limit, offset]
+      )
+    );
     const total = r.rows.length ? Number(r.rows[0]._total) || 0 : 0;
-    r.rows.forEach((row) => { delete row._total; });
+    r.rows.forEach((row) => {
+      delete row._total;
+    });
     res.json(PL.pageOut('chits', r.rows, pg, total));
-  } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'List failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -350,57 +469,92 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
  * Read-only, no migration, WITH RLS: withEntity() sets the tenant and the WHERE names it again. A folder is
  * per-COPY — this counts YOUR copies, never a counterparty's.
  */
-router.get('/:id/metrics', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+router.get('/:id/metrics', auth, [param('id').isUUID()], validate, async (req, res) => {
   try {
     const me = ent(req);
-    const flags = await policy.get(me);      //  is a POLICY, not a constant hidden inside a report
+    const flags = await policy.get(me); //  is a POLICY, not a constant hidden inside a report
     /* a VIEW folder measures its rule's matches — the same measure, a different set */
     const vf = await viewFolder(me, req.params.id);
     if (vf === false) return res.status(404).json({ error: 'Not found', message: 'That folder is switched off.' });
     if (vf) {
       const vrows = await views.rowsFor(me, await views.whensOf(me, vf), { archived: req.query.archived === '1' });
-      return res.json(Object.assign({ folder_id: req.params.id, scope: null, code: vf.code || null }, measure.measure(vrows, { overdue_days: flags.overdue_days })));
+      return res.json(
+        Object.assign({ folder_id: req.params.id, scope: null, code: vf.code || null }, measure.measure(vrows, { overdue_days: flags.overdue_days }))
+      );
     }
     /* The folder's own side scopes what it measures — a Task folder's arithmetic is over Task copies. */
     let fscope = null;
-    try { const f = await withEntity(me, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [req.params.id, me])); fscope = (f.rows[0]||{}).scope || null; } catch (e) { log.fellBack('folders GET /:id/metrics: the read failed — carried on without it', e); }
-    const rows = await select.rows(me, { folder_id: req.params.id, archived: req.query.archived === '1',
-      direction: fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : undefined });
+    try {
+      const f = await withEntity(me, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [req.params.id, me]));
+      fscope = (f.rows[0] || {}).scope || null;
+    } catch (e) {
+      log.fellBack('folders GET /:id/metrics: the read failed — carried on without it', e);
+    }
+    const rows = await select.rows(me, {
+      folder_id: req.params.id,
+      archived: req.query.archived === '1',
+      direction: fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : undefined
+    });
     res.json(Object.assign({ folder_id: req.params.id, scope: fscope }, measure.measure(rows, { overdue_days: flags.overdue_days })));
-  } catch (err) { console.error("folder metrics:", err.message); res.status(500).json({ error: "Metrics failed", message: safeErr(err) }); }
+  } catch (err) {
+    console.error('folder metrics:', err.message);
+    res.status(500).json({ error: 'Metrics failed', message: safeErr(err) });
+  }
 });
 
 /* ── FOLDER RULES (b132) — condition -> file here. The UX Athi asked for lives INSIDE the folder. ────────────── */
 const rules = require('../lib/folder-rules');
-const fail = (res, err, label) => res.status(err.status || 500).json({ error: label, message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+const fail = (res, err, label) => res.status(err.status || 500).json({ error: label, message: err.status ? err.message || safeErr(err) : safeErr(err) });
 
-router.get('/:id/rules', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+router.get('/:id/rules', auth, [param('id').isUUID()], validate, async (req, res) => {
   try {
     /* ⭐ a SYSTEM folder's rule is the inventory's, shown and fixed — the Task list leaves out the same documents, so an
        edited rule here would make the folder and the inbox disagree */
     const f = INV.byId(req.params.id);
-    if (f) return res.json({ rules: [{ rule_id: null, folder_id: req.params.id, name: f.code + ' ' + f.name, when: f.when, enabled: true, system: true }], migrated: true, system: true });
+    if (f)
+      return res.json({
+        rules: [{ rule_id: null, folder_id: req.params.id, name: f.code + ' ' + f.name, when: f.when, enabled: true, system: true }],
+        migrated: true,
+        system: true
+      });
     res.json(await rules.list(ent(req), req.params.id));
-  } catch (err) { fail(res, err, 'Rules list failed'); }
+  } catch (err) {
+    fail(res, err, 'Rules list failed');
+  }
 });
-router.post('/:id/rules', auth, [ param('id').isUUID() ], validate, async (req, res) => {
+router.post('/:id/rules', auth, [param('id').isUUID()], validate, async (req, res) => {
   try {
-    if (INV.byId(req.params.id)) return res.status(400).json({ error: 'Fixed rule', message: 'A system folder\'s rule is part of the folder inventory and cannot be changed here.' });
+    if (INV.byId(req.params.id))
+      return res.status(400).json({ error: 'Fixed rule', message: "A system folder's rule is part of the folder inventory and cannot be changed here." });
     res.json(await rules.create(ent(req), req.params.id, req.body || {}));
-  } catch (err) { fail(res, err, 'Rule create failed'); }
+  } catch (err) {
+    fail(res, err, 'Rule create failed');
+  }
 });
-router.patch('/rules/:rule_id', auth, [ param('rule_id').isUUID() ], validate, async (req, res) => {
-  try { res.json(await rules.update(ent(req), req.params.rule_id, req.body || {})); } catch (err) { fail(res, err, 'Rule update failed'); }
+router.patch('/rules/:rule_id', auth, [param('rule_id').isUUID()], validate, async (req, res) => {
+  try {
+    res.json(await rules.update(ent(req), req.params.rule_id, req.body || {}));
+  } catch (err) {
+    fail(res, err, 'Rule update failed');
+  }
 });
-router.delete('/rules/:rule_id', auth, [ param('rule_id').isUUID() ], validate, async (req, res) => {
-  try { res.json(await rules.remove(ent(req), req.params.rule_id)); } catch (err) { fail(res, err, 'Rule delete failed'); }
+router.delete('/rules/:rule_id', auth, [param('rule_id').isUUID()], validate, async (req, res) => {
+  try {
+    res.json(await rules.remove(ent(req), req.params.rule_id));
+  } catch (err) {
+    fail(res, err, 'Rule delete failed');
+  }
 });
 
 /* ⚠️ PREVIEW BEFORE SAVE — the most useful route here. A rule is a promise about the future written by someone
    who cannot see it; running it against chits that already exist turns "I think this catches supplier invoices"
    into a list you can read first. Needs no rules table, so it works before b132 is run. */
 router.post('/rules/preview', auth, async (req, res) => {
-  try { res.json(await rules.preview(ent(req), (req.body || {}).when, req.body || {})); } catch (err) { fail(res, err, 'Preview failed'); }
+  try {
+    res.json(await rules.preview(ent(req), (req.body || {}).when, req.body || {}));
+  } catch (err) {
+    fail(res, err, 'Preview failed');
+  }
 });
 
 /* The condition vocabulary, served to the UI so the builder cannot offer a term the matcher does not know. */
@@ -420,8 +574,12 @@ router.get('/rules/vocabulary', auth, (req, res) => res.json({ keys: require('..
  * with one argument dropped, not a second implementation that can drift from the first.
  */
 router.get('/rules', auth, async (req, res) => {
-  try { const found = await rules.list(ent(req), null); res.json(Object.assign({}, found, PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)))); }
-  catch (err) { fail(res, err, 'Rules list failed'); }
+  try {
+    const found = await rules.list(ent(req), null);
+    res.json(Object.assign({}, found, PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+  } catch (err) {
+    fail(res, err, 'Rules list failed');
+  }
 });
 
 /**
@@ -472,7 +630,9 @@ router.get('/messages', auth, async (req, res) => {
     const isActor = req.identity && req.identity.identity_type === 'actor';
     const actorId = isActor ? String(req.identity.identity_id) : null;
     const params = [];
-    const actorCond = isActor ? (params.push(actorId), `
+    const actorCond = isActor
+      ? (params.push(actorId),
+        `
             AND EXISTS (
               SELECT 1 FROM chit_line_assignment a
                WHERE a.entity_id = m.entity_id
@@ -481,7 +641,8 @@ router.get('/messages', auth, async (req, res) => {
                  AND (m.line_id IS NULL OR a.line_id = m.line_id)
                  /* the LATEST assignment for that line — a line handed on is no longer theirs */
                  AND a.seq = (SELECT MAX(s.seq) FROM chit_line_assignment s
-                               WHERE s.entity_id = a.entity_id AND s.chit_id = a.chit_id AND s.line_id = a.line_id))`) : '';
+                               WHERE s.entity_id = a.entity_id AND s.chit_id = a.chit_id AND s.line_id = a.line_id))`)
+      : '';
     /**
      * ⭐ ?count=1 — the badge, without the payload. Called on every app boot, so it must not drag 200 rows and
      * two joins along to answer a question that is one integer. Unread only: a KEPT message is not news, and a
@@ -491,13 +652,17 @@ router.get('/messages', auth, async (req, res) => {
       /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST. A badge counting conversations the actor cannot open would send
          them to a screen that says "nothing new" — and worse, it would leak HOW MANY customer conversations the
          business is having, which is the thing the scope exists to withhold. */
-      const c = await withEntity(ent(req), (db) => db.query(
-        `SELECT count(*)::int AS n FROM chit_messages m
+      const c = await withEntity(ent(req), (db) =>
+        db.query(
+          `SELECT count(*)::int AS n FROM chit_messages m
           WHERE m.thread_type = 'external'
             AND COALESCE(m.is_dispute, false) = false
             AND m.sender_entity_id <> m.entity_id
             AND to_jsonb(m)->>'read_at' IS NULL
-            ${actorCond}`, params));
+            ${actorCond}`,
+          params
+        )
+      );
       return res.json({ count: (c.rows[0] && c.rows[0].n) || 0 });
     }
     /**
@@ -577,7 +742,9 @@ router.get('/messages', auth, async (req, res) => {
             ${cond}
             ${actorCond}
           ORDER BY m.created_at DESC
-          LIMIT 200`, params);
+          LIMIT 200`,
+        params
+      );
       return q.rows;
     });
     res.json(Object.assign({ count: rows.length }, PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
@@ -598,11 +765,10 @@ router.get('/messages', auth, async (req, res) => {
 router.post('/messages/:message_id/mark', auth, async (req, res) => {
   const id = String(req.params.message_id || '');
   if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'Bad request', message: 'message_id must be a uuid' });
-  const read = ('read' in req.body) ? !!req.body.read : null;
-  const kept = ('kept' in req.body) ? !!req.body.kept : null;
+  const read = 'read' in req.body ? !!req.body.read : null;
+  const kept = 'kept' in req.body ? !!req.body.kept : null;
   try {
-    const n = await withEntity(ent(req), (db) => db.query(
-      'SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS n', [id, read, kept]));
+    const n = await withEntity(ent(req), (db) => db.query('SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS n', [id, read, kept]));
     const touched = (n.rows[0] && Number(n.rows[0].n)) || 0;
     /* 404 rather than a silent 200: a message id that matched nothing of MINE is either not mine or not real,
        and both deserve to be said rather than reported as a successful no-op. */
@@ -633,15 +799,19 @@ router.get('/worklist', auth, async (req, res) => {
      * "show me what Murugan has" is the whole point of running the business.
      */
     const isActor = req.identity.identity_type === 'actor';
-    const aid = isActor ? String(req.identity.identity_id)
-                        : String(req.query.actor_id || '').trim();
-    res.json(await assign.byPerson(ent(req), {
-      due_on: due || undefined,
-      actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
-      /* So the screen can say "your work" honestly rather than guessing from the row count. */
-      _scoped_to_self: isActor,
-    }));
-  } catch (err) { console.error('worklist:', err.message); res.status(500).json({ error: 'Worklist failed', message: safeErr(err) }); }
+    const aid = isActor ? String(req.identity.identity_id) : String(req.query.actor_id || '').trim();
+    res.json(
+      await assign.byPerson(ent(req), {
+        due_on: due || undefined,
+        actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
+        /* So the screen can say "your work" honestly rather than guessing from the row count. */
+        _scoped_to_self: isActor
+      })
+    );
+  } catch (err) {
+    console.error('worklist:', err.message);
+    res.status(500).json({ error: 'Worklist failed', message: safeErr(err) });
+  }
 });
 
 const groupsum = require('../lib/groupsum');
@@ -654,16 +824,24 @@ router.get('/groupsum', auth, async (req, res) => {
        well-formed uuids pass, so a junk id can never reach a query, and 500 is far above any real selection
        (paging is 50) while keeping an unbounded list out of the request. The lib INTERSECTS these with the
        caller's own rows, so this parameter can only ever narrow what they could already see. */
-    const ids = String(req.query.chit_ids || '').split(',')
-      .map((s) => s.trim()).filter((s) => /^[0-9a-f-]{36}$/i.test(s)).slice(0, 500);
-    res.json(await groupsum.requirement(me, {
-      scope: req.query.scope === 'order' ? 'order' : 'task',
-      folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
-      archived: req.query.archived === '1',
-      chit_ids: ids.length ? ids : undefined,
-      overdue_days: flags.overdue_days,
-    }));
-  } catch (err) { console.error('groupsum:', err.message); res.status(500).json({ error: 'Group sum failed', message: safeErr(err) }); }
+    const ids = String(req.query.chit_ids || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => /^[0-9a-f-]{36}$/i.test(item))
+      .slice(0, 500);
+    res.json(
+      await groupsum.requirement(me, {
+        scope: req.query.scope === 'order' ? 'order' : 'task',
+        folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
+        archived: req.query.archived === '1',
+        chit_ids: ids.length ? ids : undefined,
+        overdue_days: flags.overdue_days
+      })
+    );
+  } catch (err) {
+    console.error('groupsum:', err.message);
+    res.status(500).json({ error: 'Group sum failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -689,44 +867,48 @@ router.get('/groupsum', auth, async (req, res) => {
 router.get('/reconcile', auth, async (req, res) => {
   try {
     const me = ent(req);
-    const scope = (req.query.scope === 'order') ? 'order' : 'task';
+    const scope = req.query.scope === 'order' ? 'order' : 'task';
     const direction = scope === 'order' ? 'sent' : 'received';
     const flags = await policy.get(me);
 
     // ONE read of every copy on this track — filed and unfiled alike. Counting the pieces separately is how two
     // numbers come to disagree; here they are literally partitions of the same array.
     const rows = await select.rows(me, { direction, limit: 5000 });
-    const folders = (await withEntity(me, (db) => db.query(
-      `SELECT folder_id, parent_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, name`, [me]))).rows;
+    const folders = (await withEntity(me, (db) => db.query(`SELECT folder_id, parent_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, name`, [me])))
+      .rows;
 
     const byFolder = new Map();
     let unfiled = 0;
     for (const r of rows) {
-      if (!r.folder_id) { unfiled++; continue; }
+      if (!r.folder_id) {
+        unfiled++;
+        continue;
+      }
       byFolder.set(r.folder_id, (byFolder.get(r.folder_id) || []).concat([r]));
     }
     // Roll a folder's own rows up through its ancestors, so `tree` is this folder plus everything beneath it.
     const kids = {};
-    folders.forEach((f) => { (kids[f.parent_id || 'root'] = kids[f.parent_id || 'root'] || []).push(f); });
-    const treeRows = (fid) => (byFolder.get(fid) || []).concat(
-      ((kids[fid] || []).flatMap((c) => treeRows(c.folder_id))));
-
-    const seg = (list) => Object.assign(measure.measure(list, { overdue_days: flags.overdue_days }), {
-      /* ⚠️ ASSIGNED vs UNASSIGNED is a SEGREGATION, not a status. A chit can be open and unassigned, or open and
-         assigned — conflating them hides the pile nobody has picked up, which is the one worth seeing. */
-      assigned: list.filter((x) => x.assigned_to_actor_id).length,
-      unassigned: list.filter((x) => !x.assigned_to_actor_id).length,
+    folders.forEach((item) => {
+      (kids[item.parent_id || 'root'] = kids[item.parent_id || 'root'] || []).push(item);
     });
+    const treeRows = (fid) => (byFolder.get(fid) || []).concat((kids[fid] || []).flatMap((item) => treeRows(item.folder_id)));
 
-    const out = folders.map((f) => {
-      const own = byFolder.get(f.folder_id) || [];
-      const tree = treeRows(f.folder_id);
-      return { folder_id: f.folder_id, parent_id: f.parent_id, name: f.name,
-               own: own.length, tree: tree.length, segments: seg(own) };
+    const seg = (list) =>
+      Object.assign(measure.measure(list, { overdue_days: flags.overdue_days }), {
+        /* ⚠️ ASSIGNED vs UNASSIGNED is a SEGREGATION, not a status. A chit can be open and unassigned, or open and
+         assigned — conflating them hides the pile nobody has picked up, which is the one worth seeing. */
+        assigned: list.filter((x) => x.assigned_to_actor_id).length,
+        unassigned: list.filter((x) => !x.assigned_to_actor_id).length
+      });
+
+    const out = folders.map((item) => {
+      const own = byFolder.get(item.folder_id) || [];
+      const tree = treeRows(item.folder_id);
+      return { folder_id: item.folder_id, parent_id: item.parent_id, name: item.name, own: own.length, tree: tree.length, segments: seg(own) };
     });
 
     const filed = rows.length - unfiled;
-    const summed = out.reduce((n, f) => n + f.own, 0);
+    const summed = out.reduce((total, item) => total + item.own, 0);
     /**
      * ⭐ THE BILLS LEFT THE INBOX, SO THEY ARE COUNTED, NOT LOST (2026-10-01). An unfiled bill is in the Bills folders, not in
      * Task: unfiled = inbox + in_bills, by the same classification the inbox uses (lib/folder-inventory LEAVES over doc_kind).
@@ -735,7 +917,8 @@ router.get('/reconcile', auth, async (req, res) => {
     const inBills = rows.filter((x) => !x.folder_id && leaves.has(x.doc_kind)).length;
     const inbox = unfiled - inBills;
     res.json({
-      scope, direction,
+      scope,
+      direction,
       total: rows.length,
       unfiled,
       inbox,
@@ -746,9 +929,11 @@ router.get('/reconcile', auth, async (req, res) => {
       // ⚠️ The assertion, returned rather than described: `filed` counted from the chits must equal the sum of the
       //    folders' own counts. If it does not, a chit is filed into a folder this entity cannot see.
       reconciles: filed === summed && inbox + inBills + filed === rows.length,
-      ...(filed === summed ? {} : { discrepancy: { filed, sum_of_folders: summed, missing: filed - summed } }),
+      ...(filed === summed ? {} : { discrepancy: { filed, sum_of_folders: summed, missing: filed - summed } })
     });
-  } catch (err) { res.status(500).json({ error: 'Reconcile failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Reconcile failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -788,8 +973,8 @@ router.get('/mis', auth, async (req, res) => {
     /* ⚠️ ONE read, then partitioned — counting the halves separately is how two numbers come to disagree.
        Same discipline as /reconcile above, and the same limit. */
     const rows = await select.rows(me, { limit: 5000, since });
-    const received = rows.filter((r) => r.direction === 'received');
-    const sent = rows.filter((r) => r.direction === 'sent');
+    const received = rows.filter((item) => item.direction === 'received');
+    const sent = rows.filter((item) => item.direction === 'sent');
     /* T3-P4-ACCOUNT: `overdue` follows the rail's one rule (lib/home-facts railMeasure — the shop's own notes are never overdue), so CB Finance › Reports'
        overdue opens CB CRM's stuck list and counts the same chits as Home's rail. Every other figure is lib/measure's own, as before. */
     const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, opts);
@@ -798,12 +983,15 @@ router.get('/mis', auth, async (req, res) => {
       /* ⚠️ Echoed back so the caller can prove the window it asked for is the window it got — an ignored `since`
          would otherwise be indistinguishable from an empty one. */
       since: since || null,
-      truncated: rows.length >= 5000,   /* T3-P4-ACCOUNT: a count over a cut read is said, never painted as the whole */
+      truncated: rows.length >= 5000 /* T3-P4-ACCOUNT: a count over a cut read is said, never painted as the whole */,
       all: M(rows),
       received: M(received),
-      sent: M(sent),
+      sent: M(sent)
     });
-  } catch (err) { console.error('mis:', err.message); res.status(500).json({ error: 'MIS failed', message: safeErr(err) }); }
+  } catch (err) {
+    console.error('mis:', err.message);
+    res.status(500).json({ error: 'MIS failed', message: safeErr(err) });
+  }
 });
 
 module.exports = router;

@@ -17,13 +17,13 @@
  * implementation, and nothing here is tax advice. The point is the RAIL, not the return.
  */
 const OI = require('../lib/order-input');
-const FH = require('../lib/form-handshake');   // the handshake ENGINE — the mapper below is now a DECLARATION
+const FH = require('../lib/form-handshake'); // the handshake ENGINE — the mapper below is now a DECLARATION
 
 const B = (s) => '\x1b[1m' + s + '\x1b[0m';
 const G = (s) => '\x1b[32m' + s + '\x1b[0m';
 const R = (s) => '\x1b[31m' + s + '\x1b[0m';
 const Y = (s) => '\x1b[33m' + s + '\x1b[0m';
-const line = (c) => console.log(c.repeat(78));
+const line = (text) => console.log(text.repeat(78));
 
 // ── 1. THE CATALOGUE — a store whose catalogue IS a set of forms; ITR-2 is one item ───────────────────────────
 // This is exactly the declaration shipped on 2026-07-28: preset 'form' → payload pipeline → declared fields.
@@ -32,30 +32,30 @@ const ITR2_DECLARATION = {
   schema: {
     properties: {
       // Part A — General
-      pan:                    { type: 'string', maxLength: 10 },
-      assessment_year:        { type: 'string', enum: ['2025-26', '2026-27'] },
-      residential_status:     { type: 'string', enum: ['Resident', 'Non-Resident', 'RNOR'] },
+      pan: { type: 'string', maxLength: 10 },
+      assessment_year: { type: 'string', enum: ['2025-26', '2026-27'] },
+      residential_status: { type: 'string', enum: ['Resident', 'Non-Resident', 'RNOR'] },
       // Schedule S — Salary
-      gross_salary_17_1:      { type: 'number' },
-      perquisites_17_2:       { type: 'number' },
-      exempt_allowances_s10:  { type: 'number' },
-      standard_deduction_16ia:{ type: 'number' },
+      gross_salary_17_1: { type: 'number' },
+      perquisites_17_2: { type: 'number' },
+      exempt_allowances_s10: { type: 'number' },
+      standard_deduction_16ia: { type: 'number' },
       professional_tax_16iii: { type: 'number' },
-      income_from_salary:     { type: 'number' },
+      income_from_salary: { type: 'number' },
       // Chapter VI-A
-      deduction_80c:          { type: 'number' },
-      deduction_80d:          { type: 'number' },
+      deduction_80c: { type: 'number' },
+      deduction_80d: { type: 'number' },
       // Schedule TDS
-      employer_tan:           { type: 'string', maxLength: 10 },
-      tds_deducted:           { type: 'number' },
+      employer_tan: { type: 'string', maxLength: 10 },
+      tds_deducted: { type: 'number' },
       // NOT derivable from Form 16 — the return needs them, the certificate does not carry them
-      capital_gains_total:    { type: 'number' },
-      house_property_income:  { type: 'number' },
-      foreign_assets_held:    { type: 'boolean' },
-      bank_account_ifsc:      { type: 'string', maxLength: 11 },
+      capital_gains_total: { type: 'number' },
+      house_property_income: { type: 'number' },
+      foreign_assets_held: { type: 'boolean' },
+      bank_account_ifsc: { type: 'string', maxLength: 11 }
     },
-    required: ['pan', 'assessment_year', 'income_from_salary', 'employer_tan', 'bank_account_ifsc'],
-  },
+    required: ['pan', 'assessment_year', 'income_from_salary', 'employer_tan', 'bank_account_ifsc']
+  }
 };
 
 // ── 2. THE INPUT — a Form 16 (TDS certificate the employer issues) ────────────────────────────────────────────
@@ -63,11 +63,15 @@ const FORM_16 = {
   _doc: 'Form 16 (AY 2026-27)',
   part_a: { employer_tan: 'BLRA12345F', employee_pan: 'ABCDE1234F', assessment_year: '2026-27', total_tds: 184500 },
   part_b: {
-    salary_us_17_1: 1850000, perquisites_us_17_2: 42000, profits_in_lieu_17_3: 0,
-    allowances_exempt_us_10: 96000, standard_deduction_us_16_ia: 75000, professional_tax_us_16_iii: 2400,
+    salary_us_17_1: 1850000,
+    perquisites_us_17_2: 42000,
+    profits_in_lieu_17_3: 0,
+    allowances_exempt_us_10: 96000,
+    standard_deduction_us_16_ia: 75000,
+    professional_tax_us_16_iii: 2400,
     income_chargeable_salaries: 1718600,
-    chapter_via: { s_80c: 150000, s_80d: 25000 },
-  },
+    chapter_via: { s_80c: 150000, s_80d: 25000 }
+  }
 };
 
 // ── 3. THE SOURCE DECLARATION — Form 16 → ITR-2. Pure DATA now, run by lib/form-handshake.js. ────────────────
@@ -77,19 +81,19 @@ const FORM16_SOURCE = {
   key: 'form_16',
   label: 'Form 16 (TDS certificate)',
   map: {
-    'part_a.employee_pan':                'pan',
-    'part_a.assessment_year':             'assessment_year',
-    'part_a.employer_tan':                'employer_tan',
-    'part_a.total_tds':                   'tds_deducted',
-    'part_b.salary_us_17_1':              'gross_salary_17_1',
-    'part_b.perquisites_us_17_2':         'perquisites_17_2',
-    'part_b.allowances_exempt_us_10':     'exempt_allowances_s10',
+    'part_a.employee_pan': 'pan',
+    'part_a.assessment_year': 'assessment_year',
+    'part_a.employer_tan': 'employer_tan',
+    'part_a.total_tds': 'tds_deducted',
+    'part_b.salary_us_17_1': 'gross_salary_17_1',
+    'part_b.perquisites_us_17_2': 'perquisites_17_2',
+    'part_b.allowances_exempt_us_10': 'exempt_allowances_s10',
     'part_b.standard_deduction_us_16_ia': 'standard_deduction_16ia',
-    'part_b.professional_tax_us_16_iii':  'professional_tax_16iii',
-    'part_b.income_chargeable_salaries':  'income_from_salary',
-    'part_b.chapter_via.s_80c':           'deduction_80c',
-    'part_b.chapter_via.s_80d':           'deduction_80d',
-  },
+    'part_b.professional_tax_us_16_iii': 'professional_tax_16iii',
+    'part_b.income_chargeable_salaries': 'income_from_salary',
+    'part_b.chapter_via.s_80c': 'deduction_80c',
+    'part_b.chapter_via.s_80d': 'deduction_80d'
+  }
 };
 // A second source, to show the residue shrinking as evidence arrives (Athi: "a couple more details").
 const CHEQUE_SOURCE = { key: 'cheque_scan', label: 'Cancelled cheque', map: { 'bank.ifsc': 'bank_account_ifsc' } };
@@ -119,7 +123,8 @@ console.log('   ' + Y('This is declaration maths — no file has been uploaded. 
 console.log('\n' + B('2b · AT FILL TIME — the customer supplies the Form 16'));
 const res = FH.resolve(oi.schema, [FORM16_SOURCE], { form_16: FORM_16 });
 const mapped = res.value;
-const filled = res.filled, missing = res.residue;
+const filled = res.filled,
+  missing = res.residue;
 console.log('   autopopulated   : ' + G(filled.length + ' of ' + declared.length) + '  → ' + filled.join(', '));
 console.log('   still needed    : ' + Y(missing.length + ' field(s)') + '  → ' + missing.join(', '));
 const agrees = filled.slice().sort().join() === covF16.covered.slice().sort().join();
@@ -137,12 +142,18 @@ console.log('   ' + (draft.ok ? '' : Y('EXPECTED — the required bank account (
 
 console.log('\n' + B('4 · Customer completes the remainder, then submits'));
 const completed = Object.assign({}, mapped, {
-  residential_status: 'Resident', capital_gains_total: 0, house_property_income: 0,
-  foreign_assets_held: false, bank_account_ifsc: 'HDFC0001234',
+  residential_status: 'Resident',
+  capital_gains_total: 0,
+  house_property_income: 0,
+  foreign_assets_held: false,
+  bank_account_ifsc: 'HDFC0001234'
 });
 const final = OI.validate(completed, oi.schema);
 console.log('   valid as a submission? ' + (final.ok ? G('yes') : R('no ' + final.errors.join('; '))));
-console.log('   coerced correctly?     ' + (typeof final.value.tds_deducted === 'number' && final.value.foreign_assets_held === false ? G('yes (numbers + booleans typed)') : R('no')));
+console.log(
+  '   coerced correctly?     ' +
+    (typeof final.value.tds_deducted === 'number' && final.value.foreign_assets_held === false ? G('yes (numbers + booleans typed)') : R('no'))
+);
 
 console.log('\n' + B('5 · Guards still hold on a form catalogue'));
 const junk = OI.validate(Object.assign({}, completed, { price: 5000, quantity: 3 }), oi.schema);

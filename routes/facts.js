@@ -24,7 +24,9 @@ router.get('/rail/chits', auth, async (req, res) => {
   if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to see the Home figures.' });
   try {
     res.json(await home.railChits({ entity: auth.entityOf(req), actor: req.identity && req.identity.identity_id, req }));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/:card', auth, async (req, res) => {
@@ -34,7 +36,9 @@ router.get('/:card', auth, async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     res.json(await build({ entity, actor: req.identity && req.identity.identity_id, req }));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 module.exports = router;

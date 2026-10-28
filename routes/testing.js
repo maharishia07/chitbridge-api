@@ -70,7 +70,8 @@ const junitresults = require('../lib/junitresults');
 const PROJECT_MAX = 80;
 const _proj = { has: null, at: 0, warned: false };
 function projectMissing(why) {
-  _proj.has = false; _proj.at = Date.now();
+  _proj.has = false;
+  _proj.at = Date.now();
   if (!_proj.warned) {
     _proj.warned = true;
     console.warn('[testing] test_result.project is not there yet (' + why + ') — results are written WITHOUT a project until b292 is run');
@@ -81,26 +82,34 @@ function projectMissing(why) {
  * read takes what is already known instead of paying a statement for it (round-trips.budget.json holds the line).
  * /runs always asks — it lists the projects.
  */
-async function projectReady(db, project) { return project ? hasProject(db) : _proj.has === true; }
+async function projectReady(db, project) {
+  return project ? hasProject(db) : _proj.has === true;
+}
 async function hasProject(db) {
   if (_proj.has === true) return true;
   if (_proj.has === false && Date.now() - _proj.at < 5 * 60 * 1000) return false;
   try {
     const r = await db.query(
       `SELECT 1 FROM information_schema.columns
-        WHERE table_schema = current_schema() AND table_name = 'test_result' AND column_name = 'project' LIMIT 1`);
-    if (r.rows.length) { _proj.has = true; return true; }
+        WHERE table_schema = current_schema() AND table_name = 'test_result' AND column_name = 'project' LIMIT 1`
+    );
+    if (r.rows.length) {
+      _proj.has = true;
+      return true;
+    }
     projectMissing('information_schema');
-  } catch (e) { projectMissing('could not ask: ' + (e.message || e)); }
+  } catch (e) {
+    projectMissing('could not ask: ' + (e.message || e));
+  }
   return false;
 }
 /** ⭐ ONE reading of a project name — the tap, the JUnit post and every ?project= filter. '' is no project. */
 function projectOf(v) {
   if (v == null) return { project: null };
-  const s = String(v).trim();
-  if (!s) return { project: null };
-  if (s.length > PROJECT_MAX) return { error: 'The project name is longer than ' + PROJECT_MAX + ' characters.' };
-  return { project: s };
+  const text = String(v).trim();
+  if (!text) return { project: null };
+  if (text.length > PROJECT_MAX) return { error: 'The project name is longer than ' + PROJECT_MAX + ' characters.' };
+  return { project: text };
 }
 /**
  * ⭐ THE ONE FILTER on test_result for `?project=`, given the $ index its value is passed at (always passed,
@@ -115,28 +124,46 @@ function projectWhere(has, i) {
  * lib/page-limit.js. Each default is the size the list answered before, so no screen reads a shorter list than it did.
  */
 const { limitOf, pageOf, pageArgs, pageOut } = require('../lib/page-limit');
-const PAGE = { cases: 5000, results: 5000, history: 500, runs: 50, findings: 500, cmdb: 500, releases: 200 };   /* LIM2: changes (findings) · releases — the size each answered before; cmdb: 30 records ship today, the whole list in one answer (W1-SET) */
+const PAGE = {
+  cases: 5000,
+  results: 5000,
+  history: 500,
+  runs: 50,
+  findings: 500,
+  cmdb: 500,
+  releases: 200
+}; /* LIM2: changes (findings) · releases — the size each answered before; cmdb: 30 records ship today, the whole list in one answer (W1-SET) */
 /**
  * ONE page read for this file: `SELECT <sel> <from> ORDER BY <order>` cut to the page, with the count of the whole
  * filtered set in the same statement. Only a page past the end (no row to carry the count) asks the count again.
  */
 async function readPage(db, sel, from, order, params, q, size) {
-  const limit = limitOf(q.limit, size, size), page = pageOf(q.page), n = params.length;
-  const rows = (await db.query(
-    `SELECT ${sel}, count(*) OVER ()::int AS full_count ${from} ORDER BY ${order} LIMIT $${n + 1} OFFSET $${n + 2}`,
-    params.concat([limit, (page - 1) * limit]))).rows;
-  const total = rows.length ? Number(rows[0].full_count)
-    : (page > 1 ? Number((await db.query(`SELECT count(*)::int AS n FROM (SELECT 1 ${from}) z`, params)).rows[0].n) : 0);
-  rows.forEach((x) => { delete x.full_count; });
+  const limit = limitOf(q.limit, size, size),
+    page = pageOf(q.page),
+    n = params.length;
+  const rows = (
+    await db.query(
+      `SELECT ${sel}, count(*) OVER ()::int AS full_count ${from} ORDER BY ${order} LIMIT $${n + 1} OFFSET $${n + 2}`,
+      params.concat([limit, (page - 1) * limit])
+    )
+  ).rows;
+  const total = rows.length
+    ? Number(rows[0].full_count)
+    : page > 1
+      ? Number((await db.query(`SELECT count(*)::int AS n FROM (SELECT 1 ${from}) z`, params)).rows[0].n)
+      : 0;
+  rows.forEach((x) => {
+    delete x.full_count;
+  });
   return { rows, total, page, limit };
 }
 /* the ?state= filter of a findings list, its value at $2: 'all' · 'open' (any of `open`) · one state. The lists are constants. */
 function stateWhere(col, open) {
-  return `($2 = 'all' OR ($2 = 'open' AND ${col} IN (${open.map((s) => `'${s}'`).join(',')})) OR ${col} = $2)`;
+  return `($2 = 'all' OR ($2 = 'open' AND ${col} IN (${open.map((item) => `'${item}'`).join(',')})) OR ${col} = $2)`;
 }
 /* a findings list's order by rank — the place of `expr` in `ranks` (constants), anything else last */
 function rankOrder(expr, ranks) {
-  return `CASE ${expr} ${ranks.map((s, i) => `WHEN '${s}' THEN ${i}`).join(' ')} ELSE ${ranks.length} END`;
+  return `CASE ${expr} ${ranks.map((item, index) => `WHEN '${item}' THEN ${index}`).join(' ')} ELSE ${ranks.length} END`;
 }
 
 /* The two axes, in one place. The server is the authority so a screen cannot offer a value the CHECK refuses. */
@@ -163,8 +190,7 @@ const STATUSES = ['pass', 'fail', 'blocked', 'skipped'];
  * job) and not a static one: it asks whether ONE SCREEN opens, names itself and does what it claims. That
  * is a different question and a different amount of evidence, so it counts separately.
  */
-const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'performance', 'security',
-  'penetration', 'static', 'support'];
+const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'performance', 'security', 'penetration', 'static', 'support'];
 
 /**
  * ── ⭐⭐ TRACE MY OWN CALLS, FOR A WHILE ───────────────────────────────────────────────────────────────────
@@ -201,7 +227,7 @@ const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'pe
  */
 router.post('/cases/close', auth, async (req, res) => {
   try {
-    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: closing a shared case is authoring the board */
+    if (boardRefused(req, res)) return; /* SEC-SMALL item 3: closing a shared case is authoring the board */
     const entity_id = testboard.entityFor(auth.entityOf(req));
     if (!entity_id) return res.status(401).json({ error: 'Unauthorised' });
     const key = String((req.body && req.body.case_key) || '').trim();
@@ -218,28 +244,42 @@ router.post('/cases/close', auth, async (req, res) => {
      * table to join. Reopening clears it: a stale reason on a live case would explain a closure that has been
      * undone.
      */
-    const why = String((req.body && req.body.why) || '').trim().slice(0, 400);
+    const why = String((req.body && req.body.why) || '')
+      .trim()
+      .slice(0, 400);
     const who = testerOf(req);
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE definition d SET status = $3
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `UPDATE definition d SET status = $3
         WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2
         RETURNING d.definition_id, d.name, d.status, d.current_version`,
-      [entity_id, key, open ? 'live' : 'retired']));
+        [entity_id, key, open ? 'live' : 'retired']
+      )
+    );
     if (r && r.rows.length) {
       /* the account of the closure goes onto the CURRENT version, where every reader already looks */
-      await withEntity(entity_id, (db) => db.query(
-        `UPDATE definition_version SET rules = rules
+      await withEntity(entity_id, (db) =>
+        db.query(
+          `UPDATE definition_version SET rules = rules
             || jsonb_build_object('closed_note', $3::text, 'closed_by', $4::text, 'closed_at', $5::text)
           WHERE definition_id = $1 AND version = $2`,
-        [r.rows[0].definition_id, r.rows[0].current_version,
-         open ? null : (why || null), open ? null : (who.name || null),
-         open ? null : new Date().toISOString()]));
+          [
+            r.rows[0].definition_id,
+            r.rows[0].current_version,
+            open ? null : why || null,
+            open ? null : who.name || null,
+            open ? null : new Date().toISOString()
+          ]
+        )
+      );
     }
     if (!r || !r.rows.length) {
       return res.status(404).json({ error: 'Not found', message: 'no case called ' + key });
     }
     return res.json({ case_key: r.rows[0].name, status: r.rows[0].status, closed: !open });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.post('/trace', auth, (req, res) => {
@@ -249,19 +289,26 @@ router.post('/trace', auth, (req, res) => {
     const t = require('../lib/trips');
     const b = req.body || {};
     return res.json(b.off ? t.traceOff(me) : t.traceOn(me, b.minutes));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 router.get('/trace', auth, (req, res) => {
   try {
     const me = auth.entityOf(req);
     if (!me) return res.status(401).json({ error: 'Unauthorised' });
     return res.json(require('../lib/trips').traceState(me));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/vocabulary', (req, res) => {
   res.json({
-    run_kinds: RUN_KINDS, layers: LAYERS, statuses: STATUSES, test_types: TEST_TYPES,
+    run_kinds: RUN_KINDS,
+    layers: LAYERS,
+    statuses: STATUSES,
+    test_types: TEST_TYPES,
     /* ⚠️ said plainly, because "unit vs integration" is argued about endlessly and the argument is avoidable
        if the board states which meaning it uses */
     levels: {
@@ -279,16 +326,17 @@ router.get('/vocabulary', (req, res) => {
        */
       performance: 'Round trips, query shape, load and concurrency. What it costs, not whether it is right.',
       security: 'Forged tokens, algorithm pinning, key scopes, tenant isolation, routes left unguarded.',
-      penetration: '⚠ There is none. Shown at zero so the absence cannot pass for "not applicable" — '
-        + 'scripts/penetration.js is MARKET penetration and is not a security test.',
+      penetration:
+        '⚠ There is none. Shown at zero so the absence cannot pass for "not applicable" — ' +
+        'scripts/penetration.js is MARKET penetration and is not a security test.'
     },
     /* ⚠️ SAID OUT LOUD, because the distinction is the one people get wrong: 'blocked' is not 'fail'. */
     says: {
       pass: 'It did what the case says it should.',
       fail: 'It did something else. The note should say what.',
       blocked: 'It could not be reached — something earlier is broken. This says nothing about the case itself.',
-      skipped: 'Deliberately not run this time. Not applicable, or out of scope for this sitting.',
-    },
+      skipped: 'Deliberately not run this time. Not applicable, or out of scope for this sitting.'
+    }
   });
 });
 
@@ -319,9 +367,11 @@ function testerOf(req) {
 router.get('/cases', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const r = await withEntity(entity_id, (db) => readPage(db,
-      `d.definition_id, d.name, d.sub_kind, d.status, d.current_version, v.rules`,
-      `  FROM definition d
+    const r = await withEntity(entity_id, (db) =>
+      readPage(
+        db,
+        `d.definition_id, d.name, d.sub_kind, d.status, d.current_version, v.rules`,
+        `  FROM definition d
          JOIN definition_version v
            ON v.definition_id = d.definition_id AND v.version = d.current_version
         /**
@@ -331,12 +381,19 @@ router.get('/cases', auth, async (req, res) => {
          */
         WHERE d.entity_id = $1 AND d.kind = 'testcase'
           AND ($2::boolean IS TRUE OR d.status <> 'retired')`,
-      `d.sub_kind, d.name, d.definition_id`,
-      [entity_id, req.query.all === '1' || req.query.all === 'true'], req.query, PAGE.cases));
+        `d.sub_kind, d.name, d.definition_id`,
+        [entity_id, req.query.all === '1' || req.query.all === 'true'],
+        req.query,
+        PAGE.cases
+      )
+    );
 
-    const cases = r.rows.map((x) => Object.assign(
-      { definition_id: x.definition_id, case_key: x.name, module_key: x.sub_kind || '—',
-        version: x.current_version, status: x.status }, x.rules || {}));
+    const cases = r.rows.map((x) =>
+      Object.assign(
+        { definition_id: x.definition_id, case_key: x.name, module_key: x.sub_kind || '—', version: x.current_version, status: x.status },
+        x.rules || {}
+      )
+    );
     res.json({ cases, count: cases.length, total: r.total, page: r.page, limit: r.limit });
   } catch (err) {
     res.status(500).json({ error: 'Could not read the test cases', message: safeErr(err) });
@@ -379,17 +436,22 @@ async function importCases(entity_id, who, rows, mode) {
   const seen = {};
   for (const c of rows || []) {
     const key = String(c.case_key || c.id || '').trim();
-    if (!key || seen[key]) continue;      /* ⚠ a repeated key in one payload would write itself twice */
+    if (!key || seen[key]) continue; /* ⚠ a repeated key in one payload would write itself twice */
     seen[key] = 1;
     want.push({
       key: key,
       mod: String(c.module_key || key.split('-')[0] || '').trim() || null,
       /* everything that is not identity goes in rules — the version is what makes an edit safe */
       rules: {
-        title: c.title || '', priority: c.priority || 'Medium', pre: c.pre || '', data: c.data || '',
-        steps: Array.isArray(c.steps) ? c.steps : [], note: c.note || '',
+        title: c.title || '',
+        priority: c.priority || 'Medium',
+        pre: c.pre || '',
+        data: c.data || '',
+        steps: Array.isArray(c.steps) ? c.steps : [],
+        note: c.note || '',
         layer: LAYERS.indexOf(c.layer) >= 0 ? c.layer : null,
-        module_name: c.module_name || '', intro: c.intro || '',
+        module_name: c.module_name || '',
+        intro: c.intro || '',
         /**
          * ⭐⭐ WHAT KIND OF TEST THIS IS — Athi, 2026-09-11: *"say it is unit, integration and so on."*
          *
@@ -431,7 +493,7 @@ async function importCases(entity_id, who, rows, mode) {
          * ⭐ Caught by asking the loaded board what it actually held (`withSeq: 0`) rather than by trusting the
          * build output. A field that exists at both ends is not a field that arrived.
          */
-        seq: (typeof c.seq === 'number' ? c.seq : 99),
+        seq: typeof c.seq === 'number' ? c.seq : 99,
         step: c.step || '',
         /**
          * ⭐⭐⭐ THE CITATION — which clause of which spec this case proves.
@@ -528,9 +590,9 @@ async function importCases(entity_id, who, rows, mode) {
          * through here too, and stamping there would rewrite the author of all 1,455 cases to whoever last
          * pressed the button.
          */
-        written_by: (mode === 'add' && who) ? (who.name || null) : (c.written_by || null),
-        written_by_id: (mode === 'add' && who) ? (who.id || null) : (c.written_by_id || null),
-        written_at: (mode === 'add') ? new Date().toISOString() : (c.written_at || null),
+        written_by: mode === 'add' && who ? who.name || null : c.written_by || null,
+        written_by_id: mode === 'add' && who ? who.id || null : c.written_by_id || null,
+        written_at: mode === 'add' ? new Date().toISOString() : c.written_at || null,
         /**
          * ── ⚠️⚠️⚠️ AND THE SEVENTH FIELD THROUGH THE SAME DOOR, CAUGHT BY DRIVING THE LOOP ────────────────
          *
@@ -546,8 +608,8 @@ async function importCases(entity_id, who, rows, mode) {
          */
         closed_note: c.closed_note || null,
         closed_by: c.closed_by || null,
-        closed_at: c.closed_at || null,
-      },
+        closed_at: c.closed_at || null
+      }
     });
   }
   if (!want.length) return out;
@@ -559,25 +621,32 @@ async function importCases(entity_id, who, rows, mode) {
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = ANY($2::text[])`,
-      [entity_id, want.map((w) => w.key)]);
+      [entity_id, want.map((item) => item.key)]
+    );
     const by = {};
-    have.rows.forEach((r) => { by[r.name] = r; });
+    have.rows.forEach((item) => {
+      by[item.name] = item;
+    });
 
     /* ── 3 · decide, in memory ── */
-    const toCreate = [], toVersion = [];
-    want.forEach((w) => {
-      const cur = by[w.key];
-      const json = JSON.stringify(w.rules);
-      if (!cur) { toCreate.push(Object.assign({ json: json }, w)); return; }
+    const toCreate = [],
+      toVersion = [];
+    want.forEach((item) => {
+      const cur = by[item.key];
+      const json = JSON.stringify(item.rules);
+      if (!cur) {
+        toCreate.push(Object.assign({ json: json }, item));
+        return;
+      }
       /* ⚠️ NO VERSION FOR AN IDENTICAL RE-IMPORT. The button is meant to be pressed often; a version per press
          would bury the edits that matter under a hundred that changed nothing, and would make "which version did
          this pass on?" a question with a useless answer. */
       if (JSON.stringify(cur.rules || {}) === json) {
         out.unchanged++;
-        out.cases.push({ case_key: w.key, definition_id: cur.definition_id, version: cur.current_version });
+        out.cases.push({ case_key: item.key, definition_id: cur.definition_id, version: cur.current_version });
         return;
       }
-      toVersion.push(Object.assign({ json: json, id: cur.definition_id, next: Number(cur.current_version) + 1 }, w));
+      toVersion.push(Object.assign({ json: json, id: cur.definition_id, next: Number(cur.current_version) + 1 }, item));
     });
 
     /* ── 4 · the new cases: one INSERT, then one INSERT for their version 1 ── */
@@ -588,14 +657,16 @@ async function importCases(entity_id, who, rows, mode) {
            FROM unnest($2::text[], $3::text[], $4::text[]) AS t(mod, name, note)
          ON CONFLICT DO NOTHING
          RETURNING definition_id, name`,
-        [entity_id, toCreate.map((t) => t.mod), toCreate.map((t) => t.key),
-         toCreate.map((t) => t.rules.title || null), who.id]);
+        [entity_id, toCreate.map((item) => item.mod), toCreate.map((item) => item.key), toCreate.map((item) => item.rules.title || null), who.id]
+      );
 
       /* ⚠ ON CONFLICT DO NOTHING means a row somebody else created in the meantime is simply not returned. It is
          not an error and must not be counted as added — the next press will see it as unchanged. */
       const madeBy = {};
-      ins.rows.forEach((r) => { madeBy[r.name] = r.definition_id; });
-      const made = toCreate.filter((t) => madeBy[t.key]);
+      ins.rows.forEach((item) => {
+        madeBy[item.name] = item.definition_id;
+      });
+      const made = toCreate.filter((item) => madeBy[item.key]);
 
       if (made.length) {
         await db.query(
@@ -604,10 +675,11 @@ async function importCases(entity_id, who, rows, mode) {
           `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
            SELECT t.id::uuid, 1, $1, t.rules::jsonb, $4
              FROM unnest($2::text[], $3::text[]) AS t(id, rules)`,
-          [entity_id, made.map((t) => madeBy[t.key]), made.map((t) => t.json), who.id]);
-        made.forEach((t) => {
+          [entity_id, made.map((item) => madeBy[item.key]), made.map((item) => item.json), who.id]
+        );
+        made.forEach((item) => {
           out.added++;
-          out.cases.push({ case_key: t.key, definition_id: madeBy[t.key], version: 1 });
+          out.cases.push({ case_key: item.key, definition_id: madeBy[item.key], version: 1 });
         });
       }
     }
@@ -618,18 +690,24 @@ async function importCases(entity_id, who, rows, mode) {
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
          SELECT t.id::uuid, t.v::int, $1, t.rules::jsonb, $5
            FROM unnest($2::text[], $3::int[], $4::text[]) AS t(id, v, rules)`,
-        [entity_id, toVersion.map((t) => t.id), toVersion.map((t) => t.next),
-         toVersion.map((t) => t.json), who.id]);
+        [entity_id, toVersion.map((item) => item.id), toVersion.map((item) => item.next), toVersion.map((item) => item.json), who.id]
+      );
       await db.query(
         `UPDATE definition d
             SET current_version = t.v::int, sub_kind = t.mod, note = t.note
            FROM unnest($1::text[], $2::int[], $3::text[], $4::text[]) AS t(id, v, mod, note)
           WHERE d.definition_id = t.id::uuid AND d.entity_id = $5`,
-        [toVersion.map((t) => t.id), toVersion.map((t) => t.next), toVersion.map((t) => t.mod),
-         toVersion.map((t) => t.rules.title || null), entity_id]);
-      toVersion.forEach((t) => {
+        [
+          toVersion.map((item) => item.id),
+          toVersion.map((item) => item.next),
+          toVersion.map((item) => item.mod),
+          toVersion.map((item) => item.rules.title || null),
+          entity_id
+        ]
+      );
+      toVersion.forEach((item) => {
         out.updated++;
-        out.cases.push({ case_key: t.key, definition_id: t.id, version: t.next });
+        out.cases.push({ case_key: item.key, definition_id: item.id, version: item.next });
       });
     }
 
@@ -670,10 +748,12 @@ async function importCases(entity_id, who, rows, mode) {
      *
      * ⭐ So it reads `want`, which is the normalised list the upsert itself used. One derivation, one answer.
      */
-    const inDoc = new Set(want.map((t) => t.key));
+    const inDoc = new Set(want.map((item) => item.key));
     const live = await db.query(
       `SELECT definition_id, name FROM definition
-        WHERE entity_id = $1 AND kind = 'testcase' AND status <> 'retired'`, [entity_id]);
+        WHERE entity_id = $1 AND kind = 'testcase' AND status <> 'retired'`,
+      [entity_id]
+    );
     /**
      * ── ⚠️⚠️⚠️ ADDING ONE CASE IS NOT A REBUILD, AND THIS ROUTE COULD NOT TELL THE DIFFERENCE ──────────────
      *
@@ -688,9 +768,9 @@ async function importCases(entity_id, who, rows, mode) {
      * the board is none of this call's business; the seed button and the document import say nothing and
      * keep the rebuild behaviour they have always had.
      */
-    const orphans = mode === 'add' ? [] : live.rows.filter((r) => !inDoc.has(r.name));
+    const orphans = mode === 'add' ? [] : live.rows.filter((item) => !inDoc.has(item.name));
 
-    out.orphans = orphans.map((r) => r.name);
+    out.orphans = orphans.map((item) => item.name);
     /* ⚠️ the threshold is on the INCOMING document against what is already there */
     const plausible = live.rows.length === 0 || inDoc.size >= Math.floor(live.rows.length * 0.9);
 
@@ -698,13 +778,18 @@ async function importCases(entity_id, who, rows, mode) {
       await db.query(
         `UPDATE definition SET status = 'retired'
           WHERE entity_id = $1 AND definition_id = ANY($2::uuid[])`,
-        [entity_id, orphans.map((r) => r.definition_id)]);
+        [entity_id, orphans.map((item) => item.definition_id)]
+      );
       out.retired = orphans.length;
     } else if (orphans.length) {
       /* ⭐ say why nothing happened, or a person reads "0 retired" as "nothing was orphaned" */
       out.retired = 0;
-      out.retire_held = 'the document carried ' + inDoc.size + ' cases against ' + live.rows.length
-        + ' on the board \u2014 too few to trust as a complete rebuild, so nothing was retired';
+      out.retire_held =
+        'the document carried ' +
+        inDoc.size +
+        ' cases against ' +
+        live.rows.length +
+        ' on the board \u2014 too few to trust as a complete rebuild, so nothing was retired';
     }
   });
 
@@ -713,12 +798,12 @@ async function importCases(entity_id, who, rows, mode) {
 
 router.post('/cases/import', auth, async (req, res) => {
   try {
-    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: a rebuild of the shared suite is the board writer's act */
+    if (boardRefused(req, res)) return; /* SEC-SMALL item 3: a rebuild of the shared suite is the board writer's act */
     const rows = Array.isArray(req.body && req.body.cases) ? req.body.cases : [];
     if (!rows.length) return res.status(400).json({ error: 'Nothing to import', message: 'Send { cases: [...] }.' });
     /* ⚠️ shape-checked, not trusted: anything but the exact word means a rebuild, which is the safe default
        — a typo must never quietly turn a rebuild into an add and leave retired cases live. */
-    const mode = (req.body && req.body.mode === 'add') ? 'add' : null;
+    const mode = req.body && req.body.mode === 'add' ? 'add' : null;
     const _who = testerOf(req);
     const _ent = testboard.entityFor(auth.entityOf(req));
     const _out = await importCases(_ent, _who, rows, mode);
@@ -728,10 +813,11 @@ router.post('/cases/import', auth, async (req, res) => {
      */
     try {
       if (mode === 'add' && (rows || []).length === 1) {
-        require('../lib/testnews').testRaised(_ent, 'case', rows[0].case_key,
-          { screen: rows[0].screen_code, by: _who.id, byName: _who.name });
+        require('../lib/testnews').testRaised(_ent, 'case', rows[0].case_key, { screen: rows[0].screen_code, by: _who.id, byName: _who.name });
       }
-    } catch (e) { logger.fellBack('testing POST /cases/import: the helper failed — carried on without it', e); }
+    } catch (e) {
+      logger.fellBack('testing POST /cases/import: the helper failed — carried on without it', e);
+    }
     res.json(_out);
   } catch (err) {
     res.status(500).json({ error: 'Import failed', message: safeErr(err) });
@@ -767,21 +853,24 @@ router.get('/engine', auth, (req, res) => {
     if (!require('fs').existsSync(f)) return res.json({ engine: null });
     const doc = JSON.parse(require('fs').readFileSync(f, 'utf8'));
     /* ⭐ the notes ride with the contents: each row states what its own rule leaves out */
-    res.json({ engine: doc.engine || null, contents: doc.contents || null,
-               notes: doc.notes || null, foot: doc.foot || null });
-  } catch (err) { res.status(500).json({ error: 'Could not read the engine manifest' }); }
+    res.json({ engine: doc.engine || null, contents: doc.contents || null, notes: doc.notes || null, foot: doc.foot || null });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read the engine manifest' });
+  }
 });
 
 router.post('/cases/seed', auth, async (req, res) => {
   try {
-    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: "Load cases" reseeds what every shop reads */
+    if (boardRefused(req, res)) return; /* SEC-SMALL item 3: "Load cases" reseeds what every shop reads */
     const file = require('path').join(__dirname, '..', 'data', 'test-cases.json');
     /* ⚠ A MISSING FILE MUST SAY SO PLAINLY. It means the API shipped without the document — a deploy problem, not
        something the person pressing the button can act on, and they must not be left staring at an empty board
        wondering whether they did it wrong. */
     if (!require('fs').existsSync(file)) {
-      return res.status(500).json({ error: 'The documented cases are not on this server',
-        message: 'This API was deployed without data/test-cases.json. Run build-test-cases.cjs and deploy again.' });
+      return res.status(500).json({
+        error: 'The documented cases are not on this server',
+        message: 'This API was deployed without data/test-cases.json. Run build-test-cases.cjs and deploy again.'
+      });
     }
     const doc = JSON.parse(require('fs').readFileSync(file, 'utf8'));
     const out = await importCases(testboard.entityFor(auth.entityOf(req)), testerOf(req), doc.cases || []);
@@ -826,7 +915,7 @@ const INSERT_BY_KIND = {
   spec: `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'spec',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
   cmdb: `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
-         VALUES ($1,'cmdb',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
+         VALUES ($1,'cmdb',$2,$3,$4,'live',1,$5) RETURNING definition_id`
 };
 async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, rules) {
   const insert = INSERT_BY_KIND[kind];
@@ -835,12 +924,17 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
     `SELECT d.definition_id, d.current_version, v.rules
        FROM definition d
        JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
-      WHERE d.entity_id = $1 AND d.kind = $2 AND d.name = $3`, [entity_id, kind, name]);
+      WHERE d.entity_id = $1 AND d.kind = $2 AND d.name = $3`,
+    [entity_id, kind, name]
+  );
   if (!cur.rows[0]) {
     const ins = await db.query(insert, [entity_id, subKind, name, note, who.id]);
     const id = ins.rows[0].definition_id;
-    await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                    VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
+    await db.query(
+      `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                    VALUES ($1,1,$2,$3,$4)`,
+      [id, entity_id, JSON.stringify(rules), who.id]
+    );
     return { definition_id: id, version: 1, changed: true };
   }
   const id = cur.rows[0].definition_id;
@@ -848,10 +942,12 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
     return { definition_id: id, version: cur.rows[0].current_version, changed: false };
   }
   const next = Number(cur.rows[0].current_version) + 1;
-  await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                  VALUES ($1,$2,$3,$4,$5)`, [id, next, entity_id, JSON.stringify(rules), who.id]);
-  await db.query(`UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`,
-    [id, next, subKind, note]);
+  await db.query(
+    `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                  VALUES ($1,$2,$3,$4,$5)`,
+    [id, next, entity_id, JSON.stringify(rules), who.id]
+  );
+  await db.query(`UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`, [id, next, subKind, note]);
   return { definition_id: id, version: next, changed: true };
 }
 
@@ -875,31 +971,48 @@ const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
  */
 function boardRefused(req, res) {
   if (testboard.canWrite(auth.entityOf(req))) return false;
-  res.status(403).json({ error: 'Not a writer of the shared board', code: 'NOT_BOARD_WRITER',
-    message: 'Cases and CMDB records are read by every shop, so only the board’s own account (or one named in '
-      + 'TEST_BOARD_WRITERS) can change them.' });
+  res.status(403).json({
+    error: 'Not a writer of the shared board',
+    code: 'NOT_BOARD_WRITER',
+    message: 'Cases and CMDB records are read by every shop, so only the board’s own account (or one named in ' + 'TEST_BOARD_WRITERS) can change them.'
+  });
   return true;
 }
 
 /** one CMDB list row from its definition row: the id, title, version, and the flags the record raises about itself */
 function cmdbListRow(row) {
   const record = row.rules || {};
-  return { ci: row.name, title: record.title || row.name, version: row.current_version, updated_at: row.updated_at,
-    source: record.source || null, flags: cmdb.flags(record) };
+  return {
+    ci: row.name,
+    title: record.title || row.name,
+    version: row.current_version,
+    updated_at: row.updated_at,
+    source: record.source || null,
+    flags: cmdb.flags(record)
+  };
 }
 /** GET /api/testing/cmdb — every record, PAGED (W1-SET: readPage → top-level total · page · limit, ?page= ?limit=; `records` stays) */
 router.get('/cmdb', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const page = await withEntity(entity_id, (db) => readPage(db,
-      `d.name, d.current_version, d.updated_at, v.rules`,
-      `  FROM definition d
+    const page = await withEntity(entity_id, (db) =>
+      readPage(
+        db,
+        `d.name, d.current_version, d.updated_at, v.rules`,
+        `  FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'cmdb' AND d.status <> 'retired'`,
-      `d.name`, [entity_id], req.query, PAGE.cmdb));
+        `d.name`,
+        [entity_id],
+        req.query,
+        PAGE.cmdb
+      )
+    );
     const records = page.rows.map(cmdbListRow);
     res.json({ records, count: records.length, total: page.total, page: page.page, limit: page.limit });
-  } catch (err) { res.status(500).json({ error: 'Could not read the CMDB', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read the CMDB', message: safeErr(err) });
+  }
 });
 
 /** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
@@ -909,16 +1022,21 @@ router.get('/cmdb/:ci', auth, async (req, res) => {
     if (!cmdb.CI_RE.test(ci)) return res.status(400).json({ error: 'Not a CI id', message: 'A CI id looks like CAP-SIGNIN.' });
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const want = Number(req.query.version) || null;
-    const rows = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.name, d.current_version, v.version, v.rules, v.created_at
+    const rows = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT d.name, d.current_version, v.version, v.rules, v.created_at
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = COALESCE($3, d.current_version)
-        WHERE d.entity_id = $1 AND d.kind = 'cmdb' AND d.name = $2`, [entity_id, ci, want]));
+        WHERE d.entity_id = $1 AND d.kind = 'cmdb' AND d.name = $2`,
+        [entity_id, ci, want]
+      )
+    );
     const r = rows.rows[0];
     if (!r) return res.status(404).json({ error: 'No such record', message: 'Nothing in the CMDB is called ' + ci + '.' });
-    res.json({ ci: r.name, version: r.version, current_version: r.current_version, saved_at: r.created_at,
-               record: r.rules, flags: cmdb.flags(r.rules || {}) });
-  } catch (err) { res.status(500).json({ error: 'Could not read the record', message: safeErr(err) }); }
+    res.json({ ci: r.name, version: r.version, current_version: r.current_version, saved_at: r.created_at, record: r.rules, flags: cmdb.flags(r.rules || {}) });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read the record', message: safeErr(err) });
+  }
 });
 
 /** PUT /api/testing/cmdb/:ci — save one record; a new version only when it actually changed */
@@ -929,10 +1047,11 @@ router.put('/cmdb/:ci', auth, async (req, res) => {
     const v = cmdb.shape(rec);
     if (!v.ok) return res.status(400).json({ error: 'That record does not fit', message: v.why });
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const out = await withEntity(entity_id, (db) =>
-      upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
+    const out = await withEntity(entity_id, (db) => upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
     res.json(Object.assign({ ci: rec.ci, flags: cmdb.flags(rec) }, out));
-  } catch (err) { res.status(500).json({ error: 'Could not save the record', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Could not save the record', message: safeErr(err) });
+  }
 });
 
 /** POST /api/testing/cmdb/seed — load every record shipped in data/cmdb/*.json, the way cases/seed loads cases */
@@ -941,20 +1060,28 @@ router.post('/cmdb/seed', auth, async (req, res) => {
     if (boardRefused(req, res)) return;
     const fs = require('fs');
     if (!fs.existsSync(CMDB_DIR)) {
-      return res.status(500).json({ error: 'The CMDB records are not on this server',
-        message: 'This API was deployed without data/cmdb/. Deploy again.' });
+      return res.status(500).json({ error: 'The CMDB records are not on this server', message: 'This API was deployed without data/cmdb/. Deploy again.' });
     }
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const out = { seeded: [], unchanged: [], refused: [] };
-    const files = fs.readdirSync(CMDB_DIR).filter((n) => /\.json$/.test(n)).sort();
+    const files = fs
+      .readdirSync(CMDB_DIR)
+      .filter((item) => /\.json$/.test(item))
+      .sort();
     /* ⚠️ every file is checked BEFORE anything is written: one bad record refuses the whole load, said by name,
        rather than leaving the CMDB half-seeded and looking complete */
-    const recs = files.map((n) => { let r = null; try { r = JSON.parse(fs.readFileSync(require('path').join(CMDB_DIR, n), 'utf8')); } catch (e) { logger.fellBack('testing POST /cmdb/seed: did not parse — carried on without it', e, 'debug'); }
-      return { n, r, v: cmdb.shape(r) }; });
-    const bad = recs.filter((x) => !x.v.ok);
-    if (bad.length) return res.status(400).json({ error: 'A shipped record does not fit',
-      message: bad.map((x) => x.n + ': ' + x.v.why).join(' · ') });
+    const recs = files.map((item) => {
+      let r = null;
+      try {
+        r = JSON.parse(fs.readFileSync(require('path').join(CMDB_DIR, item), 'utf8'));
+      } catch (e) {
+        logger.fellBack('testing POST /cmdb/seed: did not parse — carried on without it', e, 'debug');
+      }
+      return { n: item, r, v: cmdb.shape(r) };
+    });
+    const list = recs.filter((x) => !x.v.ok);
+    if (list.length) return res.status(400).json({ error: 'A shipped record does not fit', message: list.map((x) => x.n + ': ' + x.v.why).join(' · ') });
     await withEntity(entity_id, async (db) => {
       for (const x of recs) {
         const w = await upsertVersioned(db, entity_id, who, 'cmdb', x.r.ci, x.r.system || null, x.r.title, x.r);
@@ -962,7 +1089,9 @@ router.post('/cmdb/seed', auth, async (req, res) => {
       }
     });
     res.json(out);
-  } catch (err) { res.status(500).json({ error: 'Could not load the CMDB records', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Could not load the CMDB records', message: safeErr(err) });
+  }
 });
 
 /* ── THE RESULTS ──────────────────────────────────────────────────────────────────────────────────────────── */
@@ -983,17 +1112,54 @@ router.post('/cmdb/seed', auth, async (req, res) => {
  * ⚠️ IT REPORTS, IT DOES NOT ACCEPT. Copying unknown keys through would put whatever a client sends into the
  * rules blob, which is how a whitelist becomes decoration.
  */
-const CASE_FIELDS = new Set(['case_key', 'module_key', 'module_name', 'intro', 'title', 'claim', 'priority',
-  'pre', 'data', 'steps', 'note', 'layer', 'test_type', 'group', 'automated', 'areas', 'subjects', 'run_by',
-  'seq', 'step', 'cites', 'changed_at', 'needs', 'held', 'menu', 'generated', 'observed', 'evidence_id',
-  'screen_code', 'control_code', 'written_by', 'written_by_id', 'written_at',
-  'closed_note', 'closed_by', 'closed_at', 'screen_purpose', 'generic']);
+const CASE_FIELDS = new Set([
+  'case_key',
+  'module_key',
+  'module_name',
+  'intro',
+  'title',
+  'claim',
+  'priority',
+  'pre',
+  'data',
+  'steps',
+  'note',
+  'layer',
+  'test_type',
+  'group',
+  'automated',
+  'areas',
+  'subjects',
+  'run_by',
+  'seq',
+  'step',
+  'cites',
+  'changed_at',
+  'needs',
+  'held',
+  'menu',
+  'generated',
+  'observed',
+  'evidence_id',
+  'screen_code',
+  'control_code',
+  'written_by',
+  'written_by_id',
+  'written_at',
+  'closed_note',
+  'closed_by',
+  'closed_at',
+  'screen_purpose',
+  'generic'
+]);
 
 function unknownFields(rows) {
   const seen = new Set();
-  (rows || []).forEach((c) => Object.keys(c || {}).forEach((k) => {
-    if (!CASE_FIELDS.has(k)) seen.add(k);
-  }));
+  (rows || []).forEach((item) =>
+    Object.keys(item || {}).forEach((item) => {
+      if (!CASE_FIELDS.has(item)) seen.add(item);
+    })
+  );
   return [...seen].slice(0, 20);
 }
 
@@ -1032,7 +1198,10 @@ function badResult(r) {
  */
 async function recordResults(entity_id, who, b) {
   const given = Array.isArray(b.results) ? b.results : [b];
-  for (const r of given) { const bad = badResult(r); if (bad) return { status: 422, body: { error: 'Not recorded', message: bad } }; }
+  for (const r of given) {
+    const bad = badResult(r);
+    if (bad) return { status: 422, body: { error: 'Not recorded', message: bad } };
+  }
   /**
    * ⚠️⚠️ ONE ROW PER (run, case, layer) IS THE LEDGER'S SHAPE (uq_test_result_once), so a batch naming a case
    * twice is FOLDED here, worst result first — never left to ON CONFLICT DO NOTHING, which kept the first and
@@ -1047,41 +1216,50 @@ async function recordResults(entity_id, who, b) {
     const run_label = b.run_label || null;
     const build = b.build || null;
 
-    const write = (askProject) => withEntity(entity_id, async (db) => {
-      const withProject = askProject && pj.project !== null && await hasProject(db);
-      /* the case's identity and CURRENT VERSION, read once for the whole batch — see the round-trip note above */
-      const keys = list.map((r) => String(r.case_key).trim());
-      const known = await db.query(
-        `SELECT definition_id, name, sub_kind, current_version FROM definition
-          WHERE entity_id = $1 AND kind = 'testcase' AND name = ANY($2::text[])`, [entity_id, keys]);
-      const by = {}; known.rows.forEach((x) => { by[x.name] = x; });
+    const write = (askProject) =>
+      withEntity(entity_id, async (db) => {
+        const withProject = askProject && pj.project !== null && (await hasProject(db));
+        /* the case's identity and CURRENT VERSION, read once for the whole batch — see the round-trip note above */
+        const keys = list.map((item) => String(item.case_key).trim());
+        const known = await db.query(
+          `SELECT definition_id, name, sub_kind, current_version FROM definition
+          WHERE entity_id = $1 AND kind = 'testcase' AND name = ANY($2::text[])`,
+          [entity_id, keys]
+        );
+        const by = {};
+        known.rows.forEach((x) => {
+          by[x.name] = x;
+        });
 
-      /**
-       * ⚠⚠ ONE INSERT FOR THE WHOLE RUN, not one per result.
-       *
-       * A person taps one case at a time and would never notice. A JUnit report does not: the suite posts every
-       * test at once, and a loop here is one Pacific crossing per test — the same fault that made loading the
-       * cases take a minute and a half. [[project-roundtrip-cost]]
-       *
-       * ⚠ ON CONFLICT DO NOTHING still applies per row, so a replayed suite is still a quiet no-op, and the
-       * rows that were skipped are simply not returned — which is what `skipped` counts.
-       */
-      const norm = list.map((r) => {
-        const key = String(r.case_key).trim();
-        const d = by[key] || null;
-        return {
-          key: key,
-          definition_id: d ? d.definition_id : null,
-          case_version: d ? d.current_version : null,
-          module_key: r.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
-          status: r.status, run_kind: r.run_kind, layer: r.layer || null,
-          tester_name: who.name,   /* SEC-FIX3 S10: stamped from the token, never the body */
-          note: r.note || null, evidence: r.evidence || null,
-        };
-      });
+        /**
+         * ⚠⚠ ONE INSERT FOR THE WHOLE RUN, not one per result.
+         *
+         * A person taps one case at a time and would never notice. A JUnit report does not: the suite posts every
+         * test at once, and a loop here is one Pacific crossing per test — the same fault that made loading the
+         * cases take a minute and a half. [[project-roundtrip-cost]]
+         *
+         * ⚠ ON CONFLICT DO NOTHING still applies per row, so a replayed suite is still a quiet no-op, and the
+         * rows that were skipped are simply not returned — which is what `skipped` counts.
+         */
+        const norm = list.map((item) => {
+          const key = String(item.case_key).trim();
+          const d = by[key] || null;
+          return {
+            key: key,
+            definition_id: d ? d.definition_id : null,
+            case_version: d ? d.current_version : null,
+            module_key: item.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
+            status: item.status,
+            run_kind: item.run_kind,
+            layer: item.layer || null,
+            tester_name: who.name /* SEC-FIX3 S10: stamped from the token, never the body */,
+            note: item.note || null,
+            evidence: item.evidence || null
+          };
+        });
 
-      const ins = await db.query(
-        `INSERT INTO test_result
+        const ins = await db.query(
+          `INSERT INTO test_result
            (entity_id, definition_id, case_version, case_key, module_key, status, run_kind, layer,
             tested_by, tester_name, run_id, run_label, note, evidence, build${withProject ? ', project' : ''})
          SELECT $1, t.did::uuid, t.cver::int, t.key, t.mod, t.status, t.kind, t.layer,
@@ -1091,21 +1269,42 @@ async function recordResults(entity_id, who, b) {
              AS t(did, cver, key, mod, status, kind, layer, tester, note, evidence)
          ON CONFLICT DO NOTHING
          RETURNING result_id, case_key, status, at`,
-        [entity_id,
-         norm.map((r) => r.definition_id), norm.map((r) => r.case_version), norm.map((r) => r.key),
-         norm.map((r) => r.module_key), norm.map((r) => r.status), norm.map((r) => r.run_kind),
-         norm.map((r) => r.layer), norm.map((r) => r.tester_name), norm.map((r) => r.note),
-         norm.map((r) => r.evidence),
-         who.id, run_id, run_label, build].concat(withProject ? [pj.project] : []));
-      return { rows: ins.rows, project: withProject ? pj.project : null,
-        missing: norm.filter((r) => !r.definition_id).map((r) => r.key).slice(0, 50) };
-    });
+          [
+            entity_id,
+            norm.map((item) => item.definition_id),
+            norm.map((item) => item.case_version),
+            norm.map((item) => item.key),
+            norm.map((item) => item.module_key),
+            norm.map((item) => item.status),
+            norm.map((item) => item.run_kind),
+            norm.map((item) => item.layer),
+            norm.map((item) => item.tester_name),
+            norm.map((item) => item.note),
+            norm.map((item) => item.evidence),
+            who.id,
+            run_id,
+            run_label,
+            build
+          ].concat(withProject ? [pj.project] : [])
+        );
+        return {
+          rows: ins.rows,
+          project: withProject ? pj.project : null,
+          missing: norm
+            .filter((item) => !item.definition_id)
+            .map((item) => item.key)
+            .slice(0, 50)
+        };
+      });
     /* ⚠️ a 42703 means the column went away under the cache — write the run WITHOUT it rather than lose it */
     let saved;
-    try { saved = await write(true); }
-    catch (e) {
-      if (e && e.code === '42703' && /project/.test(String(e.message || ''))) { projectMissing('42703'); saved = await write(false); }
-      else throw e;
+    try {
+      saved = await write(true);
+    } catch (e) {
+      if (e && e.code === '42703' && /project/.test(String(e.message || ''))) {
+        projectMissing('42703');
+        saved = await write(false);
+      } else throw e;
     }
 
     /**
@@ -1119,9 +1318,16 @@ async function recordResults(entity_id, who, b) {
     if (pj.project !== null && saved.project === null) {
       body.project_not_written = 'test_result.project is not there yet (b292) — recorded without "' + pj.project + '"';
     }
-    return { status: 200, body: Object.assign(body, { recorded: saved.rows.length,
-      skipped: list.length - saved.rows.length, folded: given.length - list.length,
-      not_on_board: saved.missing, results: saved.rows }) };
+    return {
+      status: 200,
+      body: Object.assign(body, {
+        recorded: saved.rows.length,
+        skipped: list.length - saved.rows.length,
+        folded: given.length - list.length,
+        not_on_board: saved.missing,
+        results: saved.rows
+      })
+    };
   }
 }
 
@@ -1150,9 +1356,17 @@ router.get('/results', auth, async (req, res) => {
 
     if (q.case_key || q.run_id) {
       const where = q.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
-      const r = await withEntity(entity_id, async (db) => readPage(db, '*',
-        `FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, pj.project), 3)}`,
-        'at DESC', [entity_id, q.case_key || q.run_id, pj.project], q, PAGE.history));
+      const r = await withEntity(entity_id, async (db) =>
+        readPage(
+          db,
+          '*',
+          `FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, pj.project), 3)}`,
+          'at DESC',
+          [entity_id, q.case_key || q.run_id, pj.project],
+          q,
+          PAGE.history
+        )
+      );
       /* ⚠️ `history` named which branch answered and no caller read it — dropped by the envelope besides */
       return res.json({ results: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
     }
@@ -1163,11 +1377,19 @@ router.get('/results', auth, async (req, res) => {
      * hide a red counter, which is precisely the pair of facts worth keeping apart.
      */
     /* ⭐ with ?project= it is the latest word per case WITHIN that project — "where did this sprint leave it" */
-    const r = await withEntity(entity_id, async (db) => readPage(db, '*',
-      `FROM (SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
+    const r = await withEntity(entity_id, async (db) =>
+      readPage(
+        db,
+        '*',
+        `FROM (SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
          FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 2)}
         ORDER BY case_key, COALESCE(layer,''), at DESC) latest`,
-      `case_key, COALESCE(layer,'')`, [entity_id, pj.project], q, PAGE.results));
+        `case_key, COALESCE(layer,'')`,
+        [entity_id, pj.project],
+        q,
+        PAGE.results
+      )
+    );
     res.json({ results: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
   } catch (err) {
     res.status(500).json({ error: 'Could not read the results', message: safeErr(err) });
@@ -1188,13 +1410,17 @@ router.get('/runs', auth, async (req, res) => {
     const r = await withEntity(entity_id, async (db) => {
       const has = await hasProject(db);
       if (has) {
-        projects = (await db.query(
-          `SELECT project, count(DISTINCT run_id)::int AS runs, max(at) AS last_at FROM test_result
+        projects = (
+          await db.query(
+            `SELECT project, count(DISTINCT run_id)::int AS runs, max(at) AS last_at FROM test_result
             WHERE entity_id = $1 AND project IS NOT NULL GROUP BY project ORDER BY max(at) DESC LIMIT 200`,
-          [entity_id])).rows;
+            [entity_id]
+          )
+        ).rows;
       }
-      return readPage(db,
-      `run_id, max(run_label) AS run_label, max(build) AS build, ${has ? 'max(project)' : 'NULL::text'} AS project,
+      return readPage(
+        db,
+        `run_id, max(run_label) AS run_label, max(build) AS build, ${has ? 'max(project)' : 'NULL::text'} AS project,
               min(at) AS started, max(at) AS finished,
               string_agg(DISTINCT run_kind, ', ') AS kinds,
               string_agg(DISTINCT tester_name, ', ') AS testers,
@@ -1203,8 +1429,12 @@ router.get('/runs', auth, async (req, res) => {
               count(*) FILTER (WHERE status = 'fail')    AS failed,
               count(*) FILTER (WHERE status = 'blocked') AS blocked,
               count(*) FILTER (WHERE status = 'skipped') AS skipped`,
-      `FROM test_result WHERE entity_id = $1 AND ${projectWhere(has, 2)} GROUP BY run_id`,
-      'max(at) DESC, run_id', [entity_id, pj.project], req.query || {}, PAGE.runs);
+        `FROM test_result WHERE entity_id = $1 AND ${projectWhere(has, 2)} GROUP BY run_id`,
+        'max(at) DESC, run_id',
+        [entity_id, pj.project],
+        req.query || {},
+        PAGE.runs
+      );
     });
     res.json({ runs: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project, projects });
   } catch (err) {
@@ -1233,16 +1463,15 @@ router.get('/runs', auth, async (req, res) => {
  * middleware→capability are the closest honest pairings, not exact ones. The RIGHT fix is one vocabulary,
  * which is a migration and a decision; this stops the column being a constant in the meantime.
  */
-const AREA_TO_LAYER = { api: 'transport', middleware: 'capability', engine: 'engine',
-                        web: 'web', database: 'db', connector: 'connector' };
+const AREA_TO_LAYER = { api: 'transport', middleware: 'capability', engine: 'engine', web: 'web', database: 'db', connector: 'connector' };
 let _caseAreas = null;
 function layerOfCase(key) {
   try {
     if (!_caseAreas) {
       const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
       _caseAreas = {};
-      JSON.parse(require('fs').readFileSync(f, 'utf8')).cases.forEach((c) => {
-        if ((c.areas || []).length) _caseAreas[c.case_key] = c.areas;
+      JSON.parse(require('fs').readFileSync(f, 'utf8')).cases.forEach((item) => {
+        if ((item.areas || []).length) _caseAreas[item.case_key] = item.areas;
       });
     }
     const ar = _caseAreas[key];
@@ -1257,13 +1486,16 @@ function layerOfCase(key) {
       if (ar.indexOf(a) >= 0) return AREA_TO_LAYER[a];
     }
     return null;
-  } catch (e) { logger.fellBack('testing layerOfCase: did not parse — answered with nothing', e, 'debug'); return null; }
+  } catch (e) {
+    logger.fellBack('testing layerOfCase: did not parse — answered with nothing', e, 'debug');
+    return null;
+  }
 }
 
 router.post('/results/junit', auth, async (req, res) => {
   try {
-    const xml = String((req.body && req.body.xml) || '');
-    if (!xml.trim()) return res.status(400).json({ error: 'No report', message: 'Send { xml: "<testsuites>…" }.' });
+    const text = String((req.body && req.body.xml) || '');
+    if (!text.trim()) return res.status(400).json({ error: 'No report', message: 'Send { xml: "<testsuites>…" }.' });
 
     const run_kind = RUN_KINDS.indexOf(req.body.run_kind) >= 0 ? req.body.run_kind : 't1';
     const layer = LAYERS.indexOf(req.body.layer) >= 0 ? req.body.layer : 'web';
@@ -1277,20 +1509,34 @@ router.post('/results/junit', auth, async (req, res) => {
     const kf = req.body.key_from;
     let read;
     try {
-      read = junitresults.read(xml, {
+      read = junitresults.read(text, {
         keyFrom: kf === 'name' || kf === 'file' ? kf : 'bracket',
-        keyPrefix: req.body.key_prefix, runKind: run_kind, layer, layerOf: layerOfCase });
-    } catch (e) { return res.status(400).json({ error: 'Not read', message: e.message }); }
-    const results = read.results, unmatched = read.unmatched;
+        keyPrefix: req.body.key_prefix,
+        runKind: run_kind,
+        layer,
+        layerOf: layerOfCase
+      });
+    } catch (e) {
+      return res.status(400).json({ error: 'Not read', message: e.message });
+    }
+    const results = read.results,
+      unmatched = read.unmatched;
     if (!results.length) {
-      return res.status(422).json({ error: 'Nothing recognisable', unmatched,
-        message: 'No test in that report carries a case key in brackets, e.g. "[CTR-05] a single click chooses".' });
+      return res.status(422).json({
+        error: 'Nothing recognisable',
+        unmatched,
+        message: 'No test in that report carries a case key in brackets, e.g. "[CTR-05] a single click chooses".'
+      });
     }
 
     /* ⭐ the SAME recorder a person's tap goes through — one write path, one shape of row */
     const out = await recordResults(resultsEntityOf(req), testerOf(req), {
-      results, run_id: req.body.run_id, run_label: req.body.run_label || 'automated', build: req.body.build,
-      project: req.body.project });
+      results,
+      run_id: req.body.run_id,
+      run_label: req.body.run_label || 'automated',
+      build: req.body.build,
+      project: req.body.project
+    });
     return res.status(out.status).json(Object.assign({ unmatched }, out.body));
   } catch (err) {
     res.status(500).json({ error: 'Could not read that report', message: safeErr(err) });
@@ -1316,22 +1562,34 @@ router.get('/cases/gherkin', auth, async (req, res) => {
     const gherkin = require('../lib/gherkin');
     const only = req.query && req.query.module ? String(req.query.module).trim() : null;
 
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.name, d.sub_kind, d.current_version, v.rules
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT d.name, d.sub_kind, d.current_version, v.rules
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
           AND ($2::text IS NULL OR d.sub_kind = $2)
-        ORDER BY d.sub_kind, d.name`, [entity_id, only]));
+        ORDER BY d.sub_kind, d.name`,
+        [entity_id, only]
+      )
+    );
 
-    const groups = [], seen = {};
+    const groups = [],
+      seen = {};
     r.rows.forEach((x) => {
-      const ru = x.rules || {}, key = x.sub_kind || '-';
+      const ru = x.rules || {},
+        key = x.sub_kind || '-';
       if (!seen[key]) {
-        seen[key] = { module: { key: key, name: ru.module_name || '', intro: ru.intro || '',
-                                spec: (ru.cites && ru.cites.spec) || '',
-                                clause: (ru.cites && ru.cites.clause) || key },
-                      cases: [] };
+        seen[key] = {
+          module: {
+            key: key,
+            name: ru.module_name || '',
+            intro: ru.intro || '',
+            spec: (ru.cites && ru.cites.spec) || '',
+            clause: (ru.cites && ru.cites.clause) || key
+          },
+          cases: []
+        };
         groups.push(seen[key]);
       }
       seen[key].cases.push(Object.assign({ case_key: x.name }, ru));
@@ -1357,18 +1615,16 @@ router.get('/cases/gherkin', auth, async (req, res) => {
  */
 router.post('/cases/gherkin', auth, async (req, res) => {
   try {
-    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: a feature file authors shared cases */
+    if (boardRefused(req, res)) return; /* SEC-SMALL item 3: a feature file authors shared cases */
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const gherkin = require('../lib/gherkin');
     const text = String((req.body && req.body.text) || '');
-    if (!text.trim()) return res.status(400).json({ error: 'Nothing to import',
-      message: 'Send { text: "Feature: …" }.' });
+    if (!text.trim()) return res.status(400).json({ error: 'Nothing to import', message: 'Send { text: "Feature: …" }.' });
 
     const parts = gherkin.splitFeatures(text);
     if (!parts.length) {
-      return res.status(422).json({ error: 'Not a feature file',
-        message: 'No "Feature:" line was found. A .feature file starts with one.' });
+      return res.status(422).json({ error: 'Not a feature file', message: 'No "Feature:" line was found. A .feature file starts with one.' });
     }
 
     const out = { added: 0, updated: 0, unchanged: 0, clauses: [], problems: [], cases: [] };
@@ -1383,20 +1639,26 @@ router.post('/cases/gherkin', auth, async (req, res) => {
       await withEntity(entity_id, async (db) => {
         const cl = await upsertClause(db, entity_id, who, f.spec, f.clause || f.key, f.intro);
         if (cl) {
-          cite = { definition_id: cl.definition_id, version: cl.version,
-                   spec: f.spec || null, clause: f.clause || f.key };
-          out.clauses.push({ clause: f.clause || f.key, spec: f.spec || null,
-                             version: cl.version, changed: cl.changed });
+          cite = { definition_id: cl.definition_id, version: cl.version, spec: f.spec || null, clause: f.clause || f.key };
+          out.clauses.push({ clause: f.clause || f.key, spec: f.spec || null, version: cl.version, changed: cl.changed });
         }
       });
 
-      const rows = (f.cases || []).filter((c) => c.case_key).map((c) => Object.assign({}, c, {
-        module_key: f.key || (c.case_key || '').split('-')[0],
-        module_name: f.name || '', intro: f.intro || '', cites: cite,
-      }));
+      const rows = (f.cases || [])
+        .filter((item) => item.case_key)
+        .map((item) =>
+          Object.assign({}, item, {
+            module_key: f.key || (item.case_key || '').split('-')[0],
+            module_name: f.name || '',
+            intro: f.intro || '',
+            cites: cite
+          })
+        );
       if (!rows.length) continue;
       const r = await importCases(entity_id, who, rows);
-      out.added += r.added; out.updated += r.updated; out.unchanged += r.unchanged;
+      out.added += r.added;
+      out.updated += r.updated;
+      out.unchanged += r.unchanged;
       out.cases = out.cases.concat(r.cases);
     }
     res.json(out);
@@ -1454,8 +1716,8 @@ router.post('/cases/gherkin', auth, async (req, res) => {
  * — and the fraction work of 2026-09-12 is the proof: the rule was obvious BECAUSE the line vanished.
  */
 const REQ_STATES = ['raised', 'accepted', 'implemented', 'rejected'];
-const REQ_OPEN = ['raised', 'accepted'];      // "not actioned" — the list's default filter
-const REQ_PRI = ['High', 'Medium', 'Low'];    // the list's order, first to last
+const REQ_OPEN = ['raised', 'accepted']; // "not actioned" — the list's default filter
+const REQ_PRI = ['High', 'Medium', 'Low']; // the list's order, first to last
 const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rejected: 'retired' };
 
 /** POST /api/testing/requirements — raise one from the case that found it. */
@@ -1492,12 +1754,12 @@ router.post('/requirements', auth, async (req, res) => {
     let citeHeld = null;
     const caseEntity = testboard.entityFor(auth.entityOf(req));
     if (case_key && caseEntity !== entity_id) {
-      const seen = await withEntity(caseEntity, (db) => db.query(
-        `SELECT 1 FROM definition WHERE entity_id = $1 AND kind = 'testcase' AND name = $2 LIMIT 1`,
-        [caseEntity, case_key]));
+      const seen = await withEntity(caseEntity, (db) =>
+        db.query(`SELECT 1 FROM definition WHERE entity_id = $1 AND kind = 'testcase' AND name = $2 LIMIT 1`, [caseEntity, case_key])
+      );
       citeHeld = seen.rows[0]
-        ? 'the case is on the shared board and this requirement is yours, so the link is not written onto a '
-          + 'shared row. The requirement records the case key and is saved.'
+        ? 'the case is on the shared board and this requirement is yours, so the link is not written onto a ' +
+          'shared row. The requirement records the case key and is saved.'
         : 'no case named ' + case_key + ' on the board.';
     }
     /* ⚠️ BOTH, and refused rather than defaulted. A requirement with no evidence is a wish, and evidence with no
@@ -1507,13 +1769,13 @@ router.post('/requirements', auth, async (req, res) => {
 
     const out = await withEntity(entity_id, async (db) => {
       /* the clause id: given, or minted from the case it came from so it reads as what it is */
-      const name = String(b.clause || '').trim()
-        || ('REQ-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-'
-            + Math.random().toString(36).slice(2, 6).toUpperCase());
+      const name =
+        String(b.clause || '').trim() ||
+        'REQ-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
       /* ⭐ PRIORITY, because Athi: *"this will help to keep it prioratised, backlog and so on"*. Same three
          words the cases already use — a second vocabulary for the same idea is how two lists stop sorting alike. */
-      const PRI = ['High', 'Medium', 'Low'];
-      const priority = PRI.indexOf(String(b.priority || '')) >= 0 ? String(b.priority) : 'Medium';
+      const list = ['High', 'Medium', 'Low'];
+      const priority = list.indexOf(String(b.priority || '')) >= 0 ? String(b.priority) : 'Medium';
       /**
        * ⭐⭐ WHERE THE TESTER WAS STANDING, CAPTURED RATHER THAN ASKED FOR. Athi, 2026-09-12: *"I am doing all
        * those so when I ask the external tester to perform testing they should be able to record against it."*
@@ -1526,19 +1788,30 @@ router.post('/requirements', auth, async (req, res) => {
        */
       const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
       const rules = {
-        text: requirement, observed: observed, spec: String(b.spec || '').trim() || null, priority: priority,
-        screen_code: codeOf(b.screen_code), popup_code: codeOf(b.popup_code),
-        state: 'raised', raised_from: case_key, raised_by: who.name, raised_at: new Date().toISOString(),
-        raised_by_id: who.id, /* who to tell when it is accepted or rejected — see lib/testnews.js */
-        history: [{ state: 'raised', by: who.name, at: new Date().toISOString(), why: null }],
+        text: requirement,
+        observed: observed,
+        spec: String(b.spec || '').trim() || null,
+        priority: priority,
+        screen_code: codeOf(b.screen_code),
+        popup_code: codeOf(b.popup_code),
+        state: 'raised',
+        raised_from: case_key,
+        raised_by: who.name,
+        raised_at: new Date().toISOString(),
+        raised_by_id: who.id /* who to tell when it is accepted or rejected — see lib/testnews.js */,
+        history: [{ state: 'raised', by: who.name, at: new Date().toISOString(), why: null }]
       };
       const ins = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'spec',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
-        [entity_id, rules.spec, name, requirement.slice(0, 200), who.id]);
+        [entity_id, rules.spec, name, requirement.slice(0, 200), who.id]
+      );
       const id = ins.rows[0].definition_id;
-      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                      VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`,
+        [id, entity_id, JSON.stringify(rules), who.id]
+      );
 
       /**
        * ⭐ THE CASE NOW CITES IT, at version 1 — which is the citation the board has never had. ⚠️ Only when the
@@ -1568,18 +1841,24 @@ router.post('/requirements', auth, async (req, res) => {
           `SELECT d.definition_id, d.current_version, v.rules
              FROM definition d JOIN definition_version v
                ON v.definition_id = d.definition_id AND v.version = d.current_version
-            WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2`, [entity_id, case_key]);
+            WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.name = $2`,
+          [entity_id, case_key]
+        );
         const row = c.rows[0];
         if (row && !((row.rules || {}).cites || {}).definition_id) {
           const next = Object.assign({}, row.rules, {
-            cites: { definition_id: id, version: 1, spec: rules.spec, clause: name },
+            cites: { definition_id: id, version: 1, spec: rules.spec, clause: name }
           });
-          await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+          await db.query(
+            `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                           VALUES ($1,$2,$3,$4,$5)`,
-            [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]);
-          await db.query(`UPDATE definition SET current_version = $2, updated_at = now()
+            [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]
+          );
+          await db.query(
+            `UPDATE definition SET current_version = $2, updated_at = now()
                             WHERE definition_id = $1 AND entity_id = $3`,
-            [row.definition_id, row.current_version + 1, entity_id]);
+            [row.definition_id, row.current_version + 1, entity_id]
+          );
           cited = true;
         }
       }
@@ -1597,17 +1876,33 @@ router.post('/requirements', auth, async (req, res) => {
        * word "requirement" is a display label. Routing on the label would file it under a folder nobody set.
        */
       try {
-        support = await require('../lib/supportcopy').toOperator('spec', {
-          entity_id, definition_id: out && out.definition_id, ref: out && (out.clause || out.ref),
-          note: out && out.requirement, subject: out && out.requirement, screen_code: b.screen_code,
-          /* ⭐ 'here' keeps it inside this entity and 'them' sends it to the shop named by to_bridge_id — each
+        support = await require('../lib/supportcopy').toOperator(
+          'spec',
+          {
+            entity_id,
+            definition_id: out && out.definition_id,
+            ref: out && (out.clause || out.ref),
+            note: out && out.requirement,
+            subject: out && out.requirement,
+            screen_code: b.screen_code,
+            /* ⭐ 'here' keeps it inside this entity and 'them' sends it to the shop named by to_bridge_id — each
              answered by THAT entity's own routing. Anything else means us. */
-          audience: b.audience, to_bridge_id: b.to_bridge_id,
-        }, w2);
-      } catch (e) { support = { copied: false, why: String(e.message || e) }; }
-      require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref),
-        { screen: (req.body || {}).screen_code, by: w2.id, byName: w2.name });
-    } catch (e) { logger.fellBack('testing POST /requirements: the helper failed — carried on without it', e); }
+            audience: b.audience,
+            to_bridge_id: b.to_bridge_id
+          },
+          w2
+        );
+      } catch (e) {
+        support = { copied: false, why: String(e.message || e) };
+      }
+      require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref), {
+        screen: (req.body || {}).screen_code,
+        by: w2.id,
+        byName: w2.name
+      });
+    } catch (e) {
+      logger.fellBack('testing POST /requirements: the helper failed — carried on without it', e);
+    }
     res.json(Object.assign({ raised: true, state: 'raised', support }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not raise it', message: safeErr(err) });
@@ -1633,33 +1928,60 @@ router.get('/requirements', auth, async (req, res) => {
     let byState = [];
     const r = await withEntity(entity_id, async (db) => {
       byState = (await db.query(`SELECT v.rules->>'state' AS state, count(*)::int AS n ${FROM} GROUP BY 1`, [entity_id])).rows;
-      return readPage(db, `d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules`,
+      return readPage(
+        db,
+        `d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules`,
         `${FROM} AND ${stateWhere(`v.rules->>'state'`, REQ_OPEN)}`,
         `${rankOrder(`COALESCE(v.rules->>'priority','Medium')`, REQ_PRI)}, v.rules->>'raised_at' NULLS LAST, d.definition_id`,
-        [entity_id, want], req.query || {}, PAGE.findings);
+        [entity_id, want],
+        req.query || {},
+        PAGE.findings
+      );
     });
 
     const all = r.rows.map((x) => {
       const ru = x.rules || {};
       return {
-        definition_id: x.definition_id, clause: x.name, spec: x.sub_kind || null,
-        requirement: ru.text || '', observed: ru.observed || '', priority: ru.priority || 'Medium',
-        screen_code: ru.screen_code || null, popup_code: ru.popup_code || null,
-        state: ru.state || 'raised', shelf: x.status,
-        raised_from: ru.raised_from || null, raised_by: ru.raised_by || null, raised_at: ru.raised_at || null,
+        definition_id: x.definition_id,
+        clause: x.name,
+        spec: x.sub_kind || null,
+        requirement: ru.text || '',
+        observed: ru.observed || '',
+        priority: ru.priority || 'Medium',
+        screen_code: ru.screen_code || null,
+        popup_code: ru.popup_code || null,
+        state: ru.state || 'raised',
+        shelf: x.status,
+        raised_from: ru.raised_from || null,
+        raised_by: ru.raised_by || null,
+        raised_at: ru.raised_at || null,
         raised_by_id: ru.raised_by_id || x.created_by || null,
         work_status: teststatus.workStatus({ kind: 'requirement', state: ru.state || 'raised' }),
-        why: ru.why || null, history: ru.history || [], at: x.updated_at,
+        why: ru.why || null,
+        history: ru.history || [],
+        at: x.updated_at
       };
     });
     /* ⭐ A BACKLOG READS BY PRIORITY FIRST (REQ_PRI, in the ORDER BY above). Newest-first is right for a log and wrong
        for a worklist — the oldest High is exactly the row that must not sink. Within a priority, oldest first. */
     /* ⭐ the counts travel with the list so a filter can say what it is hiding rather than just showing less.
        `total` is the pager's: the rows this filter holds. Every state together is the sum of `counts`. */
-    const counts = REQ_STATES.reduce((a, k) => { a[k] = 0; return a; }, {});
-    byState.forEach((x) => { if (x.state in counts) counts[x.state] = x.n; });
-    res.json({ requirements: all, count: all.length, counts, open: REQ_OPEN.reduce((s, k) => s + counts[k], 0),
-      total: r.total, page: r.page, limit: r.limit });
+    const counts = REQ_STATES.reduce((total, item) => {
+      total[item] = 0;
+      return total;
+    }, {});
+    byState.forEach((x) => {
+      if (x.state in counts) counts[x.state] = x.n;
+    });
+    res.json({
+      requirements: all,
+      count: all.length,
+      counts,
+      open: REQ_OPEN.reduce((total, item) => total + counts[item], 0),
+      total: r.total,
+      page: r.page,
+      limit: r.limit
+    });
   } catch (err) {
     res.status(500).json({ error: 'Could not read them', message: safeErr(err) });
   }
@@ -1690,8 +2012,7 @@ router.patch('/requirements/:id', auth, async (req, res) => {
       return res.status(400).json({ error: 'Not a state', message: 'One of: ' + REQ_STATES.join(' · ') });
     }
     if (state === 'rejected' && !why) {
-      return res.status(400).json({ error: 'Say why',
-        message: 'A rejected requirement needs its reason, or the next tester raises it again.' });
+      return res.status(400).json({ error: 'Say why', message: 'A rejected requirement needs its reason, or the next tester raises it again.' });
     }
 
     const out = await withEntity(entity_id, async (db) => {
@@ -1700,36 +2021,58 @@ router.patch('/requirements/:id', auth, async (req, res) => {
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.definition_id = $2::uuid`,
-        [entity_id, req.params.id]);
+        [entity_id, req.params.id]
+      );
       const row = c.rows[0];
       if (!row) return null;
       const ru = row.rules || {};
       /* ⚠️ re-prioritising is a decision too, and lands in the same history rather than editing quietly */
-      const PRI = ['High', 'Medium', 'Low'];
-      const pri = PRI.indexOf(String((req.body || {}).priority || '')) >= 0 ? String(req.body.priority) : (ru.priority || 'Medium');
+      const list = ['High', 'Medium', 'Low'];
+      const pri = list.indexOf(String((req.body || {}).priority || '')) >= 0 ? String(req.body.priority) : ru.priority || 'Medium';
       const nextState = state || ru.state || 'raised';
       const next = Object.assign({}, ru, {
-        state: nextState, priority: pri, why: why || ru.why || null,
-        history: (ru.history || []).concat([{ state: nextState, priority: pri, by: who.name, at: new Date().toISOString(), why: why || null }]),
+        state: nextState,
+        priority: pri,
+        why: why || ru.why || null,
+        history: (ru.history || []).concat([{ state: nextState, priority: pri, by: who.name, at: new Date().toISOString(), why: why || null }])
       });
-      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,$2,$3,$4,$5)`,
-        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]);
-      await db.query(`UPDATE definition SET current_version = $2, status = $3, updated_at = now()
+        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]
+      );
+      await db.query(
+        `UPDATE definition SET current_version = $2, status = $3, updated_at = now()
                         WHERE definition_id = $1 AND entity_id = $4`,
-        [row.definition_id, row.current_version + 1, REQ_SHELF[nextState], entity_id]);
-      return { state: nextState, shelf: REQ_SHELF[nextState], version: row.current_version + 1,
-        _ref: row.name || null, _raiser: ru.raised_by_id || row.created_by || null, _screen: ru.screen_code || null };
+        [row.definition_id, row.current_version + 1, REQ_SHELF[nextState], entity_id]
+      );
+      return {
+        state: nextState,
+        shelf: REQ_SHELF[nextState],
+        version: row.current_version + 1,
+        _ref: row.name || null,
+        _raiser: ru.raised_by_id || row.created_by || null,
+        _screen: ru.screen_code || null
+      };
     });
 
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No requirement with that id.' });
     /* ⭐ accepted or rejected, the person who raised it hears — a rejection nobody is told about is how the
        same requirement gets raised a third time. See the argument in lib/testnews.js. */
     try {
-      require('../lib/testnews').testRaised(entity_id, 'requirement', out._ref,
-        { state: out.state, forId: out._raiser, screen: out._screen, by: who.id, byName: who.name });
-    } catch (e) { logger.fellBack('testing PATCH /requirements/:id: the helper failed — carried on without it', e); }
-    delete out._ref; delete out._raiser; delete out._screen;
+      require('../lib/testnews').testRaised(entity_id, 'requirement', out._ref, {
+        state: out.state,
+        forId: out._raiser,
+        screen: out._screen,
+        by: who.id,
+        byName: who.name
+      });
+    } catch (e) {
+      logger.fellBack('testing PATCH /requirements/:id: the helper failed — carried on without it', e);
+    }
+    delete out._ref;
+    delete out._raiser;
+    delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not set it', message: safeErr(err) });
@@ -1773,7 +2116,7 @@ router.patch('/requirements/:id', auth, async (req, res) => {
  * ISO/IEC/IEEE 29119-3 asks for, assembled from records that already had to exist.
  */
 const INC_STATES = ['raised', 'investigating', 'resolved', 'closed'];
-const INC_OPEN = ['raised', 'investigating'];   // "open" — the list's default filter
+const INC_OPEN = ['raised', 'investigating']; // "open" — the list's default filter
 /* ⚠️ the shelf words are b160's draft|live|retired, NOT new ones: other screens filter on them, and inventing
    a fifth would make every one of those quietly wrong about what is on the shelf. */
 const INC_SHELF = { raised: 'draft', investigating: 'draft', resolved: 'live', closed: 'retired' };
@@ -1787,7 +2130,7 @@ const SEV_MEANS = {
   'Sev-1': 'stopped — the work cannot go on',
   'Sev-2': 'blocked — there is a way round, and it costs',
   'Sev-3': 'wrong — it runs, and it is not right',
-  'Sev-4': 'noticed — nothing is at risk',
+  'Sev-4': 'noticed — nothing is at risk'
 };
 
 /** POST /api/testing/incidents — record one where it happened. */
@@ -1810,14 +2153,15 @@ router.post('/incidents', auth, async (req, res) => {
     if (!(Date.parse(happened) > 0) || Date.parse(happened) > Date.parse(now)) happened = now;
 
     const out = await withEntity(entity_id, async (db) => {
-      const name = String(b.ref || '').trim()
-        || ('INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase());
+      const name = String(b.ref || '').trim() || 'INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
       const rules = {
         observed: observed,
-        severity: sev, severity_means: SEV_MEANS[sev],
+        severity: sev,
+        severity_means: SEV_MEANS[sev],
         /* ⭐ where they were standing, in the words the registers already use — CAT005 is a work item,
            'the catalogue screen' is a conversation. Shape-checked, and a missing code stays missing. */
-        screen_code: codeOf(b.screen_code), popup_code: codeOf(b.popup_code),
+        screen_code: codeOf(b.screen_code),
+        popup_code: codeOf(b.popup_code),
         /* ⭐ the screenshot, by id — the bytes stay in the attachment store and are read through its own
            entity-scoped door. ⚠️ Shape-checked: an id that is not a uuid is dropped rather than stored as
            a link that will 404 for whoever opens the incident next. */
@@ -1825,23 +2169,31 @@ router.post('/incidents', auth, async (req, res) => {
         affected: String(b.affected || '').trim() || null,
         build: String(b.build || '').trim() || null,
         found_by_case: String(b.case_key || '').trim() || null,
-        state: 'raised', happened_at: happened, raised_at: now,
+        state: 'raised',
+        happened_at: happened,
+        raised_at: now,
         raised_by: who.name,
         /* ⚠️ THE ID AS WELL AS THE NAME. The name is what a board read six months from now must still be able
            to show; the ID is what lets a session ask "is this one MINE to retest?" without matching strings.
            Two people called Athi on one board would otherwise both be told to go and verify it. */
         raised_by_id: who.id,
         /* the links, empty until somebody makes them — never invented here */
-        defects: [], changes: [], resolved_at: null,
-        history: [{ state: 'raised', by: who.name, at: now, why: null }],
+        defects: [],
+        changes: [],
+        resolved_at: null,
+        history: [{ state: 'raised', by: who.name, at: now, why: null }]
       };
       const ins = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'incident',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
-        [entity_id, sev, name, observed.slice(0, 200), who.id]);
+        [entity_id, sev, name, observed.slice(0, 200), who.id]
+      );
       const id = ins.rows[0].definition_id;
-      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                      VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`,
+        [id, entity_id, JSON.stringify(rules), who.id]
+      );
       return { definition_id: id, ref: name, severity: sev, happened_at: happened, rules, note: observed };
     });
 
@@ -1854,9 +2206,10 @@ router.post('/incidents', auth, async (req, res) => {
      */
     try {
       const w = testerOf(req);
-      require('../lib/testnews').testRaised(entity_id, 'incident', out && out.ref,
-        { screen: b.screen_code, by: w.id, byName: w.name });
-    } catch (e) { logger.fellBack('testing POST /incidents: the helper failed — carried on without it', e); }
+      require('../lib/testnews').testRaised(entity_id, 'incident', out && out.ref, { screen: b.screen_code, by: w.id, byName: w.name });
+    } catch (e) {
+      logger.fellBack('testing POST /incidents: the helper failed — carried on without it', e);
+    }
 
     /**
      * ── ⭐⭐ AND IT REACHES US (DESIGN-SUPPORT-LIFECYCLE.md §5.2) ─────────────────────────────────────────────
@@ -1884,13 +2237,24 @@ router.post('/incidents', auth, async (req, res) => {
      */
     let support = { copied: false, why: 'not attempted' };
     try {
-      support = await require('../lib/supportcopy').toOperator('incident', {
-        entity_id: auth.entityOf(req), definition_id: out && out.definition_id, ref: out && out.ref,
-        sub_kind: out && out.severity, note: out && out.note, screen_code: b.screen_code,
-        /* the rail is broken (us), my business is (me), or theirs is (them) - only the raiser knows which */
-        audience: b.audience, to_bridge_id: b.to_bridge_id,
-      }, testerOf(req));
-    } catch (e) { support = { copied: false, why: String(e.message || e) }; }
+      support = await require('../lib/supportcopy').toOperator(
+        'incident',
+        {
+          entity_id: auth.entityOf(req),
+          definition_id: out && out.definition_id,
+          ref: out && out.ref,
+          sub_kind: out && out.severity,
+          note: out && out.note,
+          screen_code: b.screen_code,
+          /* the rail is broken (us), my business is (me), or theirs is (them) - only the raiser knows which */
+          audience: b.audience,
+          to_bridge_id: b.to_bridge_id
+        },
+        testerOf(req)
+      );
+    } catch (e) {
+      support = { copied: false, why: String(e.message || e) };
+    }
 
     res.json(Object.assign({ recorded: true, state: 'raised', support }, out));
   } catch (err) {
@@ -1913,14 +2277,20 @@ router.get('/incidents', auth, async (req, res) => {
     const FROM = `FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'incident'`;
-    const ST = `COALESCE(v.rules->>'state','raised')`, SV = `COALESCE(v.rules->>'severity','Sev-3')`;
+    const ST = `COALESCE(v.rules->>'state','raised')`,
+      SV = `COALESCE(v.rules->>'severity','Sev-3')`;
     let bySS = [];
     const r = await withEntity(entity_id, async (db) => {
       bySS = (await db.query(`SELECT ${ST} AS state, ${SV} AS severity, count(*)::int AS n ${FROM} GROUP BY 1, 2`, [entity_id])).rows;
-      return readPage(db, `d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules`,
+      return readPage(
+        db,
+        `d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, d.created_by, v.rules`,
         `${FROM} AND ${stateWhere(ST, INC_OPEN)}`,
         `${rankOrder(SV, INC_SEV)}, v.rules->>'happened_at' NULLS LAST, d.definition_id`,
-        [entity_id, want], req.query || {}, PAGE.findings);
+        [entity_id, want],
+        req.query || {},
+        PAGE.findings
+      );
     });
 
     const all = r.rows.map((x) => {
@@ -1932,19 +2302,30 @@ router.get('/incidents', auth, async (req, res) => {
       const t0 = Date.parse(ru.happened_at || ru.raised_at || x.updated_at);
       const t1 = Date.parse(ru.raised_at || x.updated_at);
       const t2 = ru.resolved_at ? Date.parse(ru.resolved_at) : null;
-      const mins = (a, b2) => ((a > 0 && b2 > 0) ? Math.max(0, Math.round((b2 - a) / 60000)) : null);
+      const mins = (a, b2) => (a > 0 && b2 > 0 ? Math.max(0, Math.round((b2 - a) / 60000)) : null);
       return {
-        definition_id: x.definition_id, ref: x.name,
-        observed: ru.observed || '', severity: sev, severity_means: SEV_MEANS[sev] || null,
-        screen_code: ru.screen_code || null, popup_code: ru.popup_code || null,
+        definition_id: x.definition_id,
+        ref: x.name,
+        observed: ru.observed || '',
+        severity: sev,
+        severity_means: SEV_MEANS[sev] || null,
+        screen_code: ru.screen_code || null,
+        popup_code: ru.popup_code || null,
         evidence_id: ru.evidence_id || null,
-        affected: ru.affected || null, build: ru.build || null,
+        affected: ru.affected || null,
+        build: ru.build || null,
         found_by_case: ru.found_by_case || null,
-        state: ru.state || 'raised', shelf: x.status,
-        happened_at: ru.happened_at || null, raised_at: ru.raised_at || null, resolved_at: ru.resolved_at || null,
-        unnoticed_mins: mins(t0, t1), open_mins: mins(t1, t2),
-        defects: ru.defects || [], changes: ru.changes || [],
-        raised_by: ru.raised_by || null, raised_by_id: ru.raised_by_id || x.created_by || null,
+        state: ru.state || 'raised',
+        shelf: x.status,
+        happened_at: ru.happened_at || null,
+        raised_at: ru.raised_at || null,
+        resolved_at: ru.resolved_at || null,
+        unnoticed_mins: mins(t0, t1),
+        open_mins: mins(t1, t2),
+        defects: ru.defects || [],
+        changes: ru.changes || [],
+        raised_by: ru.raised_by || null,
+        raised_by_id: ru.raised_by_id || x.created_by || null,
         /* ⭐ WHOSE FAULT IS THIS, AND FROM WHICH SET OF BOOKS. On the operator queue every row is a COPY
            (lib/supportcopy), and without this the list reads as nine anonymous faults with no way to tell a
            real customer apart from an e2e run. Null on a shop own board, which is correct: it is theirs. */
@@ -1953,21 +2334,39 @@ router.get('/incidents', auth, async (req, res) => {
         /* ⭐ ONE RULE, ON THE SERVER — see lib/teststatus.js. The board, the screen and the report print the
            same word because they read the same function. */
         work_status: teststatus.workStatus({ kind: 'incident', state: ru.state || 'raised' }),
-        why: ru.why || null, history: ru.history || [], at: x.updated_at,
+        why: ru.why || null,
+        history: ru.history || [],
+        at: x.updated_at
       };
     });
     /* ⚠️ SEVERITY FIRST, THEN OLDEST (INC_SEV, in the ORDER BY above). Newest-first is right for a log and wrong for
        a board: the oldest Sev-1 is precisely the row that must never sink, and it is the one a date sort buries. */
-    const counts = INC_STATES.reduce((a, k) => { a[k] = 0; return a; }, {});
+    const counts = INC_STATES.reduce((total, item) => {
+      total[item] = 0;
+      return total;
+    }, {});
     /* ⭐ the count a release gate actually asks for, computed here so no caller has to know the rule */
-    const bySev = INC_SEV.reduce((a, k) => { a[k] = 0; return a; }, {});
+    const bySev = INC_SEV.reduce((total, item) => {
+      total[item] = 0;
+      return total;
+    }, {});
     bySS.forEach((x) => {
       if (x.state in counts) counts[x.state] += x.n;
       if (INC_OPEN.indexOf(x.state) >= 0 && x.severity in bySev) bySev[x.severity] += x.n;
     });
     /* `total` is the pager's: the rows this filter holds. Every state together is the sum of `counts`. */
-    res.json({ incidents: all, count: all.length, counts, open: INC_OPEN.reduce((s, k) => s + counts[k], 0),
-      open_by_severity: bySev, total: r.total, page: r.page, limit: r.limit, severities: INC_SEV, means: SEV_MEANS });
+    res.json({
+      incidents: all,
+      count: all.length,
+      counts,
+      open: INC_OPEN.reduce((total, item) => total + counts[item], 0),
+      open_by_severity: bySev,
+      total: r.total,
+      page: r.page,
+      limit: r.limit,
+      severities: INC_SEV,
+      means: SEV_MEANS
+    });
   } catch (err) {
     res.status(500).json({ error: 'Could not read them', message: safeErr(err) });
   }
@@ -2000,12 +2399,10 @@ router.patch('/incidents/:id', auth, async (req, res) => {
      * resolution carries either the commit that did it or, in words, why nothing needed doing.
      */
     if (state === 'resolved' && !b.change && !why) {
-      return res.status(400).json({ error: 'Say what changed',
-        message: 'Cite the commit that fixed it, or say why nothing needed to change.' });
+      return res.status(400).json({ error: 'Say what changed', message: 'Cite the commit that fixed it, or say why nothing needed to change.' });
     }
     if (state === 'closed' && !why) {
-      return res.status(400).json({ error: 'Say why',
-        message: 'Closing is a decision — record it, or the next person reopens the same thing.' });
+      return res.status(400).json({ error: 'Say why', message: 'Closing is a decision — record it, or the next person reopens the same thing.' });
     }
 
     const out = await withEntity(entity_id, async (db) => {
@@ -2014,7 +2411,8 @@ router.patch('/incidents/:id', auth, async (req, res) => {
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'incident' AND d.definition_id = $2::uuid`,
-        [entity_id, req.params.id]);
+        [entity_id, req.params.id]
+      );
       const row = c.rows[0];
       if (!row) return null;
       const ru = row.rules || {};
@@ -2028,10 +2426,20 @@ router.patch('/incidents/:id', auth, async (req, res) => {
        */
       const changes = (ru.changes || []).slice();
       if (b.change) {
-        const sha = String((b.change.sha || b.change.commit || '')).trim().toLowerCase();
+        const sha = String(b.change.sha || b.change.commit || '')
+          .trim()
+          .toLowerCase();
         if (/^[0-9a-f]{7,40}$/.test(sha)) {
-          changes.push({ repo: String(b.change.repo || '').trim() || null, sha: sha,
-            subject: String(b.change.subject || '').trim().slice(0, 200) || null, by: who.name, at: now });
+          changes.push({
+            repo: String(b.change.repo || '').trim() || null,
+            sha: sha,
+            subject:
+              String(b.change.subject || '')
+                .trim()
+                .slice(0, 200) || null,
+            by: who.name,
+            at: now
+          });
         }
       }
       /* a defect is a requirement/spec row that already exists — its id, never its text copied over */
@@ -2040,24 +2448,40 @@ router.patch('/incidents/:id', auth, async (req, res) => {
         if (defects.indexOf(String(b.defect)) < 0) defects.push(String(b.defect));
       }
       const next = Object.assign({}, ru, {
-        state: nextState, severity: sev, severity_means: SEV_MEANS[sev],
-        why: why || ru.why || null, changes: changes, defects: defects,
+        state: nextState,
+        severity: sev,
+        severity_means: SEV_MEANS[sev],
+        why: why || ru.why || null,
+        changes: changes,
+        defects: defects,
         /* ⚠️ stamped once, on the FIRST resolution: a reopened-and-resolved incident must not lose the day the
            shop actually got its counter back, which is the number anybody reporting on this will quote. */
-        resolved_at: (nextState === 'resolved' || nextState === 'closed') ? (ru.resolved_at || now) : ru.resolved_at || null,
-        history: (ru.history || []).concat([{ state: nextState, severity: sev, by: who.name, at: now, why: why || null }]),
+        resolved_at: nextState === 'resolved' || nextState === 'closed' ? ru.resolved_at || now : ru.resolved_at || null,
+        history: (ru.history || []).concat([{ state: nextState, severity: sev, by: who.name, at: now, why: why || null }])
       });
-      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,$2,$3,$4,$5)`,
-        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]);
-      await db.query(`UPDATE definition SET current_version = $2, status = $3, sub_kind = $4, updated_at = now()
+        [row.definition_id, row.current_version + 1, entity_id, JSON.stringify(next), who.id]
+      );
+      await db.query(
+        `UPDATE definition SET current_version = $2, status = $3, sub_kind = $4, updated_at = now()
                         WHERE definition_id = $1 AND entity_id = $5`,
-        [row.definition_id, row.current_version + 1, INC_SHELF[nextState], sev, entity_id]);
-      return { state: nextState, severity: sev, shelf: INC_SHELF[nextState],
-        version: row.current_version + 1, changes: changes.length, defects: defects.length,
+        [row.definition_id, row.current_version + 1, INC_SHELF[nextState], sev, entity_id]
+      );
+      return {
+        state: nextState,
+        severity: sev,
+        shelf: INC_SHELF[nextState],
+        version: row.current_version + 1,
+        changes: changes.length,
+        defects: defects.length,
         /* carried out of the transaction so the news can name the incident and the person now waiting on it.
            ⚠️ Stripped again before the reply — the client is answered about the incident, not about the post. */
-        _ref: row.name || null, _raiser: ru.raised_by_id || row.created_by || null, _screen: ru.screen_code || null };
+        _ref: row.name || null,
+        _raiser: ru.raised_by_id || row.created_by || null,
+        _screen: ru.screen_code || null
+      };
     });
 
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No incident with that id.' });
@@ -2074,10 +2498,19 @@ router.patch('/incidents/:id', auth, async (req, res) => {
      * ⚠️ AND IT CANNOT THROW: an incident that moved must not fail because a browser could not be told.
      */
     try {
-      require('../lib/testnews').testRaised(entity_id, 'incident', out._ref,
-        { state: out.state, forId: out._raiser, screen: out._screen, by: who.id, byName: who.name });
-    } catch (e) { logger.fellBack('testing PATCH /incidents/:id: the helper failed — carried on without it', e); }
-    delete out._ref; delete out._raiser; delete out._screen;
+      require('../lib/testnews').testRaised(entity_id, 'incident', out._ref, {
+        state: out.state,
+        forId: out._raiser,
+        screen: out._screen,
+        by: who.id,
+        byName: who.name
+      });
+    } catch (e) {
+      logger.fellBack('testing PATCH /incidents/:id: the helper failed — carried on without it', e);
+    }
+    delete out._ref;
+    delete out._raiser;
+    delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
     res.status(500).json({ error: 'Could not set it', message: safeErr(err) });
@@ -2112,20 +2545,24 @@ router.post('/evidence', auth, async (req, res) => {
     const data = String(b.data_base64 || '');
     if (!data) return res.status(400).json({ error: 'Nothing to attach', message: 'Send data_base64.' });
     if (!/^image\/(png|jpe?g|gif|webp|bmp)$/.test(mime)) {
-      return res.status(400).json({ error: 'Not an image',
-        message: 'A screenshot, please \u2014 png, jpg, gif, webp or bmp.' });
+      return res.status(400).json({ error: 'Not an image', message: 'A screenshot, please \u2014 png, jpg, gif, webp or bmp.' });
     }
     const buffer = Buffer.from(data, 'base64');
     if (!buffer.length) return res.status(400).json({ error: 'Empty', message: 'That decoded to nothing.' });
     if (buffer.length > 4 * 1024 * 1024) {
-      return res.status(413).json({ error: 'Too large',
-        message: 'Screenshots are capped at 4 MB \u2014 crop it, or grab the part that matters.' });
+      return res.status(413).json({ error: 'Too large', message: 'Screenshots are capped at 4 MB \u2014 crop it, or grab the part that matters.' });
     }
     const id = await storage.putForParticipants({
-      chit_id: null, message_id: null, line_index: null,
+      chit_id: null,
+      message_id: null,
+      line_index: null,
       name: String(b.name || 'screenshot.png').slice(0, 120),
-      mime: mime, size: buffer.length, buffer: buffer,
-      uploaded_by: who.id, participants: [entity_id], forEntity: entity_id,
+      mime: mime,
+      size: buffer.length,
+      buffer: buffer,
+      uploaded_by: who.id,
+      participants: [entity_id],
+      forEntity: entity_id
     });
     if (!id) return res.status(500).json({ error: 'Not stored', message: 'The attachment store returned nothing.' });
     /* ⭐ the id is all the caller keeps; the bytes come back from /api/attachments/:id, which is already
@@ -2139,8 +2576,9 @@ router.post('/evidence', auth, async (req, res) => {
 router.get('/stale', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.name AS case_key, d.sub_kind AS module_key, v.rules,
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT d.name AS case_key, d.sub_kind AS module_key, v.rules,
               s.name AS clause, s.sub_kind AS spec, s.current_version AS clause_now
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
@@ -2148,19 +2586,25 @@ router.get('/stale', auth, async (req, res) => {
         WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
           AND v.rules->'cites'->>'definition_id' IS NOT NULL
           AND (v.rules->'cites'->>'version')::int < s.current_version
-        ORDER BY s.name, d.name`, [entity_id]));
+        ORDER BY s.name, d.name`,
+        [entity_id]
+      )
+    );
 
     res.json({
       stale: r.rows.map((x) => ({
-        case_key: x.case_key, module_key: x.module_key, title: (x.rules || {}).title || '',
-        spec: x.spec, clause: x.clause,
-        cited_version: Number(((x.rules || {}).cites || {}).version), clause_now: Number(x.clause_now),
+        case_key: x.case_key,
+        module_key: x.module_key,
+        title: (x.rules || {}).title || '',
+        spec: x.spec,
+        clause: x.clause,
+        cited_version: Number(((x.rules || {}).cites || {}).version),
+        clause_now: Number(x.clause_now)
       })),
       count: r.rowCount,
       says: r.rowCount
-        ? 'These cases were written against an earlier wording of their clause. Read the clause, then either '
-          + 'edit the case or test it again.'
-        : 'Every case cites the current wording of its clause.',
+        ? 'These cases were written against an earlier wording of their clause. Read the clause, then either ' + 'edit the case or test it again.'
+        : 'Every case cites the current wording of its clause.'
     });
   } catch (err) {
     res.status(500).json({ error: 'Could not read that', message: safeErr(err) });
@@ -2198,8 +2642,9 @@ router.get('/coverage', auth, async (req, res) => {
     if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
     /* ⭐ ?project= narrows every RESULT read below to that project's rows; the cases are the board's either way */
 
-    const r = await withEntity(entity_id, async (db) => db.query(
-      `WITH cases AS (
+    const r = await withEntity(entity_id, async (db) =>
+      db.query(
+        `WITH cases AS (
          SELECT d.definition_id, d.name AS case_key, COALESCE(d.sub_kind, '-') AS module_key,
                 COALESCE(v.rules->>'priority', 'Medium') AS priority,
                 COALESCE(v.rules->>'module_name', '') AS module_name
@@ -2235,7 +2680,10 @@ router.get('/coverage', auth, async (req, res) => {
         GROUP BY c.module_key
         ORDER BY count(*) FILTER (WHERE l.case_key IS NULL AND c.priority = 'High') DESC,
                  count(*) FILTER (WHERE l.case_key IS NULL) DESC,
-                 c.module_key`, [entity_id, run_id, pj.project]));
+                 c.module_key`,
+        [entity_id, run_id, pj.project]
+      )
+    );
 
     /**
      * ⭐⭐ THE SAME QUESTION, ASKED FOUR WAYS. Athi, 2026-09-11: *"any graph / chart according to group?"*
@@ -2283,26 +2731,51 @@ router.get('/coverage', auth, async (req, res) => {
                 count(*) FILTER (WHERE status='blocked') AS blocked,
                 count(*) AS total
            FROM test_result WHERE entity_id = $1 AND ${projectWhere(has, 2)}
-          GROUP BY run_id ORDER BY max(at) DESC LIMIT 12`, [entity_id, pj.project]);
+          GROUP BY run_id ORDER BY max(at) DESC LIMIT 12`,
+        [entity_id, pj.project]
+      );
 
-      const num = (rows) => rows.map((x) => ({ key: x.key, total: Number(x.total), passed: Number(x.passed),
-        failed: Number(x.failed), blocked: Number(x.blocked), untested: Number(x.untested) }));
+      const num = (rows) =>
+        rows.map((x) => ({
+          key: x.key,
+          total: Number(x.total),
+          passed: Number(x.passed),
+          failed: Number(x.failed),
+          blocked: Number(x.blocked),
+          untested: Number(x.untested)
+        }));
       return {
         by_layer: num(byLayer.rows),
         by_priority: num(byPriority.rows),
         /* oldest first, because a trend is read left to right */
-        trend: trend.rows.slice().reverse().map((x) => ({ run_id: x.run_id, run_label: x.run_label, at: x.at,
-          passed: Number(x.passed), failed: Number(x.failed), blocked: Number(x.blocked), total: Number(x.total) })),
+        trend: trend.rows
+          .slice()
+          .reverse()
+          .map((x) => ({
+            run_id: x.run_id,
+            run_label: x.run_label,
+            at: x.at,
+            passed: Number(x.passed),
+            failed: Number(x.failed),
+            blocked: Number(x.blocked),
+            total: Number(x.total)
+          }))
       };
     });
 
     const areas = r.rows.map((x) => ({
-      module_key: x.module_key, module_name: x.module_name,
-      total: Number(x.total), tested: Number(x.tested), untested: Number(x.untested),
-      passed: Number(x.passed), failed: Number(x.failed), blocked: Number(x.blocked),
-      high_untested: Number(x.high_untested), tested_in_run: Number(x.tested_in_run),
+      module_key: x.module_key,
+      module_name: x.module_name,
+      total: Number(x.total),
+      tested: Number(x.tested),
+      untested: Number(x.untested),
+      passed: Number(x.passed),
+      failed: Number(x.failed),
+      blocked: Number(x.blocked),
+      high_untested: Number(x.high_untested),
+      tested_in_run: Number(x.tested_in_run)
     }));
-    const worst = areas.filter((a) => a.untested > 0)[0] || null;
+    const worst = areas.filter((item) => item.untested > 0)[0] || null;
 
     res.json({
       areas: areas,
@@ -2311,9 +2784,13 @@ router.get('/coverage', auth, async (req, res) => {
       /* ⭐ the panel opens on this when no focus has been chosen — the gap, named, rather than a dropdown */
       suggest: worst ? worst.module_key : null,
       says: worst
-        ? worst.module_key + ' has ' + worst.untested + ' case(s) nobody has run'
-          + (worst.high_untested ? ', ' + worst.high_untested + ' of them High' : '') + '.'
-        : 'Every case has been run at least once.',
+        ? worst.module_key +
+          ' has ' +
+          worst.untested +
+          ' case(s) nobody has run' +
+          (worst.high_untested ? ', ' + worst.high_untested + ' of them High' : '') +
+          '.'
+        : 'Every case has been run at least once.'
     });
   } catch (err) {
     res.status(500).json({ error: 'Could not read the coverage', message: safeErr(err) });
@@ -2379,7 +2856,9 @@ router.get('/report', auth, async (req, res) => {
                 count(*) FILTER (WHERE l.case_key IS NULL AND c.swept=1) AS untested_swept,
                 count(*) FILTER (WHERE l.case_key IS NULL AND c.swept=0) AS untested_written
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
-          GROUP BY c.module_key ORDER BY c.module_key`, [entity_id, pj.project]);
+          GROUP BY c.module_key ORDER BY c.module_key`,
+        [entity_id, pj.project]
+      );
 
       /* the incidents: what actually went wrong, latest word only, worst first */
       const bad = await db.query(
@@ -2387,7 +2866,9 @@ router.get('/report', auth, async (req, res) => {
                 tester_name, run_kind, layer, at, case_version
            FROM test_result
           WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 3)}
-          ORDER BY case_key, at DESC`, [entity_id, run_id, pj.project]);
+          ORDER BY case_key, at DESC`,
+        [entity_id, run_id, pj.project]
+      );
 
       /**
        * ── ⭐⭐⭐ WHO DID WHAT, PER PERSON ────────────────────────────────────────────────────────────────────
@@ -2423,7 +2904,9 @@ router.get('/report', auth, async (req, res) => {
                 min(at) AS first_at, max(at) AS last_at
            FROM latest
           GROUP BY tested_by
-          ORDER BY count(*) DESC`, [entity_id, run_id, pj.project]);
+          ORDER BY count(*) DESC`,
+        [entity_id, run_id, pj.project]
+      );
 
       const runs = await db.query(
         `SELECT run_id, max(run_label) AS run_label, max(build) AS build, ${has ? 'max(project)' : 'NULL::text'} AS project,
@@ -2433,7 +2916,9 @@ router.get('/report', auth, async (req, res) => {
                 string_agg(DISTINCT layer, ', ') AS layers, count(*) AS total
            FROM test_result
           WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 4)}
-          GROUP BY run_id ORDER BY max(at) DESC LIMIT $3`, [entity_id, run_id, run_id ? 1 : 12, pj.project]);
+          GROUP BY run_id ORDER BY max(at) DESC LIMIT $3`,
+        [entity_id, run_id, run_id ? 1 : 12, pj.project]
+      );
 
       /* ⚠️ cases written against wording that has since changed — a PASS on one of these is not evidence about
          what the spec says today, and a completion report that stays silent about it overstates its own case */
@@ -2442,7 +2927,9 @@ router.get('/report', auth, async (req, res) => {
            JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
            JOIN definition sp ON sp.definition_id = (v.rules->'cites'->>'definition_id')::uuid
           WHERE d.entity_id = $1 AND d.kind='testcase' AND d.status <> 'retired'
-            AND (v.rules->'cites'->>'version')::int < sp.current_version`, [entity_id]);
+            AND (v.rules->'cites'->>'version')::int < sp.current_version`,
+        [entity_id]
+      );
 
       /**
        * ── ⭐⭐⭐ WHAT KINDS OF TESTING HAVE ACTUALLY BEEN DONE ────────────────────────────────────────────
@@ -2475,20 +2962,39 @@ router.get('/report', auth, async (req, res) => {
                 count(*) FILTER (WHERE l.status='pass')::int       AS passed,
                 count(*) FILTER (WHERE l.status='fail')::int       AS failed
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
-          GROUP BY c.test_type, c.layer ORDER BY count(*) DESC`, [entity_id, pj.project]);
+          GROUP BY c.test_type, c.layer ORDER BY count(*) DESC`,
+        [entity_id, pj.project]
+      );
 
       /* ⭐ ONE READ, TWO FOLDS (N07): the same rows give the per-kind table and the §5 plan-by-level table, so the
          plan comparison costs no extra trip. Planned = cases DEFINED; executed = defined cases with a latest word. */
-      const fold = (key) => { const m = {};
-        kinds.rows.forEach((r) => { const k = r[key]; const a = m[k] || (m[k] = { total: 0, run: 0, passed: 0, failed: 0 });
-          ['total', 'run', 'passed', 'failed'].forEach((x) => { a[x] += Number(r[x] || 0); }); });
-        return m; };
-      const byKind = fold('test_type'), byLayer = fold('layer');
+      const fold = (key) => {
+        const m = {};
+        kinds.rows.forEach((item) => {
+          const k = item[key];
+          const a = m[k] || (m[k] = { total: 0, run: 0, passed: 0, failed: 0 });
+          ['total', 'run', 'passed', 'failed'].forEach((x) => {
+            a[x] += Number(item[x] || 0);
+          });
+        });
+        return m;
+      };
+      const byKind = fold('test_type'),
+        byLayer = fold('layer');
 
-      return { cover: cover.rows, bad: bad.rows, runs: runs.rows, people: people.rows,
-        kinds: Object.keys(byKind).map((k) => Object.assign({ test_type: k }, byKind[k])).sort((a, b) => b.total - a.total),
-        plan: Object.keys(byLayer).map((k) => ({ layer: k, planned: byLayer[k].total, executed: byLayer[k].run, passed: byLayer[k].passed }))
-          .sort((a, b) => b.planned - a.planned), stale: stale.rows[0] ? stale.rows[0].n : 0 };
+      return {
+        cover: cover.rows,
+        bad: bad.rows,
+        runs: runs.rows,
+        people: people.rows,
+        kinds: Object.keys(byKind)
+          .map((item) => Object.assign({ test_type: item }, byKind[item]))
+          .sort((first, second) => second.total - first.total),
+        plan: Object.keys(byLayer)
+          .map((item) => ({ layer: item, planned: byLayer[item].total, executed: byLayer[item].run, passed: byLayer[item].passed }))
+          .sort((first, second) => second.planned - first.planned),
+        stale: stale.rows[0] ? stale.rows[0].n : 0
+      };
     });
 
     /**
@@ -2504,10 +3010,13 @@ router.get('/report', auth, async (req, res) => {
      * finding, and burying it would be the opposite fault to the one being fixed. They are SEPARATED, so the
      * board asks for the two different actions it actually needs — go run these, go write those.
      */
-    const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0,
-                untested_swept: 0, untested_written: 0 };
-    data.cover.forEach((c) => Object.keys(n).forEach((k) => { n[k] += Number(c[k] || 0); }));
-    const incidents = data.bad.filter((r) => r.status === 'fail' || r.status === 'blocked');
+    const n = { total: 0, passed: 0, failed: 0, blocked: 0, skipped: 0, untested: 0, high_untested: 0, untested_swept: 0, untested_written: 0 };
+    data.cover.forEach((item) =>
+      Object.keys(n).forEach((k) => {
+        n[k] += Number(item[k] || 0);
+      })
+    );
+    const incidents = data.bad.filter((item) => item.status === 'fail' || item.status === 'blocked');
 
     /**
      * ── ⭐⭐⭐ WHAT PEOPLE FOUND, AS OPPOSED TO WHAT THE SUITE MEASURED ─────────────────────────────────────
@@ -2555,15 +3064,19 @@ router.get('/report', auth, async (req, res) => {
         found = await withEntity(entity_id, (db) => db.query(foundSql(`${FINDING} OR (${CASE_H})`), [entity_id]));
       } else {
         const [cases, findings] = await Promise.all([
-          withEntity(entity_id, (db) => db.query(foundSql(CASE_H),  [entity_id])),
-          withEntity(mine,      (db) => db.query(foundSql(FINDING), [mine])),
+          withEntity(entity_id, (db) => db.query(foundSql(CASE_H), [entity_id])),
+          withEntity(mine, (db) => db.query(foundSql(FINDING), [mine]))
         ]);
         /* ⚠️ re-sorted after the merge. Two ordered reads concatenated are NOT ordered, and the section below
            groups by kind — an unsorted list would print incidents interleaved with requirements. */
-        found = { rows: (cases.rows || []).concat(findings.rows || [])
-          .sort((a, b) => (a.kind + a.name).localeCompare(b.kind + b.name)) };
+        found = {
+          rows: (cases.rows || []).concat(findings.rows || []).sort((first, second) => (first.kind + first.name).localeCompare(second.kind + second.name))
+        };
       }
-    } catch (e) { logger.fellBack('testing GET /report: the read failed — answered with none', e); found = { rows: [] }; }
+    } catch (e) {
+      logger.fellBack('testing GET /report: the read failed — answered with none', e);
+      found = { rows: [] };
+    }
 
     const KINDW = { testcase: 'case', spec: 'requirement', incident: 'incident' };
     /**
@@ -2586,11 +3099,14 @@ router.get('/report', auth, async (req, res) => {
       const st = String(r.state || '');
       const kind = KINDW[x.kind] || x.kind;
       const work = teststatus.workStatus({
-        kind: kind === 'case' ? 'case' : (kind === 'incident' ? 'incident' : 'requirement'),
-        state: st, retired: x.status === 'retired', last: null,
+        kind: kind === 'case' ? 'case' : kind === 'incident' ? 'incident' : 'requirement',
+        state: st,
+        retired: x.status === 'retired',
+        last: null
       });
       return {
-        kind: kind, ref: x.name,
+        kind: kind,
+        ref: x.name,
         screen: r.screen_code || null,
         what: r.title || r.requirement || r.observed || '',
         seen: r.observed || null,
@@ -2598,11 +3114,13 @@ router.get('/report', auth, async (req, res) => {
         at: r.written_at || r.raised_at || null,
         state: st || (teststatus.isOpen(work) ? 'open' : 'closed'),
         /* ⭐ the same word the board shows, and what it asks of the reader */
-        work_status: work, work_label: teststatus.LABEL[work], next: teststatus.TELL[work],
+        work_status: work,
+        work_label: teststatus.LABEL[work],
+        next: teststatus.TELL[work],
         open: teststatus.isOpen(work),
         closed_note: r.closed_note || r.why || null,
         closed_by: r.closed_by || null,
-        has_screenshot: !!r.evidence_id,
+        has_screenshot: !!r.evidence_id
       };
     });
     const tested = n.total - n.untested;
@@ -2625,7 +3143,7 @@ router.get('/report', auth, async (req, res) => {
         incident: 'Incident Report (ISO/IEC/IEEE 29119-3)',
         report: 'Test Completion Report (ISO/IEC/IEEE 29119-3)',
         results: 'JUnit XML — the de-facto interchange every CI writes',
-        feature: 'Gherkin .feature — the clause and its scenarios in one text',
+        feature: 'Gherkin .feature — the clause and its scenarios in one text'
       },
       /* ⚠️ named so a reader can check it, and because IEEE 829 is the one most people expect */
       supersedes: 'IEEE 829 (withdrawn 2013)',
@@ -2634,7 +3152,10 @@ router.get('/report', auth, async (req, res) => {
       project: pj.project,
 
       sections: [
-        { id: '1', title: 'Overview', source: 'measured',
+        {
+          id: '1',
+          title: 'Overview',
+          source: 'measured',
           body: {
             /**
              * ⚠️⚠️ IT WAS DEDUPING WHOLE STRINGS, NOT NAMES — so the report listed the same person twice.
@@ -2647,42 +3168,63 @@ router.get('/report', auth, async (req, res) => {
              * and a Tested-by line that repeats a name is the single thing most likely to make a reader think
              * otherwise. [[feedback-silence-is-the-bug]]
              */
-            tested_by: [...new Set(
-              data.runs.flatMap((r) => String(r.testers || '').split(',').map((x) => x.trim()))
-                .filter(Boolean)
-            )].join(', ') || '—',
-            period: data.runs.length
-              ? { from: data.runs[data.runs.length - 1].started, to: data.runs[0].finished } : null,
+            tested_by:
+              [
+                ...new Set(
+                  data.runs
+                    .flatMap((item) =>
+                      String(item.testers || '')
+                        .split(',')
+                        .map((x) => x.trim())
+                    )
+                    .filter(Boolean)
+                )
+              ].join(', ') || '—',
+            period: data.runs.length ? { from: data.runs[data.runs.length - 1].started, to: data.runs[0].finished } : null,
             runs: data.runs.length,
-            kinds: [...new Set(data.runs.flatMap((r) => String(r.kinds || '').split(', ')))].filter(Boolean),
-            layers: [...new Set(data.runs.flatMap((r) => String(r.layers || '').split(', ')))].filter(Boolean),
-            builds: [...new Set(data.runs.map((r) => r.build).filter(Boolean))],
-          } },
+            kinds: [...new Set(data.runs.flatMap((item) => String(item.kinds || '').split(', ')))].filter(Boolean),
+            layers: [...new Set(data.runs.flatMap((item) => String(item.layers || '').split(', ')))].filter(Boolean),
+            builds: [...new Set(data.runs.map((item) => item.build).filter(Boolean))]
+          }
+        },
 
         /**
          * ⚠️ IT IS THE LATEST WORD PER CASE, not every row ever written — the same rule the totals use. A
          * tester who ran one case five times has run ONE case, and a report that says five is a report that
          * rewards re-pressing the button.
          */
-        { id: '1b', title: 'By tester', source: 'measured',
+        {
+          id: '1b',
+          title: 'By tester',
+          source: 'measured',
           body: {
-            people: data.people.map((p) => ({
-              tester: p.tester_name || 'someone', tester_id: p.tested_by,
-              recorded: p.recorded, passed: p.passed, failed: p.failed,
-              blocked: p.blocked, skipped: p.skipped,
-              first_at: p.first_at, last_at: p.last_at,
+            people: data.people.map((item) => ({
+              tester: item.tester_name || 'someone',
+              tester_id: item.tested_by,
+              recorded: item.recorded,
+              passed: item.passed,
+              failed: item.failed,
+              blocked: item.blocked,
+              skipped: item.skipped,
+              first_at: item.first_at,
+              last_at: item.last_at
             })),
-            note: data.people.length > 1
-              ? 'Everyone signed in to this entity writes to one board; each row carries who recorded it.'
-              : 'One person has recorded anything so far.',
-          } },
+            note:
+              data.people.length > 1
+                ? 'Everyone signed in to this entity writes to one board; each row carries who recorded it.'
+                : 'One person has recorded anything so far.'
+          }
+        },
 
         /**
          * ⭐ EVERY KIND WE DECLARE, INCLUDING THE ONES AT ZERO. Same rule as the empty columns on the matrix:
          * a kind left out because nobody wrote one lets "we have none" pass for "not applicable", and those
          * are opposite claims. Penetration in particular is shown at zero on purpose.
          */
-        { id: '2b', title: 'Types of testing performed', source: 'measured',
+        {
+          id: '2b',
+          title: 'Types of testing performed',
+          source: 'measured',
           body: {
             kinds: (function () {
               const SAYS = {
@@ -2695,87 +3237,119 @@ router.get('/report', auth, async (req, res) => {
                 security: 'Forged tokens, algorithm pinning, key scopes, tenant isolation, unguarded routes.',
                 penetration: 'An attacker trying to get in. There is none.',
                 screen: 'A named screen, walked by a person.',
-                support: 'Not a test — a fixture or harness other tests stand on.',
+                support: 'Not a test — a fixture or harness other tests stand on.'
               };
               const got = {};
-              (data.kinds || []).forEach((k) => { got[k.test_type] = k; });
+              (data.kinds || []).forEach((item) => {
+                got[item.test_type] = item;
+              });
               /* ⚠️ the DECLARED list leads, so a kind with no cases still gets a row */
-              const order = TEST_TYPES.concat(Object.keys(got).filter((k) => TEST_TYPES.indexOf(k) < 0));
-              return order.map((k) => {
-                const g = got[k] || { total: 0, run: 0, passed: 0, failed: 0 };
-                return { kind: k, says: SAYS[k] || null,
-                  total: g.total, run: g.run, passed: g.passed, failed: g.failed };
+              const order = TEST_TYPES.concat(Object.keys(got).filter((item) => TEST_TYPES.indexOf(item) < 0));
+              return order.map((item) => {
+                const g = got[item] || { total: 0, run: 0, passed: 0, failed: 0 };
+                return { kind: item, says: SAYS[item] || null, total: g.total, run: g.run, passed: g.passed, failed: g.failed };
               });
             })(),
-            note: 'What was RUN, not how good the product is. "14 of 18 security cases passed" is evidence; '
-              + '"the product is secure" is a judgement and belongs to section 6, with a person.',
-          } },
+            note:
+              'What was RUN, not how good the product is. "14 of 18 security cases passed" is evidence; ' +
+              '"the product is secure" is a judgement and belongs to section 6, with a person.'
+          }
+        },
 
-        { id: '2', title: 'Test results', source: 'measured',
-          body: { totals: n, tested: tested,
+        {
+          id: '2',
+          title: 'Test results',
+          source: 'measured',
+          body: {
+            totals: n,
+            tested: tested,
             coverage_pct: n.total ? Math.round((tested / n.total) * 100) : 0,
             pass_pct: tested ? Math.round((n.passed / tested) * 100) : 0,
-            by_feature: data.cover } },
+            by_feature: data.cover
+          }
+        },
 
-        { id: '3', title: 'Incidents', source: 'measured',
-          body: { count: incidents.length, items: incidents } },
+        { id: '3', title: 'Incidents', source: 'measured', body: { count: incidents.length, items: incidents } },
 
         /* ⭐ 3b, beside 3, because they answer different questions with the same word */
-        { id: '3b', title: 'Raised by people', source: 'measured',
+        {
+          id: '3b',
+          title: 'Raised by people',
+          source: 'measured',
           body: {
             total: foundRows.length,
-            open: foundRows.filter((r) => r.open).length,
-            closed: foundRows.filter((r) => !r.open).length,
+            open: foundRows.filter((item) => item.open).length,
+            closed: foundRows.filter((item) => !item.open).length,
             /**
              * ⭐ THE SAME SEVEN WORDS THE BOARD USES, in the same order — what is waiting on somebody first.
              * ⚠️ `awaiting_retest` is pulled out by name because it is the one a release meeting must not
              * miss: somebody says it is fixed and nobody has checked. Under the old binary it was filed as
              * CLOSED and could not be seen at all.
              */
-            by_status: teststatus.ORDER
-              .map((k) => ({ status: k, label: teststatus.LABEL[k], next: teststatus.TELL[k],
-                             count: foundRows.filter((r) => r.work_status === k).length }))
-              .filter((x) => x.count),
-            awaiting_retest: foundRows.filter((r) => r.work_status === 'retest').length,
-            by_kind: ['case', 'requirement', 'incident'].map((k) => ({
-              kind: k,
-              total: foundRows.filter((r) => r.kind === k).length,
-              open: foundRows.filter((r) => r.kind === k && r.open).length,
+            by_status: teststatus.ORDER.map((item) => ({
+              status: item,
+              label: teststatus.LABEL[item],
+              next: teststatus.TELL[item],
+              count: foundRows.filter((r) => r.work_status === item).length
+            })).filter((x) => x.count),
+            awaiting_retest: foundRows.filter((item) => item.work_status === 'retest').length,
+            by_kind: ['case', 'requirement', 'incident'].map((item) => ({
+              kind: item,
+              total: foundRows.filter((r) => r.kind === item).length,
+              open: foundRows.filter((r) => r.kind === item && r.open).length
             })),
             items: foundRows,
             /* ⚠️ said in the document, because the two sections WILL be read as the same thing otherwise */
-            note: 'Section 3 counts failed RESULTS. This counts what a person RAISED while testing \u2014 cases '
-              + 'written on a screen, requirements, and incidents. A day with no failed results can still have '
-              + 'findings here, and it is usually the more useful list. The status words are the ones on the '
-              + 'board (Test Capture and Test Manager): Retest \u00b7 To do \u00b7 Failed \u00b7 Change asked \u00b7 '
-              + 'Agreed \u00b7 Blocked \u00b7 Passed \u00b7 Closed.',
+            note:
+              'Section 3 counts failed RESULTS. This counts what a person RAISED while testing \u2014 cases ' +
+              'written on a screen, requirements, and incidents. A day with no failed results can still have ' +
+              'findings here, and it is usually the more useful list. The status words are the ones on the ' +
+              'board (Test Capture and Test Manager): Retest \u00b7 To do \u00b7 Failed \u00b7 Change asked \u00b7 ' +
+              'Agreed \u00b7 Blocked \u00b7 Passed \u00b7 Closed.',
             /* ⚠️ a closure with no reason is reported as such: it is the gap the closing note exists to fill */
-            closed_without_reason: foundRows.filter((r) => !r.open && !r.closed_note).length,
-          } },
+            closed_without_reason: foundRows.filter((item) => !item.open && !item.closed_note).length
+          }
+        },
 
-        { id: '4', title: 'Factors blocking progress', source: 'measured',
+        {
+          id: '4',
+          title: 'Factors blocking progress',
+          source: 'measured',
           /* ⭐ 29119-3 asks for this by name, and we HAVE it: a blocked case is a case somebody could not reach. */
-          body: { blocked: data.bad.filter((r) => r.status === 'blocked').length,
-            items: data.bad.filter((r) => r.status === 'blocked') } },
+          body: { blocked: data.bad.filter((item) => item.status === 'blocked').length, items: data.bad.filter((item) => item.status === 'blocked') }
+        },
 
         /* ⭐ N07 — 29119-3 §5 "comparison against plan". The plan IS the board's case definitions (cases =
            definitions), so these are COUNTS lifted from the same rows as §2 — never typed, never a sentence. */
-        { id: '5a', title: 'Comparison against the plan', source: 'measured',
-          body: { levels: data.plan,
-            planned: data.plan.reduce((t, x) => t + x.planned, 0),
-            executed: data.plan.reduce((t, x) => t + x.executed, 0),
-            passed: data.plan.reduce((t, x) => t + x.passed, 0),
-            note: 'Planned = cases defined on the board. Executed = defined cases with a recorded result. '
-              + 'Passed = executed cases whose latest word is pass.' } },
+        {
+          id: '5a',
+          title: 'Comparison against the plan',
+          source: 'measured',
+          body: {
+            levels: data.plan,
+            planned: data.plan.reduce((total, x) => total + x.planned, 0),
+            executed: data.plan.reduce((total, x) => total + x.executed, 0),
+            passed: data.plan.reduce((total, x) => total + x.passed, 0),
+            note:
+              'Planned = cases defined on the board. Executed = defined cases with a recorded result. ' + 'Passed = executed cases whose latest word is pass.'
+          }
+        },
 
         /* ⚠️ A JUDGEMENT HEADING: the app never fills it. It asks; a person answers. */
-        { id: '5', title: 'Deviations from the test plan', source: 'needs a person',
-          asks: 'What was planned that did not happen, and why? The counts above show how far the defined cases '
-              + 'were run; the reasons are yours to give.' },
+        {
+          id: '5',
+          title: 'Deviations from the test plan',
+          source: 'needs a person',
+          asks: 'What was planned that did not happen, and why? The counts above show how far the defined cases ' + 'were run; the reasons are yours to give.'
+        },
 
-        { id: '6', title: 'Test completion evaluation', source: 'needs a person',
-          asks: 'Were the exit criteria met? No exit criteria are declared, so this cannot be measured — the '
-              + 'numbers in section 2 are evidence FOR the judgement, not the judgement.',
+        {
+          id: '6',
+          title: 'Test completion evaluation',
+          source: 'needs a person',
+          asks:
+            'Were the exit criteria met? No exit criteria are declared, so this cannot be measured — the ' +
+            'numbers in section 2 are evidence FOR the judgement, not the judgement.',
           /* ⚠️ THE TWO FACTS THAT MOST OFTEN MAKE A GREEN REPORT WRONG, stated where the evaluation is made */
           caveats: [
             /**
@@ -2794,29 +3368,37 @@ router.get('/report', auth, async (req, res) => {
              * ⭐ These two fire on ZERO, which is exactly when the others cannot.
              */
             !n.total
-              ? 'THERE ARE NO TEST CASES ON THIS BOARD. Every count in section 2 is zero because nothing has '
-                + 'been declared — not because it was tested and found clean. Nothing here may be signed.'
+              ? 'THERE ARE NO TEST CASES ON THIS BOARD. Every count in section 2 is zero because nothing has ' +
+                'been declared — not because it was tested and found clean. Nothing here may be signed.'
               : null,
-            (n.total && !(n.total - n.untested))
-              ? 'NOT ONE CASE HAS EVER BEEN RUN. The board holds ' + n.total + ' case(s) and no result exists '
-                + 'for any of them, so this report records what is INTENDED, never what was observed.'
+            n.total && !(n.total - n.untested)
+              ? 'NOT ONE CASE HAS EVER BEEN RUN. The board holds ' +
+                n.total +
+                ' case(s) and no result exists ' +
+                'for any of them, so this report records what is INTENDED, never what was observed.'
               : null,
-            n.untested ? n.untested + ' case(s) have never been run'
-              + (n.high_untested ? ', ' + n.high_untested + ' of them High priority' : '') : null,
-            data.stale ? data.stale + ' case(s) cite an older version of their spec clause, so a pass on them is '
-              + 'not evidence about what the spec says today' : null,
-          ].filter(Boolean) },
+            n.untested ? n.untested + ' case(s) have never been run' + (n.high_untested ? ', ' + n.high_untested + ' of them High priority' : '') : null,
+            data.stale
+              ? data.stale + ' case(s) cite an older version of their spec clause, so a pass on them is ' + 'not evidence about what the spec says today'
+              : null
+          ].filter(Boolean)
+        },
 
-        { id: '7', title: 'Residual risks', source: 'needs a person',
-          asks: 'What is still not known, and what would it cost if it is wrong? A count of passes is not a risk '
-              + 'assessment.' },
+        {
+          id: '7',
+          title: 'Residual risks',
+          source: 'needs a person',
+          asks: 'What is still not known, and what would it cost if it is wrong? A count of passes is not a risk ' + 'assessment.'
+        },
 
-        { id: '8', title: 'Reusable test assets', source: 'measured',
-          body: { cases: n.total, features: data.cover.length,
-            note: 'Every case is a versioned definition and can be exported as Gherkin (.feature).' } },
+        {
+          id: '8',
+          title: 'Reusable test assets',
+          source: 'measured',
+          body: { cases: n.total, features: data.cover.length, note: 'Every case is a versioned definition and can be exported as Gherkin (.feature).' }
+        },
 
-        { id: '9', title: 'Lessons learned and recommendations', source: 'needs a person',
-          asks: 'What should be done differently next time?' },
+        { id: '9', title: 'Lessons learned and recommendations', source: 'needs a person', asks: 'What should be done differently next time?' },
 
         /**
          * ⚠️⚠️⚠️ NO SIGNATURE BLOCK OVER AN EMPTY BOARD. Two ruled signature lines under a document whose
@@ -2826,17 +3408,24 @@ router.get('/report', auth, async (req, res) => {
          * ⚠️ The clause is NOT hidden. An empty report is a legitimate and useful document — "we have
          * declared nothing and run nothing" — it simply must not be signable.
          */
-        (n.total && (n.total - n.untested))
-          ? { id: '10', title: 'Approval', source: 'needs a person',
-              asks: 'Who accepts this report, and on what date? ⚠️ Nothing here signs anything — a generated '
-                  + 'document must not carry an approval nobody gave.' }
-          : { id: '10', title: 'Approval', source: 'needs a person', no_sign: true,
+        n.total && n.total - n.untested
+          ? {
+              id: '10',
+              title: 'Approval',
+              source: 'needs a person',
+              asks:
+                'Who accepts this report, and on what date? ⚠️ Nothing here signs anything — a generated ' + 'document must not carry an approval nobody gave.'
+            }
+          : {
+              id: '10',
+              title: 'Approval',
+              source: 'needs a person',
+              no_sign: true,
               asks: !n.total
-                ? 'There is nothing to approve: this board holds no test cases. The signature block appears '
-                  + 'once there is a result to stand behind.'
-                : 'There is nothing to approve: no case on this board has been run. The signature block '
-                  + 'appears once there is a result to stand behind.' },
-      ],
+                ? 'There is nothing to approve: this board holds no test cases. The signature block appears ' + 'once there is a result to stand behind.'
+                : 'There is nothing to approve: no case on this board has been run. The signature block ' + 'appears once there is a result to stand behind.'
+            }
+      ]
     });
   } catch (err) {
     res.status(500).json({ error: 'Could not build the report', message: safeErr(err) });
@@ -2870,8 +3459,9 @@ router.get('/reliability', auth, async (req, res) => {
     const q = req.query || {};
     const kind = q.run_kind ? String(q.run_kind) : null;
 
-    const r = await withEntity(entity_id, (db) => db.query(
-      `WITH ordered AS (
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `WITH ordered AS (
          SELECT case_key, module_key, status, at, run_kind, layer,
                 lag(status) OVER (PARTITION BY case_key ORDER BY at) AS prev
            FROM test_result
@@ -2898,47 +3488,66 @@ router.get('/reliability', auth, async (req, res) => {
        )
        SELECT a.*, l.last_status, l.tester_name, l.last_kind
          FROM agg a JOIN latest l ON l.case_key = a.case_key
-        ORDER BY a.flips DESC, a.failed DESC, a.case_key`, [entity_id, kind]));
+        ORDER BY a.flips DESC, a.failed DESC, a.case_key`,
+        [entity_id, kind]
+      )
+    );
 
     const rows = r.rows.map((x) => {
-      const runs = Number(x.runs), failed = Number(x.failed), flips = Number(x.flips);
+      const runs = Number(x.runs),
+        failed = Number(x.failed),
+        flips = Number(x.flips);
       return {
-        case_key: x.case_key, module_key: x.module_key,
-        runs, passed: Number(x.passed), failed, blocked: Number(x.blocked), skipped: Number(x.skipped),
+        case_key: x.case_key,
+        module_key: x.module_key,
+        runs,
+        passed: Number(x.passed),
+        failed,
+        blocked: Number(x.blocked),
+        skipped: Number(x.skipped),
         flips,
         pass_rate: runs ? Math.round((Number(x.passed) / runs) * 100) : 0,
-        first_seen: x.first_seen, last_seen: x.last_seen,
-        kinds: x.kinds, layers: x.layers,
-        last_status: x.last_status, tester_name: x.tester_name, last_kind: x.last_kind,
+        first_seen: x.first_seen,
+        last_seen: x.last_seen,
+        kinds: x.kinds,
+        layers: x.layers,
+        last_status: x.last_status,
+        tester_name: x.tester_name,
+        last_kind: x.last_kind,
         /**
          * ⭐ THE VERDICT, IN WORDS, BECAUSE A NUMBER IS NOT A DECISION.
          * ⚠ 'once' is not a judgement at all and says so — a single green run is the commonest way a suite
          * claims maturity it has not earned, and calling it 'settled' would be this metric telling the lie it
          * exists to catch.
          */
-        verdict: runs < 2 ? 'run once — nothing to judge yet'
-          : flips === 0 && failed === 0 ? 'settled'
-          /**
-           * ⚠️⚠️ THIS USED TO SAY "the product, not the test", AND IT WAS WRONG ABOUT HALF OF THEM.
-           *
-           * A triage of the 27 reds on 2026-09-11 found 9 genuine product faults, 13 STALE TESTS and 4 that
-           * should never have run unattended. `products-bulk.test.cjs` tests a file deliberately deleted in
-           * September; `arrow-probe.cjs` wants an env var that is not here. Both fail every single time with
-           * zero flips — indistinguishable, from this data, from a real defect.
-           *
-           * ⭐ Flips can tell you a test is NOT mature. Nothing here can tell you that a consistent failure is
-           * the product's fault, and saying so sent somebody to read nine files that were fine.
-           */
-          : flips === 0 ? 'red every time — a defect, or a test that has gone stale; this cannot tell which'
-          : flips === 1 ? 'changed once — a fix or a regression, not drift'
-          : 'DRIFTING — ' + flips + ' changes of answer across ' + runs + ' runs; this test is not mature',
+        verdict:
+          runs < 2
+            ? 'run once — nothing to judge yet'
+            : flips === 0 && failed === 0
+              ? 'settled'
+              : /**
+                 * ⚠️⚠️ THIS USED TO SAY "the product, not the test", AND IT WAS WRONG ABOUT HALF OF THEM.
+                 *
+                 * A triage of the 27 reds on 2026-09-11 found 9 genuine product faults, 13 STALE TESTS and 4 that
+                 * should never have run unattended. `products-bulk.test.cjs` tests a file deliberately deleted in
+                 * September; `arrow-probe.cjs` wants an env var that is not here. Both fail every single time with
+                 * zero flips — indistinguishable, from this data, from a real defect.
+                 *
+                 * ⭐ Flips can tell you a test is NOT mature. Nothing here can tell you that a consistent failure is
+                 * the product's fault, and saying so sent somebody to read nine files that were fine.
+                 */
+                flips === 0
+                ? 'red every time — a defect, or a test that has gone stale; this cannot tell which'
+                : flips === 1
+                  ? 'changed once — a fix or a regression, not drift'
+                  : 'DRIFTING — ' + flips + ' changes of answer across ' + runs + ' runs; this test is not mature'
       };
     });
 
     /* ⭐ a SITTING is one posted run, however many results it carried */
-    const sittings = await withEntity(entity_id, (db) => db.query(
-      'SELECT COUNT(DISTINCT run_id)::int AS n FROM test_result WHERE entity_id = $1', [entity_id]))
-      .then((r) => (r.rows[0] || {}).n || 0);
+    const sittings = await withEntity(entity_id, (db) =>
+      db.query('SELECT COUNT(DISTINCT run_id)::int AS n FROM test_result WHERE entity_id = $1', [entity_id])
+    ).then((reply) => (reply.rows[0] || {}).n || 0);
 
     const drifting = rows.filter((x) => x.flips >= 2);
     const settled = rows.filter((x) => x.runs >= 2 && x.flips === 0 && x.failed === 0);
@@ -2952,19 +3561,20 @@ router.get('/reliability', auth, async (req, res) => {
          * a reader how much history there is to trust. Both figures are worth having; they are not the same
          * figure and must not share a label.
          */
-        results: rows.reduce((a, x) => a + x.runs, 0),
+        results: rows.reduce((total, x) => total + x.runs, 0),
         runs: sittings,
-        failures: rows.reduce((a, x) => a + x.failed, 0),
+        failures: rows.reduce((total, x) => total + x.failed, 0),
         drifting: drifting.length,
         settled: settled.length,
-        once: rows.filter((x) => x.runs < 2).length,
+        once: rows.filter((x) => x.runs < 2).length
       },
       says: rows.length
-        ? (drifting.length
-            ? drifting.length + ' test(s) have changed their answer more than once. Those are the ones to read '
-              + 'first \u2014 a test nobody can believe costs more than a missing one.'
-            : 'Nothing is drifting. Every test that has run twice has given the same answer both times.')
-        : 'Nothing has been recorded yet.',
+        ? drifting.length
+          ? drifting.length +
+            ' test(s) have changed their answer more than once. Those are the ones to read ' +
+            'first \u2014 a test nobody can believe costs more than a missing one.'
+          : 'Nothing is drifting. Every test that has run twice has given the same answer both times.'
+        : 'Nothing has been recorded yet.'
     });
   } catch (err) {
     res.status(500).json({ error: 'Could not read the history', message: safeErr(err) });
@@ -3015,7 +3625,9 @@ const RISKS = ['routine', 'significant', 'emergency'];
  * ⚠️ It is forced, not merely defaulted: a caller cannot declare a migration routine.
  */
 function riskOf(body) {
-  const asked = String((body || {}).risk || '').trim().toLowerCase();
+  const asked = String((body || {}).risk || '')
+    .trim()
+    .toLowerCase();
   const paths = String((body || {}).files || '') + ' ' + String((body || {}).summary || '');
   if ((body || {}).migration === true || /\bmigrations?\//i.test(paths) || /\bb\d{3}_[a-z_]+\.sql\b/i.test(paths)) {
     return { risk: 'significant', forced: 'a migration is always significant — see b237' };
@@ -3051,23 +3663,35 @@ router.post('/changes', auth, async (req, res) => {
        A change with no BACKOUT has not been thought through; writing the sentence is the review.
        A change with no SUMMARY is a sha, and a sha is not a record. */
     if (!summary) return res.status(400).json({ error: 'Nothing recorded', message: 'Say what the change does.' });
-    if (!backout) return res.status(400).json({ error: 'No way back',
-      message: 'How would you undo this? ⚠️ Written before it ships, not after — if the answer is "I am not sure", that is the finding.' });
-    if (!cites || !String(cites.ref || '').trim()) return res.status(400).json({ error: 'No cause',
-      message: 'Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep.' });
+    if (!backout)
+      return res.status(400).json({
+        error: 'No way back',
+        message: 'How would you undo this? ⚠️ Written before it ships, not after — if the answer is "I am not sure", that is the finding.'
+      });
+    if (!cites || !String(cites.ref || '').trim())
+      return res.status(400).json({
+        error: 'No cause',
+        message: 'Name the incident or requirement this answers. A change with no cause is either undocumented work or scope creep.'
+      });
 
     const { risk, forced } = riskOf(b);
-    const name = String(b.ref || '').trim()
-      || ('CHG-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-'
-          + Math.random().toString(36).slice(2, 6).toUpperCase());
+    const name =
+      String(b.ref || '').trim() ||
+      'CHG-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
 
     const out = await withEntity(entity_id, async (db) => {
       const rules = {
-        text: summary, backout, risk,
+        text: summary,
+        backout,
+        risk,
         /* ⚠️ the entity is captured WITH the reference. An incident lives in the entity that raised it, and by
            release time there is no other way to find out which one that was. */
-        cites: { kind: String(cites.kind || 'incident'), ref: String(cites.ref).trim(),
-                 definition_id: cites.definition_id || null, entity_id: citedEntityOf(entity_id, cites) },
+        cites: {
+          kind: String(cites.kind || 'incident'),
+          ref: String(cites.ref).trim(),
+          definition_id: cites.definition_id || null,
+          entity_id: citedEntityOf(entity_id, cites)
+        },
         repo: String(b.repo || '').trim() || null,
         /* ⭐ the SHA is the record. A branch name rots the moment it is merged or deleted. */
         sha: String(b.sha || '').trim() || null,
@@ -3075,26 +3699,35 @@ router.post('/changes', auth, async (req, res) => {
         proves: Array.isArray(b.proves) ? b.proves.map((x) => String(x).trim()).filter(Boolean) : [],
         shipped_in: null,
         state: 'proposed',
-        raised_by: who.name, raised_by_id: who.id, raised_at: new Date().toISOString(),
-        history: [{ state: 'proposed', by: who.name, at: new Date().toISOString(), why: forced }],
+        raised_by: who.name,
+        raised_by_id: who.id,
+        raised_at: new Date().toISOString(),
+        history: [{ state: 'proposed', by: who.name, at: new Date().toISOString(), why: forced }]
       };
       const ins = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'change',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
-        [entity_id, risk, name, summary.slice(0, 200), who.id]);
+        [entity_id, risk, name, summary.slice(0, 200), who.id]
+      );
       const id = ins.rows[0].definition_id;
-      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                      VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`,
+        [id, entity_id, JSON.stringify(rules), who.id]
+      );
       return { definition_id: id, ref: name, risk, rules };
     });
 
-    require('../lib/testnews').testRaised(entity_id, 'change', out.ref,
-      { state: 'proposed', by: who.id, byName: who.name });
+    require('../lib/testnews').testRaised(entity_id, 'change', out.ref, { state: 'proposed', by: who.id, byName: who.name });
 
-    res.status(201).json({ ok: true, ...out, forced_risk: forced,
+    res.status(201).json({
+      ok: true,
+      ...out,
+      forced_risk: forced,
       /* ⭐ said out loud rather than silently applied — a rule that changes your answer without telling you is
          one you will argue with the first time it matters. */
-      needs_review: risk !== 'routine' });
+      needs_review: risk !== 'routine'
+    });
   } catch (e) {
     console.error('change create:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to record the change', message: safeErr(e) });
@@ -3106,29 +3739,47 @@ router.get('/changes', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
     const want = String((req.query || {}).state || 'open');
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT d.definition_id, d.name, d.sub_kind, d.status, d.updated_at, v.rules
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'change'
-        ORDER BY d.updated_at DESC LIMIT 500`, [entity_id]));
+        ORDER BY d.updated_at DESC LIMIT 500`,
+        [entity_id]
+      )
+    );
     const all = r.rows.map((x) => {
       const ru = x.rules || {};
-      return { definition_id: x.definition_id, ref: x.name, risk: x.sub_kind || ru.risk || 'routine',
-        summary: ru.text || '', backout: ru.backout || '', cites: ru.cites || null,
-        repo: ru.repo || null, sha: ru.sha || null, proves: ru.proves || [],
-        shipped_in: ru.shipped_in || null, state: ru.state || 'proposed', shelf: x.status,
+      return {
+        definition_id: x.definition_id,
+        ref: x.name,
+        risk: x.sub_kind || ru.risk || 'routine',
+        summary: ru.text || '',
+        backout: ru.backout || '',
+        cites: ru.cites || null,
+        repo: ru.repo || null,
+        sha: ru.sha || null,
+        proves: ru.proves || [],
+        shipped_in: ru.shipped_in || null,
+        state: ru.state || 'proposed',
+        shelf: x.status,
         /* ⭐ ONE RULE, ON THE SERVER — the board, the screen and the report print the same verdict because
            they all read this. ⚠️ proves is passed: a change that shipped proving nothing reads "retest",
            not 'closed', which is the whole reason the field is allowed to be empty. */
-        work_status: teststatus.workStatus({ kind: 'change', state: ru.state || 'proposed',
-                                             proves: ru.proves || [] }),
-        raised_by: ru.raised_by || null, at: x.updated_at, history: ru.history || [] };
+        work_status: teststatus.workStatus({ kind: 'change', state: ru.state || 'proposed', proves: ru.proves || [] }),
+        raised_by: ru.raised_by || null,
+        at: x.updated_at,
+        history: ru.history || []
+      };
     });
-    const open = all.filter((c) => c.state === 'proposed' || c.state === 'reviewed');
-    const list = want === 'all' ? all : (want === 'open' ? open : all.filter((c) => c.state === want));
-    res.json(Object.assign(pageOut('changes', list, pageArgs(req.query, PAGE.findings, PAGE.findings)), { counts: { all: all.length, open: open.length,
-      unproven: all.filter((c) => !(c.proves || []).length).length } }));
+    const open = all.filter((item) => item.state === 'proposed' || item.state === 'reviewed');
+    const list = want === 'all' ? all : want === 'open' ? open : all.filter((item) => item.state === want);
+    res.json(
+      Object.assign(pageOut('changes', list, pageArgs(req.query, PAGE.findings, PAGE.findings)), {
+        counts: { all: all.length, open: open.length, unproven: all.filter((item) => !(item.proves || []).length).length }
+      })
+    );
   } catch (e) {
     console.error('changes list:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to list changes' });
@@ -3157,10 +3808,9 @@ router.post('/releases', auth, async (req, res) => {
     const name = String(b.name || '').trim();
     const ids = Array.isArray(b.changes) ? b.changes.map((x) => String(x).trim()).filter(Boolean) : [];
 
-    if (!name) return res.status(400).json({ error: 'Unnamed release',
-      message: 'Give it a tag — it is what a shop will be told its fix arrived in.' });
-    if (!ids.length) return res.status(400).json({ error: 'Nothing in it',
-      message: 'A release carries changes. One with none is a tag, and a tag tells nobody anything.' });
+    if (!name) return res.status(400).json({ error: 'Unnamed release', message: 'Give it a tag — it is what a shop will be told its fix arrived in.' });
+    if (!ids.length)
+      return res.status(400).json({ error: 'Nothing in it', message: 'A release carries changes. One with none is a tag, and a tag tells nobody anything.' });
 
     const carried = await withEntity(entity_id, async (db) => {
       const got = await db.query(
@@ -3168,7 +3818,8 @@ router.post('/releases', auth, async (req, res) => {
            FROM definition d
            JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'change' AND d.definition_id = ANY($2::uuid[])`,
-        [entity_id, ids]);
+        [entity_id, ids]
+      );
 
       const rows = got.rows.map((x) => ({ id: x.definition_id, ref: x.name, v: x.current_version, rules: x.rules || {} }));
 
@@ -3177,26 +3828,41 @@ router.post('/releases', auth, async (req, res) => {
         carried: rows.map((x) => ({ definition_id: x.id, ref: x.ref, risk: x.rules.risk || 'routine' })),
         /* ⭐ every case any carried change claims to be proved by, de-duplicated — the release's own evidence. */
         proves: [...new Set(rows.flatMap((x) => x.rules.proves || []))],
-        state: 'shipped', cut_by: who.name, cut_by_id: who.id, at: new Date().toISOString(),
+        state: 'shipped',
+        cut_by: who.name,
+        cut_by_id: who.id,
+        at: new Date().toISOString()
       };
       const ins = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
          VALUES ($1,'release',NULL,$2,$3,'live',1,$4) RETURNING definition_id`,
-        [entity_id, name, rel.text, who.id]);
+        [entity_id, name, rel.text, who.id]
+      );
       const relId = ins.rows[0].definition_id;
-      await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                      VALUES ($1,1,$2,$3,$4)`, [relId, entity_id, JSON.stringify(rel), who.id]);
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
+                      VALUES ($1,1,$2,$3,$4)`,
+        [relId, entity_id, JSON.stringify(rel), who.id]
+      );
 
       /* ⭐ each change now knows what carried it — written by the release, never by hand. */
       for (const x of rows) {
-        const next = { ...x.rules, state: 'shipped', shipped_in: name,
-          history: (x.rules.history || []).concat([{ state: 'shipped', by: who.name, at: rel.at, why: name }]) };
+        const next = {
+          ...x.rules,
+          state: 'shipped',
+          shipped_in: name,
+          history: (x.rules.history || []).concat([{ state: 'shipped', by: who.name, at: rel.at, why: name }])
+        };
         await db.query(
           `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-           VALUES ($1,$2,$3,$4,$5)`, [x.id, x.v + 1, entity_id, JSON.stringify(next), who.id]);
+           VALUES ($1,$2,$3,$4,$5)`,
+          [x.id, x.v + 1, entity_id, JSON.stringify(next), who.id]
+        );
         await db.query(
           `UPDATE definition SET current_version = $2, status = 'live', updated_at = now()
-            WHERE definition_id = $1 AND entity_id = $3`, [x.id, x.v + 1, entity_id]);
+            WHERE definition_id = $1 AND entity_id = $3`,
+          [x.id, x.v + 1, entity_id]
+        );
       }
       return { release_id: relId, rows, rel };
     });
@@ -3215,7 +3881,10 @@ router.post('/releases', auth, async (req, res) => {
       const c = x.rules.cites || {};
       if (!c.definition_id || !c.entity_id || c.kind !== 'incident') continue;
       /* SEC-FIX3 S1: a change recorded before this fix may name a stranger — only the root follows another entity, or `origin` */
-      if (!mayFollow && String(c.entity_id) !== String(entity_id)) { told.push({ ref: c.ref, resolved: false, why: 'not your incident' }); continue; }
+      if (!mayFollow && String(c.entity_id) !== String(entity_id)) {
+        told.push({ ref: c.ref, resolved: false, why: 'not your incident' });
+        continue;
+      }
       try {
         /* ⭐ ours first — the queue we work from. */
         const mine = await markIncidentResolved(c.entity_id, c.definition_id, name, who, carried.rel.at);
@@ -3227,11 +3896,16 @@ router.post('/releases', auth, async (req, res) => {
       }
     }
 
-    res.status(201).json({ ok: true, release_id: carried.release_id, name,
-      carried: carried.rel.carried, proves: carried.rel.proves,
+    res.status(201).json({
+      ok: true,
+      release_id: carried.release_id,
+      name,
+      carried: carried.rel.carried,
+      proves: carried.rel.proves,
       resolved: told,
       /* ⭐ the honest half of the receipt: a release whose changes prove nothing is a release nobody can retest. */
-      unproven: carried.rows.filter((x) => !(x.rules.proves || []).length).map((x) => x.ref) });
+      unproven: carried.rows.filter((x) => !(x.rules.proves || []).length).map((x) => x.ref)
+    });
   } catch (e) {
     console.error('release create:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to cut the release', message: safeErr(e) });
@@ -3267,7 +3941,8 @@ async function markIncidentResolved(entity_id, definition_id, releaseName, who, 
       `SELECT d.current_version, v.rules FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.definition_id = $1 AND d.entity_id = $2 AND d.kind = 'incident'`,
-      [definition_id, entity_id]);
+      [definition_id, entity_id]
+    );
     if (!cur.rows[0]) return { ok: false, why: 'not found' };
     const ru = cur.rows[0].rules || {};
     /* ⚠️ ONLY FROM AN OPEN STATE. A shop that already closed it has had the last word, and a release must not
@@ -3276,20 +3951,33 @@ async function markIncidentResolved(entity_id, definition_id, releaseName, who, 
       return { ok: false, why: 'already ' + (ru.state || 'raised'), origin: ru.origin || null };
     }
     const v = cur.rows[0].current_version + 1;
-    const next = Object.assign({}, ru, { state: 'resolved', resolved_in: releaseName,
-      history: (ru.history || []).concat([{ state: 'resolved', by: who.name, at, why: releaseName }]) });
+    const next = Object.assign({}, ru, {
+      state: 'resolved',
+      resolved_in: releaseName,
+      history: (ru.history || []).concat([{ state: 'resolved', by: who.name, at, why: releaseName }])
+    });
     await db.query(
       `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-       VALUES ($1,$2,$3,$4,$5)`, [definition_id, v, entity_id, JSON.stringify(next), who.id]);
+       VALUES ($1,$2,$3,$4,$5)`,
+      [definition_id, v, entity_id, JSON.stringify(next), who.id]
+    );
     await db.query(
       `UPDATE definition SET current_version = $2, updated_at = now()
-        WHERE definition_id = $1 AND entity_id = $3`, [definition_id, v, entity_id]);
+        WHERE definition_id = $1 AND entity_id = $3`,
+      [definition_id, v, entity_id]
+    );
     /* ⚠️ `forId` is the ORIGINAL RAISER. Everyone on that entity hears the event; only the person waiting is
        told it is theirs to verify. A message telling five people to check one fix gets checked by none. */
     try {
-      require('../lib/testnews').testRaised(entity_id, 'incident', ru.ref || null,
-        { state: 'resolved', forId: ru.raised_by_id || null, by: who.id, byName: who.name });
-    } catch (e) { logger.fellBack('testing markIncidentResolved: the helper failed — carried on without it', e); }
+      require('../lib/testnews').testRaised(entity_id, 'incident', ru.ref || null, {
+        state: 'resolved',
+        forId: ru.raised_by_id || null,
+        by: who.id,
+        byName: who.name
+      });
+    } catch (e) {
+      logger.fellBack('testing markIncidentResolved: the helper failed — carried on without it', e);
+    }
     return { ok: true, origin: ru.origin || null };
   });
 }
@@ -3298,26 +3986,40 @@ async function markIncidentResolved(entity_id, definition_id, releaseName, who, 
 router.get('/releases', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityForFinding(auth.entityOf(req));
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT d.definition_id, d.name, d.note, d.updated_at, v.rules
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT d.definition_id, d.name, d.note, d.updated_at, v.rules
          FROM definition d
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'release'
-        ORDER BY d.updated_at DESC LIMIT 200`, [entity_id]));
-    res.json(pageOut('releases', r.rows.map((x) => ({
-      definition_id: x.definition_id, name: x.name, note: x.note,
-      carried: (x.rules || {}).carried || [], proves: (x.rules || {}).proves || [],
-      work_status: teststatus.workStatus({ kind: 'release', proves: (x.rules || {}).proves || [] }),
-      cut_by: (x.rules || {}).cut_by || null, at: x.updated_at })), pageArgs(req.query, PAGE.releases, PAGE.releases)));
+        ORDER BY d.updated_at DESC LIMIT 200`,
+        [entity_id]
+      )
+    );
+    res.json(
+      pageOut(
+        'releases',
+        r.rows.map((x) => ({
+          definition_id: x.definition_id,
+          name: x.name,
+          note: x.note,
+          carried: (x.rules || {}).carried || [],
+          proves: (x.rules || {}).proves || [],
+          work_status: teststatus.workStatus({ kind: 'release', proves: (x.rules || {}).proves || [] }),
+          cut_by: (x.rules || {}).cut_by || null,
+          at: x.updated_at
+        })),
+        pageArgs(req.query, PAGE.releases, PAGE.releases)
+      )
+    );
   } catch (e) {
     console.error('releases list:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to list releases' });
   }
 });
 
-
 /* the project-column cache, for tests/junit-board.test.js only — the route never reads it from outside */
 router._proj = _proj;
 module.exports = router;
 router.citedEntityOf = citedEntityOf;
-router.resultsEntityOf = resultsEntityOf;   /* SEC-FIX3 — exported for tests/sec-fix3.test.cjs */
+router.resultsEntityOf = resultsEntityOf; /* SEC-FIX3 — exported for tests/sec-fix3.test.cjs */

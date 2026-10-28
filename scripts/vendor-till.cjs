@@ -9,7 +9,8 @@
  *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale — what tests/till-vendor.test.js uses)
  */
 'use strict';
-const fs = require('fs'), path = require('path');
+const fs = require('fs'),
+  path = require('path');
 const API = path.join(__dirname, '..');
 /* ⭐ M09: a worktree stack vendors into ITS web worktree, never the main checkout beside it — CB_WEB_DIR names it */
 const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');
@@ -22,16 +23,28 @@ const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'publi
  * till-vendor asserts. Stamping it HERE means a copy generated next month carries it too; stamping the files by hand would
  * last exactly until the next vendor run.
  */
-const GEN = '/* GENERATED — DO NOT EDIT. Written by chitbridge-api/scripts/vendor-till.cjs. Edit the master and re-run. */\n'
-  + '// @stage tested\n'
-  + '// @stage-note a byte-for-byte copy of the master, which is the thing the tests cover (scripts/vendor-till.cjs).\n';
+const GEN =
+  '/* GENERATED — DO NOT EDIT. Written by chitbridge-api/scripts/vendor-till.cjs. Edit the master and re-run. */\n' +
+  '// @stage tested\n' +
+  '// @stage-note a byte-for-byte copy of the master, which is the thing the tests cover (scripts/vendor-till.cjs).\n';
 
-const MANIFEST = JSON.stringify({
-  name: 'ChitBridge Counter', short_name: 'Counter', start_url: '/till.html', scope: '/', display: 'standalone',
-  background_color: '#fdfbf7', theme_color: '#1c7a4a', orientation: 'any',
-  description: 'Bill at the counter — works with the line down, syncs when it returns.',
-  icons: [{ src: '/till-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
-}, null, 2) + '\n';
+const MANIFEST =
+  JSON.stringify(
+    {
+      name: 'ChitBridge Counter',
+      short_name: 'Counter',
+      start_url: '/till.html',
+      scope: '/',
+      display: 'standalone',
+      background_color: '#fdfbf7',
+      theme_color: '#1c7a4a',
+      orientation: 'any',
+      description: 'Bill at the counter — works with the line down, syncs when it returns.',
+      icons: [{ src: '/till-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }]
+    },
+    null,
+    2
+  ) + '\n';
 
 /* a shop's counter, drawn rather than photographed: no binary in the repo, and it scales to any launcher size */
 const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Counter">
@@ -93,12 +106,12 @@ self.addEventListener('fetch', (e) => {
  * on the first sum instead of at load, which is the worst possible moment.
  */
 const wrapForBrowser = (file, global, deps) => {
-  let src = norm(fs.readFileSync(path.join(API, 'lib', file), 'utf8'));
+  let text = norm(fs.readFileSync(path.join(API, 'lib', file), 'utf8'));
   for (const spec of Object.keys(deps || {})) {
     const call = "require('" + spec + "')";
     /* ⚠️ and this one too: a dep named only in a comment would look satisfied when nothing imports it */
-    if (src.replace(/\/\*[\s\S]*?\*\//g, ' ').indexOf(call) < 0) throw new Error(file + ' does not ' + call + ' — the dep map is stale');
-    src = src.split(call).join('window.' + deps[spec]);
+    if (text.replace(/\/\*[\s\S]*?\*\//g, ' ').indexOf(call) < 0) throw new Error(file + ' does not ' + call + ' — the dep map is stale');
+    text = text.split(call).join('window.' + deps[spec]);
   }
   const NL = String.fromCharCode(10);
   /**
@@ -108,15 +121,18 @@ const wrapForBrowser = (file, global, deps) => {
    * ⚠️ The fourth time a guard here has read prose as code. Stripping both comment kinds first is the fix that
    * worked the other three times; the EMITTED source is untouched, only what is scanned.
    */
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-  const left = [...code.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((m) => m[1]);
+  const code = text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  const left = [...code.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((item) => item[1]);
   if (left.length) {
-    throw new Error(file + ' still requires ' + JSON.stringify(left) + ' — a browser has no require(). '
-      + 'Vendor that module too and name it in the dep map, or this engine is not liftable into a page.');
+    throw new Error(
+      file +
+        ' still requires ' +
+        JSON.stringify(left) +
+        ' — a browser has no require(). ' +
+        'Vendor that module too and name it in the dep map, or this engine is not liftable into a page.'
+    );
   }
-  return GEN + '(function(){' + NL
-    + src.replace(/module\.exports\s*=/, 'var EXPORTS =') + NL
-    + 'window.' + global + ' = EXPORTS;' + NL + '})();' + NL;
+  return GEN + '(function(){' + NL + text.replace(/module\.exports\s*=/, 'var EXPORTS =') + NL + 'window.' + global + ' = EXPORTS;' + NL + '})();' + NL;
 };
 
 /**
@@ -127,12 +143,16 @@ const wrapForBrowser = (file, global, deps) => {
  * ⚠️ Run AFTER tools/adopt.cjs — the web engines are its output, this only reads them.
  */
 const VERSIONS = () => {
-  const dir = path.join(WEB, 'engine'), out = {};
-  fs.readdirSync(dir).filter((n) => /\.js$/.test(n)).sort().forEach((n) => {
-    const head = fs.readFileSync(path.join(dir, n), 'utf8').slice(0, 320);
-    const m = head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
-    out[n.replace(/\.js$/, '')] = m ? m[1] : 'unversioned';
-  });
+  const dir = path.join(WEB, 'engine'),
+    out = {};
+  fs.readdirSync(dir)
+    .filter((item) => /\.js$/.test(item))
+    .sort()
+    .forEach((item) => {
+      const head = fs.readFileSync(path.join(dir, item), 'utf8').slice(0, 320);
+      const m = head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
+      out[item.replace(/\.js$/, '')] = m ? m[1] : 'unversioned';
+    });
   /* ⭐ M08: the PAGE's own build, read off the master — till.html's pageStale() compares it with the copy it is running */
   const page = (norm(fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8')).match(/var TILL_BUILD = '([^']+)'/) || [])[1] || null;
   return JSON.stringify({ engines: out, page }, null, 2) + '\n';
@@ -346,19 +366,23 @@ const COPIES = () => [
   [null, path.join(WEB, 'engine', 'versions.json'), VERSIONS()],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],
-  [null, path.join(WEB, 'till-icon.svg'), ICON],
+  [null, path.join(WEB, 'till-icon.svg'), ICON]
 ];
 
-const norm = (s) => s.replace(/\r\n/g, '\n');
+const norm = (text) => text.replace(/\r\n/g, '\n');
 const want = (from, body) => (body === 'copy' ? norm(fs.readFileSync(from, 'utf8')) : body);
 
 if (process.argv.includes('--check')) {
   for (const [from, to, body] of COPIES()) {
     const text = want(from, body);
     const have = fs.existsSync(to) ? norm(fs.readFileSync(to, 'utf8')) : '';
-    if (have !== text) { console.log('STALE: ' + to + ' — run node scripts/vendor-till.cjs'); process.exit(1); }
+    if (have !== text) {
+      console.log('STALE: ' + to + ' — run node scripts/vendor-till.cjs');
+      process.exit(1);
+    }
   }
-  console.log('the counter screen and its files are current'); process.exit(0);
+  console.log('the counter screen and its files are current');
+  process.exit(0);
 }
 
 for (const [from, to, body] of COPIES()) {

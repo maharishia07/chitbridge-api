@@ -46,7 +46,7 @@ const fail = (res, e, what) => res.status(500).json({ error: what, message: safe
  */
 async function senderOf(chit) {
   const bj = chit.business_json || {};
-  if (bj.source && bj.source.sectors) return { name: bj.source.name || bj.party && bj.party.name, sectors: bj.source.sectors };
+  if (bj.source && bj.source.sectors) return { name: bj.source.name || (bj.party && bj.party.name), sectors: bj.source.sectors };
   /**
    * ⚠️⚠️ THERE IS NO FALLBACK LOOKUP, and there must not be. A receiver CANNOT read a supplier's
    * entity_profile — it is RLS-isolated and that is correct; nobody should be able to read another
@@ -63,11 +63,12 @@ async function receiverOf(entity_id) {
   let sectors = [];
   try {
     /* ⚠️ withEntity — this is the shop's OWN profile, and a bare query() would read nothing under RLS */
-    const p = await withEntity(entity_id, (db) => db.query(
-      `SELECT sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]));
+    const p = await withEntity(entity_id, (db) => db.query(`SELECT sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]));
     const row = p.rows[0] || {};
     sectors = row.sectors || [];
-  } catch (e) { logger.fellBack('adopt receiverOf: the read failed — carried on without it', e); }
+  } catch (e) {
+    logger.fellBack('adopt receiverOf: the read failed — carried on without it', e);
+  }
   /**
    * ⚠️⚠️ MATCH ON WHAT THE SUPPLIER CALLS IT, NOT ONLY ON WHAT THE SHOP CALLS IT — and [ADOPT-02] found this
    * the first time a person walked the screen. The shop adopted "Paracetamol 500mg strip" as "Paracetamol
@@ -77,25 +78,46 @@ async function receiverOf(entity_id) {
    * the counter when it matches a delivery line by hand (POST /api/till/alias). Adoption writes one too, so
    * the two paths teach the same catalogue the same thing.
    */
-  const r = await withEntity(entity_id, (db) => db.query(
-    `SELECT item_data->>'name' AS name, item_data->'aliases' AS aliases
-       FROM catalogue_items WHERE entity_id = $1`, [entity_id]));
+  const r = await withEntity(entity_id, (db) =>
+    db.query(
+      `SELECT item_data->>'name' AS name, item_data->'aliases' AS aliases
+       FROM catalogue_items WHERE entity_id = $1`,
+      [entity_id]
+    )
+  );
   const have = new Set();
-  const add = (v) => { const k = String(v || '').trim().toLowerCase(); if (k) have.add(k); };
+  const add = (v) => {
+    const k = String(v || '')
+      .trim()
+      .toLowerCase();
+    if (k) have.add(k);
+  };
   for (const row of r.rows) {
     add(row.name);
-    (Array.isArray(row.aliases) ? row.aliases : []).forEach((a) => add(a && a.text));
+    (Array.isArray(row.aliases) ? row.aliases : []).forEach((item) => add(item && item.text));
   }
-  return { sectors, has_item: (n) => have.has(String(n || '').trim().toLowerCase()) };
+  return {
+    sectors,
+    has_item: (n) =>
+      have.has(
+        String(n || '')
+          .trim()
+          .toLowerCase()
+      )
+  };
 }
 
 /** the delivery itself, from THIS shop's own copy — never the sender's */
 async function deliveryOf(entity_id, chit_id) {
-  const r = await withEntity(entity_id, (db) => db.query(
-    `SELECT h.chit_id, h.purpose, h.business_json, h.created_at, h.sender_entity_id, d.line_items
+  const r = await withEntity(entity_id, (db) =>
+    db.query(
+      `SELECT h.chit_id, h.purpose, h.business_json, h.created_at, h.sender_entity_id, d.line_items
        FROM chit_header h
        LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
-      WHERE h.entity_id = $1 AND h.chit_id = $2`, [entity_id, chit_id]));
+      WHERE h.entity_id = $1 AND h.chit_id = $2`,
+      [entity_id, chit_id]
+    )
+  );
   return r.rows[0] || null;
 }
 
@@ -103,11 +125,18 @@ async function deliveryOf(entity_id, chit_id) {
 async function supplierKind(entity_id, supplier_entity_id) {
   if (!supplier_entity_id) return null;
   try {
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT supply_kind, nickname FROM supplier_list
-        WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [entity_id, supplier_entity_id]));
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT supply_kind, nickname FROM supplier_list
+        WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
+        [entity_id, supplier_entity_id]
+      )
+    );
     return r.rows[0] ? { supply_kind: r.rows[0].supply_kind, nickname: r.rows[0].nickname } : null;
-  } catch (e) { logger.fellBack('adopt supplierKind: the read failed — answered with nothing', e); return null; }
+  } catch (e) {
+    logger.fellBack('adopt supplierKind: the read failed — answered with nothing', e);
+    return null;
+  }
 }
 
 /** ⭐ WHAT THIS DELIVERY OFFERS — reads only. Grouped the way a person reads it, never as forty rows. */
@@ -119,19 +148,24 @@ router.get('/:chit_id', auth, async (req, res) => {
 
     const from = await senderOf(chit);
     const kind = await supplierKind(entity_id, chit.sender_entity_id);
-    if (kind) { from.supply_kind = kind.supply_kind; from.name = kind.nickname || from.name; }
+    if (kind) {
+      from.supply_kind = kind.supply_kind;
+      from.name = kind.nickname || from.name;
+    }
     const me = await receiverOf(entity_id);
 
     const out = adopt.considerAll(chit.line_items || [], from, me, {});
     res.json({
-      chit_id: chit.chit_id, from: { name: from.name, vertical: adopt.verticalOf(from.sectors),
-                                     supply_kind: from.supply_kind || null },
-      says: out.says, rows: out.rows,
+      chit_id: chit.chit_id,
+      from: { name: from.name, vertical: adopt.verticalOf(from.sectors), supply_kind: from.supply_kind || null },
+      says: out.says,
+      rows: out.rows,
       /* ⚠️ counts, so a screen can lead with what needs a person rather than with a list */
-      counts: { offer: out.offer.length, refused: out.refused.length,
-                already: out.already.length, not_for_sale: out.not_for_sale.length },
+      counts: { offer: out.offer.length, refused: out.refused.length, already: out.already.length, not_for_sale: out.not_for_sale.length }
     });
-  } catch (e) { fail(res, e, 'Could not read the delivery'); }
+  } catch (e) {
+    fail(res, e, 'Could not read the delivery');
+  }
 });
 
 /**
@@ -150,31 +184,46 @@ router.post('/:chit_id', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const wanted = Array.isArray((req.body || {}).accept) ? req.body.accept : [];
-    if (!wanted.length) return res.status(400).json({ error: 'validation',
-      message: 'name the lines to accept — there is no "accept everything"' });
+    if (!wanted.length) return res.status(400).json({ error: 'validation', message: 'name the lines to accept — there is no "accept everything"' });
 
     const chit = await deliveryOf(entity_id, String(req.params.chit_id));
     if (!chit) return res.status(404).json({ error: 'Not found' });
     const lines = chit.line_items || [];
     const from = await senderOf(chit);
     const kind = await supplierKind(entity_id, chit.sender_entity_id);
-    if (kind) { from.supply_kind = kind.supply_kind; from.name = kind.nickname || from.name; }
+    if (kind) {
+      from.supply_kind = kind.supply_kind;
+      from.name = kind.nickname || from.name;
+    }
     const me = await receiverOf(entity_id);
 
-    const made = [], refused = [], schema_id = await require('../lib/catalogue-write').defaultSchemaId(entity_id);   /* S2: the shop's OWN schema, never the body's */
+    const made = [],
+      refused = [],
+      schema_id = await require('../lib/catalogue-write').defaultSchemaId(entity_id); /* S2: the shop's OWN schema, never the body's */
     for (const w of wanted) {
       const i = Number(w.line);
       const line = lines[i];
-      if (!line) { refused.push({ line: i, why: 'no such line on this delivery' }); continue; }
+      if (!line) {
+        refused.push({ line: i, why: 'no such line on this delivery' });
+        continue;
+      }
 
       /* ⚠️ RE-CHECKED HERE, against the rules as they are NOW */
       const say = adopt.consider(line, from, me, { purpose: w.purpose, override: w.override === true });
-      if (say.may !== 'offer') { refused.push({ line: i, why: say.why || say.may, refused: say.refused }); continue; }
+      if (say.may !== 'offer') {
+        refused.push({ line: i, why: say.why || say.may, refused: say.refused });
+        continue;
+      }
 
       const name = String(w.name || '').trim();
-      if (!name) { refused.push({ line: i, why: 'this needs your own name for it before it can be added' }); continue; }
+      if (!name) {
+        refused.push({ line: i, why: 'this needs your own name for it before it can be added' });
+        continue;
+      }
       if (!String(w.sku || '').trim()) {
-        refused.push({ line: i, why: 'this needs your own SKU — the supplier\'s is never adopted' }); continue; }
+        refused.push({ line: i, why: "this needs your own SKU — the supplier's is never adopted" });
+        continue;
+      }
 
       /**
        * ⭐ THE SHOP'S PRODUCT, seeded from theirs. The attributes the vertical requires travel; the COST travels
@@ -183,7 +232,8 @@ router.post('/:chit_id', auth, async (req, res) => {
        * than needing somebody to remember afterwards.
        */
       const item_data = Object.assign({}, say.seed.attributes, {
-        name, sku: String(w.sku).trim(),
+        name,
+        sku: String(w.sku).trim(),
         unit: w.unit || say.seed.unit || null,
         price: w.price == null ? null : Number(w.price),
         cost: say.seed.cost,
@@ -192,31 +242,48 @@ router.post('/:chit_id', auth, async (req, res) => {
         adopted_at: new Date().toISOString(),
         /* ⭐ THE SUPPLIER'S OWN WORDING, kept so the next delivery of this line is recognised rather than
            offered again. Same shape the counter writes when it matches a line by hand. */
-        aliases: [{ by: (say.seed.from && say.seed.from.name) || null,
-                    text: String(line.particulars || '').slice(0, 120),
-                    unit: (line && line.unit) || null, factor: null,
-                    at: new Date().toISOString() }],
+        aliases: [
+          {
+            by: (say.seed.from && say.seed.from.name) || null,
+            text: String(line.particulars || '').slice(0, 120),
+            unit: (line && line.unit) || null,
+            factor: null,
+            at: new Date().toISOString()
+          }
+        ],
         /* ⚠️ AN OVERRIDE LEAVES A TRACE ON THE PRODUCT ITSELF, not only in a log. Somebody looking at a pharma
            line in a grocery's catalogue in a year should be able to see that a person decided that. */
-        adopted_override: say.overridden ? say.vertical : undefined,
+        adopted_override: say.overridden ? say.vertical : undefined
       });
-      Object.keys(item_data).forEach((k) => item_data[k] === undefined && delete item_data[k]);
+      Object.keys(item_data).forEach((item) => item_data[item] === undefined && delete item_data[item]);
 
-      const r = await mintProduct({ query, withEntity, entity_id, schema_id,
-        item_data, rid: req.id, note: 'adopted from a delivery' });
-      if (r.error) { refused.push({ line: i, why: r.error }); continue; }
+      const r = await mintProduct({ query, withEntity, entity_id, schema_id, item_data, rid: req.id, note: 'adopted from a delivery' });
+      if (r.error) {
+        refused.push({ line: i, why: r.error });
+        continue;
+      }
       made.push({ line: i, item_id: r.item.item_id, name, missing: say.missing });
     }
 
-    res.json({ message: made.length + ' added to your catalogue', added: made, refused,
-      says: made.length + ' added' + (refused.length ? ' · ' + refused.length + ' not' : '') });
-  } catch (e) { fail(res, e, 'Could not adopt'); }
+    res.json({
+      message: made.length + ' added to your catalogue',
+      added: made,
+      refused,
+      says: made.length + ' added' + (refused.length ? ' · ' + refused.length + ' not' : '')
+    });
+  } catch (e) {
+    fail(res, e, 'Could not adopt');
+  }
 });
 
-router.openapi = { paths: {
-  '/api/adopt/{chit_id}': {
-    get:  { summary: 'What a delivery offers to this catalogue, and what it refuses', tags: ['adopt'] },
-    post: { summary: 'Accept named lines as your OWN products', tags: ['adopt'] },
-  } }, schemas: {} };
+router.openapi = {
+  paths: {
+    '/api/adopt/{chit_id}': {
+      get: { summary: 'What a delivery offers to this catalogue, and what it refuses', tags: ['adopt'] },
+      post: { summary: 'Accept named lines as your OWN products', tags: ['adopt'] }
+    }
+  },
+  schemas: {}
+};
 
 module.exports = router;

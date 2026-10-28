@@ -1,7 +1,8 @@
 // routes/connections.js — Connection handshake
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
 const log = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
@@ -13,11 +14,9 @@ const auth = require('../middleware/auth');
 
 // ─── POST /connections/request ───────────────────────────────
 // Entity A sends connection request to Entity B
-router.post('/request',
-  [
-    body('to_entity_id').trim().notEmpty().withMessage('Receiver entity ID required'),
-    body('note').optional().trim().isLength({ max: 500 }),
-  ],
+router.post(
+  '/request',
+  [body('to_entity_id').trim().notEmpty().withMessage('Receiver entity ID required'), body('note').optional().trim().isLength({ max: 500 })],
   auth,
   validate,
   async (req, res) => {
@@ -67,10 +66,7 @@ router.post('/request',
       }
 
       // Get sender snapshot
-      const sender = await query(
-        'SELECT bridge_id, display_name FROM identities WHERE identity_id = $1',
-        [from_id]
-      );
+      const sender = await query('SELECT bridge_id, display_name FROM identities WHERE identity_id = $1', [from_id]);
 
       // Create connection request
       const connection_id = uuidv4();
@@ -79,32 +75,19 @@ router.post('/request',
          (connection_id, from_entity_id, from_display_name, from_bridge_id,
           to_entity_id, to_display_name, to_bridge_id, status, note)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)`,
-        [
-          connection_id,
-          from_id,
-          sender.rows[0].display_name,
-          sender.rows[0].bridge_id,
-          to_id,
-          receiver.rows[0].display_name,
-          receiver.rows[0].bridge_id,
-          note
-        ]
+        [connection_id, from_id, sender.rows[0].display_name, sender.rows[0].bridge_id, to_id, receiver.rows[0].display_name, receiver.rows[0].bridge_id, note]
       );
 
       // Log to state_log (the requester's OWN copy). B1 RLS: withEntity(me).
-      await withEntity(from_id, (c) => c.query(
-        `INSERT INTO state_log
+      await withEntity(from_id, (c) =>
+        c.query(
+          `INSERT INTO state_log
          (chit_id, entity_id, action, action_by_identity_id,
           action_by_display_name, detail)
          VALUES ($1, $2, 'connection_requested', $3, $4, $5)`,
-        [
-          connection_id,
-          from_id,
-          from_id,
-          sender.rows[0].display_name,
-          `Connection request sent to ${receiver.rows[0].display_name}`
-        ]
-      ));
+          [connection_id, from_id, from_id, sender.rows[0].display_name, `Connection request sent to ${receiver.rows[0].display_name}`]
+        )
+      );
 
       res.json({
         message: 'Connection request sent',
@@ -114,7 +97,6 @@ router.post('/request',
           bridge_id: receiver.rows[0].bridge_id
         }
       });
-
     } catch (err) {
       console.error('Connection request error:', err.message);
       res.status(500).json({ error: 'Request failed', message: safeErr(err) });
@@ -136,7 +118,6 @@ router.get('/pending', auth, async (req, res) => {
     );
 
     res.json(Object.assign({ count: result.rows.length }, PL.pageOut('requests', result.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
-
   } catch (err) {
     console.error('Pending connections error:', err.message);
     res.status(500).json({ error: 'Failed to get requests', message: safeErr(err) });
@@ -145,13 +126,9 @@ router.get('/pending', auth, async (req, res) => {
 
 // ─── PUT /connections/:id/respond ────────────────────────────
 // Entity B accepts or rejects connection request
-router.put('/:id/respond',
-  [
-    body('action')
-      .trim()
-      .isIn(['accept', 'reject'])
-      .withMessage('Action must be accept or reject'),
-  ],
+router.put(
+  '/:id/respond',
+  [body('action').trim().isIn(['accept', 'reject']).withMessage('Action must be accept or reject')],
   auth,
   validate,
   async (req, res) => {
@@ -185,23 +162,23 @@ router.put('/:id/respond',
       );
 
       // Log to state_log — for both entities
-      const logAction = action === 'accept'
-        ? 'connection_accepted'
-        : 'connection_rejected';
+      const logAction = action === 'accept' ? 'connection_accepted' : 'connection_rejected';
 
-      const detail = action === 'accept'
-        ? `${req.identity.display_name} accepted connection from ${conn.rows[0].from_display_name}`
-        : `${req.identity.display_name} rejected connection from ${conn.rows[0].from_display_name}`;
+      const detail =
+        action === 'accept'
+          ? `${req.identity.display_name} accepted connection from ${conn.rows[0].from_display_name}`
+          : `${req.identity.display_name} rejected connection from ${conn.rows[0].from_display_name}`;
 
       // Log for receiver (the responder's OWN copy). B1 RLS: withEntity(me).
-      await withEntity(entity_id, (c) => c.query(
-        `INSERT INTO state_log
+      await withEntity(entity_id, (c) =>
+        c.query(
+          `INSERT INTO state_log
          (chit_id, entity_id, action, action_by_identity_id,
           action_by_display_name, detail)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [connection_id, entity_id, logAction,
-         entity_id, req.identity.display_name, detail]
-      ));
+          [connection_id, entity_id, logAction, entity_id, req.identity.display_name, detail]
+        )
+      );
 
       // (Removed under B1 RLS, 2026-07-04) There used to be a second state_log INSERT here with
       // entity_id = the SENDER (conn.from_entity_id) — the responder writing into the OTHER entity's copy.
@@ -214,8 +191,16 @@ router.put('/:id/respond',
       /* ⭐ b99 names `network.connect`. Metered only on ACCEPT — a refused request is not a connection, and
          billing for one would charge for being asked. */
       if (newStatus === 'accepted') {
-        try { require('../lib/meter').meter(entity_id, 'network.connect', {
-          detail: connection_id, rid: req.id }).catch(log.orElse('connections PUT /:id/respond: failed — carried on without it')); } catch (e) { log.fellBack('connections PUT /:id/respond: the helper failed — carried on without it', e); }
+        try {
+          require('../lib/meter')
+            .meter(entity_id, 'network.connect', {
+              detail: connection_id,
+              rid: req.id
+            })
+            .catch(log.orElse('connections PUT /:id/respond: failed — carried on without it'));
+        } catch (e) {
+          log.fellBack('connections PUT /:id/respond: the helper failed — carried on without it', e);
+        }
       }
 
       res.json({
@@ -223,7 +208,6 @@ router.put('/:id/respond',
         connection_id,
         status: newStatus
       });
-
     } catch (err) {
       console.error('Connection respond error:', err.message);
       res.status(500).json({ error: 'Response failed', message: safeErr(err) });
@@ -254,7 +238,6 @@ router.get('/list', auth, async (req, res) => {
     );
 
     res.json(Object.assign({ count: result.rows.length }, PL.pageOut('connections', result.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
-
   } catch (err) {
     console.error('Connections list error:', err.message);
     res.status(500).json({ error: 'Failed to get connections', message: safeErr(err) });

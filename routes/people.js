@@ -9,8 +9,9 @@
  * refuse on their own — this is never the check, only the early word.
  */
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query } = require('../db');
@@ -37,9 +38,13 @@ router.get('/', auth, async (req, res) => {
          LEFT JOIN identities i ON i.parent_entity_id = e.identity_id AND ${people.peopleSql('i')}
         WHERE e.identity_id = $1
         ORDER BY (i.break_status = 'deactivated'), i.display_name`,
-      [entity_id]);
+      [entity_id]
+    );
     const country = r.rows[0] && r.rows[0].entity_country;
-    const view = people.view(r.rows.filter((x) => x.identity_id), { owner: isOwner(req), country });
+    const view = people.view(
+      r.rows.filter((x) => x.identity_id),
+      { owner: isOwner(req), country }
+    );
     res.json(Object.assign(view, PL.pageOut('people', view.people, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     console.error('List people error:', err.message);

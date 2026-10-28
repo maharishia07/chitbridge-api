@@ -13,7 +13,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { safeErr } = require('../lib/respond');
 const capture = require('../lib/capture');
-const channels = require('../lib/channels');   // b123 — the number/address → entity map the webhooks resolve against
+const channels = require('../lib/channels'); // b123 — the number/address → entity map the webhooks resolve against
 
 // HMAC verify over the RAW request body (constant-time). Providers sign every POST; a shared verify-token is NOT auth.
 // header e.g. WhatsApp `X-Hub-Signature-256: sha256=<hex>`. Returns true only on a valid signature.
@@ -21,7 +21,12 @@ function hmacOk(rawBuf, secret, header, prefix) {
   if (!secret || !rawBuf || !header) return false;
   const sig = String(header).replace(prefix || '', '');
   const mine = crypto.createHmac('sha256', secret).update(rawBuf).digest('hex');
-  try { return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(mine, 'hex')); } catch (e) { log.fellBack('capture hmacOk: did not parse — answered no', e, 'debug'); return false; }
+  try {
+    return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(mine, 'hex'));
+  } catch (e) {
+    log.fellBack('capture hmacOk: did not parse — answered no', e, 'debug');
+    return false;
+  }
 }
 
 const entityId = (req) => auth.entityOf(req);
@@ -32,20 +37,36 @@ const entityId = (req) => auth.entityOf(req);
 router.post('/simulate', auth, async (req, res) => {
   try {
     const b = req.body || {};
-    res.json(await capture.createCapture(entityId(req), {
-      channel: 'web', sender_ref: b.sender_ref, sender_name: b.sender_name, subject: b.subject, raw_text: b.raw_text, media_refs: b.media_refs }));
-  } catch (err) { res.status(err.status || 500).json({ error: 'Capture failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+    res.json(
+      await capture.createCapture(entityId(req), {
+        channel: 'web',
+        sender_ref: b.sender_ref,
+        sender_name: b.sender_name,
+        subject: b.subject,
+        raw_text: b.raw_text,
+        media_refs: b.media_refs
+      })
+    );
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Capture failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 router.get('/pending', auth, async (req, res) => {
-  try { res.json(await capture.listPending(entityId(req))); }
-  catch (err) { res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) }); }
+  try {
+    res.json(await capture.listPending(entityId(req)));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) });
+  }
 });
 
 // POST /:id/structure — invoke the AI co-assist to structure the message into a chit draft (proposes; human confirms).
 router.post('/:id/structure', auth, async (req, res) => {
-  try { res.json(await capture.structureCapture(entityId(req), req.params.id)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Structure failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await capture.structureCapture(entityId(req), req.params.id));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Structure failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 /**
@@ -57,19 +78,28 @@ router.post('/:id/structure', auth, async (req, res) => {
  */
 router.post('/:id/raise', auth, async (req, res) => {
   // use_catalogue defaults TRUE; false makes every line carry exactly what the message said (see raisePayload).
-  try { res.json(await capture.raisePayload(entityId(req), req.params.id, { useCatalogue: (req.body || {}).use_catalogue !== false })); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Raise failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await capture.raisePayload(entityId(req), req.params.id, { useCatalogue: (req.body || {}).use_catalogue !== false }));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Raise failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 // POST /:id/convert — the human has SENT the chit (via /api/chits/send); record the linkage. { chit_id }
 router.post('/:id/convert', auth, async (req, res) => {
-  try { res.json(await capture.markConverted(entityId(req), req.params.id, (req.body || {}).chit_id)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Convert failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await capture.markConverted(entityId(req), req.params.id, (req.body || {}).chit_id));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Convert failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 router.post('/:id/dismiss', auth, async (req, res) => {
-  try { res.json(await capture.dismissCapture(entityId(req), req.params.id)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Dismiss failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await capture.dismissCapture(entityId(req), req.params.id));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Dismiss failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 // ── CHANNEL WEBHOOKS (adapters over the SAME pipeline) ─────────────────────────────────────────────────────────
@@ -109,29 +139,31 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
      * is theirs. The binding is looked up on OURS. Getting those two the wrong way round is the whole bug this
      * comment exists to prevent.
      */
-    const evt = JSON.parse(req.body.toString('utf8'));
+    const parsed = JSON.parse(req.body.toString('utf8'));
     let placed = 0;
-    for (const entry of (evt.entry || [])) {
-      for (const ch of (entry.changes || [])) {
+    for (const entry of parsed.entry || []) {
+      for (const ch of entry.changes || []) {
         const v = (ch && ch.value) || {};
         const to = (v.metadata && (v.metadata.display_phone_number || v.metadata.phone_number_id)) || '';
         /* b131 — resolve the OWNER and the line's settings in one SECURITY DEFINER call. Falls back to ownerOf on a
            pre-b131 database, where auto_raise simply does not exist and every line behaves as it does today. */
         const bind = await channels.bindingFor('whatsapp', to);
         const entity = bind ? bind.entity_id : await channels.ownerOf('whatsapp', to);
-        if (!entity) continue;                                   // not bound to anyone here — not for us
+        if (!entity) continue; // not bound to anyone here — not for us
         const names = {};
-        for (const c of (v.contacts || [])) names[c.wa_id] = (c.profile && c.profile.name) || null;
-        for (const m of (v.messages || [])) {
-          const text = (m.text && m.text.body) || (m.caption) || '';
+        for (const c of v.contacts || []) names[c.wa_id] = (c.profile && c.profile.name) || null;
+        for (const m of v.messages || []) {
+          const text = (m.text && m.text.body) || m.caption || '';
           const media = m.image || m.document || m.audio || m.video;
-          if (!text && !media) continue;                          // a receipt/status, not a message
+          if (!text && !media) continue; // a receipt/status, not a message
           const cap = await capture.createCapture(entity, {
-            channel: 'whatsapp', sender_ref: m.from, sender_name: names[m.from] || null,
-            raw_text: text || ('[' + (m.type || 'media') + ']'),
+            channel: 'whatsapp',
+            sender_ref: m.from,
+            sender_name: names[m.from] || null,
+            raw_text: text || '[' + (m.type || 'media') + ']',
             media_refs: media && media.id ? [{ name: media.filename || m.type, id: media.id }] : [],
-            to_ref: to,     // b126 — the line they wrote to, so a reply can come FROM it
-            provider_msg_id: m.id,   // b129 — Meta retries; a redelivery must not become a second order
+            to_ref: to, // b126 — the line they wrote to, so a reply can come FROM it
+            provider_msg_id: m.id // b129 — Meta retries; a redelivery must not become a second order
           });
           /**
            * ⚠️ AUTO-RAISE RUNS AFTER WE HAVE ANSWERED, NEVER BEFORE (b131). Reading a message with a co-assist takes
@@ -143,15 +175,20 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
            * message we already handled would mint a second chit for one request.
            */
           if (bind && bind.auto_raise && !cap.duplicate) {
-            const _cid = cap.id, _ent = entity;
-            setImmediate(() => { require('../lib/autoraise').run(_ent, _cid).catch(log.orElse('capture: auto-raise failed — the message waits in Intake to be raised by hand')); });
+            const _cid = cap.id,
+              _ent = entity;
+            setImmediate(() => {
+              require('../lib/autoraise').run(_ent, _cid).catch(log.orElse('capture: auto-raise failed — the message waits in Intake to be raised by hand'));
+            });
           }
           placed++;
         }
       }
     }
     return res.status(200).json({ ok: true, captured: placed });
-  } catch (_) { return res.status(200).json({ ok: true }); }
+  } catch (_) {
+    return res.status(200).json({ ok: true });
+  }
 });
 
 // Inbound email (SendGrid Inbound Parse / Mailgun route). Inert until a signing secret AND an address→entity map exist.
@@ -159,28 +196,41 @@ router.post('/webhook/email', express.raw({ type: () => true }), async (req, res
   try {
     const secret = process.env.EMAIL_INBOUND_SECRET;
     if (!secret) return res.status(200).json({ ok: true, note: 'email inbound not configured' });
-    if (!hmacOk(req.body, secret, req.headers['x-mailgun-signature-256'] || req.headers['x-inbound-signature'], '')) return res.status(401).json({ error: 'bad signature' });
+    if (!hmacOk(req.body, secret, req.headers['x-mailgun-signature-256'] || req.headers['x-inbound-signature'], ''))
+      return res.status(401).json({ error: 'bad signature' });
     /**
      * Entity from the To: address MAP, never the body (b123). Inbound-parse providers differ in casing and in
      * whether they send JSON or form fields, so read tolerantly — but only ever to find WHICH ADDRESS IT WAS SENT
      * TO. Who sent it is data on the capture; who receives it is a decision, and decisions come from the map.
      */
     let body = {};
-    try { body = JSON.parse(req.body.toString('utf8')); }
-    catch (_) { body = Object.fromEntries(new URLSearchParams(req.body.toString('utf8'))); }
-    const to = String(body.to || body.To || body.recipient || '').replace(/.*</, '').replace(/>.*/, '').trim();
+    try {
+      body = JSON.parse(req.body.toString('utf8'));
+    } catch (_) {
+      body = Object.fromEntries(new URLSearchParams(req.body.toString('utf8')));
+    }
+    const to = String(body.to || body.To || body.recipient || '')
+      .replace(/.*</, '')
+      .replace(/>.*/, '')
+      .trim();
     const entity = await channels.ownerOf('email', to);
     if (!entity) return res.status(200).json({ ok: true, note: 'no binding for that address' });
     const text = String(body.text || body['body-plain'] || body.stripped_text || '').trim();
     if (!text) return res.status(200).json({ ok: true, note: 'nothing to capture' });
     await capture.createCapture(entity, {
       channel: 'email',
-      sender_ref: String(body.from || body.From || body.sender || '').replace(/.*</, '').replace(/>.*/, '').trim() || null,
+      sender_ref:
+        String(body.from || body.From || body.sender || '')
+          .replace(/.*</, '')
+          .replace(/>.*/, '')
+          .trim() || null,
       subject: String(body.subject || body.Subject || '').slice(0, 200) || null,
-      raw_text: text,
+      raw_text: text
     });
     return res.status(200).json({ ok: true, captured: 1 });
-  } catch (_) { return res.status(200).json({ ok: true }); }
+  } catch (_) {
+    return res.status(200).json({ ok: true });
+  }
 });
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -203,28 +253,36 @@ router.get('/consolidate', auth, async (req, res) => {
     const cards = await capture.consolidationInput(me, { since: req.query.since });
     const out = consolidate.consolidate(cards, cat);
     const want = String(req.query.date || '').trim();
-    const lines = want ? out.lines.filter((l) => l.date === want) : out.lines;
+    const lines = want ? out.lines.filter((item) => item.date === want) : out.lines;
     /* ⚠️ THE FLAGS TRAVEL WITH THE TOTALS, never in a separate place nobody opens. A total with a gap beside it
        gets checked; a total that quietly excluded something does not. */
     res.json({
       date: want || null,
-      dates: [...new Set(out.lines.map((l) => l.date))].sort(),
+      dates: [...new Set(out.lines.map((item) => item.date))].sort(),
       requirement: lines,
       flags: out.flags,
       unmatched_phrase_count: out.flags.unmatched.length,
-      note: 'Flagged lines are EXCLUDED from every total — unmatched, variant-unspecified, date-unspecified. Unit-split lines are shown split, never converted without a declared factor.',
+      note: 'Flagged lines are EXCLUDED from every total — unmatched, variant-unspecified, date-unspecified. Unit-split lines are shown split, never converted without a declared factor.'
     });
-  } catch (err) { res.status(500).json({ error: 'Consolidate failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Consolidate failed', message: safeErr(err) });
+  }
 });
 
 // ── the shop list (W-1) ──────────────────────────────────────────────────────────────────────────────────────
 router.get('/stores', auth, async (req, res) => {
-  try { res.json(await stores.list(entityId(req))); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Stores list failed', message: safeErr(err) }); }
+  try {
+    res.json(await stores.list(entityId(req)));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Stores list failed', message: safeErr(err) });
+  }
 });
 router.post('/stores', auth, async (req, res) => {
-  try { res.json(await stores.upsert(entityId(req), req.body || {})); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Store save failed', message: err.status ? err.message : safeErr(err) }); }
+  try {
+    res.json(await stores.upsert(entityId(req), req.body || {}));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Store save failed', message: err.status ? err.message : safeErr(err) });
+  }
 });
 
 module.exports = router;

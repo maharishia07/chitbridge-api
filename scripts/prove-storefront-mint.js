@@ -20,7 +20,7 @@
  */
 const { j, signIn, run } = require('./_proof');
 
-const CUSTOMER_OTP = process.env.DEV_OTP_CUSTOMER || '123123';   // lib/dev-otp.js DEFAULTS.customer
+const CUSTOMER_OTP = process.env.DEV_OTP_CUSTOMER || '123123'; // lib/dev-otp.js DEFAULTS.customer
 
 run('prove-storefront-mint', async (t) => {
   console.log('\n  the storefront order — the fourth mint path, and the only one with a buyer\n');
@@ -47,7 +47,7 @@ run('prove-storefront-mint', async (t) => {
   await j('/api/entities/profile', { method: 'PATCH', token: tok, body: { catalogue_visibility: 'public' } });
 
   const me = (await j('/api/entities/me', { token: tok })).b;
-  const bridge = (me.entity ? me.entity.bridge_id : me.bridge_id);
+  const bridge = me.entity ? me.entity.bridge_id : me.bridge_id;
   t.ok(!!bridge, 'the shop exists', bridge);
 
   const shop = await j('/api/catalogue/' + bridge);
@@ -57,20 +57,22 @@ run('prove-storefront-mint', async (t) => {
 
   /* ── the BUYER — no account, no JWT, just a phone number and an OTP ──────────────────────────────────────── */
   const phone = '+9198' + RUN + '55';
-  const start = await j('/api/catalogue/' + bridge + '/order/start', { method: 'POST',
-    body: { phone, name: 'Walk-in buyer ' + RUN } });
+  const start = await j('/api/catalogue/' + bridge + '/order/start', { method: 'POST', body: { phone, name: 'Walk-in buyer ' + RUN } });
   t.ok(start.status === 200, '★ a public buyer can start an order with no account', JSON.stringify(start.b).slice(0, 140));
 
   const line_items = [
     { particulars: 'Cement', quantity: 4, price: 340, total: 1360 },
-    { particulars: 'Nails',  quantity: 2, price: 85,  total: 170 },
+    { particulars: 'Nails', quantity: 2, price: 85, total: 170 }
   ];
-  const confirm = await j('/api/catalogue/' + bridge + '/order/confirm', { method: 'POST',
-    body: { phone, otp: CUSTOMER_OTP, name: 'Walk-in buyer ' + RUN, line_items,
-            delivery_address: '9 Market street', note: 'leave at the gate' } });
-  t.ok(confirm.status === 200 || confirm.status === 201,
+  const confirm = await j('/api/catalogue/' + bridge + '/order/confirm', {
+    method: 'POST',
+    body: { phone, otp: CUSTOMER_OTP, name: 'Walk-in buyer ' + RUN, line_items, delivery_address: '9 Market street', note: 'leave at the gate' }
+  });
+  t.ok(
+    confirm.status === 200 || confirm.status === 201,
     '★★★ THE STOREFRONT ORDER MINTED — the fourth path, through mint.deliver({client})',
-    'HTTP ' + confirm.status + ' ' + JSON.stringify(confirm.b).slice(0, 200));
+    'HTTP ' + confirm.status + ' ' + JSON.stringify(confirm.b).slice(0, 200)
+  );
   if (!(confirm.status === 200 || confirm.status === 201)) return;
 
   const chitId = confirm.b && (confirm.b.chit_id || confirm.b.order_id || (confirm.b.order && confirm.b.order.chit_id));
@@ -78,8 +80,12 @@ run('prove-storefront-mint', async (t) => {
 
   /* ── the SHOP's copy: it must be in the shop's Task list ─────────────────────────────────────────────────── */
   const inbox = ((await j('/api/chits/inbox?limit=20', { token: tok })).b || {}).chits || [];
-  const mine = inbox.find((c) => c.chit_id === chitId) || inbox[0];
-  t.ok(!!mine, '★★★ the SHOP holds its copy — the order arrived as a Task', JSON.stringify(inbox.map((c) => c.manual_subject || c.auto_subject).slice(0, 3)));
+  const mine = inbox.find((item) => item.chit_id === chitId) || inbox[0];
+  t.ok(
+    !!mine,
+    '★★★ the SHOP holds its copy — the order arrived as a Task',
+    JSON.stringify(inbox.map((item) => item.manual_subject || item.auto_subject).slice(0, 3))
+  );
 
   if (mine) {
     const s = mine.summary_json || {};
@@ -93,21 +99,30 @@ run('prove-storefront-mint', async (t) => {
     const det = (full.b && full.b.detail) || {};
     const li = det.line_items || [];
     t.ok(li.length === 2, '★★ the shop can see the actual line items', JSON.stringify(li.map((x) => x.particulars)));
-    t.ok(li.some((x) => /cement/i.test(x.particulars) && Number(x.quantity) === 4),
-      '★★★ …with the quantities the buyer chose — 4 bags of cement', JSON.stringify(li));
+    t.ok(
+      li.some((x) => /cement/i.test(x.particulars) && Number(x.quantity) === 4),
+      '★★★ …with the quantities the buyer chose — 4 bags of cement',
+      JSON.stringify(li)
+    );
 
     const h = (full.b && full.b.header) || {};
-    t.ok(h.sender_entity_id && h.sender_entity_id !== (me.entity ? me.entity.identity_id : me.identity_id),
+    t.ok(
+      h.sender_entity_id && h.sender_entity_id !== (me.entity ? me.entity.identity_id : me.identity_id),
       '★★★ the SENDER is the BUYER, not the shop — a customer order is not the shop writing to itself',
-      String(h.sender_entity_id));
+      String(h.sender_entity_id)
+    );
   }
 
   /* ── the buyer's OTP must be SPENT. If it still works, the same code could mint a second order. ──────────── */
-  const replay = await j('/api/catalogue/' + bridge + '/order/confirm', { method: 'POST',
-    body: { phone, otp: CUSTOMER_OTP, name: 'Walk-in buyer ' + RUN, line_items } });
-  t.ok(replay.status !== 200 && replay.status !== 201,
+  const replay = await j('/api/catalogue/' + bridge + '/order/confirm', {
+    method: 'POST',
+    body: { phone, otp: CUSTOMER_OTP, name: 'Walk-in buyer ' + RUN, line_items }
+  });
+  t.ok(
+    replay.status !== 200 && replay.status !== 201,
     '★★★ the OTP cannot be replayed — the consume committed WITH the chit, in one transaction',
-    'got ' + replay.status + ' ' + JSON.stringify(replay.b).slice(0, 120));
+    'got ' + replay.status + ' ' + JSON.stringify(replay.b).slice(0, 120)
+  );
 
   t.note('mint.deliver({client}) kept the OTP consume, the chit and the documents in ONE transaction — that is why');
   t.note('this path takes an open client instead of opening its own connection.');

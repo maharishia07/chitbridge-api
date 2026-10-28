@@ -19,6 +19,8 @@
  * j() had 9 copies, loadEnvFile 9, ok() 14, the API base URL 31. Retry-on-blip could not be "added" because there
  * was nowhere to add it — it would have meant 9 edits and the 10th script written next week would still be wrong.
  * That is the same shape as the OTP fix that reached one of three call sites (lib/otp.js).
+ 
+ * CALLED BY scripts/add-catalogue-synonyms.js, scripts/category-cite.js, scripts/check-screw-message.js, scripts/cleanup-test-data.js, scripts/close-proof-lines.js (+31 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 const fs = require('fs');
 const path = require('path');
@@ -42,7 +44,10 @@ function loadEnv() {
     for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
       const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
       if (!m) continue;
-      const v = m[2].trim().replace(/^['"]|['"]$/g, '').trim();
+      const v = m[2]
+        .trim()
+        .replace(/^['"]|['"]$/g, '')
+        .trim();
       if (!process.env[m[1]] && v) process.env[m[1]] = v;
     }
   }
@@ -54,7 +59,11 @@ const OTP = process.env.DEV_OTP || '123456';
 
 /** Thrown when the PLATFORM is unreachable. Never means a check failed — see the exit-code note above. */
 class PlatformDown extends Error {
-  constructor(msg) { super(msg); this.name = 'PlatformDown'; this.platformDown = true; }
+  constructor(msg) {
+    super(msg);
+    this.name = 'PlatformDown';
+    this.platformDown = true;
+  }
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -71,20 +80,23 @@ async function j(p, o = {}) {
   const retries = o.retries === undefined ? 3 : o.retries;
   let lastWhy = null;
   for (let attempt = 0; attempt <= retries; attempt++) {
-    if (attempt) await sleep(1500 * attempt);                 // 1.5s, 3s, 4.5s — a Railway cold start fits inside
+    if (attempt) await sleep(1500 * attempt); // 1.5s, 3s, 4.5s — a Railway cold start fits inside
     let r;
     try {
       r = await fetch(API + p, {
         method: o.method || 'GET',
-        headers: Object.assign({ 'Content-Type': 'application/json' },
-          o.token ? { Authorization: 'Bearer ' + o.token } : {}, o.headers || {}),
-        body: o.body === undefined ? undefined : (typeof o.body === 'string' ? o.body : JSON.stringify(o.body)),
+        headers: Object.assign({ 'Content-Type': 'application/json' }, o.token ? { Authorization: 'Bearer ' + o.token } : {}, o.headers || {}),
+        body: o.body === undefined ? undefined : typeof o.body === 'string' ? o.body : JSON.stringify(o.body)
       });
-    } catch (e) {                                             // DNS / socket / reset — never reached the app
+    } catch (e) {
+      // DNS / socket / reset — never reached the app
       lastWhy = (e && e.message) || 'network error';
       continue;
     }
-    let b = null; try { b = await r.json(); } catch (_) {}
+    let b = null;
+    try {
+      b = await r.json();
+    } catch (_) {}
     /**
      * ⚠️ A 503 FROM OUR OWN CODE IS AN ANSWER, NOT AN OUTAGE — and this guard got that wrong on its first real
      * outing. The API returns 503 with a JSON body to mean "that migration has not been run"; the edge returns 503
@@ -94,7 +106,10 @@ async function j(p, o = {}) {
      * The discriminator is the BODY: our handlers always answer JSON with an `error` field. If one parsed, the app
      * spoke — return it and let the check judge. Only a 502/503/504 with nothing readable is really the platform.
      */
-    if (PLATFORM_STATUS.has(r.status) && !(b && (b.error || b.message))) { lastWhy = 'HTTP ' + r.status; continue; }
+    if (PLATFORM_STATUS.has(r.status) && !(b && (b.error || b.message))) {
+      lastWhy = 'HTTP ' + r.status;
+      continue;
+    }
     return { status: r.status, b };
   }
   /* ⚠️ ONE ARGUMENT. Passing (method, path, why) silently produced the message "GET" — the two facts that say
@@ -117,10 +132,12 @@ async function run(name, fn) {
       console.log('\n  \x1b[33m⊘ COULD NOT TEST\x1b[0m — the platform did not answer (' + e.message + ').');
       console.log('    Nothing was proved either way. This is NOT a failure of the code — re-run it.');
       console.log('    ' + t.passed + ' check(s) had passed before it stopped.\n');
-      process.exitCode = 2; return;
+      process.exitCode = 2;
+      return;
     }
     console.log('\n  \x1b[31m' + name + ' crashed:\x1b[0m ' + ((e && e.message) || e) + '\n');
-    process.exitCode = 1; return;
+    process.exitCode = 1;
+    return;
   }
   console.log('\n  ' + t.passed + ' passed, ' + t.failed + ' failed\n');
   process.exitCode = t.failed ? 1 : 0;
@@ -129,13 +146,21 @@ async function run(name, fn) {
 /** The check counter + printer. `ok(cond, message, detail)` — detail is shown only on failure. */
 function tally() {
   const t = {
-    passed: 0, failed: 0,
+    passed: 0,
+    failed: 0,
     ok(cond, msg, detail) {
-      if (cond) { t.passed++; console.log('  \x1b[32m✓\x1b[0m ' + msg); }
-      else { t.failed++; console.log('  \x1b[31m✗ ' + msg + '\x1b[0m' + (detail ? '\n      ' + detail : '')); }
+      if (cond) {
+        t.passed++;
+        console.log('  \x1b[32m✓\x1b[0m ' + msg);
+      } else {
+        t.failed++;
+        console.log('  \x1b[31m✗ ' + msg + '\x1b[0m' + (detail ? '\n      ' + detail : ''));
+      }
       return !!cond;
     },
-    note(msg) { console.log('  \x1b[36m·\x1b[0m ' + msg); },
+    note(msg) {
+      console.log('  \x1b[36m·\x1b[0m ' + msg);
+    }
   };
   return t;
 }
@@ -155,7 +180,10 @@ async function signIn(email, display_name) {
  */
 async function requireSignedWebhook() {
   const r = await j('/api/capture/webhook/whatsapp', {
-    method: 'POST', body: '{}', headers: { 'X-Hub-Signature-256': 'sha256=deadbeef' } });
+    method: 'POST',
+    body: '{}',
+    headers: { 'X-Hub-Signature-256': 'sha256=deadbeef' }
+  });
   if (r.status !== 401) throw new PlatformDown('webhook signatures are not being enforced (got ' + r.status + ') — set WHATSAPP_APP_SECRET on the server');
   return true;
 }

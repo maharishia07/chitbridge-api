@@ -121,10 +121,11 @@
 const API = '';
 const token = localStorage.getItem('cb_token');
 const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
-if (!token) { window.location.href = '/'; }
+if (!token) {
+  window.location.href = '/';
+}
 
-document.getElementById('entity-info').textContent =
-  `${entity.display_name} · ${entity.bridge_id}`;
+document.getElementById('entity-info').textContent = `${entity.display_name} · ${entity.bridge_id}`;
 
 let selectedEntity = null;
 let searchTimer = null;
@@ -132,7 +133,10 @@ let searchTimer = null;
 async function searchEntities(q) {
   clearTimeout(searchTimer);
   const resultsEl = document.getElementById('search-results');
-  if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+  if (q.length < 2) {
+    resultsEl.innerHTML = '';
+    return;
+  }
 
   searchTimer = setTimeout(async () => {
     try {
@@ -146,12 +150,16 @@ async function searchEntities(q) {
         return;
       }
 
-      resultsEl.innerHTML = data.results.map(e => `
+      resultsEl.innerHTML = data.results
+        .map(
+          (e) => `
         <div class="result-item" onclick="selectEntity('${e.identity_id}', '${e.display_name}', '${e.bridge_id}')">
           <div class="result-name">${e.display_name}</div>
           <div class="result-id">${e.bridge_id}</div>
         </div>
-      `).join('');
+      `
+        )
+        .join('');
     } catch (err) {}
   }, 300);
 }
@@ -224,23 +232,27 @@ async function loadPendingRequests() {
     }
 
     countEl.textContent = data.requests.length;
-    el.innerHTML = data.requests.map(r => `
+    el.innerHTML = data.requests
+      .map(
+        (item) => `
       <div class="conn-item">
-        <div class="conn-name">${r.from_display_name}</div>
-        <div class="conn-id">${r.from_bridge_id}</div>
-        ${r.note ? `<div style="font-size:12px;color:#555;margin-top:4px;font-style:italic">"${r.note}"</div>` : ''}
+        <div class="conn-name">${item.from_display_name}</div>
+        <div class="conn-id">${item.from_bridge_id}</div>
+        ${item.note ? `<div style="font-size:12px;color:#555;margin-top:4px;font-style:italic">"${item.note}"</div>` : ''}
         <div class="conn-actions">
           <button class="btn btn-success"
-            onclick="respondToRequest('${r.connection_id}', 'accept', '${r.from_display_name}')">
+            onclick="respondToRequest('${item.connection_id}', 'accept', '${item.from_display_name}')">
             ✓ Accept
           </button>
           <button class="btn btn-danger"
-            onclick="respondToRequest('${r.connection_id}', 'reject', '${r.from_display_name}')">
+            onclick="respondToRequest('${item.connection_id}', 'reject', '${item.from_display_name}')">
             ✗ Reject
           </button>
         </div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   } catch (err) {}
 }
 
@@ -257,15 +269,19 @@ async function loadConnections() {
       return;
     }
 
-    el.innerHTML = data.connections.map(c => `
+    el.innerHTML = data.connections
+      .map(
+        (item) => `
       <div class="conn-item">
-        <div class="conn-name">${c.partner_display_name}</div>
-        <div class="conn-id">${c.partner_bridge_id}</div>
+        <div class="conn-name">${item.partner_display_name}</div>
+        <div class="conn-id">${item.partner_bridge_id}</div>
         <div style="font-size:11px;color:#999;margin-top:4px">
-          Connected since ${new Date(c.created_at).toLocaleDateString('en-IN')}
+          Connected since ${new Date(item.created_at).toLocaleDateString('en-IN')}
         </div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   } catch (err) {}
 }
 

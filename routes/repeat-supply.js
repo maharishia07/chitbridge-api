@@ -38,7 +38,7 @@ function fail(res, e) {
 }
 /** a writing verb on either side: the owner, or a person at editor level — the rail's own words for the rest */
 function editorMay(req, res) {
-  const m = access.mayWrite(req);   /* the one answer (lib/access mayWrite) — the trade writes ask the same */
+  const m = access.mayWrite(req); /* the one answer (lib/access mayWrite) — the trade writes ask the same */
   if (m.may) return true;
   res.status(403).json({ error: 'Not permitted', message: m.why, why: m.code });
   return false;
@@ -57,22 +57,35 @@ router.get('/', auth, async (req, res) => {
     const R = RS();
     if (!(await R.migrated(me(req)))) return res.json({ agreements: [], migrated: false, message: R.WHY.not_migrated });
     res.json({ agreements: await R.list(me(req)), migrated: true });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** POST /api/repeat { chit_id, every, unit, start_on, anchor_day?, until: { runs? | on? }, mode? } → { agreement } — the agreement chit is sent */
 router.post('/', auth, async (req, res) => {
   try {
     if (!editorMay(req, res)) return;
     res.json({ agreement: await RS().create(me(req), who(req), req.body || {}) });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** POST /api/repeat/sweep → { ran, problems } — the seller runs everything due now (what the nightly would do) */
 router.post('/sweep', auth, async (req, res) => {
-  try { if (!editorMay(req, res)) return; res.json(await RS().sweep(me(req))); } catch (e) { fail(res, e); }
+  try {
+    if (!editorMay(req, res)) return;
+    res.json(await RS().sweep(me(req)));
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** GET /api/repeat/:id?chit= → { agreement } — either side; the customer names the chit they hold */
 router.get('/:id', auth, async (req, res) => {
-  try { res.json(await RS().one(me(req), req.params.id, chitOf(req))); } catch (e) { fail(res, e); }
+  try {
+    res.json(await RS().one(me(req), req.params.id, chitOf(req)));
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /* ── the customer's side (through the rail: they hold the agreement chit) ── */
@@ -80,20 +93,26 @@ router.post('/:id/accept', auth, async (req, res) => {
   try {
     if (!customerMay(req, res, 'accept')) return;
     res.json({ agreement: await RS().accept(me(req), req.params.id, chitOf(req), who(req), railActions.meOf(req)) });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** POST /:id/counter { chit_id, lines?: [{ line_id, quantity }], every?, unit?, start_on?, note } */
 router.post('/:id/counter', auth, async (req, res) => {
   try {
     if (!customerMay(req, res, 'amend')) return;
     res.json({ agreement: await RS().counter(me(req), req.params.id, chitOf(req), who(req), req.body || {}) });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.post('/:id/decline', auth, async (req, res) => {
   try {
     if (!customerMay(req, res, 'reject')) return;
     res.json({ agreement: await RS().decline(me(req), req.params.id, chitOf(req), who(req), req.body || {}, railActions.meOf(req)) });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /* ── either side: skip the next run (the customer says why) ── */
@@ -101,16 +120,49 @@ router.post('/:id/skip', auth, async (req, res) => {
   try {
     if (!editorMay(req, res)) return;
     res.json({ agreement: await RS().skip(me(req), req.params.id, chitOf(req), who(req), req.body || {}) });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /* ── the seller's side ── */
-const seller = (fn) => async (req, res) => { try { if (!editorMay(req, res)) return; res.json(await fn(req)); } catch (e) { fail(res, e); } };
-router.post('/:id/agree', auth, seller(async (req) => ({ agreement: await RS().agree(me(req), req.params.id, who(req)) })));
-router.post('/:id/refuse', auth, seller(async (req) => ({ agreement: await RS().refuseCounter(me(req), req.params.id, who(req), req.body || {}) })));
-router.post('/:id/pause', auth, seller(async (req) => ({ agreement: await RS().pause(me(req), req.params.id, who(req), req.body || {}) })));
-router.post('/:id/resume', auth, seller(async (req) => ({ agreement: await RS().resume(me(req), req.params.id, who(req)) })));
-router.post('/:id/end', auth, seller(async (req) => ({ agreement: await RS().end(me(req), req.params.id, who(req), req.body || {}) })));
-router.post('/:id/run', auth, seller(async (req) => RS().run(me(req), req.params.id, who(req))));
+const seller = (fn) => async (req, res) => {
+  try {
+    if (!editorMay(req, res)) return;
+    res.json(await fn(req));
+  } catch (e) {
+    fail(res, e);
+  }
+};
+router.post(
+  '/:id/agree',
+  auth,
+  seller(async (req) => ({ agreement: await RS().agree(me(req), req.params.id, who(req)) }))
+);
+router.post(
+  '/:id/refuse',
+  auth,
+  seller(async (req) => ({ agreement: await RS().refuseCounter(me(req), req.params.id, who(req), req.body || {}) }))
+);
+router.post(
+  '/:id/pause',
+  auth,
+  seller(async (req) => ({ agreement: await RS().pause(me(req), req.params.id, who(req), req.body || {}) }))
+);
+router.post(
+  '/:id/resume',
+  auth,
+  seller(async (req) => ({ agreement: await RS().resume(me(req), req.params.id, who(req)) }))
+);
+router.post(
+  '/:id/end',
+  auth,
+  seller(async (req) => ({ agreement: await RS().end(me(req), req.params.id, who(req), req.body || {}) }))
+);
+router.post(
+  '/:id/run',
+  auth,
+  seller(async (req) => RS().run(me(req), req.params.id, who(req)))
+);
 
 module.exports = router;

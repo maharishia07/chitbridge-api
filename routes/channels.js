@@ -18,20 +18,29 @@ const entityId = (req) => auth.entityOf(req);
 // GET / — every channel, its provider state, and this entity's bindings. One read, so the panel cannot show a
 // binding and a provider state that disagree with each other.
 router.get('/', auth, async (req, res) => {
-  try { res.json(await channels.listChannels(entityId(req))); }
-  catch (err) { res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) }); }
+  try {
+    res.json(await channels.listChannels(entityId(req)));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) });
+  }
 });
 
 // GET /outbound — the receipts: what we tried to send back, and what became of it (b126).
 router.get('/outbound', auth, async (req, res) => {
-  try { res.json(await channels.listOutbound(entityId(req), req.query.limit)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) }); }
+  try {
+    res.json(await channels.listOutbound(entityId(req), req.query.limit));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) });
+  }
 });
 
 // POST /:id/provider-ref — Meta's phone_number_id for this line; a send cannot be addressed without it. { provider_ref }
 router.post('/:id/provider-ref', auth, async (req, res) => {
-  try { res.json(await channels.setProviderRef(entityId(req), req.params.id, (req.body || {}).provider_ref)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await channels.setProviderRef(entityId(req), req.params.id, (req.body || {}).provider_ref));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Update failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 // POST /:id/template — the OWNER states Meta approved a template on their number. { name, state }
@@ -42,19 +51,31 @@ router.post('/:id/provider-ref', auth, async (req, res) => {
  * ⚠️ The switch is not the permission: an unverified binding auto-raises nothing whatever this says.
  */
 router.post('/:id/auto-raise', auth, async (req, res) => {
-  try { res.json(await channels.setAutoRaise(entityId(req), req.params.id, !!(req.body || {}).on)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Auto-raise update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await channels.setAutoRaise(entityId(req), req.params.id, !!(req.body || {}).on));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Auto-raise update failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 router.post('/:id/template', auth, async (req, res) => {
-  try { const b = req.body || {}; res.json(await channels.setTemplate(entityId(req), req.params.id, b.name, b.state)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Template update failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    const b = req.body || {};
+    res.json(await channels.setTemplate(entityId(req), req.params.id, b.name, b.state));
+  } catch (err) {
+    res
+      .status(err.status || 500)
+      .json({ error: 'Template update failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 // POST / — bind an address to this entity. { channel, address, label }
 router.post('/', auth, async (req, res) => {
-  try { res.status(201).json(await channels.addBinding(entityId(req), req.body || {})); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Bind failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.status(201).json(await channels.addBinding(entityId(req), req.body || {}));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Bind failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 /**
@@ -73,28 +94,42 @@ function admin(req, res, next) {
   if (!key) return res.status(503).json({ error: 'Admin disabled', message: 'CB_ADMIN_KEY is not set on this server.' });
   const given = req.headers['x-cb-admin-key'];
   // Constant-time-ish: compare length first, then a crypto compare, so a wrong key leaks nothing by timing.
-  const ok = typeof given === 'string' && given.length === key.length &&
-    require('crypto').timingSafeEqual(Buffer.from(given), Buffer.from(key));
+  const ok = typeof given === 'string' && given.length === key.length && require('crypto').timingSafeEqual(Buffer.from(given), Buffer.from(key));
   if (!ok) return res.status(403).json({ error: 'Forbidden' });
   next();
 }
 router.post('/:id/approve', admin, async (req, res) => {
-  try { res.json(await channels.approveBinding(req.params.id, (req.body || {}).via || 'platform')); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Approve failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await channels.approveBinding(req.params.id, (req.body || {}).via || 'platform'));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Approve failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 // POST /:id/template-approve { entity_id, name } — the platform records Meta's approval (SEC-FIX3 S7: a shop cannot say it for itself)
 router.post('/:id/template-approve', admin, async (req, res) => {
-  try { const given = req.body || {}; res.json(await channels.setTemplate(given.entity_id, req.params.id, given.name, 'approved', true)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Template update failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    const given = req.body || {};
+    res.json(await channels.setTemplate(given.entity_id, req.params.id, given.name, 'approved', true));
+  } catch (err) {
+    res
+      .status(err.status || 500)
+      .json({ error: 'Template update failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 router.post('/:id/revoke', admin, async (req, res) => {
-  try { res.json(await channels.revokeBinding(req.params.id)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Revoke failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await channels.revokeBinding(req.params.id));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Revoke failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 router.delete('/:id', auth, async (req, res) => {
-  try { res.json(await channels.removeBinding(entityId(req), req.params.id)); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Unbind failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  try {
+    res.json(await channels.removeBinding(entityId(req), req.params.id));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Unbind failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+  }
 });
 
 module.exports = router;

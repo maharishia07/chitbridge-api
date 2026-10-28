@@ -4,22 +4,23 @@
 // catalogue_face is RLS-protected (b112) -> every query runs inside withEntity(caller). One row per entity.
 const express = require('express');
 const log = require('../lib/logger');
-const router  = express.Router();
+const router = express.Router();
 const { withEntity, query } = require('../db');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
 
 const ent = (req) => auth.entityOf(req);
-const MAX_BYTES = 1_000_000;   // a face is a small config object; cap so this never becomes a document store
+const MAX_BYTES = 1_000_000; // a face is a small config object; cap so this never becomes a document store
 
 // GET /api/catalogue-face — this entity's saved face (null if none yet).
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
-    const r = await withEntity(e, (db) => db.query(
-      `SELECT face, updated_at FROM catalogue_face WHERE entity_id = $1`, [e]));
+    const r = await withEntity(e, (db) => db.query(`SELECT face, updated_at FROM catalogue_face WHERE entity_id = $1`, [e]));
     res.json({ face: r.rows.length ? r.rows[0].face : null, updated_at: r.rows.length ? r.rows[0].updated_at : null });
-  } catch (err) { res.status(500).json({ error: 'Load failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Load failed', message: safeErr(err) });
+  }
 });
 
 // PUT /api/catalogue-face — upsert the whole face config { face: {...} }.
@@ -39,10 +40,10 @@ router.put('/', auth, async (req, res) => {
     // is REJECTED here, at the moment the owner writes it, which is the only point where the message is useful.
     const orderInput = require('../lib/order-input');
     const declErrors = [];
-    if (face.order_input) declErrors.push(...orderInput.resolve(face.order_input).errors.map((m) => 'catalogue: ' + m));
-    for (const it of (Array.isArray(face.items) ? face.items : [])) {
+    if (face.order_input) declErrors.push(...orderInput.resolve(face.order_input).errors.map((item) => 'catalogue: ' + item));
+    for (const it of Array.isArray(face.items) ? face.items : []) {
       if (it && it.order_input) {
-        declErrors.push(...orderInput.resolve(it.order_input).errors.map((m) => `item "${(it.name || it.product || '?')}": ${m}`));
+        declErrors.push(...orderInput.resolve(it.order_input).errors.map((item) => `item "${it.name || it.product || '?'}": ${item}`));
       }
     }
     // Same rule for the IDENTITY declaration: what makes a line unique, which field names the product it belongs
@@ -56,21 +57,29 @@ router.put('/', auth, async (req, res) => {
       const cols = await query(
         `SELECT sf.field_key FROM schema_fields sf
            JOIN entity_schemas es ON es.schema_id = sf.schema_id
-          WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`, [e]).catch(log.orElse('catalogue-face PUT /: the read failed — answered with none', ({ rows: [] })));
-      const have = cols.rows.map((r) => r.field_key);
+          WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`,
+        [e]
+      ).catch(log.orElse('catalogue-face PUT /: the read failed — answered with none', { rows: [] }));
+      const have = cols.rows.map((item) => item.field_key);
       // Only check when there is something to check against — an entity with no schema yet would otherwise be told
       // every field it names is missing.
-      if (have.length) declErrors.push(...identity.check(ident, have).map((m) => 'identity: ' + m));
+      if (have.length) declErrors.push(...identity.check(ident, have).map((item) => 'identity: ' + item));
     }
     if (declErrors.length) {
       return res.status(422).json({ error: 'Declaration not supported', message: declErrors.join('; '), errors: declErrors });
     }
-    const r = await withEntity(e, (db) => db.query(
-      `INSERT INTO catalogue_face (entity_id, face, updated_at) VALUES ($1, $2, now())
+    const r = await withEntity(e, (db) =>
+      db.query(
+        `INSERT INTO catalogue_face (entity_id, face, updated_at) VALUES ($1, $2, now())
          ON CONFLICT (entity_id) DO UPDATE SET face = EXCLUDED.face, updated_at = now()
-       RETURNING updated_at`, [e, face]));
+       RETURNING updated_at`,
+        [e, face]
+      )
+    );
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
-  } catch (err) { res.status(500).json({ error: 'Save failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Save failed', message: safeErr(err) });
+  }
 });
 
 module.exports = router;

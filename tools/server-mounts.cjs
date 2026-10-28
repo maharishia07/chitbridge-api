@@ -23,7 +23,10 @@ function serverMounts(src) {
   const vars = {};
   for (const m of s.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) vars[m[1]] = m[2] + '.js';
   for (const m of s.matchAll(/app\.use\(\s*['"]([^'"]+)['"]\s*,([^;]{0,160}?)\)\s*;/g)) {
-    const args = m[2].split(',').map((x) => x.trim()).filter(Boolean);
+    const args = m[2]
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
     const last = args[args.length - 1];
     if (last && vars[last] && !mounts[vars[last]]) mounts[vars[last]] = m[1];
   }

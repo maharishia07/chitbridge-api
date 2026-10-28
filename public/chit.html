@@ -86,10 +86,14 @@
 const API = '';
 const token = localStorage.getItem('cb_token');
 const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
-if (!token) { window.location.href = '/'; }
+if (!token) {
+  window.location.href = '/';
+}
 
 const chit_id = new URLSearchParams(window.location.search).get('id');
-if (!chit_id) { window.location.href = '/inbox.html'; }
+if (!chit_id) {
+  window.location.href = '/inbox.html';
+}
 
 let chitData = null;
 
@@ -100,8 +104,11 @@ function getStatusClass(status) {
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   });
 }
 
@@ -121,7 +128,7 @@ function formatAction(action) {
     status_completed: '✅ Marked Completed',
     status_cancelled: '🚫 Cancelled',
     connection_requested: '🔗 Connection Requested',
-    connection_accepted: '✅ Connection Accepted',
+    connection_accepted: '✅ Connection Accepted'
   };
   return labels[action] || action;
 }
@@ -132,61 +139,64 @@ async function loadChit() {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
-    if (res.status === 401) { window.location.href = '/'; return; }
+    if (res.status === 401) {
+      window.location.href = '/';
+      return;
+    }
     if (!res.ok) {
-      document.getElementById('content').innerHTML =
-        '<div class="card"><p style="color:#C62828">Chit not found</p></div>';
+      document.getElementById('content').innerHTML = '<div class="card"><p style="color:#C62828">Chit not found</p></div>';
       return;
     }
 
     chitData = await res.json();
     renderChit();
-
   } catch (err) {
-    document.getElementById('content').innerHTML =
-      '<div class="card"><p style="color:#C62828">Failed to load chit</p></div>';
+    document.getElementById('content').innerHTML = '<div class="card"><p style="color:#C62828">Failed to load chit</p></div>';
   }
 }
 
 function renderChit() {
   const { header, detail, participants, state_log } = chitData;
-  const myStatus = participants.find(p => p.entity_id === entity.identity_id);
+  const myStatus = participants.find((item) => item.entity_id === entity.identity_id);
   const currentStatus = myStatus ? myStatus.current_status : 'unknown';
   const isSender = header.sender_entity_id === entity.identity_id;
 
   // Summary chips
   let summaryChips = '';
   if (header.summary_json) {
-    const s = typeof header.summary_json === 'string'
-      ? JSON.parse(header.summary_json) : header.summary_json;
+    const s = typeof header.summary_json === 'string' ? JSON.parse(header.summary_json) : header.summary_json;
     if (s.line_item_count) summaryChips += `<span class="chip">📦 ${s.line_item_count} items</span>`;
-    if (s.total_value) summaryChips += `<span class="chip">💰 ${s.currency_code || 'INR'} ${parseFloat(s.total_value).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>`;
+    if (s.total_value)
+      summaryChips += `<span class="chip">💰 ${s.currency_code || 'INR'} ${parseFloat(s.total_value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>`;
     summaryChips += `<span class="chip">📋 ${header.purpose}</span>`;
   }
 
   // Line items table
   let lineItemsHtml = '';
   if (detail && detail.line_items) {
-    const items = typeof detail.line_items === 'string'
-      ? JSON.parse(detail.line_items) : detail.line_items;
+    const items = typeof detail.line_items === 'string' ? JSON.parse(detail.line_items) : detail.line_items;
     if (items && items.length > 0) {
       lineItemsHtml = `
         <table>
           <tr>
             <th>Item</th><th>Qty</th><th>Unit</th><th>Price</th><th>Total</th>
           </tr>
-          ${items.map(i => `
+          ${items
+            .map(
+              (item) => `
             <tr>
-              <td>${i.name}</td>
-              <td>${i.quantity}</td>
-              <td>${i.unit || '—'}</td>
-              <td>${parseFloat(i.price || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-              <td>${parseFloat(i.total || i.price * i.quantity || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+              <td>${item.name}</td>
+              <td>${item.quantity}</td>
+              <td>${item.unit || '—'}</td>
+              <td>${parseFloat(item.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+              <td>${parseFloat(item.total || item.price * item.quantity || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
             </tr>
-          `).join('')}
+          `
+            )
+            .join('')}
           <tr class="total-row">
             <td colspan="4">Total</td>
-            <td>${detail.currency_code || 'INR'} ${parseFloat(detail.total_value || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+            <td>${detail.currency_code || 'INR'} ${parseFloat(detail.total_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
           </tr>
         </table>`;
     }
@@ -199,18 +209,34 @@ function renderChit() {
 
   // Action buttons — only for receivers and valid transitions
   const validNextActions = {
-    'pending':     [['accepted','✅ Accept','btn-accept'],['rejected','❌ Reject','btn-reject']],
-    'delivered':   [['accepted','✅ Accept','btn-accept'],['rejected','❌ Reject','btn-reject']],
-    'read':        [['accepted','✅ Accept','btn-accept'],['rejected','❌ Reject','btn-reject']],
-    'accepted':    [['in_progress','⏳ Start Processing','btn-progress'],['completed','✅ Complete','btn-complete'],['cancelled','🚫 Cancel','btn-reject']],
-    'in_progress': [['completed','✅ Mark Complete','btn-complete'],['cancelled','🚫 Cancel','btn-reject']],
+    'pending': [
+      ['accepted', '✅ Accept', 'btn-accept'],
+      ['rejected', '❌ Reject', 'btn-reject']
+    ],
+    'delivered': [
+      ['accepted', '✅ Accept', 'btn-accept'],
+      ['rejected', '❌ Reject', 'btn-reject']
+    ],
+    'read': [
+      ['accepted', '✅ Accept', 'btn-accept'],
+      ['rejected', '❌ Reject', 'btn-reject']
+    ],
+    'accepted': [
+      ['in_progress', '⏳ Start Processing', 'btn-progress'],
+      ['completed', '✅ Complete', 'btn-complete'],
+      ['cancelled', '🚫 Cancel', 'btn-reject']
+    ],
+    'in_progress': [
+      ['completed', '✅ Mark Complete', 'btn-complete'],
+      ['cancelled', '🚫 Cancel', 'btn-reject']
+    ]
   };
 
   let actionButtons = '';
   if (!isSender && validNextActions[currentStatus]) {
-    actionButtons = validNextActions[currentStatus].map(([status, label, cls]) =>
-      `<button class="btn ${cls}" onclick="updateStatus('${status}')">${label}</button>`
-    ).join('');
+    actionButtons = validNextActions[currentStatus]
+      .map(([status, label, cls]) => `<button class="btn ${cls}" onclick="updateStatus('${status}')">${label}</button>`)
+      .join('');
   }
 
   document.getElementById('content').innerHTML = `
@@ -234,45 +260,59 @@ function renderChit() {
     </div>
 
     <!-- Action bar -->
-    ${actionButtons ? `
+    ${
+      actionButtons
+        ? `
     <div class="card">
       <div class="section-title">Actions</div>
       <div id="msg-action"></div>
       <div class="action-bar">${actionButtons}</div>
-    </div>` : ''}
+    </div>`
+        : ''
+    }
 
     <!-- Participants -->
     <div class="card">
       <div class="section-title">All Participants</div>
       <div class="participants">
-        ${participants.map(p => `
+        ${participants
+          .map(
+            (item) => `
           <div class="participant">
             <div>
-              <div class="p-name">${p.display_name}
-                ${p.entity_id === entity.identity_id ? '<span style="color:#0D47A1;font-size:11px"> (You)</span>' : ''}
+              <div class="p-name">${item.display_name}
+                ${item.entity_id === entity.identity_id ? '<span style="color:#0D47A1;font-size:11px"> (You)</span>' : ''}
               </div>
-              <div class="p-id">${p.bridge_id}</div>
+              <div class="p-id">${item.bridge_id}</div>
             </div>
             <div style="text-align:right">
-              <span class="status-badge ${getStatusClass(p.current_status)}">${p.current_status}</span>
-              ${p.read_at ? '<div style="font-size:11px;color:#999;margin-top:4px">Read</div>' : ''}
+              <span class="status-badge ${getStatusClass(item.current_status)}">${item.current_status}</span>
+              ${item.read_at ? '<div style="font-size:11px;color:#999;margin-top:4px">Read</div>' : ''}
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
 
     <!-- Line items -->
-    ${lineItemsHtml ? `
+    ${
+      lineItemsHtml
+        ? `
     <div class="card line-items">
       <div class="section-title">Line Items</div>
       ${lineItemsHtml}
-    </div>` : ''}
+    </div>`
+        : ''
+    }
 
     <!-- State log -->
     <div class="card">
       <div class="section-title">Audit Trail — State Log</div>
-      ${state_log.map(log => `
+      ${state_log
+        .map(
+          (log) => `
         <div class="log-item">
           <div class="log-dot"></div>
           <div style="flex:1">
@@ -283,7 +323,9 @@ function renderChit() {
           </div>
           ${log.new_status ? `<span class="status-badge ${getStatusClass(log.new_status)}">${log.new_status}</span>` : ''}
         </div>
-      `).join('')}
+      `
+        )
+        .join('')}
     </div>`;
 }
 
@@ -309,7 +351,6 @@ async function updateStatus(newStatus) {
 
     msgEl.innerHTML = `<div class="msg success">Status updated to: ${newStatus}</div>`;
     setTimeout(() => loadChit(), 1000);
-
   } catch (err) {
     if (msgEl) msgEl.innerHTML = '<div class="msg error">Update failed</div>';
   }

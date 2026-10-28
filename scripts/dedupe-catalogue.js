@@ -29,7 +29,7 @@ const SHOP = process.env.CB_SHOP_NAME || 'Chola Auto Care';
 const EMAIL = process.env.CB_SHOP_EMAIL || 'cholaauto@email.com';
 const APPLY = process.argv.includes('--apply');
 
-const nameOf = (x) => String(((x.item_data || x).name) || '').trim();
+const nameOf = (x) => String((x.item_data || x).name || '').trim();
 
 (async () => {
   console.log('\n══ CATALOGUE DEDUPE ' + (APPLY ? '· APPLYING' : '· DRY RUN (nothing will change)') + ' ══\n');
@@ -37,12 +37,18 @@ const nameOf = (x) => String(((x.item_data || x).name) || '').trim();
   /* ⚠️ signIn returns the TOKEN, not an auth object — `P.j` wants `{ token }`. Reading it wrong sends every
      request with no Authorization header, and an empty catalogue then looks like a clean shelf. */
   const token = await P.signIn(EMAIL, SHOP);
-  if (!token) { console.log('sign-in failed for ' + SHOP); process.exit(1); }
+  if (!token) {
+    console.log('sign-in failed for ' + SHOP);
+    process.exit(1);
+  }
   const auth = { token };
 
   const r = await P.j('/api/products?limit=500', auth);
   const items = (r.b && (r.b.items || r.b)) || [];
-  if (!Array.isArray(items)) { console.log('unexpected catalogue shape'); process.exit(1); }
+  if (!Array.isArray(items)) {
+    console.log('unexpected catalogue shape');
+    process.exit(1);
+  }
   console.log(SHOP + ' — ' + items.length + ' active item(s) on the shelf\n');
 
   /* Group by the name a person would search for, oldest first inside each group. */
@@ -54,23 +60,39 @@ const nameOf = (x) => String(((x.item_data || x).name) || '').trim();
     groups.get(key).push(it);
   }
   for (const list of groups.values()) {
-    list.sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+    list.sort((first, second) => String(first.created_at || '').localeCompare(String(second.created_at || '')));
   }
 
   const dupes = [...groups.entries()].filter(([, list]) => list.length > 1);
-  if (!dupes.length) { console.log('  nothing duplicated — the shelf is already clean\n'); return; }
+  if (!dupes.length) {
+    console.log('  nothing duplicated — the shelf is already clean\n');
+    return;
+  }
 
   let planned = 0;
   for (const [, list] of dupes) {
     const keep = list[0];
     const drop = list.slice(1);
     planned += drop.length;
-    console.log('  ' + nameOf(keep).padEnd(24) + list.length + ' copies → keep 1, retire ' + drop.length
-      + '   (keeping ' + String(keep.item_id).slice(0, 8) + ', added ' + String(keep.created_at || '').slice(0, 10) + ')');
+    console.log(
+      '  ' +
+        nameOf(keep).padEnd(24) +
+        list.length +
+        ' copies → keep 1, retire ' +
+        drop.length +
+        '   (keeping ' +
+        String(keep.item_id).slice(0, 8) +
+        ', added ' +
+        String(keep.created_at || '').slice(0, 10) +
+        ')'
+    );
   }
   console.log('\n  ' + planned + ' row(s) would be retired across ' + dupes.length + ' product(s)');
 
-  if (!APPLY) { console.log('\n  DRY RUN — re-run with --apply to do it\n'); return; }
+  if (!APPLY) {
+    console.log('\n  DRY RUN — re-run with --apply to do it\n');
+    return;
+  }
 
   let done = 0;
   let failed = 0;
@@ -82,7 +104,10 @@ const nameOf = (x) => String(((x.item_data || x).name) || '').trim();
          checker: it accuses the thing it is checking. */
       const d = await P.j('/api/products/' + it.item_id, { method: 'DELETE', ...auth });
       if (d.status >= 200 && d.status < 300) done++;
-      else { failed++; console.log('  FAIL ' + nameOf(it) + ' ' + it.item_id + ' → ' + d.status); }
+      else {
+        failed++;
+        console.log('  FAIL ' + nameOf(it) + ' ' + it.item_id + ' → ' + d.status);
+      }
     }
   }
   console.log('\n  retired ' + done + ' · failed ' + failed);

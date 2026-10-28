@@ -27,20 +27,39 @@ const crypto = require('crypto');
    overnight open defect on 2026-08-09. This was 9 copies of j() and 31 copies of the base URL. */
 const { API, j, signIn } = require('./_proof');
 
-
 const SECRET = process.env.WHATSAPP_APP_SECRET;
 const ADMIN = process.env.CB_ADMIN_KEY;
 
-let pass = 0, fail = 0;
-const ok = (n, c, x) => { if (c) { console.log('  \x1b[32mok\x1b[0m  ' + n); pass++; } else { console.log('  \x1b[31mXX\x1b[0m  ' + n + (x ? ' — ' + x : '')); fail++; } };
+let pass = 0,
+  fail = 0;
+const ok = (n, c, x) => {
+  if (c) {
+    console.log('  \x1b[32mok\x1b[0m  ' + n);
+    pass++;
+  } else {
+    console.log('  \x1b[31mXX\x1b[0m  ' + n + (x ? ' — ' + x : ''));
+    fail++;
+  }
+};
 
 const login = (email, name) => signIn(email, name);
 async function deliver(to, from, text) {
-  const payload = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {
-    metadata: { display_phone_number: to, phone_number_id: '000' },
-    contacts: [{ wa_id: from, profile: { name: 'Ravi (test)' } }],
-    messages: [{ from, id: 'wamid.' + Date.now() + Math.random(), type: 'text', text: { body: text } }],
-  } }] }] });
+  const payload = JSON.stringify({
+    object: 'whatsapp_business_account',
+    entry: [
+      {
+        changes: [
+          {
+            value: {
+              metadata: { display_phone_number: to, phone_number_id: '000' },
+              contacts: [{ wa_id: from, profile: { name: 'Ravi (test)' } }],
+              messages: [{ from, id: 'wamid.' + Date.now() + Math.random(), type: 'text', text: { body: text } }]
+            }
+          }
+        ]
+      }
+    ]
+  });
   const sig = 'sha256=' + crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
   return j('/api/capture/webhook/whatsapp', { method: 'POST', body: payload, headers: { 'X-Hub-Signature-256': sig } });
 }
@@ -57,16 +76,24 @@ async function deliver(to, from, text) {
  * stamped per run; the message was the one thing that was not. A customer quoting their own reference is exactly
  * what a real one does, so this costs the message nothing in realism.
  */
-const messageFor = (stamp) =>
-  'Hi, please send 2 boxes of bolts and 5 metres of cable to the Ramnagar site by Friday. Thanks - Ravi (ref ' + stamp + ')';
+const messageFor = (stamp) => 'Hi, please send 2 boxes of bolts and 5 metres of cable to the Ramnagar site by Friday. Thanks - Ravi (ref ' + stamp + ')';
 
 (async () => {
-  if (!SECRET || !ADMIN) { console.log('\n  Missing WHATSAPP_APP_SECRET / CB_ADMIN_KEY — see prove-channels.js.\n'); process.exitCode = 2; return; }
+  if (!SECRET || !ADMIN) {
+    console.log('\n  Missing WHATSAPP_APP_SECRET / CB_ADMIN_KEY — see prove-channels.js.\n');
+    process.exitCode = 2;
+    return;
+  }
   const canary = await j('/api/capture/webhook/whatsapp', { method: 'POST', body: '{}', headers: { 'X-Hub-Signature-256': 'sha256=deadbeef' } });
-  if (canary.status !== 401) { console.log('\n  ABORTED — server not enforcing signatures; run prove-channels.js first.\n'); process.exitCode = 2; return; }
+  if (canary.status !== 401) {
+    console.log('\n  ABORTED — server not enforcing signatures; run prove-channels.js first.\n');
+    process.exitCode = 2;
+    return;
+  }
 
   const stamp = Date.now().toString().slice(-6);
-  const NUM = '+9155' + stamp + '0', CUST = '+9191' + stamp + '9';
+  const NUM = '+9155' + stamp + '0',
+    CUST = '+9191' + stamp + '9';
   const A = await login('beta@test-cb.com', 'Beta Fresh');
 
   console.log('\n── 1 · a customer writes in ────────────────────────────────────────────────');
@@ -76,11 +103,15 @@ const messageFor = (stamp) =>
   await deliver(NUM, CUST, MESSAGE);
   const caps = ((await j('/api/capture/pending', { token: A })).b || {}).captures || [];
   // Matched on THIS RUN's stamp, so a leftover capture from another run can never be mistaken for ours.
-  const cap = caps.find((c) => String(c.raw_text || '').includes(stamp));
+  const cap = caps.find((item) => String(item.raw_text || '').includes(stamp));
   ok('★★ the message is in the intake inbox, raw and unaltered', !!cap);
   ok('★ it knows who wrote and which line they wrote to', cap && cap.sender_ref === CUST && cap.to_ref === NUM);
   ok('★★ it is NOT a chit yet — it is pending', cap && cap.status === 'pending' && !cap.chit_id);
-  if (!cap) { console.log('\n  cannot continue\n'); process.exitCode = 1; return; }
+  if (!cap) {
+    console.log('\n  cannot continue\n');
+    process.exitCode = 1;
+    return;
+  }
 
   console.log('\n── 2 · the co-assist reads it  \x1b[33m(this call costs)\x1b[0m ─────────────────────────');
   const st = await j('/api/capture/' + cap.id + '/structure', { method: 'POST', token: A, body: {} });
@@ -89,26 +120,42 @@ const messageFor = (stamp) =>
   ok('★★ prose became structured line items', st.status === 200 && lines.length >= 2, 'status ' + st.status + ' lines ' + lines.length);
   const txt = JSON.stringify(lines).toLowerCase();
   ok('★★ it read the ACTUAL goods, not a guess', txt.includes('bolt') && txt.includes('cable'), JSON.stringify(lines).slice(0, 200));
-  const bolts = lines.find((l) => /bolt/i.test(l.particulars || ''));
+  const bolts = lines.find((item) => /bolt/i.test(item.particulars || ''));
   ok('★★ …and the ACTUAL quantity — 2 boxes of bolts', bolts && Number(bolts.qty) === 2, JSON.stringify(bolts));
   /**
    * ⚠️ THE MOST IMPORTANT ASSERTION HERE. The message states no prices. A model that helpfully supplies one has
    * invented a number that will sit on a chit and be traded against — the single worst thing this pipeline could
    * do. The skill forbids it; this proves the forbidding holds on real prose.
    */
-  ok('★★ it invented NO price — none was stated', lines.every((l) => Number(l.rate || 0) === 0), JSON.stringify(lines));
+  ok(
+    '★★ it invented NO price — none was stated',
+    lines.every((item) => Number(item.rate || 0) === 0),
+    JSON.stringify(lines)
+  );
   ok('★ it is marked as a DRAFT, not evidence', /draft/i.test(st.b.note || ''), st.b.note);
   if (st.b.usage) console.log('  \x1b[36m--\x1b[0m  cost of that call: $' + st.b.usage.est_cost_usd);
 
   console.log('\n── 3 · a human confirms it onto the rail ───────────────────────────────────');
   /* Exactly what the Intake screen does: send the chit, then record the linkage. */
-  const subject = s.subject || ('From ' + CUST);
-  const chit = await j('/api/chits/send', { method: 'POST', token: A, body: {
-    recipients: [{ name: 'Self', role: 'to', self: true }], is_draft: false, send_as_label: 'Beta Fresh',
-    subject: subject, schema_values: { subject: subject },
-    line_items: lines.map((l) => ({ particulars: l.particulars, quantity: Number(l.qty) || 0,
-                                    price: Number(l.rate) || 0, total: (Number(l.qty) || 0) * (Number(l.rate) || 0) })),
-    external_priority: 'normal' } });
+  const subject = s.subject || 'From ' + CUST;
+  const chit = await j('/api/chits/send', {
+    method: 'POST',
+    token: A,
+    body: {
+      recipients: [{ name: 'Self', role: 'to', self: true }],
+      is_draft: false,
+      send_as_label: 'Beta Fresh',
+      subject: subject,
+      schema_values: { subject: subject },
+      line_items: lines.map((item) => ({
+        particulars: item.particulars,
+        quantity: Number(item.qty) || 0,
+        price: Number(item.rate) || 0,
+        total: (Number(item.qty) || 0) * (Number(item.rate) || 0)
+      })),
+      external_priority: 'normal'
+    }
+  });
   const chit_id = chit.b && chit.b.chit_id;
   ok('★★ THE CHIT EXISTS ON THE RAIL', (chit.status === 200 || chit.status === 201) && !!chit_id, JSON.stringify(chit.b).slice(0, 140));
 
@@ -126,17 +173,23 @@ const messageFor = (stamp) =>
    * away entirely.
    */
   const hdr = (got.b && got.b.header) || {};
-  ok('★★ …under a subject drawn from THEIR OWN words, not the generic fallback',
-     !!hdr.manual_subject && hdr.manual_subject !== hdr.auto_subject, 'manual="' + hdr.manual_subject + '" auto="' + hdr.auto_subject + '"');
+  ok(
+    '★★ …under a subject drawn from THEIR OWN words, not the generic fallback',
+    !!hdr.manual_subject && hdr.manual_subject !== hdr.auto_subject,
+    'manual="' + hdr.manual_subject + '" auto="' + hdr.auto_subject + '"'
+  );
   /* `detail` is an OBJECT carrying line_items, not an array of rows — asserted against the real shape. */
   const det = (got.b && got.b.detail) || {};
-  ok('★ the line items are on the chit itself', Array.isArray(det.line_items) && det.line_items.length >= 2,
-     'line_items: ' + JSON.stringify(det.line_items || []).slice(0, 120));
+  ok(
+    '★ the line items are on the chit itself',
+    Array.isArray(det.line_items) && det.line_items.length >= 2,
+    'line_items: ' + JSON.stringify(det.line_items || []).slice(0, 120)
+  );
 
   /* ⚠️ PROVENANCE — the point of the whole exercise. Six weeks later someone must be able to ask "where did this
      order come from?" and be told: that WhatsApp message, from that number, on that date. */
   const after = (await j('/api/capture/pending', { token: A })).b.captures || [];
-  ok('★★ it has left the pending queue — handled, not lost', !after.find((c) => c.id === cap.id));
+  ok('★★ it has left the pending queue — handled, not lost', !after.find((item) => item.id === cap.id));
   ok('★★ the capture still POINTS AT the chit it became — provenance survives', conv.b.chit_id === chit_id);
 
   console.log('\n── 5 · ⚠️ the SAME message must not become a SECOND chit ───────────────────');
@@ -154,21 +207,33 @@ const messageFor = (stamp) =>
 
   const beforeDup = ((await j('/api/capture/pending', { token: A })).b.captures || []).length;
   /* Redeliver the SAME wamid by replaying an identical signed payload — which is exactly what a Meta retry is. */
-  const same = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {
-    metadata: { display_phone_number: NUM, phone_number_id: '000' },
-    contacts: [{ wa_id: CUST, profile: { name: 'Ravi (test)' } }],
-    messages: [{ from: CUST, id: 'wamid.RETRY.' + stamp, type: 'text', text: { body: 'retry test ' + stamp } }],
-  } }] }] });
+  const same = JSON.stringify({
+    object: 'whatsapp_business_account',
+    entry: [
+      {
+        changes: [
+          {
+            value: {
+              metadata: { display_phone_number: NUM, phone_number_id: '000' },
+              contacts: [{ wa_id: CUST, profile: { name: 'Ravi (test)' } }],
+              messages: [{ from: CUST, id: 'wamid.RETRY.' + stamp, type: 'text', text: { body: 'retry test ' + stamp } }]
+            }
+          }
+        ]
+      }
+    ]
+  });
   const sig = 'sha256=' + crypto.createHmac('sha256', SECRET).update(same).digest('hex');
   await j('/api/capture/webhook/whatsapp', { method: 'POST', body: same, headers: { 'X-Hub-Signature-256': sig } });
   await j('/api/capture/webhook/whatsapp', { method: 'POST', body: same, headers: { 'X-Hub-Signature-256': sig } });
   const afterDup = (await j('/api/capture/pending', { token: A })).b.captures || [];
-  const retries = afterDup.filter((c) => String(c.raw_text || '') === 'retry test ' + stamp);
+  const retries = afterDup.filter((item) => String(item.raw_text || '') === 'retry test ' + stamp);
   ok('★★ (b) the SAME message delivered twice makes ONE capture, not two', retries.length === 1, 'found ' + retries.length);
   /* Tidy the extras this section created so the queue is left as it was found. */
-  for (const c of afterDup) if (String(c.raw_text || '').includes('retry test ' + stamp)) {
-    await j('/api/capture/' + c.id + '/dismiss', { method: 'POST', token: A, body: {} });
-  }
+  for (const c of afterDup)
+    if (String(c.raw_text || '').includes('retry test ' + stamp)) {
+      await j('/api/capture/' + c.id + '/dismiss', { method: 'POST', token: A, body: {} });
+    }
 
   await j('/api/channels/' + bind.b.id, { method: 'DELETE', token: A });
   console.log('\n  \x1b[36m--\x1b[0m  binding removed. The CHIT is left in place: "' + subject + '"');
@@ -179,4 +244,7 @@ const messageFor = (stamp) =>
   console.log('  \x1b[33m⚠️\x1b[0m  What is NOT proven is the transport: that Meta really delivers to that webhook.');
   console.log('     That is the part other applications do every day, and the part we wait on an account for.\n');
   process.exitCode = fail ? 1 : 0;
-})().catch((e) => { console.error('\nprove-message-to-chit crashed:', e && e.message, '\n'); process.exitCode = 1; });
+})().catch((e) => {
+  console.error('\nprove-message-to-chit crashed:', e && e.message, '\n');
+  process.exitCode = 1;
+});

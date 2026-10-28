@@ -17,10 +17,16 @@
 'use strict';
 const P = require('./_proof');
 
-let pass = 0, fail = 0;
+let pass = 0,
+  fail = 0;
 const ok = (name, cond, got) => {
-  if (cond) { pass++; console.log('  ok   ' + name); }
-  else { fail++; console.log('  FAIL ' + name + (got === undefined ? '' : '  → ' + JSON.stringify(got))); }
+  if (cond) {
+    pass++;
+    console.log('  ok   ' + name);
+  } else {
+    fail++;
+    console.log('  FAIL ' + name + (got === undefined ? '' : '  → ' + JSON.stringify(got)));
+  }
 };
 
 async function login(email, name) {
@@ -36,9 +42,16 @@ async function login(email, name) {
   const tag = String(Date.now()).slice(-6);
 
   console.log('1 · author a term and cite it');
-  const made = await P.j('/api/definitions', { method: 'POST', ...me, body: {
-    kind: 'offer', sub_kind: 'percent_off', name: 'Bulk ' + tag,
-    rules: { percent: 10, region: 'TN' } } });
+  const made = await P.j('/api/definitions', {
+    method: 'POST',
+    ...me,
+    body: {
+      kind: 'offer',
+      sub_kind: 'percent_off',
+      name: 'Bulk ' + tag,
+      rules: { percent: 10, region: 'TN' }
+    }
+  });
   ok('a definition exists to cite', made.status === 201, made.status);
   const defId = made.b && made.b.definition && made.b.definition.definition_id;
 
@@ -51,11 +64,16 @@ async function login(email, name) {
 
   console.log('\n2 · send the chit carrying those terms');
   const subject = 'Adoption freeze ' + tag;
-  const sent = await P.j('/api/chits/send', { method: 'POST', ...me, body: {
-    manual_subject: subject,
-    recipients: [{ name: 'Karpagam Caterers', role: 'to' }],
-    line_items: [{ particulars: 'Tamarind', unit: 'kg', quantity: 10, price: 190, total: 1900 }],
-    business_json: snapshot } });
+  const sent = await P.j('/api/chits/send', {
+    method: 'POST',
+    ...me,
+    body: {
+      manual_subject: subject,
+      recipients: [{ name: 'Karpagam Caterers', role: 'to' }],
+      line_items: [{ particulars: 'Tamarind', unit: 'kg', quantity: 10, price: 190, total: 1900 }],
+      business_json: snapshot
+    }
+  });
   ok('the chit is sent', sent.status === 200 || sent.status === 201, sent.status);
   const chitId = sent.b && (sent.b.chit_id || (sent.b.chit && sent.b.chit.chit_id));
 
@@ -68,40 +86,46 @@ async function login(email, name) {
   ok('…and the name, so it can say WHAT it applied', /^Bulk /.test(terms.name || ''), terms.name);
 
   console.log('\n3 · ⭐⭐ NOW MOVE THE SHELF');
-  const edited = await P.j('/api/definitions/' + defId, { method: 'PUT', ...me, body: {
-    rules: { percent: 25, region: 'TN' } } });
+  const edited = await P.j('/api/definitions/' + defId, {
+    method: 'PUT',
+    ...me,
+    body: {
+      rules: { percent: 25, region: 'TN' }
+    }
+  });
   ok('the shelf is edited to 25%', edited.status === 200 && edited.b.version === 2, edited.b && edited.b.version);
 
   const after = await P.j('/api/chits/' + chitId, me);
   const afterOn = ((after.b || {}).header || {}).business_json || (after.b || {}).business_json || {};
   const afterTerms = (afterOn.frozen_terms || [])[0] || {};
-  ok('⭐⭐ THE SENT CHIT STILL SAYS 10% — its terms did not move',
-     afterTerms.rules && afterTerms.rules.percent === 10, afterTerms.rules);
+  ok('⭐⭐ THE SENT CHIT STILL SAYS 10% — its terms did not move', afterTerms.rules && afterTerms.rules.percent === 10, afterTerms.rules);
   ok('…still pointing at version 1', afterTerms.version === 1, afterTerms.version);
 
   const shelf = await P.j('/api/definitions/' + defId, me);
-  ok('…while the shelf is at version 2, 25%',
-     shelf.b.definition.current_version === 2, shelf.b.definition.current_version);
-  ok('⭐ and version 1 is STILL READABLE — the chit\'s copy can be checked against the shelf',
-     (shelf.b.versions || []).some((v) => v.version === 1 && v.rules.percent === 10),
-     (shelf.b.versions || []).map((v) => 'v' + v.version + ' ' + v.rules.percent + '%'));
+  ok('…while the shelf is at version 2, 25%', shelf.b.definition.current_version === 2, shelf.b.definition.current_version);
+  ok(
+    "⭐ and version 1 is STILL READABLE — the chit's copy can be checked against the shelf",
+    (shelf.b.versions || []).some((item) => item.version === 1 && item.rules.percent === 10),
+    (shelf.b.versions || []).map((item) => 'v' + item.version + ' ' + item.rules.percent + '%')
+  );
 
   console.log('\n4 · ⭐ BOTH PARTIES HOLD THE SAME TERMS');
   const theirs = await P.j('/api/chits/' + chitId, them);
   ok('the counterparty can open the chit', theirs.status === 200, theirs.status);
   const theirOn = ((theirs.b || {}).header || {}).business_json || (theirs.b || {}).business_json || {};
   const theirTerms = (theirOn.frozen_terms || [])[0] || {};
-  ok('⭐⭐ …and sees the SAME frozen terms — 10%, not the seller’s current 25%',
-     theirTerms.rules && theirTerms.rules.percent === 10, theirTerms.rules);
+  ok('⭐⭐ …and sees the SAME frozen terms — 10%, not the seller’s current 25%', theirTerms.rules && theirTerms.rules.percent === 10, theirTerms.rules);
   ok('…the same version pointer', theirTerms.version === 1, theirTerms.version);
   /**
    * ⚠️ THIS IS THE PART AN ERP CANNOT DO. The buyer holds their own copy of the terms — not a link to the
    * seller's record, which the seller could edit. That is why the snapshot travels ON the chit rather than
    * being resolved from the shelf when read.
    */
-  ok('⚠️ …and it is their OWN copy: the shelf it came from is not even visible to them',
-     (await P.j('/api/definitions/' + defId, them)).status === 404);
+  ok('⚠️ …and it is their OWN copy: the shelf it came from is not even visible to them', (await P.j('/api/definitions/' + defId, them)).status === 404);
 
   console.log('\n== RESULT ==  PASS ' + pass + '  ·  FAIL ' + fail);
   process.exit(fail ? 1 : 0);
-})().catch((e) => { console.error('\nthrew: ' + e.message); process.exit(1); });
+})().catch((e) => {
+  console.error('\nthrew: ' + e.message);
+  process.exit(1);
+});

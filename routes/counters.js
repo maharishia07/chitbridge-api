@@ -23,6 +23,8 @@
  * ⚠️ SESSION ONLY. A key can never create, open or release a counter — a leaked counter key must not be able to
  * open more counters.
  * ⚠️ NO MIGRATION: the register rides identities.policy_flags.counters, beside the key list.
+ 
+ * CALLED BY routes/till.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 'use strict';
 const express = require('express');
@@ -42,11 +44,11 @@ const ownerOnly = require('../lib/owner').gate(OWNER_SAYS);
 const PENDING_MS = 2 * 60 * 1000;
 const isPending = (h) => typeof h === 'string' && h.indexOf('pending:') === 0;
 const isDevice = (h) => typeof h === 'string' && h.indexOf('dev:') === 0;
-const pendingLive = (c) => isPending(c && c.held_by) && (Date.now() - new Date(c.held_at || 0).getTime()) < PENDING_MS;
+const pendingLive = (c) => isPending(c && c.held_by) && Date.now() - new Date(c.held_at || 0).getTime() < PENDING_MS;
 
 /** set one counter's record in one statement — shallow merge into policy_flags.counters[id] */
 async function patchCounter(db, entity_id, id, patch) {
-  await require('../lib/policy').patchKey(db, entity_id, ['counters', String(id)], patch, { op: 'merge' });   /* T2-POLICY: the one writer */
+  await require('../lib/policy').patchKey(db, entity_id, ['counters', String(id)], patch, { op: 'merge' }); /* T2-POLICY: the one writer */
 }
 router.patchCounter = patchCounter;
 
@@ -64,19 +66,25 @@ async function readLocked(db, entity_id) {
   const pf = (r.rows[0] && r.rows[0].policy_flags) || {};
   const counters = Object.assign({}, pf.counters || {});
   const list = Array.isArray(pf.api_keys) ? pf.api_keys : [];
-  const tills = list.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
+  const tills = list.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
   for (const k of tills) {
     const id = k.till && k.till.id ? String(k.till.id).toUpperCase() : null;
     if (!id || keys.isClosed(k)) continue;
     if (!counters[id]) {
-      counters[id] = { id, name: 'Counter ' + id, created_at: k.created_at || new Date().toISOString(),
-                       held_by: k.jti, held_at: (k.till && k.till.at) || new Date().toISOString(), adopted: true };
+      counters[id] = {
+        id,
+        name: 'Counter ' + id,
+        created_at: k.created_at || new Date().toISOString(),
+        held_by: k.jti,
+        held_at: (k.till && k.till.at) || new Date().toISOString(),
+        adopted: true
+      };
       await patchCounter(db, entity_id, id, counters[id]);
     }
     if (!k.counter) await keys.patchKeyWith(db, entity_id, k.jti, { counter: id });
   }
   /* M11: phones listed on this shop — a counter assigned to a phone is held by 'dev:'+device_id (keys.claimSeries) */
-  const devices = (pf.devices && typeof pf.devices === 'object') ? pf.devices : {};
+  const devices = pf.devices && typeof pf.devices === 'object' ? pf.devices : {};
   return { counters, list, tills, devices, pf };
 }
 
@@ -85,28 +93,44 @@ function view(c, list, devices) {
   /* ⭐ M11: a counter assigned to a phone number is held by that phone ('dev:'+device_id) while the phone holds its prefix */
   const dev = isDevice(c.held_by) ? (devices || {})[String(c.held_by).slice(4)] : null;
   if (dev && !dev.revoked_at && dev.till && String(dev.till.prefix || '').toUpperCase() === String(c.id).toUpperCase()) {
-    return Object.assign(baseView(c), { state: 'open', held_by: { name: dev.label || 'a phone', phone: true, since: c.held_at || null,
-      seen: dev.seen ? { at: dev.seen } : null, diag: null } });
+    return Object.assign(baseView(c), {
+      state: 'open',
+      held_by: { name: dev.label || 'a phone', phone: true, since: c.held_at || null, seen: dev.seen ? { at: dev.seen } : null, diag: null }
+    });
   }
-  const holder = c.held_by && !isPending(c.held_by) && !isDevice(c.held_by) ? list.find((k) => k && String(k.jti) === String(c.held_by)) : null;
+  const holder = c.held_by && !isPending(c.held_by) && !isDevice(c.held_by) ? list.find((item) => item && String(item.jti) === String(c.held_by)) : null;
   const open = !!(holder && !keys.isClosed(holder));
   return {
-    id: c.id, name: c.name || ('Counter ' + c.id), created_at: c.created_at || null,
-    state: open ? (c.status === 'break' ? 'break' : 'open') : (pendingLive(c) ? 'opening' : 'closed'),
-    break_since: open && c.status === 'break' ? (c.status_since || null) : null,
-    break_by: open && c.status === 'break' ? (c.status_by || null) : null,
-    held_by: open ? { name: holder.name, last4: holder.last4, since: c.held_at || null, seen: holder.seen || null,
-                      diag: holder.diag || null } : null,
-    next: c.next || null, period: c.period || null, last_no: c.last_no || null,
-    last_at: c.last_at || null, closed_at: c.closed_at || null,
-    assigned: assignedView(c),
+    id: c.id,
+    name: c.name || 'Counter ' + c.id,
+    created_at: c.created_at || null,
+    state: open ? (c.status === 'break' ? 'break' : 'open') : pendingLive(c) ? 'opening' : 'closed',
+    break_since: open && c.status === 'break' ? c.status_since || null : null,
+    break_by: open && c.status === 'break' ? c.status_by || null : null,
+    held_by: open ? { name: holder.name, last4: holder.last4, since: c.held_at || null, seen: holder.seen || null, diag: holder.diag || null } : null,
+    next: c.next || null,
+    period: c.period || null,
+    last_no: c.last_no || null,
+    last_at: c.last_at || null,
+    closed_at: c.closed_at || null,
+    assigned: assignedView(c)
   };
 }
 /** what every view says whoever holds it — the series and the phone it is assigned to */
 function baseView(c) {
-  return { id: c.id, name: c.name || ('Counter ' + c.id), created_at: c.created_at || null, break_since: null, break_by: null,
-           next: c.next || null, period: c.period || null, last_no: c.last_no || null, last_at: c.last_at || null,
-           closed_at: c.closed_at || null, assigned: assignedView(c) };
+  return {
+    id: c.id,
+    name: c.name || 'Counter ' + c.id,
+    created_at: c.created_at || null,
+    break_since: null,
+    break_by: null,
+    next: c.next || null,
+    period: c.period || null,
+    last_no: c.last_no || null,
+    last_at: c.last_at || null,
+    closed_at: c.closed_at || null,
+    assigned: assignedView(c)
+  };
 }
 /** ⚠️ the number is shown MASKED (last four) — the counters list is read by every signed-in person, not only the owner */
 function assignedView(c) {
@@ -124,7 +148,7 @@ function assignedView(c) {
 router.listNarrow = async (entity_id) => {
   const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
   const counters = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.counters) || {};
-  return Object.keys(counters).map((id) => ({ id, name: (counters[id] && counters[id].name) || ('Counter ' + id) }));
+  return Object.keys(counters).map((id) => ({ id, name: (counters[id] && counters[id].name) || 'Counter ' + id }));
 };
 
 router.get('/', auth, sessionOnly, async (req, res) => {
@@ -132,38 +156,51 @@ router.get('/', auth, sessionOnly, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const out = await withTransaction(async (db) => {
       const { counters, list, devices } = await readLocked(db, entity_id);
-      return Object.values(counters).sort((a, b) => keys.TILL_IDS.indexOf(a.id) - keys.TILL_IDS.indexOf(b.id))
-        .map((c) => view(c, list, devices));
+      return Object.values(counters)
+        .sort((first, second) => keys.TILL_IDS.indexOf(first.id) - keys.TILL_IDS.indexOf(second.id))
+        .map((item) => view(item, list, devices));
     });
-    res.json({ counters: out, free: out.filter((c) => c.state === 'closed').length, may: { manage: require('../lib/owner').may(req, OWNER_SAYS) } });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    res.json({ counters: out, free: out.filter((item) => item.state === 'closed').length, may: { manage: require('../lib/owner').may(req, OWNER_SAYS) } });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /** ⭐ CREATE — online by construction (this is the web). The id is the lowest one no counter holds and nothing was billed under. */
 router.post('/', auth, sessionOnly, ownerOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const name = String((req.body && req.body.name) || '').trim().slice(0, 40);
+    const name = String((req.body && req.body.name) || '')
+      .trim()
+      .slice(0, 40);
     const made = await withTransaction(async (db) => {
       const { counters, pf } = await readLocked(db, entity_id);
       const booked = await bookedPrefixes(db, entity_id);
       /* M11: nor one a phone bills under — a counter made on it would hand a PC the phone's numbers */
       const phones = keys.devicePrefixes(pf, null);
       const id = keys.TILL_IDS.find((x) => !counters[x] && !booked.has(x) && !phones.has(x));
-      if (!id) { const e = new Error('There is no counter number left to give.'); e.status = 400; throw e; }
-      const c = { id, name: name || ('Counter ' + id), created_at: new Date().toISOString(), held_by: null };
+      if (!id) {
+        const e = new Error('There is no counter number left to give.');
+        e.status = 400;
+        throw e;
+      }
+      const c = { id, name: name || 'Counter ' + id, created_at: new Date().toISOString(), held_by: null };
       await patchCounter(db, entity_id, id, c);
       return c;
     });
     res.status(201).json({ counter: view(made, []) });
-  } catch (e) { res.status(e.status || 500).json({ error: e.status ? 'validation' : 'Failed', message: String(e && e.message) }); }
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.status ? 'validation' : 'Failed', message: String(e && e.message) });
+  }
 });
 
 router.patch('/:id', auth, sessionOnly, ownerOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
-    const name = String((req.body && req.body.name) || '').trim().slice(0, 40);
+    const name = String((req.body && req.body.name) || '')
+      .trim()
+      .slice(0, 40);
     if (!name) return res.status(400).json({ error: 'validation', message: 'A counter needs a name.' });
     const done = await withTransaction(async (db) => {
       const { counters } = await readLocked(db, entity_id);
@@ -173,7 +210,9 @@ router.patch('/:id', auth, sessionOnly, ownerOnly, async (req, res) => {
     });
     if (!done) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, id, name });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -190,7 +229,8 @@ router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only
     const id = String(req.params.id || '').toUpperCase();
     const raw = req.body && req.body.phone;
     const phone = raw == null || raw === '' ? null : require('./identity-docs').normPhone(raw);
-    if (phone !== null && !/^[+]?[0-9]{10,15}$/.test(phone)) return res.status(400).json({ error: 'validation', code: 'BAD_PHONE', message: 'Type the mobile number with its country code — 10 to 15 digits.' });
+    if (phone !== null && !/^[+]?[0-9]{10,15}$/.test(phone))
+      return res.status(400).json({ error: 'validation', code: 'BAD_PHONE', message: 'Type the mobile number with its country code — 10 to 15 digits.' });
     const out = await withTransaction(async (db) => {
       const { counters, list, devices } = await readLocked(db, entity_id);
       if (!counters[id]) return null;
@@ -200,7 +240,9 @@ router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, counter: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -220,10 +262,20 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
       if (!c) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + id + ' in this shop.' } };
       const v = view(c, list, devices);
       if (v.state === 'open' || v.state === 'break' || v.state === 'opening') {
-        return { status: 409, body: { error: 'Counter already open', code: 'COUNTER_HELD', counter: v,
-          message: 'Counter ' + id + ' is already open' + (v.held_by ? ' on ' + v.held_by.name
-            + (v.held_by.seen && v.held_by.seen.ip ? ' (' + v.held_by.seen.ip + ')' : '') : '')
-          + '. Close it there first — or, if that PC is gone, release it.' } };
+        return {
+          status: 409,
+          body: {
+            error: 'Counter already open',
+            code: 'COUNTER_HELD',
+            counter: v,
+            message:
+              'Counter ' +
+              id +
+              ' is already open' +
+              (v.held_by ? ' on ' + v.held_by.name + (v.held_by.seen && v.held_by.seen.ip ? ' (' + v.held_by.seen.ip + ')' : '') : '') +
+              '. Close it there first — or, if that PC is gone, release it.'
+          }
+        };
       }
       await patchCounter(db, entity_id, id, { held_by: nonce, held_at: new Date().toISOString() });
       return { status: 200, counter: c };
@@ -235,7 +287,9 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
     let minted;
     try {
       minted = await keys.mint(entity_id, req.identity, {
-        name: 'counter ' + id + ' · ' + os + ' · ' + new Date().toISOString().slice(0, 10), scopes: ['till'] });
+        name: 'counter ' + id + ' · ' + os + ' · ' + new Date().toISOString().slice(0, 10),
+        scopes: ['till']
+      });
     } catch (e) {
       await withTransaction((db) => patchCounter(db, entity_id, id, { held_by: null, held_at: null }));
       throw e;
@@ -243,11 +297,15 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
     const c = got.counter;
     await withTransaction(async (db) => {
       await keys.patchKeyWith(db, entity_id, minted.jti, {
-        counter: id, till: { id, issued: Number(c.next) > 1, at: new Date().toISOString() } });
+        counter: id,
+        till: { id, issued: Number(c.next) > 1, at: new Date().toISOString() }
+      });
       await patchCounter(db, entity_id, id, { held_by: minted.jti, held_at: new Date().toISOString(), opened_at: new Date().toISOString() });
     });
     res.json({ key: minted.key, counter: Object.assign(view(Object.assign({}, c, { held_by: minted.jti }), [minted]), { state: 'open' }) });
-  } catch (e) { res.status(e.status || 500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) {
+    res.status(e.status || 500).json({ error: 'Failed', message: String(e && e.message) });
+  }
 });
 
 /**
@@ -265,19 +323,29 @@ router.post('/:id/release', auth, sessionOnly, ownerOnly, async (req, res) => {
       const { counters, list } = await readLocked(db, entity_id);
       const c = counters[id];
       if (!c) return null;
-      const holder = c.held_by && !isPending(c.held_by) ? list.find((k) => k && String(k.jti) === String(c.held_by)) : null;
+      const holder = c.held_by && !isPending(c.held_by) ? list.find((item) => item && String(item.jti) === String(c.held_by)) : null;
       if (holder && !keys.isClosed(holder)) {
         await keys.patchKeyWith(db, entity_id, holder.jti, {
-          till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true }) });
+          till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true })
+        });
         auth.forgetKey(holder.jti);
       }
-      await patchCounter(db, entity_id, id, { held_by: null, held_at: null, closed_at: new Date().toISOString(), released: true,
-                                              status: null, status_since: null, status_by: null });
+      await patchCounter(db, entity_id, id, {
+        held_by: null,
+        held_at: null,
+        closed_at: new Date().toISOString(),
+        released: true,
+        status: null,
+        status_since: null,
+        status_by: null
+      });
       return { id, released_from: holder ? holder.name : null };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json(Object.assign({ ok: true }, out));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -344,13 +412,22 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
      * and when they were last seen, so the person choosing can tell a PC that is gone from one that is busy.
      */
     if (!takeover && (v.state === 'open' || v.state === 'break' || v.state === 'opening')) {
-      return { status: 409, body: {
-        error: 'Counter already open', code: 'COUNTER_HELD', counter: v,
-        held_by: (v.held_by && v.held_by.name) || null,
-        seen: (v.held_by && v.held_by.seen && v.held_by.seen.at) || null,
-        message: 'Counter ' + want + ' is already open'
-          + (v.held_by && v.held_by.name ? ' on ' + v.held_by.name : '')
-          + '. Close it there first — or, if that PC is gone, take it over from here.' } };
+      return {
+        status: 409,
+        body: {
+          error: 'Counter already open',
+          code: 'COUNTER_HELD',
+          counter: v,
+          held_by: (v.held_by && v.held_by.name) || null,
+          seen: (v.held_by && v.held_by.seen && v.held_by.seen.at) || null,
+          message:
+            'Counter ' +
+            want +
+            ' is already open' +
+            (v.held_by && v.held_by.name ? ' on ' + v.held_by.name : '') +
+            '. Close it there first — or, if that PC is gone, take it over from here.'
+        }
+      };
     }
 
     /**
@@ -359,10 +436,11 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
      * where exactly that can happen.
      */
     if (takeover && c.held_by && !isPending(c.held_by)) {
-      const holder = list.find((k) => k && String(k.jti) === String(c.held_by));
+      const holder = list.find((item) => item && String(item.jti) === String(c.held_by));
       if (holder && !keys.isClosed(holder)) {
         await keys.patchKeyWith(db, entity_id, holder.jti, {
-          till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true }) });
+          till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true })
+        });
         auth.forgetKey(holder.jti);
       }
     }
@@ -372,17 +450,22 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
 
   const minted = await keys.mint(entity_id, identity, {
     name: 'counter ' + want + (label ? ' · ' + label : '') + ' · ' + new Date().toISOString().slice(0, 10),
-    scopes: ['till'],
+    scopes: ['till']
   });
 
   /* ⭐ the key and the counter are written together — the key knows its counter, the counter knows its key */
   await withTransaction(async (db) => {
     await keys.patchKeyWith(db, entity_id, minted.jti, {
       counter: want,
-      till: { id: want, issued: Number(got.counter.next) > 1, at: new Date().toISOString() } });
+      till: { id: want, issued: Number(got.counter.next) > 1, at: new Date().toISOString() }
+    });
     await patchCounter(db, entity_id, want, {
-      held_by: minted.jti, held_at: new Date().toISOString(), opened_at: new Date().toISOString(),
-      closed_at: null, released: null });
+      held_by: minted.jti,
+      held_at: new Date().toISOString(),
+      opened_at: new Date().toISOString(),
+      closed_at: null,
+      released: null
+    });
   });
 
   return { status: 200, key: minted.key, counter: want, released: got.released };

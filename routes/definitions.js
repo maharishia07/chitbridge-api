@@ -32,31 +32,32 @@
  */
 'use strict';
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
 const logger = require('../lib/logger');
-const router  = express.Router();
+const router = express.Router();
 const { body } = require('express-validator');
 const { query, withEntity, withTransaction, readBatch } = require('../db');
 const { validate } = require('../middleware/validate');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
-const { shopChanged } = require('../lib/shopchanged');   /* ⭐ an offer is what a counter and a TV are SHOWING; they hear at once */
+const { shopChanged } = require('../lib/shopchanged'); /* ⭐ an offer is what a counter and a TV are SHOWING; they hear at once */
 /* The jurisdiction's tax slabs (region_layer, b201) — served beside the entity's own definitions, read-only. */
 const regional = require('../lib/regional');
 const taxGov = require('../lib/tax-governance');
 const slabCites = require('../lib/slab-cites');
-const offerClash = require('../lib/offer-clash');   /* T2-LABS: a live offer that overlaps another live one is refused, in words (CBOffers.clashes) */
+const offerClash = require('../lib/offer-clash'); /* T2-LABS: a live offer that overlaps another live one is refused, in words (CBOffers.clashes) */
 
 const ctx = (req) => auth.entityOf(req);
 
 /* b160 not applied yet → say so plainly rather than 500. The API deploys before migrations by design, so this
    window is real: a 500 here would read as "definitions are broken" when they are merely not provisioned. */
-const notMigrated = (e) => e && (e.code === '42P01');
-const gone = (res) => res.status(503).json({ error: 'Not provisioned',
-  message: 'Definitions need migration b160. Ask the operator to run it.' });
+const notMigrated = (e) => e && e.code === '42P01';
+const gone = (res) => res.status(503).json({ error: 'Not provisioned', message: 'Definitions need migration b160. Ask the operator to run it.' });
 
-const MAX_NAME = 120, MAX_NOTE = 500;
+const MAX_NAME = 120,
+  MAX_NOTE = 500;
 
 /** GET / — the shelf. ?kind= narrows; ?status= narrows (default: everything except retired). */
 /** N1: the governed slabs of the entity's country, or - with no country - none and the one sentence that says where to set it */
@@ -98,11 +99,23 @@ router.get('/', auth, async (req, res) => {
      * that works today slower.
      */
     const kinds = req.query.kind
-      ? String(req.query.kind).split(',').map((k) => k.trim()).filter(Boolean).slice(0, 12)
+      ? String(req.query.kind)
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .slice(0, 12)
       : [];
-    if (kinds.length === 1) { params.push(kinds[0]); where += ` AND d.kind = $${params.length}`; }
-    else if (kinds.length > 1) { params.push(kinds); where += ` AND d.kind = ANY($${params.length})`; }
-    if (req.query.status) { params.push(String(req.query.status)); where += ` AND d.status = $${params.length}`; }
+    if (kinds.length === 1) {
+      params.push(kinds[0]);
+      where += ` AND d.kind = $${params.length}`;
+    } else if (kinds.length > 1) {
+      params.push(kinds);
+      where += ` AND d.kind = ANY($${params.length})`;
+    }
+    if (req.query.status) {
+      params.push(String(req.query.status));
+      where += ` AND d.status = $${params.length}`;
+    }
     /**
      * ⚠️ RETIRED IS HIDDEN BY DEFAULT BUT REACHABLE. `?status=retired` returns them, and `?all=1` returns
      * everything. A shelf that silently omits retired items is how someone re-creates a definition they already
@@ -130,12 +143,20 @@ router.get('/', auth, async (req, res) => {
       const at = {};
       if (wantsTax && wantsLive) {
         at.id = stmts.push({ text: 'SELECT country, currency_code FROM identities WHERE identity_id = $1', params: [entity_id] }) - 1;
-        at.layers = stmts.push({ text: `SELECT region_code, currency, units, language, jurisdiction FROM region_layer WHERE region_code IN ('IN', (SELECT upper(trim(country)) FROM identities WHERE identity_id = $1))`, params: [entity_id] }) - 1;
+        at.layers =
+          stmts.push({
+            text: `SELECT region_code, currency, units, language, jurisdiction FROM region_layer WHERE region_code IN ('IN', (SELECT upper(trim(country)) FROM identities WHERE identity_id = $1))`,
+            params: [entity_id]
+          }) - 1;
       }
       if (wantsOffers) {
-        at.net = stmts.push({ text: `SELECT policy_flags#>'{network_offers,released}' AS released,
+        at.net =
+          stmts.push({
+            text: `SELECT policy_flags#>'{network_offers,released}' AS released,
             ${require('../lib/network-membership').ACTIVE_COUNT_SQL} AS stores
-            FROM identities WHERE identity_id = $1`, params: [entity_id] }) - 1;
+            FROM identities WHERE identity_id = $1`,
+            params: [entity_id]
+          }) - 1;
       }
       const res = await readBatch(entity_id, req.identity && req.identity.identity_id, stmts);
       rows = res[0].rows;
@@ -152,7 +173,10 @@ router.get('/', auth, async (req, res) => {
        * A shop with no stores gets nothing: the words would be about a network it does not have.
        */
       if (at.net !== undefined) require('../lib/network-offers').stampReleases(rows, res[at.net].rows[0]);
-    } catch (e) { logger.fellBack('definitions GET /: the read failed — answered with nothing', e); rows = null; }
+    } catch (e) {
+      logger.fellBack('definitions GET /: the read failed — answered with nothing', e);
+      rows = null;
+    }
     const r = rows === null ? await withEntity(entity_id, (db) => db.query(listSql, params)) : null;
     /**
      * ⭐⭐ THE JURISDICTION'S SLABS RIDE ALONG WITH THE ENTITY'S OWN. Athi, 2026-09-04: *"why each entity should
@@ -166,12 +190,22 @@ router.get('/', auth, async (req, res) => {
     if (rows === null) {
       rows = r.rows;
       if (wantsTax && wantsLive) {
-        const governed = await governedNote(entity_id); rows = rows.concat(governed.rows); governedWhy = governed.why;   /* N1: no country -> no slabs, and the sentence says why */
+        const governed = await governedNote(entity_id);
+        rows = rows.concat(governed.rows);
+        governedWhy = governed.why; /* N1: no country -> no slabs, and the sentence says why */
       }
     }
-    res.json(Object.assign({ count: rows.length }, governedWhy ? { governed_why: governedWhy } : {}, PL.pageOut('definitions', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
-  } catch (e) { if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    res.json(
+      Object.assign(
+        { count: rows.length },
+        governedWhy ? { governed_why: governedWhy } : {},
+        PL.pageOut('definitions', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))
+      )
+    );
+  } catch (e) {
+    if (notMigrated(e)) return gone(res);
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /** GET /:id — one definition with its FULL version history. The history is the point, so it is not optional. */
@@ -195,7 +229,9 @@ router.get('/:id', auth, async (req, res) => {
       if (!d.rows.length) return null;
       const v = await db.query(
         `SELECT version, rules, note, created_at, created_by FROM definition_version
-          WHERE definition_id = $1 ORDER BY version DESC`, [req.params.id]);
+          WHERE definition_id = $1 ORDER BY version DESC`,
+        [req.params.id]
+      );
       /**
        * ⭐ [b268] "who approved the offer or made it live" — the name, not just the id: a LEFT JOIN so a
        * status_log row from an identity since removed still shows its status and timestamp rather than
@@ -205,65 +241,82 @@ router.get('/:id', auth, async (req, res) => {
         `SELECT sl.status, sl.changed_at, sl.changed_by, i.display_name AS changed_by_name
            FROM definition_status_log sl
            LEFT JOIN identities i ON i.identity_id = sl.changed_by
-          WHERE sl.definition_id = $1 ORDER BY sl.changed_at DESC`, [req.params.id]);
+          WHERE sl.definition_id = $1 ORDER BY sl.changed_at DESC`,
+        [req.params.id]
+      );
       return { definition: d.rows[0], versions: v.rows, status_log: sl.rows };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json(out);
-  } catch (e) { if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    if (notMigrated(e)) return gone(res);
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /** POST / — author one. Creates the definition AND version 1 in ONE transaction. */
-router.post('/', auth,
-  [ body('kind').isString().trim().notEmpty(), body('name').isString().trim().notEmpty() ], validate,
-  async (req, res) => {
-    try {
-      const entity_id = ctx(req);
-      const { kind, sub_kind, name, note } = req.body || {};
-      /* 'live' on create — the planner authors several dated offers at once; a second call per row to flip each
+router.post('/', auth, [body('kind').isString().trim().notEmpty(), body('name').isString().trim().notEmpty()], validate, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const { kind, sub_kind, name, note } = req.body || {};
+    /* 'live' on create — the planner authors several dated offers at once; a second call per row to flip each
          to live doubled its round trips. Anything else is a draft, as before. */
-      const status0 = (req.body && req.body.status === 'live') ? 'live' : 'draft';
-      const rules = (req.body && typeof req.body.rules === 'object' && req.body.rules) || {};
-      /* a rule without its value is refused here too (lib/definition-check.js — the form's own sentences) */
-      { const bad = require('../lib/definition-check').missingValue(String(kind || '').trim(), sub_kind ? String(sub_kind).trim() : null, rules); if (bad) return res.status(422).json({ error: 'Incomplete rule', message: bad }); }
-
-      /**
-       * ⚠️ ONE TRANSACTION, BOTH ROWS. A definition whose version 1 failed to write is a definition with no
-       * rules — it would list on the shelf, resolve to nothing, and freeze nothing onto a chit that cited it.
-       * The pair is the unit, exactly as putForParticipantsInTx treats a chit and its documents.
-       */
-      const out = await withEntity(entity_id, async (db) => {
-        /* ⭐ T2-LABS: born LIVE beside another live discount on the same items → refused before anything is written */
-        const clash = await offerClash.check(db, entity_id, { definition_id: null, kind: String(kind).trim(), sub_kind: sub_kind ? String(sub_kind).trim() : null,
-          name: String(name).trim(), rules, status: status0 });
-        if (clash) return { clash };
-        const d = await db.query(
-          `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
-           VALUES ($1,$2,$3,$4,$5,$7,1,$6) RETURNING *`,
-          [entity_id, String(kind).trim(), sub_kind ? String(sub_kind).trim() : null,
-           String(name).trim().slice(0, MAX_NAME), note ? String(note).slice(0, MAX_NOTE) : null,
-           req.identity && req.identity.identity_id, status0]);
-        const row = d.rows[0];
-        await db.query(
-          `INSERT INTO definition_version (definition_id, version, entity_id, rules, note, created_by)
-           VALUES ($1,1,$2,$3,$4,$5)`,
-          [row.definition_id, entity_id, rules, note ? String(note).slice(0, MAX_NOTE) : null,
-           req.identity && req.identity.identity_id]);
-        return row;
-      });
-      if (out && out.clash) return res.status(out.clash.status).json(out.clash.body);
-      shopChanged(entity_id, 'definition created');
-      res.status(201).json({ message: 'Definition created', definition: out, version: 1 });
-    } catch (e) {
-      if (notMigrated(e)) return gone(res);
-      /* The unique index is a real rule, not an internal failure — a name is how people cite a definition, so
-         two with the same name in the same kind would make every citation ambiguous. */
-      if (e && e.code === '23505') return res.status(409).json({ error: 'Name taken',
-        message: 'You already have a definition of this kind with that name.' });
-      res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    const status0 = req.body && req.body.status === 'live' ? 'live' : 'draft';
+    const rules = (req.body && typeof req.body.rules === 'object' && req.body.rules) || {};
+    /* a rule without its value is refused here too (lib/definition-check.js — the form's own sentences) */
+    {
+      const bad = require('../lib/definition-check').missingValue(String(kind || '').trim(), sub_kind ? String(sub_kind).trim() : null, rules);
+      if (bad) return res.status(422).json({ error: 'Incomplete rule', message: bad });
     }
-  });
+
+    /**
+     * ⚠️ ONE TRANSACTION, BOTH ROWS. A definition whose version 1 failed to write is a definition with no
+     * rules — it would list on the shelf, resolve to nothing, and freeze nothing onto a chit that cited it.
+     * The pair is the unit, exactly as putForParticipantsInTx treats a chit and its documents.
+     */
+    const out = await withEntity(entity_id, async (db) => {
+      /* ⭐ T2-LABS: born LIVE beside another live discount on the same items → refused before anything is written */
+      const clash = await offerClash.check(db, entity_id, {
+        definition_id: null,
+        kind: String(kind).trim(),
+        sub_kind: sub_kind ? String(sub_kind).trim() : null,
+        name: String(name).trim(),
+        rules,
+        status: status0
+      });
+      if (clash) return { clash };
+      const d = await db.query(
+        `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+           VALUES ($1,$2,$3,$4,$5,$7,1,$6) RETURNING *`,
+        [
+          entity_id,
+          String(kind).trim(),
+          sub_kind ? String(sub_kind).trim() : null,
+          String(name).trim().slice(0, MAX_NAME),
+          note ? String(note).slice(0, MAX_NOTE) : null,
+          req.identity && req.identity.identity_id,
+          status0
+        ]
+      );
+      const row = d.rows[0];
+      await db.query(
+        `INSERT INTO definition_version (definition_id, version, entity_id, rules, note, created_by)
+           VALUES ($1,1,$2,$3,$4,$5)`,
+        [row.definition_id, entity_id, rules, note ? String(note).slice(0, MAX_NOTE) : null, req.identity && req.identity.identity_id]
+      );
+      return row;
+    });
+    if (out && out.clash) return res.status(out.clash.status).json(out.clash.body);
+    shopChanged(entity_id, 'definition created');
+    res.status(201).json({ message: 'Definition created', definition: out, version: 1 });
+  } catch (e) {
+    if (notMigrated(e)) return gone(res);
+    /* The unique index is a real rule, not an internal failure — a name is how people cite a definition, so
+         two with the same name in the same kind would make every citation ambiguous. */
+    if (e && e.code === '23505') return res.status(409).json({ error: 'Name taken', message: 'You already have a definition of this kind with that name.' });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
+});
 
 /**
  * ⭐⭐ PUT /:id — an edit is a NEW VERSION, never an overwrite.
@@ -272,14 +325,17 @@ router.post('/', auth,
  * stamped against version 2 can still be explained after the shelf has moved to version 5.
  */
 /* A governed slab is the jurisdiction's, not the entity's: a sentence, not a uuid-cast error. */
-const governedRefusal = (res) => res.status(403).json({ error: 'Governed',
-  message: 'This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own.' });
+const governedRefusal = (res) =>
+  res.status(403).json({
+    error: 'Governed',
+    message: 'This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own.'
+  });
 
 router.put('/:id', auth, async (req, res) => {
   try {
     if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
     const entity_id = ctx(req);
-    const rules = (req.body && typeof req.body.rules === 'object') ? req.body.rules : null;
+    const rules = req.body && typeof req.body.rules === 'object' ? req.body.rules : null;
     const { name, note, status } = req.body || {};
 
     const out = await withEntity(entity_id, async (db) => {
@@ -287,15 +343,27 @@ router.put('/:id', auth, async (req, res) => {
       if (!cur.rows.length) return { missing: true };
       const d = cur.rows[0];
       /* an edit that removes the value is refused like a create without one */
-      if (rules) { const bad = require('../lib/definition-check').missingValue(d.kind, d.sub_kind, rules); if (bad) return { bad }; }
+      if (rules) {
+        const bad = require('../lib/definition-check').missingValue(d.kind, d.sub_kind, rules);
+        if (bad) return { bad };
+      }
       /* ⭐ T2-LABS: a save that MAKES the offer live, or changes the rules of a live one, is asked whether it clashes with another
          live discount (lib/offer-clash — the engine's rule). A rename, a pause or a retire is never refused for it. */
       const after = status ? String(status) : d.status;
       if (d.kind === 'offer' && after === 'live' && (rules || d.status !== 'live')) {
-        const rulesNow = rules || ((await db.query(`SELECT rules FROM definition_version WHERE definition_id = $1 AND version = $2`,
-          [req.params.id, d.current_version])).rows[0] || {}).rules || {};
-        const clash = await offerClash.check(db, entity_id, { definition_id: d.definition_id, kind: d.kind, sub_kind: d.sub_kind,
-          name: name ? String(name).trim() : d.name, rules: rulesNow, status: after });
+        const rulesNow =
+          rules ||
+          ((await db.query(`SELECT rules FROM definition_version WHERE definition_id = $1 AND version = $2`, [req.params.id, d.current_version])).rows[0] || {})
+            .rules ||
+          {};
+        const clash = await offerClash.check(db, entity_id, {
+          definition_id: d.definition_id,
+          kind: d.kind,
+          sub_kind: d.sub_kind,
+          name: name ? String(name).trim() : d.name,
+          rules: rulesNow,
+          status: after
+        });
         if (clash) return { clash };
       }
       let version = d.current_version;
@@ -308,8 +376,8 @@ router.put('/:id', auth, async (req, res) => {
         await db.query(
           `INSERT INTO definition_version (definition_id, version, entity_id, rules, note, created_by)
            VALUES ($1,$2,$3,$4,$5,$6)`,
-          [req.params.id, version, entity_id, rules, note ? String(note).slice(0, MAX_NOTE) : null,
-           req.identity && req.identity.identity_id]);
+          [req.params.id, version, entity_id, rules, note ? String(note).slice(0, MAX_NOTE) : null, req.identity && req.identity.identity_id]
+        );
       }
       const upd = await db.query(
         `UPDATE definition
@@ -319,9 +387,14 @@ router.put('/:id', auth, async (req, res) => {
                 current_version = $5,
                 updated_at = now()
           WHERE definition_id = $1 RETURNING *`,
-        [req.params.id, name ? String(name).trim().slice(0, MAX_NAME) : null,
-         note != null ? String(note).slice(0, MAX_NOTE) : null,
-         status ? String(status) : null, version]);
+        [
+          req.params.id,
+          name ? String(name).trim().slice(0, MAX_NAME) : null,
+          note != null ? String(note).slice(0, MAX_NOTE) : null,
+          status ? String(status) : null,
+          version
+        ]
+      );
       /**
        * ⭐⭐⭐ [b268, 2026-09-27] "who approved the offer or made it live" — one row per REAL transition
        * (never a no-op "approved" PUT that leaves it already approved), so the log answers exactly the
@@ -332,7 +405,8 @@ router.put('/:id', auth, async (req, res) => {
         await db.query(
           `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
            VALUES ($1,$2,$3,$4)`,
-          [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]);
+          [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
+        );
       }
       return { row: upd.rows[0], version, versioned: !!rules };
     });
@@ -340,12 +414,10 @@ router.put('/:id', auth, async (req, res) => {
     if (out.missing) return res.status(404).json({ error: 'Not found' });
     if (out.bad) return res.status(422).json({ error: 'Incomplete rule', message: out.bad });
     if (out.clash) return res.status(out.clash.status).json(out.clash.body);
-    res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved',
-               definition: out.row, version: out.version, new_version: out.versioned });
+    res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved', definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {
     if (notMigrated(e)) return gone(res);
-    if (e && e.code === '23505') return res.status(409).json({ error: 'Name taken',
-      message: 'You already have a definition of this kind with that name.' });
+    if (e && e.code === '23505') return res.status(409).json({ error: 'Name taken', message: 'You already have a definition of this kind with that name.' });
     res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
@@ -360,13 +432,16 @@ router.put('/:id', auth, async (req, res) => {
 /** the takeover slab: one of my LIVE slabs, or a governed one (lib/slab-cites has the why) */
 async function liveSlabById(db, entity_id, id) {
   if (taxGov.isGovernedId(id)) {
-    const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
-    const g = gov.find((x) => String(x.definition_id) === String(id));
+    const list = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+    const g = list.find((x) => String(x.definition_id) === String(id));
     return g ? slabCites.S.slabOf(g) : null;
   }
-  const r = await db.query(`SELECT d.definition_id, d.name, d.status, v.rules FROM definition d
+  const r = await db.query(
+    `SELECT d.definition_id, d.name, d.status, v.rules FROM definition d
                             LEFT JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
-                           WHERE d.definition_id = $1 AND d.kind = 'tax' AND d.status = 'live'`, [id]);
+                           WHERE d.definition_id = $1 AND d.kind = 'tax' AND d.status = 'live'`,
+    [id]
+  );
   return r.rows.length ? slabCites.S.slabOf(r.rows[0]) : null;
 }
 router.delete('/:id', auth, async (req, res) => {
@@ -391,16 +466,20 @@ router.delete('/:id', auth, async (req, res) => {
          Guarded the same way PUT guards its own write: a retire called on something already retired is a
          no-op, not a second event. */
       if (!wasRetired) {
-        await db.query(
-          `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by) VALUES ($1,$2,'retired',$3)`,
-          [req.params.id, entity_id, req.identity && req.identity.identity_id]);
+        await db.query(`INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by) VALUES ($1,$2,'retired',$3)`, [
+          req.params.id,
+          entity_id,
+          req.identity && req.identity.identity_id
+        ]);
       }
       shopChanged(entity_id, 'definition retired');
       return { status: 200, body: { message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true, moved } };
     });
     res.status(out.status).json(out.body);
-  } catch (e) { if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    if (notMigrated(e)) return gone(res);
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -421,7 +500,7 @@ router.delete('/:id', auth, async (req, res) => {
  * ⚠️ A RETIRED DEFINITION STILL FREEZES. Retiring means "do not offer this any more", not "this never happened" —
  * refusing here would block a chit citing terms that were live when the order was placed.
  */
-router.post('/freeze', auth, [ body('definition_ids').isArray() ], validate, async (req, res) => {
+router.post('/freeze', auth, [body('definition_ids').isArray()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const ids = (req.body.definition_ids || []).map(String).filter(Boolean);
@@ -431,20 +510,31 @@ router.post('/freeze', auth, [ body('definition_ids').isArray() ], validate, asy
        own definitions freeze from their version row; the jurisdiction's slabs freeze as a copy of the regional
        layer (there is no version row to point at — the copy IS the record, keyed by effective_from). */
     const govIds = ids.filter(taxGov.isGovernedId);
-    const ownIds = ids.filter((i) => !taxGov.isGovernedId(i));
+    const ownIds = ids.filter((item) => !taxGov.isGovernedId(item));
 
-    const r = ownIds.length ? await withEntity(entity_id, (db) => db.query(
-      `SELECT d.definition_id, d.kind, d.sub_kind, d.name, d.status,
+    const r = ownIds.length
+      ? await withEntity(entity_id, (db) =>
+          db.query(
+            `SELECT d.definition_id, d.kind, d.sub_kind, d.name, d.status,
               v.version, v.rules
          FROM definition d
          JOIN definition_version v
            ON v.definition_id = d.definition_id AND v.version = d.current_version
-        WHERE d.definition_id = ANY($1::uuid[])`, [ownIds])) : { rows: [] };
+        WHERE d.definition_id = ANY($1::uuid[])`,
+            [ownIds]
+          )
+        )
+      : { rows: [] };
 
     const at = new Date().toISOString();
     const frozen = r.rows.map((x) => ({
-      definition_id: x.definition_id, version: x.version, kind: x.kind, sub_kind: x.sub_kind,
-      name: x.name, rules: x.rules, frozen_at: at
+      definition_id: x.definition_id,
+      version: x.version,
+      kind: x.kind,
+      sub_kind: x.sub_kind,
+      name: x.name,
+      rules: x.rules,
+      frozen_at: at
     }));
     /**
      * ⚠️ WHAT WAS NOT FOUND IS RETURNED, NOT SWALLOWED. A caller freezing three definitions and silently
@@ -453,13 +543,15 @@ router.post('/freeze', auth, [ body('definition_ids').isArray() ], validate, asy
      * something this entity may learn more about.
      */
     if (govIds.length) {
-      const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
-      gov.filter((g) => govIds.includes(g.definition_id)).forEach((g) => frozen.push(taxGov.frozenCopy(g, at)));
+      const list = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+      list.filter((item) => govIds.includes(item.definition_id)).forEach((item) => frozen.push(taxGov.frozenCopy(item, at)));
     }
-    const found = new Set(frozen.map((f) => String(f.definition_id)));
-    res.json({ frozen, missing: ids.filter((i) => !found.has(i)), frozen_at: at });
-  } catch (e) { if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    const found = new Set(frozen.map((item) => String(item.definition_id)));
+    res.json({ frozen, missing: ids.filter((item) => !found.has(item)), frozen_at: at });
+  } catch (e) {
+    if (notMigrated(e)) return gone(res);
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 module.exports = router;

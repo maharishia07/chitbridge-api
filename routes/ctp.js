@@ -33,12 +33,17 @@ const { query } = require('../db');
 const envelope = require('../lib/ctpenvelope');
 const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
-const addressBook = require('../lib/ctpaddress');   /* peerByKey — the ONE "do we deal with this installation?" */
+const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
 
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
-const ctpLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false,
-  message: { error: 'Too many envelopes', message: 'Slow down and retry.' } });
+const ctpLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many envelopes', message: 'Slow down and retry.' }
+});
 
 /* ── ① WHO WE ARE ───────────────────────────────────────────────────────────────────────────────────────────── */
 /**
@@ -51,7 +56,8 @@ const ctpLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: t
  */
 async function manifest() {
   const k = keys.status();
-  let me = null, pops = [];
+  let me = null,
+    pops = [];
   try {
     /**
      * ⚠️ WHO I AM IS CONFIGURATION, NOT A FLAG ABOUT OTHERS. This filtered on `hosted_locally = true` and so
@@ -63,19 +69,26 @@ async function manifest() {
       `SELECT installation_key, label, region, domain, ctp_endpoint
          FROM installation WHERE active
          ORDER BY (installation_key = $1) DESC, hosted_locally DESC, installation_key LIMIT 1`,
-      [process.env.INSTALLATION_KEY || 'platform-0']);
+      [process.env.INSTALLATION_KEY || 'platform-0']
+    );
     me = r.rows[0] || null;
-  } catch (e) { log.fellBack('ctp manifest: the read failed — answered with nothing', e); me = null; }
+  } catch (e) {
+    log.fellBack('ctp manifest: the read failed — answered with nothing', e);
+    me = null;
+  }
   try {
     /* ⚠️ only `live` by default. Publishing every sandbox code would tell the world what we are testing and
        invite a stranger to guess a pairing. */
     const p = await query(`SELECT code FROM ops.population WHERE is_live`);
     pops = p.rows.map((x) => x.code);
-  } catch (e) { log.fellBack('ctp manifest: the read failed — answered with none', e); pops = []; }
+  } catch (e) {
+    log.fellBack('ctp manifest: the read failed — answered with none', e);
+    pops = [];
+  }
 
   return {
     ctp: '1',
-    installation_key: me ? me.installation_key : (process.env.INSTALLATION_KEY || 'platform-0'),
+    installation_key: me ? me.installation_key : process.env.INSTALLATION_KEY || 'platform-0',
     label: me ? me.label : null,
     region: me ? me.region : null,
     endpoint: (me && me.ctp_endpoint) || null,
@@ -84,7 +97,7 @@ async function manifest() {
     /* ⚠️ said out loud. An installation that cannot sign is one whose envelopes nobody should accept, and a
        peer deserves to learn that from the manifest rather than from a failed delivery. */
     can_sign: k.can_sign,
-    note: k.can_sign ? undefined : k.why,
+    note: k.can_sign ? undefined : k.why
   };
 }
 
@@ -146,8 +159,12 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
      * decision is still Athi's. A resolver that cannot read the row says `fallback: true` rather than nothing.
      */
     let senderGov = null;
-    try { senderGov = await require('../lib/govresolve').resolveInstallationGovernance(ik); }
-    catch (e) { log.fellBack('ctp POST /deliver: the helper failed — answered with nothing', e); senderGov = null; }
+    try {
+      senderGov = await require('../lib/govresolve').resolveInstallationGovernance(ik);
+    } catch (e) {
+      log.fellBack('ctp POST /deliver: the helper failed — answered with nothing', e);
+      senderGov = null;
+    }
 
     /* ── the signature, against the key on THEIR domain. Never one they sent us. */
     const pk = await directory.publicKeyFor(peer.domain, ik);
@@ -158,7 +175,8 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
     const r = await query(
       `SELECT identity_id, coalesce(population,'live') AS population FROM identities
         WHERE bridge_id = $1 AND identity_type = 'entity' AND coalesce(status,'active') = 'active'`,
-      [toBridge]);
+      [toBridge]
+    );
     const to = r.rows[0];
     if (!to) return no(404, 'no active business here with bridge id ' + toBridge);
 
@@ -178,9 +196,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
       return no(503, 'this installation cannot check whether that crossing is permitted — refusing');
     }
     if (!mayCross) {
-      return no(409, to.population === 'live'
-        ? 'refused'
-        : '“' + to.population + '” is a local name on both sides — it must name ' + ik + ' as a peer first');
+      return no(409, to.population === 'live' ? 'refused' : '“' + to.population + '” is a local name on both sides — it must name ' + ik + ' as a peer first');
     }
 
     const opened = envelope.open(env, {
@@ -188,7 +204,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
          the database, so `pairedWith` simply reports it rather than deciding it a second time. */
       population: to.population,
       pairedWith: () => mayCross,
-      verify: (hash, sig) => keys.verifyWith(pk.public_key, hash, sig),
+      verify: (hash, sig) => keys.verifyWith(pk.public_key, hash, sig)
     });
     if (!opened.ok) return no(409, opened.why);
 
@@ -218,11 +234,11 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
       from_installation: ik,
       from_domain: peer.domain,
       sender_bridge_id: (env.from && env.from.bridge_id) || null,
-      at: new Date().toISOString(),
+      at: new Date().toISOString()
     };
     const copy = Object.assign({}, opened.copy, {
       entity_id: to.identity_id,
-      business_json: Object.assign({}, opened.copy.business_json || {}, { ctp_arrival: arrivalStamp }),
+      business_json: Object.assign({}, opened.copy.business_json || {}, { ctp_arrival: arrivalStamp })
     });
 
     /**
@@ -258,16 +274,20 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
     await mint.deliver(senderCtx, opened.chit_id, [copy], { is_draft: false, arrived: true });
 
     res.json({
-      accepted: true, chit_id: opened.chit_id, to: toBridge,
+      accepted: true,
+      chit_id: opened.chit_id,
+      to: toBridge,
       /* ⭐ the sender's governance as WE resolved it from their installation — visible, and never the reason a
          copy was accepted or refused (see the note beside senderGov above, and CTP-DESIGN §6.1) */
-      sender_governance: senderGov ? {
-        constitution: senderGov.constitution,
-        region: senderGov.basics && senderGov.basics.region,
-        currency: senderGov.basics && senderGov.basics.currency,
-        resolved_from: senderGov.resolved_from,
-        fallback: senderGov.fallback,
-      } : null,
+      sender_governance: senderGov
+        ? {
+            constitution: senderGov.constitution,
+            region: senderGov.basics && senderGov.basics.region,
+            currency: senderGov.basics && senderGov.basics.currency,
+            resolved_from: senderGov.resolved_from,
+            fallback: senderGov.fallback
+          }
+        : null
     });
   } catch (e) {
     /* ⚠️ a 500 tells a sender to retry something that may never work — so it is reserved for OUR faults, and it
@@ -311,7 +331,7 @@ router.post('/query', ctpLimiter, async (req, res) => {
     const pk = await directory.publicKeyFor(peer.domain, ik);
     if (!pk.ok) return no(403, 'could not read the asker’s manifest: ' + pk.why);
     const opened = ctpquery.open(q, {
-      verify: (hash, sig, who) => who === ik && keys.verifyWith(pk.public_key, hash, sig),
+      verify: (hash, sig, who) => who === ik && keys.verifyWith(pk.public_key, hash, sig)
     });
     if (!opened.ok) return no(403, opened.why);
 
@@ -328,9 +348,15 @@ router.post('/query', ctpLimiter, async (req, res) => {
       if (!ent) return res.json({ ok: true, found: false, why: 'no business here called ' + ask.handle });
       const me = await manifest();
       /* ⚠️ the address is BUILT by lib/ctpaddress, never spelled here — tests/namespace fails any second "@" join */
-      return res.json({ ok: true, found: true, bridge_id: ent.bridge_id, display_name: ent.display_name,
-                        user_id: ent.user_id, address: require('../lib/ctpaddress').format(ent.bridge_id, me.domain),
-                        installation_key: me.installation_key });
+      return res.json({
+        ok: true,
+        found: true,
+        bridge_id: ent.bridge_id,
+        display_name: ent.display_name,
+        user_id: ent.user_id,
+        address: require('../lib/ctpaddress').format(ent.bridge_id, me.domain),
+        installation_key: me.installation_key
+      });
     }
 
     if (ask.want === 'catalogue') {

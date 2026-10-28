@@ -20,7 +20,7 @@
  * Read their own orders, read their own copy of a document they submitted, and delete that copy. Nothing else.
  * Every read is scoped to `identity_id` (their own per-copy rows under RLS) — never to the shop's copies.
  */
-const { verifyJwt } = require('../lib/jwt-verify');   // E10 — the ONE verifier
+const { verifyJwt } = require('../lib/jwt-verify'); // E10 — the ONE verifier
 
 module.exports = function customerAuth(req, res, next) {
   const header = req.headers.authorization || '';
@@ -40,7 +40,7 @@ module.exports = function customerAuth(req, res, next) {
       // the SHOP this customer belongs to. Storefront identities are per-shop by design (crHandle), so this scopes
       // every customer query to the one shop they transacted with.
       shop_entity_id: decoded.parent_entity_id || null,
-      display_name: decoded.display_name || null,
+      display_name: decoded.display_name || null
     };
     next();
   } catch (_) {

@@ -15,17 +15,20 @@
  *
  * ⭐ WHAT THE EMPLOYER SEES IS THE VERDICT, NOT THE DOCUMENT — verified, when, by whom. That is
  * [[reference-cb-core-principle]] applied to a person: the fact travels, the source does not.
+ 
+ * CALLED BY lib/identity-auth.js, routes/keys.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
 const log = require('../lib/logger');
-const router  = express.Router();
-const auth    = require('../middleware/auth');
-const schema  = require('../lib/schema');
-const vault   = require('../lib/vaultcrypto');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const schema = require('../lib/schema');
+const vault = require('../lib/vaultcrypto');
 const { query, withEntity } = require('../db');
-const crypto  = require('crypto');
+const crypto = require('crypto');
 const { safeErr } = require('../lib/respond');
 
 /**
@@ -42,10 +45,10 @@ const { safeErr } = require('../lib/respond');
    whitespace survived and "TN01 2011 0001234" would have failed the DL pattern for no visible reason. Third
    time in one session that a script silently dropped an escape; anything touching these lines uses an editor,
    not a generator. */
-const UP     = (v) => v.toUpperCase().replace(/[\s-]/g, '');   // PAN, Voter ID — case-insensitive, no separators
-const UPKEEP = (v) => v.toUpperCase().replace(/\s/g, '');      // DL — keeps hyphens, which appear in real numbers
-const DIGITS = (v) => v.replace(/[^0-9+]/g, '');               // phone, Aadhaar — a leading + survives
-const LOWER  = (v) => v.trim().toLowerCase();                  // email — lowercased, never stripped
+const UP = (text) => text.toUpperCase().replace(/[\s-]/g, ''); // PAN, Voter ID — case-insensitive, no separators
+const UPKEEP = (text) => text.toUpperCase().replace(/\s/g, ''); // DL — keeps hyphens, which appear in real numbers
+const DIGITS = (text) => text.replace(/[^0-9+]/g, ''); // phone, Aadhaar — a leading + survives
+const LOWER = (text) => text.trim().toLowerCase(); // email — lowercased, never stripped
 
 /**
  * ⭐⭐ selfServe — MAY THE PERSON THEMSELVES FILE THIS? Athi, 2026-08-20: *"mobile number and email id, he can
@@ -63,31 +66,68 @@ const LOWER  = (v) => v.trim().toLowerCase();                  // email — lowe
  */
 const CATALOGUE = {
   IN: [
-    { scheme: 'PHONE',    label: 'Mobile',         pattern: /^[+]?[0-9]{10,15}$/,        mask: v => '•••••' + v.slice(-4),  store: true,  verify: 'otp', norm: DIGITS, selfServe: true },
-    { scheme: 'EMAIL',    label: 'Email',          pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, mask: v => v.replace(/^(.).*(@.*)$/, '$1•••$2'), store: true, verify: 'otp', norm: LOWER, selfServe: true },
-    { scheme: 'PAN',      label: 'PAN',            pattern: /^[A-Z]{5}[0-9]{4}[A-Z]$/,   mask: v => v.slice(0,3) + '••••' + v.slice(-3), store: true, verify: 'nsdl', norm: UP },
-    { scheme: 'VOTER_ID', label: 'Voter ID',       pattern: /^[A-Z]{3}[0-9]{7}$/,        mask: v => '•••' + v.slice(-4),    store: true,  verify: 'manual', norm: UP },
-    { scheme: 'DL',       label: 'Driving licence',pattern: /^[A-Z0-9-]{8,20}$/,          mask: v => '••••' + v.slice(-4),   store: true,  verify: 'manual', norm: UPKEEP },
+    {
+      scheme: 'PHONE',
+      label: 'Mobile',
+      pattern: /^[+]?[0-9]{10,15}$/,
+      mask: (v) => '•••••' + v.slice(-4),
+      store: true,
+      verify: 'otp',
+      norm: DIGITS,
+      selfServe: true
+    },
+    {
+      scheme: 'EMAIL',
+      label: 'Email',
+      pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
+      mask: (text) => text.replace(/^(.).*(@.*)$/, '$1•••$2'),
+      store: true,
+      verify: 'otp',
+      norm: LOWER,
+      selfServe: true
+    },
+    {
+      scheme: 'PAN',
+      label: 'PAN',
+      pattern: /^[A-Z]{5}[0-9]{4}[A-Z]$/,
+      mask: (v) => v.slice(0, 3) + '••••' + v.slice(-3),
+      store: true,
+      verify: 'nsdl',
+      norm: UP
+    },
+    { scheme: 'VOTER_ID', label: 'Voter ID', pattern: /^[A-Z]{3}[0-9]{7}$/, mask: (v) => '•••' + v.slice(-4), store: true, verify: 'manual', norm: UP },
+    { scheme: 'DL', label: 'Driving licence', pattern: /^[A-Z0-9-]{8,20}$/, mask: (v) => '••••' + v.slice(-4), store: true, verify: 'manual', norm: UPKEEP },
     /* ⚠️ store:false — the ONLY entry with it, and the reason the flag exists at all. */
-    { scheme: 'AADHAAR',  label: 'Aadhaar',        pattern: /^[0-9]{12}$/,               mask: v => 'XXXX XXXX ' + v.slice(-4), store: false, verify: 'uidai-offline', norm: DIGITS },
-  ],
+    {
+      scheme: 'AADHAAR',
+      label: 'Aadhaar',
+      pattern: /^[0-9]{12}$/,
+      mask: (v) => 'XXXX XXXX ' + v.slice(-4),
+      store: false,
+      verify: 'uidai-offline',
+      norm: DIGITS
+    }
+  ]
 };
-const schemesFor = (cc) => CATALOGUE[cc] || CATALOGUE.IN.filter((s) => s.selfServe);   /* CX0: a country with no list gets the universal two (phone · email), never India's PAN / Aadhaar */
+const schemesFor = (cc) =>
+  CATALOGUE[cc] ||
+  CATALOGUE.IN.filter((item) => item.selfServe); /* CX0: a country with no list gets the universal two (phone · email), never India's PAN / Aadhaar */
 /**
  * CX4 (R3): WHICH COUNTRY'S LIST — the shop's own (identities.country), read here by the server. A country sent by the client was
  * trusted before (default IN), so an Australian shop was offered PAN and Aadhaar and could file one. One read, the shop's row.
  */
 async function shopCountry(entity_id) {
   const r = await query('SELECT country FROM identities WHERE identity_id = $1', [entity_id]);
-  return String((r.rows[0] && r.rows[0].country) || '').trim().toUpperCase();
+  return String((r.rows[0] && r.rows[0].country) || '')
+    .trim()
+    .toUpperCase();
 }
 
 /** GET — the person's own record. Never returns a stored value, only the mask and the verdict. */
 router.get('/documents', auth, async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
-      return res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED',
-        message: 'Identity records are not switched on yet.' });
+      return res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message: 'Identity records are not switched on yet.' });
     }
     /* ⭐ The owner reads a co-assist's record on the Co-assists screen; anyone else reads only their own. Same
        three rules as the write — resolveSubject is the ONE place that decides whose record may be named, so a
@@ -100,18 +140,28 @@ router.get('/documents', auth, async (req, res) => {
      * "no documents on file" to a person whose documents were on file. A wrong answer with a 200 beside it is
      * worse than an error, because nothing prompts anyone to look.
      */
-    const r = await withEntity(auth.entityOf(req), (db) => db.query(
-      `SELECT scheme, country, value_masked, status, verified_at, verified_by, submitted_by, consent_at
+    const r = await withEntity(auth.entityOf(req), (db) =>
+      db.query(
+        `SELECT scheme, country, value_masked, status, verified_at, verified_by, submitted_by, consent_at
          FROM identity_documents WHERE identity_id = $1 ORDER BY scheme`,
-      [subject.id]));
+        [subject.id]
+      )
+    );
     /* M18: a plain `verified` (+ `verified_at`) per document — what N19's trade-ready check reads. Only status 'verified'
        WITH a stamp counts; the pending-code counterfoil (verification_ref) is never selected, so it cannot leak. */
-    const documents = r.rows.map(d => ({ ...d, verified: d.status === 'verified' && !!d.verified_at }));
-    res.json(Object.assign(PL.pageOut('documents', documents, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), { catalogue: schemesFor(await shopCountry(auth.entityOf(req))).map(s => ({
-      scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store,
-      /* the client renders an input only where this is true — the server refuses the rest either way */
-      selfServe: !!s.selfServe,
-    })) }));
+    const documents = r.rows.map((item) => ({ ...item, verified: item.status === 'verified' && !!item.verified_at }));
+    res.json(
+      Object.assign(PL.pageOut('documents', documents, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), {
+        catalogue: schemesFor(await shopCountry(auth.entityOf(req))).map((item) => ({
+          scheme: item.scheme,
+          label: item.label,
+          verify: item.verify,
+          stored: item.store,
+          /* the client renders an input only where this is true — the server refuses the rest either way */
+          selfServe: !!item.selfServe
+        }))
+      })
+    );
   } catch (e) {
     /* ⚠️ safeErr RETURNS A STRING — it does not send a response. I first wrote safeErr(res, e, msg) as though
        it were a responder, which logs `res` as the error, discards the string, and NEVER REPLIES: the request
@@ -148,14 +198,19 @@ async function resolveSubject(req, wanted) {
 
   if (req.identity.identity_type === 'actor') {
     const e = new Error('Only the account owner can record a document for someone else.');
-    e.status = 403; e.code = 'IDOC_SUBJECT_FORBIDDEN'; throw e;
+    e.status = 403;
+    e.code = 'IDOC_SUBJECT_FORBIDDEN';
+    throw e;
   }
-  const r = await query(
-    `SELECT 1 FROM identities WHERE identity_id = $1 AND identity_type = 'actor' AND parent_entity_id = $2`,
-    [raw, req.identity.identity_id]);
+  const r = await query(`SELECT 1 FROM identities WHERE identity_id = $1 AND identity_type = 'actor' AND parent_entity_id = $2`, [
+    raw,
+    req.identity.identity_id
+  ]);
   if (!r.rows.length) {
     const e = new Error('That person is not one of your co-assists.');
-    e.status = 403; e.code = 'IDOC_SUBJECT_FORBIDDEN'; throw e;
+    e.status = 403;
+    e.code = 'IDOC_SUBJECT_FORBIDDEN';
+    throw e;
   }
   return { id: raw, onBehalf: true };
 }
@@ -166,12 +221,13 @@ async function resolveSubject(req, wanted) {
 router.put('/documents/:scheme', auth, async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
-      return res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED',
-        message: 'Identity records are not switched on yet — the b174 migration has not been run.' });
+      return res
+        .status(503)
+        .json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message: 'Identity records are not switched on yet — the b174 migration has not been run.' });
     }
-    const cc   = await shopCountry(auth.entityOf(req));   /* CX4: the shop's country, never the client's */
+    const cc = await shopCountry(auth.entityOf(req)); /* CX4: the shop's country, never the client's */
     const want = String(req.params.scheme || '').toUpperCase();
-    const spec = schemesFor(cc).find(s => s.scheme === want);
+    const spec = schemesFor(cc).find((item) => item.scheme === want);
     if (!spec) return res.status(400).json({ error: 'Unknown document', message: 'That document is not recognised for ' + cc + '.' });
 
     /**
@@ -188,8 +244,9 @@ router.put('/documents/:scheme', auth, async (req, res) => {
      */
     const raw = spec.norm(String(req.body.value || '').trim());
     if (!spec.pattern.test(raw)) {
-      return res.status(400).json({ error: 'Validation failed', field: want,
-        message: 'That does not look like a ' + spec.label + '. Check it and try again.' });
+      return res
+        .status(400)
+        .json({ error: 'Validation failed', field: want, message: 'That does not look like a ' + spec.label + '. Check it and try again.' });
     }
 
     /**
@@ -200,8 +257,11 @@ router.put('/documents/:scheme', auth, async (req, res) => {
     let enc = null;
     if (spec.store) {
       if (!vault.isConfigured()) {
-        return res.status(503).json({ error: 'Not configured', code: 'VAULT_ENC_UNCONFIGURED',
-          message: 'Secure storage is not switched on yet, so this cannot be saved. Nothing was stored.' });
+        return res.status(503).json({
+          error: 'Not configured',
+          code: 'VAULT_ENC_UNCONFIGURED',
+          message: 'Secure storage is not switched on yet, so this cannot be saved. Nothing was stored.'
+        });
       }
       enc = JSON.stringify(vault.encryptVault({ v: raw }));
     }
@@ -210,8 +270,8 @@ router.put('/documents/:scheme', auth, async (req, res) => {
        scheme so the same digits under two schemes do not collide into one identity. */
     const hash = docHash(want, raw);
     const entity_id = auth.entityOf(req);
-    const subject   = await resolveSubject(req, req.body.identity_id);
-    const filedBy   = subject.onBehalf ? String(req.identity.identity_id) : 'self';
+    const subject = await resolveSubject(req, req.body.identity_id);
+    const filedBy = subject.onBehalf ? String(req.identity.identity_id) : 'self';
 
     /**
      * ⚠️⚠️ AADHAAR FILED BY SOMEONE ELSE NEEDS RECORDED CONSENT. b174 enforces this with a CHECK, so omitting
@@ -232,23 +292,31 @@ router.put('/documents/:scheme', auth, async (req, res) => {
      */
     if (!subject.onBehalf && req.identity.identity_type === 'actor' && !spec.selfServe) {
       return res.status(403).json({
-        error: 'Not permitted', code: 'IDOC_EMPLOYER_ONLY',
-        message: 'Your ' + spec.label + ' is recorded by your employer, who checks it against the document '
-               + 'itself. You can add your mobile and email here — those are confirmed by a code sent to them.'
+        error: 'Not permitted',
+        code: 'IDOC_EMPLOYER_ONLY',
+        message:
+          'Your ' +
+          spec.label +
+          ' is recorded by your employer, who checks it against the document ' +
+          'itself. You can add your mobile and email here — those are confirmed by a code sent to them.'
       });
     }
 
-    const consent = (req.body.consent === true || req.body.consent === 'true') ? new Date() : null;
+    const consent = req.body.consent === true || req.body.consent === 'true' ? new Date() : null;
     if (want === 'AADHAAR' && subject.onBehalf && !consent) {
-      return res.status(400).json({ error: 'Consent required', code: 'IDOC_CONSENT_REQUIRED',
-        message: 'Recording someone else\'s Aadhaar needs their agreement. Confirm they have agreed, or ask '
-               + 'them to enter it themselves from their own profile.' });
+      return res.status(400).json({
+        error: 'Consent required',
+        code: 'IDOC_CONSENT_REQUIRED',
+        message:
+          "Recording someone else's Aadhaar needs their agreement. Confirm they have agreed, or ask " + 'them to enter it themselves from their own profile.'
+      });
     }
 
     /* ⚠️ withEntity — see the note on the read. WITH RLS means every statement against this table needs the
        tenant set on its connection, without exception. */
-    const r = await withEntity(entity_id, (db) => db.query(
-      `INSERT INTO identity_documents (identity_id, entity_id, country, scheme, value_masked, value_hash, value_enc, status, submitted_by, consent_at)
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `INSERT INTO identity_documents (identity_id, entity_id, country, scheme, value_masked, value_hash, value_enc, status, submitted_by, consent_at)
             VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8,$9)
        ON CONFLICT (identity_id, scheme) DO UPDATE
             SET value_masked = EXCLUDED.value_masked, value_hash = EXCLUDED.value_hash,
@@ -256,7 +324,9 @@ router.put('/documents/:scheme', auth, async (req, res) => {
                 submitted_by = EXCLUDED.submitted_by, consent_at = EXCLUDED.consent_at,
                 verified_at = NULL, verified_by = NULL, verification_ref = NULL, updated_at = NOW()
        RETURNING scheme, value_masked, status, submitted_by`,
-      [subject.id, entity_id, cc, want, spec.mask(raw), hash, enc, filedBy, consent]));
+        [subject.id, entity_id, cc, want, spec.mask(raw), hash, enc, filedBy, consent]
+      )
+    );
 
     res.json({ message: 'Submitted for verification', document: r.rows[0], verified_by: spec.verify });
   } catch (e) {
@@ -277,28 +347,44 @@ router.put('/documents/:scheme', auth, async (req, res) => {
 async function loadDoc(req, scheme) {
   const subject = await resolveSubject(req, req.body.identity_id || req.query.identity_id);
   const entity_id = auth.entityOf(req);
-  const r = await withEntity(entity_id, (db) => db.query(
-    `SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme]));
+  const r = await withEntity(entity_id, (db) =>
+    db.query(`SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme])
+  );
   const row = r.rows[0];
   let value = null;
-  if (row && row.value_enc) { try { value = (vault.decryptVault(JSON.parse(row.value_enc)) || {}).v || null; } catch (e) { log.fellBack('identity-docs loadDoc: did not parse — answered with nothing', e, 'debug'); value = null; } }
+  if (row && row.value_enc) {
+    try {
+      value = (vault.decryptVault(JSON.parse(row.value_enc)) || {}).v || null;
+    } catch (e) {
+      log.fellBack('identity-docs loadDoc: did not parse — answered with nothing', e, 'debug');
+      value = null;
+    }
+  }
   return { subject, entity_id, row, value };
 }
 const stores = (entity_id, identity_id, scheme) => ({
-  save: (ref) => withEntity(entity_id, (db) => db.query(
-    `UPDATE identity_documents SET verification_ref = $3, updated_at = NOW() WHERE identity_id = $1 AND scheme = $2`, [identity_id, scheme, ref])),
-  verified: async (by) => (await withEntity(entity_id, (db) => db.query(
-    `UPDATE identity_documents SET status = 'verified', verified_at = NOW(), verified_by = $3, verification_ref = NULL, updated_at = NOW()
-      WHERE identity_id = $1 AND scheme = $2 RETURNING verified_at`, [identity_id, scheme, by]))).rows[0].verified_at,
+  save: (ref) =>
+    withEntity(entity_id, (db) =>
+      db.query(`UPDATE identity_documents SET verification_ref = $3, updated_at = NOW() WHERE identity_id = $1 AND scheme = $2`, [identity_id, scheme, ref])
+    ),
+  verified: async (by) =>
+    (
+      await withEntity(entity_id, (db) =>
+        db.query(
+          `UPDATE identity_documents SET status = 'verified', verified_at = NOW(), verified_by = $3, verification_ref = NULL, updated_at = NOW()
+      WHERE identity_id = $1 AND scheme = $2 RETURNING verified_at`,
+          [identity_id, scheme, by]
+        )
+      )
+    ).rows[0].verified_at
 });
 const idocGate = async (res) => {
   if (await schema.hasTable('identity_documents')) return false;
   res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message: 'Identity records are not switched on yet.' });
   return true;
 };
-const sendCode = (channel, to, code) => channel === 'email'
-  ? require('../lib/notify').sendOtpEmail(to, '', code, { ttl: '10 minutes' })
-  : require('../lib/notify').sendOtpSms(to, code);
+const sendCode = (channel, to, code) =>
+  channel === 'email' ? require('../lib/notify').sendOtpEmail(to, '', code, { ttl: '10 minutes' }) : require('../lib/notify').sendOtpSms(to, code);
 const codeScheme = (req) => String(req.params.scheme || '').toUpperCase();
 router.post('/documents/:scheme/code', auth, async (req, res) => {
   try {
@@ -307,9 +393,14 @@ router.post('/documents/:scheme/code', auth, async (req, res) => {
     const { subject, entity_id, row, value } = await loadDoc(req, scheme);
     if (!row) return res.status(404).json({ error: 'Not found', code: 'IDOC_NOT_FOUND', message: 'Add that document first, then ask for a code.' });
     const out = await require('../lib/iddoc-verify').start({
-      doc: { identity_id: subject.id, scheme, value }, store: stores(entity_id, subject.id, scheme), send: sendCode });
+      doc: { identity_id: subject.id, scheme, value },
+      store: stores(entity_id, subject.id, scheme),
+      send: sendCode
+    });
     res.status(out.status).json(out.body);
-  } catch (e) { res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) }); }
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) });
+  }
 });
 router.post('/documents/:scheme/verify', auth, async (req, res) => {
   try {
@@ -318,18 +409,27 @@ router.post('/documents/:scheme/verify', auth, async (req, res) => {
     const { subject, entity_id, row } = await loadDoc(req, scheme);
     if (!row) return res.status(404).json({ error: 'Not found', code: 'IDOC_NOT_FOUND', message: 'Add that document first.' });
     const out = await require('../lib/iddoc-verify').confirm({
-      doc: { identity_id: subject.id, scheme, verification_ref: row.verification_ref }, code: req.body.code, store: stores(entity_id, subject.id, scheme) });
+      doc: { identity_id: subject.id, scheme, verification_ref: row.verification_ref },
+      code: req.body.code,
+      store: stores(entity_id, subject.id, scheme)
+    });
     res.status(out.status).json(out.body);
-  } catch (e) { res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) }); }
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) });
+  }
 });
-
 
 /**
  * docHash(scheme, normalisedValue) — "is this the same document" without holding it: sha256 of SCHEME:value, salted with the
  * scheme so the same digits under two schemes never collide. ⭐ ONE HASH, TWO READERS (M11): the PUT above stores it, and
  * routes/keys.js claimSeries matches a counter assigned to a phone number against the signed-in person's verified PHONE.
  */
-function docHash(scheme, raw) { return crypto.createHash('sha256').update(String(scheme) + ':' + String(raw)).digest('hex'); }
+function docHash(scheme, raw) {
+  return crypto
+    .createHash('sha256')
+    .update(String(scheme) + ':' + String(raw))
+    .digest('hex');
+}
 /** the PHONE normaliser the PUT uses (DIGITS: a leading + survives) — so a number typed by the owner hashes as the person's did */
 router.normPhone = (v) => DIGITS(String(v == null ? '' : v).trim());
 router.docHash = docHash;

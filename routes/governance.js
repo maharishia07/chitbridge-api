@@ -11,13 +11,13 @@ const log = require('../lib/logger');
 // Adapted to this codebase: Express router + query/withTransaction from ../db, identity_id PK,
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
-const { writeGate } = require('../lib/access');   /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
-const { memo } = require('../lib/confcache');   // the active constitution is read once a minute, not once a call
-const platformroot = require('../lib/platformroot');   /* W1-SET: the ONE platform-role door (create · re-attest · register a source) */
+const { writeGate } = require('../lib/access'); /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
+const { memo } = require('../lib/confcache'); // the active constitution is read once a minute, not once a call
+const platformroot = require('../lib/platformroot'); /* W1-SET: the ONE platform-role door (create · re-attest · register a source) */
 
 const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
@@ -46,25 +46,29 @@ async function loadActiveConstitution() {
       `SELECT pc.version, pc.params, pc.plan_menu, pc.root_id
          FROM platform_constitution pc
          JOIN platform_root pr ON pr.root_id = pc.root_id
-        WHERE pc.is_active LIMIT 1`);
-    if (!rows.length) return null;                  // no-orphan: caller must reject
+        WHERE pc.is_active LIMIT 1`
+    );
+    if (!rows.length) return null; // no-orphan: caller must reject
     const r = rows[0];
     return { version: r.version, root_id: r.root_id, plan_menu: r.plan_menu, ...r.params };
   });
 }
 
 async function countEntities(rootId) {
-  const { rows } = await query(
-    `SELECT count(*)::int AS n FROM identities WHERE governed_by = $1`, [rootId]);
+  const { rows } = await query(`SELECT count(*)::int AS n FROM identities WHERE governed_by = $1`, [rootId]);
   return rows[0].n;
 }
 async function countChitsToday(entityId) {
   // UTC-day window (absolute-time invariant). B1 RLS: an entity's own sent chits -> withEntity(entity). (Dormant
   // guard — call it OUTSIDE any open entity transaction to avoid nesting when it's eventually wired.)
-  const { rows } = await withEntity(entityId, (c) => c.query(
-    `SELECT count(*)::int AS n FROM chit_header
+  const { rows } = await withEntity(entityId, (c) =>
+    c.query(
+      `SELECT count(*)::int AS n FROM chit_header
       WHERE sender_entity_id = $1
-        AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`, [entityId]));
+        AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`,
+      [entityId]
+    )
+  );
   return rows[0].n;
 }
 
@@ -74,7 +78,8 @@ router.get('/entities/:id', auth, async (req, res) => {
     const { rows } = await query(
       `SELECT constitution_version, params_override, plan
          FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`,
-      [req.params.id]);
+      [req.params.id]
+    );
     if (!rows.length) return res.status(404).json({ error: 'entity not found or not governed' });
     const ent = rows[0];
 
@@ -88,7 +93,7 @@ router.get('/entities/:id', auth, async (req, res) => {
       drift: driftStatus(ent.constitution_version, active.version),
       plan: ent.plan,
       effective,
-      exceptions,
+      exceptions
     });
   } catch (err) {
     res.status(500).json({ error: 'governance view failed', message: safeErr(err) });
@@ -100,12 +105,11 @@ router.get('/entities/:id', auth, async (req, res) => {
 router.post('/entities', auth, async (req, res) => {
   if (!platformroot.refuseUnlessPlatform(req, res)) return;
 
-  const override     = (req.body && req.body.params_override) || {};
-  const plan         = (req.body && req.body.plan) || 'free';
+  const override = (req.body && req.body.params_override) || {};
+  const plan = (req.body && req.body.plan) || 'free';
   const display_name = ((req.body && req.body.display_name) || '').trim();
-  const email        = ((req.body && req.body.email) || '').trim().toLowerCase();
-  if (!display_name || !email)
-    return res.status(400).json({ error: 'display_name and email required' });
+  const email = ((req.body && req.body.email) || '').trim().toLowerCase();
+  if (!display_name || !email) return res.status(400).json({ error: 'display_name and email required' });
 
   try {
     const active = await loadActiveConstitution();
@@ -118,8 +122,11 @@ router.post('/entities', auth, async (req, res) => {
 
     // conformance: resolve + stamp (throws GovernanceError on Class A/B)
     let stamp;
-    try { stamp = mintEntity(active, active.root_id, override); }
-    catch (e) { return res.status(422).json({ error: 'conformance', code: e.code, detail: e.message }); }
+    try {
+      stamp = mintEntity(active, active.root_id, override);
+    } catch (e) {
+      return res.status(422).json({ error: 'conformance', code: e.code, detail: e.message });
+    }
 
     const out = await withTransaction(async (client) => {
       const ins = await client.query(
@@ -128,13 +135,11 @@ router.post('/entities', auth, async (req, res) => {
             governed_by, constitution_version, params_override, plan, entity_kind, country)
          VALUES ($1,$2,$3,'entity','active',$4,$5,$6,$7,'customer',NULL)   -- GOV-AU1: nobody stated it — Country setup asks
          RETURNING identity_id`,
-        [genBridge(), display_name, email,
-         stamp.governed_by, stamp.constitution_version, JSON.stringify(stamp.params_override), plan]);
+        [genBridge(), display_name, email, stamp.governed_by, stamp.constitution_version, JSON.stringify(stamp.params_override), plan]
+      );
       const newId = ins.rows[0].identity_id;
       for (const ex of stamp.exceptions) {
-        await client.query(
-          `INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`,
-          [newId, ex.klass, ex.key, ex.detail]);
+        await client.query(`INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`, [newId, ex.klass, ex.key, ex.detail]);
       }
       return { id: newId };
     });
@@ -152,23 +157,21 @@ router.post('/entities', auth, async (req, res) => {
 router.post('/entities/:id/reattest', auth, async (req, res) => {
   if (!platformroot.refuseUnlessPlatform(req, res)) return;
   try {
-    const { rows } = await query(
-      `SELECT params_override FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`,
-      [req.params.id]);
+    const { rows } = await query(`SELECT params_override FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`, [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'entity not found or not governed' });
 
     const active = await loadActiveConstitution();
     if (!active) return res.status(503).json({ error: 'no active constitution' });
 
     let ra;
-    try { ra = reattest(active, rows[0].params_override || {}); }
-    catch (e) { return res.status(422).json({ error: 'conformance', code: e.code, detail: e.message }); }
+    try {
+      ra = reattest(active, rows[0].params_override || {});
+    } catch (e) {
+      return res.status(422).json({ error: 'conformance', code: e.code, detail: e.message });
+    }
 
-    await query(
-      `UPDATE identities SET constitution_version = $1 WHERE identity_id = $2`,
-      [ra.constitution_version, req.params.id]);
-    res.json({ message: 'Re-attested', constitution_version: ra.constitution_version,
-               drift: false, effective: ra.effective, exceptions: ra.exceptions });
+    await query(`UPDATE identities SET constitution_version = $1 WHERE identity_id = $2`, [ra.constitution_version, req.params.id]);
+    res.json({ message: 'Re-attested', constitution_version: ra.constitution_version, drift: false, effective: ra.effective, exceptions: ra.exceptions });
   } catch (err) {
     res.status(500).json({ error: 'reattest failed', message: safeErr(err) });
   }
@@ -177,10 +180,19 @@ router.post('/entities/:id/reattest', auth, async (req, res) => {
 // ── Guards to call from core flows WHEN enforcement is enabled (not wired yet) ──
 async function assertChitAllowed(entityId, plan) {
   const active = await loadActiveConstitution();
-  if (!active) { const e = new Error('no active constitution'); e.status = 503; throw e; }
+  if (!active) {
+    const e = new Error('no active constitution');
+    e.status = 503;
+    throw e;
+  }
   const used = await countChitsToday(entityId);
   const r = checkRate(planFor(active, plan), 'chits_per_day', used);
-  if (!r.ok) { const e = new Error('daily chit limit reached'); e.status = 429; e.quota = r.info; throw e; }
+  if (!r.ok) {
+    const e = new Error('daily chit limit reached');
+    e.status = 429;
+    e.quota = r.info;
+    throw e;
+  }
 }
 /**
  * ── SUPERSEDED 2026-08-06 · use lib/visibility-cap.js ──────────────────────────────────────────────────────────
@@ -208,8 +220,8 @@ function assertPublicAllowed() {
 // governs" surface — the light, deterministic form; an AI co-assist adds semantic judgement on top later.
 router.post('/conformance', auth, async (req, res) => {
   try {
-    const data = (req.body && typeof req.body.data === 'object' && req.body.data) ? req.body.data : (req.body || {});
-    const scope = (req.body && typeof req.body.scope === 'string') ? req.body.scope : 'chit';
+    const data = req.body && typeof req.body.data === 'object' && req.body.data ? req.body.data : req.body || {};
+    const scope = req.body && typeof req.body.scope === 'string' ? req.body.scope : 'chit';
     const verdict = await require('../lib/conformance').checkConformance(data, scope);
     res.json(verdict);
   } catch (err) {
@@ -223,7 +235,9 @@ router.get('/boilerplate/:key', auth, async (req, res) => {
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
     if (!bp) return res.status(404).json({ error: 'Not found', message: 'No such boilerplate' });
     res.json(bp);
-  } catch (err) { res.status(500).json({ error: 'Boilerplate read failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Boilerplate read failed', message: safeErr(err) });
+  }
 });
 
 // POST /api/governance/boilerplate/:key/adopt — the minted-path binding: stamp the caller's entity with this mould so
@@ -233,14 +247,19 @@ router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
     if (!bp) return res.status(404).json({ error: 'Not found', message: 'No such boilerplate' });
-    await withEntity(entity_id, (c) => c.query(
-      `INSERT INTO entity_governance (entity_id, constitution_key, boilerplate_key)
+    await withEntity(entity_id, (c) =>
+      c.query(
+        `INSERT INTO entity_governance (entity_id, constitution_key, boilerplate_key)
        VALUES ($1, COALESCE((SELECT constitution_key FROM constitution WHERE active = true AND is_default = true LIMIT 1), 'trade'), $2)
        ON CONFLICT (entity_id) DO UPDATE SET boilerplate_key = EXCLUDED.boilerplate_key`,
-      [entity_id, bp.key]));
-    require('../lib/workpattern').invalidateWorkPattern(entity_id);   // re-stamp → next resolve re-derives
+        [entity_id, bp.key]
+      )
+    );
+    require('../lib/workpattern').invalidateWorkPattern(entity_id); // re-stamp → next resolve re-derives
     res.json({ message: 'Minted from boilerplate', boilerplate: versionref.format(bp.key, bp.version), standards: bp.standards, locale: bp.locale });
-  } catch (err) { res.status(500).json({ error: 'Adopt failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Adopt failed', message: safeErr(err) });
+  }
 });
 
 // POST /api/governance/source — REGISTER a source as a sealed SOURCE-ENTITY + upload its typed content + stamp it.
@@ -252,9 +271,16 @@ router.post('/source', auth, async (req, res) => {
   try {
     const b = req.body || {};
     const out = await require('../lib/source').registerSource({
-      source_key: (b.source_key || '').trim(), title: b.title, facet: b.facet, kind: b.kind, template: b.template });
+      source_key: (b.source_key || '').trim(),
+      title: b.title,
+      facet: b.facet,
+      kind: b.kind,
+      template: b.template
+    });
     res.json({ message: 'Source registered & stamped', source: out });
-  } catch (err) { res.status(err.status || 500).json({ error: 'Register source failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Register source failed', message: safeErr(err) });
+  }
 });
 
 // GET /api/governance/source/:key — view a source: its typed content + its owning source-entity (stable id + mutable name).
@@ -263,7 +289,9 @@ router.get('/source/:key', auth, async (req, res) => {
     const s = await require('../lib/source').resolveSourceEntity(req.params.key);
     if (!s) return res.status(404).json({ error: 'Not found', message: 'No such source' });
     res.json(s);
-  } catch (err) { res.status(500).json({ error: 'Source read failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Source read failed', message: safeErr(err) });
+  }
 });
 
 // GET /api/governance/readiness — the CALLER's own trade readiness. ?destination=EU&vertical=paint → resolved FOR that
@@ -278,16 +306,20 @@ router.get('/readiness', auth, async (req, res) => {
     /* G8: what this login may do here — the server answers, the screen greys a refused button WITH the sentence */
     const m = require('../lib/access').mayWrite(req);
     res.json({ ...out, may: { gather: m, verify: m } });
-  } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Readiness failed', message: safeErr(err) });
+  }
 });
 
 // GET /api/governance/lanes?vertical=paint — the CALLER's market-readiness MATRIX (readiness % per destination + gaps).
 router.get('/lanes', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const m = require('../lib/access').mayWrite(req);   /* G8 */
+    const m = require('../lib/access').mayWrite(req); /* G8 */
     res.json({ ...(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin)), may: { gather: m, verify: m } });
-  } catch (err) { res.status(500).json({ error: 'Lanes failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Lanes failed', message: safeErr(err) });
+  }
 });
 
 // GET /api/governance/track-record — the CALLER's SELF-PROVING REFERENCE (relationship rung of the trust ladder):
@@ -297,7 +329,9 @@ router.get('/track-record', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/reference').resolveTrackRecord(entity_id));
-  } catch (err) { res.status(500).json({ error: 'Track record failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Track record failed', message: safeErr(err) });
+  }
 });
 
 // ── COMMERCE LAYER — the commercial-instrument cluster + the end-to-end settlement chain (derive-not-enumerate). ──
@@ -306,27 +340,36 @@ router.get('/instruments', auth, async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
     res.json(require('../lib/instruments').resolveInstruments({ cross_border, incoterm: req.query.incoterm }));
-  } catch (err) { res.status(500).json({ error: 'Instruments failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Instruments failed', message: safeErr(err) });
+  }
 });
 // GET /api/governance/journey?incoterm=CIF&cross_border=1 — the ordered end-to-end settlement chain (partner + cover per stage).
 router.get('/journey', auth, async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
     res.json(require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm }));
-  } catch (err) { res.status(500).json({ error: 'Journey failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Journey failed', message: safeErr(err) });
+  }
 });
 // GET /api/governance/commerce-standards — the commerce standards (Incoterms/UCP/FRM) as governed source-entities (b93).
 router.get('/commerce-standards', auth, async (req, res) => {
   try {
     res.json(await require('../lib/instruments').commerceStandards());
-  } catch (err) { res.status(500).json({ error: 'Commerce standards failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Commerce standards failed', message: safeErr(err) });
+  }
 });
 
 // ── ENTITY TRADE PROFILE — individual-specific: trade mode + markets + sectors + adopted certs (b96). ──
 router.get('/profile', auth, async (req, res) => {
-  try { const entity_id = auth.entityOf(req);
+  try {
+    const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').getProfile(entity_id));
-  } catch (err) { res.status(500).json({ error: 'Profile failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Profile failed', message: safeErr(err) });
+  }
 });
 /**
  * ⚠️ THE PROFILE IS A SHELF EVERY SCREEN HOLDS A COPY OF — `UI._party` feeds the Invoice row, the UPI id and
@@ -334,22 +377,32 @@ router.get('/profile', auth, async (req, res) => {
  * elsewhere kept showing the old supplier block until it was reloaded.
  */
 router.put('/profile', auth, async (req, res) => {
-  try { const entity_id = auth.entityOf(req);
+  try {
+    const entity_id = auth.entityOf(req);
     const saved = await require('../lib/profile').saveProfile(entity_id, req.body || {});
     /* ⚠ AFTER the save, not before it. Announcing a change that has not happened yet is a lie every open tab
        acts on, and it would fire even when saveProfile throws. */
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile: the signal was not sent — carried on without it', e); }
+    try {
+      require('../lib/shopchanged').shopChanged(entity_id, 'profile');
+    } catch (e) {
+      log.fellBack('governance PUT /profile: the signal was not sent — carried on without it', e);
+    }
     res.json(saved);
-  } catch (err) { res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) });
+  }
 });
 // TRADE DOCUMENTS VAULT — recurring inputs that pre-fill forms. The vault is now repeatable SECTIONS of free
 // rows (the user names their own details), so this endpoint offers the section TYPES rather than a field
 // whitelist, plus the tags that can be checked at source. ⚠️ It describes what we OFFER, never what is allowed:
 // a row with any name, and any tag or none, is stored regardless.
 router.get('/vault-schema', auth, async (req, res) => {
-  try { const p = require('../lib/profile');
+  try {
+    const p = require('../lib/profile');
     res.json({ section_types: p.SECTION_TYPES, verifiable_tags: p.VERIFIABLE_TAGS });
-  } catch (err) { res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) });
+  }
 });
 /** one PUT /profile/vault body: a patch, or a whole vault (a first fill — over an existing vault it must name the version); → { saved } or { refusal } */
 async function writeVaultBody(entity_id, body) {
@@ -373,30 +426,41 @@ async function writeVaultBody(entity_id, body) {
  *   Who may: any signed-in login of the shop (as before; the server's auth). Trips: 1 read + 1 conditional write (+ the mirror's).
  */
 router.put('/profile/vault', auth, async (req, res) => {
-  try { const entity_id = auth.entityOf(req);
+  try {
+    const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const written = await writeVaultBody(entity_id, b);
     if (written.refusal) return res.status(409).json(written.refusal);
     const saved = written.saved;
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e); }
+    try {
+      require('../lib/shopchanged').shopChanged(entity_id, 'profile');
+    } catch (e) {
+      log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e);
+    }
     res.json(saved);
   } catch (err) {
     if (err && err.code === 'VAULT_CHANGED') return res.status(409).json({ code: err.code, error: err.say, message: err.say });
-    res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+    res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
   }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
 router.get('/profile/readiness', auth, async (req, res) => {
-  try { const entity_id = auth.entityOf(req);
+  try {
+    const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').resolveProfileReadiness(entity_id));
-  } catch (err) { res.status(500).json({ error: 'Profile readiness failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Profile readiness failed', message: safeErr(err) });
+  }
 });
 // the forward roadmap — which markets you could reach next and what to add
 router.get('/profile/path', auth, async (req, res) => {
-  try { const entity_id = auth.entityOf(req);
+  try {
+    const entity_id = auth.entityOf(req);
     res.json(await require('../lib/profile').resolvePath(entity_id));
-  } catch (err) { res.status(500).json({ error: 'Path failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Path failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -411,19 +475,33 @@ router.get('/profile/path', auth, async (req, res) => {
  * Trips: GET 2 (identities + entity_governance, inside one withEntity) · PUT 2 reads + 2 writes (+1 insert for a shop with no stamp row).
  */
 router.get('/country-setup', auth, async (req, res) => {
-  try { const entity_id = auth.entityOf(req);
+  try {
+    const entity_id = auth.entityOf(req);
     const CS = require('../lib/country-setup');
     res.json(await withEntity(entity_id, (h) => CS.profile(h, entity_id)));
-  } catch (err) { res.status(err.status || 500).json({ code: err.code || undefined, error: err.say || 'Country setup could not be read', message: err.say || safeErr(err) }); }
+  } catch (err) {
+    res.status(err.status || 500).json({ code: err.code || undefined, error: err.say || 'Country setup could not be read', message: err.say || safeErr(err) });
+  }
 });
 router.put('/country-setup', auth, async (req, res) => {
-  try { const entity_id = auth.entityOf(req);
+  try {
+    const entity_id = auth.entityOf(req);
     if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
     const CS = require('../lib/country-setup');
-    const out = await withEntity(entity_id, (h) => CS.save(h, entity_id, req.body || {}, req.identity && req.identity.identity_id));   /* CS2: who corrected the country is logged */
+    const out = await withEntity(entity_id, (h) =>
+      CS.save(h, entity_id, req.body || {}, req.identity && req.identity.identity_id)
+    ); /* CS2: who corrected the country is logged */
     /* the books gate's cached answer and the books-hooks switch cache both move with the country */
-    try { require('../lib/books-hooks').forget(entity_id); } catch (e) { log.fellBack('governance PUT /country-setup: the helper failed — carried on without it', e); }
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /country-setup: the signal was not sent — carried on without it', e); }
+    try {
+      require('../lib/books-hooks').forget(entity_id);
+    } catch (e) {
+      log.fellBack('governance PUT /country-setup: the helper failed — carried on without it', e);
+    }
+    try {
+      require('../lib/shopchanged').shopChanged(entity_id, 'profile');
+    } catch (e) {
+      log.fellBack('governance PUT /country-setup: the signal was not sent — carried on without it', e);
+    }
     res.json(out);
   } catch (err) {
     if (err && err.say) return res.status(err.status || 422).json({ code: err.code, error: err.say, message: err.say });
@@ -442,7 +520,7 @@ router.post('/ai-draft', auth, async (req, res) => {
     // 4xx are intentional, client-safe reasons (gate 402/429 · unknown skill 400 · not-connected 503) → show them;
     // 5xx keep the generic message (no internal/DB text leaks).
     const st = err.status || 500;
-    res.status(st).json({ error: 'AI draft failed', message: st < 500 ? (err.message || safeErr(err)) : safeErr(err) });
+    res.status(st).json({ error: 'AI draft failed', message: st < 500 ? err.message || safeErr(err) : safeErr(err) });
   }
 });
 // per-entity AI spend (metering / charge-back)
@@ -450,14 +528,19 @@ router.get('/ai-usage', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     res.json(await require('../lib/ai').usageSummary(entity_id));
-  } catch (err) { res.status(500).json({ error: 'AI usage failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'AI usage failed', message: safeErr(err) });
+  }
 });
 // the AI skill INVENTORY — what the one co-assist can be invoked to do (id · category · kind · gate · label). The UI
 // reads this to place "✨ Draft with AI" wherever a skill's category applies. Single source of truth: the ai_skill TABLE
 // (F5), self-healing to the lib/ai.js SEED until b110 is run.
 router.get('/ai-skills', auth, async (req, res) => {
-  try { res.json({ skills: await require('../lib/ai').listSkills() }); }
-  catch (err) { res.status(500).json({ error: 'AI skills failed', message: safeErr(err) }); }
+  try {
+    res.json({ skills: await require('../lib/ai').listSkills() });
+  } catch (err) {
+    res.status(500).json({ error: 'AI skills failed', message: safeErr(err) });
+  }
 });
 
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
@@ -478,18 +561,28 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
       `SELECT identity_id, display_name, bridge_id, user_id, gstn, country, policy_flags FROM identities
         WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1)) AND identity_type = 'entity'
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
-      [req.params.bridge_id]);
+      [req.params.bridge_id]
+    );
     if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such entity' });
     const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */
     /* ⭐ the public facts with their rung — what they gave, what their books say, what we checked (lib/public-facts.js) */
-    let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (e) { log.fellBack('governance GET /readiness/:bridge_id: the helper failed — carried on without it', e); }
+    let facts = null;
+    try {
+      facts = require('../lib/public-facts').factsOf(r.rows[0]);
+    } catch (e) {
+      log.fellBack('governance GET /readiness/:bridge_id: the helper failed — carried on without it', e);
+    }
     /* SEC-FIX3 S6: the registry value (PAN, IEC, GSTIN) rides in evidence_ref — it stays with its owner; a stranger sees status + rung only */
     const isOwnRow = String(auth.entityOf(req)) === String(r.rows[0].identity_id);
-    const shown = isOwnRow ? rd : Object.assign({}, rd, { clearances: (rd.clearances || []).map((clearance) => Object.assign({}, clearance, { evidence_ref: null })) });
+    const shown = isOwnRow
+      ? rd
+      : Object.assign({}, rd, { clearances: (rd.clearances || []).map((clearance) => Object.assign({}, clearance, { evidence_ref: null })) });
     res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...shown });
-  } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Readiness failed', message: safeErr(err) });
+  }
 });
 
 // POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
@@ -500,9 +593,16 @@ router.post('/compliance', auth, writeGate, async (req, res) => {
     // T1 (reviewer 2026-07-13): a self-gathered document is at most `documented`/`declared`. The verification stamp is
     // the PLATFORM's own attestation and is NEVER accepted from the client here — only /verify may set it. Stripped.
     await require('../lib/readiness').gatherDocument(entity_id, {
-      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: b.evidence_ref, valid_until: b.valid_until, status: b.status });
+      standard_key: b.standard_key,
+      doc_key: b.doc_key,
+      evidence_ref: b.evidence_ref,
+      valid_until: b.valid_until,
+      status: b.status
+    });
     res.json({ message: 'Clearance gathered', ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
-  } catch (err) { res.status(err.status || 500).json({ error: 'Gather failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Gather failed', message: safeErr(err) });
+  }
 });
 
 // POST /api/governance/verify — MACHINE-VERIFY a registry ID (IEC/GSTN/PAN) → the "verified" rung. Un-fakeable once the
@@ -512,16 +612,30 @@ router.post('/verify', auth, writeGate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    const v = await require('../lib/verify').verifyRegistry(b.id_type, b.id_value);
-    if (!v.ok) return res.status(422).json({ error: 'Verification failed', message: v.note, verdict: v });
+    const node = await require('../lib/verify').verifyRegistry(b.id_type, b.id_value);
+    if (!node.ok) return res.status(422).json({ error: 'Verification failed', message: node.note, verdict: node });
     await require('../lib/readiness').gatherDocument(entity_id, {
-      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: v.value, valid_until: b.valid_until,
-      status: 'gathered', trusted: true,   // T1 — ONLY this platform path may set a verification stamp
-      verification: { method: v.method, id_type: v.id_type, checked: v.checked, provider: v.provider || null,
-        registry: v.registry || null, note: v.note, verified_at: new Date().toISOString() } });
-    const msg = v.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
-    res.json({ message: msg, verdict: v, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
-  } catch (err) { res.status(err.status || 500).json({ error: 'Verify failed', message: safeErr(err) }); }
+      standard_key: b.standard_key,
+      doc_key: b.doc_key,
+      evidence_ref: node.value,
+      valid_until: b.valid_until,
+      status: 'gathered',
+      trusted: true, // T1 — ONLY this platform path may set a verification stamp
+      verification: {
+        method: node.method,
+        id_type: node.id_type,
+        checked: node.checked,
+        provider: node.provider || null,
+        registry: node.registry || null,
+        note: node.note,
+        verified_at: new Date().toISOString()
+      }
+    });
+    const msg = node.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
+    res.json({ message: msg, verdict: node, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Verify failed', message: safeErr(err) });
+  }
 });
 
 module.exports = router;
@@ -541,8 +655,7 @@ module.exports.loadActiveConstitution = loadActiveConstitution;
 router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
   try {
     if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
-      return res.status(503).json({ error: 'Not enabled', code: 'SRA_NOT_MIGRATED',
-        message: 'Acceptance is not switched on yet.' });
+      return res.status(503).json({ error: 'Not enabled', code: 'SRA_NOT_MIGRATED', message: 'Acceptance is not switched on yet.' });
     }
     const entity_id = auth.entityOf(req);
     const handle = String(req.body.supplier || '').trim();
@@ -552,7 +665,9 @@ router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
     const s = await query(
       `SELECT identity_id FROM identities
         WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1)) AND identity_type = 'entity'
-        ORDER BY (bridge_id = $1) DESC LIMIT 1`, [handle]);
+        ORDER BY (bridge_id = $1) DESC LIMIT 1`,
+      [handle]
+    );
     if (!s.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such supplier' });
 
     /**
@@ -561,12 +676,14 @@ router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
      * same reasoning that strips a client-supplied verification stamp in /compliance.
      */
     const rd = await require('../lib/readiness').resolveReadiness(s.rows[0].identity_id);
-    const r = await withEntity(entity_id, (db) => db.query(
-      `INSERT INTO supplier_readiness_acceptance (entity_id, supplier_id, summary, accepted_by, note)
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `INSERT INTO supplier_readiness_acceptance (entity_id, supplier_id, summary, accepted_by, note)
             VALUES ($1,$2,$3,$4,$5)
        RETURNING acceptance_id, accepted_at`,
-      [entity_id, s.rows[0].identity_id, JSON.stringify(rd.summary || {}),
-       req.identity.identity_id, (req.body.note || '').trim() || null]));
+        [entity_id, s.rows[0].identity_id, JSON.stringify(rd.summary || {}), req.identity.identity_id, (req.body.note || '').trim() || null]
+      )
+    );
 
     res.json({ message: 'Accepted', acceptance: r.rows[0], summary: rd.summary });
   } catch (err) {
@@ -584,18 +701,23 @@ router.get('/supplier-acceptance/:handle', auth, async (req, res) => {
     const s = await query(
       `SELECT identity_id FROM identities
         WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1)) AND identity_type = 'entity'
-        ORDER BY (bridge_id = $1) DESC LIMIT 1`, [String(req.params.handle || '').trim()]);
+        ORDER BY (bridge_id = $1) DESC LIMIT 1`,
+      [String(req.params.handle || '').trim()]
+    );
     if (!s.rows.length) return res.json({ acceptance: null, applied: true });
 
     /* ⚠️ withEntity — WITH RLS, on the read as well as the write. Fixing one and not the other is
        indistinguishable from fixing neither; that cost most of an afternoon this morning. */
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT a.acceptance_id, a.summary, a.accepted_at, a.note, i.display_name AS accepted_by_name
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT a.acceptance_id, a.summary, a.accepted_at, a.note, i.display_name AS accepted_by_name
          FROM supplier_readiness_acceptance a
          LEFT JOIN identities i ON i.identity_id = a.accepted_by
         WHERE a.entity_id = $1 AND a.supplier_id = $2
         ORDER BY a.accepted_at DESC LIMIT 1`,
-      [entity_id, s.rows[0].identity_id]));
+        [entity_id, s.rows[0].identity_id]
+      )
+    );
 
     res.json({ acceptance: r.rows[0] || null, applied: true });
   } catch (err) {

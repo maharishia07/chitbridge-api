@@ -8,6 +8,8 @@
  *
  * It is a DIGITAL pdf — a real text layer, which is what a payroll system emits. A SCANNED Form 16 is a picture and
  * would need OCR; this prototype deliberately does not pretend to handle that.
+ 
+ * CALLED BY scripts/prototype-form16-to-itr2.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 
 // The lines a payroll system actually prints. Values are illustrative, but the LABELS are the real anchors the
@@ -44,14 +46,16 @@ const FORM16_LINES = [
   '(b) Deduction in respect of health insurance premia under section 80D: 25000.00',
   '',
   'Verification',
-  'I, the deductor, certify that the information given above is true and correct.',
+  'I, the deductor, certify that the information given above is true and correct.'
 ];
 
-function esc(s) { return String(s).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)'); }
+function esc(s) {
+  return String(s).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+}
 
 /** Returns a Buffer holding a one-page, text-layer PDF of the lines above. */
 function makeForm16Pdf(lines) {
-  const body = (lines || FORM16_LINES);
+  const body = lines || FORM16_LINES;
   // one content stream: begin text, set font, then a Td-positioned Tj per line
   let content = 'BT\n/F1 9 Tf\n1 0 0 1 40 780 Tm\n12 TL\n';
   for (const ln of body) content += `(${esc(ln)}) Tj\nT*\n`;
@@ -66,13 +70,13 @@ function makeForm16Pdf(lines) {
 
   let pdf = '%PDF-1.4\n';
   const offsets = [];
-  for (let i = 1; i < objs.length; i++) {
-    offsets[i] = Buffer.byteLength(pdf);
-    pdf += `${i} 0 obj\n${objs[i]}\nendobj\n`;
+  for (let index = 1; index < objs.length; index++) {
+    offsets[index] = Buffer.byteLength(pdf);
+    pdf += `${index} 0 obj\n${objs[index]}\nendobj\n`;
   }
   const xrefAt = Buffer.byteLength(pdf);
   pdf += `xref\n0 ${objs.length}\n0000000000 65535 f \n`;
-  for (let i = 1; i < objs.length; i++) pdf += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+  for (let index = 1; index < objs.length; index++) pdf += String(offsets[index]).padStart(10, '0') + ' 00000 n \n';
   pdf += `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xrefAt}\n%%EOF\n`;
   return Buffer.from(pdf, 'latin1');
 }

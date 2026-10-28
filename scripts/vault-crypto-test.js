@@ -1,7 +1,11 @@
 // vault-crypto-test.js — LOCAL unit proof of vault at-rest encryption (F1). No DB, no network.
 // Run: node scripts/vault-crypto-test.js
 const crypto = require('crypto');
-let P = 0, F = 0; const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : ''))); };
+let P = 0,
+  F = 0;
+const chk = (n, ok, d) => {
+  ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : '')));
+};
 
 console.log('== VAULT CRYPTO (AES-256-GCM, key from env) ==\n');
 
@@ -10,7 +14,7 @@ const vault = {
   identity: { legal_name: 'Royale Paints Pvt Ltd', country: 'India' },
   registrations: { gstin: '33AJMPR0813M1Z0', pan: 'AJMPR0813M', iec: 'AAACR1234B' },
   banking: { account_no: '9876543210012345', ifsc: 'HDFC0001234', swift: 'HDFCINBB' },
-  signatory: { name: 'A. Narayanan', designation: 'Director' },
+  signatory: { name: 'A. Narayanan', designation: 'Director' }
 };
 
 // 1 · no key → encrypt fails closed
@@ -18,8 +22,12 @@ delete process.env.VAULT_ENC_KEY;
 delete require.cache[require.resolve('../lib/vaultcrypto')];
 let vc = require('../lib/vaultcrypto');
 chk('not configured when no key', vc.isConfigured() === false);
-try { vc.encryptVault(vault); chk('encrypt fails closed w/o key', false, 'did not throw'); }
-catch (e) { chk('encrypt fails closed w/o key', e.status === 503 && e.code === 'VAULT_ENC_UNCONFIGURED', e.code); }
+try {
+  vc.encryptVault(vault);
+  chk('encrypt fails closed w/o key', false, 'did not throw');
+} catch (e) {
+  chk('encrypt fails closed w/o key', e.status === 503 && e.code === 'VAULT_ENC_UNCONFIGURED', e.code);
+}
 
 // 2 · with a key → round-trip
 process.env.VAULT_ENC_KEY = crypto.randomBytes(32).toString('base64');
@@ -39,7 +47,7 @@ chk('round-trip decrypts to the original', JSON.stringify(back) === JSON.stringi
 chk('  └ banking.account_no intact', back.banking && back.banking.account_no === '9876543210012345');
 
 // 3 · tamper → auth fails → {} (never the wrong plaintext)
-const tampered = { ...env, ct: Buffer.from(Buffer.from(env.ct, 'base64').map((b, i) => i === 0 ? b ^ 0xff : b)).toString('base64') };
+const tampered = { ...env, ct: Buffer.from(Buffer.from(env.ct, 'base64').map((item, index) => (index === 0 ? item ^ 0xff : item))).toString('base64') };
 chk('tampered ciphertext → {} (GCM auth)', JSON.stringify(vc.decryptVault(tampered)) === '{}');
 
 // 4 · wrong key → {} (can't read another key's data)

@@ -36,14 +36,17 @@ router.post('/', auth, async (req, res) => {
     if (!chit_id || !data_base64 || !name) return res.status(400).json({ error: 'Bad request', message: 'chit_id, name and data_base64 are required' });
 
     // caller must be a participant — and its own copy carries the full roster (all_recipients)
-    const rosterRow = await withEntity(entity_id, (db) => db.query(
-      `SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]));
+    const rosterRow = await withEntity(entity_id, (db) =>
+      db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id])
+    );
     if (!rosterRow.rows.length) return res.status(403).json({ error: 'Forbidden', message: 'Not a participant on this chit' });
-    let participants = [...new Set((rosterRow.rows[0].all_recipients || []).map(r => r.entity_id).filter(Boolean))];
+    let participants = [...new Set((rosterRow.rows[0].all_recipients || []).map((item) => item.entity_id).filter(Boolean))];
     if (!participants.includes(entity_id)) participants.push(entity_id);
-    if (message_id) {   // an INTERNAL-message attachment stays private to its entity (single copy)
-      const mv = await withEntity(entity_id, (db) => db.query(
-        `SELECT visibility_entity_id FROM chit_messages WHERE message_id = $1 AND chit_id = $2 LIMIT 1`, [message_id, chit_id]));
+    if (message_id) {
+      // an INTERNAL-message attachment stays private to its entity (single copy)
+      const mv = await withEntity(entity_id, (db) =>
+        db.query(`SELECT visibility_entity_id FROM chit_messages WHERE message_id = $1 AND chit_id = $2 LIMIT 1`, [message_id, chit_id])
+      );
       const vis = mv.rows[0] && mv.rows[0].visibility_entity_id;
       if (vis) participants = [vis];
     }
@@ -53,9 +56,16 @@ router.post('/', auth, async (req, res) => {
     if (buffer.length > MAX_BYTES) return res.status(413).json({ error: 'Too large', message: 'Max 6 MB per file' });
 
     const id = await storage.putForParticipants({
-      chit_id, message_id: message_id || null, line_index: (line_index == null ? null : parseInt(line_index)),
-      name: String(name).slice(0, 200), mime: String(mime || 'application/octet-stream').slice(0, 120),
-      size: buffer.length, buffer, uploaded_by: req.identity.identity_id, participants, forEntity: entity_id
+      chit_id,
+      message_id: message_id || null,
+      line_index: line_index == null ? null : parseInt(line_index),
+      name: String(name).slice(0, 200),
+      mime: String(mime || 'application/octet-stream').slice(0, 120),
+      size: buffer.length,
+      buffer,
+      uploaded_by: req.identity.identity_id,
+      participants,
+      forEntity: entity_id
     });
     res.json({ id, name, mime: mime || 'application/octet-stream', size: buffer.length });
   } catch (err) {

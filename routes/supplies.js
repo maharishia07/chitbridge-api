@@ -33,7 +33,10 @@ router.get('/', auth, async (req, res) => {
   try {
     const list = await supplies.list(ctx(req), withEntity, { all: req.query.all === '1' });
     /* [OFFR-04] last_cost is what the shop paid: an actor without can_see_costs does not get it */
-    if (!(await require('../lib/cost').canReadSafe(req, ctx(req)))) list.forEach((s) => { delete s.last_cost; });
+    if (!(await require('../lib/cost').canReadSafe(req, ctx(req))))
+      list.forEach((item) => {
+        delete item.last_cost;
+      });
     res.json({ supplies: list });
   } catch (e) {
     /* ⚠️ BEFORE b217 THE TABLE DOES NOT EXIST, and a screen must not break because a migration is pending */
@@ -50,9 +53,18 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     const b = req.body || {};
-    const made = await supplies.ensure(ctx(req), {
-      name: b.name, unit: b.unit, sku: b.sku, note: b.note, keep_stock: b.keep_stock === true,
-    }, withEntity, { actor_id: req.identity && req.identity.identity_id });
+    const made = await supplies.ensure(
+      ctx(req),
+      {
+        name: b.name,
+        unit: b.unit,
+        sku: b.sku,
+        note: b.note,
+        keep_stock: b.keep_stock === true
+      },
+      withEntity,
+      { actor_id: req.identity && req.identity.identity_id }
+    );
     if (made.error) return res.status(400).json({ error: 'validation', message: made.error });
     res.json({ message: 'Supply added', supply: made });
   } catch (e) {
@@ -67,7 +79,9 @@ router.patch('/:id', auth, async (req, res) => {
     const row = await supplies.update(ctx(req), String(req.params.id), req.body || {}, withEntity);
     if (!row) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Saved', supply: row });
-  } catch (e) { fail(res, e, 'Could not save the supply'); }
+  } catch (e) {
+    fail(res, e, 'Could not save the supply');
+  }
 });
 
 /**
@@ -82,12 +96,12 @@ router.patch('/:id', auth, async (req, res) => {
  */
 router.post('/purchase', auth, async (req, res) => {
   try {
-    const out = await supplies.purchase(ctx(req), req.body || {}, withEntity,
-      { actor_id: req.identity && req.identity.identity_id });
+    const out = await supplies.purchase(ctx(req), req.body || {}, withEntity, { actor_id: req.identity && req.identity.identity_id });
     if (out.error) return res.status(400).json({ error: 'validation', message: out.error });
     /* WX-P2P-04 (2026-10-13): the toast read "1 line(s) recorded · 1 counted · 0 expensed on receipt" — never "(s)", never a zero that is
        fine (SYSTEM rule 1: only a failing thing earns words); what happened, in a shopkeeper's words */
-    const n = out.recorded.length, parts = [n + (n === 1 ? ' line recorded' : ' lines recorded')];
+    const n = out.recorded.length,
+      parts = [n + (n === 1 ? ' line recorded' : ' lines recorded')];
     if (out.stocked) parts.push(out.stocked + ' counted');
     if (out.expensed) parts.push(out.expensed + ' expensed — not in your books yet');
     if (out.failed && out.failed.length) parts.push(out.failed.length + ' not recorded');
@@ -101,17 +115,24 @@ router.post('/purchase', auth, async (req, res) => {
 /** ⭐ used some — the movement that turns a purchase into a spend figure somebody can read */
 router.post('/:id/issue', auth, async (req, res) => {
   try {
-    const r = await supplies.issue(ctx(req), String(req.params.id), (req.body || {}).qty, withEntity,
-      { actor_id: req.identity && req.identity.identity_id, ref: (req.body || {}).ref });
+    const r = await supplies.issue(ctx(req), String(req.params.id), (req.body || {}).qty, withEntity, {
+      actor_id: req.identity && req.identity.identity_id,
+      ref: (req.body || {}).ref
+    });
     if (r.error) return res.status(400).json({ error: 'validation', message: r.error });
     if (!r.ok) return res.status(400).json({ error: 'validation', message: r.why });
     res.json({ message: 'Recorded as used', balance: r.balance });
-  } catch (e) { fail(res, e, 'Could not record it'); }
+  } catch (e) {
+    fail(res, e, 'Could not record it');
+  }
 });
 
-router.openapi = { paths: {
-  '/api/supplies': { get: { summary: 'What this shop buys to use — never products, never priced', tags: ['supplies'] } },
-  '/api/supplies/purchase': { post: { summary: 'Record a sundry purchase that came from outside ChitBridge', tags: ['supplies'] } },
-} , schemas: {} };
+router.openapi = {
+  paths: {
+    '/api/supplies': { get: { summary: 'What this shop buys to use — never products, never priced', tags: ['supplies'] } },
+    '/api/supplies/purchase': { post: { summary: 'Record a sundry purchase that came from outside ChitBridge', tags: ['supplies'] } }
+  },
+  schemas: {}
+};
 
 module.exports = router;

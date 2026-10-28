@@ -8,36 +8,61 @@
 // verify that path via lifecycle-iot.js or a live device signal; this harness covers the manual flag + the invariant.
 // Run: node scripts/self-copy-pref.js
 const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
-let PASS = 0, FAIL = 0; const ISSUES = [];
+let PASS = 0,
+  FAIL = 0;
+const ISSUES = [];
 function check(name, ok, detail) {
-  if (ok) { PASS++; console.log('  ✓ ' + name + (detail ? '  ' + detail : '')); }
-  else { FAIL++; console.log('  ✗ ' + name + (detail ? '  — ' + detail : '')); ISSUES.push(name + (detail ? ' — ' + detail : '')); }
+  if (ok) {
+    PASS++;
+    console.log('  ✓ ' + name + (detail ? '  ' + detail : ''));
+  } else {
+    FAIL++;
+    console.log('  ✗ ' + name + (detail ? '  — ' + detail : ''));
+    ISSUES.push(name + (detail ? ' — ' + detail : ''));
+  }
   return ok;
 }
 async function api(method, path, { token, body } = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (token) headers.Authorization = 'Bearer ' + token;
   const res = await fetch(BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-  let json = null; try { json = await res.json(); } catch (_) {}
+  let json = null;
+  try {
+    json = await res.json();
+  } catch (_) {}
   return { status: res.status, json };
 }
 async function login(email) {
-  const reg = await api('POST', '/api/entities/register', { body: { email } });
-  const otp = reg.json && reg.json.dev_otp; if (!otp) return { err: JSON.stringify(reg.json) };
-  const ver = await api('POST', '/api/entities/verify', { body: { email: reg.json.email, otp } });
+  const reply = await api('POST', '/api/entities/register', { body: { email } });
+  const otp = reply.json && reply.json.dev_otp;
+  if (!otp) return { err: JSON.stringify(reply.json) };
+  const ver = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp } });
   return { token: ver.json && ver.json.token };
 }
 const has = (obj, id) => JSON.stringify(obj || '').includes(id);
-const eid = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
+const eid = (text) => {
+  try {
+    return JSON.parse(Buffer.from(text.split('.')[1], 'base64').toString()).identity_id;
+  } catch (_) {
+    return null;
+  }
+};
 const setPref = (token, pref) => api('PATCH', '/api/entities/profile', { token, body: { self_copy_pref: pref } });
 async function sendSelf(token, subj) {
-  const r = await api('POST', '/api/chits/send', { token, body: {
-    recipients: [{ name: 'self', role: 'to' }], purpose: 'general', manual_subject: subj, business_json: { note: 'scp test' } } });
-  return r.json && (r.json.chit_id || (r.json.chit && r.json.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', {
+    token,
+    body: {
+      recipients: [{ name: 'self', role: 'to' }],
+      purpose: 'general',
+      manual_subject: subj,
+      business_json: { note: 'scp test' }
+    }
+  });
+  return reply.json && (reply.json.chit_id || (reply.json.chit && reply.json.chit.chit_id));
 }
-const inOrder = async (token, id) => has((await api('GET', '/api/chits/sent',  { token })).json, id);
-const inTask  = async (token, id) => has((await api('GET', '/api/chits/inbox', { token })).json, id);
-const detail  = (token, id) => api('GET', '/api/chits/' + id, { token });
+const inOrder = async (token, id) => has((await api('GET', '/api/chits/sent', { token })).json, id);
+const inTask = async (token, id) => has((await api('GET', '/api/chits/inbox', { token })).json, id);
+const detail = (token, id) => api('GET', '/api/chits/' + id, { token });
 
 (async () => {
   console.log('== SELF-COPY-PREF (policy-flag #1) ==  ' + BASE + '\n');
@@ -87,9 +112,16 @@ const detail  = (token, id) => api('GET', '/api/chits/' + id, { token });
 
   // 4 · INVARIANT — flag STILL 'received', but an inter-entity chit keeps BOTH copies (suppression is self-only)
   console.log('\n4 · co-held invariant — inter-entity chit ignores the flag');
-  const r4 = await api('POST', '/api/chits/send', { token: S.token, body: {
-    recipients: [{ entity_id: R_ID, role: 'to' }], purpose: 'general', manual_subject: 'SCP xent ' + ts, business_json: { note: 'invariant' } } });
-  const c4 = r4.json && (r4.json.chit_id || (r4.json.chit && r4.json.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', {
+    token: S.token,
+    body: {
+      recipients: [{ entity_id: R_ID, role: 'to' }],
+      purpose: 'general',
+      manual_subject: 'SCP xent ' + ts,
+      business_json: { note: 'invariant' }
+    }
+  });
+  const c4 = reply.json && (reply.json.chit_id || (reply.json.chit && reply.json.chit.chit_id));
   check('send inter-entity chit', !!c4, c4 || 'no chit_id');
   if (c4) {
     check('inter-entity → sender KEEPS Order copy (not suppressed)', await inOrder(S.token, c4));
@@ -97,13 +129,19 @@ const detail  = (token, id) => api('GET', '/api/chits/' + id, { token });
     check('inter-entity → NO copy_policy (suppression is self-only)', !has((await detail(S.token, c4)).json, 'copy_policy'));
   }
 
-  await setPref(S.token, 'both');   // leave the throwaway entity at default
+  await setPref(S.token, 'both'); // leave the throwaway entity at default
   console.log('\n(IoT task-only is enforced in emitSignalChit — verify via lifecycle-iot.js or a live device signal.)');
   done();
-})().catch(e => { console.error('HARNESS ERROR', e); done(); });
+})().catch((e) => {
+  console.error('HARNESS ERROR', e);
+  done();
+});
 
 function done() {
   console.log('\n== RESULT ==  PASS ' + PASS + '  ·  FAIL ' + FAIL);
-  if (ISSUES.length) { console.log('\n-- ISSUES --'); ISSUES.forEach((i, n) => console.log((n + 1) + '. ' + i)); }
+  if (ISSUES.length) {
+    console.log('\n-- ISSUES --');
+    ISSUES.forEach((item, index) => console.log(index + 1 + '. ' + item));
+  }
   process.exit(0);
 }

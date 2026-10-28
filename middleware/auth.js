@@ -1,8 +1,9 @@
 // middleware/auth.js — JWT validation middleware
-const { verifyJwt, rotating } = require('../lib/jwt-verify');   // E10 — JWT_SECRET, then JWT_SECRET_PREV
+// CALLED BY routes/actors.js, routes/adopt.js, routes/assist.js, routes/attachments.js, routes/books.js (+40 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SECRET, then JWT_SECRET_PREV
 const { query } = require('../db');
-const schema = require('../lib/schema');   // b173 — ask the DB what it has before naming a column
-const { holderOf } = require('../lib/holder');   // M04 — req.till, one shape for key / person / actor
+const schema = require('../lib/schema'); // b173 — ask the DB what it has before naming a column
+const { holderOf } = require('../lib/holder'); // M04 — req.till, one shape for key / person / actor
 
 /**
  * ⭐⭐ DECIDED ONCE PER REQUEST (M04, 2026-10-07). A route whose body must not be read before the caller is known
@@ -14,8 +15,7 @@ const { holderOf } = require('../lib/holder');   // M04 — req.till, one shape 
 const DECIDED = new WeakSet();
 
 const auth = async (req, res, next) => {
-  if (req && DECIDED.has(req))
-    return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
+  if (req && DECIDED.has(req)) return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
   try {
     // Get token from Authorization header
     /* ⭐ AN API KEY FOR ANOTHER SYSTEM travels as X-Api-Key or as a Bearer — same verification, then the listing check below */
@@ -32,7 +32,7 @@ const auth = async (req, res, next) => {
     // Verify token
     // Pin the algorithm: tokens are signed HS256, so only accept HS256 — closes any
     // algorithm-confusion ambiguity (e.g. a token claiming a different alg).
-    const { claims: decoded, rotated } = verifyJwt(token);   // E10 — the ONE verifier (lib/jwt-verify.js)
+    const { claims: decoded, rotated } = verifyJwt(token); // E10 — the ONE verifier (lib/jwt-verify.js)
 
     // S1 (reviewer 2026-07-13) — FAIL CLOSED on any token that is not a REAL identity. The signature being valid is not
     // enough: a non-identity token (e.g. a marketing `sim_lead` token that happened to be signed with JWT_SECRET) must NOT
@@ -44,21 +44,33 @@ const auth = async (req, res, next) => {
        the token's own expiry says. One read per request, cached a minute per jti. */
     let keyRec = null;
     if (decoded.kind === 'api_key') {
-      const rec = keyRec = await keyListed(decoded.identity_id, decoded.jti, req);
+      const rec = (keyRec = await keyListed(decoded.identity_id, decoded.jti, req));
       if (!rec) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
       /* ⚠️ A CLOSED COUNTER IS HISTORY (POST /api/till/close) — its record stays so its series can be explained, but the
          key behind it no longer opens anything */
-      if (rec.till && rec.till.closed_at) return res.status(401).json({ error: 'Unauthorised', code: 'COUNTER_CLOSED',
-        message: 'This counter was closed on ' + String(rec.till.closed_at).slice(0, 10) + '. Open a new counter from ChitBridge to bill again.' });
+      if (rec.till && rec.till.closed_at)
+        return res.status(401).json({
+          error: 'Unauthorised',
+          code: 'COUNTER_CLOSED',
+          message: 'This counter was closed on ' + String(rec.till.closed_at).slice(0, 10) + '. Open a new counter from ChitBridge to bill again.'
+        });
       req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [], enrol: (rec && rec.enrol) || null };
-      const url = String(req.originalUrl || req.url || '').split('?')[0], m = req.method;
+      const url = String(req.originalUrl || req.url || '').split('?')[0],
+        m = req.method;
       /* ⭐ ENROLMENT (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"):
          a connector key whose kit has NOT been approved for its PC may only heartbeat (routes/integrations.js decides; the owner
          approves on Settings › Integrations). Everything else answers 403 with `pending:true` so the kit can say why it waits. */
       if (rec && rec.enrol && rec.enrol.approved === false && !/^\/api\/integrations\/heartbeat$/.test(url))
-        return res.status(403).json({ error: 'Forbidden', pending: true, message: 'This connector is waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC' + (rec.enrol.host ? ' (' + rec.enrol.host + ')' : '') + (rec.enrol.reason ? ' · ' + rec.enrol.reason : '') });
+        return res.status(403).json({
+          error: 'Forbidden',
+          pending: true,
+          message:
+            'This connector is waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC' +
+            (rec.enrol.host ? ' (' + rec.enrol.host + ')' : '') +
+            (rec.enrol.reason ? ' · ' + rec.enrol.reason : '')
+        });
       /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
-      const allowed = req.api_key.scopes.some((sc) => (KEY_ROUTES[sc] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
+      const allowed = req.api_key.scopes.some((item) => (KEY_ROUTES[item] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
       if (!allowed) return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
     }
     /**
@@ -78,16 +90,24 @@ const auth = async (req, res, next) => {
       const sent = String(req.headers['x-device-id'] || '').trim();
       if (!decoded.device_id || sent !== String(decoded.device_id)) {
         mark(res, 'code', 'DEVICE_MISMATCH');
-        return res.status(401).json({ error: 'Unauthorised', code: 'DEVICE_MISMATCH', message: 'This sign-in belongs to another device. Sign in on this one.' });
+        return res
+          .status(401)
+          .json({ error: 'Unauthorised', code: 'DEVICE_MISMATCH', message: 'This sign-in belongs to another device. Sign in on this one.' });
       }
-      const v = sessRec = await require('../lib/person-session').deviceListed(query, decoded.parent_entity_id || decoded.identity_id,
-        String(decoded.device_id), decoded.jti);
-      const renewing = v.renewed_to && req.method === 'POST'
-        && /^\/api\/signin\/renew\/?$/.test(String(req.originalUrl || req.url || '').split('?')[0]);
+      const v = (sessRec = await require('../lib/person-session').deviceListed(
+        query,
+        decoded.parent_entity_id || decoded.identity_id,
+        String(decoded.device_id),
+        decoded.jti
+      ));
+      const renewing = v.renewed_to && req.method === 'POST' && /^\/api\/signin\/renew\/?$/.test(String(req.originalUrl || req.url || '').split('?')[0]);
       if (!v.ok && !renewing) {
         mark(res, 'code', v.code);
-        return res.status(401).json({ error: 'Unauthorised', code: v.code, message: v.code === 'DEVICE_REVOKED'
-          ? 'The shop removed this device. Your bills are kept here; ask the owner.' : 'Sign in to continue.' });
+        return res.status(401).json({
+          error: 'Unauthorised',
+          code: v.code,
+          message: v.code === 'DEVICE_REVOKED' ? 'The shop removed this device. Your bills are kept here; ask the owner.' : 'Sign in to continue.'
+        });
       }
       mark(res, 'kind', 'person');
     } else if (decoded.kind !== 'api_key') {
@@ -98,13 +118,13 @@ const auth = async (req, res, next) => {
 
     // Attach identity to request
     req.identity = {
-      identity_id:      decoded.identity_id,
-      bridge_id:        decoded.bridge_id,
-      display_name:     decoded.display_name,
-      identity_type:    decoded.identity_type,
-      email:            decoded.email,
+      identity_id: decoded.identity_id,
+      bridge_id: decoded.bridge_id,
+      display_name: decoded.display_name,
+      identity_type: decoded.identity_type,
+      email: decoded.email,
       parent_entity_id: decoded.parent_entity_id || null,
-      owner_scope:      decoded.owner_scope || null,
+      owner_scope: decoded.owner_scope || null
     };
     /* ⭐ WHO HOLDS THIS REQUEST — one shape for a key, a person and an actor (lib/holder.js). Routes ask req.till, not
        req.api_key.scopes, whether a counter is speaking. */
@@ -158,7 +178,7 @@ const auth = async (req, res, next) => {
        * derives the level from the old `hat` — answering identically either side of the migration. Passing
        * undefined through is correct: it is what tells access.js to fall back.
        */
-      req.identity.hat          = r.rows[0].hat || 'act';
+      req.identity.hat = r.rows[0].hat || 'act';
       req.identity.access_level = r.rows[0].access_level;
       req.identity.whole_entity = r.rows[0].whole_entity === true;
     }
@@ -214,7 +234,9 @@ const auth = async (req, res, next) => {
      */
     if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
       /* E10: the code is added ONLY while a rotation is open — with JWT_SECRET_PREV unset the body is byte-for-byte what it was */
-      return res.status(401).json(rotating() ? { error: 'Unauthorised', code: 'TOKEN_INVALID', message: 'Invalid token' } : { error: 'Unauthorised', message: 'Invalid token' });
+      return res
+        .status(401)
+        .json(rotating() ? { error: 'Unauthorised', code: 'TOKEN_INVALID', message: 'Invalid token' } : { error: 'Unauthorised', message: 'Invalid token' });
     }
     console.error('auth: non-JWT failure —', err.code || '', err.message);
     return res.status(500).json({
@@ -226,23 +248,35 @@ const auth = async (req, res, next) => {
 
 module.exports = auth;
 /** res.locals.<k> = v for the request log (server.js) — a stub res in a test may have no locals */
-function mark(res, k, v) { try { (res.locals = res.locals || {})[k] = v; } catch (_) { /* a log field is never worth an error */ } }
+function mark(res, k, v) {
+  try {
+    (res.locals = res.locals || {})[k] = v;
+  } catch (_) {
+    /* a log field is never worth an error */
+  }
+}
 /**
  * ⚠️ THE GUARD, ASKED DIRECTLY. tests/key-scopes.test.js declares what each key SHOULD reach and checks it here — without a
  * network, and crucially without ever SENDING the request it is asserting must be refused. A security boundary written as data
  * drifts unless something asserts it; twice this week a scope was wrong in a way nothing noticed.
  */
 auth.allowsKey = function (scopes, method, url) {
-  return (scopes || []).some(function (sc) {
-    return (KEY_ROUTES[sc] || []).some(function (pair) {
-      return (pair[0] === '*' || pair[0] === method) && pair[1].test(url); }); });
+  return (scopes || []).some(function (item) {
+    return (KEY_ROUTES[item] || []).some(function (pair) {
+      return (pair[0] === '*' || pair[0] === method) && pair[1].test(url);
+    });
+  });
 };
 /**
  * ⚠️ THE NAMES ARE EXPORTED SO NOBODY KEEPS A SECOND LIST. routes/keys.js had its own array of scope names, and a scope added
  * here but not there is mintable by nobody — the guard would enforce a permission no key could ever hold. One list, derived from
  * the map that does the enforcing.
  */
-Object.defineProperty(auth, 'SCOPE_NAMES', { get: function(){ return Object.keys(KEY_ROUTES); } });
+Object.defineProperty(auth, 'SCOPE_NAMES', {
+  get: function () {
+    return Object.keys(KEY_ROUTES);
+  }
+});
 
 /** what each scope opens — method + path; a route not listed here is closed to keys whatever else they pass */
 const KEY_ROUTES = {
@@ -259,14 +293,19 @@ const KEY_ROUTES = {
    * those are acts of judgement, and a key on a CI box is a credential in a file somebody can read.
    * ⚠ Deliberately NOT here: POST /cases/import, POST /cases/seed, POST /cases/gherkin.
    */
-  testing:   [['GET', /^\/api\/testing\/(cases|results|runs|coverage|stale|vocabulary)(\?|$)/],
-              ['GET', /^\/api\/testing\/cases\/gherkin(\?|$)/],
-              ['POST', /^\/api\/testing\/results(\/junit)?$/]],
-  offers:    [['*', /^\/api\/offers(\/|$)/]],
-  pricing:   [['*', /^\/api\/pricing(\/|$)/]],
-  tax:       [['POST', /^\/api\/tax\/(rate|compute)$/]],
-  invoice:   [['*', /^\/api\/invoice(\/|$)/]],
-  services:  [['*', /^\/api\/(offers|pricing|invoice)(\/|$)/], ['POST', /^\/api\/tax\/(rate|compute)$/]],
+  testing: [
+    ['GET', /^\/api\/testing\/(cases|results|runs|coverage|stale|vocabulary)(\?|$)/],
+    ['GET', /^\/api\/testing\/cases\/gherkin(\?|$)/],
+    ['POST', /^\/api\/testing\/results(\/junit)?$/]
+  ],
+  offers: [['*', /^\/api\/offers(\/|$)/]],
+  pricing: [['*', /^\/api\/pricing(\/|$)/]],
+  tax: [['POST', /^\/api\/tax\/(rate|compute)$/]],
+  invoice: [['*', /^\/api\/invoice(\/|$)/]],
+  services: [
+    ['*', /^\/api\/(offers|pricing|invoice)(\/|$)/],
+    ['POST', /^\/api\/tax\/(rate|compute)$/]
+  ],
   /* ⭐ THE TILL (2026-09-07): its snapshot, its bills, its heartbeat, the bell. It cannot read another chit, cannot touch products,
      cannot mint keys — and routes/chits.js refuses a till key that addresses anyone but itself. */
   /**
@@ -278,92 +317,115 @@ const KEY_ROUTES = {
    */
   /* ⚠️ NOT verify — that route calls requireScope('till') of its own, so listing it here promised a door the door itself
      refuses. A scope map that advertises what a route will not open is worse than not listing it. */
-  screen:    [['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/], ['POST', /^\/api\/events\/ticket$/]],
+  screen: [
+    ['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/],
+    ['POST', /^\/api\/events\/ticket$/]
+  ],
   /* ⭐ `summary` joined 2026-09-20 ([TILL-124]): the shop's day/week/month trend folded across every counter.
      A till key may READ it — a counter showing its shop's own months is the point — and cannot write one:
      summaries arrive only as chits through POST /api/chits/send, which is already on this line. */
   /* ⚠️ `stock` (GET) is the Receive screen's qty + average cost — this shop's own shelf, read-only. It shipped
      (dcdf493) without this word, so the read was a bare 403 on a till key; tests/key-scopes caught it. */
-  till:      [['GET', /^\/api\/till\/(snapshot|bills|summary|tasks|verify|worth-an-offer|reward|stock|engine\/[a-z]+)$/], ['POST', /^\/api\/chits\/send$/], ['POST', /^\/api\/integrations\/heartbeat$/],
-              /* ⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — a counter reads the groups it can choose from, and reads/writes
+  till: [
+    ['GET', /^\/api\/till\/(snapshot|bills|summary|tasks|verify|worth-an-offer|reward|stock|engine\/[a-z]+)$/],
+    ['POST', /^\/api\/chits\/send$/],
+    ['POST', /^\/api\/integrations\/heartbeat$/],
+    /* ⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — a counter reads the groups it can choose from, and reads/writes
                  only ITS OWN active groups, hidden items and screen style. It cannot author a group (that's /api/quick-keys,
                  session-only, no scope grants it). */
-              ['GET', /^\/api\/till\/counters$/],
-              ['GET', /^\/api\/till\/quick-keys\/(groups|state|hidden|screen-config)$/],
-              ['POST', /^\/api\/till\/quick-keys\/(state|hide|unhide|screen-config)$/],
-              /* ⚠️⚠️ THE SHOP'S OWN HEADER, FROM THE COUNTER ([TILL-105], 2026-09-19). Athi: *'counter has no
+    ['GET', /^\/api\/till\/counters$/],
+    ['GET', /^\/api\/till\/quick-keys\/(groups|state|hidden|screen-config)$/],
+    ['POST', /^\/api\/till\/quick-keys\/(state|hide|unhide|screen-config)$/],
+    /* ⚠️⚠️ THE SHOP'S OWN HEADER, FROM THE COUNTER ([TILL-105], 2026-09-19). Athi: *'counter has no
                  password, use the till key alone for the time being.'* The route holds the whitelist — identity, contact
                  and GSTIN — and refuses currency and registration type, the two that decide what a bill CHARGES. */
-              ['POST', /^\/api\/till\/shop$/],
-              /* ⭐⭐ STARTING THE STORE ([TILL-107]). A trade's starter catalogue, or rows a person approved in
+    ['POST', /^\/api\/till\/shop$/],
+    /* ⭐⭐ STARTING THE STORE ([TILL-107]). A trade's starter catalogue, or rows a person approved in
                  the preflight report. Setup is an ONLINE act (Athi: *"while setting up the store… we can still
                  connect"*), so the server mints and the counter never authors a product locally. */
-              ['POST', /^\/api\/till\/catalogue$/],
-              ['GET', /^\/api\/till\/catalogue\/blueprints$/],
-              /**
-               * ⭐⭐ UPLOADING A PRODUCT LIST ([TILL-108]). The counter uses the import that already exists rather
-               * than a third copy of it. Narrow by the ROUTES' own contract: preflight writes nothing, and the
-               * commit never deletes, never renames a field, never changes a type, never acts on its own
-               * suggestions, and refuses while any row is in error. A counter key can add products from a file
-               * somebody confirmed; it cannot rewrite a catalogue.
-               */
-              ['POST', /^\/api\/products\/import\/preflight$/],
-              ['POST', /^\/api\/products\/import$/],
-              /* ⭐ download-first ([TILL-115]): the shop's own catalogue and masters, as a workbook to edit */
-              ['GET', /^\/api\/products\/workbook\.xlsx$/],
-              ['POST', /^\/api\/events\/ticket$/],   /* ⭐ the bell — a price change reaches the counter without waiting out a timer */
-              /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
+    ['POST', /^\/api\/till\/catalogue$/],
+    ['GET', /^\/api\/till\/catalogue\/blueprints$/],
+    /**
+     * ⭐⭐ UPLOADING A PRODUCT LIST ([TILL-108]). The counter uses the import that already exists rather
+     * than a third copy of it. Narrow by the ROUTES' own contract: preflight writes nothing, and the
+     * commit never deletes, never renames a field, never changes a type, never acts on its own
+     * suggestions, and refuses while any row is in error. A counter key can add products from a file
+     * somebody confirmed; it cannot rewrite a catalogue.
+     */
+    ['POST', /^\/api\/products\/import\/preflight$/],
+    ['POST', /^\/api\/products\/import$/],
+    /* ⭐ download-first ([TILL-115]): the shop's own catalogue and masters, as a workbook to edit */
+    ['GET', /^\/api\/products\/workbook\.xlsx$/],
+    ['POST', /^\/api\/events\/ticket$/] /* ⭐ the bell — a price change reaches the counter without waiting out a timer */,
+    /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
                  product, only to say "this is off the shelf" and "this costs this now". */
-              /**
-                * ⚠️⚠️ EVERY NEW /api/till ROUTE MUST BE ADDED HERE TOO. requireScope('till') on the route is only half the
-                * lock — this table is the other half, and a route missing from it is refused with a bare 403 no matter what
-                * the route itself says. POST /api/till/flags shipped without this line, so "show on the shop screen" and the
-                * offer opt-out saved locally and were refused by the server every single time: "ChitBridge refused it (403)".
-                * The counter said so honestly and nobody could act on it, which is why the message now explains itself too.
-                */
-              /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
+    /**
+     * ⚠️⚠️ EVERY NEW /api/till ROUTE MUST BE ADDED HERE TOO. requireScope('till') on the route is only half the
+     * lock — this table is the other half, and a route missing from it is refused with a bare 403 no matter what
+     * the route itself says. POST /api/till/flags shipped without this line, so "show on the shop screen" and the
+     * offer opt-out saved locally and were refused by the server every single time: "ChitBridge refused it (403)".
+     * The counter said so honestly and nobody could act on it, which is why the message now explains itself too.
+     */
+    /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
                  product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
-              /* ⭐ a counter that is stuck reports itself — the one thing nobody can reach saying so in its own words */
-              ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close|state)$/],
-              /* ⭐ the same availability permission as /stock, batched — a selection on or off the shelf in ONE call.
+    /* ⭐ a counter that is stuck reports itself — the one thing nobody can reach saying so in its own words */
+    ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close|state)$/],
+    /* ⭐ the same availability permission as /stock, batched — a selection on or off the shelf in ONE call.
                  It shipped (f2f2a9f) without this line, so on a till key it was a bare 403; tests/key-scopes caught it. */
-              ['POST', /^\/api\/till\/stock\/bulk$/],
-              /* ⭐ a TV for this shop, from the counter's own menu (2026-09-27, Athi: "yes, screen codes only"). The route
+    ['POST', /^\/api\/till\/stock\/bulk$/],
+    /* ⭐ a TV for this shop, from the counter's own menu (2026-09-27, Athi: "yes, screen codes only"). The route
                  hands a key-bearer a SCREEN code only; the screen key names this counter key as its parent and dies with it.
                  The list and the off-switch reach SCREEN keys only — a counter can never see or revoke another counter. */
-              ['POST', /^\/api\/till\/pair$/],
-              ['GET', /^\/api\/till\/screens$/],
-              ['POST', /^\/api\/till\/screens\/revoke$/],
-              ['POST', /^\/api\/till\/screens\/rename$/],   /* T2g: name a paired screen — the same owner as revoke */
-              /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
+    ['POST', /^\/api\/till\/pair$/],
+    ['GET', /^\/api\/till\/screens$/],
+    ['POST', /^\/api\/till\/screens\/revoke$/],
+    ['POST', /^\/api\/till\/screens\/rename$/] /* T2g: name a paired screen — the same owner as revoke */,
+    /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
                  definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
                  authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".
                  ⚠️ reward/claim moves a walk-in's phone-held balance onto an account. It nets to zero, it is append-only, and
                  it happens because a person at the counter asked for it — a phone number is not proof of identity. */
-              ['POST', /^\/api\/till\/reward(\/claim)?$/],
-              /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
+    ['POST', /^\/api\/till\/reward(\/claim)?$/],
+    /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
                  two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery
                  claim against any open order of ITS OWN shop. It is the shop's own claim, it is visible, it is corrected by a
                  negative row rather than an edit, and divergence between the two parties is surfaced, never resolved. */
-              ['POST', /^\/api\/chits\/[0-9a-f-]{36}\/deliver-lines$/],
-              /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
+    ['POST', /^\/api\/chits\/[0-9a-f-]{36}\/deliver-lines$/],
+    /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
                  nothing else — which is why it exists instead of letting a till key PATCH products. */
-              ['POST', /^\/api\/till\/alias$/],
-              /* ⚠️⚠️ NOTHING UNDER /api/books (critic M9, 2026-09-30). Four ledger routes were listed here "for the counter" — dues,
+    ['POST', /^\/api\/till\/alias$/],
+    /* ⚠️⚠️ NOTHING UNDER /api/books (critic M9, 2026-09-30). Four ledger routes were listed here "for the counter" — dues,
                  a party's statement, payments, propose/confirm — and the counter calls none of them: it sends a CHIT (money
                  received is business_json.payment_received), and what each customer owes rides its snapshot. So they were
                  only surface: a till key (a TV screen's parent holds one) could POST /api/books/payments { direction: 'out' }
                  for any id on any date. Add a line here the day the counter really calls one — tests/key-scopes holds the DENY. */
-              /* ⭐ a counter may ask what was just said into its own microphone — audio in, text out, nothing kept */
-              ['POST', /^\/api\/till\/listen$/],
-              ['POST', /^\/api\/events\/ticket$/], ['*', /^\/api\/offers(\/|$)/],
-              /* ⭐ a kit keeps ITSELF current (2026-09-08): the same public files every shop downloads, read-only */
-              ['GET', /^\/api\/integrations\/kit(\/|$)/]],
-  connector: [['*', /^\/api\/offers(\/|$)/], ['GET', /^\/api\/products(\/|$)/], ['POST', /^\/api\/products\/bulk$/], ['POST', /^\/api\/products\/availability\/bulk$/], ['PATCH', /^\/api\/products\/[^/]+$/],
-              ['GET', /^\/api\/chits\/(inbox|sent|pulse|[0-9a-f-]{36})$/] /* sent: the buyer's connector books its purchases */, ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */, ['POST', /^\/api\/events\/ticket$/] /* SEC3: not /events/stats — platform-wide counts are the operator's */, ['POST', /^\/api\/integrations\/heartbeat$/], ['POST', /^\/api\/integrations\/books$/] /* the kit's write-back: what it booked, onto my copy (2026-09-06) */, ['POST', /^\/api\/integrations\/profile$/], ['GET', /^\/api\/integrations\/profile-map$/], ['GET', /^\/api\/integrations\/kit(\/|$)/]],
+    /* ⭐ a counter may ask what was just said into its own microphone — audio in, text out, nothing kept */
+    ['POST', /^\/api\/till\/listen$/],
+    ['POST', /^\/api\/events\/ticket$/],
+    ['*', /^\/api\/offers(\/|$)/],
+    /* ⭐ a kit keeps ITSELF current (2026-09-08): the same public files every shop downloads, read-only */
+    ['GET', /^\/api\/integrations\/kit(\/|$)/]
+  ],
+  connector: [
+    ['*', /^\/api\/offers(\/|$)/],
+    ['GET', /^\/api\/products(\/|$)/],
+    ['POST', /^\/api\/products\/bulk$/],
+    ['POST', /^\/api\/products\/availability\/bulk$/],
+    ['PATCH', /^\/api\/products\/[^/]+$/],
+    ['GET', /^\/api\/chits\/(inbox|sent|pulse|[0-9a-f-]{36})$/] /* sent: the buyer's connector books its purchases */,
+    ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */,
+    ['POST', /^\/api\/events\/ticket$/] /* SEC3: not /events/stats — platform-wide counts are the operator's */,
+    ['POST', /^\/api\/integrations\/heartbeat$/],
+    ['POST', /^\/api\/integrations\/books$/] /* the kit's write-back: what it booked, onto my copy (2026-09-06) */,
+    ['POST', /^\/api\/integrations\/profile$/],
+    ['GET', /^\/api\/integrations\/profile-map$/],
+    ['GET', /^\/api\/integrations\/kit(\/|$)/]
+  ]
 };
-const _keyCache = new Map();   // jti → { ok: the key's listing record (or false), at }
-auth.forgetKey = (jti) => { _keyCache.delete(String(jti)); };   /* an approval must not wait a minute for the cache (routes/integrations.js) */
+const _keyCache = new Map(); // jti → { ok: the key's listing record (or false), at }
+auth.forgetKey = (jti) => {
+  _keyCache.delete(String(jti));
+}; /* an approval must not wait a minute for the cache (routes/integrations.js) */
 /**
  * ── ⭐⭐⭐ WHEN DID THIS COUNTER LAST SPEAK, AND FROM WHERE ────────────────────────────────────────────────────
  *
@@ -379,19 +441,26 @@ auth.forgetKey = (jti) => { _keyCache.delete(String(jti)); };   /* an approval m
  * database trip per bill keystroke. It writes at most once every five minutes, after the answer has gone out, and
  * a failure here is swallowed on purpose — a shop must never lose a sale because we could not file a timestamp.
  */
-const _seenAt = new Map();   // jti → when we last filed a sighting
+const _seenAt = new Map(); // jti → when we last filed a sighting
 function noteSeen(entity_id, jti, req) {
   try {
     if (!jti) return;
-    const now = Date.now(), was = _seenAt.get(jti) || 0;
+    const now = Date.now(),
+      was = _seenAt.get(jti) || 0;
     if (now - was < 300000) return;
     _seenAt.set(jti, now);
-    const ip = String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '').trim().slice(0, 45) || null;
+    const ip =
+      String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '')
+        .trim()
+        .slice(0, 45) || null;
     setImmediate(() => {
-      require('../routes/keys').setSeen(entity_id, jti, { ip, agent: String(req.headers['user-agent'] || '').slice(0, 160) })
+      require('../routes/keys')
+        .setSeen(entity_id, jti, { ip, agent: String(req.headers['user-agent'] || '').slice(0, 160) })
         .catch(() => {});
     });
-  } catch (_) { /* a sighting is never worth an error */ }
+  } catch (_) {
+    /* a sighting is never worth an error */
+  }
 }
 /**
  * keyAlive(list, jti) → the key's record, or false. A key is alive while it is LISTED — and, if a counter made it
@@ -400,32 +469,42 @@ function noteSeen(entity_id, jti, req) {
  */
 function keyAlive(list, jti) {
   if (!Array.isArray(list)) return false;
-  const rec = list.find((k) => k && String(k.jti) === String(jti));
+  const rec = list.find((item) => item && String(item.jti) === String(jti));
   if (!rec) return false;
   if (rec.parent) {
-    const p = list.find((k) => k && String(k.jti) === String(rec.parent));
+    const p = list.find((item) => item && String(item.jti) === String(rec.parent));
     if (!p || (p.till && p.till.closed_at)) return false;
   }
   return rec;
 }
 auth.keyAlive = keyAlive;
-auth.holderOf = holderOf;   /* the ONE holder builder lives in lib/holder.js (M04) — re-exported for readers of auth */
+auth.holderOf = holderOf; /* the ONE holder builder lives in lib/holder.js (M04) — re-exported for readers of auth */
 async function keyListed(entity_id, jti, req) {
   if (!jti) return false;
   if (req) noteSeen(entity_id, jti, req);
-  const c = _keyCache.get(jti); if (c && Date.now() - c.at < 60000) return c.ok;
+  const c = _keyCache.get(jti);
+  if (c && Date.now() - c.at < 60000) return c.ok;
   let ok = false;
-  try { const { query } = require('../db'); const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
-        const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
-        ok = keyAlive(list, jti); } catch (_) { ok = false; }
-  _keyCache.set(jti, { ok, at: Date.now() }); return ok;
+  try {
+    const { query } = require('../db');
+    const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+    const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
+    ok = keyAlive(list, jti);
+  } catch (_) {
+    ok = false;
+  }
+  _keyCache.set(jti, { ok, at: Date.now() });
+  return ok;
 }
 /** requireScope('offers') — a session may do anything; a key only what it was minted for */
-auth.requireScope = (...scopes) => (req, res, next) => {
-  if (!req.api_key) return next();
-  if (scopes.some((s) => req.api_key.scopes.includes(s)) || req.api_key.scopes.includes('services')) return next();   /* 'services' = every service; any listed scope will do */
-  return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scopes.join(' / ') });
-};
+auth.requireScope =
+  (...scopes) =>
+  (req, res, next) => {
+    if (!req.api_key) return next();
+    if (scopes.some((item) => req.api_key.scopes.includes(item)) || req.api_key.scopes.includes('services'))
+      return next(); /* 'services' = every service; any listed scope will do */
+    return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scopes.join(' / ') });
+  };
 
 /**
  * entityOf(req) — WHOSE data is this request acting on.
