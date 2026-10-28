@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 602
    },
    "foreign_id_404": {
     "applies": 227,
@@ -694,7 +694,7 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 297,
+   "line": 300,
    "hash": "a7a5a0e07f26ec5e",
    "columns": {
     "schema_in": true,
@@ -744,7 +744,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 537,
+   "line": 540,
    "hash": "29fd16d8665f60b0",
    "columns": {
     "schema_in": true,
@@ -7429,7 +7429,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 72,
-   "hash": "43f1e03628304b31",
+   "hash": "e777711079e33376",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7439,7 +7439,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7478,7 +7478,7 @@
    "path": "/api/folders/:id/chits",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 411,
+   "line": 414,
    "hash": "bb204c7a8e782061",
    "columns": {
     "schema_in": true,
@@ -7528,7 +7528,7 @@
    "path": "/api/folders/:id/metrics",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 467,
+   "line": 470,
    "hash": "47486dec2da7fddd",
    "columns": {
     "schema_in": true,
@@ -7578,7 +7578,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 503,
+   "line": 506,
    "hash": "c699793f92f8b281",
    "columns": {
     "schema_in": true,
@@ -7628,8 +7628,8 @@
    "path": "/api/folders/groupsum",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 820,
-   "hash": "007f1d0f3518165a",
+   "line": 836,
+   "hash": "6de17009cdef055b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7639,7 +7639,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7666,8 +7666,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4885ff22259b0def"
    },
    "status": "partial"
   },
@@ -7677,8 +7678,8 @@
    "path": "/api/folders/inventory",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 131,
-   "hash": "b47e31b79620787e",
+   "line": 134,
+   "hash": "b6e727a5f02eaf0b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7688,7 +7689,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7714,8 +7715,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b6e727a5f02eaf0b"
    },
    "status": "partial"
   },
@@ -7725,8 +7727,8 @@
    "path": "/api/folders/messages",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 629,
-   "hash": "90df1b9d0ced1a55",
+   "line": 655,
+   "hash": "01c8ba7f06de8969",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7736,7 +7738,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7763,8 +7765,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "badea35ce66d96dc"
    },
    "status": "partial"
   },
@@ -7774,8 +7777,8 @@
    "path": "/api/folders/mis",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 964,
-   "hash": "eca040ded68054ae",
+   "line": 987,
+   "hash": "a7167645145a889c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7785,7 +7788,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7812,8 +7815,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a7167645145a889c"
    },
    "status": "partial"
   },
@@ -7823,8 +7827,8 @@
    "path": "/api/folders/reconcile",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 869,
-   "hash": "8d90526d91c6055a",
+   "line": 886,
+   "hash": "ab50db137b09ad6d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7834,7 +7838,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7861,8 +7865,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f7cb30b70fdf3b01"
    },
    "status": "partial"
   },
@@ -7872,8 +7877,8 @@
    "path": "/api/folders/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 578,
-   "hash": "6552b5c42fd20a68",
+   "line": 581,
+   "hash": "a9192fee03cd9021",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7883,7 +7888,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7910,8 +7915,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bc2249a2aa8bc1cc"
    },
    "status": "partial"
   },
@@ -7921,8 +7927,8 @@
    "path": "/api/folders/rules/vocabulary",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 557,
-   "hash": "b0493f4f41424aa1",
+   "line": 560,
+   "hash": "acd81ea945245e41",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7932,7 +7938,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7957,8 +7963,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "acd81ea945245e41"
    },
    "status": "partial"
   },
@@ -7968,8 +7975,8 @@
    "path": "/api/folders/worklist",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 788,
-   "hash": "7a858079df6a042f",
+   "line": 803,
+   "hash": "7c82fe820a1cb78e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7979,7 +7986,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8007,8 +8014,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "5a551b15f7f73550"
    },
    "status": "partial"
   },
@@ -14591,7 +14599,7 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 253,
+   "line": 256,
    "hash": "8db729f039adb720",
    "columns": {
     "schema_in": true,
@@ -14642,7 +14650,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 530,
+   "line": 533,
    "hash": "b441eb5a465334ce",
    "columns": {
     "schema_in": true,
@@ -22189,7 +22197,7 @@
    "path": "/api/folders",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 185,
+   "line": 188,
    "hash": "739c296671afce9d",
    "columns": {
     "schema_in": true,
@@ -22240,7 +22248,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 519,
+   "line": 522,
    "hash": "98c0c7c8280fbe49",
    "columns": {
     "schema_in": true,
@@ -22290,7 +22298,7 @@
    "path": "/api/folders/messages/:message_id/mark",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 767,
+   "line": 782,
    "hash": "e1e0553c2e47dfe8",
    "columns": {
     "schema_in": true,
@@ -22342,7 +22350,7 @@
    "path": "/api/folders/move",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 316,
+   "line": 319,
    "hash": "b7ed471d00dd49f2",
    "columns": {
     "schema_in": true,
@@ -22391,7 +22399,7 @@
    "path": "/api/folders/rules/preview",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 548,
+   "line": 551,
    "hash": "988b1ca9cc682a67",
    "columns": {
     "schema_in": true,
@@ -30142,7 +30150,7 @@
    "path": "/api/folders/inventory/:code",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 148,
+   "line": 151,
    "hash": "abcd059525ec8d8b",
    "columns": {
     "schema_in": true,

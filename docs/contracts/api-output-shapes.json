@@ -838,6 +838,888 @@
     "url": "/api/assist/whoami"
    }
   },
+  "GET /api/folders": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "folders",
+     "total",
+     "page",
+     "limit"
+    ],
+    "properties": {
+     "folders": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "folder_id",
+        "parent_id",
+        "name",
+        "kind",
+        "scope",
+        "sort",
+        "count"
+       ],
+       "properties": {
+        "folder_id": {
+         "type": "string"
+        },
+        "parent_id": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "name": {
+         "type": "string"
+        },
+        "code": {
+         "type": "string"
+        },
+        "kind": {
+         "type": "string"
+        },
+        "system": {
+         "type": "boolean"
+        },
+        "scope": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "side": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "ledger": {
+         "type": "object",
+         "required": [
+          "code",
+          "name",
+          "role"
+         ],
+         "properties": {
+          "code": {
+           "type": "string"
+          },
+          "name": {
+           "type": "string"
+          },
+          "role": {
+           "type": "string"
+          },
+          "folder_id": {},
+          "parent_id": {},
+          "kind": {},
+          "system": {},
+          "scope": {},
+          "side": {},
+          "ledger": {},
+          "sort": {},
+          "count": {},
+          "total": {}
+         },
+         "additionalProperties": false
+        },
+        "sort": {
+         "type": "number"
+        },
+        "count": {},
+        "total": {
+         "type": "number"
+        }
+       },
+       "additionalProperties": false
+      }
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "system_error": {
+      "type": "string"
+     },
+     "capped": {
+      "type": "boolean"
+     },
+     "cap_note": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 8,
+   "open": [],
+   "example": {
+    "url": "/api/folders"
+   }
+  },
+  "GET /api/folders/groupsum": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "scope",
+     "folder_id",
+     "chits",
+     "chits_with_lines",
+     "chits_without_lines",
+     "has_catalogue",
+     "requirement",
+     "flags",
+     "money"
+    ],
+    "properties": {
+     "scope": {
+      "type": "string"
+     },
+     "folder_id": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "chits": {
+      "type": "number"
+     },
+     "chits_with_lines": {
+      "type": "number"
+     },
+     "chits_without_lines": {
+      "type": "number"
+     },
+     "has_catalogue": {
+      "type": "boolean"
+     },
+     "requirement": {},
+     "flags": {
+      "type": "object"
+     },
+     "money": {
+      "type": "object"
+     },
+     "selected": {
+      "type": "boolean"
+     },
+     "selection_requested": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "flags",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "money",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/folders/groupsum?scope=order&folder_id=22222222-2222-4222-8222-222222222222&chit_ids=22222222-2222-4222-8222-222222222222"
+   }
+  },
+  "GET /api/folders/inventory": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "rows",
+     "can_change"
+    ],
+    "properties": {
+     "rows": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "can_change": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "rows[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/folders/inventory"
+   }
+  },
+  "GET /api/folders/messages": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "count"
+    ],
+    "properties": {
+     "count": {
+      "type": "number"
+     },
+     "messages": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "message_id",
+        "chit_id",
+        "line_id",
+        "sender_display_name",
+        "sender_entity_id",
+        "message_text",
+        "created_at",
+        "msg_type",
+        "read_at",
+        "kept",
+        "manual_subject",
+        "auto_subject",
+        "track",
+        "particulars",
+        "chit_status"
+       ],
+       "properties": {
+        "message_id": {
+         "type": "string"
+        },
+        "chit_id": {
+         "type": "string"
+        },
+        "line_id": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "sender_display_name": {
+         "type": "string"
+        },
+        "sender_entity_id": {
+         "type": "string"
+        },
+        "message_text": {
+         "type": "string"
+        },
+        "created_at": {
+         "type": "string"
+        },
+        "msg_type": {
+         "type": "string"
+        },
+        "read_at": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "kept": {
+         "type": "boolean"
+        },
+        "manual_subject": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "auto_subject": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "track": {
+         "type": "string"
+        },
+        "particulars": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "chit_status": {
+         "type": [
+          "string",
+          "null"
+         ]
+        }
+       },
+       "additionalProperties": false
+      }
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "capped": {
+      "type": "boolean"
+     },
+     "cap_note": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 8,
+   "open": [],
+   "example": {
+    "url": "/api/folders/messages"
+   }
+  },
+  "GET /api/folders/mis": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "overdue_days",
+     "since",
+     "truncated",
+     "all",
+     "received",
+     "sent"
+    ],
+    "properties": {
+     "overdue_days": {
+      "type": "number"
+     },
+     "since": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "truncated": {
+      "type": "boolean"
+     },
+     "all": {
+      "type": "object"
+     },
+     "received": {
+      "type": "object"
+     },
+     "sent": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "all",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "received",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "sent",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/folders/mis"
+   }
+  },
+  "GET /api/folders/reconcile": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "scope",
+     "direction",
+     "total",
+     "unfiled",
+     "inbox",
+     "in_bills",
+     "filed",
+     "folders",
+     "overall",
+     "reconciles"
+    ],
+    "properties": {
+     "scope": {
+      "type": "string"
+     },
+     "direction": {
+      "type": "string"
+     },
+     "total": {
+      "type": "number"
+     },
+     "unfiled": {
+      "type": "number"
+     },
+     "inbox": {
+      "type": "number"
+     },
+     "in_bills": {
+      "type": "number"
+     },
+     "filed": {
+      "type": "number"
+     },
+     "folders": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "overall": {
+      "type": "object"
+     },
+     "reconciles": {
+      "type": "boolean"
+     },
+     "discrepancy": {
+      "type": "object",
+      "required": [
+       "filed",
+       "sum_of_folders",
+       "missing"
+      ],
+      "properties": {
+       "filed": {
+        "type": "number"
+       },
+       "sum_of_folders": {
+        "type": "number"
+       },
+       "missing": {
+        "type": "number"
+       }
+      },
+      "additionalProperties": false
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 7,
+   "open": [
+    {
+     "path": "folders[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "overall",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/folders/reconcile"
+   }
+  },
+  "GET /api/folders/rules": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "rules",
+     "migrated",
+     "total",
+     "page",
+     "limit"
+    ],
+    "properties": {
+     "rules": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "rule_id",
+        "folder_id",
+        "name",
+        "when",
+        "enabled",
+        "sort",
+        "stop_processing",
+        "last_matched_at",
+        "match_count",
+        "created_at"
+       ],
+       "properties": {
+        "rule_id": {
+         "type": "string"
+        },
+        "folder_id": {
+         "type": "string"
+        },
+        "name": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "when": {
+         "type": "object",
+         "required": [
+          "doc"
+         ],
+         "properties": {
+          "from": {
+           "type": "string"
+          },
+          "subject": {
+           "type": "string"
+          },
+          "text": {
+           "type": "string"
+          },
+          "purpose": {
+           "type": "string"
+          },
+          "direction": {
+           "type": "string"
+          },
+          "status": {
+           "type": "string"
+          },
+          "channel": {
+           "type": "string"
+          },
+          "min_amount": {
+           "type": "number"
+          },
+          "max_amount": {
+           "type": "number"
+          },
+          "has_dispute": {
+           "type": "boolean"
+          },
+          "unread": {
+           "type": "boolean"
+          },
+          "older_than_days": {
+           "type": "number"
+          },
+          "doc": {
+           "type": "string"
+          },
+          "rule_id": {},
+          "folder_id": {},
+          "name": {},
+          "when": {},
+          "enabled": {},
+          "sort": {},
+          "stop_processing": {},
+          "last_matched_at": {},
+          "match_count": {},
+          "created_at": {}
+         },
+         "additionalProperties": false
+        },
+        "enabled": {
+         "type": "boolean"
+        },
+        "sort": {
+         "type": "number"
+        },
+        "stop_processing": {
+         "type": "boolean"
+        },
+        "last_matched_at": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "match_count": {
+         "type": "string"
+        },
+        "created_at": {
+         "type": "string"
+        }
+       },
+       "additionalProperties": false
+      }
+     },
+     "migrated": {
+      "type": "boolean"
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "note": {
+      "type": "string"
+     },
+     "capped": {
+      "type": "boolean"
+     },
+     "cap_note": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [],
+   "example": {
+    "url": "/api/folders/rules"
+   }
+  },
+  "GET /api/folders/rules/vocabulary": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "keys"
+    ],
+    "properties": {
+     "keys": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "keys",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/folders/rules/vocabulary"
+   }
+  },
+  "GET /api/folders/worklist": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "people",
+     "lines",
+     "migrated"
+    ],
+    "properties": {
+     "people": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "actor_id",
+        "name",
+        "type",
+        "lines",
+        "count"
+       ],
+       "properties": {
+        "actor_id": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "name": {
+         "type": "string"
+        },
+        "type": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "lines": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "chit_id",
+           "line_id",
+           "seq",
+           "particulars",
+           "quantity",
+           "unit",
+           "task",
+           "due_date",
+           "note",
+           "state",
+           "chit_status",
+           "delivered",
+           "left",
+           "asked_as",
+           "raw_phrase",
+           "comment",
+           "needs_human",
+           "subject",
+           "counterparty"
+          ],
+          "properties": {
+           "chit_id": {
+            "type": "string"
+           },
+           "line_id": {
+            "type": "string"
+           },
+           "seq": {
+            "type": "number"
+           },
+           "particulars": {
+            "type": "string"
+           },
+           "quantity": {
+            "type": [
+             "number",
+             "null"
+            ]
+           },
+           "unit": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "task": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "due_date": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "state": {
+            "type": "string"
+           },
+           "chit_status": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "delivered": {
+            "type": "number"
+           },
+           "left": {
+            "type": [
+             "number",
+             "null"
+            ]
+           },
+           "asked_as": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "raw_phrase": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "comment": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "needs_human": {
+            "type": "boolean"
+           },
+           "subject": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "counterparty": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "actor_id": {},
+           "name": {},
+           "type": {},
+           "lines": {},
+           "count": {}
+          },
+          "additionalProperties": false
+         }
+        },
+        "count": {
+         "type": "number"
+        },
+        "chit_id": {},
+        "line_id": {},
+        "seq": {},
+        "particulars": {},
+        "quantity": {},
+        "unit": {},
+        "task": {},
+        "due_date": {},
+        "note": {},
+        "state": {},
+        "chit_status": {},
+        "delivered": {},
+        "left": {},
+        "asked_as": {},
+        "raw_phrase": {},
+        "comment": {},
+        "needs_human": {},
+        "subject": {},
+        "counterparty": {}
+       },
+       "additionalProperties": false
+      }
+     },
+     "lines": {
+      "type": "number"
+     },
+     "migrated": {
+      "type": "boolean"
+     },
+     "scoped_to_self": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [],
+   "example": {
+    "url": "/api/folders/worklist"
+   }
+  },
   "POST /api/assist": {
    "status": "200",
    "schema": {
@@ -1217,6 +2099,11 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/folders/groupsum": "open at flags — a value passed through (an expression: its keys are not written in the handler); money — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/folders/inventory": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/folders/mis": "open at all — a value passed through (an expression: its keys are not written in the handler); received — a value passed through (an expression: its keys are not written in the handler); sent — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/folders/reconcile": "open at folders[] — a value passed through (an expression: its keys are not written in the handler); overall — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/folders/rules/vocabulary": "open at keys — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
