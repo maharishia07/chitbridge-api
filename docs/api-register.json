@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 605
    },
    "foreign_id_404": {
     "applies": 227,
@@ -845,8 +845,8 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1699,
-   "hash": "ef5500ca995d3b4b",
+   "line": 1725,
+   "hash": "65c79891d0d65e2b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -856,7 +856,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -884,8 +884,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "65c79891d0d65e2b"
    },
    "status": "partial"
   },
@@ -895,8 +896,8 @@
    "path": "/api/products/:id/media/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1849,
-   "hash": "2c018b29c6dc0708",
+   "line": 1875,
+   "hash": "4b7298a6835be858",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -906,7 +907,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -934,8 +935,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4b7298a6835be858"
    },
    "status": "partial"
   },
@@ -945,7 +947,7 @@
    "path": "/api/products/:id/schedule/:sid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1580,
+   "line": 1606,
    "hash": "d1ce481d9e75dc7a",
    "columns": {
     "schema_in": true,
@@ -10610,8 +10612,8 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 641,
-   "hash": "091f1ce75402d338",
+   "line": 666,
+   "hash": "a85c20451df4101f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10621,7 +10623,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10648,8 +10650,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a85c20451df4101f"
    },
    "status": "partial"
   },
@@ -10659,7 +10662,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1535,
+   "line": 1561,
    "hash": "f27ee6ea29d22689",
    "columns": {
     "schema_in": true,
@@ -10709,8 +10712,8 @@
    "path": "/api/products/:id/versions",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1885,
-   "hash": "6bc46a7033f4102a",
+   "line": 1911,
+   "hash": "80271132220845aa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10720,7 +10723,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10749,8 +10752,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "80271132220845aa"
    },
    "status": "partial"
   },
@@ -10760,7 +10764,7 @@
    "path": "/api/products/export.csv",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1000,
+   "line": 1025,
    "hash": "e6c365a0051bb1fc",
    "columns": {
     "schema_in": true,
@@ -10808,8 +10812,8 @@
    "path": "/api/products/lists",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2000,
-   "hash": "5d9fd08ccb9f8f04",
+   "line": 2026,
+   "hash": "53042587c8e14b98",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10819,7 +10823,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10845,8 +10849,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "276e9df18d618522"
    },
    "status": "partial"
   },
@@ -10856,7 +10861,7 @@
    "path": "/api/products/media/:item_id/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1744,
+   "line": 1770,
    "hash": "37dfa7e57774ac5a",
    "columns": {
     "schema_in": true,
@@ -10905,8 +10910,8 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1331,
-   "hash": "7fd15416d5433865",
+   "line": 1356,
+   "hash": "63089576d01de346",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10916,7 +10921,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10943,8 +10948,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e9db926f3a2d296a"
    },
    "status": "partial"
   },
@@ -10954,7 +10960,7 @@
    "path": "/api/products/template",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1029,
+   "line": 1054,
    "hash": "4fa0397692601b3c",
    "columns": {
     "schema_in": true,
@@ -11002,7 +11008,7 @@
    "path": "/api/products/workbook.xlsx",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 929,
+   "line": 954,
    "hash": "f926495a5d767afd",
    "columns": {
     "schema_in": true,
@@ -14692,7 +14698,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1469,
+   "line": 1495,
    "hash": "2cb19f337d86ef8c",
    "columns": {
     "schema_in": true,
@@ -24791,7 +24797,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 395,
+   "line": 420,
    "hash": "4522908970c7bd15",
    "columns": {
     "schema_in": true,
@@ -24842,7 +24848,7 @@
    "path": "/api/products/:id/media",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1784,
+   "line": 1810,
    "hash": "c82f2c2dbbf7c486",
    "columns": {
     "schema_in": true,
@@ -24894,7 +24900,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1548,
+   "line": 1574,
    "hash": "6b487edc09786183",
    "columns": {
     "schema_in": true,
@@ -24947,7 +24953,7 @@
    "path": "/api/products/availability/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1594,
+   "line": 1620,
    "hash": "e22e7ba9374b3ef4",
    "columns": {
     "schema_in": true,
@@ -24996,7 +25002,7 @@
    "path": "/api/products/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 456,
+   "line": 481,
    "hash": "788b99d8d31e7593",
    "columns": {
     "schema_in": true,
@@ -25047,7 +25053,7 @@
    "path": "/api/products/bulk-update",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 596,
+   "line": 621,
    "hash": "c171de3ebf354cea",
    "columns": {
     "schema_in": true,
@@ -25098,7 +25104,7 @@
    "path": "/api/products/import",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1126,
+   "line": 1151,
    "hash": "ed75a55ba1d66a41",
    "columns": {
     "schema_in": true,
@@ -25151,7 +25157,7 @@
    "path": "/api/products/import/preflight",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1053,
+   "line": 1078,
    "hash": "4345c2ea3bad5916",
    "columns": {
     "schema_in": true,
@@ -25200,7 +25206,7 @@
    "path": "/api/products/lists/adopt",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2121,
+   "line": 2128,
    "hash": "17aa750372131c9d",
    "columns": {
     "schema_in": true,
@@ -25249,7 +25255,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1340,
+   "line": 1366,
    "hash": "ea8cd5d6b378f465",
    "columns": {
     "schema_in": true,
@@ -25298,7 +25304,7 @@
    "path": "/api/products/status/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 506,
+   "line": 531,
    "hash": "224a58ec6a2e8d00",
    "columns": {
     "schema_in": true,
@@ -30535,7 +30541,7 @@
    "path": "/api/products/:id/availability",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1639,
+   "line": 1665,
    "hash": "61175630388e5785",
    "columns": {
     "schema_in": true,
@@ -30585,7 +30591,7 @@
    "path": "/api/products/:id/status",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1669,
+   "line": 1695,
    "hash": "19e06763d0d328ee",
    "columns": {
     "schema_in": true,

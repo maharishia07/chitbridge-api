@@ -391,6 +391,31 @@ async function catalogueShape(entity_id) {
   };
 }
 
+/**
+ * One starter list as the Product Lab shows it (GET /lists): its words, its shelves and units, the languages its rows carry, and every row with the unit it will be adopted under.
+ * Above the first route on purpose: tools/api-allowlist.cjs reads a handler up to the next router line, and a map written inside the answer would hand every key it names to every level of it.
+ */
+function listCard(blueprints, item) {
+  const bp = blueprints.blueprint(item);
+  return {
+    key: bp.key,
+    label: bp.label,
+    outcome: bp.outcome,
+    pin: blueprints.pin(bp),
+    categories: bp.categories,
+    units: bp.units,
+    languages: blueprints.languagesOf(item),
+    count: bp.starter.length,
+    rows: bp.starter.map((x) => ({
+      name: x.name,
+      unit: x.unit || bp.defaultUnit,
+      price: x.price,
+      category: x.category || null,
+      names: x.names || null
+    }))
+  };
+}
+
 // CREATE — add a product
 router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
@@ -1331,7 +1356,8 @@ router.post(
 router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (req, res) => {
   try {
     const v = req.query.vertical;
-    res.json(v ? { starter: starter.starterFor(v), verticals: starter.list() } : { verticals: starter.list() });
+    if (!v) return res.json({ verticals: starter.list() });
+    res.json({ starter: starter.starterFor(v), verticals: starter.list() });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not list the standard sets'));
   }
@@ -2060,26 +2086,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
       /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
       vertical: trade.key,
       pick: BP.forVertical(trade.key),
-      lists: Object.keys(BP.BLUEPRINTS).map((item) => {
-        const bp = BP.blueprint(item);
-        return {
-          key: bp.key,
-          label: bp.label,
-          outcome: bp.outcome,
-          pin: BP.pin(bp),
-          categories: bp.categories,
-          units: bp.units,
-          languages: BP.languagesOf(item),
-          count: bp.starter.length,
-          rows: bp.starter.map((x) => ({
-            name: x.name,
-            unit: x.unit || bp.defaultUnit,
-            price: x.price,
-            category: x.category || null,
-            names: x.names || null
-          }))
-        };
-      }),
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => listCard(BP, item)),
       /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
       language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
       mine

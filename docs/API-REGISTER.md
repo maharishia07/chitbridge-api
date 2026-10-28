@@ -26,9 +26,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/folders/:id | folders | routes/folders.js:297 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:537 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/keys/:jti | keys | routes/keys.js:723 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| DELETE | /api/products/:id | products | routes/products.js:1699 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/products/:id/media/:mid | products | routes/products.js:1849 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1580 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| DELETE | /api/products/:id | products | routes/products.js:1725 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| DELETE | /api/products/:id/media/:mid | products | routes/products.js:1875 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1606 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:64 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | DELETE | /api/quick-keys/groups/:id/items/:productId | quick-keys | routes/quick-keys.js:90 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
 | DELETE | /api/relationships/suppliers/:id | relationships | routes/relationships.js:434 | no | no | no | yes | no | no | no | yes | no | no | yes | yes | yes | partial |
@@ -229,15 +229,15 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/pricing/kinds | pricing | routes/pricing.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/privacy/facts | privacy | routes/privacy.js:34 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/privacy/me | privacy | routes/privacy.js:58 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/products | products | routes/products.js:641 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/:id/schedule | products | routes/products.js:1535 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/products/:id/versions | products | routes/products.js:1885 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/export.csv | products | routes/products.js:1000 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/lists | products | routes/products.js:2000 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1744 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/products/starter-columns | products | routes/products.js:1331 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/template | products | routes/products.js:1029 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/products/workbook.xlsx | products | routes/products.js:929 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products | products | routes/products.js:666 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/products/:id/schedule | products | routes/products.js:1561 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/products/:id/versions | products | routes/products.js:1911 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/products/export.csv | products | routes/products.js:1025 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/lists | products | routes/products.js:2026 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1770 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/products/starter-columns | products | routes/products.js:1356 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/products/template | products | routes/products.js:1054 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/products/workbook.xlsx | products | routes/products.js:954 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:31 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:110 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/relationships/customers | relationships | routes/relationships.js:674 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -314,7 +314,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/entities/profile | entities | routes/entities.js:952 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/folders/:id | folders | routes/folders.js:253 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PATCH | /api/folders/rules/:rule_id | folders | routes/folders.js:530 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PATCH | /api/products/:id | products | routes/products.js:1469 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/products/:id | products | routes/products.js:1495 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:51 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | PATCH | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:100 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | PATCH | /api/relationships/customers/:id | relationships | routes/relationships.js:929 | no | no | no | yes | no | no | no | no | no | no | yes | yes | yes | partial |
@@ -522,17 +522,17 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/pricing/price | pricing | routes/pricing.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/privacy/me/consent | privacy | routes/privacy.js:66 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/privacy/me/requests | privacy | routes/privacy.js:79 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/products | products | routes/products.js:395 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/:id/media | products | routes/products.js:1784 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/products/:id/schedule | products | routes/products.js:1548 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/availability/bulk | products | routes/products.js:1594 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/products/bulk | products | routes/products.js:456 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/products/bulk-update | products | routes/products.js:596 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/import | products | routes/products.js:1126 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/import/preflight | products | routes/products.js:1053 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/lists/adopt | products | routes/products.js:2121 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/products/starter-columns | products | routes/products.js:1340 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/products/status/bulk | products | routes/products.js:506 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products | products | routes/products.js:420 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/:id/media | products | routes/products.js:1810 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/products/:id/schedule | products | routes/products.js:1574 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/availability/bulk | products | routes/products.js:1620 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/products/bulk | products | routes/products.js:481 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/products/bulk-update | products | routes/products.js:621 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/import | products | routes/products.js:1151 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/import/preflight | products | routes/products.js:1078 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/lists/adopt | products | routes/products.js:2128 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/products/starter-columns | products | routes/products.js:1366 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/products/status/bulk | products | routes/products.js:531 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:40 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:77 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/relationships/customers | relationships | routes/relationships.js:789 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
@@ -639,8 +639,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/integrations/streams | integrations | routes/integrations.js:754 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-design | network-design | routes/network-design.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:275 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| PUT | /api/products/:id/availability | products | routes/products.js:1639 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PUT | /api/products/:id/status | products | routes/products.js:1669 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PUT | /api/products/:id/availability | products | routes/products.js:1665 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PUT | /api/products/:id/status | products | routes/products.js:1695 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:120 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/service/:chit_id | service | routes/service.js:146 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1066 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
