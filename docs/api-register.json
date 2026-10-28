@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 475,
+  "meets": 16,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -12080,11 +12080,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "bd30665cb3f8b1dc"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/cases/gherkin",
@@ -12179,11 +12179,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "b7b13910d9ada03a"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/cmdb",
@@ -12229,11 +12229,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "7834c3a9fe758c4c"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/cmdb/:ci",
@@ -12330,11 +12330,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "0d3b74eec0b8d28c"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/engine",
@@ -12379,11 +12379,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "a672d2723cf321b4"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/incidents",
@@ -12429,11 +12429,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "dd6dd6a017caaada"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/releases",
@@ -12479,11 +12479,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "7cb8d085e54f75b2"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/reliability",
@@ -12529,11 +12529,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "377c8d297b6551de"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/report",
@@ -12579,11 +12579,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "056d0bd767fdd496"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/requirements",
@@ -12629,11 +12629,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "7f7b838c3152de50"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/results",
@@ -12679,11 +12679,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "1065ada489338f23"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/runs",
@@ -12729,11 +12729,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "470b6802045dbe44"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/stale",
@@ -12778,11 +12778,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "e947d53d445f47e4"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/trace",
@@ -12827,11 +12827,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "c33e11145435a49f"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/testing/vocabulary",
@@ -12872,11 +12872,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#472 stage2",
     "lifecycle": "stable",
     "stale_since": "f7a3b65e46125b61"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/till/bills",
