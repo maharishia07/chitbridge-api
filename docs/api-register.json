@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 604
    },
    "foreign_id_404": {
     "applies": 227,
@@ -9117,8 +9117,8 @@
    "path": "/api/integrations/catalogue",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 360,
-   "hash": "ea38f893d73af3f7",
+   "line": 361,
+   "hash": "4f975cefee8013c8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9128,7 +9128,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9153,8 +9153,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "19787d5b6f7b5761"
    },
    "status": "partial"
   },
@@ -9164,7 +9165,7 @@
    "path": "/api/integrations/docs/:id",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 273,
+   "line": 274,
    "hash": "597a2e449ca230ab",
    "columns": {
     "schema_in": true,
@@ -9263,7 +9264,7 @@
    "owner_area": "integrations",
    "file": "routes/integrations.js",
    "line": 249,
-   "hash": "90cec884ead1b7b2",
+   "hash": "833e8fa6a4263243",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9273,7 +9274,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9299,8 +9300,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7ec5aaead3ec6a59"
    },
    "status": "partial"
   },
@@ -9310,7 +9312,7 @@
    "path": "/api/integrations/kit/*",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 256,
+   "line": 257,
    "hash": "9f494cd2f4297967",
    "columns": {
     "schema_in": true,
@@ -9359,8 +9361,8 @@
    "path": "/api/integrations/profile-map",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 978,
-   "hash": "1ea9c2e0ff3af8e9",
+   "line": 975,
+   "hash": "fbc84eccb8ec2d37",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9370,7 +9372,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9396,8 +9398,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "70a7140cb8eb244c"
    },
    "status": "partial"
   },
@@ -9407,8 +9410,8 @@
    "path": "/api/integrations/reconcile",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 827,
-   "hash": "9389a318048c28b3",
+   "line": 828,
+   "hash": "457ba6a1ba37fd28",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9418,7 +9421,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9445,8 +9448,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "457ba6a1ba37fd28"
    },
    "status": "partial"
   },
@@ -9457,7 +9461,7 @@
    "owner_area": "integrations",
    "file": "routes/integrations.js",
    "line": 714,
-   "hash": "c7eb7598ddf2d768",
+   "hash": "70de3a5a5b1f6993",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9467,7 +9471,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9494,8 +9498,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "13dc9377bb4f93fd"
    },
    "status": "partial"
   },
@@ -9505,8 +9510,8 @@
    "path": "/api/integrations/stock/:handle",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 953,
-   "hash": "6d484ddc5697721a",
+   "line": 954,
+   "hash": "af4a542c64bc4085",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9516,7 +9521,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9542,8 +9547,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7c2a82da92c2d5f8"
    },
    "status": "partial"
   },
@@ -9553,8 +9559,8 @@
    "path": "/api/integrations/streams",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 745,
-   "hash": "ea3c318db486649e",
+   "line": 746,
+   "hash": "f97d3783abe3f0d1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9564,7 +9570,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9590,8 +9596,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f97d3783abe3f0d1"
    },
    "status": "partial"
   },
@@ -23214,7 +23221,7 @@
    "path": "/api/integrations/ask/:handle/stock",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 932,
+   "line": 933,
    "hash": "2ef735f570ed04cc",
    "columns": {
     "schema_in": true,
@@ -23313,7 +23320,7 @@
    "path": "/api/integrations/books/skip",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 795,
+   "line": 796,
    "hash": "918358dc8a020ca7",
    "columns": {
     "schema_in": true,
@@ -23414,7 +23421,7 @@
    "path": "/api/integrations/profile",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 994,
+   "line": 1003,
    "hash": "144599f781125548",
    "columns": {
     "schema_in": true,
@@ -30390,7 +30397,7 @@
    "path": "/api/integrations/streams",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 754,
+   "line": 755,
    "hash": "1d8791f0df7ece41",
    "columns": {
     "schema_in": true,

@@ -838,6 +838,356 @@
     "url": "/api/assist/whoami"
    }
   },
+  "GET /api/integrations/catalogue": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "connectors"
+    ],
+    "properties": {
+     "connectors": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 3,
+   "open": [
+    {
+     "path": "connectors[]",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/integrations/catalogue"
+   }
+  },
+  "GET /api/integrations/kit": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "version",
+     "at",
+     "files"
+    ],
+    "properties": {
+     "version": {
+      "type": "string"
+     },
+     "at": {
+      "type": "string"
+     },
+     "files": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 1,
+   "open": [
+    {
+     "path": "files[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/integrations/kit"
+   }
+  },
+  "GET /api/integrations/profile-map": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "engine",
+     "version",
+     "fields",
+     "order",
+     "issues",
+     "filled",
+     "total",
+     "rungs",
+     "state_name"
+    ],
+    "properties": {
+     "engine": {
+      "type": "string"
+     },
+     "version": {
+      "type": "number"
+     },
+     "fields": {
+      "type": "object"
+     },
+     "order": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "issues": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "filled": {
+      "type": "number"
+     },
+     "total": {
+      "type": "number"
+     },
+     "rungs": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "state_name": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "name_mismatch": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 2,
+   "open": [
+    {
+     "path": "fields",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "issues[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "name_mismatch",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/integrations/profile-map"
+   }
+  },
+  "GET /api/integrations/reconcile": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "days",
+     "books_at",
+     "overdue_hours",
+     "connector_since",
+     "counts",
+     "by_system",
+     "rows"
+    ],
+    "properties": {
+     "days": {
+      "type": "number"
+     },
+     "books_at": {
+      "type": "string"
+     },
+     "overdue_hours": {
+      "type": "number"
+     },
+     "connector_since": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "counts": {
+      "type": "object"
+     },
+     "by_system": {
+      "type": "object"
+     },
+     "rows": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 3,
+   "open": [
+    {
+     "path": "counts",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_system",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    },
+    {
+     "path": "rows[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/integrations/reconcile"
+   }
+  },
+  "GET /api/integrations/status": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "connectors",
+     "total",
+     "page",
+     "limit"
+    ],
+    "properties": {
+     "connectors": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "capped": {
+      "type": "boolean"
+     },
+     "cap_note": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 4,
+   "open": [
+    {
+     "path": "connectors[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/integrations/status?limit=500"
+   }
+  },
+  "GET /api/integrations/stock/:handle": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "stock",
+     "total",
+     "page",
+     "limit",
+     "at"
+    ],
+    "properties": {
+     "stock": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "at": {
+      "type": "string"
+     },
+     "capped": {
+      "type": "boolean"
+     },
+     "cap_note": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 4,
+   "open": [
+    {
+     "path": "stock[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/integrations/stock/shop-a?limit=500"
+   }
+  },
+  "GET /api/integrations/streams": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "streams",
+     "owner",
+     "connectors"
+    ],
+    "properties": {
+     "streams": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "owner": {
+      "type": "object"
+     },
+     "connectors": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 2,
+   "open": [
+    {
+     "path": "streams[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "owner",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "connectors[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/integrations/streams"
+   }
+  },
   "POST /api/assist": {
    "status": "200",
    "schema": {
@@ -1217,6 +1567,16 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/integrations/catalogue": "open at connectors[] — a value passed through (a name: its keys are not written in the handler)",
+  "GET /api/integrations/docs/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/integrations/download/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/integrations/kit": "open at files[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/integrations/kit/*": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/integrations/profile-map": "open at fields — a value passed through (an expression: its keys are not written in the handler); issues[] — a value passed through (an expression: its keys are not written in the handler); name_mismatch — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/integrations/reconcile": "open at counts — a value passed through (a name: its keys are not written in the handler); by_system — a value passed through (a name: its keys are not written in the handler); rows[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/integrations/status": "open at connectors[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/integrations/stock/:handle": "open at stock[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/integrations/streams": "open at streams[] — a value passed through (an expression: its keys are not written in the handler); owner — a value passed through (an expression: its keys are not written in the handler); connectors[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
