@@ -29796,7 +29796,7 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 4960,
-   "hash": "dbf1814d4f83fa55",
+   "hash": "bdc0ab6cc433cce6",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29834,8 +29834,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bdc0ab6cc433cce6"
    },
    "status": "partial"
   },

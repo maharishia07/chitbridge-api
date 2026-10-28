@@ -4656,7 +4656,7 @@ router.post('/:chit_id/books-request', auth, ...checked('POST /:chit_id/books-re
  */
 function withdrawFailure(req, res, err) {
   if (!require('../lib/books-hooks').isBooksRefusal(err)) {
-    console.error('Void error:', err.message);
+    cbLog.error('chits/void failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     return problem(req, res, failed(err, req, 'Void failed'));
   }
   return problem(req, res, { status: 409, ...said({
@@ -4862,7 +4862,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         { id: action_by_id, name: action_by_name }
       );
     } catch (e) {
-      console.error('bill step (status) not written:', e.message);
+      cbLog.fellBack('chits status: the bill step was not written — the status change stands without it', e);
     }
   } else
     await crossing(
@@ -4933,7 +4933,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         }
       }
     } catch (e) {
-      console.error('cancel confirm:', e.message);
+      cbLog.fellBack('chits status: the cancel confirm was not stamped — the cancel stands without it', e);
     }
   }
 
@@ -5048,7 +5048,7 @@ router.put(
         ); /* outbound is never allowed to affect the status change */
       }
     } catch (err) {
-      console.error('Update status error:', err.message);
+      cbLog.error('chits/status failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
       problem(req, res, failed(err, req, 'Update failed'));
     }
   }
