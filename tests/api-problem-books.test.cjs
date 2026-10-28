@@ -26,6 +26,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
 const MOUNT = '/api/books';
 const MOUNTS = ['/api/books', '/api/tax', '/api/invoice'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
@@ -85,7 +86,7 @@ function installStubs() {
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
-  mock('lib/country-setup', { gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
+  mock('lib/country-setup', { currencyStated: (...vals) => vals.find((one) => typeof one === 'string' && one.trim()) || null, gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
   console.error = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
 }
 
@@ -121,7 +122,19 @@ const ADVICE_PATCH = (ready) => ({
   books: { adviceFor: async () => ({ may: { send_advice: { ok: false, why: 'already_sent', say: 'An advice is already sent.' }, share_advice: { ok: true } }, advice: { chit_id: '99999999-9999-4999-8999-999999999999' } }) }
 });
 const BAD_MONEY = { party_id: PARTY, amount_minor: 100, currency: 'USD', mode: 'cash' };
+/** the cash position of a shop with one drawer and nothing owed, made by the cash engine's own project() (the stand-in db cannot seat the ledgers read() needs) */
+const CASH_PATCH = {
+  cashflow: {
+    read: async (h, entity, s, q) => {
+      const cashflow = require(path.join(HERE, 'lib', 'books-cashflow'));
+      const opening = [{ role: 'cash', code: '1000', name: 'Cash', balance_minor: 50000 }];
+      return cashflow.project({ asOf: q.asOf, days: q.days, currency: 'INR', opening, receivable_items: [], payable_items: [], cheques: [], promises: [], gst: { payable_minor: 0, form: 'GSTR-3B', short: 'GST', due_date: null, why: null }, names: new Map(), recurring: [] });
+    }
+  }
+};
 const EXTRAS = [
+  X('cashflow-owner-reads', 'GET /api/books/cashflow', 200, { patch: CASH_PATCH }),
+  X('fx-revalue-reads', 'GET /api/books/fx-revalue', 200, { url: MOUNT + '/fx-revalue?fiscal_year=2026-27&period=6' }),
   X('currency-not-the-ledgers', 'POST /api/books/payments/preview', 422, { body: BAD_MONEY }),
   X('currency-not-the-ledgers', 'POST /api/books/payments', 422, { body: BAD_MONEY }),
   X('window-too-long', 'GET /api/books/bank/rail', 400, { url: MOUNT + '/bank/rail?from=2020-01-01&to=2026-01-01' }),
@@ -198,7 +211,7 @@ function scenariosOf(routes) {
 
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
-  const modules = { books: require(path.join(HERE, 'lib', 'books')), store: require(path.join(HERE, 'lib', 'books-store')) };
+  const modules = { books: require(path.join(HERE, 'lib', 'books')), store: require(path.join(HERE, 'lib', 'books-store')), cashflow: require(path.join(HERE, 'lib', 'books-cashflow')) };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -250,7 +263,7 @@ async function checkRoutes(port, scenarios, recording) {
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, request: { url: scenario.url, body: scenario.body } }; /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer (R2-13) */
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (argv.includes('--capture')) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
@@ -296,6 +309,45 @@ function checkRefusals() {
   check('refusalOf: the database refusing a write on purpose is a 503 in words', refusalOf(Object.assign(new Error('insert-only'), { code: '42501' })).status === 503);
   const unknown = refusalOf(new Error(SECRET_SQL));
   check('refusalOf: anything else is a 500 INTERNAL that says nothing of its cause', unknown.status === 500 && unknown.code === 'INTERNAL' && !JSON.stringify(unknown).includes('vault'), unknown);
+}
+
+/**
+ * API-8 output allow-list (S34), the way tests/api-problem-till.test.cjs proves it: a books read whose 200 schema is CLOSED (additionalProperties false, derived in
+ * docs/contracts/api-output-shapes.json) and whose recorded 200 fits that schema, with no key pruned, is proved here — the generator's proxy world cannot seat the
+ * ledger, so it never reaches these 200s. → { route: { output_allowlist: true } } for the routes that held
+ */
+function checkAllowList(recording) {
+  const proved = {};
+  const words = require(path.join(HERE, 'lib', 'books-contract.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  Object.keys(words.OPERATIONS).filter((route) => route.startsWith('GET ')).sort().forEach((route) => {
+    const schema = (((words.OPERATIONS[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = engine.compile(schema);
+    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the books reads the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/')).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
 }
 
 /** lib/tax-contract.js as a unit: the words of a tax refusal and of a fault, as the service always said them */
@@ -366,6 +418,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkTaxWords();
   checkKit();
   checkAnswers(recording);
+  const proved = checkAllowList(recording);
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -373,7 +426,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !MINE(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/books.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
+    writeAllowList(proved);
+  } else {
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/books.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the books reads whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(proved).length });
+  }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();

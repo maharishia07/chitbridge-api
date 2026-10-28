@@ -16,6 +16,72 @@
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
+  "GET /api/books/accounts": {
+   "output_allowlist": true
+  },
+  "GET /api/books/assets": {
+   "output_allowlist": true
+  },
+  "GET /api/books/bank/rail": {
+   "output_allowlist": true
+  },
+  "GET /api/books/bs": {
+   "output_allowlist": true
+  },
+  "GET /api/books/cashflow": {
+   "output_allowlist": true
+  },
+  "GET /api/books/cheques": {
+   "output_allowlist": true
+  },
+  "GET /api/books/compare": {
+   "output_allowlist": true
+  },
+  "GET /api/books/daybook": {
+   "output_allowlist": true
+  },
+  "GET /api/books/dues": {
+   "output_allowlist": true
+  },
+  "GET /api/books/events": {
+   "output_allowlist": true
+  },
+  "GET /api/books/fx-rates": {
+   "output_allowlist": true
+  },
+  "GET /api/books/fx-revalue": {
+   "output_allowlist": true
+  },
+  "GET /api/books/health": {
+   "output_allowlist": true
+  },
+  "GET /api/books/move-in/imports": {
+   "output_allowlist": true
+  },
+  "GET /api/books/packs": {
+   "output_allowlist": true
+  },
+  "GET /api/books/periods": {
+   "output_allowlist": true
+  },
+  "GET /api/books/pl": {
+   "output_allowlist": true
+  },
+  "GET /api/books/recurring": {
+   "output_allowlist": true
+  },
+  "GET /api/books/returns": {
+   "output_allowlist": true
+  },
+  "GET /api/books/status": {
+   "output_allowlist": true
+  },
+  "GET /api/books/terms": {
+   "output_allowlist": true
+  },
+  "GET /api/books/trial-balance": {
+   "output_allowlist": true
+  },
   "GET /api/catalogue/:bridge_id": {
    "output_allowlist": true,
    "foreign_id_404": true

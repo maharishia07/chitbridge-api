@@ -568,7 +568,8 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
           totals: { dr_minor: paged.sums.dr, cr_minor: paged.sums.cr }
         }
       : {};
-    res.json(Object.assign({ currency: curOf(req), from, to, entries: out, count: out.length }, page));
+    /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
+    res.json({ currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -940,7 +941,27 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
       CF = require('../lib/books-cashflow');
     const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
       asOf = dateQ(req.query.asOf, today(req));
-    res.json(await withEntity(e, (h) => CF.read(h, e, req.books, { asOf, days })));
+    const c = await withEntity(e, (h) => CF.read(h, e, req.books, { asOf, days }));
+    res.json({
+      asOf: c.asOf,
+      days: c.days,
+      from: c.from,
+      to: c.to,
+      currency: c.currency,
+      opening_minor: c.opening_minor,
+      drawer_minor: c.drawer_minor,
+      bank_minor: c.bank_minor,
+      opening: c.opening,
+      in_minor: c.in_minor,
+      out_minor: c.out_minor,
+      closing_minor: c.closing_minor,
+      lowest: c.lowest,
+      shortfall: c.shortfall,
+      words: c.words,
+      uncounted: c.uncounted,
+      gst: c.gst,
+      series: c.series
+    });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1614,7 +1635,8 @@ const M = () => require('../lib/books-manual');
 /** GET /events → { events: [{ kind, words, icon, band, voucher, fields, ledger_group, preview, post | route }], picks, pending, golden } — the grid; the screen holds no rules */
 router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => {
   try {
-    res.json(M().catalogue(req.books));
+    const c = M().catalogue(req.books);
+    res.json({ events: c.events, picks: c.picks, pending: c.pending, golden: c.golden });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1833,7 +1855,8 @@ router.post('/move-in/import', auth, owner, on, ...checked('POST /move-in/import
 router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports'), async (req, res) => {
   try {
     const e = ctx(req);
-    res.json(await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e)));
+    const l = await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e));
+    res.json({ ready: l.ready, why: l.why, imports: l.imports });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2323,7 +2346,8 @@ const route = (method, p, fn) =>
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
 router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, res) => {
   try {
-    res.json(await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req))));
+    const a = await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)));
+    res.json({ currency: a.currency, asOf: a.asOf, assets: a.assets, net_block: a.net_block, total_wdv_minor: a.total_wdv_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2353,7 +2377,31 @@ route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
 router.get('/returns', auth, owner, on, ...checked('GET /returns'), async (req, res) => {
   try {
-    res.json(await P().taxReturn(ctx(req), req.books, req.query || {}));
+    const r = await P().taxReturn(ctx(req), req.books, req.query || {});
+    /* the pack's return, every key it can carry named (S34); the keys of a return that needs a period or a pack's extra tables are undefined, and JSON leaves them out */
+    res.json({
+      currency: r.currency,
+      pack: r.pack,
+      form: r.form,
+      name: r.name,
+      short: r.short,
+      authority: r.authority,
+      portal: r.portal,
+      prepared: r.prepared,
+      asked: r.asked,
+      needs: r.needs,
+      why: r.why,
+      periods: r.periods,
+      period: r.period,
+      boxes: r.boxes,
+      payable_minor: r.payable_minor,
+      refund_minor: r.refund_minor,
+      net_minor: r.net_minor,
+      notes: r.notes,
+      cite: r.cite,
+      emirates: r.emirates,
+      staggers: r.staggers
+    });
   } catch (err) {
     if (err && err.code === 'RETURN_FROM_RAIL') {
       const pack = err.pack || null;
