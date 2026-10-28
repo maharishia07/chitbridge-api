@@ -69,6 +69,8 @@ function extras(tools) {
     X('vocabulary', 'GET ' + T + '/vocabulary', 200, {}),
     X('vocabulary-fails', 'GET ' + T + '/vocabulary', 500, { setup: { jsonThrows: true } }),
     X('engine', 'GET ' + T + '/engine', 200, {}),
+    /* the manifest file is missing: the answer is { engine: null } */
+    X('engine-file-missing', 'GET ' + T + '/engine', 200, { patch: { fs: { existsSync: (file) => !/test-cases.json$/.test(String(file)) && require('fs').statSync(file, { throwIfNoEntry: false }) !== undefined } } }),
     X('engine-fails', 'GET ' + T + '/engine', 500, { setup: { jsonThrows: true } }),
     /* cases */
     X('cases-empty', 'GET ' + T + '/cases', 200, {}),

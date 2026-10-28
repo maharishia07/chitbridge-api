@@ -1404,14 +1404,14 @@
    "schema": {
     "type": "object",
     "required": [
-     "engine",
-     "contents",
-     "notes",
-     "foot"
+     "engine"
     ],
     "properties": {
      "engine": {
-      "type": "object"
+      "type": [
+       "object",
+       "null"
+      ]
      },
      "contents": {
       "type": "object"
@@ -1425,7 +1425,7 @@
     },
     "additionalProperties": false
    },
-   "observed": 4,
+   "observed": 5,
    "open": [
     {
      "path": "engine",

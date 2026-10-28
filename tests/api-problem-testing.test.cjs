@@ -56,7 +56,7 @@ const lab = harness({
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || ADDED.has(scenario)
 });
 const { check } = lab;
-const sources = () => ({ board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')) });
+const sources = () => ({ board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')), fs: require('fs') });
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
   { id: 'staff-asks', setup: { who: STAFF } },
