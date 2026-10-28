@@ -2328,8 +2328,8 @@ const route = (method, p, fn) =>
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
 router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, res) => {
   try {
-    const register = await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)));
-    res.json({ currency: register.currency, asOf: register.asOf, assets: register.assets, net_block: register.net_block, total_wdv_minor: register.total_wdv_minor });
+    const assetBook = await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)));
+    res.json({ currency: assetBook.currency, asOf: assetBook.asOf, assets: assetBook.assets, net_block: assetBook.net_block, total_wdv_minor: assetBook.total_wdv_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
