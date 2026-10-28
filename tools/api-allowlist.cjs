@@ -120,10 +120,13 @@ function nodeOf(expression) {
   return { kind: 'opaque', tokens: tokensOf(text), spread: /\.\.\.\s*[\w$(\[{]/.test(text) };
 }
 
+/** an entry of a literal without the comments written before its key (a comment is not a computed key) */
+const withoutLeadingComments = (entry) => entry.replace(/^(?:\s*(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*))+\s*/, '');
+
 /** a literal `{ a: 1, b, ...c, [d]: 2 }` as an object node */
 function objectNodeOf(text) {
   const node = { kind: 'object', keys: new Map(), spread: false, computed: false };
-  splitTop(text.slice(1, -1)).forEach((entry) => {
+  splitTop(text.slice(1, -1)).map(withoutLeadingComments).forEach((entry) => {
     if (entry.startsWith('...')) node.spread = true;
     else if (entry.startsWith('[')) node.computed = true;
     else {
@@ -223,13 +226,16 @@ function closeArray(stats, source, where, open) {
   return { type: nullable, items: closeNode(stats.items, source && source.kind === 'opaque' ? source : null, where + '[]', open) };
 }
 
+/** a closed record that is null in another branch of the handler says so: type [object, null] */
+const orNull = (stats, closed) => (stats && stats.types.has('null') && closed.type === 'object' ? Object.assign({}, closed, { type: ['object', 'null'] }) : closed);
+
 /** one node of the schema from the answers seen there (stats) and the handler's text there (source) */
 function closeNode(stats, source, where, open) {
   const holdsObject = !!stats && stats.objects > 0;
   const holdsArray = !!stats && !!stats.items;
   if (holdsObject && holdsArray) return {};
   if (holdsArray) return closeArray(stats, source, where, open);
-  if (holdsObject || (source && source.kind === 'object')) return closeObject(holdsObject ? stats : null, source, where, open);
+  if (holdsObject || (source && source.kind === 'object')) return orNull(stats, closeObject(holdsObject ? stats : null, source, where, open));
   return leafSchema(stats);
 }
 

@@ -32,7 +32,6 @@ const ALLOWED = {
   'service.js /:chit_id': 'one service chit',
   'crm.js /parties/:id': 'one party',
   'definitions.js /:id': 'one definition and its versions',
-  'entities.js /me': 'the caller\'s own entity bundle',
   'entities.js /usage': 'one entity\'s usage summary',
   'entities.js /constitutions': 'the fixed constitution vocabulary of the installation',
   'assist.js /regions': 'the fixed region vocabulary (region_layer)',

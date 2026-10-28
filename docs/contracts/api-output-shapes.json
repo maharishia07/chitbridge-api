@@ -838,6 +838,924 @@
     "url": "/api/assist/whoami"
    }
   },
+  "GET /api/entities/entitlements": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "plan",
+     "name",
+     "sellable",
+     "limited",
+     "features",
+     "quotas",
+     "vertical",
+     "entity_kind",
+     "envelope",
+     "enforced",
+     "note"
+    ],
+    "properties": {
+     "plan": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "sellable": {
+      "type": "boolean"
+     },
+     "limited": {
+      "type": "boolean"
+     },
+     "features": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "quotas": {
+      "type": "object"
+     },
+     "vertical": {
+      "type": "string"
+     },
+     "entity_kind": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "envelope": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "enforced": {
+      "type": "boolean"
+     },
+     "note": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 7,
+   "open": [
+    {
+     "path": "quotas",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    },
+    {
+     "path": "envelope",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/entitlements"
+   }
+  },
+  "GET /api/entities/header": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "business",
+     "licences",
+     "trade_ready"
+    ],
+    "properties": {
+     "business": {
+      "type": "object"
+     },
+     "licences": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "trade_ready": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 4,
+   "open": [
+    {
+     "path": "business",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "licences[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "trade_ready",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/header"
+   }
+  },
+  "GET /api/entities/me": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "entity",
+     "capabilities",
+     "capabilities_debug",
+     "governance"
+    ],
+    "properties": {
+     "entity": {
+      "type": "object"
+     },
+     "capabilities": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "capabilities_debug": {
+      "type": "string"
+     },
+     "governance": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "included": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 7,
+   "open": [
+    {
+     "path": "entity",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "governance",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    },
+    {
+     "path": "included",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/me"
+   }
+  },
+  "GET /api/entities/me/can-see-costs": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "can_see_costs",
+     "is_owner",
+     "may_set_rate"
+    ],
+    "properties": {
+     "can_see_costs": {
+      "type": "boolean"
+     },
+     "is_owner": {
+      "type": "boolean"
+     },
+     "may_set_rate": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [],
+   "example": {
+    "url": "/api/entities/me/can-see-costs"
+   }
+  },
+  "GET /api/entities/mis": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "at",
+     "other_population",
+     "populations",
+     "headline",
+     "by_kind",
+     "by_vertical",
+     "by_plan",
+     "by_visibility",
+     "by_entity_visibility",
+     "by_supplies",
+     "by_position",
+     "by_class",
+     "joined_by_month",
+     "counts_wired",
+     "counts_error",
+     "rows",
+     "matched",
+     "controls",
+     "blind"
+    ],
+    "properties": {
+     "at": {
+      "type": "string"
+     },
+     "other_population": {
+      "type": "number"
+     },
+     "populations": {
+      "type": "array",
+      "items": {}
+     },
+     "headline": {
+      "type": "object",
+      "required": [
+       "identities",
+       "customers",
+       "active_30d"
+      ],
+      "properties": {
+       "identities": {
+        "type": "number"
+       },
+       "customers": {
+        "type": "number"
+       },
+       "active_30d": {
+        "type": "number"
+       }
+      },
+      "additionalProperties": false
+     },
+     "by_kind": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "by_vertical": {
+      "type": "object"
+     },
+     "by_plan": {
+      "type": "object"
+     },
+     "by_visibility": {
+      "type": "object"
+     },
+     "by_entity_visibility": {
+      "type": "object"
+     },
+     "by_supplies": {
+      "type": "object"
+     },
+     "by_position": {
+      "type": "object"
+     },
+     "by_class": {
+      "type": "object"
+     },
+     "joined_by_month": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "counts_wired": {
+      "type": "boolean"
+     },
+     "counts_error": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "rows": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "matched": {
+      "type": "number"
+     },
+     "controls": {
+      "type": "object",
+      "required": [
+       "sortable",
+       "standings",
+       "applied",
+       "presets",
+       "filters",
+       "searches",
+       "positions"
+      ],
+      "properties": {
+       "sortable": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "standings": {},
+       "applied": {
+        "type": "object",
+        "required": [
+         "sort",
+         "dir",
+         "q",
+         "kind",
+         "vertical",
+         "plan",
+         "position",
+         "ownership",
+         "population",
+         "live_population",
+         "standing",
+         "supplies",
+         "visibility",
+         "entity_visibility",
+         "limit",
+         "offset"
+        ],
+        "properties": {
+         "sort": {
+          "type": "string"
+         },
+         "dir": {
+          "type": "string"
+         },
+         "q": {
+          "type": "string"
+         },
+         "kind": {
+          "type": "string"
+         },
+         "vertical": {
+          "type": "string"
+         },
+         "plan": {
+          "type": "string"
+         },
+         "position": {
+          "type": "string"
+         },
+         "ownership": {
+          "type": "string"
+         },
+         "population": {
+          "type": "string"
+         },
+         "live_population": {
+          "type": "string"
+         },
+         "standing": {
+          "type": "string"
+         },
+         "supplies": {
+          "type": "string"
+         },
+         "visibility": {
+          "type": "string"
+         },
+         "entity_visibility": {
+          "type": "string"
+         },
+         "limit": {
+          "type": "number"
+         },
+         "offset": {
+          "type": "number"
+         }
+        },
+        "additionalProperties": false
+       },
+       "presets": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "required": [
+          "key",
+          "label",
+          "sort",
+          "dir"
+         ],
+         "properties": {
+          "key": {
+           "type": "string"
+          },
+          "label": {
+           "type": "string"
+          },
+          "sort": {
+           "type": "string"
+          },
+          "dir": {
+           "type": "string"
+          }
+         },
+         "additionalProperties": false
+        }
+       },
+       "filters": {
+        "type": "object",
+        "required": [
+         "kind",
+         "vertical",
+         "plan",
+         "visibility",
+         "entity_visibility",
+         "supplies"
+        ],
+        "properties": {
+         "kind": {
+          "type": "array",
+          "items": {}
+         },
+         "vertical": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "plan": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "visibility": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "entity_visibility": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "supplies": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         }
+        },
+        "additionalProperties": false
+       },
+       "searches": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "positions": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      },
+      "additionalProperties": false
+     },
+     "blind": {
+      "type": "object",
+      "required": [
+       "tables",
+       "why"
+      ],
+      "properties": {
+       "tables": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "why": {
+        "type": "string"
+       }
+      },
+      "additionalProperties": false
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 3,
+   "open": [
+    {
+     "path": "by_kind[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_vertical",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_plan",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_visibility",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_entity_visibility",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_supplies",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_position",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_class",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "joined_by_month[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "rows[]",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/mis"
+   }
+  },
+  "GET /api/entities/policy": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "flags",
+     "country",
+     "schema",
+     "bound",
+     "bound_schema",
+     "may"
+    ],
+    "properties": {
+     "flags": {
+      "type": "object"
+     },
+     "country": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "schema": {
+      "type": "object"
+     },
+     "bound": {
+      "type": "object"
+     },
+     "bound_schema": {
+      "type": "object"
+     },
+     "may": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 4,
+   "open": [
+    {
+     "path": "flags",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    },
+    {
+     "path": "schema",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "bound",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "bound_schema",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/policy"
+   }
+  },
+  "GET /api/entities/populations": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "populations"
+    ],
+    "properties": {
+     "populations": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "desk_candidates": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "why": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "populations[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "desk_candidates[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/populations"
+   }
+  },
+  "GET /api/entities/routing": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "kinds",
+     "folders",
+     "people",
+     "teams"
+    ],
+    "properties": {
+     "kinds": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "kind",
+        "label",
+        "hint",
+        "folder_id",
+        "assignee_actor_id",
+        "route_to_entity_id"
+       ],
+       "properties": {
+        "kind": {
+         "type": "string"
+        },
+        "label": {
+         "type": "string"
+        },
+        "hint": {
+         "type": "string"
+        },
+        "folder_id": {},
+        "assignee_actor_id": {},
+        "route_to_entity_id": {
+         "type": [
+          "string",
+          "null"
+         ]
+        }
+       },
+       "additionalProperties": false
+      }
+     },
+     "folders": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "people": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "teams": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 7,
+   "open": [
+    {
+     "path": "folders[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "people[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "teams[]",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/routing"
+   }
+  },
+  "GET /api/entities/search": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "results",
+     "count"
+    ],
+    "properties": {
+     "results": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "count": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 2,
+   "open": [
+    {
+     "path": "results[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/search?q=shop"
+   }
+  },
+  "GET /api/entities/sides": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "lean",
+     "use",
+     "impact"
+    ],
+    "properties": {
+     "lean": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "use": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "impact": {
+      "type": [
+       "object",
+       "null"
+      ]
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 4,
+   "open": [
+    {
+     "path": "lean[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "use[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "impact",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/sides"
+   }
+  },
+  "GET /api/entities/usage": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "ok",
+     "window_days",
+     "counts",
+     "total_cost_usd",
+     "rate_card",
+     "daily",
+     "by_meter",
+     "recent"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     },
+     "window_days": {
+      "type": "number"
+     },
+     "counts": {
+      "type": "object",
+      "required": [
+       "billed"
+      ],
+      "properties": {
+       "billed": {
+        "type": "number"
+       }
+      },
+      "additionalProperties": false
+     },
+     "total_cost_usd": {
+      "type": "number"
+     },
+     "rate_card": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "daily": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "by_meter": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "recent": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "not_enabled": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 7,
+   "open": [
+    {
+     "path": "daily[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "by_meter[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "recent[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/entities/usage"
+   }
+  },
   "POST /api/assist": {
    "status": "200",
    "schema": {
@@ -1217,6 +2135,16 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/entities/entitlements": "open at quotas — a value passed through (a name: its keys are not written in the handler); envelope — a value passed through (a name: its keys are not written in the handler)",
+  "GET /api/entities/header": "open at business — a value passed through (an expression: its keys are not written in the handler); licences[] — a value passed through (an expression: its keys are not written in the handler); trade_ready — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/entities/me": "open at entity — a value passed through (an expression: its keys are not written in the handler); governance — a value passed through (a name: its keys are not written in the handler); included — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/entities/mis": "open at by_kind[] — a value passed through (an expression: its keys are not written in the handler); by_vertical — a value passed through (an expression: its keys are not written in the handler); by_plan — a value passed through (an expression: its keys are not written in the handler); by_visibility — a value passed through (an expression: its keys are not written in the handler); by_entity_visibility — a value passed through (an expression: its keys are not written in the handler); by_supplies — a value passed through (an expression: its keys are not written in the handler); by_position — a value passed through (an expression: its keys are not written in the handler); by_class — a value passed through (an expression: its keys are not written in the handler); joined_by_month[] — a value passed through (an expression: its keys are not written in the handler); rows[] — a value passed through (a name: its keys are not written in the handler)",
+  "GET /api/entities/policy": "open at flags — a value passed through (a name: its keys are not written in the handler); schema — a value passed through (an expression: its keys are not written in the handler); bound — a value passed through (an expression: its keys are not written in the handler); bound_schema — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/entities/populations": "open at populations[] — a value passed through (an expression: its keys are not written in the handler); desk_candidates[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/entities/routing": "open at folders[] — a value passed through (an expression: its keys are not written in the handler); people[] — a value passed through (an expression: its keys are not written in the handler); teams[] — a value passed through (a name: its keys are not written in the handler)",
+  "GET /api/entities/search": "open at results[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/entities/sides": "open at lean[] — a value passed through (an expression: its keys are not written in the handler); use[] — a value passed through (an expression: its keys are not written in the handler); impact — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/entities/usage": "open at daily[] — a value passed through (an expression: its keys are not written in the handler); by_meter[] — a value passed through (an expression: its keys are not written in the handler); recent[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
@@ -1234,10 +2162,16 @@
   "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "PATCH /api/entities/me/exposure": "open at exposure — a value passed through (an expression: its keys are not written in the handler)",
+  "PATCH /api/entities/me/locale": "open at (answer) — never seen and not written in the handler",
+  "PATCH /api/entities/me/prefs/:kind": "open at (answer) — never seen and not written in the handler",
+  "PATCH /api/entities/policy": "open at flags — a value passed through (an expression: its keys are not written in the handler)",
   "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
   "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/entities/register": "open at (answer) — never seen and not written in the handler",
+  "POST /api/entities/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
