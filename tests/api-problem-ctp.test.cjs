@@ -58,6 +58,8 @@ function rowsFor(sql) {
     if (world.peerThrows) throw new Error(SECRET_SQL);
     return { rows: world.peer ? [world.peer] : [] };
   }
+  /* RAIL-138 (b): the sender's id and bridge id are looked up here too; this world's sender is a party of the peer with no row here */
+  if (/SELECT identity_id FROM identities WHERE (identity_id|bridge_id) = \$1$/.test(sql)) return { rows: [] };
   if (/FROM identities/.test(sql)) return { rows: world.to ? [world.to] : [] };
   if (/f_ctp_may_deliver/.test(sql)) {
     if (world.crossThrows) throw new Error(SECRET_SQL);
@@ -83,7 +85,7 @@ function installStubs() {
     open: () =>
       world.openWhy
         ? { ok: false, why: world.openWhy }
-        : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: 'sender-1' }), header: {} }
+        : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: '22222222-2222-4222-8222-222222222222', sender_entity_bridge_id: 'CBSEND0001' }), header: {} }
   });
   mock('lib/ctpquery', { open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
   mock('lib/mint', {
