@@ -63,14 +63,16 @@ function recorder() {
 }
 
 /**
- * writeEvidence(file, mine, proved) — merge this run into the evidence file: for the routes `mine(route)` names, foreign_id_404 is true when the run showed it and
- * absent when it did not (a route that stops holding loses its evidence); every other route and every other column is kept as it was, in its place.
+ * writeEvidence(file, mine, proved, columns?) — merge this run into the evidence file: for the routes `mine(route)` names, each of `columns` (default foreign_id_404) is true when the run
+ * showed it and absent when it did not (a route that stops holding loses its evidence); every other route and every other column is kept as it was, in its place.
+ * A sweep whose own case reaches what the generated one cannot (an answer behind a row the stand-in always returns) names its column here too, e.g. ['foreign_id_404', 'output_allowlist'].
  */
-function writeEvidence(file, mine, proved) {
+function writeEvidence(file, mine, proved, columns) {
+  const kept = columns || [COLUMN];
   const onDisk = JSON.parse(fs.readFileSync(file, 'utf8'));
   const routes = onDisk.routes || {};
   Object.keys(routes).filter(mine).forEach((route) => {
-    delete routes[route][COLUMN];
+    kept.forEach((column) => delete routes[route][column]);
     if (!Object.keys(routes[route]).length) delete routes[route];
   });
   Object.keys(proved).forEach((route) => {
@@ -80,10 +82,12 @@ function writeEvidence(file, mine, proved) {
   fs.writeFileSync(file, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
 }
 
-/** the routes of the evidence file that this run owns and shows true, for the check that the committed file says what the run showed */
-function evidenceOf(file, mine) {
+/** the routes of the evidence file that this run owns and shows true, for the check that the committed file says what the run showed (the same columns writeEvidence was given) */
+function evidenceOf(file, mine, columns) {
+  const kept = columns || [COLUMN];
   const routes = JSON.parse(fs.readFileSync(file, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => mine(route) && routes[route][COLUMN]).sort().map((route) => [route, { [COLUMN]: true }]));
+  const held = (route) => Object.fromEntries(kept.filter((column) => routes[route][column]).map((column) => [column, true]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => mine(route) && Object.keys(held(route)).length).sort().map((route) => [route, held(route)]));
 }
 
 module.exports = { comparable, foreignIdCase, runCases, recorder, writeEvidence, evidenceOf, COLUMN };

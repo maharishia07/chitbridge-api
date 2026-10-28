@@ -29,7 +29,6 @@ const ALLOWED = {
   'adopt.js /:chit_id': 'one chit',
   'chits.js /:chit_id': 'one chit and its lines',
   'chits.js /:chit_id/diagnosis': 'one chit\'s diagnosis',
-  'service.js /:chit_id': 'one service chit',
   'crm.js /parties/:id': 'one party',
   'definitions.js /:id': 'one definition and its versions',
   'entities.js /me': 'the caller\'s own entity bundle',

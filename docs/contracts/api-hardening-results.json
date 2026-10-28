@@ -4339,8 +4339,7 @@
   },
   "GET /api/service/:chit_id": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": true
@@ -4348,12 +4347,10 @@
   },
   "PUT /api/service/:chit_id": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": true
@@ -4361,8 +4358,7 @@
   },
   "POST /api/service/:chit_id/respond": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -4373,36 +4369,18 @@
   },
   "POST /api/service/:chit_id/resolve": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "POST /api/service/:chit_id/pause": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
-   },
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
-   }
-  },
-  "POST /api/service/:chit_id/pause/:pause_id/end": {
-   "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4412,18 +4390,26 @@
     "pass": true
    }
   },
-  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
+   }
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": true
+   },
+   "foreign_id_404": {
+    "pass": true
    }
   },
   "GET /api/definitions": {

@@ -2837,6 +2837,78 @@
    "since": "2026-10-23"
   },
   {
+   "code": "SERVICE_ALREADY_PAUSED",
+   "status": "409",
+   "title": "Already paused",
+   "shopkeeper": "This request is already paused by you.",
+   "hint": "End that pause before starting another.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SERVICE_BAD_PRIORITY",
+   "status": "400",
+   "title": "Priority not known",
+   "shopkeeper": "That priority is not one the service clock knows.",
+   "hint": "Pick one of the priorities listed.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SERVICE_BAD_REASON",
+   "status": "400",
+   "title": "Pause reason not known",
+   "shopkeeper": "That pause reason is not one the service clock knows.",
+   "hint": "Pick one of the reasons listed.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SERVICE_BAD_RESOLUTION",
+   "status": "400",
+   "title": "Resolution not known",
+   "shopkeeper": "That way of resolving is not one the service clock knows.",
+   "hint": "Pick one of the resolutions listed.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SERVICE_NOT_MIGRATED",
+   "status": "503",
+   "title": "Service clock not ready",
+   "shopkeeper": "The service clock is not ready on this server yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SERVICE_NOT_TRACKED",
+   "status": "404",
+   "title": "Clock not started",
+   "shopkeeper": "This request has no service clock yet.",
+   "hint": "Start the service clock first.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SERVICE_OWN_CLAIM",
+   "status": "409",
+   "title": "Your own claim",
+   "shopkeeper": "You raised this pause, so the other party answers it.",
+   "hint": "Wait for the other party to accept or reject it.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SERVICE_PAUSE_NOT_OPEN",
+   "status": "409",
+   "title": "Pause already ended",
+   "shopkeeper": "That pause has already ended.",
+   "hint": "Its end time cannot be moved.",
+   "owner_area": "service",
+   "since": "2026-10-23"
+  },
+  {
    "code": "SESSION_EXPIRED",
    "status": "401",
    "title": "Session expired",

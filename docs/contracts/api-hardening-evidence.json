@@ -659,16 +659,36 @@
    "foreign_id_404": true
   },
   "GET /api/service/:chit_id": {
-   "foreign_id_404": true
-  },
-  "PUT /api/service/:chit_id": {
-   "foreign_id_404": true
-  },
-  "POST /api/service/:chit_id/respond": {
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "PUT /api/service/:chit_id": {
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/service/:chit_id/respond": {
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/service/:chit_id/pause": {
+   "strict_input": true,
+   "foreign_id_404": true
+  },
   "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "strict_input": true,
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/definitions/:id": {

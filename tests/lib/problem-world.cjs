@@ -93,7 +93,7 @@ function harness(options) {
     const realCustomer = require(path.join(here, 'middleware', 'customer-auth'));
     mock('middleware/customer-auth', (req, res, next) => (world.realAuth || world.noCustomer ? realCustomer(req, res, next) : ((req.customer = CUSTOMER), next())));
     const client = { query: async (sql, params) => rowsFor(sql, params) };
-    const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, run) => run(client), trySavepoint: async (db, run, fallback) => run(client).catch(() => (fallback === undefined ? null : fallback)), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one, one.params)) };
+    const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), onEntity: async (id, first, second) => (typeof first === 'function' ? first : second)(client), trySavepoint: async (db, run, fallback) => run(client).catch(() => (fallback === undefined ? null : fallback)), readBatch: async (id, actor, statements) => statements.map((one) => rowsFor(one.text || one, one.params)) };
     const fallback = async () => ({ rows: [], rowCount: 0 });
     const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : fallback) });
     mock('db', db);

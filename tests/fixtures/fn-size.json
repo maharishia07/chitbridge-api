@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 228,
+  "long_functions": 227,
   "worst_complexity": 183,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -448,9 +448,6 @@
     "routes/schemas.js": [
       "GET /fields",
       "PATCH /fields/:field_key"
-    ],
-    "routes/service.js": [
-      "GET /:chit_id"
     ],
     "routes/signin.js": [
       "ask",

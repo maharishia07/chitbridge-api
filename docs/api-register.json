@@ -3,21 +3,21 @@
  "stage": "2",
  "counts": {
   "routes": 633,
-  "not_started": 144,
-  "partial": 488,
+  "not_started": 137,
+  "partial": 495,
   "meets": 1,
   "columns": {
    "strict_input": {
     "applies": 344,
-    "failing": 338
+    "failing": 332
    },
    "output_allowlist": {
     "applies": 633,
-    "failing": 622
+    "failing": 615
    },
    "foreign_id_404": {
     "applies": 227,
-    "failing": 119
+    "failing": 116
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -11665,18 +11665,18 @@
    "path": "/api/service/:chit_id",
    "owner_area": "service",
    "file": "routes/service.js",
-   "line": 49,
-   "hash": "9d37f883df1e3ac1",
+   "line": 120,
+   "hash": "d9b95ee33e645969",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -11690,9 +11690,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11701,7 +11707,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/signin/devices",
@@ -26183,19 +26189,19 @@
    "path": "/api/service/:chit_id/pause",
    "owner_area": "service",
    "file": "routes/service.js",
-   "line": 245,
-   "hash": "522139faaa0ab757",
+   "line": 270,
+   "hash": "188bda5137b3474d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -26208,9 +26214,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -26219,7 +26232,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/service/:chit_id/pause/:pause_id/answer",
@@ -26227,19 +26240,19 @@
    "path": "/api/service/:chit_id/pause/:pause_id/answer",
    "owner_area": "service",
    "file": "routes/service.js",
-   "line": 327,
-   "hash": "3c27d75cf0b80028",
+   "line": 308,
+   "hash": "9683736941c6d3b4",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -26252,9 +26265,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -26263,7 +26283,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/service/:chit_id/pause/:pause_id/end",
@@ -26271,18 +26291,18 @@
    "path": "/api/service/:chit_id/pause/:pause_id/end",
    "owner_area": "service",
    "file": "routes/service.js",
-   "line": 305,
-   "hash": "fe3c0e13b88bfd3f",
+   "line": 286,
+   "hash": "babf098bbf780ae8",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26296,9 +26316,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -26307,7 +26334,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/service/:chit_id/resolve",
@@ -26315,19 +26342,19 @@
    "path": "/api/service/:chit_id/resolve",
    "owner_area": "service",
    "file": "routes/service.js",
-   "line": 215,
-   "hash": "4b363cb3e9243049",
+   "line": 214,
+   "hash": "5757ca5b8673cd58",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -26340,9 +26367,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -26351,7 +26384,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/service/:chit_id/respond",
@@ -26359,18 +26392,18 @@
    "path": "/api/service/:chit_id/respond",
    "owner_area": "service",
    "file": "routes/service.js",
-   "line": 193,
-   "hash": "cf63bbe4e1b64f1a",
+   "line": 191,
+   "hash": "a29f4afcca67a54a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26384,9 +26417,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -26395,7 +26434,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/signin/ask",
@@ -30582,18 +30621,18 @@
    "path": "/api/service/:chit_id",
    "owner_area": "service",
    "file": "routes/service.js",
-   "line": 146,
-   "hash": "208ec110ba400137",
+   "line": 169,
+   "hash": "ea8227b314743dd1",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30607,9 +30646,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -30618,7 +30663,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PUT /api/testing/cmdb/:ci",

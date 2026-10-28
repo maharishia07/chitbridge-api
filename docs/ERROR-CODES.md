@@ -264,6 +264,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SELF | 400 | Cannot connect to itself | A business cannot connect to itself. | Choose another business. | network | 2026-10-23 |
 | SENDING | varies | Sending | PENDING | - | verdict | 2026-10-22 |
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
+| SERVICE_ALREADY_PAUSED | 409 | Already paused | This request is already paused by you. | End that pause before starting another. | service | 2026-10-23 |
+| SERVICE_BAD_PRIORITY | 400 | Priority not known | That priority is not one the service clock knows. | Pick one of the priorities listed. | service | 2026-10-23 |
+| SERVICE_BAD_REASON | 400 | Pause reason not known | That pause reason is not one the service clock knows. | Pick one of the reasons listed. | service | 2026-10-23 |
+| SERVICE_BAD_RESOLUTION | 400 | Resolution not known | That way of resolving is not one the service clock knows. | Pick one of the resolutions listed. | service | 2026-10-23 |
+| SERVICE_NOT_MIGRATED | 503 | Service clock not ready | The service clock is not ready on this server yet. | Try again after the next update. | service | 2026-10-23 |
+| SERVICE_NOT_TRACKED | 404 | Clock not started | This request has no service clock yet. | Start the service clock first. | service | 2026-10-23 |
+| SERVICE_OWN_CLAIM | 409 | Your own claim | You raised this pause, so the other party answers it. | Wait for the other party to accept or reject it. | service | 2026-10-23 |
+| SERVICE_PAUSE_NOT_OPEN | 409 | Pause already ended | That pause has already ended. | Its end time cannot be moved. | service | 2026-10-23 |
 | SESSION_EXPIRED | 401 | Session expired | PENDING | - | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | PENDING | - | identity-auth | 2026-10-22 |
 | SESSION_UPGRADE | varies | Session upgrade | PENDING | - | auth | 2026-10-22 |

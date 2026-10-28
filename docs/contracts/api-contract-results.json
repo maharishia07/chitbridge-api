@@ -914,6 +914,14 @@
     400
    ]
   },
+  "GET /api/service/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/tax/gstr": {
    "cases": 2,
    "failed": 0,
@@ -2594,6 +2602,46 @@
     400
    ]
   },
+  "POST /api/service/:chit_id/pause": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "cases": 7,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/service/:chit_id/respond": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/tax/compute": {
    "cases": 2,
    "failed": 0,
@@ -3148,6 +3196,14 @@
   },
   "PUT /api/products/:id/status": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PUT /api/service/:chit_id": {
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

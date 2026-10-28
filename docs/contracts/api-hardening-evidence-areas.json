@@ -48,6 +48,10 @@
   "GET /api/repeat/:id": {
    "foreign_id_404": true
   },
+  "GET /api/service/:chit_id": {
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
   "GET /api/testing/cmdb/:ci": {
    "foreign_id_404": true
   },
@@ -147,6 +151,23 @@
   "POST /api/repeat/:id/skip": {
    "foreign_id_404": true
   },
+  "POST /api/service/:chit_id/pause": {
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "foreign_id_404": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "foreign_id_404": true
+  },
+  "POST /api/service/:chit_id/respond": {
+   "foreign_id_404": true
+  },
   "PUT /api/actors/:id/delegate": {
    "foreign_id_404": true
   },
@@ -157,6 +178,9 @@
    "foreign_id_404": true
   },
   "PUT /api/connections/:id/respond": {
+   "foreign_id_404": true
+  },
+  "PUT /api/service/:chit_id": {
    "foreign_id_404": true
   }
  }

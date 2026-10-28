@@ -221,6 +221,8 @@ const INFRA_LIBS = [
   'chits-input.js',
   /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'orders-contract.js',
+  /* API-4 sweep, the service clock: the contract of routes/service.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform; the clock itself is lib/sla.js. (2026-10-23) */
+  'service-contract.js',
   /* API-4 sweep, the CRM: the contract of the routes/crm.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-crm.test.cjs */
   'crm-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */

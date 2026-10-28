@@ -39504,6 +39504,850 @@
      }
     }
    ]
+  },
+  "GET /api/service/:chit_id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "get-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     }
+    },
+    {
+     "scenario": "get-reads-throw",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "stranger-reads",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "pause-already",
+     "status": 409,
+     "body_keys": {
+      "error": "Already paused",
+      "message": "This request is already paused by you — end that pause before starting another."
+     },
+     "fixture": {
+      "error": "Already paused",
+      "message": "This request is already paused by you — end that pause before starting another."
+     }
+    },
+    {
+     "scenario": "pause-bad-reason",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad reason",
+      "message": "reason must be one of: waiting_on_counterparty, waiting_on_third_party, waiting_on_parts, outside_service_hours, scheduled, other"
+     },
+     "fixture": {
+      "error": "Bad reason",
+      "message": "reason must be one of: waiting_on_counterparty, waiting_on_third_party, waiting_on_parts, outside_service_hours, scheduled, other"
+     }
+    },
+    {
+     "scenario": "pause-write-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "pause-chit-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "answer-own-claim",
+     "status": 409,
+     "body_keys": {
+      "error": "Your own claim",
+      "message": "You raised this pause — the other party is the one who accepts or rejects it."
+     },
+     "fixture": {
+      "error": "Your own claim",
+      "message": "You raised this pause — the other party is the one who accepts or rejects it."
+     }
+    },
+    {
+     "scenario": "answer-wrong-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "answer-write-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "answer-chit-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "end-already-closed",
+     "status": 409,
+     "body_keys": {
+      "error": "Not open",
+      "message": "That pause is already ended — its end time cannot be moved."
+     },
+     "fixture": {
+      "error": "Not open",
+      "message": "That pause is already ended — its end time cannot be moved."
+     }
+    },
+    {
+     "scenario": "end-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "resolve-bad-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad resolution",
+      "message": "resolution_code must be one of: fixed, workaround_applied, not_reproducible, no_fault_found, withdrawn_by_requester, rejected, duplicate"
+     },
+     "fixture": {
+      "error": "Bad resolution",
+      "message": "resolution_code must be one of: fixed, workaround_applied, not_reproducible, no_fault_found, withdrawn_by_requester, rejected, duplicate"
+     }
+    },
+    {
+     "scenario": "resolve-not-tracked",
+     "status": 404,
+     "body_keys": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     },
+     "fixture": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     }
+    },
+    {
+     "scenario": "resolve-write-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/respond": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "respond-not-tracked",
+     "status": 404,
+     "body_keys": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     },
+     "fixture": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     }
+    },
+    {
+     "scenario": "respond-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     }
+    }
+   ]
+  },
+  "PUT /api/service/:chit_id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "put-bad-priority",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad priority",
+      "message": "priority must be one of: P1, P2, P3, P4"
+     },
+     "fixture": {
+      "error": "Bad priority",
+      "message": "priority must be one of: P1, P2, P3, P4"
+     }
+    },
+    {
+     "scenario": "put-wrong-kind",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "impact",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "impact",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "put-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock needs b147 on this environment."
+     }
+    },
+    {
+     "scenario": "put-write-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
