@@ -89394,6 +89394,31 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-13T06:13:10Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/round-trips-volume.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SPD-17: THE VOLUME CHECK FAILS A NEW N+1, TRIPS OVER THE BASELINE AND P95 OVER ITS CEILING.",
+   "claim": "SPD-17: THE VOLUME CHECK FAILS A NEW N+1, TRIPS OVER THE BASELINE AND P95 OVER ITS CEILING.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 45 lines. Run: node chitbridge-api/tests/round-trips-volume.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T12:00:00+05:30"
   }
  ]
 }
