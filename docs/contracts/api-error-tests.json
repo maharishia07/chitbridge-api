@@ -427,10 +427,12 @@
   500
  ],
  "GET /api/chits/folder": [
+  400,
   401,
   500
  ],
  "GET /api/chits/inbox": [
+  400,
   401,
   500
  ],
@@ -462,6 +464,7 @@
   500
  ],
  "GET /api/chits/sent": [
+  400,
   401,
   500
  ],

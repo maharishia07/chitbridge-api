@@ -90,6 +90,7 @@ const billPrivacy = require('../lib/bill-privacy');
 const entityId = (req) => auth.entityOf(req);
 /** a request word picks a value from a fixed map only if the map OWNS that key, else the fallback: `sort=constructor` reads Object's
  *  own member and used to reach the SQL as a function's source (500). RAIL-135; an unknown word already fell back the same way. */
+const CBChart = require('../lib/chart'); /* dayOf: the one real-day rule */
 const pickOwn = (map, word, fallback) => (typeof word === 'string' && Object.prototype.hasOwnProperty.call(map, word) ? map[word] : fallback);
 /* "Do I hold a copy of this chit?" — the one probe /amend, /reprice, /costs and /assign-lines ask before writing (RAIL-128) */
 const holdsCopy = async (entity_id, chit_id) =>
@@ -2590,7 +2591,20 @@ function assignedToWhere(req, params) {
   return ` AND cs.assigned_to_actor_id = $${params.length}`;
 }
 
+/** a real day (YYYY-MM-DD, chart.dayOf) or a full timestamp that starts with one */
+const isRealDateWord = (word) => (/^\d{4}-\d{2}-\d{2}$/.test(word) ? CBChart.dayOf(word) !== null : /^\d{4}-\d{2}-\d{2}T/.test(word) && Number.isFinite(Date.parse(word)));
+
+/** ?date_from= / ?date_to= that is neither a real day (YYYY-MM-DD, chart.dayOf) nor a full timestamp → a 400 naming the field (Q20, laptop1
+ *  2026-10-28: refuse, never ignore: a dropped filter returns the wrong list). 2026-02-30 used to reach the date cast and answer 500 (RAIL-135). */
+function refuseUnrealDates(req) {
+  for (const field of ['date_from', 'date_to']) {
+    const given = req.query[field];
+    if (given && !isRealDateWord(String(given).trim())) throw Object.assign(new Error(`That ${field === 'date_from' ? 'from' : 'to'} date is not a real day. Use YYYY-MM-DD.`), { status: 400, field });
+  }
+}
+
 function chitFilters(req, where, params) {
+  refuseUnrealDates(req);
   /**
    * ⚠️ A FOLDER IS A FILTER ON THIS LIST, NOT A SECOND SCREEN. Athi, 2026-08-10: *"we just pass the parameter as
    * folder name and filter data accordingly, so the same panel works for each folder."*
@@ -2737,7 +2751,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Sent list error:', err.message);
-    problem(req, res, failed(err, req, 'Failed to get sent items'));
+    problem(req, res, faultOf(err, req, 'Failed to get sent items', { words: true }));
   }
 });
 
@@ -2815,7 +2829,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Folder error:', err.message);
-    problem(req, res, failed(err, req, 'Failed to get folder'));
+    problem(req, res, faultOf(err, req, 'Failed to get folder', { words: true }));
   }
 });
 
@@ -3074,7 +3088,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
     ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
   } catch (err) {
     console.error('Inbox error:', err.message);
-    problem(req, res, failed(err, req, 'Failed to get inbox'));
+    problem(req, res, faultOf(err, req, 'Failed to get inbox', { words: true }));
   }
 });
 
