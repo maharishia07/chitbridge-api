@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 477,
+  "meets": 14,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -8231,11 +8231,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "cf1d3b18bbcc525b"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/ai-usage",
@@ -8280,11 +8280,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "cac294fecc77cde1"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/boilerplate/:key",
@@ -8379,11 +8379,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "711afb668547dccc"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/country-setup",
@@ -8428,11 +8428,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "e0cf35dd9ae94035"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/entities/:id",
@@ -8529,11 +8529,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "cf7acc0d7f0e5981"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/journey",
@@ -8579,11 +8579,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "d1b9aff13d1951ad"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/lanes",
@@ -8629,11 +8629,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "ab486ab1278e5fba"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/profile",
@@ -8678,11 +8678,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "7ec19f2e13178f37"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/profile/path",
@@ -8727,11 +8727,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "40a9b75152f469b7"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/profile/readiness",
@@ -8776,11 +8776,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "b22fd94767ce796d"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/readiness",
@@ -8826,11 +8826,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "952b64eb711a3a48"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/readiness/:bridge_id",
@@ -9026,11 +9026,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "2e3391304f83f3aa"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/vault-schema",
@@ -9075,11 +9075,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#460",
     "lifecycle": "stable",
     "stale_since": "4f285b6f37f32fe8"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/identity/documents",
