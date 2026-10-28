@@ -136,6 +136,8 @@ const FOLDER_ROW = (extra) => Object.assign({ folder_id: PARTY, name: 'Mayur', s
 /** a folder row as the folders list selects it (the folder table: migrations/000_baseline_2026-10-21.sql + b133's scope + b275's kind), count as the database answers a COUNT: text */
 const FOLDER_FILED = { folder_id: PARTY, parent_id: null, name: 'Mayur', sort: 1, scope: 'task', kind: 'filed', count: '2' };
 const FOLDER_VIEW = { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'Late bills', sort: 0, scope: null, kind: 'view', count: '0' };
+/** folder.sort is `integer DEFAULT 0` with no NOT NULL (migrations/000_baseline): a row can hold NULL */
+const FOLDER_NO_SORT = { folder_id: '99999999-9999-4999-8999-999999999999', parent_id: null, name: 'Unsorted', sort: null, scope: 'order', kind: 'filed', count: '0' };
 const AT = '2026-10-01T10:00:00.000Z';
 /** every term of the rule vocabulary (lib/match KEYS), so a rule's when is seen with the whole of what a rule may hold */
 const WHEN_FULL = Object.fromEntries(Object.entries(require(path.join(HERE, 'lib', 'match')).KEYS).map(([key, kind]) => [key, { text: 'rice', exact: 'invoice', number: 5, bool: true }[kind]]));
@@ -146,6 +148,8 @@ const RULE_FROM_ONLY = { rule_id: '88888888-8888-4888-8888-888888888888', folder
 const RULE_BARE = { rule_id: '33333333-3333-4333-8333-333333333333', folder_id: PARTY, name: null, when: { doc: 'invoice' }, enabled: false, sort: 0, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
 /** a message of the inbox as its statement selects it (chit_messages + the chit's header, line and status) */
 const MESSAGE_FULL = { message_id: PARTY, chit_id: PARTY, line_id: PARTY, sender_display_name: 'Asha', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Ring me', created_at: AT, msg_type: 'query', read_at: AT, kept: true, manual_subject: 'Rice', auto_subject: 'Order', track: 'order', particulars: 'Ponni 24 kg', chit_status: 'pending' };
+/** a product-subject message: chit_messages_subject_ck lets chit_id and line_id be NULL, and the inbox query does not filter it out; the chit joins find nothing */
+const MESSAGE_PRODUCT = { message_id: '77777777-7777-4777-8777-777777777777', chit_id: null, line_id: null, sender_display_name: 'Asha', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Is it in stock', created_at: AT, msg_type: 'query', read_at: null, kept: false, manual_subject: null, auto_subject: null, track: 'task', particulars: null, chit_status: null };
 const MESSAGE_BARE = { message_id: '33333333-3333-4333-8333-333333333333', chit_id: PARTY, line_id: null, sender_display_name: 'Ravi', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Hello', created_at: AT, msg_type: 'info', read_at: null, kept: false, manual_subject: null, auto_subject: null, track: 'task', particulars: null, chit_status: null };
 /** a copy of a chit as lib/select rows hands it to the measure (the status words are lib/rail-actions') */
 const CHIT = (extra) => Object.assign({ chit_id: PARTY, current_status: 'pending', direction: 'received', folder_id: null, created_at: '2026-09-01T10:00:00.000Z', read_at: null, touched_at: null, open_disputes: 0, resolved_disputes: 0, value: '100', currency: 'INR', assigned_to_actor_id: null, doc_kind: 'invoice', counterparty_id: PARTY, counterparty_name: 'Asha Traders' }, extra);
@@ -158,7 +162,7 @@ const CHITS = [
 const STRAY = CHIT({ chit_id: '66666666-6666-4666-8666-666666666666', folder_id: '77777777-7777-4777-8777-777777777777' });
 /** a line of the worklist as its statement selects it (chit_line_assignment + chit_line + the chit's header and status) */
 const WORK_ROW = { assignee_actor_id: '44444444-4444-4444-8444-444444444444', assignee_name: 'Murugan', assignee_type: 'actor', task: 'Pack', due_date: '2026-10-02', note: 'n', chit_id: PARTY, line_id: PARTY, seq: 2, state: 'doing', particulars: 'Ponni 24 kg', quantity: '10', unit: 'kg', removed: false, comment: 'c', asked_as: 'usual rice', raw_phrase: 'the usual rice', needs_human: true, delivered: '4', chit_status: 'pending', manual_subject: 'Rice', auto_subject: 'Order', sender_entity_display_name: 'Asha Traders' };
-const WORK_BARE = { assignee_actor_id: null, assignee_name: null, assignee_type: null, task: null, due_date: null, note: null, chit_id: PARTY, line_id: '33333333-3333-4333-8333-333333333333', seq: 0, state: 'open', particulars: 'Dal', quantity: null, unit: null, removed: false, comment: null, asked_as: null, raw_phrase: null, needs_human: false, delivered: null, chit_status: null, manual_subject: null, auto_subject: null, sender_entity_display_name: null };
+const WORK_BARE = { assignee_actor_id: null, assignee_name: null, assignee_type: null, task: null, due_date: null, note: null, chit_id: PARTY, line_id: '33333333-3333-4333-8333-333333333333', seq: 0, state: 'open', particulars: null, quantity: null, unit: null, removed: false, comment: null, asked_as: null, raw_phrase: null, needs_human: false, delivered: null, chit_status: null, manual_subject: null, auto_subject: null, sender_entity_display_name: null };
 /** a system folder as lib/folder-views systemFolders builds it */
 const SYSTEM_ROW = (extra) => Object.assign({ folder_id: PARTY, parent_id: null, name: 'Bills', code: 'B-2100', kind: 'view', system: true, scope: null, side: 'received', ledger: null, sort: 0, count: 0, total: 0 }, extra);
 const withChits = (rows) => ({ select: { rows: async () => rows } });
@@ -169,11 +173,13 @@ const READY = [
   X('folders-ready', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: withChits(CHITS) }),
   /* lib/folder-inventory ledgerOf answers { code, name, role }, { code, name, group } (a group of the chart, e.g. E-6000) or null: all three are seen */
   X('folders-ledger-role-group-null', 'GET ' + F, 200, { patch: { views: { systemFolders: async () => [SYSTEM_ROW({ ledger: { code: '2100', name: 'Suppliers', role: 'creditors' } }), SYSTEM_ROW({ code: 'E-6000', ledger: { code: '6000', name: 'Expenses', group: 'expenses' } }), SYSTEM_ROW({ code: 'R-1', ledger: null })] } } }),
+  X('folders-sort-not-set', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_NO_SORT]) } }),
   X('folders-view-count-fails', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: { views: { members: async () => { throw new Error(SECRET_SQL); } } } }),
   X('folders-past-the-cap', 'GET ' + F, 200, { url: F + '?limit=9999&page=2', setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED]) } }),
   X('rules-ready', 'GET ' + F + '/rules', 200, { setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY]) } }),
   X('rules-past-the-cap', 'GET ' + F + '/rules', 200, { url: F + '/rules?limit=9999&page=2', setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL]) } }),
   X('messages-ready', 'GET ' + F + '/messages', 200, { setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_FULL, MESSAGE_BARE]) } }),
+  X('messages-about-a-product', 'GET ' + F + '/messages', 200, { setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_PRODUCT]) } }),
   X('messages-past-the-cap', 'GET ' + F + '/messages', 200, { url: F + '/messages?all=1&limit=9999&page=2', setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_FULL]) } }),
   X('badge-count-of-two', 'GET ' + F + '/messages', 200, { url: F + '/messages?count=true', setup: { sqlRows: answering(/count\(\*\)::int AS n FROM chit_messages/, [{ n: 2 }]) } }),
   X('worklist-ready', 'GET ' + F + '/worklist', 200, { url: F + '/worklist?due_on=2026-10-02&actor_id=' + PARTY, setup: { sqlRows: answering(/WITH latest AS/, [WORK_ROW, WORK_BARE]) } }),

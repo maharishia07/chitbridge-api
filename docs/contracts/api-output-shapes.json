@@ -932,7 +932,10 @@
          "additionalProperties": false
         },
         "sort": {
-         "type": "number"
+         "type": [
+          "number",
+          "null"
+         ]
         },
         "count": {},
         "total": {
@@ -963,7 +966,7 @@
     },
     "additionalProperties": false
    },
-   "observed": 9,
+   "observed": 10,
    "open": [],
    "example": {
     "url": "/api/folders"
@@ -1106,7 +1109,10 @@
          "type": "string"
         },
         "chit_id": {
-         "type": "string"
+         "type": [
+          "string",
+          "null"
+         ]
         },
         "line_id": {
          "type": [
@@ -1187,7 +1193,7 @@
     },
     "additionalProperties": false
    },
-   "observed": 8,
+   "observed": 9,
    "open": [],
    "example": {
     "url": "/api/folders/messages"
@@ -1586,7 +1592,10 @@
             "type": "number"
            },
            "particulars": {
-            "type": "string"
+            "type": [
+             "string",
+             "null"
+            ]
            },
            "quantity": {
             "type": [
