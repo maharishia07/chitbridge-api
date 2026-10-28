@@ -12,6 +12,12 @@
  * ⚠️ DETERMINISTIC BY DEFAULT. A pack passes its FIXED seed; CI runs exactly that, so a red is a red and not a dice roll. A fresh seed
  * is on demand only: GORILLA_SEED=<n> (or "random"). GORILLA_N=<n> sets how many records (CI default 200; the nightly 2,000).
  * GORILLA_ONLY=<i> replays ONE record of the given seed — every failure prints the exact line to paste to do that.
+ * GORILLA_BUDGET_MS=<ms> (or the pack's budgetMs) fails a GORILLA-TIME case when the run takes longer, so a slow pack is a red, not a slow CI.
+ * GORILLA_JSON=<file> writes every failing index per check (the nightly run keeps them as fixed cases).
+ *
+ * ⚠️ A RECORD IS PURE OF ITS SEED; THE WORLD IS NOT. make() must not read the clock or the run tag (a pack derives them from the record's
+ * index), but records share the pack's shop, so stock and numbering carry from one to the next. A check must hold whatever came before;
+ * a pack that needs a clean world per record gives hammer a before(record, i) that sets it up and hands send what it made.
  *
  * Plain JS, no dependency: the point is a failure anyone can replay from one line, not a framework.
  */
@@ -43,11 +49,15 @@ function helpers(next) {
 /** the run's settings, from the environment, with the pack's fixed seed as the default */
 function settings(fixedSeed, env) {
   const vars = env || process.env;
-  const asked = vars.GORILLA_SEED;
-  const seed = asked === 'random' ? Math.floor(Math.random() * 2 ** 31) : asked ? Number(asked) >>> 0 : fixedSeed >>> 0;
-  const count = Number(vars.GORILLA_N) > 0 ? Math.floor(Number(vars.GORILLA_N)) : 200;
-  const only = vars.GORILLA_ONLY !== undefined && vars.GORILLA_ONLY !== '' ? Number(vars.GORILLA_ONLY) : null;
-  return { seed, count, only };
+  const whole = (name) => {
+    const text = vars[name];
+    if (text === undefined || text === '') return null;
+    if (!/^\d+$/.test(String(text).trim())) throw new Error(name + ' must be a whole number (or GORILLA_SEED=random)');
+    return Number(text);
+  };
+  const seed = vars.GORILLA_SEED === 'random' ? Math.floor(Math.random() * 2 ** 31) : (whole('GORILLA_SEED') ?? fixedSeed) >>> 0;
+  const count = whole('GORILLA_N') || 200;
+  return { seed, count, only: whole('GORILLA_ONLY'), budgetMs: whole('GORILLA_BUDGET_MS') };
 }
 
 /** record i of a seed: its own stream, so one record replays without the ones before it */
@@ -59,11 +69,13 @@ function recordOf(make, seed, index) {
 const replayLine = (file, seed, index) => 'GORILLA_SEED=' + seed + ' GORILLA_ONLY=' + index + ' node ' + file;
 
 /**
- * hammer({ label, file, fixedSeed, make, send, checks, kase, env })
- *   make(h, i)            → a record (h: next/int/pick/chance/money)
- *   send(record, i)       → what was seen (any shape the checks read); a throw is itself a finding, named by its message
+ * hammer({ label, file, fixedSeed, make, send, checks, kase, before?, budgetMs?, env? })
+ *   make(h, i)            → a record (h: next/int/pick/chance/money) — from the seed only
+ *   before(record, i)     → optional: the state a record needs first (a bill to pay, a balance to read); its answer is handed to send
+ *   send(record, i, made) → what was seen: { status, body, ...anything the checks read }; a throw is itself a finding, named by its message
  *   checks[]              → { id, title, gap?, check(record, seen) → null when it holds, else a short sentence }
- * Every check becomes ONE kase: it passes when no record broke it, else it names how many broke it and the first, with its replay line.
+ * Every check becomes ONE kase: it passes when no record broke it, else it names how many broke it and the first three, each with its
+ * replay line.
  * @returns { seed, count, failures: { [check id]: [{ index, said }] }, ms }
  */
 async function hammer(pack) {
@@ -75,7 +87,8 @@ async function hammer(pack) {
     const record = recordOf(pack.make, run.seed, index);
     let seen;
     try {
-      seen = await pack.send(record, index);
+      const made = pack.before ? await pack.before(record, index) : undefined;
+      seen = await pack.send(record, index, made);
     } catch (e) {
       seen = { thrown: e && e.message ? e.message : String(e) };
     }
@@ -95,11 +108,21 @@ async function hammer(pack) {
     const broke = failures[rule.id];
     await pack.kase(rule.id, rule.title, async () => {
       if (!broke.length) return indexes.length + ' records';
-      const first = broke[0];
-      throw new Error(broke.length + ' of ' + indexes.length + ' records broke it · first #' + first.index + ': ' + first.said + ' · replay: ' + replayLine(pack.file, run.seed, first.index));
+      const firsts = broke.slice(0, 3).map((item) => '#' + item.index + ': ' + item.said + ' · replay: ' + replayLine(pack.file, run.seed, item.index));
+      throw new Error(broke.length + ' of ' + indexes.length + ' records broke it · ' + firsts.join(' | '));
     }, rule.gap);
   }
-  return { seed: run.seed, count: indexes.length, failures, ms };
+  const budget = run.budgetMs || pack.budgetMs;
+  if (budget) {
+    await pack.kase('GORILLA-TIME', pack.label + ' runs inside its budget (' + budget + ' ms)', async () => {
+      if (ms > budget) throw new Error(indexes.length + ' records took ' + ms + ' ms — lower GORILLA_N in CI and keep the full run for the nightly');
+      return ms + ' ms';
+    });
+  }
+  const report = { label: pack.label, seed: run.seed, count: indexes.length, failures, ms };
+  const out = (pack.env || process.env).GORILLA_JSON;
+  if (out) require('fs').writeFileSync(out, JSON.stringify(report, null, 2));
+  return report;
 }
 
 module.exports = { seeded, helpers, settings, recordOf, replayLine, hammer };

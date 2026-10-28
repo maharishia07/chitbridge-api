@@ -49,11 +49,16 @@ const make = (h, index) => ({ index, lines: h.int(1, 6), mode: h.pick(['cash', '
   });
 
   ok('the fixed seed is the default; a seed, "random", N and ONLY come from the environment', () => {
-    assert.deepStrictEqual(G.settings(99, {}), { seed: 99, count: 200, only: null });
-    assert.deepStrictEqual(G.settings(99, { GORILLA_SEED: '5', GORILLA_N: '20', GORILLA_ONLY: '3' }), { seed: 5, count: 20, only: 3 });
+    assert.deepStrictEqual(G.settings(99, {}), { seed: 99, count: 200, only: null, budgetMs: null });
+    assert.deepStrictEqual(G.settings(99, { GORILLA_SEED: '5', GORILLA_N: '20', GORILLA_ONLY: '3', GORILLA_BUDGET_MS: '900' }), { seed: 5, count: 20, only: 3, budgetMs: 900 });
     const random = G.settings(99, { GORILLA_SEED: 'random' });
     assert.ok(Number.isInteger(random.seed) && random.seed >= 0);
-    assert.strictEqual(G.settings(99, { GORILLA_N: 'lots' }).count, 200, 'a bad N falls back to 200');
+  });
+
+  ok('a seed, N or ONLY that is not a whole number is refused in words, never read as 0 or NaN', () => {
+    for (const bad of [{ GORILLA_SEED: 'abc' }, { GORILLA_N: 'lots' }, { GORILLA_ONLY: '1.5' }, { GORILLA_ONLY: '-2' }]) {
+      assert.throws(() => G.settings(99, bad), /must be a whole number/, JSON.stringify(bad));
+    }
   });
 
   /* hammer, with a kase that records instead of printing */
@@ -80,8 +85,9 @@ const make = (h, index) => ({ index, lines: h.int(1, 6), mode: h.pick(['cash', '
 
   ok('a broken check names how many broke it, the first, and the line that replays it', () => {
     assert.strictEqual(cases[0].pass, false);
-    assert.ok(/of 40 records broke it · first #\d+: /.test(cases[0].said), cases[0].said);
+    assert.ok(/of 40 records broke it · #\d+: /.test(cases[0].said), cases[0].said);
     assert.ok(/replay: GORILLA_SEED=11 GORILLA_ONLY=\d+ node tests\/x\.cjs/.test(cases[0].said), cases[0].said);
+    assert.ok(cases[0].said.split(' | ').length <= 3, 'at most the first three');
   });
 
   ok('a send that throws is a finding on that record, not a crashed run', () => {
@@ -92,6 +98,29 @@ const make = (h, index) => ({ index, lines: h.int(1, 6), mode: h.pick(['cash', '
     assert.strictEqual(cases[2].gap, 'R0');
     assert.strictEqual(cases[2].pass, false);
     assert.ok(/the check itself threw: bad check/.test(cases[3].said), cases[3].said);
+  });
+
+  const timed = [];
+  const os = require('os');
+  const jsonFile = path.join(os.tmpdir(), 'gorilla-lib-' + process.pid + '.json');
+  const handed = [];
+  await G.hammer({ label: 'slow', file: 'x', fixedSeed: 1, env: { GORILLA_N: '3', GORILLA_BUDGET_MS: '1', GORILLA_JSON: jsonFile }, make,
+    kase: async (id, title, fn) => { try { await fn(); timed.push({ id, pass: true }); } catch (e) { timed.push({ id, pass: false, said: e.message }); } },
+    before: async (record, index) => ({ prepared: index }),
+    send: async (record, index, made) => { handed.push(made); await new Promise((done) => setTimeout(done, 5)); return {}; },
+    checks: [{ id: 'S-1', title: 'odd index', check: (record) => (record.index % 2 ? 'odd' : null) }] });
+  ok('a run over its budget is a GORILLA-TIME red that says what to do', () => {
+    const time = timed.find((item) => item.id === 'GORILLA-TIME');
+    assert.ok(time && !time.pass && /lower GORILLA_N in CI/.test(time.said), JSON.stringify(timed));
+  });
+  ok('GORILLA_JSON keeps every failing index per check, for the nightly', () => {
+    const kept = JSON.parse(require('fs').readFileSync(jsonFile, 'utf8'));
+    require('fs').unlinkSync(jsonFile);
+    assert.deepStrictEqual(kept.failures['S-1'].map((item) => item.index), [1]);
+    assert.strictEqual(kept.seed, 1);
+  });
+  ok('before(record, i) runs first and its answer is handed to send', () => {
+    assert.deepStrictEqual(handed, [{ prepared: 0 }, { prepared: 1 }, { prepared: 2 }]);
   });
 
   const seenIndexes = [];
