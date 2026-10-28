@@ -5331,7 +5331,7 @@
   "GET /api/crm/parties/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
@@ -5341,7 +5341,7 @@
   "GET /api/crm/parties/:id/timeline": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
@@ -5393,8 +5393,7 @@
   },
   "DELETE /api/crm/followups/:id": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -5404,7 +5403,7 @@
   "DELETE /api/crm/parties/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
@@ -5476,8 +5475,7 @@
   },
   "GET /api/crm/parties/:id/contact-prefs": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,

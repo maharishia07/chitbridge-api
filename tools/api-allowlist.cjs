@@ -223,13 +223,16 @@ function closeArray(stats, source, where, open) {
   return { type: nullable, items: closeNode(stats.items, source && source.kind === 'opaque' ? source : null, where + '[]', open) };
 }
 
+/** a closed record that is null in another branch of the handler says so: type [object, null] */
+const orNull = (stats, closed) => (stats && stats.types.has('null') && closed.type === 'object' ? Object.assign({}, closed, { type: ['object', 'null'] }) : closed);
+
 /** one node of the schema from the answers seen there (stats) and the handler's text there (source) */
 function closeNode(stats, source, where, open) {
   const holdsObject = !!stats && stats.objects > 0;
   const holdsArray = !!stats && !!stats.items;
   if (holdsObject && holdsArray) return {};
   if (holdsArray) return closeArray(stats, source, where, open);
-  if (holdsObject || (source && source.kind === 'object')) return closeObject(holdsObject ? stats : null, source, where, open);
+  if (holdsObject || (source && source.kind === 'object')) return orNull(stats, closeObject(holdsObject ? stats : null, source, where, open));
   return leafSchema(stats);
 }
 

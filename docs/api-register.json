@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 600
    },
    "foreign_id_404": {
     "applies": 227,
@@ -497,8 +497,8 @@
    "path": "/api/crm/followups/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 410,
-   "hash": "37d0bfe9bacbeccd",
+   "line": 416,
+   "hash": "4684ff50ad88ec07",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -508,7 +508,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -537,8 +537,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4684ff50ad88ec07"
    },
    "status": "partial"
   },
@@ -548,8 +549,8 @@
    "path": "/api/crm/groups/:name",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 688,
-   "hash": "df4831a3744fad06",
+   "line": 699,
+   "hash": "7001297d46e5ab68",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -559,7 +560,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -588,8 +589,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e395e201ec90bf60"
    },
    "status": "partial"
   },
@@ -599,8 +601,8 @@
    "path": "/api/crm/parties/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 426,
-   "hash": "43b0cb170786b76c",
+   "line": 432,
+   "hash": "f4d14e5eef58c55b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -610,7 +612,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -639,8 +641,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f4d14e5eef58c55b"
    },
    "status": "partial"
   },
@@ -6030,8 +6033,8 @@
    "path": "/api/crm/calls",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 482,
-   "hash": "66cc6b96b19e9d79",
+   "line": 488,
+   "hash": "13508e79399781eb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6041,7 +6044,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6069,8 +6072,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4b0900806c2f1092"
    },
    "status": "partial"
   },
@@ -6080,8 +6084,8 @@
    "path": "/api/crm/followups",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 372,
-   "hash": "39c6a6400eec3901",
+   "line": 376,
+   "hash": "b0ff2a933d7638b5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6091,7 +6095,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6119,8 +6123,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b81974b5f9df1e6f"
    },
    "status": "partial"
   },
@@ -6131,7 +6136,7 @@
    "owner_area": "crm",
    "file": "routes/crm.js",
    "line": 93,
-   "hash": "215da4f8a8dcb11c",
+   "hash": "c875fc097db090de",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6141,7 +6146,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6169,8 +6174,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4708ef2cf4150ae1"
    },
    "status": "partial"
   },
@@ -6180,8 +6186,8 @@
    "path": "/api/crm/parties/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 112,
-   "hash": "0406c438fbf0c7ee",
+   "line": 114,
+   "hash": "79a5f828e3213138",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6191,7 +6197,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6220,8 +6226,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "db5a5d5115211f75"
    },
    "status": "partial"
   },
@@ -6231,8 +6238,8 @@
    "path": "/api/crm/parties/:id/contact-prefs",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 601,
-   "hash": "9c9cf59dab07d75d",
+   "line": 608,
+   "hash": "e66b014ff4cfc9a3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6242,7 +6249,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6271,8 +6278,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ddd58dfc2da1cf66"
    },
    "status": "partial"
   },
@@ -6282,8 +6290,8 @@
    "path": "/api/crm/parties/:id/timeline",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 170,
-   "hash": "091e5ef0e79e0e96",
+   "line": 174,
+   "hash": "6cbf9daf9774ff55",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6293,7 +6301,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6322,8 +6330,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6cbf9daf9774ff55"
    },
    "status": "partial"
   },
@@ -6333,8 +6342,8 @@
    "path": "/api/crm/privacy-requests",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 630,
-   "hash": "ca82ab9a72756faa",
+   "line": 638,
+   "hash": "136ea55e4853f93d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6344,7 +6353,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6372,8 +6381,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7bdd0bdb2394f590"
    },
    "status": "partial"
   },
@@ -6383,8 +6393,8 @@
    "path": "/api/crm/segments",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 670,
-   "hash": "4fca8466b55d4069",
+   "line": 679,
+   "hash": "1f991ac5f33714b8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6394,7 +6404,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6421,8 +6431,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "55a0614a6ffb7769"
    },
    "status": "partial"
   },
@@ -14240,7 +14251,7 @@
    "path": "/api/crm/followups/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 400,
+   "line": 406,
    "hash": "e01d0a861a4d98d1",
    "columns": {
     "schema_in": true,
@@ -21173,7 +21184,7 @@
    "path": "/api/crm/followups",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 384,
+   "line": 390,
    "hash": "dc7dfb64216aa0f1",
    "columns": {
     "schema_in": true,
@@ -21223,7 +21234,7 @@
    "path": "/api/crm/groups",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 678,
+   "line": 689,
    "hash": "7adbe776b050e48e",
    "columns": {
     "schema_in": true,
@@ -21273,7 +21284,7 @@
    "path": "/api/crm/leads",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 442,
+   "line": 448,
    "hash": "9141c846d5e2fb1a",
    "columns": {
     "schema_in": true,
@@ -21323,7 +21334,7 @@
    "path": "/api/crm/leads/import",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 513,
+   "line": 520,
    "hash": "c0c22340d0b000d9",
    "columns": {
     "schema_in": true,
@@ -21373,7 +21384,7 @@
    "path": "/api/crm/parties/:id/contact-prefs",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 617,
+   "line": 625,
    "hash": "ecde3a9059d69190",
    "columns": {
     "schema_in": true,
@@ -21424,7 +21435,7 @@
    "path": "/api/crm/parties/:id/interactions",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 350,
+   "line": 354,
    "hash": "d4f89601249d1679",
    "columns": {
     "schema_in": true,
@@ -21475,7 +21486,7 @@
    "path": "/api/crm/parties/:id/outcome",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 496,
+   "line": 503,
    "hash": "68c43ef1411b1293",
    "columns": {
     "schema_in": true,
@@ -21526,7 +21537,7 @@
    "path": "/api/crm/parties/:id/stage",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 526,
+   "line": 533,
    "hash": "f65b2d9f487257f3",
    "columns": {
     "schema_in": true,
@@ -21577,7 +21588,7 @@
    "path": "/api/crm/privacy-requests",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 639,
+   "line": 648,
    "hash": "143f2fc0c8f269c8",
    "columns": {
     "schema_in": true,
@@ -21627,7 +21638,7 @@
    "path": "/api/crm/privacy-requests/:id/answer",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 653,
+   "line": 662,
    "hash": "573a81c87496219e",
    "columns": {
     "schema_in": true,
@@ -21678,7 +21689,7 @@
    "path": "/api/crm/segments/:key/send",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 698,
+   "line": 710,
    "hash": "e6d8b5df5f81521b",
    "columns": {
     "schema_in": true,
@@ -21729,7 +21740,7 @@
    "path": "/api/crm/walk-ins/add",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 552,
+   "line": 559,
    "hash": "8b85518c2880e72e",
    "columns": {
     "schema_in": true,

@@ -5,13 +5,16 @@
    "foreign_id_404": true
   },
   "DELETE /api/crm/followups/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "DELETE /api/crm/groups/:name": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "DELETE /api/crm/parties/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
@@ -36,14 +39,32 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/crm/calls": {
+   "output_allowlist": true
+  },
+  "GET /api/crm/followups": {
+   "output_allowlist": true
+  },
+  "GET /api/crm/parties": {
+   "output_allowlist": true
+  },
   "GET /api/crm/parties/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/crm/parties/:id/contact-prefs": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/crm/parties/:id/timeline": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/crm/privacy-requests": {
+   "output_allowlist": true
+  },
+  "GET /api/crm/segments": {
+   "output_allowlist": true
   },
   "GET /api/repeat/:id": {
    "foreign_id_404": true

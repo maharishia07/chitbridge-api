@@ -1,6 +1,74 @@
 {
  "_about": "The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route's success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.",
  "routes": {
+  "DELETE /api/crm/followups/:id": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "ok"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 1,
+   "open": [],
+   "example": {
+    "url": "/api/crm/followups/10000000-0000-4000-8000-000000000021"
+   }
+  },
+  "DELETE /api/crm/groups/:name": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "name",
+     "removed"
+    ],
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "removed": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 1,
+   "open": [],
+   "example": {
+    "url": "/api/crm/groups/Dealers"
+   }
+  },
+  "DELETE /api/crm/parties/:id": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "ok",
+     "party_id"
+    ],
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     },
+     "party_id": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 1,
+   "open": [],
+   "example": {
+    "url": "/api/crm/parties/10000000-0000-4000-8000-000000000004"
+   }
+  },
   "GET /api/assist/catalogue-mine": {
    "status": "200",
    "schema": {
@@ -838,6 +906,669 @@
     "url": "/api/assist/whoami"
    }
   },
+  "GET /api/crm/calls": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "calls",
+     "total",
+     "page",
+     "limit",
+     "count",
+     "late",
+     "today",
+     "outcomes",
+     "may",
+     "shop_day"
+    ],
+    "properties": {
+     "calls": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "count": {
+      "type": "number"
+     },
+     "late": {
+      "type": "number"
+     },
+     "today": {
+      "type": "number"
+     },
+     "outcomes": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "may": {
+      "type": "object"
+     },
+     "shop_day": {
+      "type": "string"
+     },
+     "capped": {},
+     "cap_note": {}
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "calls[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "outcomes[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/calls?scope=mine&page=1&limit=10"
+   }
+  },
+  "GET /api/crm/followups": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "followups",
+     "total",
+     "page",
+     "limit",
+     "late",
+     "today",
+     "shop_day",
+     "may"
+    ],
+    "properties": {
+     "followups": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "late": {
+      "type": "number"
+     },
+     "today": {
+      "type": "number"
+     },
+     "shop_day": {
+      "type": "string"
+     },
+     "may": {
+      "type": "object"
+     },
+     "capped": {},
+     "cap_note": {}
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "followups[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/followups"
+   }
+  },
+  "GET /api/crm/parties": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "parties",
+     "walk_ins",
+     "count",
+     "total",
+     "page",
+     "limit",
+     "truncated",
+     "alerts",
+     "may"
+    ],
+    "properties": {
+     "parties": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "walk_ins": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "count": {
+      "type": "number"
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "truncated": {
+      "type": "boolean"
+     },
+     "alerts": {
+      "type": "object"
+     },
+     "may": {
+      "type": "object"
+     },
+     "leads_migrated": {
+      "type": "boolean"
+     },
+     "consent_migrated": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 7,
+   "open": [
+    {
+     "path": "parties[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "walk_ins[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "alerts",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/parties?page=1&limit=1"
+   }
+  },
+  "GET /api/crm/parties/:id": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "party_id",
+     "display_name",
+     "user_id",
+     "bridge_id",
+     "email",
+     "phone",
+     "otp_contact",
+     "gstn",
+     "city",
+     "status",
+     "kind",
+     "on_chitbridge",
+     "may_trade",
+     "roles",
+     "party_no",
+     "last_activity",
+     "legal_name",
+     "nickname",
+     "state_code",
+     "tax_ids",
+     "terms",
+     "dues",
+     "gstin",
+     "name",
+     "contact_prefs",
+     "merged_from",
+     "relationship",
+     "points",
+     "migrated",
+     "followups",
+     "may"
+    ],
+    "properties": {
+     "party_id": {
+      "type": "string"
+     },
+     "display_name": {
+      "type": "string"
+     },
+     "user_id": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "bridge_id": {
+      "type": "string"
+     },
+     "email": {},
+     "phone": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "otp_contact": {},
+     "gstn": {},
+     "city": {},
+     "status": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "kind": {
+      "type": "string"
+     },
+     "on_chitbridge": {
+      "type": "boolean"
+     },
+     "may_trade": {
+      "type": "object"
+     },
+     "roles": {
+      "type": "object"
+     },
+     "party_no": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "last_activity": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "customer": {
+      "type": "object"
+     },
+     "lead": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "legal_name": {},
+     "nickname": {},
+     "state_code": {},
+     "tax_ids": {},
+     "terms": {
+      "type": "object"
+     },
+     "dues": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "gstin": {
+      "type": "object"
+     },
+     "name": {
+      "type": "string"
+     },
+     "contact_prefs": {
+      "type": "object"
+     },
+     "merged_from": {},
+     "relationship": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "points": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "migrated": {
+      "type": "boolean"
+     },
+     "followups": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "may": {
+      "type": "object"
+     },
+     "supplier": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 9,
+   "open": [
+    {
+     "path": "may_trade",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "roles",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "customer",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "lead",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "terms",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "dues",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "gstin",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "contact_prefs",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "relationship",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "points",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "followups[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "supplier",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/parties/10000000-0000-4000-8000-000000000002"
+   }
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "party_id",
+     "history",
+     "may",
+     "law"
+    ],
+    "properties": {
+     "party_id": {
+      "type": "string"
+     },
+     "history": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "may": {
+      "type": "object"
+     },
+     "law": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 4,
+   "open": [
+    {
+     "path": "history[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "law",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/parties/10000000-0000-4000-8000-000000000002/contact-prefs"
+   }
+  },
+  "GET /api/crm/parties/:id/timeline": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "party_id",
+     "entries",
+     "next_before",
+     "migrated",
+     "total",
+     "page",
+     "limit"
+    ],
+    "properties": {
+     "party_id": {
+      "type": "string"
+     },
+     "entries": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "next_before": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "migrated": {
+      "type": "boolean"
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "entries[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/parties/10000000-0000-4000-8000-000000000002/timeline"
+   }
+  },
+  "GET /api/crm/privacy-requests": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "requests",
+     "total",
+     "page",
+     "limit",
+     "open",
+     "late",
+     "may_answer",
+     "why"
+    ],
+    "properties": {
+     "requests": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "total": {
+      "type": "number"
+     },
+     "page": {
+      "type": "number"
+     },
+     "limit": {
+      "type": "number"
+     },
+     "open": {
+      "type": "number"
+     },
+     "late": {
+      "type": "number"
+     },
+     "may_answer": {
+      "type": "boolean"
+     },
+     "why": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "requests[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/privacy-requests"
+   }
+  },
+  "GET /api/crm/segments": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "segments",
+     "groups",
+     "groups_migrated",
+     "consent_migrated",
+     "channel",
+     "purpose",
+     "customers",
+     "may"
+    ],
+    "properties": {
+     "segments": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "groups": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "groups_migrated": {
+      "type": "boolean"
+     },
+     "consent_migrated": {
+      "type": "boolean"
+     },
+     "channel": {
+      "type": "string"
+     },
+     "purpose": {
+      "type": "string"
+     },
+     "customers": {
+      "type": "number"
+     },
+     "may": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "segments[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "groups[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/crm/segments"
+   }
+  },
   "POST /api/assist": {
    "status": "200",
    "schema": {
@@ -1217,6 +1948,14 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/calls": "open at calls[] — a value passed through (an expression: its keys are not written in the handler); outcomes[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/followups": "open at followups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/parties": "open at parties[] — a value passed through (an expression: its keys are not written in the handler); walk_ins[] — a value passed through (an expression: its keys are not written in the handler); alerts — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/parties/:id": "open at may_trade — a value passed through (an expression: its keys are not written in the handler); roles — a value passed through (an expression: its keys are not written in the handler); customer — a value passed through (an expression: its keys are not written in the handler); lead — a value passed through (an expression: its keys are not written in the handler); terms — a value passed through (an expression: its keys are not written in the handler); dues — a value passed through (an expression: its keys are not written in the handler); gstin — a value passed through (an expression: its keys are not written in the handler); contact_prefs — a value passed through (an expression: its keys are not written in the handler); relationship — a value passed through (an expression: its keys are not written in the handler); points — a value passed through (an expression: its keys are not written in the handler); followups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler); supplier — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/parties/:id/contact-prefs": "open at history[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler); law — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/parties/:id/timeline": "open at entries[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/privacy-requests": "open at requests[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/crm/segments": "open at segments[] — a value passed through (an expression: its keys are not written in the handler); groups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
