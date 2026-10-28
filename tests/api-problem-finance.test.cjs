@@ -153,6 +153,8 @@ const EXTRAS = [
   X('chit-missing', 'POST ' + F + '/move', 400, { body: {} }),
   X('into-a-system-folder', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: sysId('B-2100') } }),
   X('into-a-shops-view-folder', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: answering(/to_jsonb\(f\)->>'kind' AS kind/, [{ kind: 'view' }]) } }),
+  /* RAIL-137 (a): a folder_id that is not an id is the schema's 400, never the database's 500 */
+  X('folder-not-an-id', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: 'inbox' }, setup: { sqlRows: (sql) => { if (/FROM folder/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "inbox"'), { code: '22P02' }); return null; } } }),
   X('folder-not-found', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY } }),
   X('wrong-side', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY, direction: 'sent' }, setup: { sqlRows: answering(/SELECT scope FROM folder/, [{ scope: 'task' }]) } }),
   X('move-retried-without-scope', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: raising(/SELECT scope FROM folder/, '42703') } }),
