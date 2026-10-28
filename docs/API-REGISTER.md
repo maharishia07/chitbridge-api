@@ -14,9 +14,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2276 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1927 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | DELETE | /api/channels/:id | channels | routes/channels.js:127 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| DELETE | /api/chits/:chit_id | chits | routes/chits.js:5963 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4579 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | partial |
-| DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6224 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/chits/:chit_id | chits | routes/chits.js:5961 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4577 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | partial |
+| DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6222 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:247 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:988 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:410 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -101,16 +101,16 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/channels | channels | routes/channels.js:20 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/channels/outbound | channels | routes/channels.js:29 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/chits/:chit_id | chits | routes/chits.js:3159 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/catalogue-overlay | chits | routes/chits.js:4392 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/catalogue-overlay | chits | routes/chits.js:4390 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/costs | chits | routes/chits.js:3708 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/diagnosis | chits | routes/chits.js:5648 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/chits/:chit_id/disputes | chits | routes/chits.js:5602 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/messages | chits | routes/chits.js:5279 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/diagnosis | chits | routes/chits.js:5646 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/chits/:chit_id/disputes | chits | routes/chits.js:5600 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/messages | chits | routes/chits.js:5277 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/raida | chits | routes/chits.js:3901 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/use | chits | routes/chits.js:4008 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/chits/:id/children | chits | routes/chits.js:6523 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/:id/trace | chits | routes/chits.js:6550 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/disputes/queue | chits | routes/chits.js:5868 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/:id/children | chits | routes/chits.js:6521 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/:id/trace | chits | routes/chits.js:6548 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/disputes/queue | chits | routes/chits.js:5866 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/folder | chits | routes/chits.js:2733 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/inbox | chits | routes/chits.js:2905 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/pulse | chits | routes/chits.js:3103 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
@@ -121,9 +121,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/chits/register/walk/:from | chits | routes/chits.js:3844 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/rollup | chits | routes/chits.js:2811 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/sent | chits | routes/chits.js:2668 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/trace/batches | chits | routes/chits.js:6750 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/trace/by-batch | chits | routes/chits.js:6791 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/trace/networks | chits | routes/chits.js:6972 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/trace/batches | chits | routes/chits.js:6748 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/trace/by-batch | chits | routes/chits.js:6789 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/trace/networks | chits | routes/chits.js:6970 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/unread | chits | routes/chits.js:3130 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/combo-templates | combo-templates | routes/combo-templates.js:60 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/connections/list | connections | routes/connections.js:200 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -407,23 +407,23 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/channels/:id/revoke | channels | routes/channels.js:119 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/channels/:id/template | channels | routes/channels.js:61 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | POST | /api/channels/:id/template-approve | channels | routes/channels.js:109 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
-| POST | /api/chits/:chit_id/amend | chits | routes/chits.js:4282 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6116 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/amend | chits | routes/chits.js:4281 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6114 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/assign-lines | chits | routes/chits.js:4227 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/books-request | chits | routes/chits.js:4630 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/books-request | chits | routes/chits.js:4628 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/costs | chits | routes/chits.js:3689 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/chits/:chit_id/deliver-lines | chits | routes/chits.js:4036 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/disputes | chits | routes/chits.js:5364 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/messages | chits | routes/chits.js:5102 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/payment | chits | routes/chits.js:4537 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
+| POST | /api/chits/:chit_id/disputes | chits | routes/chits.js:5362 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/messages | chits | routes/chits.js:5100 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/payment | chits | routes/chits.js:4535 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
 | POST | /api/chits/:chit_id/raida | chits | routes/chits.js:3913 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/raida/:raida_id/close | chits | routes/chits.js:3969 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/raida/:raida_id/dispute | chits | routes/chits.js:3988 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/chits/:chit_id/reprice | chits | routes/chits.js:3653 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/restore | chits | routes/chits.js:6195 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/unarchive | chits | routes/chits.js:6174 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/unread | chits | routes/chits.js:6156 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/assign-bulk | chits | routes/chits.js:6426 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/restore | chits | routes/chits.js:6193 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/unarchive | chits | routes/chits.js:6172 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/unread | chits | routes/chits.js:6154 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/assign-bulk | chits | routes/chits.js:6424 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/register/entries/:raida_id/accept | chits | routes/chits.js:3862 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/chits/register/entries/:raida_id/close | chits | routes/chits.js:3836 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/chits/register/entries/:raida_id/revise | chits | routes/chits.js:3853 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
@@ -620,13 +620,13 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/assist/container | assist | routes/assist.js:450 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/assist/region-override | assist | routes/assist.js:518 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | PUT | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:74 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:5727 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:6008 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/priority-flag | chits | routes/chits.js:6064 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/star | chits | routes/chits.js:6139 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4959 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:5725 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:6006 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/priority-flag | chits | routes/chits.js:6062 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/star | chits | routes/chits.js:6137 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4957 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4026 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6269 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6267 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:119 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:363 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1684 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
