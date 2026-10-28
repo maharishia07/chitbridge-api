@@ -25,7 +25,7 @@
  *   GS-5  gap R127 · ADDS-MONEY-1: the parts, less change, add up to the bill — or a due date says the rest is owed. No door checks
  *         this today (COLUMN-13 §2, row /chits/send); it is RECORDED here so the fix (PR 2) turns it green, not written around.
  *
- * Fixed seed 20261029 · GORILLA_N (default 200) · GORILLA_SEED=<n>|random · GORILLA_ONLY=<i> replays one. Run: node tests/send-gorilla-truth.realstack.cjs
+ * Budget 60 s for 200 records (CI measured 6.1 s; GORILLA-TIME goes red past it) · fixed seed 20261029 · GORILLA_N (default 200) · GORILLA_SEED=<n>|random · GORILLA_ONLY=<i> replays one. Run: node tests/send-gorilla-truth.realstack.cjs
  * ⚠️ LOCAL ONLY (the harness refuses anything else). Writes go through the route; the database is only SELECTed.
  */
 const { Client } = require('pg');
@@ -184,7 +184,7 @@ const CHECKS = [
       const made = ok(await j('/api/products', { method: 'POST', token: shop.token, body: { item_data: { name, unit: 'piece', price } } }), 'product ' + name).b;
       products.push({ id: made.item.item_id, name, unit: 'piece', price });
     }
-    report = await G.hammer({ label: 'POST /api/chits/send', file: 'tests/send-gorilla-truth.realstack.cjs', fixedSeed: FIXED_SEED, make: makeBill(products), send: sender(shop, pg), checks: CHECKS, kase });
+    report = await G.hammer({ label: 'POST /api/chits/send', file: 'tests/send-gorilla-truth.realstack.cjs', fixedSeed: FIXED_SEED, make: makeBill(products), send: sender(shop, pg), checks: CHECKS, kase, budgetMs: 60000 });
   } finally {
     await pg.end();
   }
