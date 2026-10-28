@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 479,
+  "meets": 12,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -6647,11 +6647,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "998cf29ea5a3077b"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/header",
@@ -6696,11 +6696,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "1e24281fe238b11a"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/lookup",
@@ -6796,11 +6796,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "a6739e9dc0af6656"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/me/can-see-costs",
@@ -6845,11 +6845,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "1f9a50e743295f2d"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/mis",
@@ -6896,11 +6896,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "11720064f2b88a42"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/policy",
@@ -6945,11 +6945,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "b266e6cd0e2948a9"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/populations",
@@ -6996,11 +6996,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "6a13bf4d7882b36c"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/routing",
@@ -7045,11 +7045,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "0cf0adb70b642c3f"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/routing/preview",
@@ -7142,11 +7142,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "094360789aadd358"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/sides",
@@ -7191,11 +7191,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "a080977790cc0456"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/usage",
@@ -7240,11 +7240,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#484 stage2",
     "lifecycle": "stable",
     "stale_since": "15ee27fbadd385d3"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/events/stats",
