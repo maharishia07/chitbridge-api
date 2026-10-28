@@ -80,6 +80,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CRM_NOT_MIGRATED | 503 | Crm not migrated | Follow-ups and call notes are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
 | CTP_CROSSING_REFUSED | 409 | Crossing refused | This business does not take chits from that installation. | The two installations must name each other as peers first. | ctp | 2026-10-23 |
 | CTP_CROSSING_UNCHECKABLE | 503 | Crossing cannot be checked | We could not check whether this chit may cross, so we refused it. | Try again later; nothing was written. | ctp | 2026-10-23 |
+| CTP_DRAFT | 409 | Draft stays here | A draft is not sent anywhere, and some of its copies belong to another installation. | Send it for real, or keep only this installation's copies. | rail | 2026-10-28 |
 | CTP_ENVELOPE_REFUSED | 409 | Envelope refused | The chit did not open here: its signature or its contents were refused. | Check the sending installation signs with the key it publishes. | ctp | 2026-10-23 |
 | CTP_MANIFEST_UNAVAILABLE | 500 | Manifest unavailable | This installation could not say who it is just now. | Try again later. | ctp | 2026-10-23 |
 | CTP_NO_INSTALLATION | 400 | No installation named | The message does not say which installation sent it. | Send it from an installation that names itself. | ctp | 2026-10-23 |
@@ -93,6 +94,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_QUERY_FAILED | 500 | Question failed | This installation could not answer just now. | Try again later. | ctp | 2026-10-23 |
 | CTP_QUERY_REFUSED | 403 | Question refused | The question was not signed by the installation that sent it. | Check the asking installation signs with the key it publishes. | ctp | 2026-10-23 |
 | CTP_RECIPIENT_NOT_HERE | 404 | Recipient not here | There is no active business here with that bridge id. | Check the address of the business. | ctp | 2026-10-23 |
+| CTP_REFUSED | 409 | Not delivered | Another installation did not take its copy of this chit. Nothing was written. | Try again later. If it keeps happening, check the two installations name each other as peers. | rail | 2026-10-28 |
 | CTP_STORE_FAILED | 500 | Could not store the chit | This installation could not store the chit just now. | Try again later; it was not written. | ctp | 2026-10-23 |
 | CTP_UNKNOWN_QUESTION | 400 | Unknown question | This installation does not answer that question. | Ask to resolve a business or for its catalogue. | ctp | 2026-10-23 |
 | CURRENCY_ENTITY_ONLY | 403 | Currency is the business’s | The currency your prices are written in belongs to the business. | Ask whoever runs the account to change it in Settings. | entities | 2026-10-22 |
