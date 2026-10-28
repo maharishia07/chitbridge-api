@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 88 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
-| 74 | `answer` | `availability.js` | from March; then nearest. |
+| 75 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 65 | `list` | `cap-settings.js` |  |
@@ -32,7 +32,7 @@ of file each thing is; this says what already does the job.
 | 53 | `next` | `dayopen.js` | the next thing to do — |
 | 50 | `entry` | `books-store.js` |  |
 | 49 | `toast` | `accounts-shell.js` |  |
-| 49 | `record` | `access-events.js` |  |
+| 50 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 47 | `again` | `signin-ui.js` |  |
 | 48 | `pack` | `books-store.js` |  |
