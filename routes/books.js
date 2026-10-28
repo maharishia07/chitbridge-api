@@ -941,27 +941,9 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
       CF = require('../lib/books-cashflow');
     const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
       asOf = dateQ(req.query.asOf, today(req));
-    const c = await withEntity(e, (h) => CF.read(h, e, req.books, { asOf, days }));
-    res.json({
-      asOf: c.asOf,
-      days: c.days,
-      from: c.from,
-      to: c.to,
-      currency: c.currency,
-      opening_minor: c.opening_minor,
-      drawer_minor: c.drawer_minor,
-      bank_minor: c.bank_minor,
-      opening: c.opening,
-      in_minor: c.in_minor,
-      out_minor: c.out_minor,
-      closing_minor: c.closing_minor,
-      lowest: c.lowest,
-      shortfall: c.shortfall,
-      words: c.words,
-      uncounted: c.uncounted,
-      gst: c.gst,
-      series: c.series
-    });
+    const cash = await withEntity(e, (h) => CF.read(h, e, req.books, { asOf, days }));
+    // prettier-ignore
+    res.json({ asOf: cash.asOf, days: cash.days, from: cash.from, to: cash.to, currency: cash.currency, opening_minor: cash.opening_minor, drawer_minor: cash.drawer_minor, bank_minor: cash.bank_minor, opening: cash.opening, in_minor: cash.in_minor, out_minor: cash.out_minor, closing_minor: cash.closing_minor, lowest: cash.lowest, shortfall: cash.shortfall, words: cash.words, uncounted: cash.uncounted, gst: cash.gst, series: cash.series });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1635,8 +1617,8 @@ const M = () => require('../lib/books-manual');
 /** GET /events → { events: [{ kind, words, icon, band, voucher, fields, ledger_group, preview, post | route }], picks, pending, golden } — the grid; the screen holds no rules */
 router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => {
   try {
-    const c = M().catalogue(req.books);
-    res.json({ events: c.events, picks: c.picks, pending: c.pending, golden: c.golden });
+    const grid = M().catalogue(req.books);
+    res.json({ events: grid.events, picks: grid.picks, pending: grid.pending, golden: grid.golden });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1855,8 +1837,8 @@ router.post('/move-in/import', auth, owner, on, ...checked('POST /move-in/import
 router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports'), async (req, res) => {
   try {
     const e = ctx(req);
-    const l = await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e));
-    res.json({ ready: l.ready, why: l.why, imports: l.imports });
+    const proofs = await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e));
+    res.json({ ready: proofs.ready, why: proofs.why, imports: proofs.imports });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2346,8 +2328,8 @@ const route = (method, p, fn) =>
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
 router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, res) => {
   try {
-    const a = await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)));
-    res.json({ currency: a.currency, asOf: a.asOf, assets: a.assets, net_block: a.net_block, total_wdv_minor: a.total_wdv_minor });
+    const register = await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)));
+    res.json({ currency: register.currency, asOf: register.asOf, assets: register.assets, net_block: register.net_block, total_wdv_minor: register.total_wdv_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2377,31 +2359,10 @@ route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
 router.get('/returns', auth, owner, on, ...checked('GET /returns'), async (req, res) => {
   try {
-    const r = await P().taxReturn(ctx(req), req.books, req.query || {});
-    /* the pack's return, every key it can carry named (S34); the keys of a return that needs a period or a pack's extra tables are undefined, and JSON leaves them out */
-    res.json({
-      currency: r.currency,
-      pack: r.pack,
-      form: r.form,
-      name: r.name,
-      short: r.short,
-      authority: r.authority,
-      portal: r.portal,
-      prepared: r.prepared,
-      asked: r.asked,
-      needs: r.needs,
-      why: r.why,
-      periods: r.periods,
-      period: r.period,
-      boxes: r.boxes,
-      payable_minor: r.payable_minor,
-      refund_minor: r.refund_minor,
-      net_minor: r.net_minor,
-      notes: r.notes,
-      cite: r.cite,
-      emirates: r.emirates,
-      staggers: r.staggers
-    });
+    const form = await P().taxReturn(ctx(req), req.books, req.query || {});
+    /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
+    // prettier-ignore
+    res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, emirates: form.emirates, staggers: form.staggers });
   } catch (err) {
     if (err && err.code === 'RETURN_FROM_RAIL') {
       const pack = err.pack || null;
