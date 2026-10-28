@@ -180,6 +180,18 @@ const CHIT_ROW = { chit_id: PARTY, all_recipients: [{ entity_id: SHOP, display_n
 const EXTRAS = [
   /* ── the lists and the read ── */
   X('a-chit-is-listed', 'GET ' + C + '/sent', 200, { setup: { sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [CHIT_ROW]) } }),
+  /* RAIL-135: a request word named like an object member is an unknown word (falls back), and assigned_to that is not an id matches nobody;
+     each used to reach the SQL (a function's source, a uuid cast) and answer 500. breaking() fails the query if the old SQL is sent. */
+  X('inbox-sorted-by-an-object-member', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?sort=constructor', setup: { sqlRows: breaking(/native code|function Object/) } }),
+  X('sent-sorted-by-an-object-member', 'GET ' + C + '/sent', 200, { url: C + '/sent?sort=constructor', setup: { sqlRows: breaking(/native code|function Object/) } }),
+  X('folder-sorted-by-an-object-member', 'GET ' + C + '/folder', 200, { url: C + '/folder?view=archive&sort=constructor', setup: { sqlRows: breaking(/native code|function Object/) } }),
+  X('inbox-fstatus-an-object-member', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?fstatus=constructor' }),
+  X('inbox-assigned-to-not-an-id', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?assigned_to=nobody', setup: { sqlRows: breaking(/assigned_to_actor_id = \$\d+/) } }),
+  /* Q20 (laptop1, 2026-10-28): a list date that is not a real day is refused in words, never ignored and never a 500 at the date cast */
+  X('inbox-from-a-day-that-is-not-real', 'GET ' + C + '/inbox', 400, { url: C + '/inbox?date_from=2026-02-30' }),
+  X('sent-to-a-word-not-a-date', 'GET ' + C + '/sent', 400, { url: C + '/sent?date_to=soon' }),
+  X('folder-from-a-day-that-is-not-real', 'GET ' + C + '/folder', 400, { url: C + '/folder?view=archive&date_from=2026-13-01' }),
+  X('inbox-from-a-real-day', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?date_from=2026-02-28&date_to=2026-03-01' }),
   X('a-chit-is-in-the-inbox', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?status=pending&q=tea&folder_id=' + PARTY, setup: { sqlRows: answering(/SELECT ch.chit_id/, [CHIT_ROW]) } }),
   X('a-draft-is-listed', 'GET ' + C + '/folder', 200, { url: C + '/folder?view=trash&sort=amount&dir=asc&date_from=2026-01-01', setup: { sqlRows: answering(/SELECT DISTINCT ON/, [CHIT_ROW]) } }),
   X('rollup-by-state', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state&direction=sent&assigned_to=me' }),

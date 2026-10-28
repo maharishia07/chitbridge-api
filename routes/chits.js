@@ -88,6 +88,10 @@ const billPrivacy = require('../lib/bill-privacy');
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
 const entityId = (req) => auth.entityOf(req);
+/** a request word picks a value from a fixed map only if the map OWNS that key, else the fallback: `sort=constructor` reads Object's
+ *  own member and used to reach the SQL as a function's source (500). RAIL-135; an unknown word already fell back the same way. */
+const CBChart = require('../lib/chart'); /* dayOf: the one real-day rule */
+const pickOwn = (map, word, fallback) => (typeof word === 'string' && Object.prototype.hasOwnProperty.call(map, word) ? map[word] : fallback);
 /* "Do I hold a copy of this chit?" — the one probe /amend, /reprice, /costs and /assign-lines ask before writing (RAIL-128) */
 const holdsCopy = async (entity_id, chit_id) =>
   (await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]))).rows.length > 0;
@@ -2573,7 +2577,34 @@ function afterOf(rows, limit, req) {
   return next;
 }
 
+/** ?assigned_to= — 'me' (the caller), an actor id, or 'all' / nothing (no filter). Anything else is assigned to nobody that exists, so no
+ *  rows: it used to reach the uuid cast and answer 500 (RAIL-135). → the WHERE fragment (params pushed). */
+function assignedToWhere(req, params) {
+  const at = req.query.assigned_to;
+  if (!at || at === 'all') return '';
+  if (at === 'me') {
+    params.push(req.identity.identity_id);
+    return ` AND cs.assigned_to_actor_id = $${params.length}`;
+  }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(at))) return ' AND false';
+  params.push(at);
+  return ` AND cs.assigned_to_actor_id = $${params.length}`;
+}
+
+/** a real day (YYYY-MM-DD, chart.dayOf) or a full timestamp that starts with one */
+const isRealDateWord = (word) => (/^\d{4}-\d{2}-\d{2}$/.test(word) ? CBChart.dayOf(word) !== null : /^\d{4}-\d{2}-\d{2}T/.test(word) && Number.isFinite(Date.parse(word)));
+
+/** ?date_from= / ?date_to= that is neither a real day (YYYY-MM-DD, chart.dayOf) nor a full timestamp → a 400 naming the field (Q20, laptop1
+ *  2026-10-28: refuse, never ignore: a dropped filter returns the wrong list). 2026-02-30 used to reach the date cast and answer 500 (RAIL-135). */
+function refuseUnrealDates(req) {
+  for (const field of ['date_from', 'date_to']) {
+    const given = req.query[field];
+    if (given && !isRealDateWord(String(given).trim())) throw Object.assign(new Error(`That ${field === 'date_from' ? 'from' : 'to'} date is not a real day. Use YYYY-MM-DD.`), { status: 400, field });
+  }
+}
+
 function chitFilters(req, where, params) {
+  refuseUnrealDates(req);
   /**
    * ⚠️ A FOLDER IS A FILTER ON THIS LIST, NOT A SECOND SCREEN. Athi, 2026-08-10: *"we just pass the parameter as
    * folder name and filter data accordingly, so the same panel works for each folder."*
@@ -2640,7 +2671,7 @@ function chitFilters(req, where, params) {
   }
   if (req.query.fstatus) {
     /* ⭐ W2-RAIL R2: the buckets are the ONE table (lib/rail-actions BUCKETS, read off the engine's transitions) — never spelled here */
-    const list = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
+    const list = pickOwn(railActions.BUCKETS, req.query.fstatus, null) || [req.query.fstatus];
     const ph = list
       .map((item) => {
         params.push(item);
@@ -2653,14 +2684,7 @@ function chitFilters(req, where, params) {
   // scopes to one actor (fixes actor "My Task"). No param = everything (back-compat).
   if (req.query.assignment === 'unassigned') where += ` AND cs.assigned_to_actor_id IS NULL`;
   else if (req.query.assignment === 'assigned') where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
-  const at = req.query.assigned_to;
-  if (at === 'me') {
-    params.push(req.identity.identity_id);
-    where += ` AND cs.assigned_to_actor_id = $${params.length}`;
-  } else if (at && at !== 'me' && at !== 'all') {
-    params.push(at);
-    where += ` AND cs.assigned_to_actor_id = $${params.length}`;
-  }
+  where += assignedToWhere(req, params);
   // D4: dispute filter — chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies).
   if (req.query.dispute === 'open' || req.query.dispute === 'active') {
     where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open')`;
@@ -2715,7 +2739,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
               ${keyCol('ch')}
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+        ORDER BY ${pickOwn({ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }, req.query.sort, 'ch.created_at')} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
@@ -2727,7 +2751,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Sent list error:', err.message);
-    problem(req, res, failed(err, req, 'Failed to get sent items'));
+    problem(req, res, faultOf(err, req, 'Failed to get sent items', { words: true }));
   }
 });
 
@@ -2765,14 +2789,14 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
       const nestedCountResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
       const orderBy =
-        ({
+        pickOwn({
           date: 'created_at',
           subject: 'COALESCE(manual_subject, auto_subject)',
           amount: "(summary_json->>'total_value')::numeric",
           status: 'current_status',
           priority: "CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",
           priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
-        }[req.query.sort] || 'created_at') +
+        }, req.query.sort, 'created_at') +
         ' ' +
         (String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC');
       const _cancelCol = await cancelCols(); // b195 — named only when it exists; see cancelCols()
@@ -2805,7 +2829,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Folder error:', err.message);
-    problem(req, res, failed(err, req, 'Failed to get folder'));
+    problem(req, res, faultOf(err, req, 'Failed to get folder', { words: true }));
   }
 });
 
@@ -3038,7 +3062,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+       ORDER BY ${pickOwn({ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }, req.query.sort, 'ch.created_at')} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
@@ -3064,7 +3088,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
     ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
   } catch (err) {
     console.error('Inbox error:', err.message);
-    problem(req, res, failed(err, req, 'Failed to get inbox'));
+    problem(req, res, faultOf(err, req, 'Failed to get inbox', { words: true }));
   }
 });
 

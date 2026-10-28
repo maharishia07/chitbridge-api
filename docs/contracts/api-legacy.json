@@ -20256,6 +20256,32 @@
       "error": "Failed to get folder",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "folder-from-a-day-that-is-not-real",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to get folder",
+      "message": "That from date is not a real day. Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "That from date is not a real day. Use YYYY-MM-DD.",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to get folder",
+      "message": "That from date is not a real day. Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "That from date is not a real day. Use YYYY-MM-DD.",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -20271,6 +20297,32 @@
      "fixture": {
       "error": "Failed to get inbox",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "inbox-from-a-day-that-is-not-real",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to get inbox",
+      "message": "That from date is not a real day. Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "That from date is not a real day. Use YYYY-MM-DD.",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to get inbox",
+      "message": "That from date is not a real day. Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "That from date is not a real day. Use YYYY-MM-DD.",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -20395,6 +20447,32 @@
      "fixture": {
       "error": "Failed to get sent items",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "sent-to-a-word-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to get sent items",
+      "message": "That to date is not a real day. Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "That to date is not a real day. Use YYYY-MM-DD.",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to get sent items",
+      "message": "That to date is not a real day. Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "That to date is not a real day. Use YYYY-MM-DD.",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
      }
     }
    ]

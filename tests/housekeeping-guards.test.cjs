@@ -198,7 +198,7 @@ const says = (r, why, status) => r.status === status && r.body.why === why && r.
     src.forEach((line, i) => { if (/^\s*(\/\/|\*)/.test(line)) return; if (BUCKET_RE.some((re) => re.test(line))) spelled.push(dir + '/' + f + ':' + (i + 1)); });
   }
   t('⭐ GUARD: no lib/ or routes/ file spells a status bucket again (was 11 places)', spelled.length === 0, spelled.join(', '));
-  t('chits.js reads BUCKETS / ASKABLE / arrivalStatus from the table', /railActions\.BUCKETS\[/.test(SRC) && /oneOfTrimmed\(railActions\.ASKABLE\)/.test(fs.readFileSync(path.join(API, 'lib', 'chits-input.js'), 'utf8')) && (SRC.match(/railActions\.arrivalStatus\(receiver\.kind\)/g) || []).length === 2);
+  t('chits.js reads BUCKETS / ASKABLE / arrivalStatus from the table', /railActions\.BUCKETS\[|pickOwn\(railActions\.BUCKETS,/.test(SRC) /* RAIL-135: pickOwn reads the table for an OWN key only */ && /oneOfTrimmed\(railActions\.ASKABLE\)/.test(fs.readFileSync(path.join(API, 'lib', 'chits-input.js'), 'utf8')) && (SRC.match(/railActions\.arrivalStatus\(receiver\.kind\)/g) || []).length === 2);
 
   console.log('\n— G · a cap says so (lib/page-limit) —');
   const pg500 = PL.pageArgs({ limit: '500' }, 20, 200);
