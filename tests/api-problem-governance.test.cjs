@@ -138,6 +138,8 @@ const STRANGER_ROWS = ANSWERS(
   [/FROM entity_compliance/, [{ standard_key: 'gst-registration', doc_key: 'gstn', status: 'gathered', evidence_ref: '27AAAAA0000A1Z5', valid_until: null, verification: null }]]
 );
 const NO_FACTS_ROWS = ANSWERS([/FROM identities/, [{ identity_id: OTHER, display_name: 'Quiet Co', bridge_id: 'BRG-2', user_id: 'quiet', gstn: null, country: null, policy_flags: null }]]);
+/** a legacy entity signed up by e-mail has no handle: identities.user_id is nullable (the unique index is WHERE user_id IS NOT NULL) */
+const NO_HANDLE_ROWS = ANSWERS([/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER, user_id: null })]]);
 const MIGRATED = { mod: 'lib/schema', fn: 'hasColumn', value: async () => true };
 /** a read made with the shop's rows seated, a vault key set, and the b299 column there */
 const READY = (id, route, extra) => X(id, route, 200, Object.assign({ setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED] }, extra));
@@ -173,6 +175,7 @@ const readyExtras = [
   READY('ai-usage-metered', 'GET /api/governance/ai-usage'),
   X('supplier-readiness-own-row', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: READY_ROWS } }),
   X('supplier-readiness-seen-by-a-stranger', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: STRANGER_ROWS } }),
+  X('supplier-readiness-legacy-without-handle', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: NO_HANDLE_ROWS } }),
   X('supplier-readiness-without-facts', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: NO_FACTS_ROWS } })
 ];
 const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { patch: FAIL(mod, fn) }));

@@ -1600,7 +1600,10 @@
         "type": "string"
        },
        "user_id": {
-        "type": "string"
+        "type": [
+         "string",
+         "null"
+        ]
        },
        "display_name": {
         "type": "string"
@@ -1632,7 +1635,7 @@
     },
     "additionalProperties": false
    },
-   "observed": 3,
+   "observed": 4,
    "open": [
     {
      "path": "facts",
