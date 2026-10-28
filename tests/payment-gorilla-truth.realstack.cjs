@@ -24,7 +24,9 @@
  *         none was typed), in paise
  *   GP-5  the same press again says "Already recorded", replayed: true — and the books still hold one payment for it
  *   GP-6  what the books settle against the bill never exceeds the bill (party_item allocations ≤ its total)
- *   GP-7  a ₹0 press is refused, never marked paid (ADDS-MONEY-2: a whole positive amount)
+ *   GP-7  gap FIN-52 · a ₹0 press is refused, never marked paid (ADDS-MONEY-2: a whole positive amount). TODAY it answers "Payment
+ *         recorded" and marks the copy: lib/books-hooks.js classify queues amount 0 ("no amount") before lib/books.js recordPayment's
+ *         > 0 gate, and the route marks first-come. RECORDED here so the fix turns it green, not written around.
  *
  * Fixed seed 20261030 · budget 120 s · GORILLA_N (default 200) · GORILLA_SEED=<n>|random · GORILLA_ONLY=<i> replays one.
  * Run: node tests/payment-gorilla-truth.realstack.cjs
@@ -61,7 +63,8 @@ function pressOf(h, kind, total, index) {
   if (kind === 'negative') press.amount = -h.pick([1, 50, total]);
   if (kind === 'word') press.amount = h.pick(['fifty', '12,50', '₹100', '1 0']);
   if (kind === 'longRef') press.ref = 'R'.repeat(121);
-  if (h.chance(0.15)) press.note = (press.note || '') + ' नकद 💵';
+  /* odd text in the note — never on 'over', whose whole point is the press with NO note (a note is what lets an overpayment through) */
+  if (kind !== 'over' && h.chance(0.15)) press.note = (press.note || '') + ' नकद 💵';
   return press;
 }
 
@@ -165,7 +168,7 @@ const CHECKS = [
     if (seen.thrown) return null;
     return seen.settledMinor <= cents(record.total) ? null : 'settled ' + seen.settledMinor + ' paise against a bill of ' + cents(record.total);
   } },
-  { id: 'GP-7', title: 'a ₹0 press is refused, never marked paid (a payment is a whole positive amount)', check: (record, seen) => {
+  { id: 'GP-7', title: 'a ₹0 press is refused, never marked paid (a payment is a whole positive amount)', gap: 'FIN-52 · classify queues a zero before the > 0 gate in recordPayment', check: (record, seen) => {
     if (seen.thrown || record.kind !== 'zero') return null;
     if (seen.status < 400) return '₹0 answered HTTP ' + seen.status + ' "' + (seen.said || '') + '"' + (seen.mark ? ' and my copy is marked paid' : '');
     return seen.mark && !record.second ? 'refused, but the copy is marked ' + JSON.stringify(seen.mark) : null;
