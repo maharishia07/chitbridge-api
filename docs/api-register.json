@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 481,
+  "meets": 10,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -7466,11 +7466,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "43f1e03628304b31"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/:id/chits",
@@ -7666,11 +7666,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "4885ff22259b0def"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/inventory",
@@ -7715,11 +7715,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "b6e727a5f02eaf0b"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/messages",
@@ -7765,11 +7765,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "badea35ce66d96dc"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/mis",
@@ -7815,11 +7815,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "a7167645145a889c"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/reconcile",
@@ -7865,11 +7865,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "f7cb30b70fdf3b01"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/rules",
@@ -7915,11 +7915,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "bc2249a2aa8bc1cc"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/rules/vocabulary",
@@ -7963,11 +7963,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "acd81ea945245e41"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/worklist",
@@ -8014,11 +8014,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#481 stage2",
     "lifecycle": "stable",
     "stale_since": "5a551b15f7f73550"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/forms",
