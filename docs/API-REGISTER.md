@@ -197,16 +197,16 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/governance/track-record | governance | routes/governance.js:338 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/governance/vault-schema | governance | routes/governance.js:409 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/identity/documents | identity-docs | routes/identity-docs.js:129 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/integrations/catalogue | integrations | routes/integrations.js:361 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/docs/:id | integrations | routes/integrations.js:274 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/integrations/download/:id | integrations | routes/integrations.js:379 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/integrations/catalogue | integrations | routes/integrations.js:362 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/integrations/docs/:id | integrations | routes/integrations.js:275 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/integrations/download/:id | integrations | routes/integrations.js:380 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/integrations/kit | integrations | routes/integrations.js:249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/kit/* | integrations | routes/integrations.js:257 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/integrations/profile-map | integrations | routes/integrations.js:975 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/reconcile | integrations | routes/integrations.js:828 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/status | integrations | routes/integrations.js:714 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/stock/:handle | integrations | routes/integrations.js:954 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/streams | integrations | routes/integrations.js:746 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/integrations/kit/* | integrations | routes/integrations.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/integrations/profile-map | integrations | routes/integrations.js:978 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/integrations/reconcile | integrations | routes/integrations.js:830 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/integrations/status | integrations | routes/integrations.js:715 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/integrations/stock/:handle | integrations | routes/integrations.js:956 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/integrations/streams | integrations | routes/integrations.js:748 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/invoice/:chit_id | invoice | routes/invoice.js:120 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/keys | keys | routes/keys.js:149 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/kyb/position | kyb | routes/kyb.js:30 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -488,12 +488,12 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/governance/verify | governance | routes/governance.js:617 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/identity/documents/:scheme/code | identity-docs | routes/identity-docs.js:390 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/identity/documents/:scheme/verify | identity-docs | routes/identity-docs.js:406 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
-| POST | /api/integrations/:actor_id/approve | integrations | routes/integrations.js:631 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:933 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/integrations/books | integrations | routes/integrations.js:668 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/integrations/books/skip | integrations | routes/integrations.js:796 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/integrations/heartbeat | integrations | routes/integrations.js:457 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/integrations/profile | integrations | routes/integrations.js:1003 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/integrations/:actor_id/approve | integrations | routes/integrations.js:632 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:935 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/integrations/books | integrations | routes/integrations.js:669 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/integrations/books/skip | integrations | routes/integrations.js:798 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/integrations/heartbeat | integrations | routes/integrations.js:458 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/integrations/profile | integrations | routes/integrations.js:1007 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/invoice/build | invoice | routes/invoice.js:31 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/keys | keys | routes/keys.js:707 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/kyb/credential | kyb | routes/kyb.js:20 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
@@ -636,7 +636,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/governance/profile | governance | routes/governance.js:389 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/governance/profile/vault | governance | routes/governance.js:438 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:223 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
-| PUT | /api/integrations/streams | integrations | routes/integrations.js:755 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/integrations/streams | integrations | routes/integrations.js:757 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-design | network-design | routes/network-design.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:275 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/products/:id/availability | products | routes/products.js:1639 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |

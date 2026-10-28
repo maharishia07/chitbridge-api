@@ -249,6 +249,7 @@ function kitManifest() {
 router.get('/kit', auth, ...filterFor('/kit'), (req, res) => {
   try {
     const manifest = kitManifest();
+    /* every key of kitManifest is named here: a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
     res.json({ version: manifest.version, at: manifest.at, files: manifest.files });
   } catch (e) {
     fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
@@ -715,6 +716,7 @@ router.get('/status', auth, schemaValidate(STATUS_OPERATION), ...filterFor('/sta
   try {
     const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]);
     const page = PL.pageOut('connectors', r.rows.map(rowOut), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* every key of PL.pageOut is named here: a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
     res.json({ connectors: page.connectors, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note });
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
@@ -965,6 +967,7 @@ router.get('/stock/:handle', schemaValidate(STOCK_OPERATION), ...filterFor('/sto
       r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })),
       PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)
     );
+    /* every key of PL.pageOut is named here: a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
     res.json({ stock: page.stock, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note, at: new Date().toISOString() });
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
@@ -983,7 +986,8 @@ router.get('/profile-map', auth, ...filterFor('/profile-map'), async (req, res) 
           .replace(/\s+/g, '')
           .toLowerCase();
     if (tn && tn.other && norm(tn.other.value) !== norm(tn.value)) out.name_mismatch = { profile: tn.value, other: tn.other.value, source: tn.other.source };
-    /* every key of PM.assess is named here (the answer is the library's, in its order; name_mismatch only when the trade name differs) */
+    /* every key of PM.assess is named here (the answer is the library's, in its order; name_mismatch only when the trade name differs):
+       a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
     res.json({
       engine: out.engine,
       version: out.version,
