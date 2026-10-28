@@ -123,6 +123,19 @@ const make = (h, index) => ({ index, lines: h.int(1, 6), mode: h.pick(['cash', '
     assert.deepStrictEqual(handed, [{ prepared: 0 }, { prepared: 1 }, { prepared: 2 }]);
   });
 
+  const broken = [];
+  let sent = 0;
+  await G.hammer({ label: 'broken world', file: 'x', fixedSeed: 2, env: { GORILLA_N: '50' }, make,
+    kase: async (id, title, fn) => { try { await fn(); broken.push({ id, pass: true }); } catch (e) { broken.push({ id, pass: false, said: e.message }); } },
+    before: async () => { sent += 1; throw new Error('the bill never opened'); },
+    send: async () => ({}),
+    checks: [{ id: 'B-1', title: 'anything', check: () => null }] });
+  ok('when the first five records all throw, the run stops there and says so (GORILLA-SETUP), never spending the CI job on it', () => {
+    assert.strictEqual(sent, 5, 'ran ' + sent + ' records');
+    const setup = broken.find((item) => item.id === 'GORILLA-SETUP');
+    assert.ok(setup && !setup.pass && /first 5 records all threw \(the bill never opened\)/.test(setup.said), JSON.stringify(broken));
+  });
+
   const seenIndexes = [];
   await G.hammer({ label: 'one', file: 'x', fixedSeed: 11, env: { GORILLA_ONLY: '13' }, make, kase: async () => {},
     send: async (record, index) => { seenIndexes.push(index); return {}; }, checks: [] });

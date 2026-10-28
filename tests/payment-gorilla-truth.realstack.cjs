@@ -7,8 +7,8 @@
  *       generator is tests/lib/gorilla.cjs; the doors, the case runner and the fresh shop are tests/lib/truth-harness.cjs. Pack 1
  *       (send-gorilla) is the pattern.
  * FLOW  fresh shop, books on, 6 products, and a second shop (whose bill is not mine) → per record: before() makes the bill to press on
- *       (its own local customer and an invoice, waited until the books hold it open · or a stranger's · a counter bill · the other
- *       shop's · an id that is no bill) → send() presses Mark paid (sometimes twice) → reads the copy back, books_payment and party_item
+ *       (a fresh buyer shop on the rail, added as my customer, and an invoice to it, waited until the books hold it open · or a
+ *       stranger's · a counter bill · the other shop's · an id that is no bill) → send() presses Mark paid (sometimes twice) → reads the copy back, books_payment and party_item
  *       → GP-1..GP-9 graded over every record → one case each
  * CARD 01-rail-core-the-chit/README
  *
@@ -17,7 +17,7 @@
  * ½% over (inside the tolerance) · ₹100 over with no note · ₹100 over with a note · ₹0 · a method the contract does not know ·
  * no method · a negative amount · a word for an amount · a 121-character reference; and a second press: the same one again (a
  * replay) · a new one for 60% · a new one for the same amount (the duplicate rule) · the same amount with its warnings acknowledged.
- * Each record has its own customer, so the duplicate rule reads only that record's history.
+ * Each record has its own buyer, so the duplicate rule reads only that record's history.
  *
  * What every record must do (ADDS-MONEY-2: a payment is a whole positive amount, dated, from a party on my list; what it settles never
  * exceeds what is open):
@@ -106,14 +106,15 @@ function makeRecord(products) {
   };
 }
 
-/** wait (≤ 5 s) until the books hold the bill open — a payment pressed before that is an advance, and GP-6 would grade nothing */
-async function openInBooks(pg, entity, chitId) {
-  for (let tries = 0; tries < 50; tries += 1) {
-    const open = await pg.query("SELECT 1 FROM party_item WHERE entity_id = $1 AND ref = $2 AND ref_kind = 'bill' LIMIT 1", [entity, String(chitId)]);
-    if (open.rows.length) return true;
+/** wait (≤ 3 s) until the books hold the bill open — a payment pressed before that is an advance, and GP-6 would grade nothing.
+ *  → the bill row's own ref (the posting names it; the pack does not assume it is the chit id), else null */
+async function openInBooks(pg, entity, party) {
+  for (let tries = 0; tries < 30; tries += 1) {
+    const open = await pg.query("SELECT ref FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill' LIMIT 1", [entity, party]);
+    if (open.rows.length) return open.rows[0].ref;
     await pause(100);
   }
-  return false;
+  return null;
 }
 
 /** before each record: the bill its press lands on (see TARGETS) */
@@ -138,10 +139,17 @@ function billMaker(shop, other, pg) {
         business_json: { customer: { name: 'Walk-in' }, till: { id: 'C1', name: 'Counter 1', host: 'browser' }, bill_no: no, billed_at: billedAt, payment: tender, slip: 'cash' },
         line_items: record.lines }), tender };
     }
-    const added = ok(await j('/api/relationships/customers', { method: 'POST', token: shop.token, body: { name: 'Payer ' + RUN + ' ' + record.index } }), 'customer ' + record.index).b;
-    const chitId = await send(shop.token, invoice({ name: added.customer.display_name, party_id: added.customer.customer_identity_id }));
-    if (!(await openInBooks(pg, shop.entity, chitId))) throw new Error('the invoice never opened in the books (no party_item bill row in 5 s)');
-    return { chit_id: chitId };
+    /* a sale invoice posts only when its buyer is ON THE RAIL (lib/books-hooks.js classify, purpose 'invoice': a self invoice to a
+       local customer is queued "no buyer on the rail") — so each record's buyer is a fresh shop, added to my customers by its User ID */
+    const tag = RUN + 'b' + record.index;
+    const buyer = await freshShop(tag, 'Gorilla Buyer');
+    const added = ok(await j('/api/relationships/customers', { method: 'POST', token: shop.token, body: { handle: tag } }), 'customer ' + record.index).b;
+    const party = added.customer.customer_identity_id;
+    const chitId = await send(shop.token, { recipients: [{ display_name: buyer.name, bridge_id: buyer.bridge, kind: 'to' }], purpose: 'invoice', subject: 'Invoice ' + no,
+      manual_subject: 'Invoice ' + no, client_ref: no, business_json: { bill_no: no, billed_at: billedAt }, line_items: record.lines });
+    const billRef = await openInBooks(pg, shop.entity, party);
+    if (!billRef) throw new Error('the invoice never opened in the books (no party_item bill row for its buyer in 3 s)');
+    return { chit_id: chitId, billRef };
   };
 }
 
@@ -161,7 +169,8 @@ function presser(shop, pg) {
     seen.mark = business ? business.payment || null : null;
     const paid = await pg.query('SELECT client_ref, amount_minor FROM books_payment WHERE entity_id = $1 AND client_ref LIKE $2', [shop.entity, 'chitpay:' + made.chit_id + '%']);
     seen.payments = paid.rows.map((row) => ({ key: row.client_ref, minor: Number(row.amount_minor) }));
-    const settled = await pg.query("SELECT COALESCE(SUM(ABS(amount_minor)), 0) AS minor FROM party_item WHERE entity_id = $1 AND ref_kind = 'allocation' AND against_ref = $2", [shop.entity, String(made.chit_id)]);
+    const settled = await pg.query("SELECT COALESCE(SUM(ABS(amount_minor)), 0) AS minor FROM party_item WHERE entity_id = $1 AND ref_kind = 'allocation' AND against_ref = $2", [shop.entity, String(made.billRef || made.chit_id)]);
+    seen.billRef = made.billRef || null;
     seen.settledMinor = Number(settled.rows[0].minor);
     return seen;
   };
