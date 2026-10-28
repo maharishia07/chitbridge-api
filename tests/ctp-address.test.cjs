@@ -169,10 +169,15 @@ function loadAddress(dbStub) {
     Date.now = () => realNow() + 5 * 60 * 1000; /* past the one-minute memo */
     topologyFails = true;
     try {
-      await okAsync('a failed topology read keeps the last good set: a remote party stays remote', async () => {
-        const a = await A.resolve('far');
-        assert.strictEqual(a.local, false, 'a blip routed a remote party\'s copy into this database');
-        assert.strictEqual(a.endpoint, 'https://ae.example/ctp');
+      await okAsync('once something has been remote, a failed topology read places nobody (resolved:false)', async () => {
+        const far = await A.resolve('far');
+        const near = await A.resolve('near');
+        assert.strictEqual(far.resolved, false, 'a blip guessed where a remote party lives: ' + JSON.stringify(far));
+        assert.strictEqual(near.resolved, false, 'a blip guessed where a local party lives (a lift back home would send it away)');
+      });
+      A.invalidate();
+      await okAsync('…and invalidate() does not reopen "nothing is remote"', async () => {
+        assert.strictEqual((await A.resolve('far')).resolved, false);
       });
     } finally { Date.now = realNow; topologyFails = false; }
 
