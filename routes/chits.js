@@ -88,6 +88,9 @@ const billPrivacy = require('../lib/bill-privacy');
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
 const entityId = (req) => auth.entityOf(req);
+/* "Do I hold a copy of this chit?" — the one probe /amend, /reprice, /costs and /assign-lines ask before writing (RAIL-128) */
+const holdsCopy = async (entity_id, chit_id) =>
+  (await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]))).rows.length > 0;
 /** the schema check of one route (its own operation in lib/chits-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = operationFor(route);
@@ -3654,11 +3657,11 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const held = await holdsCopy(entity_id, chit_id);
     /* ⭐ W2-RAIL R2 — THE RAIL QUESTION, the same one /amend asks: a reprice WRITES amendments (lib/reprice apply → amend.record),
        so it is the `amend` action — the level ladder (viewer · commenter refused in the engine's word), then "I hold a copy".
        Preview too: the answer GET /chits/:id gives for `amend` is the door's answer, preview or apply. */
-    const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
@@ -3671,7 +3674,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
       })
     );
   } catch (err) {
-    console.error('Reprice error:', err.message);
+    cbLog.error('chits/reprice failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, faultOf(err, req, 'Reprice failed'));
   }
 });
@@ -3690,8 +3693,8 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
-    if (!mine.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
+    const held = await holdsCopy(entity_id, chit_id);
+    if (!held) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
     res.json(
       await cost.record(entity_id, chit_id, req.body.rows || req.body, {
         actor_id: req.identity.identity_id,
@@ -3699,7 +3702,7 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
       })
     );
   } catch (err) {
-    console.error('Cost record error:', err.message);
+    cbLog.error('chits/costs record failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, faultOf(err, req, 'Failed to record cost'));
   }
 });
@@ -3713,7 +3716,7 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
     if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' }, 'CHIT_NOT_MIGRATED') });
     res.json(out);
   } catch (err) {
-    console.error('Cost read error:', err.message);
+    cbLog.error('chits/costs read failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, failed(err, req, 'Failed to read costs'));
   }
 });
@@ -4230,9 +4233,9 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
     const entity_id = entityId(req);
     /* Assign only on a chit I hold. Without this an id in the URL would file work against a document I am not
        party to — RLS would keep the row mine and harmless, but it would still be a record of someone else's job. */
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const held = await holdsCopy(entity_id, chit_id);
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
-    const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'assign');
+    const _v = railActions.can({ held }, railActions.meOf(req), 'assign');
     if (!_v.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(_v)));
 
     const out = await assign.assign(entity_id, chit_id, req.body.edits || req.body, {
@@ -4286,9 +4289,9 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     /* Amend only what I actually hold. Without this an id in the URL would be enough to file a correction against
        a stranger's chit — the row would be RLS-scoped to me and harmless, but it would still be a record of a
        document I was never party to. */
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const held = await holdsCopy(entity_id, chit_id);
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
-    const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {

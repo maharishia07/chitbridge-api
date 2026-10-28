@@ -20634,6 +20634,34 @@
      }
     },
     {
+     "scenario": "amend-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
      "scenario": "amend-price-not-a-number",
      "status": 400,
      "body_keys": {
@@ -21057,6 +21085,32 @@
      "fixture": {
       "error": "Failed to record cost",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "cost-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -22361,6 +22415,34 @@
      "fixture": {
       "error": "Reprice failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "reprice-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
