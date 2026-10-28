@@ -61,6 +61,10 @@ const stub = {
         return { rows: [{ installation_key: 'platform-0', ctp_endpoint: null,
                           hosted_locally: true, active: true }] };
       }
+      if (args[0] === 'mx.example') {
+        /* RAIL-142 (e): a second installation hosted in THIS database */
+        return { rows: [{ installation_key: 'platform-mx', ctp_endpoint: null, hosted_locally: true, active: true }] };
+      }
       if (args[0] === 'twin.example') {
         /* RAIL-140 (g): two rows, one domain (nothing unique stops it); the database answers in its own order */
         const rows = [{ installation_key: 'z-retired', ctp_endpoint: 'https://old.twin/ctp', hosted_locally: false, active: false },
@@ -151,6 +155,13 @@ const stub = {
     assert.strictEqual(r.local, true, r.why);
     assert.strictEqual(r.entity_id, OUR_ENTITY, 'a domain we host is still our namespace');
     assert.strictEqual(r.domain, 'in.example', 'RAIL-140 (g): the domain the address named was dropped');
+  });
+
+  await okA('a hosted domain answers only for a business stamped on ITS installation (RAIL-142 e)', async () => {
+    const r = await A.resolveAddress(SAME + '@mx.example');
+    assert.strictEqual(r.ok, false, 'our platform-0 shop answered for the Mexican domain: ' + JSON.stringify(r));
+    assert.strictEqual(r.why, 'that business is not on the installation that domain names');
+    assert.strictEqual(r.entity_id, null, 'no entity is named on a refusal');
   });
 
   await okA('two installation rows with one domain answer the active one, every time (RAIL-140 g)', async () => {
