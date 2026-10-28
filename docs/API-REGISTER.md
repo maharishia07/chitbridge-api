@@ -23,8 +23,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/crm/groups/:name | crm | routes/crm.js:688 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/crm/parties/:id | crm | routes/crm.js:426 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/definitions/:id | definitions | routes/definitions.js:476 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| DELETE | /api/folders/:id | folders | routes/folders.js:297 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:537 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| DELETE | /api/folders/:id | folders | routes/folders.js:306 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:542 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/keys/:jti | keys | routes/keys.js:723 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/products/:id | products | routes/products.js:1699 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/products/:id/media/:mid | products | routes/products.js:1849 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -163,17 +163,17 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/facts/:card | facts | routes/facts.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/facts/rail/chits | facts | routes/facts.js:36 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/folders | folders | routes/folders.js:72 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/folders/:id/chits | folders | routes/folders.js:411 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/folders/:id/metrics | folders | routes/folders.js:467 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/folders/:id/rules | folders | routes/folders.js:503 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/folders/groupsum | folders | routes/folders.js:820 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/folders/:id/chits | folders | routes/folders.js:416 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/folders/:id/metrics | folders | routes/folders.js:472 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/folders/:id/rules | folders | routes/folders.js:508 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/folders/groupsum | folders | routes/folders.js:825 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/folders/inventory | folders | routes/folders.js:131 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/folders/messages | folders | routes/folders.js:629 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/folders/mis | folders | routes/folders.js:964 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/folders/reconcile | folders | routes/folders.js:869 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/folders/rules | folders | routes/folders.js:578 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/folders/rules/vocabulary | folders | routes/folders.js:557 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/folders/worklist | folders | routes/folders.js:788 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/folders/messages | folders | routes/folders.js:634 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/folders/mis | folders | routes/folders.js:969 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/folders/reconcile | folders | routes/folders.js:874 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/folders/rules | folders | routes/folders.js:583 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/folders/rules/vocabulary | folders | routes/folders.js:562 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/folders/worklist | folders | routes/folders.js:793 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/forms | forms | routes/forms.js:22 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/forms/:key | forms | routes/forms.js:30 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/forms/instances/:id | forms | routes/forms.js:62 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
@@ -313,7 +313,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/entities/policy | entities | routes/entities.js:299 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/entities/profile | entities | routes/entities.js:952 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/folders/:id | folders | routes/folders.js:253 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PATCH | /api/folders/rules/:rule_id | folders | routes/folders.js:530 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PATCH | /api/folders/rules/:rule_id | folders | routes/folders.js:535 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PATCH | /api/products/:id | products | routes/products.js:1469 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:51 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | PATCH | /api/quick-keys/groups/:id/items | quick-keys | routes/quick-keys.js:100 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
@@ -469,10 +469,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/entities/verify | entities | routes/entities.js:141 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/events/ticket | events | routes/events.js:15 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/folders | folders | routes/folders.js:185 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/folders/:id/rules | folders | routes/folders.js:519 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:767 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/folders/move | folders | routes/folders.js:316 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/folders/rules/preview | folders | routes/folders.js:548 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/folders/:id/rules | folders | routes/folders.js:524 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:772 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/folders/move | folders | routes/folders.js:321 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/folders/rules/preview | folders | routes/folders.js:553 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/forms/:key/issue | forms | routes/forms.js:46 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/forms/:key/resolve | forms | routes/forms.js:38 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/forms/instances/:id/attach | forms | routes/forms.js:78 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
