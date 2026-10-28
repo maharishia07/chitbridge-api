@@ -25,7 +25,8 @@
  *   GP-2  a body the contract refuses (method, amount, ref) is a 400: the copy is not marked and the books hold nothing for it
  *   GP-3  above the quote with no note is a 422 PAYMENT_ABOVE_QUOTE naming the quote, and nothing is marked or recorded
  *   GP-4  a valid press on my open bill is RECORDED (never queued, never "books off"), on MY copy as pressed (method · amount · ref)
- *         and in the books ONCE, for the amount (the quote when none was typed), in paise
+ *         and in the books ONCE, for the amount (the quote when none was typed), in paise · method 'other' names no ledger: it may
+ *         be queued, but only with a why, and then the books hold nothing for it
  *   GP-5  the same press again says "Already recorded", replayed: true — and the books still hold one payment for it
  *   GP-6  what the books settle against the bill never exceeds the bill; and a whole press (exact · the quote) settles exactly the bill
  *   GP-7  gap FIN-52 · a ₹0 press is refused, never marked paid (ADDS-MONEY-2: a whole positive amount). TODAY it answers "Payment
@@ -210,8 +211,11 @@ const CHECKS = [
   { id: 'GP-4', title: 'a valid press on my open bill is recorded (never queued), on my copy as pressed, and in the books once in paise', check: (record, seen) => {
     if (seen.thrown || !own(record) || !VALID.has(record.kind)) return null;
     if (seen.status !== 200) return record.kind + ' answered HTTP ' + seen.status + ' "' + (seen.said || '') + '"';
-    if (waits(seen.body)) return 'a valid press was not posted: ' + JSON.stringify({ queued: seen.body.books.queued, off: seen.body.books.off, why: seen.body.books.why });
     const press = record.press;
+    /* 'other' names no ledger of its own: the books queue it and SAY why ("… which has no ledger yet") — honest, not silent */
+    if (press.method === 'other' && waits(seen.body))
+      return seen.body.books.why ? (nothingFor(seen, press) ? 'queued for "other", but the books hold it' : null) : 'queued for "other" with no why';
+    if (waits(seen.body)) return 'a valid press was not posted: ' + JSON.stringify({ queued: seen.body.books.queued, off: seen.body.books.off, why: seen.body.books.why });
     const second = marksAgain(record) && seen.againStatus === 200 ? record.second : null;
     const finalMark = second || press;
     if (!seen.mark || seen.mark.method !== finalMark.method || cents(seen.mark.amount ?? 0) !== cents(finalMark.amount ?? 0) || (seen.mark.ref || null) !== (finalMark.ref || null))
