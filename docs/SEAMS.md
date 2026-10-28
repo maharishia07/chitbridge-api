@@ -87,7 +87,7 @@ of file each thing is; this says what already does the job.
 | 26 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 26 | `gate` | `country-setup.js` | gate(h, entity): |
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
-| 26 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 27 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 25 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
@@ -114,7 +114,7 @@ of file each thing is; this says what already does the job.
 | 20 | `entries` | `books-store.js` |  |
 | 20 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 20 | `note` | `dbwatch.js` |  |
-| 20 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
+| 21 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 20 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `card` | `cap-shop.js` |  |
