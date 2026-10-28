@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 236,
+  "long_functions": 235,
   "worst_complexity": 183,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -95,9 +95,6 @@
       "applyDecisions",
       "matchHeader",
       "preflight"
-    ],
-    "lib/ctpaddress.js": [
-      "resolveAddress"
     ],
     "lib/dayopen.js": [
       "(anonymous)"
