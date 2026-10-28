@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 592
    },
    "foreign_id_404": {
     "applies": 227,
@@ -12868,8 +12868,8 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2919,
-   "hash": "3d6b2fc666d0eb0a",
+   "line": 2921,
+   "hash": "1945c21369b18d68",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12879,7 +12879,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12906,8 +12906,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c1dececd0345e9e5"
    },
    "status": "partial"
   },
@@ -12917,8 +12918,8 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2818,
-   "hash": "d10e6a6e1d2b604c",
+   "line": 2819,
+   "hash": "5cf00422dcf7810f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12928,7 +12929,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12955,8 +12956,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "5cf00422dcf7810f"
    },
    "status": "partial"
   },
@@ -12967,7 +12969,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1471,
-   "hash": "2076c6a23b42055a",
+   "hash": "73bccfc6825b5345",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12977,7 +12979,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13004,8 +13006,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "73bccfc6825b5345"
    },
    "status": "partial"
   },
@@ -13015,7 +13018,7 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3349,
+   "line": 3347,
    "hash": "4a422f34f38b13a0",
    "columns": {
     "schema_in": true,
@@ -13065,8 +13068,8 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3055,
-   "hash": "be0d9bf2e28e212b",
+   "line": 3057,
+   "hash": "20024d37f920395f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13076,7 +13079,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13103,8 +13106,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "fa37e29963af1fc2"
    },
    "status": "partial"
   },
@@ -13115,7 +13119,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1480,
-   "hash": "35f7ecacff13de4d",
+   "hash": "be24ae66894afb1b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13125,7 +13129,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13152,8 +13156,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "be24ae66894afb1b"
    },
    "status": "partial"
   },
@@ -13164,7 +13169,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1518,
-   "hash": "58978b2c96355943",
+   "hash": "0bcf0daa6041ee3f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13174,7 +13179,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13201,8 +13206,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0bcf0daa6041ee3f"
    },
    "status": "partial"
   },
@@ -13213,7 +13219,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1562,
-   "hash": "476b78ae0d50a3d6",
+   "hash": "e26cae6b0b11294e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13223,7 +13229,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13250,8 +13256,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "453ceee8afa3ca9f"
    },
    "status": "partial"
   },
@@ -13362,7 +13369,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 2261,
-   "hash": "fee1ffe46e308ce3",
+   "hash": "d718fc97d7bce5b7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13372,7 +13379,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13399,8 +13406,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d718fc97d7bce5b7"
    },
    "status": "partial"
   },
@@ -13411,7 +13419,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 186,
-   "hash": "5aeb941bcee2b833",
+   "hash": "ac32c7133a65c697",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13421,7 +13429,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13461,7 +13469,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 2647,
-   "hash": "879aa38ccc49a05e",
+   "hash": "65d59798e49ce45d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13471,7 +13479,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13511,8 +13519,8 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2884,
-   "hash": "2da4e820d2a1ee15",
+   "line": 2885,
+   "hash": "6cd0bd3be7ba6c1f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13522,7 +13530,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13550,8 +13558,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8f1930068039a2cf"
    },
    "status": "partial"
   },
@@ -13561,8 +13570,8 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3026,
-   "hash": "3699b1c90b1b4388",
+   "line": 3028,
+   "hash": "1c7e8c1b00bc51dd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13572,7 +13581,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13599,8 +13608,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1c7e8c1b00bc51dd"
    },
    "status": "partial"
   },
@@ -13611,7 +13621,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 2420,
-   "hash": "048543cabfe017b6",
+   "hash": "240f5759fbcaeb96",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13621,7 +13631,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13648,8 +13658,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "240f5759fbcaeb96"
    },
    "status": "partial"
   },
@@ -13660,7 +13671,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1627,
-   "hash": "16793d611dc5c4c7",
+   "hash": "bc39dfecdf201d9b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13670,7 +13681,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13698,8 +13709,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bc39dfecdf201d9b"
    },
    "status": "partial"
   },
@@ -27666,7 +27678,7 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3240,
+   "line": 3238,
    "hash": "1b393f3ac10694ac",
    "columns": {
     "schema_in": true,
@@ -27716,7 +27728,7 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2709,
+   "line": 2710,
    "hash": "0b022d0054a67cb1",
    "columns": {
     "schema_in": true,
@@ -27971,8 +27983,8 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3283,
-   "hash": "93504ef849a926a2",
+   "line": 3281,
+   "hash": "80215b80dce49435",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -27982,7 +27994,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28071,7 +28083,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 2109,
-   "hash": "b8944df3397c8a0b",
+   "hash": "f248c9eccb2db79f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28081,7 +28093,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28109,8 +28121,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f248c9eccb2db79f"
    },
    "status": "partial"
   },
@@ -28474,7 +28487,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 2381,
-   "hash": "fe056ad1a25bb4e7",
+   "hash": "373c4c3a3167c3fe",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28484,7 +28497,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28512,8 +28525,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "373c4c3a3167c3fe"
    },
    "status": "partial"
   },
@@ -28728,7 +28742,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 2510,
-   "hash": "ecbd876fea2f9aed",
+   "hash": "7024338af49d4865",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28738,7 +28752,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28766,8 +28780,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7024338af49d4865"
    },
    "status": "partial"
   },
@@ -28778,7 +28793,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1371,
-   "hash": "4f046894dfe93c93",
+   "hash": "c9212390a49efb45",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28788,7 +28803,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28816,8 +28831,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c9212390a49efb45"
    },
    "status": "partial"
   },
