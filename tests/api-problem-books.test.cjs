@@ -132,7 +132,22 @@ const CASH_PATCH = {
     }
   }
 };
+/* the READY side of the reads whose not-ready answer the stand-in db gives: the schema is learned from both branches of the handler (API-8 review) */
+const RAIL_STOP = (pack) => async () => { throw Object.assign(new Error('Read from the rail.'), { code: 'RETURN_FROM_RAIL', pack }); };
+const RETURN_BASE = { currency: 'AUD', pack: 'AU', form: 'BAS', name: 'Business Activity Statement', short: 'BAS', authority: 'ATO', portal: 'https://example.invalid', prepared: 'prepared from the ledgers' };
+const RETURN_READY = { patch: { period: { taxReturn: async () => Object.assign({}, RETURN_BASE, { asked: { simpler: true }, periods: [], period: { period: 'Q2' }, boxes: [], payable_minor: 0, refund_minor: 0, net_minor: 0, notes: [], cite: null }) } } };
+const RETURN_NEEDS = { patch: { period: { taxReturn: async () => Object.assign({}, RETURN_BASE, { asked: {}, needs: 'period', why: 'Which period?', periods: [], period: null, boxes: [], payable_minor: 0, refund_minor: 0, net_minor: 0, notes: [], cite: null, emirates: [], staggers: {} }) } } };
+const REVALUE_READY = { ready: true, date: '2026-09-30', reverses_on: '2026-10-01', functional: 'INR', rows: [], missing: [], gain_minor: 0, posted: null, event: { kind: 'fx_revalue' } };
 const EXTRAS = [
+  X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
+  X('returns-needs-period', 'GET /api/books/returns', 200, RETURN_NEEDS),
+  X('returns-from-rail-other-pack', 'GET /api/books/returns', 200, { patch: { period: { taxReturn: RAIL_STOP('AU') } } }),
+  X('returns-from-rail-no-pack', 'GET /api/books/returns', 200, { patch: { period: { taxReturn: RAIL_STOP(undefined) } } }),
+  X('move-in-ready', 'GET /api/books/move-in/imports', 200, { patch: { movein: { list: async () => ({ ready: true, why: null, imports: [] }) } } }),
+  X('compare-ready', 'GET /api/books/compare', 200, { patch: { store: { compareReady: async () => true, compareSnapshots: async () => [] } } }),
+  X('fx-rates-ready', 'GET /api/books/fx-rates', 200, { patch: { fxr: { ready: async () => true, list: async () => [] } } }),
+  X('fx-revalue-ready', 'GET /api/books/fx-revalue', 200, { url: MOUNT + '/fx-revalue?fiscal_year=2026-27&period=6', patch: { fxr: { revaluation: async () => REVALUE_READY } } }),
+  X('status-before-migration', 'GET /api/books/status', 200, { patch: { books: { settingOf: async () => null } } }),
   X('cashflow-owner-reads', 'GET /api/books/cashflow', 200, { patch: CASH_PATCH }),
   X('fx-revalue-reads', 'GET /api/books/fx-revalue', 200, { url: MOUNT + '/fx-revalue?fiscal_year=2026-27&period=6' }),
   X('currency-not-the-ledgers', 'POST /api/books/payments/preview', 422, { body: BAD_MONEY }),
@@ -211,7 +226,7 @@ function scenariosOf(routes) {
 
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
-  const modules = { books: require(path.join(HERE, 'lib', 'books')), store: require(path.join(HERE, 'lib', 'books-store')), cashflow: require(path.join(HERE, 'lib', 'books-cashflow')) };
+  const modules = { books: require(path.join(HERE, 'lib', 'books')), store: require(path.join(HERE, 'lib', 'books-store')), cashflow: require(path.join(HERE, 'lib', 'books-cashflow')), fxr: require(path.join(HERE, 'lib', 'fx-rates')), period: require(path.join(HERE, 'lib', 'books-period')), movein: require(path.join(HERE, 'lib', 'move-in-proof')) };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
