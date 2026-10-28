@@ -121,7 +121,7 @@
   "lib/memberships.js": {"score":16,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/meter.js": {"score":3,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/mint-product.js": {"score":5,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
-  "lib/mint.js": {"score":27,"long40":2,"long80":1,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
+  "lib/mint.js": {"score":27,"long40":2,"long80":1,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
   "lib/mintuserid.js": {"score":12,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/move-in-gate.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/move-in-proof.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
