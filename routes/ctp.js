@@ -127,6 +127,35 @@ router.get('/.well-known/ctp.json', async (req, res) => {
   }
 });
 
+/**
+ * RAIL-138 (b) — WHOSE SENDER IS THIS? The door runs the write as the sender the envelope names (the trust shift below), so the
+ * name must be one the signing installation may use. A sender with a row HERE must be stamped to that installation
+ * (ops.f_installation_of, the same definer ctpaddress.resolve asks); a business of THIS installation, or of a third one, is
+ * refused, or a signed peer could write a chit into our books as one of our own shops. A sender with no row here is a party
+ * of theirs, named without existing here (chit_header.sender_entity_id has no foreign key for exactly that). An unreadable
+ * answer refuses: a boundary rule that cannot be read never resolves to allowed. → { id } when it may, else { refusal }.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function senderOf(opened, copy, installationKey) {
+  const id = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
+  const refusal = await senderRefusal(id, installationKey);
+  return refusal ? { refusal } : { id };
+}
+async function senderRefusal(senderId, installationKey) {
+  if (!senderId) return { status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' };
+  if (!UUID_RE.test(String(senderId))) return { status: 400, code: 'CTP_SENDER_NOT_AN_ID', why: 'the copy names its sender by something that is not an id' };
+  try {
+    const here = await query('SELECT 1 FROM identities WHERE identity_id = $1', [senderId]);
+    if (!here.rows.length) return null;
+    const home = await query('SELECT ops.f_installation_of($1) AS installation_key', [senderId]);
+    if (home.rows[0] && home.rows[0].installation_key === installationKey) return null;
+  } catch (e) {
+    log.fellBack('ctp POST /deliver: the sender check could not be read — refused', e);
+    return { status: 503, code: 'CTP_SENDER_UNCHECKABLE', why: 'this installation cannot check whose business the sender is — refusing' };
+  }
+  return { status: 403, code: 'CTP_SENDER_NOT_THEIRS', why: 'the sender named is not a business of the installation that signed this envelope' };
+}
+
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
 router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), async (req, res) => {
   const env = req.body; /* a CTP/1 envelope: the schema refused anything else, in the old words */
@@ -285,9 +314,9 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
      * is never theirs to choose. `chit_header.sender_entity_id` has no foreign key precisely so that a
      * counterparty on another machine can be named without existing here.
      */
-    const senderCtx = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
-    if (!senderCtx) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
-    await mint.deliver(senderCtx, opened.chit_id, [copy], { is_draft: false, arrived: true });
+    const sender = await senderOf(opened, copy, ik); /* named, an id, and one the signing installation may name (RAIL-138 b) */
+    if (sender.refusal) return refuse(sender.refusal);
+    await mint.deliver(sender.id, opened.chit_id, [copy], { is_draft: false, arrived: true });
 
     res.json({
       accepted: true,

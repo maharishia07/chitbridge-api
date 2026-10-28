@@ -460,8 +460,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/crm/segments/:key/send | crm | routes/crm.js:698 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/crm/walk-ins/add | crm | routes/crm.js:552 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/csp-report | csp-report | routes/csp-report.js:80 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/ctp/deliver | ctp | routes/ctp.js:131 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/ctp/query | ctp | routes/ctp.js:333 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/ctp/deliver | ctp | routes/ctp.js:160 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/ctp/query | ctp | routes/ctp.js:362 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/definitions | definitions | routes/definitions.js:287 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/definitions/freeze | definitions | routes/definitions.js:534 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/entities/populations | entities | routes/entities.js:1713 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -607,8 +607,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/till/state | till | routes/till.js:1371 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/till/stock | till | routes/till.js:1150 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/till/stock/bulk | till | routes/till.js:1196 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /deliver | ctp | routes/ctp.js:131 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /query | ctp | routes/ctp.js:333 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /deliver | ctp | routes/ctp.js:160 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /query | ctp | routes/ctp.js:362 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/actors/:id/delegate | actors | routes/actors.js:1562 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/actors/:id/status | actors | routes/actors.js:947 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/actors/:id/tasks/route | actors | routes/actors.js:1666 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |

@@ -126,7 +126,7 @@ of file each thing is; this says what already does the job.
 | 18 | `later` | `signin-ui.js` |  |
 | 18 | `group` | `identity.js` | again in a different costume. |
 | 18 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
-| 18 | `allowed` | `trips.js` | let _idsFrom = null, |
+| 19 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 17 | `step` | `cart.js` |  |
 | 17 | `model` | `chit-sheet.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
