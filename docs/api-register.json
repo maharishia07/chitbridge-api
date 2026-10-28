@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 479,
+  "meets": 12,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -537,11 +537,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "4684ff50ad88ec07"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/crm/groups/:name",
@@ -589,11 +589,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "e395e201ec90bf60"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/crm/parties/:id",
@@ -641,11 +641,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "f4d14e5eef58c55b"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/definitions/:id",
@@ -6072,11 +6072,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "4b0900806c2f1092"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/followups",
@@ -6123,11 +6123,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "b81974b5f9df1e6f"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties",
@@ -6174,11 +6174,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "4708ef2cf4150ae1"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties/:id",
@@ -6226,11 +6226,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "db5a5d5115211f75"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties/:id/contact-prefs",
@@ -6278,11 +6278,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "ddd58dfc2da1cf66"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties/:id/timeline",
@@ -6330,11 +6330,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "6cbf9daf9774ff55"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/privacy-requests",
@@ -6381,11 +6381,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "7bdd0bdb2394f590"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/segments",
@@ -6431,11 +6431,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability, both branches) 2026-10-29 PR#468",
     "lifecycle": "stable",
     "stale_since": "55a0614a6ffb7769"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/ctp/.well-known/ctp.json",
