@@ -22,7 +22,7 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 60 | `here` | `screen-id.js` |  |
 | 58 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 58 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 59 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 60 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 57 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 56 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
