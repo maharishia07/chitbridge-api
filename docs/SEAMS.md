@@ -41,7 +41,7 @@ of file each thing is; this says what already does the job.
 | 41 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 41 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 40 | `view` | `books-payables.js` | group: |
-| 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
+| 41 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 40 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
@@ -87,7 +87,7 @@ of file each thing is; this says what already does the job.
 | 26 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 26 | `gate` | `country-setup.js` | gate(h, entity): |
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
-| 26 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 27 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 25 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
@@ -114,7 +114,7 @@ of file each thing is; this says what already does the job.
 | 20 | `entries` | `books-store.js` |  |
 | 20 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 20 | `note` | `dbwatch.js` |  |
-| 20 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
+| 21 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 20 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `card` | `cap-shop.js` |  |
