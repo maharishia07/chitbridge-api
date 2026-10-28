@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 477,
-  "meets": 14,
+  "partial": 476,
+  "meets": 15,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -8877,11 +8877,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler, lib and DDL nullability) 2026-10-29 PR#460",
     "lifecycle": "stable",
     "stale_since": "17794028a94ee94a"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/source/:key",
