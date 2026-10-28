@@ -24,7 +24,7 @@ tbl(t, col) AS (VALUES
   ('chit_header','entity_id'), ('chit_status','entity_id'), ('chit_detail','entity_id'),
   ('state_log','entity_id'), ('catalogue_items','entity_id'), ('customer_list','owner_entity_id')),
 fns(f) AS (VALUES
-  ('chit_deliver'), ('chit_participants'), ('chit_log_all'), ('chit_set_status_all'),
+  ('chit_deliver'), ('chit_participants'), ('chit_log_all'),  -- chit_set_status_all left the list with b798 (RAIL-130 a)
   ('chit_log_targets'), ('chit_set_customer_priority_all'), ('chit_participant_parity'))
 SELECT * FROM (
   -- 1. no orphan (NULL scope) rows — an orphan is invisible to everyone once RLS is on
