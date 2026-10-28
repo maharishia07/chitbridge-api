@@ -694,7 +694,7 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 297,
+   "line": 314,
    "hash": "a7a5a0e07f26ec5e",
    "columns": {
     "schema_in": true,
@@ -744,7 +744,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 537,
+   "line": 554,
    "hash": "29fd16d8665f60b0",
    "columns": {
     "schema_in": true,
@@ -7478,7 +7478,7 @@
    "path": "/api/folders/:id/chits",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 411,
+   "line": 428,
    "hash": "bb204c7a8e782061",
    "columns": {
     "schema_in": true,
@@ -7528,7 +7528,7 @@
    "path": "/api/folders/:id/metrics",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 467,
+   "line": 484,
    "hash": "47486dec2da7fddd",
    "columns": {
     "schema_in": true,
@@ -7578,7 +7578,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 503,
+   "line": 520,
    "hash": "c699793f92f8b281",
    "columns": {
     "schema_in": true,
@@ -7628,7 +7628,7 @@
    "path": "/api/folders/groupsum",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 820,
+   "line": 837,
    "hash": "007f1d0f3518165a",
    "columns": {
     "schema_in": true,
@@ -7725,7 +7725,7 @@
    "path": "/api/folders/messages",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 629,
+   "line": 646,
    "hash": "90df1b9d0ced1a55",
    "columns": {
     "schema_in": true,
@@ -7774,7 +7774,7 @@
    "path": "/api/folders/mis",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 964,
+   "line": 981,
    "hash": "eca040ded68054ae",
    "columns": {
     "schema_in": true,
@@ -7823,7 +7823,7 @@
    "path": "/api/folders/reconcile",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 869,
+   "line": 886,
    "hash": "8d90526d91c6055a",
    "columns": {
     "schema_in": true,
@@ -7872,7 +7872,7 @@
    "path": "/api/folders/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 578,
+   "line": 595,
    "hash": "6552b5c42fd20a68",
    "columns": {
     "schema_in": true,
@@ -7921,7 +7921,7 @@
    "path": "/api/folders/rules/vocabulary",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 557,
+   "line": 574,
    "hash": "b0493f4f41424aa1",
    "columns": {
     "schema_in": true,
@@ -7968,7 +7968,7 @@
    "path": "/api/folders/worklist",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 788,
+   "line": 805,
    "hash": "7a858079df6a042f",
    "columns": {
     "schema_in": true,
@@ -14591,8 +14591,8 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 253,
-   "hash": "8db729f039adb720",
+   "line": 268,
+   "hash": "268b8e179a372c98",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14642,7 +14642,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 530,
+   "line": 547,
    "hash": "b441eb5a465334ce",
    "columns": {
     "schema_in": true,
@@ -22240,7 +22240,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 519,
+   "line": 536,
    "hash": "98c0c7c8280fbe49",
    "columns": {
     "schema_in": true,
@@ -22290,7 +22290,7 @@
    "path": "/api/folders/messages/:message_id/mark",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 767,
+   "line": 784,
    "hash": "e1e0553c2e47dfe8",
    "columns": {
     "schema_in": true,
@@ -22342,7 +22342,7 @@
    "path": "/api/folders/move",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 316,
+   "line": 333,
    "hash": "b7ed471d00dd49f2",
    "columns": {
     "schema_in": true,
@@ -22391,7 +22391,7 @@
    "path": "/api/folders/rules/preview",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 548,
+   "line": 565,
    "hash": "988b1ca9cc682a67",
    "columns": {
     "schema_in": true,

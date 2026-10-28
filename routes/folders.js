@@ -249,6 +249,21 @@ router.post(
   }
 );
 
+/** RAIL-137 (c): true when `parentId` is `folderId` itself or sits anywhere BELOW it, walked up through this shop's folders: putting a
+ *  folder under its own descendant takes the whole subtree out of the tree. UNION, so a loop already in the table ends the walk. */
+async function isInsideItself(db, entityId, folderId, parentId) {
+  const above = await db.query(
+    `WITH RECURSIVE up AS (
+       SELECT folder_id, parent_id FROM folder WHERE folder_id = $1 AND entity_id = $2
+       UNION
+       SELECT above.folder_id, above.parent_id FROM folder above JOIN up ON above.folder_id = up.parent_id WHERE above.entity_id = $2
+     )
+     SELECT 1 FROM up WHERE folder_id = $3 LIMIT 1`,
+    [parentId, entityId, folderId]
+  );
+  return above.rows.length > 0;
+}
+
 // PATCH /api/folders/:id — rename and/or re-parent (move a subtree)
 router.patch(
   '/:id',
@@ -282,8 +297,10 @@ router.patch(
       params.push(e);
       const r = await withEntity(e, async (db) => {
         if (newParent && !(await views.folderOwned(db, e, newParent))) return null;
+        if (newParent && (await isInsideItself(db, e, req.params.id, newParent))) return 'inside_itself';
         return db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${index} RETURNING folder_id, parent_id, name`, params);
       });
+      if (r === 'inside_itself') return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'A folder cannot go inside a folder that is inside it') });
       /* an unknown parent and another shop's parent are one answer, and the same as an unknown folder (SEC-100) */
       if (!r || !r.rows.length) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found') });
       res.json({ folder: r.rows[0] });
