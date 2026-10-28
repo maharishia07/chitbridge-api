@@ -5278,6 +5278,8 @@ router.post(
 );
 
 // ─── GET /chits/:chit_id/messages ────────────────────────────
+/** true only for "the chit_messages table does not exist yet" (42P01 naming it): the one failure an empty thread is honest for */
+const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
 router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
@@ -5321,7 +5323,12 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     console.error('Get messages error:', err.message);
-    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    /* RAIL-136 (e): an empty thread ONLY while the table does not exist yet (42P01, before its migration). Any other failure that
+       names chit_messages (a permission, a constraint, a missing column) is a fault and answers so: it used to say "no messages". */
+    if (isNoMessagesTable(err)) {
+      cbLog.fellBack('chits GET /:chit_id/messages: no chit_messages table yet — answered an empty thread', err);
+      return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    }
     problem(req, res, failed(err, req, 'Get messages failed'));
   }
 });
