@@ -12,7 +12,7 @@ of file each thing is; this says what already does the job.
 | 122 | `list` | `amend.js` |  |
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
-| 88 | `read` | `books-cashflow.js` | Trips: |
+| 89 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
 | 74 | `answer` | `availability.js` | from March; then nearest. |
@@ -38,14 +38,14 @@ of file each thing is; this says what already does the job.
 | 48 | `pack` | `books-store.js` |  |
 | 44 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 43 | `read` | `cap-print.js` |  |
-| 41 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 42 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 41 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 40 | `view` | `books-payables.js` | group: |
 | 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 40 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
-| 38 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 39 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
 | 36 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 36 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
@@ -107,7 +107,7 @@ of file each thing is; this says what already does the job.
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 21 | `keep` | `signin.js` | see. |
-| 21 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
+| 22 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 20 | `form` | `accounts-shell.js` |  |
 | 20 | `shown` | `cap-settings.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
