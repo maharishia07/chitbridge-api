@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 468,
+  "meets": 23,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -2153,11 +2153,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8eaeaedd397a7084"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/assets",
@@ -2205,11 +2204,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "eee0a0b03f3ac6b1"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/bank/rail",
@@ -2258,11 +2256,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "80e95fa15dc3a719"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/bs",
@@ -2309,11 +2306,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "18214f6b305f2798"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/cashflow",
@@ -2361,11 +2357,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2e92ba3f76dec9ec"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/cheques",
@@ -2413,11 +2408,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2c69506810995f71"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/compare",
@@ -2464,11 +2458,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "804b1fc6fe8652d9"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/compare/:id",
@@ -2617,11 +2610,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1be56a4c8e56a48f"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/dues",
@@ -2669,11 +2661,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a3efd93dcc90fbb"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/events",
@@ -2720,11 +2711,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a91ac68aeef68bac"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/fx-rates",
@@ -2772,11 +2762,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0428eaf014400ac8"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/fx-revalue",
@@ -2825,11 +2814,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e392131a7e48af70"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/health",
@@ -2875,11 +2863,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a2a71e15be56dd5f"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/ledger/:account",
@@ -2976,11 +2963,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4fc2bb64ae1e77f0"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/packs",
@@ -3027,11 +3013,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8588a456a55569eb"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/packs/:id",
@@ -3283,11 +3268,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bbd37012f11252a0"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/pl",
@@ -3334,11 +3318,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "69865c3857e8949b"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/recurring",
@@ -3385,11 +3368,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3531bce9d5ea96a8"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/returns",
@@ -3437,11 +3419,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "190adc771195278d"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/status",
@@ -3487,11 +3468,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fdf0ca83c95caa39"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/terms",
@@ -3539,11 +3519,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "478b4e64d05fd2fa"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/todo",
@@ -3641,11 +3620,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "14f2fbecc8a741fd"
+    "signed_off_by_date": "cb-api (API-8, all 13 machine columns read in the row) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/year/:fy/status",
