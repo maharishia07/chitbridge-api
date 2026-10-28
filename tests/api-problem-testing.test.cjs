@@ -46,6 +46,12 @@ const lab = harness({
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: 'routes/testing.js' },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
+  before: () => {
+    /* every scenario meets the project column as the first read of a fresh process does: not asked yet (routes/testing.js _proj is the cache of that one question) */
+    const cache = require(path.join(HERE, 'routes', 'testing.js'))._proj;
+    cache.has = null;
+    cache.at = 0;
+  },
   inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out',
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || ADDED.has(scenario)
 });

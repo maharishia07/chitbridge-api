@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 596
    },
    "foreign_id_404": {
     "applies": 227,
@@ -12042,8 +12042,8 @@
    "path": "/api/testing/cases",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 396,
-   "hash": "6fec38c6ae1b8d86",
+   "line": 403,
+   "hash": "b1e69d0f109c9b3c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12053,7 +12053,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12080,8 +12080,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bd30665cb3f8b1dc"
    },
    "status": "partial"
   },
@@ -12091,7 +12092,7 @@
    "path": "/api/testing/cases/gherkin",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1596,
+   "line": 1600,
    "hash": "0908d66a7eb18f0d",
    "columns": {
     "schema_in": true,
@@ -12140,8 +12141,8 @@
    "path": "/api/testing/changes",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3770,
-   "hash": "df3837ba95f851ec",
+   "line": 3774,
+   "hash": "8cf4e576115ef2fb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12151,7 +12152,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12178,8 +12179,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b7b13910d9ada03a"
    },
    "status": "partial"
   },
@@ -12189,8 +12191,8 @@
    "path": "/api/testing/cmdb",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1018,
-   "hash": "83493160b13a48fb",
+   "line": 1025,
+   "hash": "a02a979153be7498",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12200,7 +12202,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12227,8 +12229,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7834c3a9fe758c4c"
    },
    "status": "partial"
   },
@@ -12238,7 +12241,7 @@
    "path": "/api/testing/cmdb/:ci",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1042,
+   "line": 1049,
    "hash": "50f8b61c79dfa702",
    "columns": {
     "schema_in": true,
@@ -12277,8 +12280,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "96bdb5ceee195ce5"
    },
    "status": "partial"
   },
@@ -12288,8 +12292,8 @@
    "path": "/api/testing/coverage",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2677,
-   "hash": "8a8dcce6296d4d12",
+   "line": 2681,
+   "hash": "230e964186f28e92",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12299,7 +12303,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12326,8 +12330,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0d3b74eec0b8d28c"
    },
    "status": "partial"
   },
@@ -12337,8 +12342,8 @@
    "path": "/api/testing/engine",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 879,
-   "hash": "d396c9bde81d33c1",
+   "line": 886,
+   "hash": "a672d2723cf321b4",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12348,7 +12353,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12374,8 +12379,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a672d2723cf321b4"
    },
    "status": "partial"
   },
@@ -12385,8 +12391,8 @@
    "path": "/api/testing/incidents",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2311,
-   "hash": "27bd76005f7f46d4",
+   "line": 2315,
+   "hash": "648b3631d4dd9f78",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12396,7 +12402,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12423,8 +12429,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "dd6dd6a017caaada"
    },
    "status": "partial"
   },
@@ -12434,8 +12441,8 @@
    "path": "/api/testing/releases",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 4017,
-   "hash": "2fc145c747b85d12",
+   "line": 4021,
+   "hash": "52497bb11fd4f7f5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12445,7 +12452,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12472,8 +12479,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7cb8d085e54f75b2"
    },
    "status": "partial"
   },
@@ -12483,8 +12491,8 @@
    "path": "/api/testing/reliability",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3496,
-   "hash": "b772e23e54f032b9",
+   "line": 3500,
+   "hash": "4765a5e2b46043d7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12494,7 +12502,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12521,8 +12529,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "377c8d297b6551de"
    },
    "status": "partial"
   },
@@ -12532,8 +12541,8 @@
    "path": "/api/testing/report",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2861,
-   "hash": "57617b1362a2285d",
+   "line": 2865,
+   "hash": "01e844b4a974f6fb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12543,7 +12552,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12570,8 +12579,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "056d0bd767fdd496"
    },
    "status": "partial"
   },
@@ -12581,8 +12591,8 @@
    "path": "/api/testing/requirements",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1959,
-   "hash": "4a84a0de5d06e7cd",
+   "line": 1963,
+   "hash": "e85095280e6bcaf9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12592,7 +12602,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12619,8 +12629,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7f7b838c3152de50"
    },
    "status": "partial"
   },
@@ -12630,8 +12641,8 @@
    "path": "/api/testing/results",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1375,
-   "hash": "eb1544842e78b304",
+   "line": 1382,
+   "hash": "7d1d8b9790744061",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12641,7 +12652,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12668,8 +12679,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1065ada489338f23"
    },
    "status": "partial"
   },
@@ -12679,8 +12691,8 @@
    "path": "/api/testing/runs",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1432,
-   "hash": "ec8741453a7f20fd",
+   "line": 1434,
+   "hash": "63236bc69e2bac66",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12690,7 +12702,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12717,8 +12729,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "470b6802045dbe44"
    },
    "status": "partial"
   },
@@ -12728,8 +12741,8 @@
    "path": "/api/testing/stale",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2616,
-   "hash": "94116a8fd4c15f2a",
+   "line": 2620,
+   "hash": "f0002c0f1c3087f3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12739,7 +12752,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12765,8 +12778,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e947d53d445f47e4"
    },
    "status": "partial"
   },
@@ -12776,8 +12790,8 @@
    "path": "/api/testing/trace",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 321,
-   "hash": "649291ebb5b1c796",
+   "line": 326,
+   "hash": "4f251bf1eda67e5c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12787,7 +12801,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12813,8 +12827,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c33e11145435a49f"
    },
    "status": "partial"
   },
@@ -12824,8 +12839,8 @@
    "path": "/api/testing/vocabulary",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 331,
-   "hash": "99e580bfaa60fa97",
+   "line": 338,
+   "hash": "0b7aa4bfcc5d0706",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12835,7 +12850,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12857,8 +12872,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f7a3b65e46125b61"
    },
    "status": "partial"
   },
@@ -15096,7 +15112,7 @@
    "path": "/api/testing/incidents/:id",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2422,
+   "line": 2426,
    "hash": "3480947172cfd1a2",
    "columns": {
     "schema_in": true,
@@ -15135,8 +15151,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "35f39366e901e9da"
    },
    "status": "partial"
   },
@@ -15146,7 +15163,7 @@
    "path": "/api/testing/requirements/:id",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2038,
+   "line": 2042,
    "hash": "2dfc6cd25cd9e02e",
    "columns": {
     "schema_in": true,
@@ -15185,8 +15202,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a6b294f836d2c088"
    },
    "status": "partial"
   },
@@ -27019,7 +27037,7 @@
    "path": "/api/testing/cases/close",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 253,
+   "line": 258,
    "hash": "4e74875485f17eb9",
    "columns": {
     "schema_in": true,
@@ -27059,8 +27077,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f13bb8d07407445b"
    },
    "status": "partial"
   },
@@ -27070,7 +27089,7 @@
    "path": "/api/testing/cases/gherkin",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1653,
+   "line": 1657,
    "hash": "6583ed630724cd4b",
    "columns": {
     "schema_in": true,
@@ -27121,7 +27140,7 @@
    "path": "/api/testing/cases/import",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 828,
+   "line": 835,
    "hash": "a9dadacfbdb762ea",
    "columns": {
     "schema_in": true,
@@ -27171,7 +27190,7 @@
    "path": "/api/testing/cases/seed",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 891,
+   "line": 898,
    "hash": "239b5875d663cee9",
    "columns": {
     "schema_in": true,
@@ -27210,8 +27229,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f505be92cba6bb85"
    },
    "status": "partial"
   },
@@ -27221,7 +27241,7 @@
    "path": "/api/testing/changes",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3690,
+   "line": 3694,
    "hash": "0f79eb9f4d94192f",
    "columns": {
     "schema_in": true,
@@ -27259,8 +27279,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "35cfaa5763b55849"
    },
    "status": "partial"
   },
@@ -27270,7 +27291,7 @@
    "path": "/api/testing/cmdb/seed",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1081,
+   "line": 1088,
    "hash": "6bdb38a77ed94dd0",
    "columns": {
     "schema_in": true,
@@ -27320,7 +27341,7 @@
    "path": "/api/testing/evidence",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2579,
+   "line": 2583,
    "hash": "705602827fafad63",
    "columns": {
     "schema_in": true,
@@ -27359,8 +27380,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c100f3afb42bf30b"
    },
    "status": "partial"
   },
@@ -27370,7 +27392,7 @@
    "path": "/api/testing/incidents",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2177,
+   "line": 2181,
    "hash": "d49a5c301245b1f0",
    "columns": {
     "schema_in": true,
@@ -27419,7 +27441,7 @@
    "path": "/api/testing/releases",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3835,
+   "line": 3839,
    "hash": "ba6cd824f790bfb4",
    "columns": {
     "schema_in": true,
@@ -27468,7 +27490,7 @@
    "path": "/api/testing/requirements",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1764,
+   "line": 1768,
    "hash": "db983a7a6b3109f6",
    "columns": {
     "schema_in": true,
@@ -27517,7 +27539,7 @@
    "path": "/api/testing/results",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1358,
+   "line": 1365,
    "hash": "b3371f3385d32089",
    "columns": {
     "schema_in": true,
@@ -27556,8 +27578,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "122683ae899b698f"
    },
    "status": "partial"
   },
@@ -27567,7 +27590,7 @@
    "path": "/api/testing/results/junit",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1527,
+   "line": 1531,
    "hash": "ce2ca4c32544593e",
    "columns": {
     "schema_in": true,
@@ -27606,8 +27629,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9c1bb7c767f6edf6"
    },
    "status": "partial"
   },
@@ -27617,7 +27641,7 @@
    "path": "/api/testing/trace",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 310,
+   "line": 315,
    "hash": "fc6370affdede9fd",
    "columns": {
     "schema_in": true,
@@ -27655,8 +27679,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9e5fa435eb0debd3"
    },
    "status": "partial"
   },
@@ -30723,7 +30748,7 @@
    "path": "/api/testing/cmdb/:ci",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1066,
+   "line": 1073,
    "hash": "74dcf5fb817fd6f9",
    "columns": {
     "schema_in": true,

@@ -20,6 +20,16 @@ const TOO_LONG = 'p'.repeat(81);
 const SHIPPED_RECORD = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'data', 'cmdb', 'CAP-ADMIN.json'), 'utf8'));
 const cannotWrite = { board: { canWrite: () => false } };
 
+const RUN = '33333333-3333-4333-8333-333333333333';
+const AT = '2026-10-01T10:00:00.000Z';
+/** a test_result row as the table holds it (migrations/000_baseline_2026-10-21.sql + b292's project): the first with every column filled, the second with every nullable column null */
+const RESULT_FULL = { result_id: RUN, entity_id: SHOP, definition_id: RUN, case_version: 1, case_key: 'CTR-05', module_key: 'CTR', status: 'pass', run_kind: 't1', layer: 'web', tested_by: SHOP, tester_name: 'Asha', at: AT, run_id: RUN, run_label: 'Sprint 4', note: 'ok', evidence: 'ev', build: 'b1', project: 'Sprint 4' };
+const RESULT_BARE = { result_id: RUN, entity_id: SHOP, definition_id: null, case_version: null, case_key: 'CTR-06', module_key: null, status: 'fail', run_kind: 'manual', layer: null, tested_by: null, tester_name: null, at: AT, run_id: RUN, run_label: null, note: null, evidence: null, build: null, project: null };
+/** the rows of a page read, each carrying the count of the whole set (readPage's window count) */
+const paged = (rows) => rows.map((row) => Object.assign({}, row, { full_count: rows.length }));
+/** the rows of a statement that matches `pattern`, a stand-in answer */
+const rowsWhen = (pattern, rows) => (sql) => (pattern.test(sql) ? { rows, rowCount: rows.length } : null);
+
 /** the tools a scene is built from: the harness's own stand-ins */
 function extras(tools) {
   const { PARTY, answering, firstOf } = tools;
@@ -170,7 +180,91 @@ function extras(tools) {
     X('release-fails', 'POST ' + T + '/releases', 500, { body: { name: 'v1', changes: [PARTY] }, setup: failing }),
     N('release-body-a-list', 'POST ' + T + '/releases', 400, { body: [] }),
     X('releases-list', 'GET ' + T + '/releases', 200, {}),
-    X('releases-list-fails', 'GET ' + T + '/releases', 500, { setup: failing })
+    X('releases-list-fails', 'GET ' + T + '/releases', 500, { setup: failing }),
+    ...readyBranch(tools)
+  ];
+}
+
+/**
+ * The READY branch of the board's reads: the database holds rows, the project column exists, so the real handlers and the real libraries (lib/page-limit, lib/teststatus, lib/cmdb) run over them.
+ * Every row below carries every column its statement selects (the table's DDL: test_result in migrations/000_baseline_2026-10-21.sql + b292's project), a nullable column null in the second row,
+ * so the shape tools/api-allowlist.cjs derives (docs/contracts/api-output-shapes.json) is the whole of what the board can answer, and the output filter drops nothing real.
+ */
+function readyBranch(tools) {
+  const { PARTY, firstOf } = tools;
+  const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const projectColumn = rowsWhen(/information_schema\.columns/, [{ ok: 1 }]);
+  const world = (...answers) => ({ sqlRows: firstOf(projectColumn, ...answers) });
+  const CASE_RULES = { title: 'Sign in', priority: 'High', pre: 'p', data: 'd', steps: ['a'], note: 'n', layer: 'web', module_name: 'Clicks', intro: 'i', test_type: 'system', group: 'g', automated: true, areas: ['a'], subjects: ['s'], claim: 'c', run_by: 'person', seq: 1, step: 's', cites: { spec: 'SPEC', clause: 'CLAUSE-1', definition_id: PARTY, version: 1 }, screen_purpose: 'sp', generic: false, changed_at: AT, needs: ['n'], held: null, menu: 'Rail', generated: false, observed: 'o', evidence_id: PARTY, screen_code: 'S1', control_code: 'C1', written_by: 'Asha', written_by_id: SHOP, written_at: AT, closed_note: null, closed_by: null, closed_at: null };
+  const history = [{ state: 'raised', at: AT, by: 'Asha', by_id: SHOP }];
+  const spec = { definition_id: PARTY, name: 'CLAUSE-1', sub_kind: 'SPEC', status: 'live', updated_at: AT, created_by: SHOP, rules: { text: 'It must work', observed: 'It did not', priority: 'High', screen_code: 'S1', popup_code: 'P1', state: 'raised', raised_from: 'screen', raised_by: 'Asha', raised_at: AT, raised_by_id: SHOP, why: 'w', history } };
+  const specBare = { definition_id: PARTY, name: 'CLAUSE-2', sub_kind: null, status: 'live', updated_at: AT, created_by: null, rules: {} };
+  const incident = { definition_id: PARTY, name: 'INC-1', sub_kind: null, status: 'live', updated_at: AT, created_by: SHOP, rules: { severity: 'Sev-1', observed: 'It broke', screen_code: 'S1', popup_code: 'P1', evidence_id: PARTY, affected: 'all', build: 'b1', found_by_case: 'CTR-05', state: 'resolved', happened_at: '2026-09-30T10:00:00.000Z', raised_at: AT, resolved_at: '2026-10-02T10:00:00.000Z', defects: ['D1'], changes: ['CHG-1'], raised_by: 'Asha', raised_by_id: SHOP, origin: 'shop', resolved_in: 'v1', why: 'w', history } };
+  const incidentBare = { definition_id: PARTY, name: 'INC-2', sub_kind: null, status: 'live', updated_at: AT, created_by: null, rules: {} };
+  const change = { definition_id: PARTY, name: 'CHG-1', sub_kind: 'routine', status: 'live', updated_at: AT, rules: { text: 'Fix it', backout: 'Revert', cites: { ref: 'INC-1', entity_id: SHOP }, repo: 'api', sha: 'abc', proves: ['CTR-05'], shipped_in: 'v1', state: 'reviewed', raised_by: 'Asha', history } };
+  const changeBare = { definition_id: PARTY, name: 'CHG-2', sub_kind: null, status: 'live', updated_at: AT, rules: {} };
+  const release = { definition_id: PARTY, name: 'v1', note: 'n', updated_at: AT, rules: { carried: [PARTY], proves: ['CTR-05'], cut_by: 'Asha' } };
+  const releaseBare = { definition_id: PARTY, name: 'v0', note: null, updated_at: AT, rules: {} };
+  const cover = [{ module_key: 'CTR', module_name: 'Clicks', total: '3', passed: '1', failed: '1', blocked: '0', skipped: '0', untested: '1', high_untested: '1', untested_swept: '0', untested_written: '1' }];
+  const bad = [
+    { case_key: 'CTR-05', module_key: 'CTR', status: 'fail', note: 'n', evidence: 'ev', tester_name: 'Asha', run_kind: 't1', layer: 'web', at: AT, case_version: 1 },
+    { case_key: 'CTR-06', module_key: null, status: 'blocked', note: null, evidence: null, tester_name: null, run_kind: 'manual', layer: null, at: AT, case_version: null }
+  ];
+  const found = [
+    { kind: 'incident', name: 'INC-1', status: 'live', rules: incident.rules },
+    { kind: 'spec', name: 'CLAUSE-1', status: 'live', rules: spec.rules },
+    { kind: 'testcase', name: 'CTR-H1', status: 'live', rules: { title: 't', state: '', written_by: 'Asha', written_at: AT, closed_note: 'done' } },
+    { kind: 'testcase', name: 'CTR-H2', status: 'retired', rules: {} }
+  ];
+  const people = [{ tested_by: SHOP, tester_name: 'Asha', recorded: 2, passed: 1, failed: 1, blocked: 0, skipped: 0, first_at: AT, last_at: AT }];
+  const sitting = [{ run_id: RUN, run_label: 'Sprint 4', build: 'b1', project: 'Sprint 4', started: AT, finished: AT, kinds: 't1', testers: 'Asha, Ravi', layers: 'web', total: '2' }];
+  const kinds = [
+    { test_type: 'unit', layer: 'engine', total: 2, run: 1, passed: 1, failed: 0 },
+    { test_type: 'system', layer: 'web', total: 1, run: 1, passed: 0, failed: 1 }
+  ];
+  const reportWorld = world(
+    rowsWhen(/untested_written/, cover),
+    rowsWhen(/SELECT DISTINCT ON \(case_key\) case_key, module_key, status, note, evidence/, bad),
+    rowsWhen(/GROUP BY tested_by/, people),
+    rowsWhen(/string_agg\(DISTINCT layer/, sitting),
+    rowsWhen(/SELECT count\(\*\)::int AS n FROM definition d/, [{ n: 1 }]),
+    rowsWhen(/GROUP BY c\.test_type, c\.layer/, kinds),
+    rowsWhen(/SELECT d\.kind, d\.name, d\.status, v\.rules/, found)
+  );
+  const sittings = [
+    { run_id: RUN, run_label: 'Sprint 4', build: 'b1', project: 'Sprint 4', started: AT, finished: AT, kinds: 't1, manual', testers: 'Asha', total: '2', passed: '1', failed: '1', blocked: '0', skipped: '0' },
+    { run_id: RUN, run_label: null, build: null, project: null, started: AT, finished: AT, kinds: 'manual', testers: null, total: '1', passed: '0', failed: '0', blocked: '0', skipped: '1' }
+  ];
+  const tracked = [
+    { case_key: 'CTR-05', module_key: 'CTR', runs: '3', passed: '1', failed: '2', blocked: '0', skipped: '0', flips: '2', first_seen: AT, last_seen: AT, kinds: 't1', layers: 'web', last_status: 'fail', tester_name: 'Asha', last_kind: 't1' },
+    { case_key: 'CTR-06', module_key: null, runs: '2', passed: '2', failed: '0', blocked: '0', skipped: '0', flips: '0', first_seen: AT, last_seen: AT, kinds: null, layers: null, last_status: 'pass', tester_name: null, last_kind: 'unit' }
+  ];
+  const area = { module_key: 'CTR', module_name: 'Clicks', total: '3', tested: '2', passed: '1', failed: '1', blocked: '0', untested: '1', high_untested: '1', tested_in_run: '0' };
+  const group = { key: 'web', total: '2', passed: '1', failed: '0', blocked: '0', untested: '1' };
+  const trend = { run_id: RUN, run_label: 'Sprint 4', at: AT, passed: '1', failed: '0', blocked: '0', total: '1' };
+  /** a row as the database answers before b292 added the project column */
+  const withoutProject = (row) => Object.fromEntries(Object.entries(row).filter(([name]) => name !== 'project'));
+  const staleBare = { case_key: 'CTR-06', module_key: null, rules: {}, clause: 'CLAUSE-2', spec: null, clause_now: 3 };
+  const staleCase = { case_key: 'CTR-05', module_key: 'CTR', rules: { title: 'Sign in', cites: { version: 1 } }, clause: 'CLAUSE-1', spec: 'SPEC', clause_now: 2 };
+  return [
+    X('cases-ready', 'GET ' + T + '/cases', 200, { setup: world(rowsWhen(/\$2::boolean IS TRUE/, paged([{ definition_id: PARTY, name: 'CTR-05', sub_kind: 'CTR', status: 'live', current_version: 1, rules: CASE_RULES }, { definition_id: PARTY, name: 'CTR-06', sub_kind: null, status: 'retired', current_version: 2, rules: {} }]))) }),
+    X('cmdb-list-ready', 'GET ' + T + '/cmdb', 200, { setup: world(rowsWhen(/d\.kind = 'cmdb'/, paged([{ name: 'CAP-SIGNIN', current_version: 1, updated_at: AT, rules: { title: 'Sign in', source: 'repo' } }, { name: 'CAP-ADMIN', current_version: 2, updated_at: AT, rules: {} }]))) }),
+    X('results-ready', 'GET ' + T + '/results', 200, { setup: world(rowsWhen(/FROM \(SELECT DISTINCT ON/, paged([RESULT_FULL, RESULT_BARE]))) }),
+    X('results-before-the-project-column', 'GET ' + T + '/results', 200, { setup: { sqlRows: rowsWhen(/FROM \(SELECT DISTINCT ON/, paged([withoutProject(RESULT_FULL), withoutProject(RESULT_BARE)])) } }),
+    X('runs-before-the-project-column', 'GET ' + T + '/runs', 200, { setup: { sqlRows: rowsWhen(/GROUP BY run_id/, paged(sittings.map(withoutProject))) } }),
+    X('results-ready-one-case', 'GET ' + T + '/results', 200, { url: T + '/results?case_key=CTR-05', setup: world(rowsWhen(/AND case_key = \$2/, paged([RESULT_FULL, RESULT_BARE]))) }),
+    X('runs-ready', 'GET ' + T + '/runs', 200, { setup: world(rowsWhen(/GROUP BY project/, [{ project: 'Sprint 4', runs: 2, last_at: AT }]), rowsWhen(/GROUP BY run_id/, paged(sittings))) }),
+    X('requirements-ready', 'GET ' + T + '/requirements', 200, { setup: world(rowsWhen(/AS state, count\(\*\)::int AS n/, [{ state: 'raised', n: 2 }]), rowsWhen(/d\.kind = 'spec'/, paged([spec, specBare]))) }),
+    X('incidents-ready', 'GET ' + T + '/incidents', 200, { setup: world(rowsWhen(/AS severity, count\(\*\)::int AS n/, [{ state: 'raised', severity: 'Sev-1', n: 1 }]), rowsWhen(/d\.kind = 'incident'/, paged([incident, incidentBare]))) }),
+    X('stale-ready', 'GET ' + T + '/stale', 200, { setup: world(rowsWhen(/IS NOT NULL/, [staleCase, staleBare])) }),
+    X('coverage-ready', 'GET ' + T + '/coverage', 200, { setup: world(rowsWhen(/tested_in_run/, [area]), rowsWhen(/SELECT c\.\w+ AS key/, [group]), rowsWhen(/max\(run_label\) AS run_label, max\(at\) AS at/, [trend])) }),
+    X('report-ready', 'GET ' + T + '/report', 200, { setup: reportWorld }),
+    X('report-ready-one-run', 'GET ' + T + '/report', 200, { url: T + '/report?run_id=' + RUN + '&project=Sprint%204', setup: reportWorld }),
+    X('reliability-ready', 'GET ' + T + '/reliability', 200, { setup: world(rowsWhen(/COUNT\(DISTINCT run_id\)::int AS n FROM test_result/i, [{ n: 3 }]), rowsWhen(/lag\(status\)/, tracked)) }),
+    X('changes-ready', 'GET ' + T + '/changes', 200, { url: T + '/changes?state=all', setup: world(rowsWhen(/d\.kind = 'change'/, [change, changeBare])) }),
+    X('changes-past-the-cap', 'GET ' + T + '/changes', 200, { url: T + '/changes?state=all&limit=9999&page=2', setup: world(rowsWhen(/d\.kind = 'change'/, [change])) }),
+    X('releases-ready', 'GET ' + T + '/releases', 200, { setup: world(rowsWhen(/d\.kind = 'release'/, [release, releaseBare])) }),
+    X('releases-past-the-cap', 'GET ' + T + '/releases', 200, { url: T + '/releases?limit=9999&page=2', setup: world(rowsWhen(/d\.kind = 'release'/, [release])) })
   ];
 }
 

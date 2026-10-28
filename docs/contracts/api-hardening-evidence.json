@@ -612,6 +612,12 @@
   "POST /api/testing/cmdb/seed": {
    "output_allowlist": true
   },
+  "GET /api/testing/results": {
+   "output_allowlist": true
+  },
+  "GET /api/testing/runs": {
+   "output_allowlist": true
+  },
   "GET /api/testing/cases/gherkin": {
    "output_allowlist": true
   },
@@ -625,6 +631,9 @@
    "output_allowlist": true
   },
   "GET /api/testing/coverage": {
+   "output_allowlist": true
+  },
+  "GET /api/testing/report": {
    "output_allowlist": true
   },
   "GET /api/testing/reliability": {
