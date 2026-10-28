@@ -373,6 +373,9 @@ const EXTRAS = [
   X('amend-a-value-the-database-refuses', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('check'), { code: '23514', constraint: 'amendment_reason_code_check' }); } } } }),
   X('amend-by-a-viewer', 'POST ' + C + '/:chit_id/amend', 403, { body: { edits: [] }, setup: { who: VIEWER } }),
   X('amend-fails', 'POST ' + C + '/:chit_id/amend', 500, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => { throw new Error(SECRET_SQL); } } } }),
+  /* RAIL-133: a library's own 400 reaches the person in its words (frozen below); amend names the field and never echoes the value typed (Q19) */
+  X('assign-due-date-not-a-date', 'POST ' + C + '/:chit_id/assign-lines', 400, { body: { edits: [{ line_id: PARTY, assignee_actor_id: null, due_date: 'soon' }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) } }),
+  X('amend-price-not-a-number', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [{ line_index: 0, line: { particulars: 'Tea', quantity: 1, price: '<b>12</b>' } }] }, setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) } }),
   X('amend-done', 'POST ' + C + '/:chit_id/amend', 200, { body: [], setup: { sqlRows: answering(/SELECT role FROM chit_header/, [{ role: 'Sent' }]) }, patch: { amend: { record: async () => ({ amendments: [] }) } } }),
   X('networks-listed', 'GET ' + C + '/trace/networks', 200, { setup: { sqlRows: answering(/network_id/, [{ network_id: 'net1', is_operator: true, edges: '2' }]) } })
 ];

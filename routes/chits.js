@@ -4072,8 +4072,8 @@ router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-
     if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
     res.json(out);
   } catch (err) {
-    console.error('Deliver lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to record delivery'));
+    /* RAIL-133: a library's own 400 ('quantity must be a non-zero number') reaches the person; a fault still says the safe sentence, and faultOf logs it */
+    problem(req, res, faultOf(err, req, 'Failed to record delivery', { words: true }));
   }
 });
 
@@ -4102,7 +4102,7 @@ async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
         { id: req.identity.identity_id, name: req.identity.display_name }
       );
     } catch (e) {
-      console.error('bill step (goods-in) not written:', e.message);
+      cbLog.fellBack('chits deliver-lines: the goods-in bill step was not written — the delivery stands without it', e);
     }
   } else
     try {
@@ -4153,7 +4153,7 @@ async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
           );
         });
     } catch (e) {
-      console.error('deliver state_log skipped:', e.message);
+      cbLog.fellBack('chits deliver-lines: the history line was not written — the delivery stands without it', e);
     }
 }
 
@@ -4214,7 +4214,7 @@ async function goodsInAccept(req, entity_id, chit_id, out) {
       }
     }
   } catch (e) {
-    console.error('goods-in accept skipped:', e.message);
+    cbLog.fellBack('chits deliver-lines: the bill was fully received but NOT accepted — accept it by hand', e); /* RAIL-133: this one failed in silence */
   }
 }
 
@@ -4257,13 +4257,12 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
         )
       );
     } catch (e) {
-      console.error('assign state_log skipped:', e.message);
+      cbLog.fellBack('chits assign-lines: the history line was not written — the assignment stands without it', e);
     }
 
     res.json(out);
   } catch (err) {
-    console.error('Assign lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to assign'));
+    problem(req, res, faultOf(err, req, 'Failed to assign', { words: true })); /* RAIL-133: the library's own 400 reaches the person */
   }
 });
 
@@ -4364,7 +4363,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
       return problem(req, res, { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') });
     }
     if (err && err.code === '23514') {
-      console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
+      cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });
       return problem(req, res, { status: 409, ...said({
         error: 'Not an accepted value',
         message: /reason_code/.test(err.constraint || '')
@@ -4372,8 +4371,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
           : 'The database refused one of these values: ' + (err.constraint || 'constraint violation')
       }, 'CHIT_VALUE_NOT_ACCEPTED') });
     }
-    console.error('Amend error:', err.code || '', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to amend'));
+    problem(req, res, faultOf(err, req, 'Failed to amend', { words: true })); /* RAIL-133: the library's own 400 reaches the person */
   }
 });
 
