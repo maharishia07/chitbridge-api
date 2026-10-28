@@ -1616,8 +1616,8 @@
    "code": "IN_USE",
    "status": "409",
    "title": "In use",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Products still hold a value in this column.",
+   "hint": "Clear it on those products first, or keep the column.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -1751,8 +1751,8 @@
    "code": "LOCKED",
    "status": "409",
    "title": "Locked",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This column is one every catalogue keeps, so it cannot be changed that way.",
+   "hint": "Leave it as it is.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -1768,9 +1768,9 @@
   {
    "code": "MIGRATION",
    "status": "409",
-   "title": "Migration",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not switched on yet",
+   "shopkeeper": "Unit and source are not switched on for your account yet.",
+   "hint": "Type, label and required still work; try again after the next update.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -2759,8 +2759,8 @@
    "code": "REQUIRED",
    "status": "409",
    "title": "Required",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Your catalogue requires this column.",
+   "hint": "Make it optional first, then remove it.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -2807,6 +2807,51 @@
    "shopkeeper": "They said no to this.",
    "hint": "Leave them be, unless they say yes later.",
    "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_COLUMN_NOT_NAMED",
+   "status": "400",
+   "title": "Column not named",
+   "shopkeeper": "Name the column you want to remove.",
+   "hint": "Pick a column from the list and try again.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_NOTHING_TO_ORDER",
+   "status": "400",
+   "title": "Nothing to order",
+   "shopkeeper": "None of those columns are in your catalogue.",
+   "hint": "Reload the page and try again.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_UNKNOWN_CHANNEL",
+   "status": "400",
+   "title": "Unknown channel",
+   "shopkeeper": "The channel must be ERP, IoT or AI.",
+   "hint": "Pick one of those.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_UNKNOWN_SOURCE",
+   "status": "400",
+   "title": "Unknown source",
+   "shopkeeper": "A value can come from the system, the customer, a computation or ChitBridge.",
+   "hint": "Pick one of those.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_UNKNOWN_TYPE",
+   "status": "400",
+   "title": "Unknown column type",
+   "shopkeeper": "A column is text, number, choice or date.",
+   "hint": "Pick one of those.",
+   "owner_area": "schemas",
    "since": "2026-10-23"
   },
   {

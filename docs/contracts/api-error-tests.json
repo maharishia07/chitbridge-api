@@ -88,6 +88,13 @@
   401,
   500
  ],
+ "DELETE /api/schemas/fields/:field_key": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
  "GET /.well-known/ctp.json": [
   200,
   500
@@ -903,6 +910,14 @@
   500,
   503
  ],
+ "GET /api/schemas/fields": [
+  401,
+  500
+ ],
+ "GET /api/schemas/my": [
+  401,
+  500
+ ],
  "GET /api/tax/gstr": [
   401,
   500
@@ -1188,6 +1203,25 @@
   403,
   404,
   409,
+  500
+ ],
+ "PATCH /api/schemas/fields/:field_key": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "PATCH /api/schemas/fields/order": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/schemas/visibility": [
+  400,
+  401,
+  404,
   500
  ],
  "PATCH /api/testing/incidents/:id": [
@@ -2304,6 +2338,10 @@
  "POST /api/repeat/sweep": [
   401,
   403,
+  500
+ ],
+ "POST /api/schemas/create-default": [
+  401,
   500
  ],
  "POST /api/tax/compute": [
