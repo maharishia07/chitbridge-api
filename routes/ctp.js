@@ -138,16 +138,26 @@ router.get('/.well-known/ctp.json', async (req, res) => {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function senderOf(opened, copy, installationKey) {
   const id = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
-  const refusal = await senderRefusal(id, installationKey);
+  const refusal = (await senderRefusal(id, installationKey)) || (await senderLabelRefusal(copy.sender_entity_bridge_id, installationKey));
   return refusal ? { refusal } : { id };
 }
 async function senderRefusal(senderId, installationKey) {
   if (!senderId) return { status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' };
   if (!UUID_RE.test(String(senderId))) return { status: 400, code: 'CTP_SENDER_NOT_AN_ID', why: 'the copy names its sender by something that is not an id' };
+  return heldForPeer('SELECT identity_id FROM identities WHERE identity_id = $1', senderId, installationKey);
+}
+/** the sender's bridge id is the LABEL the recipient reads ("from <shop>"): a peer's own uuid wearing the bridge id of one of our
+ *  shops would show a local business as the sender. Same rule as the id (cb-security on #458). No bridge id: chit_deliver refuses it. */
+async function senderLabelRefusal(bridgeId, installationKey) {
+  if (!bridgeId) return null;
+  return heldForPeer('SELECT identity_id FROM identities WHERE bridge_id = $1', String(bridgeId), installationKey);
+}
+/** null when the identity the lookup finds is not here, or is stamped to the signing installation; else the refusal */
+async function heldForPeer(lookupSql, value, installationKey) {
   try {
-    const here = await query('SELECT 1 FROM identities WHERE identity_id = $1', [senderId]);
+    const here = await query(lookupSql, [value]);
     if (!here.rows.length) return null;
-    const home = await query('SELECT ops.f_installation_of($1) AS installation_key', [senderId]);
+    const home = await query('SELECT ops.f_installation_of($1) AS installation_key', [here.rows[0].identity_id]);
     if (home.rows[0] && home.rows[0].installation_key === installationKey) return null;
   } catch (e) {
     log.fellBack('ctp POST /deliver: the sender check could not be read — refused', e);
