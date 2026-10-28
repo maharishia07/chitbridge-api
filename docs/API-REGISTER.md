@@ -166,14 +166,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/folders/:id/chits | folders | routes/folders.js:414 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/folders/:id/metrics | folders | routes/folders.js:470 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/folders/:id/rules | folders | routes/folders.js:506 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/folders/groupsum | folders | routes/folders.js:836 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/folders/groupsum | folders | routes/folders.js:827 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/folders/inventory | folders | routes/folders.js:134 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/folders/messages | folders | routes/folders.js:655 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/folders/mis | folders | routes/folders.js:987 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/folders/reconcile | folders | routes/folders.js:886 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/folders/messages | folders | routes/folders.js:635 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/folders/mis | folders | routes/folders.js:978 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/folders/reconcile | folders | routes/folders.js:877 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/folders/rules | folders | routes/folders.js:581 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/folders/rules/vocabulary | folders | routes/folders.js:560 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/folders/worklist | folders | routes/folders.js:803 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/folders/worklist | folders | routes/folders.js:794 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/forms | forms | routes/forms.js:22 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/forms/:key | forms | routes/forms.js:30 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/forms/instances/:id | forms | routes/forms.js:62 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
@@ -470,7 +470,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/events/ticket | events | routes/events.js:15 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/folders | folders | routes/folders.js:188 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/folders/:id/rules | folders | routes/folders.js:522 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:782 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:773 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/folders/move | folders | routes/folders.js:319 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/folders/rules/preview | folders | routes/folders.js:551 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/forms/:key/issue | forms | routes/forms.js:46 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |

@@ -632,26 +632,6 @@ const assign = require('../lib/assign');
  *
  * UNREAD or KEPT — see b156 on why those are two columns and not one flag.
  */
-/**
- * The unread external messages the caller may see, as one integer (the badge).
- * ⚠️ THE SAME ACTOR SCOPE AS THE LIST (actorCond). A badge counting conversations the actor cannot open would send
- * them to a screen that says "nothing new" — and worse, it would leak HOW MANY customer conversations the
- * business is having, which is the thing the scope exists to withhold.
- */
-async function unreadMessageCount(entity, actorCond, params) {
-  const counted = await withEntity(entity, (db) =>
-    db.query(
-      `SELECT count(*)::int AS n FROM chit_messages m
-      WHERE m.thread_type = 'external'
-        AND COALESCE(m.is_dispute, false) = false
-        AND m.sender_entity_id <> m.entity_id
-        AND to_jsonb(m)->>'read_at' IS NULL
-        ${actorCond}`,
-      params
-    )
-  );
-  return (counted.rows[0] && counted.rows[0].n) || 0;
-}
 router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
   try {
     const all = req.query.all === '1' || req.query.all === 'true';
@@ -672,12 +652,23 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
                                WHERE s.entity_id = a.entity_id AND s.chit_id = a.chit_id AND s.line_id = a.line_id))`)
       : '';
     /**
-     * ⭐ ?count=1 — the badge, without the payload. Called on every app boot, so it must not drag 200 rows and
-     * two joins along to answer a question that is one integer. Unread only: a KEPT message is not news, and a
-     * badge that counted it would never fall to zero while anything was pinned.
+     * ⭐ ?count=1 — the badge, without the payload (called on every app boot: one integer, not 200 rows and two joins).
+     * Unread only: a KEPT message is not news, and a badge that counted it would never fall to zero while anything was pinned.
      */
     if (req.query.count === '1' || req.query.count === 'true') {
-      return res.json({ count: await unreadMessageCount(ent(req), actorCond, params) });
+      /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST: a badge counting what the actor cannot open would leak HOW MANY customer conversations the business has. */
+      const c = await withEntity(ent(req), (db) =>
+        db.query(
+          `SELECT count(*)::int AS n FROM chit_messages m
+          WHERE m.thread_type = 'external'
+            AND COALESCE(m.is_dispute, false) = false
+            AND m.sender_entity_id <> m.entity_id
+            AND to_jsonb(m)->>'read_at' IS NULL
+            ${actorCond}`,
+          params
+        )
+      );
+      return res.json({ count: (c.rows[0] && c.rows[0].n) || 0 });
     }
     /**
      * ── ⚠️ AN ACTOR SEES ONLY CONVERSATIONS ABOUT WORK THEY HOLD ────────────────────────────────────────────
@@ -823,9 +814,9 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
       /* So the screen can say "your work" honestly rather than guessing from the row count. */
       _scoped_to_self: isActor
     });
-    /* S34: every key lib/assign byPerson answers (scoped_to_self is absent when b153 is not run), each person with their lines as it builds them */
+    /* S34: every key lib/assign byPerson answers (scoped_to_self is absent when b153 is not run); the people and their lines are the library's own literals, left open and listed */
     // prettier-ignore
-    res.json({ people: answer.people.map((x) => ({ actor_id: x.actor_id, name: x.name, type: x.type, lines: x.lines.map((line) => ({ chit_id: line.chit_id, line_id: line.line_id, seq: line.seq, particulars: line.particulars, quantity: line.quantity, unit: line.unit, task: line.task, due_date: line.due_date, note: line.note, state: line.state, chit_status: line.chit_status, delivered: line.delivered, left: line.left, asked_as: line.asked_as, raw_phrase: line.raw_phrase, comment: line.comment, needs_human: line.needs_human, subject: line.subject, counterparty: line.counterparty })), count: x.count })), lines: answer.lines, migrated: answer.migrated, scoped_to_self: answer.scoped_to_self });
+    res.json({ people: answer.people, lines: answer.lines, migrated: answer.migrated, scoped_to_self: answer.scoped_to_self });
   } catch (err) {
     console.error('worklist:', err.message);
     problem(req, res, failed(err, req, 'Worklist failed'));
