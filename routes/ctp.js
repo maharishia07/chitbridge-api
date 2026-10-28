@@ -166,6 +166,31 @@ async function heldForPeer(lookupSql, value, installationKey) {
   return { status: 403, code: 'CTP_SENDER_NOT_THEIRS', why: 'the sender named is not a business of the installation that signed this envelope' };
 }
 
+/**
+ * sealedBy(peer, installationKey, env) — the sender's key, read from THEIR domain, and the envelope's seal checked against it → { publicKey } or { refusal }.
+ * ⚠️ RAIL-139 (b): THE SEAL BEFORE ANYTHING THAT ANSWERS ABOUT OUR DATA. The recipient lookup (404) and the pairing rule (409) used to
+ * come first, so a caller with no key could learn which bridge ids live here and which worlds pair. envelope.open checks it again, same words.
+ */
+async function sealedBy(peer, installationKey, env) {
+  const pk = await directory.publicKeyFor(peer.domain, installationKey);
+  if (!pk.ok) return { refusal: { status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the sender’s manifest: ' + pk.why } };
+  const seal = sealHolds(env, pk.public_key);
+  return seal.ok ? { publicKey: pk.public_key } : { refusal: { status: 409, code: 'CTP_ENVELOPE_REFUSED', why: seal.why } };
+}
+/** the hash of the canonical contents, then the signature over it: envelope.open's two checks and words. Unhashable is unsealed. */
+function sealHolds(env, publicKey) {
+  let hash;
+  try {
+    hash = envelope.digest(env);
+  } catch (e) {
+    log.fellBack('ctp POST /deliver: the envelope could not be hashed — refused', e);
+    return { ok: false, why: 'the seal does not match the contents' };
+  }
+  if (!env.sealed || env.sealed.hash !== hash) return { ok: false, why: 'the seal does not match the contents' };
+  if (!keys.verifyWith(publicKey, hash, env.sealed.sig)) return { ok: false, why: 'signature did not verify' };
+  return { ok: true };
+}
+
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
 router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), async (req, res) => {
   const env = req.body; /* a CTP/1 envelope: the schema refused anything else, in the old words */
@@ -222,8 +247,8 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
     }
 
     /* ── the signature, against the key on THEIR domain. Never one they sent us. */
-    const pk = await directory.publicKeyFor(peer.domain, ik);
-    if (!pk.ok) return refuse({ status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the sender’s manifest: ' + pk.why });
+    const sealed = await sealedBy(peer, ik, env); /* RAIL-139 (b): the key AND the seal, before anything that answers about our data */
+    if (sealed.refusal) return refuse(sealed.refusal);
 
     /* ── is the recipient here, and which world are they in? */
     const toBridge = toBridge0;
@@ -259,7 +284,7 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
          the database, so `pairedWith` simply reports it rather than deciding it a second time. */
       population: to.population,
       pairedWith: () => mayCross,
-      verify: (hash, sig) => keys.verifyWith(pk.public_key, hash, sig)
+      verify: (hash, sig) => keys.verifyWith(sealed.publicKey, hash, sig)
     });
     if (!opened.ok) return refuse({ status: 409, code: 'CTP_ENVELOPE_REFUSED', why: opened.why });
 

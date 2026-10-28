@@ -82,6 +82,7 @@ function installStubs() {
     verifyWith: () => true
   });
   mock('lib/ctpenvelope', {
+    digest: () => 'H-1',
     open: () =>
       world.openWhy
         ? { ok: false, why: world.openWhy }
@@ -106,7 +107,8 @@ function installStubs() {
 }
 
 /* ── the scenarios: every answer of routes/ctp.js. Each runs on both mounts (server.js: '/' and '/api/ctp'). ───────────────── */
-const ENV = { ctp: '1', from: { installation_key: 'mx-1', bridge_id: 'CBSEND0001' }, to: { bridge_id: 'CBRECV0001' } };
+/* RAIL-139 (b): the door checks the seal before the recipient, so the envelope carries one the stubbed digest matches */
+const ENV = { ctp: '1', from: { installation_key: 'mx-1', bridge_id: 'CBSEND0001' }, to: { bridge_id: 'CBRECV0001' }, sealed: { hash: 'H-1', sig: 'S-1' } };
 const env = (patch) => Object.assign({}, ENV, patch || {});
 const ASK = (ask) => ({ ctp: '1', kind: 'query', from: { installation_key: 'mx-1' }, ask });
 const DOORS = { manifest: 'GET /.well-known/ctp.json', deliver: 'POST /deliver', query: 'POST /query' };

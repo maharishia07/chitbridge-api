@@ -32,6 +32,9 @@ directory.publicKeyFor = async (domain, ik) => (h.state.ctx.noKey ? { ok: false,
 const envelope = require(path.join(API, 'lib', 'ctpenvelope'));
 envelope.open = (env, o) => (h.state.ctx.openWhy ? { ok: false, why: h.state.ctx.openWhy }
   : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, h.state.ctx.noSender ? {} : { sender_entity_id: h.state.ctx.sender || SENDER, sender_entity_bridge_id: 'CBSEND0001' }), header: {} });
+envelope.digest = () => 'H-1';
+const ctpkeys = require(path.join(API, 'lib', 'ctpkeys'));
+ctpkeys.verifyWith = () => !h.state.ctx.badSig;
 const ctpquery = require(path.join(API, 'lib', 'ctpquery'));
 ctpquery.open = (q) => (h.state.ctx.openWhy ? { ok: false, why: h.state.ctx.openWhy } : { ok: true, ask: (q && q.ask) || {} });
 const mint = require(path.join(API, 'lib', 'mint'));
@@ -41,7 +44,7 @@ require(path.join(API, 'lib', 'govresolve')).resolveInstallationGovernance = asy
 const app = h.app('/api/ctp', require(path.join(API, 'routes', 'ctp')));
 
 const PEER = { installation_key: 'mx-1', domain: 'mx.example.com', hosted_locally: false, active: true };
-const ENV = { ctp: '1', from: { installation_key: 'mx-1', bridge_id: 'CBSEND0001' }, to: { bridge_id: 'CBRECV0001' } };
+const ENV = { ctp: '1', from: { installation_key: 'mx-1', bridge_id: 'CBSEND0001' }, to: { bridge_id: 'CBRECV0001' }, sealed: { hash: 'H-1', sig: 'S-1' } };
 const LIVE_TO = { identity_id: TO, population: 'live' };
 const ok = { peer: PEER, to: LIVE_TO, mayCross: true };
 const env = (patch) => Object.assign({}, ENV, patch || {});
@@ -58,6 +61,10 @@ const CASES = [
   ['deliver · no domain recorded', 'deliver', env(), { peer: Object.assign({}, PEER, { domain: null }) }, 403, 'no domain recorded for mx-1, so its key cannot be found'],
   ['deliver · the sender\'s manifest unreadable', 'deliver', env(), Object.assign({}, ok, { noKey: true }), 403, 'could not read the sender’s manifest: no manifest at mx.example.com'],
   ['deliver · no such business here', 'deliver', env(), { peer: PEER }, 404, 'no active business here with bridge id CBRECV0001'],
+  /* RAIL-139 (b): the seal is checked BEFORE the recipient and the pairing, so an unsigned caller learns nothing about who lives here */
+  ['deliver · a bad signature asking for a business that is not here: the seal answers, not the 404', 'deliver', env(), { peer: PEER, badSig: true }, 409, 'signature did not verify'],
+  ['deliver · a seal that does not match the contents, before the recipient lookup', 'deliver', env({ sealed: { hash: 'other', sig: 'S-1' } }), { peer: PEER }, 409, 'the seal does not match the contents'],
+  ['deliver · a bad signature on an unpaired world: the seal answers, not the pairing', 'deliver', env(), Object.assign({}, ok, { mayCross: false, badSig: true }), 409, 'signature did not verify'],
   ['deliver · the crossing rule unreadable → refuse', 'deliver', env(), Object.assign({}, ok, { crossThrows: true }), 503, 'this installation cannot check whether that crossing is permitted — refusing'],
   ['deliver · live, but not paired', 'deliver', env(), Object.assign({}, ok, { mayCross: false }), 409, 'refused'],
   ['deliver · a local world that does not name the peer', 'deliver', env(), Object.assign({}, ok, { to: { identity_id: TO, population: 'test' }, mayCross: false }), 409, '“test” is a local name on both sides — it must name mx-1 as a peer first'],

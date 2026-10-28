@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
 | 88 | `read` | `books-cashflow.js` | Trips: |
-| 85 | `words` | `variant.browser.js` |  |
+| 86 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
 | 74 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -38,7 +38,7 @@ of file each thing is; this says what already does the job.
 | 48 | `pack` | `books-store.js` |  |
 | 44 | `schemaValidate` | `validate.js` | options.legacy(errors) → the frozen body for the first failure. |
 | 43 | `read` | `cap-print.js` |  |
-| 41 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 42 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 41 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 40 | `view` | `books-payables.js` | group: |
 | 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
