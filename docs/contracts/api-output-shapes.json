@@ -1317,7 +1317,7 @@
     },
     "additionalProperties": false
    },
-   "observed": 7,
+   "observed": 8,
    "open": [
     {
      "path": "folders[]",
@@ -1375,9 +1375,6 @@
         },
         "when": {
          "type": "object",
-         "required": [
-          "doc"
-         ],
          "properties": {
           "from": {
            "type": "string"

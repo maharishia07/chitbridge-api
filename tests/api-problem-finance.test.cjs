@@ -141,6 +141,8 @@ const AT = '2026-10-01T10:00:00.000Z';
 const WHEN_FULL = Object.fromEntries(Object.entries(require(path.join(HERE, 'lib', 'match')).KEYS).map(([key, kind]) => [key, { text: 'rice', exact: 'invoice', number: 5, bool: true }[kind]]));
 /** a folder_rule row as lib/folder-rules list selects it: the first with every column filled, the second with every nullable column null */
 const RULE_FULL = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: true, sort: 1, stop_processing: true, last_matched_at: AT, match_count: '3', created_at: AT };
+/** a rule may hold any one term of the vocabulary (lib/match validate): this one only a sender, no doc, so no term is read as required */
+const RULE_FROM_ONLY = { rule_id: '88888888-8888-4888-8888-888888888888', folder_id: PARTY, name: 'From Asha', when: { from: 'asha' }, enabled: true, sort: 2, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
 const RULE_BARE = { rule_id: '33333333-3333-4333-8333-333333333333', folder_id: PARTY, name: null, when: { doc: 'invoice' }, enabled: false, sort: 0, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
 /** a message of the inbox as its statement selects it (chit_messages + the chit's header, line and status) */
 const MESSAGE_FULL = { message_id: PARTY, chit_id: PARTY, line_id: PARTY, sender_display_name: 'Asha', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Ring me', created_at: AT, msg_type: 'query', read_at: AT, kept: true, manual_subject: 'Rice', auto_subject: 'Order', track: 'order', particulars: 'Ponni 24 kg', chit_status: 'pending' };
@@ -165,7 +167,7 @@ const READY = [
   X('folders-ready', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: withChits(CHITS) }),
   X('folders-view-count-fails', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: { views: { members: async () => { throw new Error(SECRET_SQL); } } } }),
   X('folders-past-the-cap', 'GET ' + F, 200, { url: F + '?limit=9999&page=2', setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED]) } }),
-  X('rules-ready', 'GET ' + F + '/rules', 200, { setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE]) } }),
+  X('rules-ready', 'GET ' + F + '/rules', 200, { setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY]) } }),
   X('rules-past-the-cap', 'GET ' + F + '/rules', 200, { url: F + '/rules?limit=9999&page=2', setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL]) } }),
   X('messages-ready', 'GET ' + F + '/messages', 200, { setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_FULL, MESSAGE_BARE]) } }),
   X('messages-past-the-cap', 'GET ' + F + '/messages', 200, { url: F + '/messages?all=1&limit=9999&page=2', setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_FULL]) } }),
@@ -177,6 +179,8 @@ const READY = [
   X('reconcile-ready', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: FOLDER_PAIR }, patch: withChits(CHITS) }),
   /* a folder that is its own parent (a loop in the tree) is counted once: the answer used to be a stack overflow, a 500 */
   X('reconcile-folder-loop', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: PARTY, name: 'Loop' }]) }, patch: withChits(CHITS) }),
+  /* two folders that are each other's parent */
+  X('reconcile-two-folder-cycle', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: '33333333-3333-4333-8333-333333333333', name: 'A' }, { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'B' }]) }, patch: withChits(CHITS) }),
   X('reconcile-does-not-add-up', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: FOLDER_ONE }, patch: withChits(CHITS.concat([STRAY])) })
 ];
 const EXTRAS = [
