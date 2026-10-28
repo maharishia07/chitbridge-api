@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 122 | `list` | `amend.js` |  |
 | 107 | `rows` | `crm.js` | still in them: |
-| 101 | `withEntity` | `books-hooks.js` |  |
+| 102 | `withEntity` | `books-hooks.js` |  |
 | 88 | `read` | `books-cashflow.js` | Trips: |
 | 86 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
@@ -62,7 +62,7 @@ of file each thing is; this says what already does the job.
 | 32 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 31 | `facts` | `bill-steps.js` | MY state_log — |
 | 31 | `live` | `receivables.js` | the allocations that still count: |
-| 31 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
+| 32 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
 | 30 | `ensureCap` | `app.html` |  |
 | 29 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 29 | `order` | `cap-iddocs.js` | var LIST = null; |

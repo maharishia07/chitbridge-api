@@ -36,7 +36,7 @@ const log = require('../lib/logger');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const envelope = require('../lib/ctpenvelope');
 const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
@@ -189,6 +189,26 @@ function sealHolds(env, publicKey) {
   if (!env.sealed || env.sealed.hash !== hash) return { ok: false, why: 'the seal does not match the contents' };
   if (!keys.verifyWith(publicKey, hash, env.sealed.sig)) return { ok: false, why: 'signature did not verify' };
   return { ok: true };
+}
+
+/**
+ * deliverOnce(opened, copy, installationKey, recipientId) — the sender checked (senderOf), then the write, ONCE → { repeat } or { refusal }.
+ * ⚠️ RAIL-138 (c): a retried envelope is the ordinary case for a sender whose answer was lost, and the write is an INSERT, so the
+ * second one was a unique violation answered 500 — which tells the sender to keep retrying. The recipient's own copy is read first,
+ * AS the recipient: the same chit from the same sender is a repeat (200, nothing written); the same chit id from a different sender
+ * is refused in words (a chit id is minted once, so two senders cannot both own it).
+ */
+async function deliverOnce(opened, copy, installationKey, recipientId) {
+  const sender = await senderOf(opened, copy, installationKey);
+  if (sender.refusal) return sender;
+  const held = await withEntity(recipientId, (db) =>
+    db.query('SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1', [opened.chit_id, recipientId])
+  );
+  const heldFrom = held.rows[0] && String(held.rows[0].sender_entity_id);
+  if (heldFrom && heldFrom === String(sender.id)) return { repeat: true };
+  if (heldFrom) return { refusal: { status: 409, code: 'CTP_CHIT_ID_TAKEN', why: 'a chit with that id is already here from another sender' } };
+  await mint.deliver(sender.id, opened.chit_id, [copy], { is_draft: false, arrived: true });
+  return { repeat: false };
 }
 
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
@@ -349,12 +369,12 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
      * is never theirs to choose. `chit_header.sender_entity_id` has no foreign key precisely so that a
      * counterparty on another machine can be named without existing here.
      */
-    const sender = await senderOf(opened, copy, ik); /* named, an id, and one the signing installation may name (RAIL-138 b) */
-    if (sender.refusal) return refuse(sender.refusal);
-    await mint.deliver(sender.id, opened.chit_id, [copy], { is_draft: false, arrived: true });
+    const once = await deliverOnce(opened, copy, ik, to.identity_id); /* RAIL-138 (b) the sender is theirs · (c) a repeat writes nothing */
+    if (once.refusal) return refuse(once.refusal);
 
     res.json({
       accepted: true,
+      repeat: once.repeat || undefined,
       chit_id: opened.chit_id,
       to: toBridge,
       /* ⭐ the sender's governance as WE resolved it from their installation — visible, and never the reason a

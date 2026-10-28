@@ -920,6 +920,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CTP_CHIT_ID_TAKEN",
+   "status": "409",
+   "title": "Chit id already here",
+   "shopkeeper": "A chit with this id is already here, from a different sender.",
+   "hint": "Chit ids are minted once; the sender should mint a new id, not reuse one.",
+   "owner_area": "ctp",
+   "since": "2026-10-28"
+  },
+  {
    "code": "CTP_CROSSING_REFUSED",
    "status": "409",
    "title": "Crossing refused",
