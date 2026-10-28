@@ -1171,8 +1171,8 @@
    "path": "/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 122,
-   "hash": "d9ef786ac86d43eb",
+   "line": 137,
+   "hash": "59e047fa21d05e3f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6432,8 +6432,8 @@
    "path": "/api/ctp/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 122,
-   "hash": "d9ef786ac86d43eb",
+   "line": 137,
+   "hash": "59e047fa21d05e3f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21821,7 +21821,7 @@
    "path": "/api/ctp/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 134,
+   "line": 150,
    "hash": "e66d6e5fbc20dda3",
    "columns": {
     "schema_in": true,
@@ -21872,7 +21872,7 @@
    "path": "/api/ctp/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 336,
+   "line": 352,
    "hash": "1678af41fa18644b",
    "columns": {
     "schema_in": true,
@@ -28928,7 +28928,7 @@
    "path": "/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 134,
+   "line": 150,
    "hash": "e66d6e5fbc20dda3",
    "columns": {
     "schema_in": true,
@@ -28979,7 +28979,7 @@
    "path": "/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 336,
+   "line": 352,
    "hash": "1678af41fa18644b",
    "columns": {
     "schema_in": true,
