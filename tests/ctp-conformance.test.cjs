@@ -190,6 +190,27 @@ ok('⚠️ no verifier is a refusal, not a pass (RAIL-141 a)', () => {
   assert.strictEqual(out.why, 'no way to check the signature here — refused');
 });
 
+/* RAIL-141 (c): contents canon cannot read are an ANSWER, never a throw — at the door and on the way out */
+const deep = (n) => { let v = { leaf: 1 }; for (let i = 0; i < n; i++) v = { v }; return v; };
+ok('⚠️ a copy nested past the canon limit is refused, not thrown (RAIL-141 c)', () => {
+  const e = env.build(FROM, TO, CHIT);
+  e.copy = Object.assign({}, e.copy, { business_json: deep(300) });
+  e.sealed = { alg: 'test', hash: 'x', sig: 's', at: '2026-10-29T00:00:00.000Z' };
+  let out;
+  assert.doesNotThrow(() => { out = env.open(e, ctx); });
+  assert.strictEqual(out.ok, false);
+  assert.strictEqual(out.why, 'the envelope cannot be read as one sealed message — refused');
+});
+
+ok('⚠️ a BigInt in a copy is refused, not thrown (RAIL-141 c)', () => {
+  const e = env.build(FROM, TO, CHIT);
+  e.copy = Object.assign({}, e.copy, { business_json: { qty: BigInt(2) } });
+  e.sealed = { alg: 'test', hash: 'x', sig: 's', at: '2026-10-29T00:00:00.000Z' };
+  let out;
+  assert.doesNotThrow(() => { out = env.open(e, ctx); });
+  assert.strictEqual(out.ok, false);
+});
+
 ok('signing twice gives the same digest and does not nest', () => {
   const e1 = env.sign(env.build(FROM, TO, CHIT), null);
   const e2 = env.sign(env.build(FROM, TO, CHIT), null);
