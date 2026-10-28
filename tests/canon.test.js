@@ -181,5 +181,48 @@ t('⚠️⚠️ verify NEVER claims to know which field moved', () => {
   assert.ok(v.note.indexOf('never WHICH') > -1, 'and it says so out loud');
 });
 
+t('RAIL-141 (e): hash reads a value as JSON carries it — two Dates are two hashes, not one {}', () => {
+  const a = { at: new Date('2026-10-01T00:00:00Z') };
+  const b = { at: new Date('2026-10-02T00:00:00Z') };
+  assert.notStrictEqual(C.hash(a), C.hash(b));
+  assert.strictEqual(C.hash(a), C.hash({ at: '2026-10-01T00:00:00.000Z' }), 'a Date hashes as its ISO text, as it travels');
+});
+
+t('RAIL-141 (e): undefined, NaN and -0 hash as JSON writes them', () => {
+  assert.strictEqual(C.hash({ a: undefined, b: 1 }), C.hash({ b: 1 }), '{a:undefined} was the text {"a":undefined}');
+  assert.strictEqual(C.hash([undefined, 1]), C.hash([null, 1]), '[undefined,1] was the text [,1]');
+  assert.strictEqual(C.hash({ n: NaN }), C.hash({ n: null }));
+  assert.strictEqual(C.hash({ z: -0 }), C.hash({ z: 0 }));
+});
+
+t('RAIL-141 (e): a Map or a Set is refused, not hashed as {}', () => {
+  assert.throws(() => C.hash({ m: new Map([['a', 1]]) }), /Map or Set/);
+  assert.throws(() => C.hash([new Set([1])]), /Map or Set/);
+  assert.throws(() => C.seal(['m'], { m: new Map() }), /Map or Set/);
+});
+
+t('RAIL-141 (e): a seal over a row from Postgres covers its Dates', () => {
+  const row = { chit_id: 'c1', sent_at: new Date('2026-10-01T10:00:00Z') };
+  const s = C.seal(['chit_id', 'sent_at'], row);
+  assert.strictEqual(C.verify(s, { chit_id: 'c1', sent_at: new Date('2026-10-01T10:00:00Z') }).ok, true);
+  assert.strictEqual(C.verify(s, { chit_id: 'c1', sent_at: new Date('2026-10-01T11:00:00Z') }).ok, false, 'a moved sent_at slipped through');
+});
+
+t('RAIL-141 (e): Unicode is not normalised — NFC and NFD are two values (a judgement canon does not make)', () => {
+  assert.notStrictEqual(C.hash({ name: 'caf\u00e9' }), C.hash({ name: 'cafe\u0301' }));
+});
+
+t('RAIL-141 (e): canon() itself is unchanged for the live callers that persist its bytes', () => {
+  assert.strictEqual(C.canon({ at: new Date(0) }), '{"at":{}}', 'idempotency and connector receipts store these bytes as they are');
+});
+
+t('RAIL-141 (e): a JSON-native value hashes exactly as before', () => {
+  const crypto = require('crypto');
+  CORPUS.forEach((v, i) => {
+    if (JSON.stringify(v) === undefined) return;
+    assert.strictEqual(C.hash(v), crypto.createHash('sha256').update(C.canon(JSON.parse(JSON.stringify(v)))).digest('hex'), 'corpus[' + i + ']');
+  });
+});
+
 console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');
 process.exitCode = fail ? 1 : 0;
