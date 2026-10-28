@@ -108,6 +108,21 @@ const stub = {
     }
   });
 
+  ok('RAIL-140 (f): a domain that is not a host, a bad port, a non-string or a bad bare name is refused', () => {
+    const bad = ['CBAAAAAAAA@..', 'CBAAAAAAAA@-', 'CBAAAAAAAA@.x', 'CBAAAAAAAA@x..io', 'CBAAAAAAAA@-x.io', 'CBAAAAAAAA@x-.io',
+                 'CBAAAAAAAA@x.io:99999', 'CBAAAAAAAA@x.io:0080', 'CBAAAAAAAA@x.io:0', 'CBAAAAAAAA@x.io:', 'CBAAAAAAAA@x.io:1:2',
+                 'a b', 'C', '<script>', { bridge_id: SAME }, [SAME], 42];
+    for (const one of bad) assert.strictEqual(A.parse(one).ok, false, 'should refuse: ' + JSON.stringify(one));
+  });
+
+  ok('RAIL-140 (f): a trailing dot is dropped; a port, an IP and a seeded name still parse', () => {
+    assert.strictEqual(A.parse(SAME + '@ae.example.').domain, 'ae.example', 'x.io. would never equal a row');
+    assert.strictEqual(A.parse(SAME + '@127.0.0.1:8124').domain, '127.0.0.1:8124');
+    assert.strictEqual(A.parse(SAME + '@localhost:8').domain, 'localhost:8');
+    assert.strictEqual(A.parse('CBCUST0001').ok, true, 'a seeded shop has a name outside the CB + 8 alphabet');
+    assert.strictEqual(A.parse('CB00000000@ae.example').ok, true, 'ctpquery resolves a domain with this placeholder');
+  });
+
   ok('a local party formats WITHOUT a domain', () => {
     /* ⚠️ adding ours would assert a name other installations do not use for us */
     assert.strictEqual(A.format(SAME, null), SAME);
