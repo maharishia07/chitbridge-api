@@ -1206,7 +1206,8 @@
       "status": 200,
       "awaiting_client": {
         "pr": "MKT web round: the Marketing card on Home / CB CRM",
-        "since": "2026-10-14"
+        "since": "2026-10-28",
+        "redated": "re-dated 2026-10-28 (Athi): web round in BACKLOG this week"
       }
     },
     "GET /api/facts/offer-lab": {
@@ -1569,7 +1570,8 @@
       "status": 200,
       "awaiting_client": {
         "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
-        "since": "2026-10-13"
+        "since": "2026-10-28",
+        "redated": "re-dated 2026-10-28 (Athi): web round in BACKLOG this week"
       }
     },
     "GET /api/privacy/me": {
