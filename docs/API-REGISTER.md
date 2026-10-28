@@ -178,24 +178,24 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/forms/:key | forms | routes/forms.js:30 | no | no | no | no | no | no | no | yes | no | no | yes | yes | no | not started |
 | GET | /api/forms/instances/:id | forms | routes/forms.js:62 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/forms/instances/all | forms | routes/forms.js:54 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/governance/ai-skills | governance | routes/governance.js:544 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/ai-usage | governance | routes/governance.js:533 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/governance/ai-skills | governance | routes/governance.js:564 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/ai-usage | governance | routes/governance.js:550 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/governance/boilerplate/:key | governance | routes/governance.js:244 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/governance/commerce-standards | governance | routes/governance.js:367 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/country-setup | governance | routes/governance.js:486 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/governance/commerce-standards | governance | routes/governance.js:375 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/country-setup | governance | routes/governance.js:500 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/governance/entities/:id | governance | routes/governance.js:87 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/governance/instruments | governance | routes/governance.js:349 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/journey | governance | routes/governance.js:358 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/lanes | governance | routes/governance.js:325 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/profile | governance | routes/governance.js:376 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/profile/path | governance | routes/governance.js:466 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/profile/readiness | governance | routes/governance.js:457 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/readiness | governance | routes/governance.js:309 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/readiness/:bridge_id | governance | routes/governance.js:555 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/governance/instruments | governance | routes/governance.js:355 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/journey | governance | routes/governance.js:365 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/lanes | governance | routes/governance.js:327 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/profile | governance | routes/governance.js:385 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/profile/path | governance | routes/governance.js:479 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/profile/readiness | governance | routes/governance.js:469 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/readiness | governance | routes/governance.js:309 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/readiness/:bridge_id | governance | routes/governance.js:575 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/governance/source/:key | governance | routes/governance.js:297 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/governance/supplier-acceptance/:handle | governance | routes/governance.js:704 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/governance/track-record | governance | routes/governance.js:338 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/governance/vault-schema | governance | routes/governance.js:409 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/governance/supplier-acceptance/:handle | governance | routes/governance.js:725 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/governance/track-record | governance | routes/governance.js:341 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/governance/vault-schema | governance | routes/governance.js:421 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/identity/documents | identity-docs | routes/identity-docs.js:129 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/integrations/catalogue | integrations | routes/integrations.js:360 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/integrations/docs/:id | integrations | routes/integrations.js:273 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
@@ -477,15 +477,15 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/forms/:key/resolve | forms | routes/forms.js:38 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/forms/instances/:id/attach | forms | routes/forms.js:78 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/forms/instances/:id/sign | forms | routes/forms.js:70 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
-| POST | /api/governance/ai-draft | governance | routes/governance.js:521 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/governance/ai-draft | governance | routes/governance.js:538 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/governance/boilerplate/:key/adopt | governance | routes/governance.js:256 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/governance/compliance | governance | routes/governance.js:595 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/governance/compliance | governance | routes/governance.js:616 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/governance/conformance | governance | routes/governance.js:232 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/governance/entities | governance | routes/governance.js:119 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/governance/entities/:id/reattest | governance | routes/governance.js:169 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/governance/source | governance | routes/governance.js:280 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/governance/supplier-acceptance | governance | routes/governance.js:664 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/governance/verify | governance | routes/governance.js:617 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/governance/supplier-acceptance | governance | routes/governance.js:685 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/governance/verify | governance | routes/governance.js:638 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/identity/documents/:scheme/code | identity-docs | routes/identity-docs.js:390 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/identity/documents/:scheme/verify | identity-docs | routes/identity-docs.js:406 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | POST | /api/integrations/:actor_id/approve | integrations | routes/integrations.js:631 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -632,9 +632,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1684 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PUT | /api/entities/routing | entities | routes/entities.js:1603 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/folders/inventory/:code | folders | routes/folders.js:148 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| PUT | /api/governance/country-setup | governance | routes/governance.js:495 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/governance/profile | governance | routes/governance.js:389 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/governance/profile/vault | governance | routes/governance.js:438 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PUT | /api/governance/country-setup | governance | routes/governance.js:512 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/governance/profile | governance | routes/governance.js:401 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/governance/profile/vault | governance | routes/governance.js:450 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:223 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | PUT | /api/integrations/streams | integrations | routes/integrations.js:754 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-design | network-design | routes/network-design.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |

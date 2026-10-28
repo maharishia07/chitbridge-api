@@ -502,6 +502,9 @@
   "GET /api/governance/country-setup": {
    "output_allowlist": true
   },
+  "GET /api/governance/ai-usage": {
+   "output_allowlist": true
+  },
   "GET /api/governance/ai-skills": {
    "output_allowlist": true
   },

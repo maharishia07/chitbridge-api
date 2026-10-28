@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 597
    },
    "foreign_id_404": {
     "applies": 227,
@@ -8194,8 +8194,8 @@
    "path": "/api/governance/ai-skills",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 544,
-   "hash": "b0c82d8b2d39e9e4",
+   "line": 564,
+   "hash": "cf1d3b18bbcc525b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8205,7 +8205,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8231,8 +8231,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cf1d3b18bbcc525b"
    },
    "status": "partial"
   },
@@ -8242,8 +8243,8 @@
    "path": "/api/governance/ai-usage",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 533,
-   "hash": "1e1bdd8cdcae3e67",
+   "line": 550,
+   "hash": "328373386394ebd9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8253,7 +8254,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8279,8 +8280,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cac294fecc77cde1"
    },
    "status": "partial"
   },
@@ -8340,8 +8342,8 @@
    "path": "/api/governance/commerce-standards",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 367,
-   "hash": "0aaf1f689ae49852",
+   "line": 375,
+   "hash": "4345a64878ef69f5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8351,7 +8353,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8377,8 +8379,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "711afb668547dccc"
    },
    "status": "partial"
   },
@@ -8388,8 +8391,8 @@
    "path": "/api/governance/country-setup",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 486,
-   "hash": "18582422f82c3bdc",
+   "line": 500,
+   "hash": "334f5920ce6e77df",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8399,7 +8402,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8425,8 +8428,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e0cf35dd9ae94035"
    },
    "status": "partial"
   },
@@ -8487,8 +8491,8 @@
    "path": "/api/governance/instruments",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 349,
-   "hash": "d244b26bfe0c0b8a",
+   "line": 355,
+   "hash": "0bce9d98503ac909",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8498,7 +8502,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8525,8 +8529,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cf7acc0d7f0e5981"
    },
    "status": "partial"
   },
@@ -8536,8 +8541,8 @@
    "path": "/api/governance/journey",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 358,
-   "hash": "08fbf085b396a9e2",
+   "line": 365,
+   "hash": "31b9ee010d1c6425",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8547,7 +8552,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8574,8 +8579,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d1b9aff13d1951ad"
    },
    "status": "partial"
   },
@@ -8585,8 +8591,8 @@
    "path": "/api/governance/lanes",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 325,
-   "hash": "3310dfb380b7c221",
+   "line": 327,
+   "hash": "ed18220df1d5093b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8596,7 +8602,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8623,8 +8629,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ab486ab1278e5fba"
    },
    "status": "partial"
   },
@@ -8634,8 +8641,8 @@
    "path": "/api/governance/profile",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 376,
-   "hash": "d04fb533f89a204e",
+   "line": 385,
+   "hash": "094e8e3e410dcf65",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8645,7 +8652,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8671,8 +8678,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7ec19f2e13178f37"
    },
    "status": "partial"
   },
@@ -8682,8 +8690,8 @@
    "path": "/api/governance/profile/path",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 466,
-   "hash": "a542d42280180810",
+   "line": 479,
+   "hash": "16ad5c28a4f1437c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8693,7 +8701,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8719,8 +8727,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "40a9b75152f469b7"
    },
    "status": "partial"
   },
@@ -8730,8 +8739,8 @@
    "path": "/api/governance/profile/readiness",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 457,
-   "hash": "77a914488cef2198",
+   "line": 469,
+   "hash": "f5ab03811ab83248",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8741,7 +8750,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8767,8 +8776,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b22fd94767ce796d"
    },
    "status": "partial"
   },
@@ -8779,7 +8789,7 @@
    "owner_area": "governance",
    "file": "routes/governance.js",
    "line": 309,
-   "hash": "1dba72b3868b7cc6",
+   "hash": "bf302810e657e9d2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8789,7 +8799,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8816,8 +8826,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "952b64eb711a3a48"
    },
    "status": "partial"
   },
@@ -8827,8 +8838,8 @@
    "path": "/api/governance/readiness/:bridge_id",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 555,
-   "hash": "cdf5309687282fde",
+   "line": 575,
+   "hash": "56f8b9580dd195f1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8838,7 +8849,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8866,8 +8877,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "17794028a94ee94a"
    },
    "status": "partial"
   },
@@ -8927,7 +8939,7 @@
    "path": "/api/governance/supplier-acceptance/:handle",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 704,
+   "line": 725,
    "hash": "a6eb16e63a852605",
    "columns": {
     "schema_in": true,
@@ -8977,8 +8989,8 @@
    "path": "/api/governance/track-record",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 338,
-   "hash": "477470278411e319",
+   "line": 341,
+   "hash": "c62ac0e212831a25",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8988,7 +9000,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9014,8 +9026,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2e3391304f83f3aa"
    },
    "status": "partial"
   },
@@ -9025,8 +9038,8 @@
    "path": "/api/governance/vault-schema",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 409,
-   "hash": "eb686d966ba618aa",
+   "line": 421,
+   "hash": "4f285b6f37f32fe8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9036,7 +9049,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9062,8 +9075,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4f285b6f37f32fe8"
    },
    "status": "partial"
   },
@@ -22616,7 +22630,7 @@
    "path": "/api/governance/ai-draft",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 521,
+   "line": 538,
    "hash": "4b745a67e7797e26",
    "columns": {
     "schema_in": true,
@@ -22716,7 +22730,7 @@
    "path": "/api/governance/compliance",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 595,
+   "line": 616,
    "hash": "d1a63445cf2a9a13",
    "columns": {
     "schema_in": true,
@@ -22971,7 +22985,7 @@
    "path": "/api/governance/supplier-acceptance",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 664,
+   "line": 685,
    "hash": "835801c10ee9bed7",
    "columns": {
     "schema_in": true,
@@ -23024,7 +23038,7 @@
    "path": "/api/governance/verify",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 617,
+   "line": 638,
    "hash": "2afabffc872728f3",
    "columns": {
     "schema_in": true,
@@ -30195,7 +30209,7 @@
    "path": "/api/governance/country-setup",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 495,
+   "line": 512,
    "hash": "478f1a3774a79414",
    "columns": {
     "schema_in": true,
@@ -30245,7 +30259,7 @@
    "path": "/api/governance/profile",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 389,
+   "line": 401,
    "hash": "c9b45512be118947",
    "columns": {
     "schema_in": true,
@@ -30295,7 +30309,7 @@
    "path": "/api/governance/profile/vault",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 438,
+   "line": 450,
    "hash": "c0c431476199942f",
    "columns": {
     "schema_in": true,

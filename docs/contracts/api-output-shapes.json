@@ -838,6 +838,913 @@
     "url": "/api/assist/whoami"
    }
   },
+  "GET /api/governance/ai-skills": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "skills"
+    ],
+    "properties": {
+     "skills": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "skills[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/ai-skills"
+   }
+  },
+  "GET /api/governance/ai-usage": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "calls",
+     "tokens",
+     "spent_usd",
+     "credits_usd",
+     "balance_usd",
+     "free_usd",
+     "budget_usd",
+     "remaining_usd"
+    ],
+    "properties": {
+     "calls": {
+      "type": "number"
+     },
+     "tokens": {},
+     "spent_usd": {},
+     "credits_usd": {
+      "type": "number"
+     },
+     "balance_usd": {
+      "type": "number"
+     },
+     "free_usd": {
+      "type": "number"
+     },
+     "budget_usd": {
+      "type": "number"
+     },
+     "remaining_usd": {
+      "type": "number"
+     },
+     "rate_per_hour": {
+      "type": "number"
+     },
+     "rate_per_day": {
+      "type": "number"
+     },
+     "note": {
+      "type": "string"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [],
+   "example": {
+    "url": "/api/governance/ai-usage"
+   }
+  },
+  "GET /api/governance/commerce-standards": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "framework",
+     "governed",
+     "sources"
+    ],
+    "properties": {
+     "framework": {
+      "type": "string"
+     },
+     "governed": {
+      "type": "boolean"
+     },
+     "sources": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "sources[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/commerce-standards"
+   }
+  },
+  "GET /api/governance/country-setup": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "migrated",
+     "done",
+     "set_at",
+     "required",
+     "country",
+     "currency",
+     "fy_start_month",
+     "tax",
+     "timezone",
+     "zones",
+     "constituted",
+     "constituted_by",
+     "countries",
+     "source",
+     "pack"
+    ],
+    "properties": {
+     "migrated": {
+      "type": "boolean"
+     },
+     "done": {
+      "type": "boolean"
+     },
+     "set_at": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "required": {
+      "type": "boolean"
+     },
+     "country": {
+      "type": "object"
+     },
+     "currency": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "fy_start_month": {
+      "type": [
+       "number",
+       "null"
+      ]
+     },
+     "tax": {
+      "type": "object"
+     },
+     "timezone": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "zones": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "constituted": {
+      "type": "boolean"
+     },
+     "constituted_by": {
+      "type": "object"
+     },
+     "countries": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "source": {
+      "type": "object"
+     },
+     "pack": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "country",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "tax",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "constituted_by",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "countries[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "source",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "pack",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/country-setup"
+   }
+  },
+  "GET /api/governance/instruments": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "framework",
+     "cross_border",
+     "incoterm",
+     "cargo_insured_by",
+     "frm_classes",
+     "cluster"
+    ],
+    "properties": {
+     "framework": {
+      "type": "string"
+     },
+     "cross_border": {
+      "type": "boolean"
+     },
+     "incoterm": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "cargo_insured_by": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "frm_classes": {
+      "type": "object"
+     },
+     "cluster": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 7,
+   "open": [
+    {
+     "path": "frm_classes",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "cluster[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/instruments"
+   }
+  },
+  "GET /api/governance/journey": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "cross_border",
+     "incoterm",
+     "chain"
+    ],
+    "properties": {
+     "cross_border": {
+      "type": "boolean"
+     },
+     "incoterm": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "chain": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "chain[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/journey"
+   }
+  },
+  "GET /api/governance/lanes": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "vertical",
+     "origin",
+     "asked",
+     "code",
+     "why",
+     "lanes",
+     "may"
+    ],
+    "properties": {
+     "vertical": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "origin": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "asked": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "code": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "why": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "lanes": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "may": {
+      "type": "object",
+      "required": [
+       "gather",
+       "verify"
+      ],
+      "properties": {
+       "gather": {
+        "type": "object"
+       },
+       "verify": {
+        "type": "object"
+       }
+      },
+      "additionalProperties": false
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "lanes[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may.gather",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may.verify",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/lanes"
+   }
+  },
+  "GET /api/governance/profile": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "trade_mode",
+     "markets",
+     "sectors",
+     "adopted",
+     "vault",
+     "vault_version",
+     "invoice_party",
+     "vault_encrypted"
+    ],
+    "properties": {
+     "trade_mode": {
+      "type": "string"
+     },
+     "markets": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "sectors": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "adopted": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "vault": {
+      "type": "object"
+     },
+     "vault_version": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "invoice_party": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "vault_encrypted": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "vault",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "invoice_party",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/profile"
+   }
+  },
+  "GET /api/governance/profile/path": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "profile",
+     "sector",
+     "origin",
+     "asked",
+     "code",
+     "why",
+     "lanes",
+     "adoptable"
+    ],
+    "properties": {
+     "profile": {
+      "type": "object"
+     },
+     "sector": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "origin": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "asked": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "code": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "why": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "lanes": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "adoptable": {}
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "profile",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "lanes[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/profile/path"
+   }
+  },
+  "GET /api/governance/profile/readiness": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "profile",
+     "asked",
+     "code",
+     "why",
+     "clearances",
+     "summary"
+    ],
+    "properties": {
+     "profile": {
+      "type": "object"
+     },
+     "asked": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "code": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "why": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "clearances": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "summary": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [
+    {
+     "path": "profile",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "clearances[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "summary",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/profile/readiness"
+   }
+  },
+  "GET /api/governance/readiness": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "standards",
+     "clearances",
+     "summary",
+     "may"
+    ],
+    "properties": {
+     "standards": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "clearances": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "summary": {
+      "type": "object"
+     },
+     "may": {
+      "type": "object",
+      "required": [
+       "gather",
+       "verify"
+      ],
+      "properties": {
+       "gather": {
+        "type": "object"
+       },
+       "verify": {
+        "type": "object"
+       }
+      },
+      "additionalProperties": false
+     },
+     "origin": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "vertical": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "destination": {
+      "type": "string"
+     },
+     "dest_name": {
+      "type": "string"
+     },
+     "domestic": {
+      "type": "boolean"
+     },
+     "asked": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "code": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "why": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 8,
+   "open": [
+    {
+     "path": "clearances[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "summary",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may.gather",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "may.verify",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/readiness"
+   }
+  },
+  "GET /api/governance/readiness/:bridge_id": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "supplier",
+     "facts",
+     "standards",
+     "clearances",
+     "summary"
+    ],
+    "properties": {
+     "supplier": {
+      "type": "object",
+      "required": [
+       "bridge_id",
+       "user_id",
+       "display_name"
+      ],
+      "properties": {
+       "bridge_id": {
+        "type": "string"
+       },
+       "user_id": {
+        "type": "string"
+       },
+       "display_name": {
+        "type": "string"
+       }
+      },
+      "additionalProperties": false
+     },
+     "facts": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "standards": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "clearances": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "summary": {
+      "type": "object"
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 3,
+   "open": [
+    {
+     "path": "facts",
+     "reason": "a value passed through (a name: its keys are not written in the handler)"
+    },
+    {
+     "path": "clearances[]",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    },
+    {
+     "path": "summary",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/readiness/BRG-1"
+   }
+  },
+  "GET /api/governance/track-record": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "rung",
+     "note",
+     "disputes_clean",
+     "counterparties",
+     "dealings",
+     "settled",
+     "disputes_open",
+     "disputes_resolved",
+     "on_rail_since",
+     "last_dealing"
+    ],
+    "properties": {
+     "rung": {
+      "type": "string"
+     },
+     "note": {
+      "type": "string"
+     },
+     "disputes_clean": {
+      "type": "boolean"
+     },
+     "counterparties": {
+      "type": "number"
+     },
+     "dealings": {
+      "type": "number"
+     },
+     "settled": {
+      "type": "number"
+     },
+     "disputes_open": {
+      "type": "number"
+     },
+     "disputes_resolved": {
+      "type": "number"
+     },
+     "on_rail_since": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "last_dealing": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 6,
+   "open": [],
+   "example": {
+    "url": "/api/governance/track-record"
+   }
+  },
+  "GET /api/governance/vault-schema": {
+   "status": "200",
+   "schema": {
+    "type": "object",
+    "required": [
+     "section_types",
+     "verifiable_tags"
+    ],
+    "properties": {
+     "section_types": {
+      "type": "object"
+     },
+     "verifiable_tags": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "additionalProperties": false
+   },
+   "observed": 5,
+   "open": [
+    {
+     "path": "section_types",
+     "reason": "a value passed through (an expression: its keys are not written in the handler)"
+    }
+   ],
+   "example": {
+    "url": "/api/governance/vault-schema"
+   }
+  },
   "POST /api/assist": {
    "status": "200",
    "schema": {
@@ -1217,6 +2124,21 @@
   "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
   "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/ai-skills": "open at skills[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/boilerplate/:key": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/governance/commerce-standards": "open at sources[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/country-setup": "open at country — a value passed through (an expression: its keys are not written in the handler); tax — a value passed through (an expression: its keys are not written in the handler); constituted_by — a value passed through (an expression: its keys are not written in the handler); countries[] — a value passed through (an expression: its keys are not written in the handler); source — a value passed through (an expression: its keys are not written in the handler); pack — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/entities/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/governance/instruments": "open at frm_classes — a value passed through (an expression: its keys are not written in the handler); cluster[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/journey": "open at chain[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/lanes": "open at lanes[] — a value passed through (an expression: its keys are not written in the handler); may.gather — a value passed through (an expression: its keys are not written in the handler); may.verify — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/profile": "open at vault — a value passed through (an expression: its keys are not written in the handler); invoice_party — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/profile/path": "open at profile — a value passed through (an expression: its keys are not written in the handler); lanes[] — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/profile/readiness": "open at profile — a value passed through (an expression: its keys are not written in the handler); clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/readiness": "open at clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler); may.gather — a value passed through (an expression: its keys are not written in the handler); may.verify — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/readiness/:bridge_id": "open at facts — a value passed through (a name: its keys are not written in the handler); clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+  "GET /api/governance/source/:key": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "GET /api/governance/vault-schema": "open at section_types — a value passed through (an expression: its keys are not written in the handler)",
   "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
@@ -1238,6 +2160,15 @@
   "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
   "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/ai-draft": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/boilerplate/:key/adopt": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/compliance": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+  "POST /api/governance/entities": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/entities/:id/reattest": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/source": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/supplier-acceptance": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "POST /api/governance/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
@@ -1262,6 +2193,9 @@
   "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
   "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+  "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
+  "PUT /api/governance/country-setup": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+  "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+  "PUT /api/governance/profile/vault": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial"
  }
 }
