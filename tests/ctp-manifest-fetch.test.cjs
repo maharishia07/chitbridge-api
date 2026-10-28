@@ -54,6 +54,19 @@ const timed = (promise, ms) => Promise.race([promise, new Promise((done) => setT
       t('a body of ' + body + ' is refused as not a manifest', r.ok === false && r.why === 'manifest is missing ctp/installation_key/public_key', JSON.stringify(r));
     }
 
+    /* RAIL-140 (e) · Q19: what the far end said, and where it lives, stay in our log — the sentence is fixed */
+    const failing = await serve((req, res) => { res.statusCode = 502; res.end('bad gateway at 10.0.0.7'); });
+    servers.push(failing);
+    r = await dir.manifestFor('127.0.0.1:' + failing.address().port, { fresh: true });
+    t('a manifest that answers an error says so in fixed words — no url, no status', r.ok === false && r.why === 'the manifest address answered with an error', JSON.stringify(r));
+    const gone = await serve(() => {});
+    const gonePort = gone.address().port;
+    await new Promise((done) => gone.close(done));
+    r = await dir.manifestFor('127.0.0.1:' + gonePort, { fresh: true });
+    t('an unreachable manifest says so in fixed words — no url, no error name', r.ok === false && r.why === 'the manifest address could not be reached', JSON.stringify(r));
+    r = await dir.publicKeyFor('127.0.0.1:' + plain.address().port, 'someone-else', { fresh: true });
+    t('a manifest for another installation names neither key', r.ok === false && r.why === 'the manifest at that domain is for a different installation' && !/far-1|someone-else/.test(r.why), JSON.stringify(r));
+
     /* headers at once, then one byte a second: the deadline (5 s) must cut it, not wait for the far end */
     const drip = await serve((req, res) => {
       res.setHeader('Content-Type', 'application/json');
