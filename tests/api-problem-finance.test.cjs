@@ -159,12 +159,16 @@ const STRAY = CHIT({ chit_id: '66666666-6666-4666-8666-666666666666', folder_id:
 /** a line of the worklist as its statement selects it (chit_line_assignment + chit_line + the chit's header and status) */
 const WORK_ROW = { assignee_actor_id: '44444444-4444-4444-8444-444444444444', assignee_name: 'Murugan', assignee_type: 'actor', task: 'Pack', due_date: '2026-10-02', note: 'n', chit_id: PARTY, line_id: PARTY, seq: 2, state: 'doing', particulars: 'Ponni 24 kg', quantity: '10', unit: 'kg', removed: false, comment: 'c', asked_as: 'usual rice', raw_phrase: 'the usual rice', needs_human: true, delivered: '4', chit_status: 'pending', manual_subject: 'Rice', auto_subject: 'Order', sender_entity_display_name: 'Asha Traders' };
 const WORK_BARE = { assignee_actor_id: null, assignee_name: null, assignee_type: null, task: null, due_date: null, note: null, chit_id: PARTY, line_id: '33333333-3333-4333-8333-333333333333', seq: 0, state: 'open', particulars: 'Dal', quantity: null, unit: null, removed: false, comment: null, asked_as: null, raw_phrase: null, needs_human: false, delivered: null, chit_status: null, manual_subject: null, auto_subject: null, sender_entity_display_name: null };
+/** a system folder as lib/folder-views systemFolders builds it */
+const SYSTEM_ROW = (extra) => Object.assign({ folder_id: PARTY, parent_id: null, name: 'Bills', code: 'B-2100', kind: 'view', system: true, scope: null, side: 'received', ledger: null, sort: 0, count: 0, total: 0 }, extra);
 const withChits = (rows) => ({ select: { rows: async () => rows } });
 const FOLDER_LIST = /ORDER BY f\.parent_id NULLS FIRST/;
 const FOLDER_PAIR = answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur' }, { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'Late' }]);
 const FOLDER_ONE = answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur' }]);
 const READY = [
   X('folders-ready', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: withChits(CHITS) }),
+  /* lib/folder-inventory ledgerOf answers { code, name, role }, { code, name, group } (a group of the chart, e.g. E-6000) or null: all three are seen */
+  X('folders-ledger-role-group-null', 'GET ' + F, 200, { patch: { views: { systemFolders: async () => [SYSTEM_ROW({ ledger: { code: '2100', name: 'Suppliers', role: 'creditors' } }), SYSTEM_ROW({ code: 'E-6000', ledger: { code: '6000', name: 'Expenses', group: 'expenses' } }), SYSTEM_ROW({ code: 'R-1', ledger: null })] } } }),
   X('folders-view-count-fails', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: { views: { members: async () => { throw new Error(SECRET_SQL); } } } }),
   X('folders-past-the-cap', 'GET ' + F, 200, { url: F + '?limit=9999&page=2', setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED]) } }),
   X('rules-ready', 'GET ' + F + '/rules', 200, { setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY]) } }),

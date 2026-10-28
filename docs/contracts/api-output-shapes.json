@@ -897,11 +897,13 @@
          ]
         },
         "ledger": {
-         "type": "object",
+         "type": [
+          "object",
+          "null"
+         ],
          "required": [
           "code",
-          "name",
-          "role"
+          "name"
          ],
          "properties": {
           "code": {
@@ -911,6 +913,9 @@
            "type": "string"
           },
           "role": {
+           "type": "string"
+          },
+          "group": {
            "type": "string"
           },
           "folder_id": {},
@@ -958,7 +963,7 @@
     },
     "additionalProperties": false
    },
-   "observed": 8,
+   "observed": 9,
    "open": [],
    "example": {
     "url": "/api/folders"
