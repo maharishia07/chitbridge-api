@@ -247,6 +247,7 @@ const GUARDS = [
   /* ⭐⭐ CTP QUERY — the READ verb (Athi: catalogue PULL, by store id, same as local). A signed question,
      refused when stale/tampered/unpaired, answered with the SAME public view an anonymous visitor gets. */
   'ctp-query.test.cjs',
+  'ctp-keys.test.cjs', // RAIL-141 (g): verifyWith takes Ed25519 only, one spelling of a signature, a bad peer key said once at warn
   /* ⭐⭐⭐ THE LEDGER (SPEC-books-v2, 2026-09-29). books-writer: ONE writer of the journal tables (postEntry), insert-only by
      trigger + grant, the chit never waits on it, FORCE RLS on all 13. The rest need the books engines v1.8.0 for their "on"
      half (BOOKS_ENGINES_SRC, else a v1.8.0 sibling) and say SKIP with the reason without them — never a silent pass. */
