@@ -410,7 +410,7 @@ router.post(
          as "Send failed" (lib/knownerr, external review §23) */
       const _known = require('../lib/knownerr').known(err);
       if (_known) return problem(req, res, { status: _known.status, ...said(_known.body, codeOfStatus(_known.status)) });
-      console.error('Send chit error:', err.message);
+      cbLog.error('chits/send failed', { id: req.id, err: err.message });
       problem(req, res, failed(err, req, 'Send failed'));
     }
   }
@@ -2331,7 +2331,7 @@ async function sendCustomers(st, req, res) {
           }
         });
       } catch (e) {
-        console.log('customer auto-add skipped:', e.message);
+        cbLog.fellBack('chits send: the customer was not added to the party list — the chit is sent without it', e);
       }
     }
   /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
@@ -2352,7 +2352,7 @@ async function sendCustomers(st, req, res) {
           )
         );
       } catch (e) {
-        console.log('seller customer auto-add skipped:', e.message);
+        cbLog.fellBack('chits send: the seller was not added to the party list — the chit is sent without it', e);
       }
     }
 }
@@ -2369,7 +2369,7 @@ async function sendAssign(st, req, res) {
       try {
         await autoAssignReceived(receiver.entity_id, chit_id);
       } catch (e) {
-        console.log('auto-assign skipped:', e.message);
+        cbLog.fellBack('chits send: the chit was not auto-assigned — it is sent unassigned', e);
       }
     }
 }
