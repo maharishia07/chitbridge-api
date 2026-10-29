@@ -24,6 +24,8 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* R2-4: the area tests' own evidence file, one writer per file */
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const MOUNT = '/api/till';
 const ROUTE_FILE = 'routes/till.js'; /* named in full so the graph links this test to the route file */
@@ -117,6 +119,17 @@ const PROGRAMME = ['lib/reward-store.js', 'programme', async () => ({ name: 'Poi
 const OFFER_ROW = (kind, status) => (sql) =>
   /FROM definition d/.test(sql) ? { rows: [{ definition_id: ITEM, name: 'Spring', current_version: 1, status, kind, rules: {} }], rowCount: 1 } : undefined;
 const PARTY = (country) => ['lib/profile.js', 'invoiceParty', async () => ({ country })];
+/* F5 A1 · the rate door's worlds: a shop's registration row (regular charges, composition does not), and a shelf holding one slab but no product */
+const SLAB = '00000000-0000-4000-8000-0000000001d1'; /* a slab's definition id (the generated hardening case plays this recorded request: tools/api-contract-tests PATH_ID) */
+const RATE_BODY = { item_id: ITEM, slab_id: SLAB };
+const RATE_SHOP = (registration) => (sql) =>
+  /FROM identities WHERE identity_id = \$1/.test(sql) ? { rows: [{ gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: registration } }], rowCount: 1 } : undefined;
+const RATE_SHELF = (sql) =>
+  RATE_SHOP('regular')(sql) || (/FROM definition d/.test(sql) ? { rows: [{ definition_id: SLAB, kind: 'tax', name: 'GST 5%', current_version: 1, status: 'live', rules: { rate: 5 } }], rowCount: 1 } : undefined);
+/* …and the product itself, unrated, so the door reaches its 200 (the success answer the output allow-list is derived from) */
+const RATE_ITEM = (sql) =>
+  RATE_SHELF(sql) ||
+  (/SELECT item_data FROM catalogue_items/.test(sql) ? { rows: [{ item_data: { name: 'Poori', price: 40 } }], rowCount: 1 } : /^\s*UPDATE catalogue_items/.test(sql) ? { rows: [{ item_id: ITEM }], rowCount: 1 } : undefined);
 /** the extras: an answer the generic worlds cannot reach (a named refusal inside a handler, a fault behind a body the handler accepts) */
 const EXTRAS = [
   X('snapshot-breaks', 'GET /api/till/snapshot', 500, { patch: [['lib/profile.js', 'countryOf', THROWS]] }),
@@ -154,6 +167,11 @@ const EXTRAS = [
   X('offer-item-write-breaks', 'POST /api/till/offer-item', 500, { setup: { db: 'fail' }, body: { offer_id: ITEM, item_id: ITEM, on: true } }),
   X('price-no-item', 'POST /api/till/price', 400, { body: {} }),
   X('price-not-a-number', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: -1 } }),
+  /* CTR-168: no number at all is refused in PATCH /products' words, never read as 0 or 1 */
+  X('price-null', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: null }, said: 'Price is required' }),
+  X('price-blank', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: '' }, said: 'Price is required' }),
+  X('price-empty-list', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: [] }, said: 'Price is required' }),
+  X('price-true', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: true }, said: 'Price must be a number' }),
   X('price-cost-blind', 'POST /api/till/price', 403, {
     body: { item_id: ITEM, price: 5 },
     patch: [['lib/cost.js', 'writeRefusal', async () => ({ error: 'Not permitted', code: 'COST_BLIND', blocked: ['price'], message: 'Your access does not include cost or price.' })]]
@@ -161,6 +179,15 @@ const EXTRAS = [
   X('price-no-money', 'POST /api/till/price', 422, { body: { item_id: ITEM, price: 5 } }),
   X('price-item-not-there', 'POST /api/till/price', 404, { body: { item_id: ITEM, price: 5 }, setup: { sqlRows: SHOP_ROW } }),
   X('price-write-breaks', 'POST /api/till/price', 500, { body: { item_id: ITEM, price: 5 }, setup: { db: 'fail', sqlRows: SHOP_ROW } }),
+  /* F5 A1 · POST /rate: the door (a key, a cashier) with a full body, since the strict schema answers an empty one first; the shop that charges none; the slab and the product not there; the write breaking */
+  X('rate-key-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { key: ['till'] } }),
+  X('rate-cashier-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { who: STAFF } }),
+  X('rate-unknown-key-in-body', 'POST /api/till/rate', 400, { body: Object.assign({ colour: 'red' }, RATE_BODY) }),
+  X('rate-shop-charges-none', 'POST /api/till/rate', 409, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('composition') } }),
+  X('rate-slab-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('regular') } }),
+  X('rate-item-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHELF } }),
+  X('rate-write-breaks', 'POST /api/till/rate', 500, { body: RATE_BODY, setup: { db: 'fail', sqlRows: RATE_SHELF } }),
+  X('rate-set', 'POST /api/till/rate', 200, { body: RATE_BODY, setup: { sqlRows: RATE_ITEM } }),
   X('alias-no-words', 'POST /api/till/alias', 400, { body: { item_id: ITEM } }),
   X('alias-too-long', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'x'.repeat(121) } }),
   X('alias-bad-factor', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'SUNFL OIL', factor: -2 } }),
@@ -239,6 +266,19 @@ const EXTRAS = [
   X('catalogue-write-breaks', 'POST /api/till/catalogue', 500, { body: { blueprint: 'veg' }, patch: [['lib/catalogue-write.js', 'writeItems', throwsLater]] }),
   X('summary-trend-bad-period', 'GET /api/till/summary', 400, { url: '/api/till/summary?compare=1&period=decade' }),
   X('summary-trend-no-country', 'GET /api/till/summary', 422, { url: '/api/till/summary?compare=1&period=week' }),
+  /* API-8 (till): the READY side of the reads whose stand-in answer is the not-ready or the empty one; the output schema is learned from both branches of each handler */
+  X('summary-trend-ready', 'GET /api/till/summary', 200, { url: '/api/till/summary?compare=1&period=week', patch: [['lib/till-summary.js', 'trend', async () => ({ status: 200, body: { period: 'week', n: 12, currency: 'INR', fy_start_month: 4, slots: [] } })]] }),
+  X('bills-over-the-cap', 'GET /api/till/bills', 200, { url: '/api/till/bills?limit=100000' }),
+  X('match-no-orders', 'GET /api/till/match', 200, {}),
+  X('match-one-head', 'GET /api/till/match', 200, { patch: [['lib/select.js', 'rows', async () => [{ chit_id: ITEM, created_at: '2026-10-01T00:00:00Z', counterparty_id: null }]]] }),
+  X('stock-detail-not-switched-on', 'GET /api/till/stock', 200, { url: '/api/till/stock?detail=1', patch: [['lib/schema.js', 'hasTable', async () => false]] }),
+  X('stock-detail-ready', 'GET /api/till/stock', 200, { url: '/api/till/stock?detail=1', patch: [['lib/schema.js', 'hasTable', async () => true], ['lib/stock-store.js', 'onHand', async () => ({})]] }),
+  X('stock-plain', 'GET /api/till/stock', 200, { patch: [['lib/stock-store.js', 'onHand', async () => ({})]] }),
+  X('hidden-for-a-counter', 'GET /api/till/quick-keys/hidden', 200, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
+  X('screen-config-for-a-counter', 'GET /api/till/quick-keys/screen-config', 200, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
+  X('snapshot-for-a-tv', 'GET /api/till/snapshot', 200, { setup: { key: ['screen'] } }),
+  X('snapshot-delta', 'GET /api/till/snapshot', 200, { url: '/api/till/snapshot?since=2026-10-01T00:00:00Z' }),
+  X('snapshot-counter-key', 'GET /api/till/snapshot', 200, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
   X('engine-file-unreadable', 'GET /api/till/engine/:name', 500, { patch: [['fs', 'readFileSync', null]] })
 ];
 
@@ -301,7 +341,8 @@ async function checkRoutes(port, scenarios, recording) {
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
+    /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer (R2-13) */
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, request: { url: scenario.url, body: scenario.body } };
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (capturing) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
@@ -316,8 +357,42 @@ async function checkRoutes(port, scenarios, recording) {
     if (answer.json && answer.json.code) check(label + ': its code ' + answer.json.code + ' is registered with a shopkeeper sentence', registered.has(answer.json.code), answer.json.code);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/party_secret|SELECT|vault|relation/.test(answer.text), answer.text);
     else kit.checkLegacy(check, label, answer, kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id));
+    if (scenario.said) check(label + ': ' + scenario.expect + ' "' + scenario.said + '"', answer.status === scenario.expect && answer.json && answer.json.message === scenario.said, answer.json);
   }
   return tested;
+}
+
+/**
+ * API-3 output allow-list (S34), the way tests/api-problem-storefront.test.cjs proves it: a route whose 200 schema is CLOSED (additionalProperties false) and whose
+ * recorded 200 fits that schema is proved here, in the counter's own world — the generator's proxy world cannot seat a slab on the shelf, so POST /rate never
+ * reaches its 200 there. → { route: { output_allowlist: true } } for the routes that held (today: POST /api/till/rate, scenario rate-set)
+ */
+/*
+ * API-8 (till): the same proof for every counter route whose 200 schema is CLOSED (derived in docs/contracts/api-output-shapes.json): EVERY recorded 200 of the route fits that schema
+ * and loses no key to the allow-list (lib/output-allowlist prune). The schema is learned from the not-ready AND the ready side of each handler, so the scenarios above carry both.
+ */
+function checkAllowList(recording) {
+  const proved = {};
+  const words = require(path.join(HERE, CONTRACT_FILE));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const routes = [...new Set(Object.values(recording).filter((one) => one.status === 200 && one.body && MINE(one.route)).map((one) => one.route))].sort();
+  routes.forEach((route) => {
+    const operation = words.operationFor(route.replace(' ' + MOUNT, ' '));
+    const schema = (((operation && operation.responses[200] && operation.responses[200].content) || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = engine.compile(schema);
+    const held = answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the counter routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
 }
 
 /** the words of the contract as units: each helper answers the spec the routes spread into problem() */
@@ -365,6 +440,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkWords();
+  const proved = checkAllowList(recording);
   const coverage = Object.fromEntries(
     Object.keys(tested)
       .sort()
@@ -390,7 +466,18 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
         1
       ) + '\n'
     );
+    const evidence = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+    Object.keys(evidence.routes || {}).filter(MINE).forEach((route) => {
+      delete evidence.routes[route].output_allowlist;
+      if (!Object.keys(evidence.routes[route]).length) delete evidence.routes[route];
+    });
+    fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(evidence, null, 1) + '\n');
+    FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the counter routes whose 200 held closed here', kit.sameValue(allowListEvidenceOnDisk(), proved), {
+      onDisk: allowListEvidenceOnDisk(),
+      proved
+    });
     const mine = Object.fromEntries(
       Object.keys(onDisk)
         .filter(MINE)

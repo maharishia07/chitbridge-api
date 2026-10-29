@@ -130,6 +130,30 @@
     400
    ]
   },
+  "DELETE /api/quick-keys/groups/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "DELETE /api/quick-keys/groups/:id/items/:productId": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "DELETE /api/schemas/fields/:field_key": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/actors/:id/tasks": {
    "cases": 3,
    "failed": 0,
@@ -722,6 +746,30 @@
     422
    ]
   },
+  "GET /api/forms/:key": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/forms/instances/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/forms/instances/all": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/governance/boilerplate/:key": {
    "cases": 3,
    "failed": 0,
@@ -1284,6 +1332,46 @@
   },
   "PATCH /api/products/:id": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/quick-keys/groups/:id/items": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/schemas/fields/:field_key": {
+   "cases": 9,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/schemas/fields/order": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/schemas/visibility": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2211,7 +2299,7 @@
    ]
   },
   "POST /api/folders/move": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2220,6 +2308,38 @@
   },
   "POST /api/folders/rules/preview": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/forms/:key/issue": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/forms/:key/resolve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/forms/instances/:id/sign": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2562,6 +2682,22 @@
     400
    ]
   },
+  "POST /api/quick-keys/groups": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/repeat": {
    "cases": 2,
    "failed": 0,
@@ -2656,6 +2792,30 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/schemas/create-default": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/simulator/feedback": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/simulator/lead": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/tax/compute": {
@@ -2892,6 +3052,14 @@
   },
   "POST /api/till/quick-keys/unhide": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/till/rate": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3212,6 +3380,14 @@
   },
   "PUT /api/products/:id/status": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

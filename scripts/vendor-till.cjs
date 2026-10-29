@@ -7,6 +7,13 @@
  *
  * Run:  node scripts/vendor-till.cjs          (write)
  *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale — what tests/till-vendor.test.js uses)
+ *
+ * OWNS      the one direction of every counter copy: the kit's till.html and promo.html → web public/, the manifest, the icon and the
+ *           service worker's shelf (KEEP + SHELF); web app/signin-ui.js → the kit; lib/their-bill.js → web and kit; qrcode → engine/qr.js;
+ *           engine/versions.json read off the adopted engines.
+ * CALLED BY tests/till-vendor.test.js (--check, the CI guard) and the release step after every till master change (CB_WEB_DIR=<web twin>).
+ * FLOW      COPIES() ──▶ each [master, copy] written or compared ──▶ MANIFEST · ICON · SW · VERSIONS() ──▶ exit 1 on any stale copy
+ * CARD      09-counter/README
  */
 'use strict';
 const fs = require('fs'),
@@ -67,9 +74,11 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
    drops the old shelf, nothing else: the worker holds no bill, no setting and no store, so a bump can never clear history */
 /* ⭐ /app/signin-ui.js is on the shelf (2026-10-08): the till mounts CBSignin, and a counter PIN with the line down is a sign-in */
 /* ⭐ FX-F10W2: /app/their-bill.js is on the shelf ('cb-till-v6') — the Receive form checks their bill with the line down */
+/* ⭐ F5 W1a: /app/tax-slab-ui.js is on the shelf ('cb-till-v7') — the ask-once rate menu the page loads on its boot path; without it the
+   counter still bills, and the sheet says to set the rate in the catalogue */
 /* ⭐ HX1: /config.js is on the shelf — the page reads its api from it (window.CB_API), and an offline start must still know it */
-const SW = `${GEN}const SHELF = 'cb-till-v6';
-const KEEP = ['/till.html', '/promo.html', '/config.js', '/app/signin-ui.js', '/app/their-bill.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
+const SW = `${GEN}const SHELF = 'cb-till-v7';
+const KEEP = ['/till.html', '/promo.html', '/config.js', '/app/signin-ui.js', '/app/their-bill.js', '/app/tax-slab-ui.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {

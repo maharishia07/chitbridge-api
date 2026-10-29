@@ -39,6 +39,8 @@ function extras(tools) {
   const containerRow = (owner) => answering(/FROM product_container/, [{ container_id: 'a/b', owner_entity_id: owner, source_key: 's', name: 'N', current_version: 1 }]);
   const versionRow = answering(/FROM product_version/, [{ container_id: 'a/b', version: 1, content: { a: 1 }, schema: {}, schema_version: null, minted_at: '2026-10-01T00:00:00.000Z' }]);
   const adoption = answering(/FROM catalogue_adoption/, [{ source_key: KNOWN_SOURCE, version: 'v1', commercials: {}, visible: true, updated_at: '2026-10-01T00:00:00.000Z' }]);
+  /** n adoption rows as the catalogue-mine statement selects them (catalogue_adoption: every column NOT NULL in migrations/000_baseline_2026-10-21.sql), every other one hidden */
+  const adoptions = (n) => answering(/FROM catalogue_adoption/, Array.from({ length: n }, (_, i) => ({ source_key: KNOWN_SOURCE, version: i % 2 ? 'v2' : 'v1', commercials: i % 2 ? { mrp: 10 } : {}, visible: i % 2 === 0, updated_at: '2026-10-01T00:00:00.000Z' })));
   const helpDesk = answering(/schema_name = 'Assistant Q&A'/, [{ '?column?': 1 }]);
   const fixedClock = { clock: { now: () => 1760000000000 }, dice: { random: () => 0.5 } };
 
@@ -89,6 +91,8 @@ function extras(tools) {
     X('mine-listed', 'GET ' + at('/catalogue-mine'), 200, {}),
     X('mine-with-a-catalogue', 'GET ' + at('/catalogue-mine'), 200, { setup: { sqlRows: adoption } }),
     X('mine-a-page', 'GET ' + at('/catalogue-mine'), 200, { url: at('/catalogue-mine?limit=1'), setup: { sqlRows: adoption } }),
+    /* S34: past the route's cap (200 a page) the pager adds capped and cap_note; a hidden adoption is listed with visible false */
+    X('mine-past-the-cap', 'GET ' + at('/catalogue-mine'), 200, { url: at('/catalogue-mine?limit=500'), setup: { sqlRows: adoptions(201) } }),
     X('mine-store-missing', 'GET ' + at('/catalogue-mine'), 503, { setup: failing, throws: true }),
     X('mine-fault', 'GET ' + at('/catalogue-mine'), 500, { setup: { sqlRows: adoption }, throws: true, patch: { catalogueBuild: { resolve: boomLater } } })
   ];
@@ -124,6 +128,11 @@ function extras(tools) {
     X('handoffs-store-missing', 'GET ' + at('/erp-handoffs'), 503, { setup: failing, throws: true }),
     X('handoffs-fault', 'GET ' + at('/erp-handoffs'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('regions-listed', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'AU', currency: 'AUD', units: 'metric', language: 'en', jurisdiction: 'AU' }]) } }),
+    /* S34: region_layer as the baseline declares it: jurisdiction is jsonb NOT NULL (an object), currency, units and language may be NULL */
+    X('regions-every-column', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'IN', currency: 'INR', units: 'metric', language: 'en', jurisdiction: { tax: 'GST', country: 'IN' } }]) } }),
+    /* jsonb holds any JSON value and region_layer has no CHECK on it: a list is a jurisdiction the column may hold, so no key inside it is closed */
+    X('regions-jurisdiction-a-list', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'EU', currency: 'EUR', units: 'metric', language: null, jurisdiction: ['DE', 'FR'] }]) } }),
+    X('regions-nullable-null', 'GET ' + at('/regions'), 200, { setup: { sqlRows: answering(/FROM region_layer/, [{ region_code: 'XX', currency: null, units: null, language: null, jurisdiction: {} }]) } }),
     X('regions-unread', 'GET ' + at('/regions'), 200, { setup: failing, throws: true }),
     X('regions-fault', 'GET ' + at('/regions'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('resolve-needs-a-region', 'GET ' + at('/resolve'), 400, { url: at('/resolve?container=a%2Fb') }),
@@ -132,6 +141,8 @@ function extras(tools) {
     X('resolve-fault', 'GET ' + at('/resolve'), 500, { url: at('/resolve?container=a%2Fb&region=AU'), throws: true, patch: { regional: { resolveRegional: boomLater } } }),
     X('penetration-none', 'GET ' + at('/penetration'), 200, {}),
     X('penetration-counted', 'GET ' + at('/penetration'), 200, { setup: { sqlRows: answering(/FROM source_penetration/, [{ source_key: 's', locality: 'Pune', orders: 3, distributors: 1 }]) } }),
+    /* S34: two sources over two localities (source_penetration: source_key NOT NULL, locality filtered to non-empty, the counts are count(*)::int) */
+    X('penetration-two-localities', 'GET ' + at('/penetration'), 200, { setup: { sqlRows: answering(/FROM source_penetration/, [{ source_key: 's', locality: 'Pune', orders: 3, distributors: 1 }, { source_key: 't', locality: 'Nashik', orders: 1, distributors: 0 }]) } }),
     X('penetration-store-missing', 'GET ' + at('/penetration'), 503, { setup: failing, throws: true }),
     X('penetration-fault', 'GET ' + at('/penetration'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('questions-listed', 'GET ' + at('/questions'), 200, { setup: { sqlRows: answering(/FROM assist_qa/, [{ id: '1', q: 'x?', a: 'y.', topics: [], context: ['*'], fit: null, media: null }]) } }),
