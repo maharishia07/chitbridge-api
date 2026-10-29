@@ -543,10 +543,10 @@
   },
   {
    "code": "CAPABILITY_OFF",
-   "status": "varies",
+   "status": "403",
    "title": "Capability off",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This shop has switched its connector capability off, so devices and connectors are refused.",
+   "hint": "Turn the connector capability back on to resume.",
    "owner_area": "connectors",
    "since": "2026-10-22"
   },
@@ -716,8 +716,8 @@
    "code": "CHIT_NOT_DELIVERED",
    "status": "503",
    "title": "Chit not delivered",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "The reading arrived but its chit could not be delivered.",
+   "hint": "The device keeps the event and sends it again.",
    "owner_area": "connectors",
    "since": "2026-10-22"
   },
@@ -893,12 +893,75 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CONNECTOR_DEVICE_OFF",
+   "status": "409",
+   "title": "Connection switched off",
+   "shopkeeper": "This device connection is switched off.",
+   "hint": "Switch it on in the connector’s list.",
+   "owner_area": "connectors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTOR_HAS_DEVICES",
+   "status": "409",
+   "title": "Connector has devices",
+   "shopkeeper": "This connector still has devices attached.",
+   "hint": "Remove its devices first, then delete it.",
+   "owner_area": "connectors",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CONNECTOR_HAS_NO_KEY",
    "status": "400",
    "title": "Connector has no key",
    "shopkeeper": "This connector was set up without a key, so there is nothing to approve.",
    "hint": "Download the kit again while signed in as the owner.",
    "owner_area": "integrations",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTOR_IN_USE",
+   "status": "409",
+   "title": "Connector in use",
+   "shopkeeper": "This connector has raised records, so it cannot be deleted.",
+   "hint": "Switch its devices off instead.",
+   "owner_area": "connectors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTOR_KEY_ADMIN_ONLY",
+   "status": "403",
+   "title": "Key reissue not allowed",
+   "shopkeeper": "Only the business admin or a manager can reissue a device key.",
+   "hint": "Ask the admin or a manager to do it.",
+   "owner_area": "connectors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTOR_NAME_MISMATCH",
+   "status": "400",
+   "title": "Gateway name does not match",
+   "shopkeeper": "The gateway name you typed does not match.",
+   "hint": "Type the name exactly as it is shown.",
+   "owner_area": "connectors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTOR_NO_EMAIL",
+   "status": "400",
+   "title": "No email to send to",
+   "shopkeeper": "The business has no email address to send the code to.",
+   "hint": "Add an email address in Settings, then ask again.",
+   "owner_area": "connectors",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CONNECTOR_WRONG_TYPE",
+   "status": "409",
+   "title": "Wrong kind of connector",
+   "shopkeeper": "This door is only for ERP connectors.",
+   "hint": "Devices send their readings to the device door.",
+   "owner_area": "connectors",
    "since": "2026-10-23"
   },
   {
@@ -1308,10 +1371,10 @@
   },
   {
    "code": "DEVICE_TO_REFUSED",
-   "status": "varies",
-   "title": "Device to refused",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "status": "403",
+   "title": "Device may not send there",
+   "shopkeeper": "A device can send only to its own shop and the shop’s own customers or suppliers.",
+   "hint": "Send to one of those, or leave the recipient out.",
    "owner_area": "connectors",
    "since": "2026-10-22"
   },
@@ -2002,9 +2065,9 @@
   {
    "code": "KEY_UNKNOWN",
    "status": "401",
-   "title": "Key unknown",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Key not recognised",
+   "shopkeeper": "This key is not recognised, or its connector is inactive.",
+   "hint": "Check the key, or issue a new one from the connector.",
    "owner_area": "connectors",
    "since": "2026-10-22"
   },
@@ -2488,9 +2551,9 @@
   {
    "code": "NO_KEY",
    "status": "401",
-   "title": "No key",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "No key sent",
+   "shopkeeper": "No key was sent.",
+   "hint": "Send the connector key in the X-Bridge-Key header.",
    "owner_area": "connectors",
    "since": "2026-10-22"
   },

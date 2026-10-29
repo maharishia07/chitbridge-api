@@ -1,4 +1,7 @@
-// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1),
+// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1).   CARD 28-platform-and-operations/connectors-routes
+// OWNS the 14 connector routes (/api/connectors): make one · its connections · its key · health · and the two doors a device and an ERP agent call with their own key. CALLED BY server.js (app.use('/api/connectors')).
+// FLOW  owner routes: auth → requireConnector (the shop's switch) → chains + validateAsProblem → checked(route) → handler → res.json | problem(req, res, { status, ...words.x() } | failed(err, req, label)).
+//       device doors (/ingest, /erp-ingest): chains → checked(route) → deviceKey (the ActorKey + the switch) → handler. The words and the contract are lib/connectors-contract.js.
 // CALLED BY lib/connector-rows.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 // holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref),
 // owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and
@@ -18,7 +21,9 @@ const { safeErr } = require('../lib/respond');
 const storage = require('../lib/storage');
 const { resolveWorkPattern } = require('../lib/workpattern'); // the resolution seam — resolve-before-act
 const { body, param } = require('express-validator');
-const { validate, sanitise } = require('../middleware/validate');
+const { validateAsProblem, sanitise } = require('../middleware/validate');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { words, failed, ingestRefusal, checked, VALIDATION_WORDS: WORDS } = require('../lib/connectors-contract'); // API-4: the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
 const { sendOtpEmail, sendEmail } = require('../lib/notify');
@@ -77,21 +82,15 @@ const ownerEntityId = (req) => auth.entityOf(req);
 function hasConnector(caps) {
   return Array.isArray(caps) && caps.indexOf('connector') >= 0;
 }
-const CAPABILITY_OFF = {
-  error: 'Capability off',
-  code: 'CAPABILITY_OFF',
-  message: 'This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume.'
-};
-
 // capability gate — the entity must carry 'connector' (API-enforced, not just UI)
 async function requireConnector(req, res, next) {
   try {
     const eid = ownerEntityId(req);
     const r = await db('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
     if (hasConnector(r.rows[0] && r.rows[0].capabilities)) return next();
-    return res.status(403).json(CAPABILITY_OFF);
+    return problem(req, res, { status: 403, ...words.capabilityOff() });
   } catch (err) {
-    return res.status(500).json({ error: 'Gate check failed', message: safeErr(err) });
+    return problem(req, res, failed(err, req, 'Gate check failed'));
   }
 }
 
@@ -102,7 +101,7 @@ async function requireConnector(req, res, next) {
 async function deviceActor(req, res) {
   const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
   if (!key) {
-    res.status(401).json({ error: 'No key', code: 'NO_KEY', message: 'Send the ActorKey in the X-Bridge-Key header.' });
+    problem(req, res, { status: 401, ...words.noKey() });
     return null;
   }
   const ar = await db(
@@ -113,29 +112,44 @@ async function deviceActor(req, res) {
   );
   const actor = ar.rows[0];
   if (!actor || actor.status !== 'active') {
-    res.status(401).json({ error: 'Bad key', code: 'KEY_UNKNOWN', message: 'ActorKey not recognised, or the connector is inactive.' });
+    problem(req, res, { status: 401, ...words.badKey() });
     return null;
   }
   if (!hasConnector(actor.shop_capabilities)) {
-    res.status(403).json(CAPABILITY_OFF);
+    problem(req, res, { status: 403, ...words.capabilityOff() });
     return null;
   }
   return actor;
 }
 
 /**
+ * The gate of the two device doors (POST /ingest, POST /erp-ingest): the key is proved after the body is checked and before the handler runs, as the handler always did first. It answers its own
+ * refusals (deviceActor: 401, 403) and leaves the actor on req.device; a fault is the door's own 500, worded with the door's label.
+ */
+const deviceKey = (label) =>
+  Object.assign(
+    async (req, res, next) => {
+      try {
+        const actor = await deviceActor(req, res);
+        if (!actor) return undefined;
+        req.device = actor;
+        return next();
+      } catch (err) {
+        return problem(req, res, failed(err, req, label));
+      }
+    },
+    { addsStatuses: [401, 403] }
+  );
+
+/**
  * ⭐ SEC3 · WHOM A DEVICE MAY ADDRESS — its own shop, and that shop's own parties (on its customer OR supplier list) who can receive
  * a chit (lib/local-identity mayTradeSql: on the rail, same sandbox). The till key's rule (routes/chits.js tillMaySend), widened to
  * suppliers; a person's send has no such list. One statement; the second look runs only on a refusal, to say WHICH rule failed.
- * → null (may) | { code: 'DEVICE_TO_REFUSED', message }
+ * → null (may) | the spec of the 403 DEVICE_TO_REFUSED refusal (lib/connectors-contract words.deviceRefused: { code, detail, legacy })
  */
 async function deviceMayAddress(entity_id, cc) {
   if (!cc || String(cc) === String(entity_id)) return null;
-  const no = (why) => ({
-    error: 'Forbidden',
-    code: 'DEVICE_TO_REFUSED',
-    message: 'Not sent: ' + why + '. A device sends only to its own shop and the shop\u2019s own customers or suppliers.'
-  });
+  const no = (reason) => words.deviceRefused(reason);
   if (!/^[0-9a-f-]{36}$/i.test(String(cc))) return no('the recipient is not a ChitBridge id');
   const r = await withEntity(entity_id, (c) =>
     c.query(
@@ -171,12 +185,13 @@ router.post(
   auth,
   requireConnector,
   [
-    body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
-    body('type').isIn(['iot', 'erp']).withMessage('type must be iot or erp'),
+    body('display_name').trim().isLength({ min: 2 }).withMessage(WORDS.name),
+    body('type').isIn(['iot', 'erp']).withMessage(WORDS.type),
     body('site').optional().trim(),
     body('config').optional().isObject()
   ],
-  validate,
+  validateAsProblem,
+  ...checked('POST /'),
   async (req, res) => {
     try {
       const entity_id = ownerEntityId(req);
@@ -228,7 +243,7 @@ router.post(
         provision_key
       }); // shown ONCE
     } catch (err) {
-      res.status(500).json({ error: 'Create failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Create failed'));
     }
   }
 );
@@ -519,11 +534,12 @@ router.post(
     body('unit').optional().trim().isLength({ max: 16 }),
     body('device_id').optional().trim().isLength({ max: 64 })
   ],
-  validate,
+  validateAsProblem,
+  ...checked('POST /ingest'),
+  deviceKey('Ingest failed') /* SEC3: key + the shop's connector switch, one statement (deviceActor) */,
   async (req, res) => {
     try {
-      const actor = await deviceActor(req, res); /* SEC3: key + the shop's connector switch, one statement */
-      if (!actor) return;
+      const actor = req.device;
 
       const entity_id = actor.parent_entity_id;
       const bridge_id = req.body.bridge_id ? String(req.body.bridge_id).trim() : null;
@@ -533,8 +549,8 @@ router.post(
       if (bridge_id) {
         const cr = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
         conn = cr.rows[0] || null;
-        if (!conn) return res.status(404).json({ error: 'Unknown device', message: 'No connection with that bridge_id under this connector.' });
-        if (conn.enabled === false) return res.status(409).json({ error: 'Disabled', message: 'This connection is disabled.' });
+        if (!conn) return problem(req, res, { status: 404, ...words.unknownDevice() });
+        if (conn.enabled === false) return problem(req, res, { status: 409, ...words.deviceOff() });
       }
 
       // (2) HEARTBEAT — health goes live for the Pi (and this device). Saved independently of the chit emit below.
@@ -562,7 +578,7 @@ router.post(
       /* ⚠️ SEC3: `to` (or the configured counterparty) must be the shop or one of its own parties — before anything is minted */
       if (!req.body.heartbeat_only) {
         const refused = await deviceMayAddress(entity_id, cc);
-        if (refused) return res.status(403).json(refused);
+        if (refused) return problem(req, res, { status: 403, ...refused });
       }
       if (req.body.heartbeat_only) {
         note = 'Heartbeat only — health refreshed, no chit raised.';
@@ -621,13 +637,8 @@ router.post(
             why: String(e && e.message).slice(0, 200)
           });
           const k = require('../lib/knownerr').known(e);
-          if (k) return res.status(k.status).json(Object.assign({ health: 'live' }, k.body));
-          return res.status(503).json({
-            error: 'Not delivered',
-            code: 'CHIT_NOT_DELIVERED',
-            health: 'live',
-            message: 'Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again.'
-          });
+          if (k) return problem(req, res, ingestRefusal(k));
+          return problem(req, res, { status: 503, ...words.chitNotDelivered() });
         }
       }
       res.json({
@@ -644,7 +655,7 @@ router.post(
         money_why
       });
     } catch (err) {
-      res.status(500).json({ error: 'Ingest failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Ingest failed'));
     }
   }
 );
@@ -659,17 +670,17 @@ router.post(
   [
     body('payload')
       .custom((v) => v !== undefined && v !== null && typeof v === 'object')
-      .withMessage('payload (JSON object) required'),
+      .withMessage(WORDS.payload),
     body('doc_type').optional().trim().isLength({ max: 64 }),
     body('doc_ref').optional().trim().isLength({ max: 120 })
   ],
-  validate,
+  validateAsProblem,
+  ...checked('POST /erp-ingest'),
+  deviceKey('ERP ingest failed') /* SEC3: key + the shop's connector switch, one statement (deviceActor) */,
   async (req, res) => {
     try {
-      const actor = await deviceActor(req, res); /* SEC3: key + the shop's connector switch, one statement */
-      if (!actor) return;
-      if (actor.connector_type !== 'erp')
-        return res.status(409).json({ error: 'Wrong type', message: 'This endpoint is for ERP connectors. IoT devices use /ingest.' });
+      const actor = req.device;
+      if (actor.connector_type !== 'erp') return problem(req, res, { status: 409, ...words.wrongType() });
 
       const entity_id = actor.parent_entity_id;
       const cfg = actor.connector_config || {};
@@ -681,7 +692,7 @@ router.post(
       const doc_ref = req.body.doc_ref ? String(req.body.doc_ref).trim() : req.body.payload.doc_ref ? String(req.body.payload.doc_ref).slice(0, 120) : null;
       const cc = req.body.to ? String(req.body.to).trim() : cfg.counterparty_entity_id || null;
       const refused = await deviceMayAddress(entity_id, cc); /* SEC3: the shop or its own parties, nobody else */
-      if (refused) return res.status(403).json(refused);
+      if (refused) return problem(req, res, { status: 403, ...refused });
 
       // Heartbeat — health goes live for the ERP connector (independent of processing below).
       await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
@@ -689,20 +700,20 @@ router.post(
       const out = await processErpDocument({ actor, entity_id, cfg, payload: req.body.payload, doc_type, doc_ref, cc });
       res.json({ message: out.idempotent ? 'duplicate' : 'received', ...out });
     } catch (err) {
-      res.status(500).json({ error: 'ERP ingest failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'ERP ingest failed'));
     }
   }
 );
 
 // GET /api/connectors/:actorId/receipts — the ERP receipt ledger (hash + outcome, NEVER the raw payload). Entity-scoped.
-router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/receipts'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const own = await db(`SELECT 1 FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND connector_type = 'erp'`, [
       req.params.actorId,
       entity_id
     ]);
-    if (own.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No ERP connector with that id under this entity.' });
+    if (own.rows.length === 0) return problem(req, res, { status: 404, ...words.noErpConnector() });
     const r = await withEntity(entity_id, (c) =>
       c.query(
         `SELECT receipt_id, doc_type, doc_ref, payload_hash, outcome, chit_id, received_at
@@ -712,7 +723,7 @@ router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUI
     );
     res.json(PL.pageOut('receipts', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (err) {
-    res.status(500).json({ error: 'List receipts failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'List receipts failed'));
   }
 });
 
@@ -720,7 +731,7 @@ router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUI
 // ActorKey, which the UI never holds — we store only its hash). So the owner (JWT) triggers the SAME process-then-forget
 // core with a generated sample document. A fresh nonce keeps every run unique so it is never swallowed by idempotency —
 // each press produces a real receipt + a real co-held chit, letting a human see the whole ERP loop from the cockpit.
-router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/erp-test'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const ar = await db(
@@ -730,7 +741,7 @@ router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUU
       [req.params.actorId, entity_id]
     );
     const actor = ar.rows[0];
-    if (!actor) return res.status(404).json({ error: 'Not found', message: 'No ERP connector with that id under this entity.' });
+    if (!actor) return problem(req, res, { status: 404, ...words.noErpConnector() });
     const cfg = actor.connector_config || {};
     const cc = cfg.counterparty_entity_id || null;
     // A representative sample document. The nonce makes it unique per run (else the 2nd test would dedupe to 'duplicate').
@@ -750,7 +761,7 @@ router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUU
     const out = await processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc });
     res.json({ message: 'test-processed', doc_type, doc_ref, counterparty: cc, ...out });
   } catch (err) {
-    res.status(500).json({ error: 'ERP test failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'ERP test failed'));
   }
 });
 
@@ -774,16 +785,16 @@ router.get('/', auth, requireConnector, async (req, res) => {
       )
     );
   } catch (err) {
-    res.status(500).json({ error: 'List failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'List failed'));
   }
 });
 
 // GET /api/connectors/:actorId/provisioning — the connection string to put on the Pi (IoT) / the ERP system config
-router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/provisioning'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
-    if (!actor) return res.status(404).json({ error: 'Not found' });
+    if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
     const conns = await db(`SELECT bridge_id, ref, conn_config FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at`, [
       actor.identity_id,
       entity_id
@@ -806,20 +817,20 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
       endpoints: conns.rows.map((item) => ({ bridge_id: item.bridge_id, ref: item.ref, path: (item.conn_config || {}).path || null }))
     });
   } catch (err) {
-    res.status(500).json({ error: 'Provisioning failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Provisioning failed'));
   }
 });
 
 // POST /api/connectors/reissue-code — STEP-UP: email a one-time code to the ENTITY's registered email (the account
 // owner), so even a manager delegate cannot reissue a device key without the code the entity controls.
-router.post('/reissue-code', auth, requireConnector, async (req, res) => {
+router.post('/reissue-code', auth, requireConnector, ...checked('POST /reissue-code'), async (req, res) => {
   try {
     const perm = await canReissue(req);
-    if (!perm.ok) return res.status(403).json({ error: 'Forbidden', message: 'Only the entity admin or a manager delegate may reissue a device key.' });
+    if (!perm.ok) return problem(req, res, { status: 403, ...words.keyAdminOnly() });
     const entity_id = ownerEntityId(req);
     const e = await db(`SELECT email, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
     const ent = e.rows[0];
-    if (!ent || !ent.email) return res.status(400).json({ error: 'No email', message: 'The entity has no registered email to send a code to.' });
+    if (!ent || !ent.email) return problem(req, res, { status: 400, ...words.noEmail() });
     const otp = require('../lib/otp').generateOTP('connector');
     const expires = new Date(Date.now() + 10 * 60 * 1000);
     await db(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, entity_id]);
@@ -831,7 +842,7 @@ router.post('/reissue-code', auth, requireConnector, async (req, res) => {
       ...(devOtp.mayExposeOtp() && { dev_otp: otp })
     });
   } catch (err) {
-    res.status(500).json({ error: 'Send failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Send failed'));
   }
 });
 
@@ -843,17 +854,18 @@ router.post(
   requireConnector,
   [
     param('actorId').isUUID(),
-    body('name').trim().notEmpty().withMessage('Type the gateway name'),
-    body('otp').trim().isLength({ min: 6, max: 64 }).withMessage('6-digit code required')
+    body('name').trim().notEmpty().withMessage(WORDS.gatewayName),
+    body('otp').trim().isLength({ min: 6, max: 64 }).withMessage(WORDS.code)
   ],
-  validate,
+  validateAsProblem,
+  ...checked('POST /:actorId/regenerate-key'),
   async (req, res) => {
     try {
       const perm = await canReissue(req);
-      if (!perm.ok) return res.status(403).json({ error: 'Forbidden', message: 'Only the entity admin or a manager delegate may reissue a device key.' });
+      if (!perm.ok) return problem(req, res, { status: 403, ...words.keyAdminOnly() });
       const entity_id = ownerEntityId(req);
       const actor = await ownedConnector(req.params.actorId, entity_id);
-      if (!actor) return res.status(404).json({ error: 'Not found' });
+      if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
       // THE QUESTION — the typed gateway name must match exactly (case-insensitive)
       if (
         String(req.body.name).trim().toLowerCase() !==
@@ -861,11 +873,11 @@ router.post(
           .trim()
           .toLowerCase()
       )
-        return res.status(400).json({ error: 'Name mismatch', message: 'The gateway name you typed does not match.' });
+        return problem(req, res, { status: 400, ...words.nameMismatch() });
       // THE PASSWORD — verify the one-time code against the ENTITY's current code
       const er = await db(`SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities WHERE identity_id = $1`, [entity_id]);
       const chk = await verifyOtp(db, er.rows[0] || {}, req.body.otp);
-      if (!chk.ok) return res.status(chk.status || 400).json({ error: 'Bad code', message: chk.message });
+      if (!chk.ok) return problem(req, res, { status: chk.status || 400, ...words.badCode(chk) });
       // PASSED — reissue, clear the code, audit (who/when into the connector's own config; no migration needed)
       const provision_key = genKey();
       await db(`UPDATE identities SET provision_key_hash = $1 WHERE identity_id = $2`, [hashKey(provision_key), actor.identity_id]);
@@ -876,24 +888,24 @@ router.post(
       console.log(`[AUDIT] connector key reissued — connector=${actor.identity_id} by=${req.identity.identity_id}(${perm.role}) entity=${entity_id}`);
       res.json({ message: 'ActorKey regenerated', provision_key }); // shown ONCE — the old key stops working immediately
     } catch (err) {
-      res.status(500).json({ error: 'Regenerate failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Regenerate failed'));
     }
   }
 );
 
 // POST /api/connectors/:actorId/ping — heartbeat seam: marks the connector (and optionally one bridge) live.
 // Used by the app "Test connection" button today; the real device/gateway will call the ingest path (next milestone).
-router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/ping'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
-    if (!actor) return res.status(404).json({ error: 'Not found' });
+    if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
     await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
     if (req.body && req.body.bridge_id)
       await db(`UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, req.body.bridge_id]);
     res.json({ message: 'pong', last_seen: new Date().toISOString(), health: 'live' });
   } catch (err) {
-    res.status(500).json({ error: 'Ping failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Ping failed'));
   }
 });
 
@@ -905,18 +917,19 @@ router.post(
   [
     param('actorId').isUUID(),
     body('direction').optional().isIn(['in', 'out']),
-    body('ref').trim().isLength({ min: 1 }).withMessage('endpoint/device ref required'),
+    body('ref').trim().isLength({ min: 1 }).withMessage(WORDS.ref),
     body('schema_ref').optional().trim(),
     body('counterparty_entity_id').optional().isUUID(),
     body('retention').optional().isIn(['never_persist', 'persist_then_purge']),
     body('config').optional().isObject()
   ],
-  validate,
+  validateAsProblem,
+  ...checked('POST /:actorId/connections'),
   async (req, res) => {
     try {
       const entity_id = ownerEntityId(req);
       const actor = await ownedConnector(req.params.actorId, entity_id);
-      if (!actor) return res.status(404).json({ error: 'Not found', message: 'No such connector under this entity.' });
+      if (!actor) return problem(req, res, { status: 404, ...words.noSuchConnector() });
       const direction = req.body.direction || 'in';
       const schema_ref = req.body.schema_ref || null;
       const counterparty = req.body.counterparty_entity_id || null;
@@ -931,17 +944,17 @@ router.post(
       );
       res.json({ message: 'Connection added', connection: r.rows[0] });
     } catch (err) {
-      res.status(500).json({ error: 'Add connection failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Add connection failed'));
     }
   }
 );
 
 // GET /api/connectors/:actorId/connections — list; signal CASCADES from the actor's health
-router.get('/:actorId/connections', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+router.get('/:actorId/connections', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/connections'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
-    if (!actor) return res.status(404).json({ error: 'Not found' });
+    if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
     const actorHealth = health(actor.last_seen);
     const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
     // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
@@ -953,7 +966,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
       )
     );
   } catch (err) {
-    res.status(500).json({ error: 'List connections failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'List connections failed'));
   }
 });
 
@@ -963,21 +976,22 @@ router.patch(
   auth,
   requireConnector,
   [param('actorId').isUUID(), param('connId').isInt(), body('enabled').isBoolean()],
-  validate,
+  validateAsProblem,
+  ...checked('PATCH /:actorId/connections/:connId'),
   async (req, res) => {
     try {
       const entity_id = ownerEntityId(req);
       const actor = await ownedConnector(req.params.actorId, entity_id);
-      if (!actor) return res.status(404).json({ error: 'Not found' });
+      if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
       const r = await db(
         `UPDATE connector_connection SET enabled = $1
           WHERE connection_id = $2 AND actor_id = $3 AND entity_id = $4 RETURNING *`,
         [req.body.enabled, req.params.connId, actor.identity_id, entity_id]
       );
-      if (!r.rows[0]) return res.status(404).json({ error: 'Not found' });
+      if (!r.rows[0]) return problem(req, res, { status: 404, ...words.notFound() });
       res.json({ message: 'Updated', connection: r.rows[0] });
     } catch (err) {
-      res.status(500).json({ error: 'Update failed', message: safeErr(err) });
+      problem(req, res, failed(err, req, 'Update failed'));
     }
   }
 );
@@ -985,17 +999,13 @@ router.patch(
 // DELETE /api/connectors/:actorId — retire a connector. RULE (Athi): hard-delete ONLY if it has NO devices attached
 // (a bare connector is cheap to recreate); if any connection exists, REFUSE (protect the attached devices — detach
 // first). Also refuses if the connector has raised records that reference it (FK) — that's a "problem", so keep it.
-router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], validate, async (req, res) => {
+router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('DELETE /:actorId'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const actor = await ownedConnector(req.params.actorId, entity_id);
-    if (!actor) return res.status(404).json({ error: 'Not found', message: 'No such connector under this entity.' });
+    if (!actor) return problem(req, res, { status: 404, ...words.noSuchConnector() });
     const cc = await db(`SELECT COUNT(*)::int AS n FROM connector_connection WHERE actor_id = $1`, [actor.identity_id]);
-    if (cc.rows[0].n > 0)
-      return res.status(409).json({
-        error: 'Has devices',
-        message: 'This connector has ' + cc.rows[0].n + ' device' + (cc.rows[0].n === 1 ? '' : 's') + ' attached — remove them before deleting.'
-      });
+    if (cc.rows[0].n > 0) return problem(req, res, { status: 409, ...words.hasDevices(cc.rows[0].n) });
     try {
       await db(`DELETE FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [
         actor.identity_id,
@@ -1004,14 +1014,15 @@ router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], 
     } catch (e) {
       if (e && e.code === '23503')
         // FK — it raised chits/records that point back to it; deleting would orphan them
-        return res.status(409).json({ error: 'In use', message: 'This connector has raised records and cannot be hard-deleted. Disable its devices instead.' });
+        return problem(req, res, { status: 409, ...words.inUse() });
       throw e;
     }
     res.json({ deleted: 1 });
   } catch (err) {
-    res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Delete failed'));
   }
 });
 
+router.openapi = { paths: require('../lib/connectors-contract').contract.pathsOf(), schemas: {} };
 module.exports = router;
 module.exports.health = health;
