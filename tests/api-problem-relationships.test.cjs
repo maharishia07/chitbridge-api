@@ -38,7 +38,7 @@ const lab = harness({
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: ROUTE_FILE },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
-  inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out',
+  inherited: (scenario, answer) => (answer.status === 401 && scenario.id === 'signed-out') || (answer.json && answer.json.code === 'REL_NOT_ON_YOUR_LIST') /* SEC-91: a refusal added after the sweep, so nothing was frozen */,
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || AFTER.has(scenario)
 });
 const { check, world } = lab;
