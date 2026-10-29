@@ -16,6 +16,12 @@
    "foreign_id_404": true,
    "output_allowlist": true
   },
+  "DELETE /api/products/:id": {
+   "output_allowlist": true
+  },
+  "DELETE /api/products/:id/media/:mid": {
+   "output_allowlist": true
+  },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
@@ -205,6 +211,18 @@
    "output_allowlist": true
   },
   "GET /api/entities/usage": {
+   "output_allowlist": true
+  },
+  "GET /api/products": {
+   "output_allowlist": true
+  },
+  "GET /api/products/:id/versions": {
+   "output_allowlist": true
+  },
+  "GET /api/products/lists": {
+   "output_allowlist": true
+  },
+  "GET /api/products/starter-columns": {
    "output_allowlist": true
   },
   "GET /api/repeat/:id": {
