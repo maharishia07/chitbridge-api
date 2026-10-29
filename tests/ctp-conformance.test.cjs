@@ -55,7 +55,7 @@ const TO = { bridge_id: 'CBBBBBBBBB' };
 const CHIT = { chit_id: 'd07f5862-0fc2-45bb-9fc7-e7f9999b1943', header: HEADER, copy: COPY,
                attachments: [{ id: 'x1', sha256: 'abc', href: 'https://s/x1', bytes: 12 }] };
 
-const ctx = { population: 'live' };
+const ctx = { population: 'live', verify: () => true }; /* RAIL-141 (a): open needs a verifier; the hash is still checked */
 
 /* ── ① THE CLAIM ───────────────────────────────────────────────────────────────────────────────────────────── */
 ok('a copy survives the envelope byte for byte', () => {
@@ -129,14 +129,14 @@ ok('and refuses to be built without a copy', () => {
 /* ── ③ THE BOUNDARY, WHICH IS THE DANGEROUS ONE ────────────────────────────────────────────────────────────── */
 ok('⚠️ a test world may NOT deliver into a live one', () => {
   const e = env.sign(env.build(Object.assign({}, FROM, { population: 'test' }), TO, CHIT), null);
-  const out = env.open(e, { population: 'live' });
+  const out = env.open(e, { population: 'live', verify: () => true });
   assert.strictEqual(out.ok, false, 'a population mismatch must be refused — §7');
   assert.ok(/may not deliver/.test(out.why), out.why);
 });
 
 ok('⚠️ and "test" to "test" is refused too, without an explicit pairing', () => {
   const e = env.sign(env.build(Object.assign({}, FROM, { population: 'test' }), TO, CHIT), null);
-  const out = env.open(e, { population: 'test' });
+  const out = env.open(e, { population: 'test', verify: () => true });
   assert.strictEqual(out.ok, false,
     'a population code is a LOCAL name — matching on the string wires a stranger’s sandbox to ours (§7.1)');
   assert.ok(/explicit pairing/.test(out.why), out.why);
@@ -144,12 +144,12 @@ ok('⚠️ and "test" to "test" is refused too, without an explicit pairing', ()
 
 ok('…but a declared pairing lets two sandboxes talk', () => {
   const e = env.sign(env.build(Object.assign({}, FROM, { population: 'test' }), TO, CHIT), null);
-  const out = env.open(e, { population: 'test', pairedWith: () => true });
+  const out = env.open(e, { population: 'test', pairedWith: () => true, verify: () => true });
   assert.ok(out.ok, out.why);
 });
 
 ok('live to live is allowed on the name alone', () => {
-  const out = env.open(env.sign(env.build(FROM, TO, CHIT), null), { population: 'live' });
+  const out = env.open(env.sign(env.build(FROM, TO, CHIT), null), ctx);
   assert.ok(out.ok, out.why);
 });
 
@@ -180,6 +180,35 @@ ok('a bad signature is refused', () => {
   const out = env.open(e, { population: 'live', verify: () => false });
   assert.strictEqual(out.ok, false);
   assert.ok(/signature/.test(out.why), out.why);
+});
+
+ok('⚠️ no verifier is a refusal, not a pass (RAIL-141 a)', () => {
+  const e = env.sign(env.build(FROM, TO, CHIT), null);
+  e.sealed = Object.assign({}, e.sealed, { hash: 'not-the-hash' });
+  const out = env.open(e, { population: 'live' });
+  assert.strictEqual(out.ok, false, 'an envelope opened with no verifier must not be believed');
+  assert.strictEqual(out.why, 'no way to check the signature here — refused');
+});
+
+/* RAIL-141 (c): contents canon cannot read are an ANSWER, never a throw — at the door and on the way out */
+const deep = (n) => { let v = { leaf: 1 }; for (let i = 0; i < n; i++) v = { v }; return v; };
+ok('⚠️ a copy nested past the canon limit is refused, not thrown (RAIL-141 c)', () => {
+  const e = env.build(FROM, TO, CHIT);
+  e.copy = Object.assign({}, e.copy, { business_json: deep(300) });
+  e.sealed = { alg: 'test', hash: 'x', sig: 's', at: '2026-10-29T00:00:00.000Z' };
+  let out;
+  assert.doesNotThrow(() => { out = env.open(e, ctx); });
+  assert.strictEqual(out.ok, false);
+  assert.strictEqual(out.why, 'the envelope cannot be read as one sealed message — refused');
+});
+
+ok('⚠️ a BigInt in a copy is refused, not thrown (RAIL-141 c)', () => {
+  const e = env.build(FROM, TO, CHIT);
+  e.copy = Object.assign({}, e.copy, { business_json: { qty: BigInt(2) } });
+  e.sealed = { alg: 'test', hash: 'x', sig: 's', at: '2026-10-29T00:00:00.000Z' };
+  let out;
+  assert.doesNotThrow(() => { out = env.open(e, ctx); });
+  assert.strictEqual(out.ok, false);
 });
 
 ok('signing twice gives the same digest and does not nest', () => {

@@ -22,7 +22,7 @@ const t = (name, ok, extra) => { if (ok) { pass++; out('  ok  ' + name + '\n'); 
 
 const SECRET = 'tq7-Lantern-42';
 const LOCAL = 'postgres://cb@127.0.0.1:5432/cb_test', REMOTE = 'postgres://cb:pw@db.example-host.supabase.co:5432/postgres';
-const KEYS = ['TESTER_CODE', 'TESTER_NAMES', 'TESTER_CODE_TZ', 'SHOP_CLOCK_ALLOW', 'DEV_OTP', 'DEV_OTP_CUSTOMER', 'DEV_OTP_CONNECTOR', 'DEV_OTP_IN_RESPONSE', 'NODE_ENV', 'DATABASE_URL'];
+const KEYS = ['TESTER_CODE', 'TESTER_NAMES', 'TESTER_CODE_TZ', 'TESTER_ALL_UNTIL', 'SHOP_CLOCK_ALLOW', 'DEV_OTP', 'DEV_OTP_CUSTOMER', 'DEV_OTP_CONNECTOR', 'DEV_OTP_IN_RESPONSE', 'NODE_ENV', 'DATABASE_URL'];
 function env(vars) { KEYS.forEach((k) => { delete process.env[k]; }); Object.assign(process.env, vars || {}); }
 function load() {
   ['../lib/dev-otp', '../lib/otp', '../lib/logger'].forEach((m) => { try { delete require.cache[require.resolve(m)]; } catch (_) { /* not loaded yet */ } });
@@ -254,6 +254,43 @@ async function captured(fn) {
       /Before real users — REMOVE/.test(d) && /TESTER_CODE/.test(d) && /TESTER_NAMES/.test(d) && /E2E_TESTER_CODE/.test(d));
   }
 
+  /* ── 7 · TESTER_ALL_UNTIL · the dated all-accounts window (Athi, 28 Oct) — live-like env, fixed clock ───────────────────── */
+  const live = { NODE_ENV: 'production', DATABASE_URL: REMOTE, SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}-lamp' };
+  const warns = () => dev.testerNotices().filter((n) => /EVERY account until|all-accounts window/.test(n.msg + n.reason));
+  env(Object.assign({}, live, { TESTER_NAMES: 'qa-*' })); ({ dev } = load()); at('2026-10-28T10:00:00');
+  t('window unset → an unlisted account is refused (today\'s behaviour)', dev.testerNameAllowed(['mayuri123']) === false && dev.testerNameAllowed(['qa-one']) === true);
+  env(Object.assign({}, live, { TESTER_NAMES: 'qa-*', TESTER_ALL_UNTIL: '2026-11-05' })); ({ dev } = load()); at('2026-10-28T10:00:00');
+  t('window open → any name allowed (typed name and identity names), even with TESTER_NAMES empty of it', dev.testerNameAllowed(['mayuri123']) === true && dev.testerNameAllowed(['x@y.z', 'austor1']) === true);
+  env(Object.assign({}, live, { TESTER_ALL_UNTIL: '2026-11-05' })); ({ dev } = load()); at('2026-10-28T10:00:00');
+  t('window open and TESTER_NAMES unset → still every account', dev.testerNameAllowed(['mayuri123']) === true && dev.testerCodeOk('qa-261028-lamp', ['mayuri123']) === true);
+  t('the boot WARNs every time while open, naming the date, never the code', warns().length === 1 && /until 2026-11-05/.test(warns()[0].msg) && warns()[0].level === 'warn' && !/qa-|261028/.test(JSON.stringify(dev.testerNotices())));
+  at('2026-11-05T23:30:00');
+  t('the last day itself is still open', dev.testerNameAllowed(['mayuri123']) === true);
+  at('2026-11-06T00:30:00');
+  t('the day after → refused again, no boot warning', dev.testerNameAllowed(['mayuri123']) === false && dev.testerCodeOk('qa-261106-lamp', ['mayuri123']) === false && warns().length === 0);
+  for (const bad of ['', 'soon', '2026-13-40', '2026-02-30', '28/10/2026']) {
+    env(Object.assign({}, live, { TESTER_ALL_UNTIL: bad })); ({ dev } = load()); at('2026-10-28T10:00:00');
+    t('TESTER_ALL_UNTIL "' + bad + '" → shut', dev.testerNameAllowed(['mayuri123']) === false);
+  }
+  env(Object.assign({}, live, { TESTER_ALL_UNTIL: '2026-12-30' })); ({ dev } = load()); at('2026-10-28T10:00:00');   // 63 days ahead
+  t('a date more than 62 days ahead → refused and named at boot', dev.testerNameAllowed(['mayuri123']) === false && warns().some((n) => /more than 62 days ahead/.test(n.reason)));
+  env(Object.assign({}, live, { TESTER_ALL_UNTIL: '2026-12-29' })); ({ dev } = load()); at('2026-10-28T10:00:00');   // exactly 62 ahead
+  t('exactly 62 days ahead is allowed', dev.testerNameAllowed(['mayuri123']) === true);
+  env(Object.assign({}, live, { TESTER_ALL_UNTIL: '2026-11-05', TESTER_CODE: '' })); ({ dev } = load()); at('2026-10-28T10:00:00');
+  t('window open but no TESTER_CODE → refused, nothing signs in', dev.testerNameAllowed(['mayuri123']) === false && dev.testerCodeOk('anything-at-all', ['mayuri123']) === false && warns().length === 0);
+  env(Object.assign({}, live, { TESTER_ALL_UNTIL: '2026-11-05', TESTER_CODE: 'short' })); ({ dev } = load());
+  t('window open but TESTER_CODE too short → refused', dev.testerNameAllowed(['mayuri123']) === false);
+  env(Object.assign({}, live, { TESTER_ALL_UNTIL: '2026-11-05' })); ({ dev, otp } = load()); at('2026-10-28T10:00:00');
+  t('bare * in TESTER_NAMES still counts for nothing without the window', (env(Object.assign({}, live, { TESTER_NAMES: '*' })), load().dev.testerNameAllowed(['mayuri123'])) === false);
+  env(Object.assign({}, live, { TESTER_ALL_UNTIL: '2026-11-05' })); ({ dev, otp } = load()); at('2026-10-28T10:00:00');
+  let lim = true; for (let i = 0; i < dev.TESTER_GUESS_MAX; i++) lim = lim && (await dev.testerGuess('wrong-code-' + i, ['mayuri123'], 'acct-win')) === false;
+  t('guess limit still shuts after 5, even to the right code', lim && (await dev.testerGuess('qa-261028-lamp', ['mayuri123'], 'acct-win')) === false && (await dev.testerGuess('qa-261028-lamp', ['mayuri123'], 'acct-other')) === true);
+  t('dev tools stay closed in the window (build chrome never reaches every shop)', dev.mayShowDevTools(['mayuri123']) === false);
+  env(Object.assign({}, live, { TESTER_NAMES: 'qa-*', TESTER_ALL_UNTIL: '2026-11-05' })); ({ dev } = load());
+  t('…and only a named tester sees dev tools', dev.mayShowDevTools(['mayuri123']) === false && dev.mayShowDevTools(['qa-one']) === true);
+  const otpSrc = fs.readFileSync(path.join(API, 'lib/dev-otp.js'), 'utf8');
+  t('the cutover checklist names TESTER_ALL_UNTIL', /REMOVE\s+TESTER_ALL_UNTIL/.test(otpSrc.slice(0, 2500)));
+  clock.reset();
   out('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { out('crashed: ' + (e && e.stack) + '\n'); process.exit(1); });

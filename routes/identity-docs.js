@@ -16,10 +16,11 @@
  * ⭐ WHAT THE EMPLOYER SEES IS THE VERDICT, NOT THE DOCUMENT — verified, when, by whom. That is
  * [[reference-cb-core-principle]] applied to a person: the fact travels, the source does not.
  
- * FLOW      auth (any signed-in login; the person is the token, or a co-assist the owner names) -> schema check (lib/identity-docs-contract.js) -> the handler -> lib/iddoc-verify.js for the code flow
+ * FLOW      PUT /documents/:scheme -> normalise -> docHash (keyed for Aadhaar, plain for the rest) -> upsert · identity-auth / keys.js recompute the PHONE and EMAIL hash
+ *           auth (any signed-in login; the person is the token, or a co-assist the owner names) -> schema check (lib/identity-docs-contract.js) -> the handler -> lib/iddoc-verify.js for the code flow
  *           a refusal -> problem(req, res, ...) with the old { error, code, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
  *           a thrown error -> problem(req, res, faultOf(e, req)); a refusal the library built -> problem(req, res, libraryRefusal(out))
- * CARD      18-identity-sign-in-and-access/README
+ * CARD      18-identity-sign-in-and-access/identity-documents-and-the-vault
  * CALLED BY lib/identity-auth.js, routes/keys.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 const express = require('express');
@@ -258,14 +259,13 @@ router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:sche
      * is everywhere today. A half-configured secret store that ACCEPTS data is worse than one that refuses it:
      * the refusal is visible, the plaintext is not. Same posture as b100's vault save.
      */
-    let enc = null;
-    if (spec.store) {
-      if (!vault.isConfigured()) {
-        const message = 'Secure storage is not switched on yet, so this cannot be saved. Nothing was stored.';
-        return problem(req, res, { status: 503, code: 'VAULT_ENC_UNCONFIGURED', detail: message, legacy: { error: 'Not configured', code: 'VAULT_ENC_UNCONFIGURED', message } });
-      }
-      enc = JSON.stringify(vault.encryptVault({ v: raw }));
+    /* SEC-101: the key is needed for EVERY scheme now. A store:true scheme encrypts the value with it; a store:false scheme (Aadhaar)
+       keeps only a keyed hash of it - without the key that hash would be a plain sha256 of a 12-digit number, so refuse like the rest. */
+    if (!vault.isConfigured()) {
+      const message = 'Secure storage is not switched on yet, so this cannot be saved. Nothing was stored.';
+      return problem(req, res, { status: 503, code: 'VAULT_ENC_UNCONFIGURED', detail: message, legacy: { error: 'Not configured', code: 'VAULT_ENC_UNCONFIGURED', message } });
     }
+    const enc = spec.store ? JSON.stringify(vault.encryptVault({ v: raw })) : null;
 
     /* The hash answers "is this the same document" without holding the document — and it is salted with the
        scheme so the same digits under two schemes do not collide into one identity. */
@@ -427,18 +427,36 @@ router.post('/documents/:scheme/verify', auth, ...contract.checked('POST /docume
 });
 
 /**
- * docHash(scheme, normalisedValue) — "is this the same document" without holding it: sha256 of SCHEME:value, salted with the
- * scheme so the same digits under two schemes never collide. ⭐ ONE HASH, TWO READERS (M11): the PUT above stores it, and
- * routes/keys.js claimSeries matches a counter assigned to a phone number against the signed-in person's verified PHONE.
+ * plainDocHash(scheme, normalisedValue) — sha256 of SCHEME:value, salted with the scheme so the same digits under two schemes never
+ * collide. What PHONE and EMAIL use (sign-in recomputes it, so it must stay byte for byte) and what every row before SEC-101 holds.
  */
-function docHash(scheme, raw) {
+function plainDocHash(scheme, normalised) {
   return crypto
     .createHash('sha256')
-    .update(String(scheme) + ':' + String(raw))
+    .update(String(scheme) + ':' + String(normalised))
     .digest('hex');
 }
+/** the schemes whose value is NEVER stored (store:false, Aadhaar) - a 10^12 space, so their hash must be keyed (SEC-101) */
+const isNotStored = (scheme) => Object.values(CATALOGUE).some((list) => list.some((item) => item.scheme === scheme && !item.store));
+/**
+ * docHash(scheme, normalisedValue) — "is this the same document" without holding it. ⭐ ONE HASH, TWO READERS (M11): the PUT above
+ * stores it, and routes/keys.js claimSeries matches a counter assigned to a phone number against the signed-in person's verified
+ * PHONE. A not-stored scheme (Aadhaar) gets the KEYED hash (lib/vaultcrypto keyedDocHash, throws 503 without a key); the rest are
+ * unchanged.
+ */
+function docHash(scheme, normalised) {
+  return isNotStored(scheme) ? vault.keyedDocHash(scheme, normalised) : plainDocHash(scheme, normalised);
+}
+/** every hash a stored row for this value may hold: the keyed one, and for a not-stored scheme also the pre-SEC-101 plain one (legacy rows cannot be re-hashed) */
+function docHashes(scheme, normalised) {
+  return isNotStored(scheme) ? [docHash(scheme, normalised), plainDocHash(scheme, normalised)] : [plainDocHash(scheme, normalised)];
+}
+/** is this stored hash the same document as this value? (keyed or legacy) */
+const sameDocument = (scheme, normalised, storedHash) => docHashes(scheme, normalised).includes(String(storedHash));
 /** the PHONE normaliser the PUT uses (DIGITS: a leading + survives) — so a number typed by the owner hashes as the person's did */
 router.normPhone = (v) => DIGITS(String(v == null ? '' : v).trim());
 router.docHash = docHash;
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
+router.docHashes = docHashes;
+router.sameDocument = sameDocument;
 module.exports = router;

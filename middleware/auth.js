@@ -423,6 +423,9 @@ const KEY_ROUTES = {
     /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
                  nothing else — which is why it exists instead of letting a till key PATCH products. */
     ['POST', /^\/api\/till\/alias$/],
+    /* ⭐ F5 W1a: one product's tax rate, asked once at the counter. The key only OPENS the door: routes/till.js setsRate lets an
+                 owner or a manager through and refuses a key or a cashier with its own sentence (TILL_RATE_OWNER_ONLY), never a bare 403 here. */
+    ['POST', /^\/api\/till\/rate$/],
     /* ⚠️⚠️ NOTHING UNDER /api/books (critic M9, 2026-09-30). Four ledger routes were listed here "for the counter" — dues,
                  a party's statement, payments, propose/confirm — and the counter calls none of them: it sends a CHIT (money
                  received is business_json.payment_received), and what each customer owes rides its snapshot. So they were

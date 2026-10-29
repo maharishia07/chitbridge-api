@@ -693,14 +693,14 @@ router.setDiag = async (entity_id, jti, patch) => {
 function platformScopeRefusal(req, askedScopes) {
   const allowed = scopesFor(req),
     asked = Array.isArray(askedScopes) ? askedScopes.map(String) : [];
-  const refused = asked.filter((kind) => SCOPES.includes(kind) && !allowed.includes(kind));
-  if (!refused.length) return null;
+  const notAllowed = asked.filter((kind) => SCOPES.includes(kind) && !allowed.includes(kind));
+  if (!notAllowed.length) return null;
   return {
     error: 'Platform only',
     code: 'NOT_PLATFORM',
     may: false,
     why: 'NOT_PLATFORM',
-    message: 'A ' + refused[0] + " key is the platform's to make, not a shop's."
+    message: 'A ' + notAllowed[0] + " key is the platform's to make, not a shop's."
   };
 }
 /* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
