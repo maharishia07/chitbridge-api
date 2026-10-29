@@ -7,6 +7,8 @@
  *           another shop's folder and an unknown folder get ONE answer (status and body, request id aside), and nothing is written in the foreign case.
  *           The stand-in db MODELS the foreign key the way Postgres does: checked WITHOUT row security, so a folder of any shop satisfies it and only a folder that exists nowhere
  *           is refused (23503). The first check shows that model on its own (the defect: a foreign id stored, an unknown id a 500), so the cases below cannot pass on a model that is too kind.
+ * ALSO (SEC-103) the assignee of the same write: entity_work_routing.assignee_actor_id has NO foreign key, so the model keeps whatever it is given; the shop's own actor works, another shop's
+ *           actor, an unknown id and text that is no uuid get ONE 404 ("Person not found"), nothing is written, and a clear (null or empty) still works.
  * CALLED BY scripts/guards.cjs. The real T2 twin (real Postgres, run by S41) is tests/sec100-truth.realstack.cjs.
  * FLOW      stand-in sign-in + db (tests/lib/problem-world.cjs) → the real routes/folders.js and routes/entities.js over http → ask as shop B for A's folder, for an unknown folder, for B's own
  *           → compare status and body → read what the model holds (writes, rows pointing at A's folders)
@@ -35,6 +37,9 @@ const UNKNOWN_RULES = 'cccccccc-cccc-4ccc-8ccc-cccccccc0001';
 const UNKNOWN_PATCH = 'cccccccc-cccc-4ccc-8ccc-cccccccc0002';
 const UNKNOWN_CREATE = 'cccccccc-cccc-4ccc-8ccc-cccccccc0003';
 const UNKNOWN_ROUTING = 'cccccccc-cccc-4ccc-8ccc-cccccccc0004';
+const A_ACTOR = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0a01';
+const B_ACTOR = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb0b01';
+const GHOST_ACTOR = 'cccccccc-cccc-4ccc-8ccc-cccccccc0a01';
 const UNKNOWN_MODEL = 'cccccccc-cccc-4ccc-8ccc-cccccccc0005';
 const FK_VIOLATION = '23503';
 const RULE_WHEN = { doc: 'invoice' };
@@ -45,6 +50,7 @@ const { check } = lab;
 /** the database as Postgres holds it for these four tables: folders of two shops, and a foreign key checked WITHOUT row security */
 function fkModel() {
   const folders = new Map([[A_FOLDER, { entity_id: SHOP_A, parent_id: null }], [B_FOLDER, { entity_id: SHOP_B, parent_id: null }], [B_FOLDER_TWO, { entity_id: SHOP_B, parent_id: null }]]);
+  const actors = new Map([[A_ACTOR, SHOP_A], [B_ACTOR, SHOP_B]]);
   const writes = [];
   const rules = [];
   const routing = [];
@@ -63,7 +69,8 @@ function fkModel() {
       return answer([{ folder_id: id, parent_id: parent, name: 'x' }]);
     }],
     [/INSERT INTO folder \(entity_id, parent_id, name/, ([entity, parent, name]) => (foreignKey(parent), writes.push('create'), answer([{ folder_id: 'new-1', parent_id: parent, name, sort: 0 }]))],
-    [/INSERT INTO entity_work_routing/, ([entity, kind, folder]) => (foreignKey(folder), routing.push({ entity, folder }), writes.push('routing'), answer([]))]
+    [/FROM identities WHERE identity_id = \$1 AND identity_type = 'actor' AND parent_entity_id = \$2/, ([id, entity]) => answer(actors.get(id) === entity ? [{ '?column?': 1 }] : [])],
+    [/INSERT INTO entity_work_routing/, ([entity, kind, folder, assignee]) => (foreignKey(folder), routing.push({ entity, folder, assignee }), writes.push('routing'), answer([]))]
   ];
   const query = (sql, params) => {
     const found = statements.find(([pattern]) => pattern.test(String(sql)));
@@ -73,7 +80,9 @@ function fkModel() {
   const pointingAtA = () =>
     [...folders.values()].filter((f) => f.entity_id === SHOP_B && folders.has(f.parent_id) && folders.get(f.parent_id).entity_id === SHOP_A).length +
     rules.concat(routing).filter((r) => r.entity === SHOP_B && folders.has(r.folder) && folders.get(r.folder).entity_id === SHOP_A).length;
-  return { query, writes, pointingAtA, folders };
+  /** every routing row of shop B that names a person of shop A: there must be none */
+  const assigneesOfA = () => routing.filter((r) => r.entity === SHOP_B && actors.get(r.assignee) === SHOP_A).length;
+  return { query, writes, pointingAtA, assigneesOfA, folders };
 }
 
 /** an answer as it is compared: status, type and body, the request id aside */
@@ -98,6 +107,29 @@ async function oneWrite(port, label, spec) {
   check(label + ': the shop\'s own folder works (200, it answered ' + own.status + ')', own.status === 200, own.text.slice(0, 200));
   check(label + ': the own write was made, and none of shop B points at a folder of shop A', model.writes.length === 1 && model.pointingAtA() === 0, model.writes);
   return model;
+}
+
+/** SEC-103: the same three asks for the assignee of PUT /routing, then the own actor, the clears and a non-uuid */
+async function assigneeCases(port) {
+  const put = (model, assignee) => ask(port, model, WHO_B, 'PUT', '/api/entities/routing', { kind: 'incident', folder_id: null, assignee_actor_id: assignee, route_to_entity_id: null });
+  const model = fkModel();
+  const foreign = await put(model, A_ACTOR);
+  const unknown = await put(model, GHOST_ACTOR);
+  const notUuid = await put(model, 'not-a-uuid');
+  check("assignee: another shop's person is refused with 404 (it answered " + foreign.status + ')', foreign.status === 404, foreign.text.slice(0, 200));
+  check('assignee: an unknown person gets the same 404 (it answered ' + unknown.status + ')', unknown.status === 404, unknown.text.slice(0, 200));
+  check('assignee: foreign, unknown and no-uuid answer byte for byte alike, request id aside', comparable(foreign) === comparable(unknown) && comparable(foreign) === comparable(notUuid), [foreign.text.slice(0, 160), unknown.text.slice(0, 160), notUuid.text.slice(0, 160)]);
+  check('assignee: the answer says "Person not found" and does not echo the id sent', /Person not found/.test(foreign.text) && !foreign.text.includes(A_ACTOR) && !notUuid.text.includes('not-a-uuid'), foreign.text.slice(0, 200));
+  check('assignee: nothing was written for the foreign person', model.writes.length === 0 && model.assigneesOfA() === 0, model.writes);
+  const own = await put(model, B_ACTOR);
+  check("assignee: the shop's own person works (200, it answered " + own.status + ')', own.status === 200, own.text.slice(0, 200));
+  const cleared = await put(model, null);
+  const emptied = await put(model, '');
+  check('assignee: clearing with null or empty text is still a 200', cleared.status === 200 && emptied.status === 200, [cleared.text.slice(0, 120), emptied.text.slice(0, 120)]);
+  check('assignee: the own write and the two clears were made, none names shop A person', model.writes.length === 3 && model.assigneesOfA() === 0, model.writes);
+  const bare = fkModel();
+  bare.query('INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id) VALUES ($1,$2,$3,$4)', [SHOP_B, 'incident', null, A_ACTOR]);
+  check('the model: a write with no lookup stores a person of shop A against shop B (the defect, there is no key to refuse it)', bare.assigneesOfA() === 1);
 }
 
 /** the model on its own: what Postgres does when a write skips the lookup, so the cases above are not passing on a model too kind to fail */
@@ -130,6 +162,9 @@ async function main() {
   await oneWrite(port, 'create', { method: 'POST', url: () => '/api/folders', body: (parent) => ({ name: 'Mayur', parent_id: parent }), unknown: UNKNOWN_CREATE, own: B_FOLDER, refused: 400 });
   console.log('-- SEC-100: PUT /api/entities/routing with folder_id --');
   await oneWrite(port, 'routing', { method: 'PUT', url: () => '/api/entities/routing', body: (folder) => ({ kind: 'incident', folder_id: folder }), unknown: UNKNOWN_ROUTING, own: B_FOLDER, refused: 404 });
+
+  console.log('-- SEC-103: PUT /api/entities/routing with assignee_actor_id --');
+  await assigneeCases(port);
 
   console.log('-- SEC-100: the roots and the clears keep working --');
   const model = fkModel();

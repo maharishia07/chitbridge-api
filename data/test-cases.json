@@ -96514,6 +96514,32 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rls-open-ratchet.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-75: EVERY OPEN READABLE TABLE IS CLASSIFIED AND THE COUNT OF NON-DICTIONARY ONES ONLY FALLS.",
+   "claim": "SEC-75: EVERY OPEN READABLE TABLE IS CLASSIFIED AND THE COUNT OF NON-DICTIONARY ONES ONLY FALLS.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 62 lines. Run: node chitbridge-api/tests/rls-open-ratchet.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 62,
+   "step": "",
+   "areas": [
+    "database"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": []
   }
  ]
 }
