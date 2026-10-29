@@ -80,6 +80,16 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   const badMail = await patch('/customers/CL-1', { email: 'not-an-email' });
   ok('an e-mail that is not an e-mail: 400 in words', badMail.status === 400 && /e-mail/.test(badMail.body.message), JSON.stringify(badMail));
 
+  /* CRM-42: the shape check once lost its escapes and refused any address with an "s" */
+  for (const good of ['sam@shop.com', 'sam+orders@shop.com', 'sales@mail.shop.co.in', 's.s@ss.ss', 'first.last@sub.domain.example']) {
+    const r = await patch('/customers/CL-1', { email: good });
+    ok('a real address is kept: ' + good, r.status === 200 && ids[PRIYA].email === good, JSON.stringify(r));
+  }
+  for (const wrong of ['a b@x.yz', 'sam@shop', 'sam@@shop.com', 'sam@shop..com', 'sam@.shop.com', 'sam@shop.com.', '@shop.com', 'sam@shop com.in']) {
+    const r = await patch('/customers/CL-1', { email: wrong });
+    ok('a wrong shape is refused in words: ' + wrong, r.status === 400 && /e-mail/.test(r.body.message), JSON.stringify(r));
+  }
+
   const real = await patch('/customers/CL-OTHER', { phone: '9000000003' });
   ok('a real ChitBridge business: 403 in words, contact untouched', real.status === 403 && ids[OTHER].otp_contact === '+919000000009', JSON.stringify(real));
 

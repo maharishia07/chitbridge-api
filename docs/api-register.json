@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 465,
+  "meets": 26,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -13,11 +13,11 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 479
    },
    "foreign_id_404": {
     "applies": 227,
-    "failing": 119
+    "failing": 118
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -114,7 +114,7 @@
    "path": "/api/books/recurring/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2276,
+   "line": 2281,
    "hash": "fa90a54eadb1101c",
    "columns": {
     "schema_in": true,
@@ -258,7 +258,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5966,
+   "line": 5983,
    "hash": "b1621a61d6a1f385",
    "columns": {
     "schema_in": true,
@@ -308,7 +308,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4582,
+   "line": 4595,
    "hash": "f1e5c5ac7a0e6422",
    "columns": {
     "schema_in": true,
@@ -358,7 +358,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6227,
+   "line": 6244,
    "hash": "045463184137e6f1",
    "columns": {
     "schema_in": true,
@@ -497,8 +497,8 @@
    "path": "/api/crm/followups/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 410,
-   "hash": "37d0bfe9bacbeccd",
+   "line": 416,
+   "hash": "4684ff50ad88ec07",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -508,7 +508,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -537,8 +537,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4684ff50ad88ec07"
    },
    "status": "partial"
   },
@@ -548,8 +549,8 @@
    "path": "/api/crm/groups/:name",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 688,
-   "hash": "df4831a3744fad06",
+   "line": 699,
+   "hash": "7001297d46e5ab68",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -559,7 +560,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -588,8 +589,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7001297d46e5ab68"
    },
    "status": "partial"
   },
@@ -599,8 +601,8 @@
    "path": "/api/crm/parties/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 426,
-   "hash": "43b0cb170786b76c",
+   "line": 432,
+   "hash": "f4d14e5eef58c55b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -610,7 +612,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -639,8 +641,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f4d14e5eef58c55b"
    },
    "status": "partial"
   },
@@ -694,7 +697,7 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 297,
+   "line": 300,
    "hash": "a7a5a0e07f26ec5e",
    "columns": {
     "schema_in": true,
@@ -744,7 +747,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 537,
+   "line": 540,
    "hash": "29fd16d8665f60b0",
    "columns": {
     "schema_in": true,
@@ -845,8 +848,8 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1699,
-   "hash": "ef5500ca995d3b4b",
+   "line": 1725,
+   "hash": "65c79891d0d65e2b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -856,7 +859,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -884,8 +887,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "65c79891d0d65e2b"
    },
    "status": "partial"
   },
@@ -895,8 +899,8 @@
    "path": "/api/products/:id/media/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1849,
-   "hash": "2c018b29c6dc0708",
+   "line": 1875,
+   "hash": "4b7298a6835be858",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -906,7 +910,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -934,8 +938,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4b7298a6835be858"
    },
    "status": "partial"
   },
@@ -945,7 +950,7 @@
    "path": "/api/products/:id/schedule/:sid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1580,
+   "line": 1606,
    "hash": "d1ce481d9e75dc7a",
    "columns": {
     "schema_in": true,
@@ -1266,7 +1271,7 @@
    "path": "/api/actors/:id/tasks",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1597,
+   "line": 1600,
    "hash": "8706b2506aaf77b4",
    "columns": {
     "schema_in": true,
@@ -1316,8 +1321,8 @@
    "path": "/api/actors/access-events",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1766,
-   "hash": "b5ae4b066598ae9b",
+   "line": 1769,
+   "hash": "8c0f3b62f8a5d36a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1327,7 +1332,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1353,8 +1358,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8c0f3b62f8a5d36a"
    },
    "status": "partial"
   },
@@ -1407,7 +1413,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 1475,
-   "hash": "63f0748acf99af50",
+   "hash": "67ab400b5c2716dc",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1417,7 +1423,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1443,8 +1449,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "67ab400b5c2716dc"
    },
    "status": "partial"
   },
@@ -1499,7 +1506,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 331,
-   "hash": "cd9727f08fb618ef",
+   "hash": "be9e89e246a338e7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1509,7 +1516,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1549,7 +1556,7 @@
    "path": "/api/assist/catalogue-source/:key",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 605,
+   "line": 609,
    "hash": "3b739df1cfe5c008",
    "columns": {
     "schema_in": true,
@@ -1641,7 +1648,7 @@
    "path": "/api/assist/container/:id",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 480,
+   "line": 482,
    "hash": "fceee6110bab1d76",
    "columns": {
     "schema_in": true,
@@ -1689,7 +1696,7 @@
    "path": "/api/assist/erp-handoffs",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 492,
+   "line": 494,
    "hash": "748b83451499c0b2",
    "columns": {
     "schema_in": true,
@@ -1728,11 +1735,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "748b83451499c0b2"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/gaps",
@@ -1740,7 +1746,7 @@
    "path": "/api/assist/gaps",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 727,
+   "line": 731,
    "hash": "d8cba703bbee9a55",
    "columns": {
     "schema_in": true,
@@ -1787,8 +1793,8 @@
    "path": "/api/assist/penetration",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 574,
-   "hash": "86a70dc4f9954d3d",
+   "line": 577,
+   "hash": "bcd75b131edc2142",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1798,7 +1804,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1837,7 +1843,7 @@
    "path": "/api/assist/questions",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 619,
+   "line": 623,
    "hash": "8808b7d84df68a0c",
    "columns": {
     "schema_in": true,
@@ -1873,11 +1879,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8808b7d84df68a0c"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/regions",
@@ -1885,8 +1890,8 @@
    "path": "/api/assist/regions",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 541,
-   "hash": "390f9253644349e3",
+   "line": 543,
+   "hash": "1d6b1f0c87d65d06",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1896,7 +1901,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1932,7 +1937,7 @@
    "path": "/api/assist/resolve",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 558,
+   "line": 561,
    "hash": "462430efe946fbbf",
    "columns": {
     "schema_in": true,
@@ -2024,7 +2029,7 @@
    "path": "/api/assist/whoami",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 740,
+   "line": 744,
    "hash": "330f509bff08f482",
    "columns": {
     "schema_in": true,
@@ -2116,7 +2121,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 310,
-   "hash": "03694917680b3b76",
+   "hash": "8eaeaedd397a7084",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2126,7 +2131,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2153,10 +2158,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/assets",
@@ -2164,8 +2169,8 @@
    "path": "/api/books/assets",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2324,
-   "hash": "447afb2206b1195e",
+   "line": 2329,
+   "hash": "8b75d91ef31f4602",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2175,7 +2180,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2204,10 +2209,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/bank/rail",
@@ -2215,8 +2220,8 @@
    "path": "/api/books/bank/rail",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1283,
-   "hash": "d81fdb98f7aa194c",
+   "line": 1286,
+   "hash": "80e95fa15dc3a719",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2226,7 +2231,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2256,10 +2261,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/bs",
@@ -2267,8 +2272,8 @@
    "path": "/api/books/bs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1030,
-   "hash": "c6bea652ac872095",
+   "line": 1033,
+   "hash": "18214f6b305f2798",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2278,7 +2283,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2306,10 +2311,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/cashflow",
@@ -2317,8 +2322,8 @@
    "path": "/api/books/cashflow",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 936,
-   "hash": "75c9d2ff260fc3d9",
+   "line": 937,
+   "hash": "7c2da9eab40a0454",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2328,7 +2333,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2357,10 +2362,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/cheques",
@@ -2368,8 +2373,8 @@
    "path": "/api/books/cheques",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1464,
-   "hash": "9640fccb558a26a1",
+   "line": 1467,
+   "hash": "2c69506810995f71",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2379,7 +2384,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2408,10 +2413,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/compare",
@@ -2419,8 +2424,8 @@
    "path": "/api/books/compare",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1867,
-   "hash": "a7798818dabece3b",
+   "line": 1872,
+   "hash": "f419e5ec00191334",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2430,7 +2435,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2458,10 +2463,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/compare/:id",
@@ -2469,7 +2474,7 @@
    "path": "/api/books/compare/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2036,
+   "line": 2041,
    "hash": "d9ff2645f0a73015",
    "columns": {
     "schema_in": true,
@@ -2520,7 +2525,7 @@
    "path": "/api/books/compare/:id/csv",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2044,
+   "line": 2049,
    "hash": "4c3448af6a2b5ce3",
    "columns": {
     "schema_in": true,
@@ -2572,7 +2577,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 507,
-   "hash": "7a3048e417f1b2b0",
+   "hash": "2daeb6cb953ee12c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2582,7 +2587,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2610,10 +2615,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/dues",
@@ -2621,8 +2626,8 @@
    "path": "/api/books/dues",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 769,
-   "hash": "2a3efd93dcc90fbb",
+   "line": 770,
+   "hash": "ed3ec726fafa8205",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2632,7 +2637,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2661,11 +2666,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a3efd93dcc90fbb"
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/events",
@@ -2673,8 +2677,8 @@
    "path": "/api/books/events",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1615,
-   "hash": "b61621f79709101a",
+   "line": 1618,
+   "hash": "0e14a98c10067c83",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2684,7 +2688,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2712,10 +2716,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/fx-rates",
@@ -2723,8 +2727,8 @@
    "path": "/api/books/fx-rates",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2390,
-   "hash": "bb85b32c4321ed6c",
+   "line": 2399,
+   "hash": "c9bfdc8ac640cf30",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2734,7 +2738,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2763,10 +2767,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/fx-revalue",
@@ -2774,8 +2778,8 @@
    "path": "/api/books/fx-revalue",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2436,
-   "hash": "9f1b939810534154",
+   "line": 2445,
+   "hash": "6e55385dcb5b72b0",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2785,7 +2789,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2815,10 +2819,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/health",
@@ -2827,7 +2831,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 262,
-   "hash": "a06c680a3b8c8a0d",
+   "hash": "a2a71e15be56dd5f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2837,7 +2841,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2864,10 +2868,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/ledger/:account",
@@ -2875,7 +2879,7 @@
    "path": "/api/books/ledger/:account",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 579,
+   "line": 580,
    "hash": "78b3e9fb5fd1aa89",
    "columns": {
     "schema_in": true,
@@ -2925,8 +2929,8 @@
    "path": "/api/books/move-in/imports",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1833,
-   "hash": "369cdab1f197c381",
+   "line": 1837,
+   "hash": "775a71cd90a0f681",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2936,7 +2940,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2964,10 +2968,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/packs",
@@ -2975,8 +2979,8 @@
    "path": "/api/books/packs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2131,
-   "hash": "1099001c48cf34ac",
+   "line": 2136,
+   "hash": "8588a456a55569eb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2986,7 +2990,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3014,10 +3018,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/packs/:id",
@@ -3025,7 +3029,7 @@
    "path": "/api/books/packs/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2169,
+   "line": 2174,
    "hash": "45c769474fcd5fa8",
    "columns": {
     "schema_in": true,
@@ -3076,7 +3080,7 @@
    "path": "/api/books/packs/:id/file",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2198,
+   "line": 2203,
    "hash": "eab6f7f4c79c78d9",
    "columns": {
     "schema_in": true,
@@ -3128,7 +3132,7 @@
    "path": "/api/books/party/:id/statement",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 655,
+   "line": 656,
    "hash": "afa48422a5db9136",
    "columns": {
     "schema_in": true,
@@ -3179,7 +3183,7 @@
    "path": "/api/books/payments/:id/advice",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1258,
+   "line": 1261,
    "hash": "282ceafe3ac10580",
    "columns": {
     "schema_in": true,
@@ -3230,8 +3234,8 @@
    "path": "/api/books/periods",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2097,
-   "hash": "4fd8650c86b4c029",
+   "line": 2102,
+   "hash": "bbd37012f11252a0",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3241,7 +3245,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3269,10 +3273,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/pl",
@@ -3280,8 +3284,8 @@
    "path": "/api/books/pl",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 976,
-   "hash": "d240ad68f816d2c0",
+   "line": 979,
+   "hash": "69865c3857e8949b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3291,7 +3295,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3319,10 +3323,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/recurring",
@@ -3330,8 +3334,8 @@
    "path": "/api/books/recurring",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2251,
-   "hash": "43ef65c2146b52ee",
+   "line": 2256,
+   "hash": "3531bce9d5ea96a8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3341,7 +3345,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3369,10 +3373,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/returns",
@@ -3380,8 +3384,8 @@
    "path": "/api/books/returns",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2354,
-   "hash": "45b2278e6dfc20a2",
+   "line": 2360,
+   "hash": "86ac77872e8da2ec",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3391,7 +3395,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3420,10 +3424,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/status",
@@ -3432,7 +3436,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 150,
-   "hash": "83b1c81e90f5456f",
+   "hash": "ad9d9beff840f813",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3442,7 +3446,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3469,10 +3473,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/terms",
@@ -3481,7 +3485,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 200,
-   "hash": "ac99b0cca868e1e8",
+   "hash": "478b4e64d05fd2fa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3491,7 +3495,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3520,10 +3524,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/todo",
@@ -3531,7 +3535,7 @@
    "path": "/api/books/todo",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2302,
+   "line": 2307,
    "hash": "084f040c2a23476b",
    "columns": {
     "schema_in": true,
@@ -3570,8 +3574,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8ee7b2bf34c9d2b5"
    },
    "status": "partial"
   },
@@ -3581,8 +3586,8 @@
    "path": "/api/books/trial-balance",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 950,
-   "hash": "da19a848389c6151",
+   "line": 953,
+   "hash": "14f2fbecc8a741fd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3592,7 +3597,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3620,10 +3625,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/year/:fy/status",
@@ -3631,7 +3636,7 @@
    "path": "/api/books/year/:fy/status",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2080,
+   "line": 2085,
    "hash": "038f3eafdf01ef77",
    "columns": {
     "schema_in": true,
@@ -4425,7 +4430,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3162,
+   "line": 3168,
    "hash": "cbd798d37d6ccc9d",
    "columns": {
     "schema_in": true,
@@ -4476,7 +4481,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4395,
+   "line": 4407,
    "hash": "336f23691ee01d37",
    "columns": {
     "schema_in": true,
@@ -4525,7 +4530,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3711,
+   "line": 3717,
    "hash": "79e8ab51e469ca30",
    "columns": {
     "schema_in": true,
@@ -4576,7 +4581,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5651,
+   "line": 5664,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -4627,7 +4632,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5605,
+   "line": 5618,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -4678,7 +4683,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5282,
+   "line": 5295,
    "hash": "670ecd88a1125b2d",
    "columns": {
     "schema_in": true,
@@ -4729,7 +4734,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3904,
+   "line": 3918,
    "hash": "3431da4ab22159e0",
    "columns": {
     "schema_in": true,
@@ -4779,7 +4784,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4011,
+   "line": 4025,
    "hash": "be91d2bc805731af",
    "columns": {
     "schema_in": true,
@@ -4830,7 +4835,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6526,
+   "line": 6543,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -4881,7 +4886,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6553,
+   "line": 6570,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -4893,7 +4898,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -4932,8 +4937,8 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5871,
-   "hash": "46daea8f32caa803",
+   "line": 5884,
+   "hash": "7f93cf1c14e1278e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4943,7 +4948,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -4970,8 +4975,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7f93cf1c14e1278e"
    },
    "status": "partial"
   },
@@ -4981,8 +4987,8 @@
    "path": "/api/chits/folder",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2736,
-   "hash": "f44d902821914d77",
+   "line": 2750,
+   "hash": "572705a3b3d06594",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4992,7 +4998,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5019,8 +5025,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "572705a3b3d06594"
    },
    "status": "partial"
   },
@@ -5030,8 +5037,8 @@
    "path": "/api/chits/inbox",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2908,
-   "hash": "897736af9a9c708d",
+   "line": 2925,
+   "hash": "045a326ed39e1c35",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5041,7 +5048,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5068,8 +5075,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "045a326ed39e1c35"
    },
    "status": "partial"
   },
@@ -5079,7 +5087,7 @@
    "path": "/api/chits/pulse",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3106,
+   "line": 3112,
    "hash": "67e2a779765f3c7d",
    "columns": {
     "schema_in": true,
@@ -5126,8 +5134,8 @@
    "path": "/api/chits/raida/report",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3888,
-   "hash": "565d3b192b7015a8",
+   "line": 3900,
+   "hash": "aa60ca38a2849a85",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5137,7 +5145,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5164,8 +5172,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "aa60ca38a2849a85"
    },
    "status": "partial"
   },
@@ -5175,8 +5184,8 @@
    "path": "/api/chits/register/attachables",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3739,
-   "hash": "979cb6a933b53c47",
+   "line": 3745,
+   "hash": "6c723ef8908ee772",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5186,7 +5195,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5212,8 +5221,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6c723ef8908ee772"
    },
    "status": "partial"
   },
@@ -5223,8 +5233,8 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3747,
-   "hash": "c301e82efd66c02d",
+   "line": 3755,
+   "hash": "211750c4fabb452d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5234,7 +5244,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5261,8 +5271,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "211750c4fabb452d"
    },
    "status": "partial"
   },
@@ -5272,8 +5283,8 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3788,
-   "hash": "e43efc96f747efa8",
+   "line": 3797,
+   "hash": "077c4a340f489f7d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5283,7 +5294,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5309,8 +5320,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "077c4a340f489f7d"
    },
    "status": "partial"
   },
@@ -5320,7 +5332,7 @@
    "path": "/api/chits/register/walk/:from",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3847,
+   "line": 3859,
    "hash": "600c2cdb5a83af1a",
    "columns": {
     "schema_in": true,
@@ -5370,8 +5382,8 @@
    "path": "/api/chits/rollup",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2814,
-   "hash": "2fcdcf06a8c66b94",
+   "line": 2830,
+   "hash": "6263db31de91eae7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5381,7 +5393,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5408,8 +5420,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6263db31de91eae7"
    },
    "status": "partial"
   },
@@ -5419,8 +5432,8 @@
    "path": "/api/chits/sent",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2671,
-   "hash": "5040e600e5cfbf70",
+   "line": 2683,
+   "hash": "c4148c7638d93022",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5430,7 +5443,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5457,8 +5470,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c4148c7638d93022"
    },
    "status": "partial"
   },
@@ -5468,8 +5482,8 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6753,
-   "hash": "6f3dc35905e3296e",
+   "line": 6770,
+   "hash": "e4d84f8cefe1d1a4",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5479,7 +5493,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5506,8 +5520,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e4d84f8cefe1d1a4"
    },
    "status": "partial"
   },
@@ -5517,8 +5532,8 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6794,
-   "hash": "7fd343a2fc790048",
+   "line": 6814,
+   "hash": "f15e538c4e88a8b4",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5528,7 +5543,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5556,8 +5571,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f15e538c4e88a8b4"
    },
    "status": "partial"
   },
@@ -5567,8 +5583,8 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6975,
-   "hash": "fb7da6818f541830",
+   "line": 6995,
+   "hash": "8f9238406a761e84",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5578,7 +5594,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5604,8 +5620,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8f9238406a761e84"
    },
    "status": "partial"
   },
@@ -5615,8 +5632,8 @@
    "path": "/api/chits/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3133,
-   "hash": "83ccb19f48fcdd4c",
+   "line": 3139,
+   "hash": "1524b1fea6fa0ce1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5626,7 +5643,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5652,8 +5669,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1524b1fea6fa0ce1"
    },
    "status": "partial"
   },
@@ -6030,8 +6048,8 @@
    "path": "/api/crm/calls",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 482,
-   "hash": "66cc6b96b19e9d79",
+   "line": 488,
+   "hash": "13508e79399781eb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6041,7 +6059,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6069,8 +6087,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "13508e79399781eb"
    },
    "status": "partial"
   },
@@ -6080,8 +6099,8 @@
    "path": "/api/crm/followups",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 372,
-   "hash": "39c6a6400eec3901",
+   "line": 376,
+   "hash": "b0ff2a933d7638b5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6091,7 +6110,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6119,8 +6138,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b0ff2a933d7638b5"
    },
    "status": "partial"
   },
@@ -6131,7 +6151,7 @@
    "owner_area": "crm",
    "file": "routes/crm.js",
    "line": 93,
-   "hash": "215da4f8a8dcb11c",
+   "hash": "c875fc097db090de",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6141,7 +6161,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6169,8 +6189,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c875fc097db090de"
    },
    "status": "partial"
   },
@@ -6180,8 +6201,8 @@
    "path": "/api/crm/parties/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 112,
-   "hash": "0406c438fbf0c7ee",
+   "line": 114,
+   "hash": "79a5f828e3213138",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6191,7 +6212,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6220,8 +6241,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "79a5f828e3213138"
    },
    "status": "partial"
   },
@@ -6231,8 +6253,8 @@
    "path": "/api/crm/parties/:id/contact-prefs",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 601,
-   "hash": "9c9cf59dab07d75d",
+   "line": 608,
+   "hash": "e66b014ff4cfc9a3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6242,7 +6264,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6271,8 +6293,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e66b014ff4cfc9a3"
    },
    "status": "partial"
   },
@@ -6282,8 +6305,8 @@
    "path": "/api/crm/parties/:id/timeline",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 170,
-   "hash": "091e5ef0e79e0e96",
+   "line": 174,
+   "hash": "6cbf9daf9774ff55",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6293,7 +6316,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6322,8 +6345,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6cbf9daf9774ff55"
    },
    "status": "partial"
   },
@@ -6333,8 +6357,8 @@
    "path": "/api/crm/privacy-requests",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 630,
-   "hash": "ca82ab9a72756faa",
+   "line": 638,
+   "hash": "136ea55e4853f93d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6344,7 +6368,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6372,8 +6396,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "136ea55e4853f93d"
    },
    "status": "partial"
   },
@@ -6383,8 +6408,8 @@
    "path": "/api/crm/segments",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 670,
-   "hash": "4fca8466b55d4069",
+   "line": 679,
+   "hash": "1f991ac5f33714b8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6394,7 +6419,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6421,8 +6446,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1f991ac5f33714b8"
    },
    "status": "partial"
   },
@@ -6566,7 +6592,7 @@
    "path": "/api/entities/constitutions",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 151,
+   "line": 341,
    "hash": "90d643c3f36f275a",
    "columns": {
     "schema_in": true,
@@ -6610,8 +6636,8 @@
    "path": "/api/entities/entitlements",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 2424,
-   "hash": "49d996ff5c656145",
+   "line": 2430,
+   "hash": "30f43a715550a15a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6621,7 +6647,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6647,8 +6673,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "30f43a715550a15a"
    },
    "status": "partial"
   },
@@ -6658,8 +6685,8 @@
    "path": "/api/entities/header",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 317,
-   "hash": "3ae3d5630359c01f",
+   "line": 509,
+   "hash": "1ecf5a03e800a3af",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6669,7 +6696,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6695,8 +6722,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1ecf5a03e800a3af"
    },
    "status": "partial"
   },
@@ -6706,7 +6734,7 @@
    "path": "/api/entities/lookup",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 904,
+   "line": 910,
    "hash": "4fa9ad17575badb4",
    "columns": {
     "schema_in": true,
@@ -6756,8 +6784,8 @@
    "path": "/api/entities/me",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 340,
-   "hash": "0821fc7bb18cde9b",
+   "line": 536,
+   "hash": "923ae667956b75ae",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6767,7 +6795,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6794,8 +6822,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "923ae667956b75ae"
    },
    "status": "partial"
   },
@@ -6805,8 +6834,8 @@
    "path": "/api/entities/me/can-see-costs",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 887,
-   "hash": "1f9a50e743295f2d",
+   "line": 893,
+   "hash": "b43d5b8b4da152b9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6816,7 +6845,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6854,8 +6883,8 @@
    "path": "/api/entities/mis",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1739,
-   "hash": "3911ad98eab24dfa",
+   "line": 1745,
+   "hash": "11720064f2b88a42",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6865,7 +6894,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6893,8 +6922,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "11720064f2b88a42"
    },
    "status": "partial"
   },
@@ -6904,8 +6934,8 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 288,
-   "hash": "5aeb90e77e8a43e3",
+   "line": 480,
+   "hash": "b266e6cd0e2948a9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6915,7 +6945,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6941,8 +6971,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b266e6cd0e2948a9"
    },
    "status": "partial"
   },
@@ -6952,8 +6983,8 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1629,
-   "hash": "386d6272740a5072",
+   "line": 1635,
+   "hash": "6a13bf4d7882b36c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -6963,7 +6994,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6991,8 +7022,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6a13bf4d7882b36c"
    },
    "status": "partial"
   },
@@ -7002,8 +7034,8 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1494,
-   "hash": "cd54d77895b144b2",
+   "line": 1500,
+   "hash": "bd72f1910c24b423",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7013,7 +7045,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7039,8 +7071,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bd72f1910c24b423"
    },
    "status": "partial"
   },
@@ -7050,7 +7083,7 @@
    "path": "/api/entities/routing/preview",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1478,
+   "line": 1484,
    "hash": "c0ac046521b15eac",
    "columns": {
     "schema_in": true,
@@ -7097,8 +7130,8 @@
    "path": "/api/entities/search",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 171,
-   "hash": "ebc90f56bb0a7114",
+   "line": 363,
+   "hash": "5ad0154eda5f0382",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7108,7 +7141,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7135,8 +7168,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "5ad0154eda5f0382"
    },
    "status": "partial"
   },
@@ -7146,8 +7180,8 @@
    "path": "/api/entities/sides",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 331,
-   "hash": "8c9d2c5f400475c4",
+   "line": 525,
+   "hash": "ff462dcb06f9ef9e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7157,7 +7191,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7183,8 +7217,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ff462dcb06f9ef9e"
    },
    "status": "partial"
   },
@@ -7194,8 +7229,8 @@
    "path": "/api/entities/usage",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1301,
-   "hash": "4b70911dad3abcd6",
+   "line": 1307,
+   "hash": "15ee27fbadd385d3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7205,7 +7240,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7231,8 +7266,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "15ee27fbadd385d3"
    },
    "status": "partial"
   },
@@ -7429,7 +7465,7 @@
    "owner_area": "folders",
    "file": "routes/folders.js",
    "line": 72,
-   "hash": "43f1e03628304b31",
+   "hash": "3aa7dc583807a82a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7439,7 +7475,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7478,7 +7514,7 @@
    "path": "/api/folders/:id/chits",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 411,
+   "line": 414,
    "hash": "bb204c7a8e782061",
    "columns": {
     "schema_in": true,
@@ -7528,7 +7564,7 @@
    "path": "/api/folders/:id/metrics",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 467,
+   "line": 470,
    "hash": "47486dec2da7fddd",
    "columns": {
     "schema_in": true,
@@ -7578,7 +7614,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 503,
+   "line": 506,
    "hash": "c699793f92f8b281",
    "columns": {
     "schema_in": true,
@@ -7628,8 +7664,8 @@
    "path": "/api/folders/groupsum",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 820,
-   "hash": "007f1d0f3518165a",
+   "line": 827,
+   "hash": "6de17009cdef055b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7639,7 +7675,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7666,8 +7702,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6de17009cdef055b"
    },
    "status": "partial"
   },
@@ -7677,8 +7714,8 @@
    "path": "/api/folders/inventory",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 131,
-   "hash": "b47e31b79620787e",
+   "line": 134,
+   "hash": "b6e727a5f02eaf0b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7688,7 +7725,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7714,8 +7751,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b6e727a5f02eaf0b"
    },
    "status": "partial"
   },
@@ -7725,8 +7763,8 @@
    "path": "/api/folders/messages",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 629,
-   "hash": "90df1b9d0ced1a55",
+   "line": 635,
+   "hash": "60877e20b8df1857",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7736,7 +7774,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7763,8 +7801,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "60877e20b8df1857"
    },
    "status": "partial"
   },
@@ -7774,8 +7813,8 @@
    "path": "/api/folders/mis",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 964,
-   "hash": "eca040ded68054ae",
+   "line": 978,
+   "hash": "a7167645145a889c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7785,7 +7824,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7812,8 +7851,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a7167645145a889c"
    },
    "status": "partial"
   },
@@ -7823,8 +7863,8 @@
    "path": "/api/folders/reconcile",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 869,
-   "hash": "8d90526d91c6055a",
+   "line": 877,
+   "hash": "ab50db137b09ad6d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7834,7 +7874,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7861,8 +7901,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ab50db137b09ad6d"
    },
    "status": "partial"
   },
@@ -7872,8 +7913,8 @@
    "path": "/api/folders/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 578,
-   "hash": "6552b5c42fd20a68",
+   "line": 581,
+   "hash": "f389be46783c2688",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7883,7 +7924,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7910,8 +7951,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f389be46783c2688"
    },
    "status": "partial"
   },
@@ -7921,8 +7963,8 @@
    "path": "/api/folders/rules/vocabulary",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 557,
-   "hash": "b0493f4f41424aa1",
+   "line": 560,
+   "hash": "acd81ea945245e41",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7932,7 +7974,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7957,8 +7999,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "acd81ea945245e41"
    },
    "status": "partial"
   },
@@ -7968,8 +8011,8 @@
    "path": "/api/folders/worklist",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 788,
-   "hash": "7a858079df6a042f",
+   "line": 794,
+   "hash": "9cf17566745c9c6b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7979,7 +8022,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8007,8 +8050,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9cf17566745c9c6b"
    },
    "status": "partial"
   },
@@ -8194,8 +8238,8 @@
    "path": "/api/governance/ai-skills",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 544,
-   "hash": "b0c82d8b2d39e9e4",
+   "line": 564,
+   "hash": "cf1d3b18bbcc525b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8205,7 +8249,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8231,8 +8275,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cf1d3b18bbcc525b"
    },
    "status": "partial"
   },
@@ -8242,8 +8287,8 @@
    "path": "/api/governance/ai-usage",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 533,
-   "hash": "1e1bdd8cdcae3e67",
+   "line": 550,
+   "hash": "328373386394ebd9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8253,7 +8298,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8279,8 +8324,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "328373386394ebd9"
    },
    "status": "partial"
   },
@@ -8340,8 +8386,8 @@
    "path": "/api/governance/commerce-standards",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 367,
-   "hash": "0aaf1f689ae49852",
+   "line": 375,
+   "hash": "4345a64878ef69f5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8351,7 +8397,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8377,8 +8423,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4345a64878ef69f5"
    },
    "status": "partial"
   },
@@ -8388,8 +8435,8 @@
    "path": "/api/governance/country-setup",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 486,
-   "hash": "18582422f82c3bdc",
+   "line": 500,
+   "hash": "334f5920ce6e77df",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8399,7 +8446,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8425,8 +8472,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "334f5920ce6e77df"
    },
    "status": "partial"
   },
@@ -8487,8 +8535,8 @@
    "path": "/api/governance/instruments",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 349,
-   "hash": "d244b26bfe0c0b8a",
+   "line": 355,
+   "hash": "0bce9d98503ac909",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8498,7 +8546,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8525,8 +8573,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0bce9d98503ac909"
    },
    "status": "partial"
   },
@@ -8536,8 +8585,8 @@
    "path": "/api/governance/journey",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 358,
-   "hash": "08fbf085b396a9e2",
+   "line": 365,
+   "hash": "31b9ee010d1c6425",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8547,7 +8596,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8574,8 +8623,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "31b9ee010d1c6425"
    },
    "status": "partial"
   },
@@ -8585,8 +8635,8 @@
    "path": "/api/governance/lanes",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 325,
-   "hash": "3310dfb380b7c221",
+   "line": 327,
+   "hash": "ed18220df1d5093b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8596,7 +8646,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8623,8 +8673,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ed18220df1d5093b"
    },
    "status": "partial"
   },
@@ -8634,8 +8685,8 @@
    "path": "/api/governance/profile",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 376,
-   "hash": "d04fb533f89a204e",
+   "line": 385,
+   "hash": "094e8e3e410dcf65",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8645,7 +8696,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8671,8 +8722,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "094e8e3e410dcf65"
    },
    "status": "partial"
   },
@@ -8682,8 +8734,8 @@
    "path": "/api/governance/profile/path",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 466,
-   "hash": "a542d42280180810",
+   "line": 479,
+   "hash": "16ad5c28a4f1437c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8693,7 +8745,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8719,8 +8771,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "16ad5c28a4f1437c"
    },
    "status": "partial"
   },
@@ -8730,8 +8783,8 @@
    "path": "/api/governance/profile/readiness",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 457,
-   "hash": "77a914488cef2198",
+   "line": 469,
+   "hash": "f5ab03811ab83248",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8741,7 +8794,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8767,8 +8820,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f5ab03811ab83248"
    },
    "status": "partial"
   },
@@ -8779,7 +8833,7 @@
    "owner_area": "governance",
    "file": "routes/governance.js",
    "line": 309,
-   "hash": "1dba72b3868b7cc6",
+   "hash": "bf302810e657e9d2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8789,7 +8843,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8816,8 +8870,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bf302810e657e9d2"
    },
    "status": "partial"
   },
@@ -8827,8 +8882,8 @@
    "path": "/api/governance/readiness/:bridge_id",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 555,
-   "hash": "cdf5309687282fde",
+   "line": 575,
+   "hash": "3affc6e3b068915d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8838,7 +8893,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8866,8 +8921,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3affc6e3b068915d"
    },
    "status": "partial"
   },
@@ -8927,7 +8983,7 @@
    "path": "/api/governance/supplier-acceptance/:handle",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 704,
+   "line": 725,
    "hash": "a6eb16e63a852605",
    "columns": {
     "schema_in": true,
@@ -8977,8 +9033,8 @@
    "path": "/api/governance/track-record",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 338,
-   "hash": "477470278411e319",
+   "line": 341,
+   "hash": "c62ac0e212831a25",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8988,7 +9044,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9014,8 +9070,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c62ac0e212831a25"
    },
    "status": "partial"
   },
@@ -9025,8 +9082,8 @@
    "path": "/api/governance/vault-schema",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 409,
-   "hash": "eb686d966ba618aa",
+   "line": 421,
+   "hash": "4f285b6f37f32fe8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9036,7 +9093,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9062,8 +9119,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4f285b6f37f32fe8"
    },
    "status": "partial"
   },
@@ -9117,8 +9175,8 @@
    "path": "/api/integrations/catalogue",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 360,
-   "hash": "ea38f893d73af3f7",
+   "line": 362,
+   "hash": "4f975cefee8013c8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9128,7 +9186,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9153,8 +9211,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4f975cefee8013c8"
    },
    "status": "partial"
   },
@@ -9164,7 +9223,7 @@
    "path": "/api/integrations/docs/:id",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 273,
+   "line": 275,
    "hash": "597a2e449ca230ab",
    "columns": {
     "schema_in": true,
@@ -9212,7 +9271,7 @@
    "path": "/api/integrations/download/:id",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 379,
+   "line": 380,
    "hash": "966e1a6d5ef10766",
    "columns": {
     "schema_in": true,
@@ -9263,7 +9322,7 @@
    "owner_area": "integrations",
    "file": "routes/integrations.js",
    "line": 249,
-   "hash": "90cec884ead1b7b2",
+   "hash": "833e8fa6a4263243",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9273,7 +9332,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9299,8 +9358,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "833e8fa6a4263243"
    },
    "status": "partial"
   },
@@ -9310,7 +9370,7 @@
    "path": "/api/integrations/kit/*",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 256,
+   "line": 258,
    "hash": "9f494cd2f4297967",
    "columns": {
     "schema_in": true,
@@ -9360,7 +9420,7 @@
    "owner_area": "integrations",
    "file": "routes/integrations.js",
    "line": 978,
-   "hash": "1ea9c2e0ff3af8e9",
+   "hash": "621e2f2f391396f3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9370,7 +9430,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9396,8 +9456,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "621e2f2f391396f3"
    },
    "status": "partial"
   },
@@ -9407,8 +9468,8 @@
    "path": "/api/integrations/reconcile",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 827,
-   "hash": "9389a318048c28b3",
+   "line": 830,
+   "hash": "457ba6a1ba37fd28",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9418,7 +9479,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9445,8 +9506,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "457ba6a1ba37fd28"
    },
    "status": "partial"
   },
@@ -9456,8 +9518,8 @@
    "path": "/api/integrations/status",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 714,
-   "hash": "c7eb7598ddf2d768",
+   "line": 715,
+   "hash": "70de3a5a5b1f6993",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9467,7 +9529,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9494,8 +9556,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "70de3a5a5b1f6993"
    },
    "status": "partial"
   },
@@ -9505,8 +9568,8 @@
    "path": "/api/integrations/stock/:handle",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 953,
-   "hash": "6d484ddc5697721a",
+   "line": 956,
+   "hash": "af4a542c64bc4085",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9516,7 +9579,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9542,8 +9605,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "af4a542c64bc4085"
    },
    "status": "partial"
   },
@@ -9553,8 +9617,8 @@
    "path": "/api/integrations/streams",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 745,
-   "hash": "ea3c318db486649e",
+   "line": 748,
+   "hash": "f97d3783abe3f0d1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9564,7 +9628,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9590,8 +9654,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f97d3783abe3f0d1"
    },
    "status": "partial"
   },
@@ -10610,8 +10675,8 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 641,
-   "hash": "091f1ce75402d338",
+   "line": 666,
+   "hash": "a85c20451df4101f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10621,7 +10686,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10648,8 +10713,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a85c20451df4101f"
    },
    "status": "partial"
   },
@@ -10659,7 +10725,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1535,
+   "line": 1561,
    "hash": "f27ee6ea29d22689",
    "columns": {
     "schema_in": true,
@@ -10709,8 +10775,8 @@
    "path": "/api/products/:id/versions",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1885,
-   "hash": "6bc46a7033f4102a",
+   "line": 1911,
+   "hash": "80271132220845aa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10720,7 +10786,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10749,8 +10815,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "80271132220845aa"
    },
    "status": "partial"
   },
@@ -10760,7 +10827,7 @@
    "path": "/api/products/export.csv",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1000,
+   "line": 1025,
    "hash": "e6c365a0051bb1fc",
    "columns": {
     "schema_in": true,
@@ -10808,8 +10875,8 @@
    "path": "/api/products/lists",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2000,
-   "hash": "5d9fd08ccb9f8f04",
+   "line": 2026,
+   "hash": "53042587c8e14b98",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10819,7 +10886,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10845,8 +10912,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "53042587c8e14b98"
    },
    "status": "partial"
   },
@@ -10856,7 +10924,7 @@
    "path": "/api/products/media/:item_id/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1744,
+   "line": 1770,
    "hash": "37dfa7e57774ac5a",
    "columns": {
     "schema_in": true,
@@ -10905,8 +10973,8 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1331,
-   "hash": "7fd15416d5433865",
+   "line": 1356,
+   "hash": "63089576d01de346",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10916,7 +10984,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10943,8 +11011,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "63089576d01de346"
    },
    "status": "partial"
   },
@@ -10954,7 +11023,7 @@
    "path": "/api/products/template",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1029,
+   "line": 1054,
    "hash": "4fa0397692601b3c",
    "columns": {
     "schema_in": true,
@@ -11002,7 +11071,7 @@
    "path": "/api/products/workbook.xlsx",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 929,
+   "line": 954,
    "hash": "f926495a5d767afd",
    "columns": {
     "schema_in": true,
@@ -12042,8 +12111,8 @@
    "path": "/api/testing/cases",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 396,
-   "hash": "6fec38c6ae1b8d86",
+   "line": 403,
+   "hash": "b1e69d0f109c9b3c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12053,7 +12122,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12080,8 +12149,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b1e69d0f109c9b3c"
    },
    "status": "partial"
   },
@@ -12091,7 +12161,7 @@
    "path": "/api/testing/cases/gherkin",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1596,
+   "line": 1600,
    "hash": "0908d66a7eb18f0d",
    "columns": {
     "schema_in": true,
@@ -12140,8 +12210,8 @@
    "path": "/api/testing/changes",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3770,
-   "hash": "df3837ba95f851ec",
+   "line": 3774,
+   "hash": "8cf4e576115ef2fb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12151,7 +12221,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12178,8 +12248,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8cf4e576115ef2fb"
    },
    "status": "partial"
   },
@@ -12189,8 +12260,8 @@
    "path": "/api/testing/cmdb",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1018,
-   "hash": "83493160b13a48fb",
+   "line": 1025,
+   "hash": "a02a979153be7498",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12200,7 +12271,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12227,8 +12298,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a02a979153be7498"
    },
    "status": "partial"
   },
@@ -12238,7 +12310,7 @@
    "path": "/api/testing/cmdb/:ci",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1042,
+   "line": 1049,
    "hash": "50f8b61c79dfa702",
    "columns": {
     "schema_in": true,
@@ -12288,8 +12360,8 @@
    "path": "/api/testing/coverage",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2677,
-   "hash": "8a8dcce6296d4d12",
+   "line": 2681,
+   "hash": "230e964186f28e92",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12299,7 +12371,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12326,8 +12398,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "230e964186f28e92"
    },
    "status": "partial"
   },
@@ -12337,8 +12410,8 @@
    "path": "/api/testing/engine",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 879,
-   "hash": "d396c9bde81d33c1",
+   "line": 886,
+   "hash": "ff6c09906ff23d81",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12348,7 +12421,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12374,8 +12447,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ff6c09906ff23d81"
    },
    "status": "partial"
   },
@@ -12385,8 +12459,8 @@
    "path": "/api/testing/incidents",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2311,
-   "hash": "27bd76005f7f46d4",
+   "line": 2315,
+   "hash": "648b3631d4dd9f78",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12396,7 +12470,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12423,8 +12497,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "648b3631d4dd9f78"
    },
    "status": "partial"
   },
@@ -12434,8 +12509,8 @@
    "path": "/api/testing/releases",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 4017,
-   "hash": "2fc145c747b85d12",
+   "line": 4021,
+   "hash": "52497bb11fd4f7f5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12445,7 +12520,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12472,8 +12547,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "52497bb11fd4f7f5"
    },
    "status": "partial"
   },
@@ -12483,8 +12559,8 @@
    "path": "/api/testing/reliability",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3496,
-   "hash": "b772e23e54f032b9",
+   "line": 3500,
+   "hash": "4765a5e2b46043d7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12494,7 +12570,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12521,8 +12597,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4765a5e2b46043d7"
    },
    "status": "partial"
   },
@@ -12532,8 +12609,8 @@
    "path": "/api/testing/report",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2861,
-   "hash": "57617b1362a2285d",
+   "line": 2865,
+   "hash": "01e844b4a974f6fb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12543,7 +12620,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12570,8 +12647,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "01e844b4a974f6fb"
    },
    "status": "partial"
   },
@@ -12581,8 +12659,8 @@
    "path": "/api/testing/requirements",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1959,
-   "hash": "4a84a0de5d06e7cd",
+   "line": 1963,
+   "hash": "e85095280e6bcaf9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12592,7 +12670,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12619,8 +12697,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e85095280e6bcaf9"
    },
    "status": "partial"
   },
@@ -12630,8 +12709,8 @@
    "path": "/api/testing/results",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1375,
-   "hash": "eb1544842e78b304",
+   "line": 1382,
+   "hash": "7d1d8b9790744061",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12641,7 +12720,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12668,8 +12747,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7d1d8b9790744061"
    },
    "status": "partial"
   },
@@ -12679,8 +12759,8 @@
    "path": "/api/testing/runs",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1432,
-   "hash": "ec8741453a7f20fd",
+   "line": 1434,
+   "hash": "63236bc69e2bac66",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12690,7 +12770,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12717,8 +12797,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "63236bc69e2bac66"
    },
    "status": "partial"
   },
@@ -12728,8 +12809,8 @@
    "path": "/api/testing/stale",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2616,
-   "hash": "94116a8fd4c15f2a",
+   "line": 2620,
+   "hash": "f0002c0f1c3087f3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12739,7 +12820,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12765,8 +12846,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f0002c0f1c3087f3"
    },
    "status": "partial"
   },
@@ -12776,8 +12858,8 @@
    "path": "/api/testing/trace",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 321,
-   "hash": "649291ebb5b1c796",
+   "line": 326,
+   "hash": "4f251bf1eda67e5c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12787,7 +12869,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12813,8 +12895,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4f251bf1eda67e5c"
    },
    "status": "partial"
   },
@@ -12824,8 +12907,8 @@
    "path": "/api/testing/vocabulary",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 331,
-   "hash": "99e580bfaa60fa97",
+   "line": 338,
+   "hash": "0b7aa4bfcc5d0706",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12835,7 +12918,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12857,8 +12940,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0b7aa4bfcc5d0706"
    },
    "status": "partial"
   },
@@ -12868,8 +12952,8 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2919,
-   "hash": "3d6b2fc666d0eb0a",
+   "line": 2928,
+   "hash": "1945c21369b18d68",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12879,7 +12963,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12906,8 +12990,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1945c21369b18d68"
    },
    "status": "partial"
   },
@@ -12917,8 +13002,8 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2818,
-   "hash": "d10e6a6e1d2b604c",
+   "line": 2826,
+   "hash": "5cf00422dcf7810f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12928,7 +13013,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12955,8 +13040,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "5cf00422dcf7810f"
    },
    "status": "partial"
   },
@@ -12967,7 +13053,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1471,
-   "hash": "2076c6a23b42055a",
+   "hash": "73bccfc6825b5345",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -12977,7 +13063,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13004,8 +13090,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "73bccfc6825b5345"
    },
    "status": "partial"
   },
@@ -13015,7 +13102,7 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3349,
+   "line": 3354,
    "hash": "4a422f34f38b13a0",
    "columns": {
     "schema_in": true,
@@ -13065,8 +13152,8 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3055,
-   "hash": "be0d9bf2e28e212b",
+   "line": 3064,
+   "hash": "20024d37f920395f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13076,7 +13163,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13103,8 +13190,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "20024d37f920395f"
    },
    "status": "partial"
   },
@@ -13115,7 +13203,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1480,
-   "hash": "35f7ecacff13de4d",
+   "hash": "be24ae66894afb1b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13125,7 +13213,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13152,8 +13240,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "be24ae66894afb1b"
    },
    "status": "partial"
   },
@@ -13164,7 +13253,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1518,
-   "hash": "58978b2c96355943",
+   "hash": "0bcf0daa6041ee3f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13174,7 +13263,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13201,8 +13290,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0bcf0daa6041ee3f"
    },
    "status": "partial"
   },
@@ -13213,7 +13303,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1562,
-   "hash": "476b78ae0d50a3d6",
+   "hash": "e26cae6b0b11294e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13223,7 +13313,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13250,8 +13340,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e26cae6b0b11294e"
    },
    "status": "partial"
   },
@@ -13311,7 +13402,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1953,
+   "line": 1960,
    "hash": "e51972ce8a02f1cf",
    "columns": {
     "schema_in": true,
@@ -13361,8 +13452,8 @@
    "path": "/api/till/screens",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2261,
-   "hash": "fee1ffe46e308ce3",
+   "line": 2268,
+   "hash": "d718fc97d7bce5b7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13372,7 +13463,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13399,8 +13490,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d718fc97d7bce5b7"
    },
    "status": "partial"
   },
@@ -13411,7 +13503,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 186,
-   "hash": "5aeb941bcee2b833",
+   "hash": "ac32c7133a65c697",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13421,7 +13513,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13460,8 +13552,8 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2647,
-   "hash": "879aa38ccc49a05e",
+   "line": 2654,
+   "hash": "65d59798e49ce45d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13471,7 +13563,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13511,8 +13603,8 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2884,
-   "hash": "2da4e820d2a1ee15",
+   "line": 2892,
+   "hash": "6cd0bd3be7ba6c1f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13522,7 +13614,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13550,8 +13642,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6cd0bd3be7ba6c1f"
    },
    "status": "partial"
   },
@@ -13561,8 +13654,8 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3026,
-   "hash": "3699b1c90b1b4388",
+   "line": 3035,
+   "hash": "1c7e8c1b00bc51dd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13572,7 +13665,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13599,8 +13692,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1c7e8c1b00bc51dd"
    },
    "status": "partial"
   },
@@ -13610,8 +13704,8 @@
    "path": "/api/till/verify",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2420,
-   "hash": "048543cabfe017b6",
+   "line": 2427,
+   "hash": "240f5759fbcaeb96",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13621,7 +13715,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13648,8 +13742,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "240f5759fbcaeb96"
    },
    "status": "partial"
   },
@@ -13660,7 +13755,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1627,
-   "hash": "16793d611dc5c4c7",
+   "hash": "bc39dfecdf201d9b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13670,7 +13765,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13698,8 +13793,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bc39dfecdf201d9b"
    },
    "status": "partial"
   },
@@ -13996,7 +14092,7 @@
    "path": "/api/books/payments/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1331,
+   "line": 1334,
    "hash": "c2056588c3d995f4",
    "columns": {
     "schema_in": true,
@@ -14050,7 +14146,7 @@
    "path": "/api/books/recurring/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2267,
+   "line": 2272,
    "hash": "0ce7c534396ee714",
    "columns": {
     "schema_in": true,
@@ -14240,7 +14336,7 @@
    "path": "/api/crm/followups/:id",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 400,
+   "line": 406,
    "hash": "e01d0a861a4d98d1",
    "columns": {
     "schema_in": true,
@@ -14291,7 +14387,7 @@
    "path": "/api/entities/:id/erase",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1273,
+   "line": 1279,
    "hash": "e0c040a82e4ebfc4",
    "columns": {
     "schema_in": true,
@@ -14342,7 +14438,7 @@
    "path": "/api/entities/me/exposure",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 860,
+   "line": 866,
    "hash": "7d19b7065fef8cc8",
    "columns": {
     "schema_in": true,
@@ -14391,7 +14487,7 @@
    "path": "/api/entities/me/locale",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 900,
+   "line": 906,
    "hash": "e55ea05cc2141a4a",
    "columns": {
     "schema_in": true,
@@ -14440,7 +14536,7 @@
    "path": "/api/entities/me/prefs/:kind",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 854,
+   "line": 860,
    "hash": "3a7c9f99a608bfbf",
    "columns": {
     "schema_in": true,
@@ -14490,7 +14586,7 @@
    "path": "/api/entities/policy",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 299,
+   "line": 491,
    "hash": "e190a37baf2cd8ee",
    "columns": {
     "schema_in": true,
@@ -14540,7 +14636,7 @@
    "path": "/api/entities/profile",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 952,
+   "line": 958,
    "hash": "21b4715aa77e270e",
    "columns": {
     "schema_in": true,
@@ -14591,7 +14687,7 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 253,
+   "line": 256,
    "hash": "8db729f039adb720",
    "columns": {
     "schema_in": true,
@@ -14642,7 +14738,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 530,
+   "line": 533,
    "hash": "b441eb5a465334ce",
    "columns": {
     "schema_in": true,
@@ -14692,7 +14788,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1469,
+   "line": 1495,
    "hash": "2cb19f337d86ef8c",
    "columns": {
     "schema_in": true,
@@ -15096,7 +15192,7 @@
    "path": "/api/testing/incidents/:id",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2422,
+   "line": 2426,
    "hash": "3480947172cfd1a2",
    "columns": {
     "schema_in": true,
@@ -15146,7 +15242,7 @@
    "path": "/api/testing/requirements/:id",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2038,
+   "line": 2042,
    "hash": "2dfc6cd25cd9e02e",
    "columns": {
     "schema_in": true,
@@ -15728,7 +15824,7 @@
    "path": "/api/assist/gap",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 655,
+   "line": 659,
    "hash": "86ff97ac61ac9146",
    "columns": {
     "schema_in": true,
@@ -15776,7 +15872,7 @@
    "path": "/api/assist/publish",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 672,
+   "line": 676,
    "hash": "b2df6dc4cadf72b1",
    "columns": {
     "schema_in": true,
@@ -15827,7 +15923,7 @@
    "path": "/api/assist/resolve",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 734,
+   "line": 738,
    "hash": "9f02935797a24cbc",
    "columns": {
     "schema_in": true,
@@ -16227,7 +16323,7 @@
    "path": "/api/books/cheques/:id/status",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1567,
+   "line": 1570,
    "hash": "65ac31190460ccb4",
    "columns": {
     "schema_in": true,
@@ -16330,7 +16426,7 @@
    "path": "/api/books/compare/preflight",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1888,
+   "line": 1893,
    "hash": "54621b1fd79e80be",
    "columns": {
     "schema_in": true,
@@ -16381,7 +16477,7 @@
    "path": "/api/books/compare/snapshots",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1904,
+   "line": 1909,
    "hash": "f5ed9d633f115e0c",
    "columns": {
     "schema_in": true,
@@ -16585,7 +16681,7 @@
    "path": "/api/books/entries",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1644,
+   "line": 1648,
    "hash": "1564297b273ba204",
    "columns": {
     "schema_in": true,
@@ -16636,7 +16732,7 @@
    "path": "/api/books/entries/:id/reverse",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1671,
+   "line": 1675,
    "hash": "35fbf3eb40416780",
    "columns": {
     "schema_in": true,
@@ -16688,7 +16784,7 @@
    "path": "/api/books/events",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1634,
+   "line": 1638,
    "hash": "494300b4ee1d7346",
    "columns": {
     "schema_in": true,
@@ -16739,7 +16835,7 @@
    "path": "/api/books/fx-rates",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2410,
+   "line": 2419,
    "hash": "b05b0f0230066690",
    "columns": {
     "schema_in": true,
@@ -16790,7 +16886,7 @@
    "path": "/api/books/fx-rates/import",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2419,
+   "line": 2428,
    "hash": "9a3d5d69e21dbb3e",
    "columns": {
     "schema_in": true,
@@ -16841,7 +16937,7 @@
    "path": "/api/books/fx-revalue",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2463,
+   "line": 2472,
    "hash": "5a2ed58f14ceef80",
    "columns": {
     "schema_in": true,
@@ -17097,7 +17193,7 @@
    "path": "/api/books/move-in/import",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1815,
+   "line": 1819,
    "hash": "56d6afde4e313771",
    "columns": {
     "schema_in": true,
@@ -17149,7 +17245,7 @@
    "path": "/api/books/move-in/preflight",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1767,
+   "line": 1771,
    "hash": "679662015358c708",
    "columns": {
     "schema_in": true,
@@ -17200,7 +17296,7 @@
    "path": "/api/books/move-in/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1805,
+   "line": 1809,
    "hash": "5512554f5ed56bc5",
    "columns": {
     "schema_in": true,
@@ -17251,7 +17347,7 @@
    "path": "/api/books/opening",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1717,
+   "line": 1721,
    "hash": "ba9df7ea59ede6fb",
    "columns": {
     "schema_in": true,
@@ -17354,7 +17450,7 @@
    "path": "/api/books/packs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2153,
+   "line": 2158,
    "hash": "938b00be4063353f",
    "columns": {
     "schema_in": true,
@@ -17405,7 +17501,7 @@
    "path": "/api/books/packs/:id/ack",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2228,
+   "line": 2233,
    "hash": "35799e987b3f43e5",
    "columns": {
     "schema_in": true,
@@ -17457,7 +17553,7 @@
    "path": "/api/books/parties/:id/dispute",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1589,
+   "line": 1592,
    "hash": "0650e9adf6bc5fd4",
    "columns": {
     "schema_in": true,
@@ -17510,7 +17606,7 @@
    "path": "/api/books/payments",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1156,
+   "line": 1159,
    "hash": "f21314a0d066f27a",
    "columns": {
     "schema_in": true,
@@ -17561,7 +17657,7 @@
    "path": "/api/books/payments/:id/confirm",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1418,
+   "line": 1421,
    "hash": "8b20bd11a34618f4",
    "columns": {
     "schema_in": true,
@@ -17612,7 +17708,7 @@
    "path": "/api/books/payments/:id/propose",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1387,
+   "line": 1390,
    "hash": "222dd4edbbb114d2",
    "columns": {
     "schema_in": true,
@@ -17663,7 +17759,7 @@
    "path": "/api/books/payments/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1106,
+   "line": 1109,
    "hash": "03344b8d3767b3e9",
    "columns": {
     "schema_in": true,
@@ -17714,7 +17810,7 @@
    "path": "/api/books/periods/:fy/:p/:act",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2055,
+   "line": 2060,
    "hash": "846470aee92b23d6",
    "columns": {
     "schema_in": true,
@@ -17765,7 +17861,7 @@
    "path": "/api/books/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1626,
+   "line": 1630,
    "hash": "5642f28d53e53ef9",
    "columns": {
     "schema_in": true,
@@ -17816,7 +17912,7 @@
    "path": "/api/books/recurring",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2259,
+   "line": 2264,
    "hash": "ea64835563d82a93",
    "columns": {
     "schema_in": true,
@@ -17867,7 +17963,7 @@
    "path": "/api/books/recurring/:id/post",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2285,
+   "line": 2290,
    "hash": "e86f80702fc4ce0e",
    "columns": {
     "schema_in": true,
@@ -17918,7 +18014,7 @@
    "path": "/api/books/recurring/:id/skip",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2293,
+   "line": 2298,
    "hash": "592300a405e4e0eb",
    "columns": {
     "schema_in": true,
@@ -18072,7 +18168,7 @@
    "path": "/api/books/write-off",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1684,
+   "line": 1688,
    "hash": "0eba96facf73332e",
    "columns": {
     "schema_in": true,
@@ -18124,7 +18220,7 @@
    "path": "/api/books/year/:fy/close",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2068,
+   "line": 2073,
    "hash": "f6198cb5a768e48f",
    "columns": {
     "schema_in": true,
@@ -19227,8 +19323,8 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4285,
-   "hash": "3ea8ef89441f8fd5",
+   "line": 4298,
+   "hash": "48d4a019e018499b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19279,7 +19375,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6119,
+   "line": 6136,
    "hash": "bb57518baa5d6aee",
    "columns": {
     "schema_in": true,
@@ -19329,8 +19425,8 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4230,
-   "hash": "108df111e08d1b0d",
+   "line": 4244,
+   "hash": "3c3e1c899f08d98e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19380,7 +19476,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4633,
+   "line": 4646,
    "hash": "f1261716ab50b218",
    "columns": {
     "schema_in": true,
@@ -19431,7 +19527,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3692,
+   "line": 3698,
    "hash": "542ce6681b492b26",
    "columns": {
     "schema_in": true,
@@ -19482,8 +19578,8 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4039,
-   "hash": "7c6fe581bbb94181",
+   "line": 4053,
+   "hash": "6f78c4e8b1574ad3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19521,8 +19617,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6f78c4e8b1574ad3"
    },
    "status": "partial"
   },
@@ -19532,7 +19629,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5367,
+   "line": 5380,
    "hash": "b751da3f4c8f8917",
    "columns": {
     "schema_in": true,
@@ -19583,7 +19680,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5105,
+   "line": 5118,
    "hash": "caeca2235a33877a",
    "columns": {
     "schema_in": true,
@@ -19634,8 +19731,8 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4540,
-   "hash": "e01c8002cbcabc9c",
+   "line": 4552,
+   "hash": "d593da94e87ba876",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19674,8 +19771,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c69b9c671399865f"
    },
    "status": "partial"
   },
@@ -19685,7 +19783,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3916,
+   "line": 3930,
    "hash": "659c6ddb81952ef4",
    "columns": {
     "schema_in": true,
@@ -19735,7 +19833,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3972,
+   "line": 3986,
    "hash": "91cf212eca7f8069",
    "columns": {
     "schema_in": true,
@@ -19785,7 +19883,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3991,
+   "line": 4005,
    "hash": "1a2adac71f1176a0",
    "columns": {
     "schema_in": true,
@@ -19835,7 +19933,7 @@
    "path": "/api/chits/:chit_id/reprice",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3656,
+   "line": 3662,
    "hash": "ef6cdb6ac7ae11aa",
    "columns": {
     "schema_in": true,
@@ -19886,7 +19984,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6198,
+   "line": 6215,
    "hash": "bff670d16c1973fc",
    "columns": {
     "schema_in": true,
@@ -19936,7 +20034,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6177,
+   "line": 6194,
    "hash": "53214e1f816dbb5d",
    "columns": {
     "schema_in": true,
@@ -19986,7 +20084,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6159,
+   "line": 6176,
    "hash": "cc6a9bccb319682e",
    "columns": {
     "schema_in": true,
@@ -20036,7 +20134,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6429,
+   "line": 6446,
    "hash": "a5ce4d89eefc0a51",
    "columns": {
     "schema_in": true,
@@ -20085,7 +20183,7 @@
    "path": "/api/chits/register/entries/:raida_id/accept",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3865,
+   "line": 3877,
    "hash": "f38f901b020ba047",
    "columns": {
     "schema_in": true,
@@ -20135,7 +20233,7 @@
    "path": "/api/chits/register/entries/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3839,
+   "line": 3851,
    "hash": "e30bfd0747fe6ca0",
    "columns": {
     "schema_in": true,
@@ -20185,7 +20283,7 @@
    "path": "/api/chits/register/entries/:raida_id/revise",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3856,
+   "line": 3868,
    "hash": "cdd19d12dfb65e3a",
    "columns": {
     "schema_in": true,
@@ -20235,7 +20333,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3760,
+   "line": 3769,
    "hash": "91ef772a2c9c80d6",
    "columns": {
     "schema_in": true,
@@ -20284,7 +20382,7 @@
    "path": "/api/chits/register/subjects/:subject_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3779,
+   "line": 3788,
    "hash": "57091b17e2671ef3",
    "columns": {
     "schema_in": true,
@@ -20334,7 +20432,7 @@
    "path": "/api/chits/register/subjects/:subject_id/entries",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3816,
+   "line": 3828,
    "hash": "2f000d4fac8318c9",
    "columns": {
     "schema_in": true,
@@ -20384,7 +20482,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3796,
+   "line": 3808,
    "hash": "7783fd2adbe4f1d4",
    "columns": {
     "schema_in": true,
@@ -20434,7 +20532,7 @@
    "owner_area": "chits",
    "file": "routes/chits.js",
    "line": 349,
-   "hash": "0deba8ed2fed4a3e",
+   "hash": "8f63a5b5b1666c92",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -20472,8 +20570,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8f63a5b5b1666c92"
    },
    "status": "partial"
   },
@@ -21173,7 +21272,7 @@
    "path": "/api/crm/followups",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 384,
+   "line": 390,
    "hash": "dc7dfb64216aa0f1",
    "columns": {
     "schema_in": true,
@@ -21223,7 +21322,7 @@
    "path": "/api/crm/groups",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 678,
+   "line": 689,
    "hash": "7adbe776b050e48e",
    "columns": {
     "schema_in": true,
@@ -21273,7 +21372,7 @@
    "path": "/api/crm/leads",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 442,
+   "line": 448,
    "hash": "9141c846d5e2fb1a",
    "columns": {
     "schema_in": true,
@@ -21323,7 +21422,7 @@
    "path": "/api/crm/leads/import",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 513,
+   "line": 520,
    "hash": "c0c22340d0b000d9",
    "columns": {
     "schema_in": true,
@@ -21373,7 +21472,7 @@
    "path": "/api/crm/parties/:id/contact-prefs",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 617,
+   "line": 625,
    "hash": "ecde3a9059d69190",
    "columns": {
     "schema_in": true,
@@ -21424,7 +21523,7 @@
    "path": "/api/crm/parties/:id/interactions",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 350,
+   "line": 354,
    "hash": "d4f89601249d1679",
    "columns": {
     "schema_in": true,
@@ -21475,7 +21574,7 @@
    "path": "/api/crm/parties/:id/outcome",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 496,
+   "line": 503,
    "hash": "68c43ef1411b1293",
    "columns": {
     "schema_in": true,
@@ -21526,7 +21625,7 @@
    "path": "/api/crm/parties/:id/stage",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 526,
+   "line": 533,
    "hash": "f65b2d9f487257f3",
    "columns": {
     "schema_in": true,
@@ -21577,7 +21676,7 @@
    "path": "/api/crm/privacy-requests",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 639,
+   "line": 648,
    "hash": "143f2fc0c8f269c8",
    "columns": {
     "schema_in": true,
@@ -21627,7 +21726,7 @@
    "path": "/api/crm/privacy-requests/:id/answer",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 653,
+   "line": 662,
    "hash": "573a81c87496219e",
    "columns": {
     "schema_in": true,
@@ -21678,7 +21777,7 @@
    "path": "/api/crm/segments/:key/send",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 698,
+   "line": 710,
    "hash": "e6d8b5df5f81521b",
    "columns": {
     "schema_in": true,
@@ -21729,7 +21828,7 @@
    "path": "/api/crm/walk-ins/add",
    "owner_area": "crm",
    "file": "routes/crm.js",
-   "line": 552,
+   "line": 559,
    "hash": "8b85518c2880e72e",
    "columns": {
     "schema_in": true,
@@ -22009,7 +22108,7 @@
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1713,
+   "line": 1719,
    "hash": "c303d29a52083779",
    "columns": {
     "schema_in": true,
@@ -22061,7 +22160,7 @@
    "path": "/api/entities/register",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 140,
+   "line": 330,
    "hash": "353129a910091984",
    "columns": {
     "schema_in": false,
@@ -22103,7 +22202,7 @@
    "path": "/api/entities/verify",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 141,
+   "line": 331,
    "hash": "cfc1e63a162440a5",
    "columns": {
     "schema_in": false,
@@ -22189,7 +22288,7 @@
    "path": "/api/folders",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 185,
+   "line": 188,
    "hash": "739c296671afce9d",
    "columns": {
     "schema_in": true,
@@ -22240,7 +22339,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 519,
+   "line": 522,
    "hash": "98c0c7c8280fbe49",
    "columns": {
     "schema_in": true,
@@ -22290,7 +22389,7 @@
    "path": "/api/folders/messages/:message_id/mark",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 767,
+   "line": 773,
    "hash": "e1e0553c2e47dfe8",
    "columns": {
     "schema_in": true,
@@ -22342,7 +22441,7 @@
    "path": "/api/folders/move",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 316,
+   "line": 319,
    "hash": "b7ed471d00dd49f2",
    "columns": {
     "schema_in": true,
@@ -22391,7 +22490,7 @@
    "path": "/api/folders/rules/preview",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 548,
+   "line": 551,
    "hash": "988b1ca9cc682a67",
    "columns": {
     "schema_in": true,
@@ -22616,7 +22715,7 @@
    "path": "/api/governance/ai-draft",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 521,
+   "line": 538,
    "hash": "4b745a67e7797e26",
    "columns": {
     "schema_in": true,
@@ -22716,7 +22815,7 @@
    "path": "/api/governance/compliance",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 595,
+   "line": 616,
    "hash": "d1a63445cf2a9a13",
    "columns": {
     "schema_in": true,
@@ -22971,7 +23070,7 @@
    "path": "/api/governance/supplier-acceptance",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 664,
+   "line": 685,
    "hash": "835801c10ee9bed7",
    "columns": {
     "schema_in": true,
@@ -23024,7 +23123,7 @@
    "path": "/api/governance/verify",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 617,
+   "line": 638,
    "hash": "2afabffc872728f3",
    "columns": {
     "schema_in": true,
@@ -23162,7 +23261,7 @@
    "path": "/api/integrations/:actor_id/approve",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 631,
+   "line": 632,
    "hash": "b0e5048704af15e9",
    "columns": {
     "schema_in": true,
@@ -23214,7 +23313,7 @@
    "path": "/api/integrations/ask/:handle/stock",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 932,
+   "line": 935,
    "hash": "2ef735f570ed04cc",
    "columns": {
     "schema_in": true,
@@ -23262,7 +23361,7 @@
    "path": "/api/integrations/books",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 668,
+   "line": 669,
    "hash": "afb388714ad3d9af",
    "columns": {
     "schema_in": true,
@@ -23313,7 +23412,7 @@
    "path": "/api/integrations/books/skip",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 795,
+   "line": 798,
    "hash": "918358dc8a020ca7",
    "columns": {
     "schema_in": true,
@@ -23364,7 +23463,7 @@
    "path": "/api/integrations/heartbeat",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 457,
+   "line": 458,
    "hash": "077cc43f3cef6bd0",
    "columns": {
     "schema_in": true,
@@ -23414,7 +23513,7 @@
    "path": "/api/integrations/profile",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 994,
+   "line": 1007,
    "hash": "144599f781125548",
    "columns": {
     "schema_in": true,
@@ -24791,7 +24890,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 395,
+   "line": 420,
    "hash": "4522908970c7bd15",
    "columns": {
     "schema_in": true,
@@ -24842,7 +24941,7 @@
    "path": "/api/products/:id/media",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1784,
+   "line": 1810,
    "hash": "c82f2c2dbbf7c486",
    "columns": {
     "schema_in": true,
@@ -24894,7 +24993,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1548,
+   "line": 1574,
    "hash": "6b487edc09786183",
    "columns": {
     "schema_in": true,
@@ -24947,7 +25046,7 @@
    "path": "/api/products/availability/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1594,
+   "line": 1620,
    "hash": "e22e7ba9374b3ef4",
    "columns": {
     "schema_in": true,
@@ -24996,7 +25095,7 @@
    "path": "/api/products/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 456,
+   "line": 481,
    "hash": "788b99d8d31e7593",
    "columns": {
     "schema_in": true,
@@ -25047,7 +25146,7 @@
    "path": "/api/products/bulk-update",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 596,
+   "line": 621,
    "hash": "c171de3ebf354cea",
    "columns": {
     "schema_in": true,
@@ -25098,7 +25197,7 @@
    "path": "/api/products/import",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1126,
+   "line": 1151,
    "hash": "ed75a55ba1d66a41",
    "columns": {
     "schema_in": true,
@@ -25151,7 +25250,7 @@
    "path": "/api/products/import/preflight",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1053,
+   "line": 1078,
    "hash": "4345c2ea3bad5916",
    "columns": {
     "schema_in": true,
@@ -25200,7 +25299,7 @@
    "path": "/api/products/lists/adopt",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2121,
+   "line": 2128,
    "hash": "17aa750372131c9d",
    "columns": {
     "schema_in": true,
@@ -25249,7 +25348,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1340,
+   "line": 1366,
    "hash": "ea8cd5d6b378f465",
    "columns": {
     "schema_in": true,
@@ -25298,7 +25397,7 @@
    "path": "/api/products/status/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 506,
+   "line": 531,
    "hash": "224a58ec6a2e8d00",
    "columns": {
     "schema_in": true,
@@ -27019,7 +27118,7 @@
    "path": "/api/testing/cases/close",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 253,
+   "line": 258,
    "hash": "4e74875485f17eb9",
    "columns": {
     "schema_in": true,
@@ -27070,7 +27169,7 @@
    "path": "/api/testing/cases/gherkin",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1653,
+   "line": 1657,
    "hash": "6583ed630724cd4b",
    "columns": {
     "schema_in": true,
@@ -27121,7 +27220,7 @@
    "path": "/api/testing/cases/import",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 828,
+   "line": 835,
    "hash": "a9dadacfbdb762ea",
    "columns": {
     "schema_in": true,
@@ -27171,7 +27270,7 @@
    "path": "/api/testing/cases/seed",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 891,
+   "line": 898,
    "hash": "239b5875d663cee9",
    "columns": {
     "schema_in": true,
@@ -27221,7 +27320,7 @@
    "path": "/api/testing/changes",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3690,
+   "line": 3694,
    "hash": "0f79eb9f4d94192f",
    "columns": {
     "schema_in": true,
@@ -27270,7 +27369,7 @@
    "path": "/api/testing/cmdb/seed",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1081,
+   "line": 1088,
    "hash": "6bdb38a77ed94dd0",
    "columns": {
     "schema_in": true,
@@ -27320,7 +27419,7 @@
    "path": "/api/testing/evidence",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2579,
+   "line": 2583,
    "hash": "705602827fafad63",
    "columns": {
     "schema_in": true,
@@ -27370,7 +27469,7 @@
    "path": "/api/testing/incidents",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 2177,
+   "line": 2181,
    "hash": "d49a5c301245b1f0",
    "columns": {
     "schema_in": true,
@@ -27419,7 +27518,7 @@
    "path": "/api/testing/releases",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 3835,
+   "line": 3839,
    "hash": "ba6cd824f790bfb4",
    "columns": {
     "schema_in": true,
@@ -27468,7 +27567,7 @@
    "path": "/api/testing/requirements",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1764,
+   "line": 1768,
    "hash": "db983a7a6b3109f6",
    "columns": {
     "schema_in": true,
@@ -27517,7 +27616,7 @@
    "path": "/api/testing/results",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1358,
+   "line": 1365,
    "hash": "b3371f3385d32089",
    "columns": {
     "schema_in": true,
@@ -27567,7 +27666,7 @@
    "path": "/api/testing/results/junit",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1527,
+   "line": 1531,
    "hash": "ce2ca4c32544593e",
    "columns": {
     "schema_in": true,
@@ -27617,7 +27716,7 @@
    "path": "/api/testing/trace",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 310,
+   "line": 315,
    "hash": "fc6370affdede9fd",
    "columns": {
     "schema_in": true,
@@ -27666,7 +27765,7 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3240,
+   "line": 3245,
    "hash": "1b393f3ac10694ac",
    "columns": {
     "schema_in": true,
@@ -27716,7 +27815,7 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2709,
+   "line": 2717,
    "hash": "0b022d0054a67cb1",
    "columns": {
     "schema_in": true,
@@ -27870,7 +27969,7 @@
    "path": "/api/till/enrol",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2162,
+   "line": 2169,
    "hash": "d3d29fb2332f13de",
    "columns": {
     "schema_in": true,
@@ -27971,8 +28070,8 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3283,
-   "hash": "93504ef849a926a2",
+   "line": 3288,
+   "hash": "80215b80dce49435",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -27982,7 +28081,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28070,8 +28169,8 @@
    "path": "/api/till/pair",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2109,
-   "hash": "b8944df3397c8a0b",
+   "line": 2116,
+   "hash": "f248c9eccb2db79f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28081,7 +28180,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28109,8 +28208,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f248c9eccb2db79f"
    },
    "status": "partial"
   },
@@ -28120,7 +28220,7 @@
    "path": "/api/till/pair/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2216,
+   "line": 2223,
    "hash": "62505b6631fc9613",
    "columns": {
     "schema_in": true,
@@ -28169,8 +28269,8 @@
    "path": "/api/till/price",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1798,
-   "hash": "3a149ca9b4b713e5",
+   "line": 1800,
+   "hash": "c87a981b142533cf",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28210,8 +28310,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c87a981b142533cf"
    },
    "status": "partial"
   },
@@ -28421,7 +28522,7 @@
    "path": "/api/till/rate",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1897,
+   "line": 1904,
    "hash": "dc5f3afec5d1eae1",
    "columns": {
     "schema_in": true,
@@ -28459,13 +28560,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reconcile",
@@ -28473,8 +28574,8 @@
    "path": "/api/till/reconcile",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2381,
-   "hash": "fe056ad1a25bb4e7",
+   "line": 2388,
+   "hash": "373c4c3a3167c3fe",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28484,7 +28585,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28512,8 +28613,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "373c4c3a3167c3fe"
    },
    "status": "partial"
   },
@@ -28523,7 +28625,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1988,
+   "line": 1995,
    "hash": "e0244e6670840cab",
    "columns": {
     "schema_in": true,
@@ -28574,7 +28676,7 @@
    "path": "/api/till/reward/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2044,
+   "line": 2051,
    "hash": "aa0eb6ceeead07c5",
    "columns": {
     "schema_in": true,
@@ -28625,7 +28727,7 @@
    "path": "/api/till/screens/rename",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2313,
+   "line": 2320,
    "hash": "035453d24223f376",
    "columns": {
     "schema_in": true,
@@ -28676,7 +28778,7 @@
    "path": "/api/till/screens/revoke",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2280,
+   "line": 2287,
    "hash": "a282304c2a83381b",
    "columns": {
     "schema_in": true,
@@ -28727,8 +28829,8 @@
    "path": "/api/till/shop",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2510,
-   "hash": "ecbd876fea2f9aed",
+   "line": 2517,
+   "hash": "7024338af49d4865",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28738,7 +28840,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28766,8 +28868,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7024338af49d4865"
    },
    "status": "partial"
   },
@@ -28778,7 +28881,7 @@
    "owner_area": "till",
    "file": "routes/till.js",
    "line": 1371,
-   "hash": "4f046894dfe93c93",
+   "hash": "c9212390a49efb45",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28788,7 +28891,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28816,8 +28919,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c9212390a49efb45"
    },
    "status": "partial"
   },
@@ -29028,7 +29132,7 @@
    "path": "/api/actors/:id/delegate",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1562,
+   "line": 1565,
    "hash": "3c22e829c4753516",
    "columns": {
     "schema_in": true,
@@ -29131,7 +29235,7 @@
    "path": "/api/actors/:id/tasks/route",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1666,
+   "line": 1669,
    "hash": "604e3e7a86fdc94f",
    "columns": {
     "schema_in": true,
@@ -29332,7 +29436,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1497,
+   "line": 1500,
    "hash": "85a8330db3f71f02",
    "columns": {
     "schema_in": true,
@@ -29382,7 +29486,7 @@
    "path": "/api/assist/catalogue-source",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 388,
+   "line": 390,
    "hash": "45850a50048a8d1f",
    "columns": {
     "schema_in": true,
@@ -29434,7 +29538,7 @@
    "path": "/api/assist/container",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 450,
+   "line": 452,
    "hash": "d5b388a9f6f07d0f",
    "columns": {
     "schema_in": true,
@@ -29486,7 +29590,7 @@
    "path": "/api/assist/region-override",
    "owner_area": "assist",
    "file": "routes/assist.js",
-   "line": 518,
+   "line": 520,
    "hash": "941db05fb558acda",
    "columns": {
     "schema_in": true,
@@ -29591,7 +29695,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5730,
+   "line": 5743,
    "hash": "c2325cbe73f259fc",
    "columns": {
     "schema_in": true,
@@ -29642,7 +29746,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6011,
+   "line": 6028,
    "hash": "59600f5511771cf4",
    "columns": {
     "schema_in": true,
@@ -29692,7 +29796,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6067,
+   "line": 6084,
    "hash": "bdcc6791026b87ae",
    "columns": {
     "schema_in": true,
@@ -29743,7 +29847,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6142,
+   "line": 6159,
    "hash": "63dac164e0864b45",
    "columns": {
     "schema_in": true,
@@ -29793,8 +29897,8 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4962,
-   "hash": "dbf1814d4f83fa55",
+   "line": 4975,
+   "hash": "bdc0ab6cc433cce6",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29832,8 +29936,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bdc0ab6cc433cce6"
    },
    "status": "partial"
   },
@@ -29843,7 +29948,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4029,
+   "line": 4043,
    "hash": "7ee86b115feec09f",
    "columns": {
     "schema_in": true,
@@ -29893,7 +29998,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6272,
+   "line": 6289,
    "hash": "66ea83dae3a68cd1",
    "columns": {
     "schema_in": true,
@@ -30038,7 +30143,7 @@
    "path": "/api/entities/populations/:code/desk",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1684,
+   "line": 1690,
    "hash": "bcdf0a12050562df",
    "columns": {
     "schema_in": true,
@@ -30090,7 +30195,7 @@
    "path": "/api/entities/routing",
    "owner_area": "entities",
    "file": "routes/entities.js",
-   "line": 1603,
+   "line": 1609,
    "hash": "32cc84a8d189bddd",
    "columns": {
     "schema_in": true,
@@ -30142,7 +30247,7 @@
    "path": "/api/folders/inventory/:code",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 148,
+   "line": 151,
    "hash": "abcd059525ec8d8b",
    "columns": {
     "schema_in": true,
@@ -30195,7 +30300,7 @@
    "path": "/api/governance/country-setup",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 495,
+   "line": 512,
    "hash": "478f1a3774a79414",
    "columns": {
     "schema_in": true,
@@ -30245,7 +30350,7 @@
    "path": "/api/governance/profile",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 389,
+   "line": 401,
    "hash": "c9b45512be118947",
    "columns": {
     "schema_in": true,
@@ -30295,7 +30400,7 @@
    "path": "/api/governance/profile/vault",
    "owner_area": "governance",
    "file": "routes/governance.js",
-   "line": 438,
+   "line": 450,
    "hash": "c0c431476199942f",
    "columns": {
     "schema_in": true,
@@ -30390,7 +30495,7 @@
    "path": "/api/integrations/streams",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 754,
+   "line": 757,
    "hash": "1d8791f0df7ece41",
    "columns": {
     "schema_in": true,
@@ -30535,7 +30640,7 @@
    "path": "/api/products/:id/availability",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1639,
+   "line": 1665,
    "hash": "61175630388e5785",
    "columns": {
     "schema_in": true,
@@ -30585,7 +30690,7 @@
    "path": "/api/products/:id/status",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1669,
+   "line": 1695,
    "hash": "19e06763d0d328ee",
    "columns": {
     "schema_in": true,
@@ -30723,7 +30828,7 @@
    "path": "/api/testing/cmdb/:ci",
    "owner_area": "testing",
    "file": "routes/testing.js",
-   "line": 1066,
+   "line": 1073,
    "hash": "74dcf5fb817fd6f9",
    "columns": {
     "schema_in": true,
