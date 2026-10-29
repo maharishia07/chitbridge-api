@@ -32,6 +32,12 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 delete process.env.TEST_BOARD_ENTITY;
+/* --capture / --compare replay the same answers byte for byte: the clock in milliseconds (a trace's `until`) and the random suffix of a minted reference (REQ-…, INC-…, CHG-…) are held still, so a difference is the code's and not the run's */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  Date.now = () => 1800000000000;
+}
 const MOUNT = '/api/testing';
 const OTHER_SHOP = '99999999-9999-4999-8999-999999999999';
 const STRANGER = { identity_id: OTHER_SHOP, identity_type: 'entity', display_name: 'Other shop' };
