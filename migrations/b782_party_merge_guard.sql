@@ -6,6 +6,7 @@
 -- WHY. The api check and the UPDATE are two statements; a second writer path (a script, the SQL editor, a future route) would skip the check and leave A->B and B->A, and both parties vanish from the list.
 -- WHAT. BEFORE INSERT OR UPDATE OF merged_into on customer_list and supplier_list: when merged_into is set, refuse it if (a) the row points at itself, (b) the target party is itself merged into
 --    another on either list of the same shop, or (c) other rows of the same shop already point at this row's party. The party id of a customer row is customer_identity_id, of a supplier row supplier_entity_id.
+-- COVERS: self, chain and loop only. That the target is a party on THIS shop's lists (404) stays in the app (checkMergeTarget). The function takes the app's per-shop advisory lock first.
 -- RLS: unchanged. The function is SECURITY INVOKER, so it sees only the calling shop's rows (rls_entity), which is exactly the scope of the check. No grants needed.
 
 CREATE OR REPLACE FUNCTION party_merge_guard() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -13,6 +14,8 @@ DECLARE
   me uuid;
 BEGIN
   IF NEW.merged_into IS NULL THEN RETURN NEW; END IF;
+  /* the same per-shop lock the app takes (lib/party-fields.js checkMergeTarget: 'merge:' + owner, owner = lower-case uuid text): two sessions under READ COMMITTED can no longer both pass the reads and leave A->B, B->A */
+  PERFORM pg_advisory_xact_lock(hashtext('merge:' || NEW.owner_entity_id::text));
   /* an IF, never a CASE: plpgsql resolves NEW.<column> while evaluating the expression, so a CASE that names a column the other table lacks
      fails with 'record "new" has no field ...' on every merge (found by CI's fresh-db build of PR 505, 29 Oct) */
   IF TG_TABLE_NAME = 'customer_list' THEN me := NEW.customer_identity_id; ELSE me := NEW.supplier_entity_id; END IF;

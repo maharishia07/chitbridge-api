@@ -21,6 +21,9 @@ ok('no CASE reads a NEW column (an IF branch per table instead)', !cases.some((c
 ok('the customer column is read only under the customer_list branch', /IF TG_TABLE_NAME = 'customer_list' THEN me := NEW\.customer_identity_id; ELSE me := NEW\.supplier_entity_id; END IF;/.test(fn));
 const outside = fn.replace(/IF TG_TABLE_NAME = 'customer_list'[\s\S]*?END IF;/, '');
 ok('NEW.customer_identity_id / NEW.supplier_entity_id are named nowhere else', !/NEW\.(customer_identity_id|supplier_entity_id)/.test(outside), outside.match(/NEW\.\w+/g).join(','));
+const app = fs.readFileSync(path.join(__dirname, '..', 'lib', 'party-fields.js'), 'utf8');
+ok('the function takes the per-shop lock first, with the key merge: + owner uuid text', /PERFORM pg_advisory_xact_lock\(hashtext\('merge:' \|\| NEW\.owner_entity_id::text\)\);/.test(fn) && fn.indexOf('pg_advisory_xact_lock') < fn.indexOf('EXISTS'));
+ok('the app takes the same key (merge: + lower-case owner)', /pg_advisory_xact_lock\(hashtext\(\$1\)\)', \['merge:' \+ String\(owner\)\.toLowerCase\(\)\]/.test(app));
 ok('it stays a DRAFT', /DRAFT — NOT RUN/.test(sql));
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exitCode = fail ? 1 : 0;
