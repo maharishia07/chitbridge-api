@@ -61,6 +61,13 @@ const stub = {
         return { rows: [{ installation_key: 'platform-0', ctp_endpoint: null,
                           hosted_locally: true, active: true }] };
       }
+      if (args[0] === 'twin.example') {
+        /* RAIL-140 (g): two rows, one domain (nothing unique stops it); the database answers in its own order */
+        const rows = [{ installation_key: 'z-retired', ctp_endpoint: 'https://old.twin/ctp', hosted_locally: false, active: false },
+                      { installation_key: 'a-current', ctp_endpoint: 'https://twin.example/ctp', hosted_locally: false, active: true }];
+        if (/ORDER BY active DESC, installation_key/i.test(sql)) rows.sort((x, y) => (y.active - x.active) || x.installation_key.localeCompare(y.installation_key));
+        return { rows };
+      }
       return { rows: [] };
     }
     if (/FROM identities/i.test(sql)) {
@@ -128,6 +135,13 @@ const stub = {
     const r = await A.resolveAddress(SAME + '@in.example');
     assert.strictEqual(r.local, true, r.why);
     assert.strictEqual(r.entity_id, OUR_ENTITY, 'a domain we host is still our namespace');
+    assert.strictEqual(r.domain, 'in.example', 'RAIL-140 (g): the domain the address named was dropped');
+  });
+
+  await okA('two installation rows with one domain answer the active one, every time (RAIL-140 g)', async () => {
+    const r = await A.resolveAddress(SAME + '@twin.example');
+    assert.strictEqual(r.ok, true, r.why);
+    assert.strictEqual(r.installation_key, 'a-current', 'answered by the order the rows happened to come back in');
   });
 
   await okA('a domain we do not deal with is refused, not dialled', async () => {
