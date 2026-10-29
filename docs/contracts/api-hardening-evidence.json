@@ -771,10 +771,26 @@
   "GET /api/forms": {
    "output_allowlist": true
   },
+  "GET /api/forms/:key": {
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/resolve": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/issue": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
   "GET /api/forms/instances/:id": {
    "foreign_id_404": true
   },
   "POST /api/forms/instances/:id/sign": {
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/service/:chit_id": {

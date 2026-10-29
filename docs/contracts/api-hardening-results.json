@@ -4228,8 +4228,7 @@
   },
   "GET /api/forms/:key": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -4238,12 +4237,10 @@
   },
   "POST /api/forms/:key/resolve": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -4252,12 +4249,10 @@
   },
   "POST /api/forms/:key/issue": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -4281,8 +4276,7 @@
   },
   "POST /api/forms/instances/:id/sign": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4294,16 +4288,14 @@
   },
   "POST /api/forms/instances/:id/attach": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 500"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/service/:chit_id": {

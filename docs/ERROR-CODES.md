@@ -133,6 +133,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FOLDER_IS_VIEW | 400 | Not a place for chits | That folder shows what its rule matches, so nothing can be moved into it. | Move the chit to a filing folder instead. | folders | 2026-10-22 |
 | FOLDER_NOT_MIGRATED | 503 | Folders update still to run | This part of folders is not ready on this server yet. | Try again after the next update. | folders | 2026-10-23 |
 | FOLDER_WRONG_SIDE | 400 | Folder on the other track | A Task folder holds chits that came to you; an Order folder holds chits you sent. | Pick a folder on the chit's own track. | folders | 2026-10-22 |
+| FORMS_ALREADY_SIGNED | 409 | Form already signed | This form is already signed. | Open it to see who signed it. | forms | 2026-10-23 |
+| FORMS_BAD_CONTEXT | 400 | Not a deal | That is not a deal. | Pick the deal from the list. | forms | 2026-10-23 |
+| FORMS_BAD_REQUEST | 400 | Form not done | The form could not be filled in or signed as asked. | Check what is missing, then try again. | forms | 2026-10-23 |
+| FORMS_NOT_FOUND | 404 | Form not found | We could not find that form. | Go back to the list of forms and pick again. | forms | 2026-10-23 |
+| FORMS_NOT_PARTICIPANT | 403 | Not on this chit | Your shop is not on that chit, so the form cannot be filed there. | Pick a chit your shop is on. | forms | 2026-10-23 |
+| FORMS_REFUSED | varies | Form refused | The form could not be done. | Try again, or ask the person who set it up. | forms | 2026-10-23 |
+| FORMS_STORE_MISSING | 503 | Forms not set up | Forms are not available here yet. | Ask the platform operator to set them up. | forms | 2026-10-23 |
+| FORM_NOT_READY | 400 | Form not ready | The form is missing some details it needs. | Fill in the fields listed, then try again. | forms | 2026-10-23 |
 | FX_RATE_MISSING | 422 | Exchange rate missing | There is no exchange rate for that day. | Add the rate for that day, then try again. | forms | 2026-10-22 |
 | FX_RATE_OF_DAY | varies | Fx rate of day | PENDING | - | forms | 2026-10-22 |
 | GOV_BAD_REQUEST | 400 | Needs one more answer | Something needed is missing. | Read the question shown and answer it. | governance | 2026-10-23 |

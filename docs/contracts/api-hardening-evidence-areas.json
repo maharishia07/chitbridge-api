@@ -234,6 +234,9 @@
   "GET /api/products/starter-columns": {
    "output_allowlist": true
   },
+  "GET /api/forms/instances/:id": {
+   "foreign_id_404": true
+  },
   "GET /api/repeat/:id": {
    "foreign_id_404": true
   },
@@ -356,6 +359,12 @@
    "foreign_id_404": true
   },
   "POST /api/crm/parties/:id/stage": {
+   "foreign_id_404": true
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "foreign_id_404": true
+  },
+  "POST /api/forms/instances/:id/sign": {
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/accept": {

@@ -41596,6 +41596,1112 @@
           }
         }
       ]
+    },
+    "GET /api/forms": {
+      "answers": [
+        {
+          "scenario": "list-forms-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "List forms failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "List forms failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "list-forms-library-throws",
+          "status": 500,
+          "body_keys": {
+            "error": "List forms failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "List forms failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "GET /api/forms/:key": {
+      "answers": [
+        {
+          "scenario": "bad-id",
+          "status": 404,
+          "body_keys": {
+            "error": "Get form failed",
+            "message": "Unknown form: nope"
+          },
+          "fixture": {
+            "error": "Get form failed",
+            "message": "Unknown form: nope"
+          }
+        },
+        {
+          "scenario": "form-unknown",
+          "status": 404,
+          "body_keys": {
+            "error": "Get form failed",
+            "message": "Unknown form: no-such-form"
+          },
+          "fixture": {
+            "error": "Get form failed",
+            "message": "Unknown form: no-such-form"
+          }
+        },
+        {
+          "scenario": "form-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Get form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Get form failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "GET /api/forms/instances/:id": {
+      "answers": [
+        {
+          "scenario": "viewer-asks",
+          "status": 404,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "stranger-asks",
+          "status": 404,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "bad-id",
+          "status": 404,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 404,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "instance-unknown",
+          "status": 404,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "instance-not-an-id",
+          "status": 500,
+          "body_keys": {
+            "error": "Get instance failed",
+            "code": "22P02",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "code": "22P02",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "instance-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "instance-library-throws",
+          "status": 500,
+          "body_keys": {
+            "error": "Get instance failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Get instance failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "GET /api/forms/instances/all": {
+      "answers": [
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "List instances failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "List instances failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "instances-bad-deal",
+          "status": 400,
+          "body_keys": {
+            "error": "List instances failed",
+            "code": "FORMS_BAD_CONTEXT",
+            "message": "Which deal? context_ref is the order's chit id."
+          },
+          "fixture": {
+            "error": "List instances failed",
+            "code": "FORMS_BAD_CONTEXT",
+            "message": "Which deal? context_ref is the order's chit id."
+          }
+        },
+        {
+          "scenario": "instances-deal-asked-twice",
+          "status": 400,
+          "body_keys": {
+            "error": "List instances failed",
+            "code": "FORMS_BAD_CONTEXT",
+            "message": "Which deal? context_ref is the order's chit id."
+          },
+          "fixture": {
+            "error": "List instances failed",
+            "code": "FORMS_BAD_CONTEXT",
+            "message": "Which deal? context_ref is the order's chit id."
+          }
+        },
+        {
+          "scenario": "instances-read-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "List instances failed",
+            "code": "53300",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "List instances failed",
+            "code": "53300",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "instances-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "List instances failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "List instances failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "instances-library-throws",
+          "status": 500,
+          "body_keys": {
+            "error": "List instances failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "List instances failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "POST /api/forms/:key/issue": {
+      "answers": [
+        {
+          "scenario": "viewer-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Not permitted",
+            "message": "Your access is view-only. You can read this chit but not change it.",
+            "code": "read_only",
+            "why": "read_only",
+            "type": "https://chitbridge.com/problems/read_only",
+            "title": "Read only",
+            "status": 403,
+            "detail": "Your access is view-only. You can read this chit but not change it.",
+            "hint": "Check what was sent and try again.",
+            "request_id": "req-test"
+          },
+          "fixture": {
+            "error": "Not permitted",
+            "message": "Your access is view-only. You can read this chit but not change it.",
+            "code": "read_only",
+            "why": "read_only",
+            "type": "https://chitbridge.com/problems/read_only",
+            "title": "Read only",
+            "status": 403,
+            "detail": "Your access is view-only. You can read this chit but not change it.",
+            "hint": "Check what was sent and try again.",
+            "request_id": "req-test"
+          }
+        },
+        {
+          "scenario": "stranger-asks",
+          "status": 400,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          }
+        },
+        {
+          "scenario": "bad-id",
+          "status": 404,
+          "body_keys": {
+            "error": "Issue form failed",
+            "message": "Unknown form: nope"
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "message": "Unknown form: nope"
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 400,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 400,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          }
+        },
+        {
+          "scenario": "issue-not-ready",
+          "status": 400,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          }
+        },
+        {
+          "scenario": "issue-not-ready-body-a-list",
+          "status": 400,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "FORM_NOT_READY",
+            "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+            "unresolved": [
+              {
+                "id": "applicant",
+                "label": "Applicant (legal name)"
+              },
+              {
+                "id": "address",
+                "label": "Registered address"
+              },
+              {
+                "id": "signatory",
+                "label": "Authorised signatory"
+              },
+              {
+                "id": "purpose",
+                "label": "Purpose of application"
+              }
+            ]
+          }
+        },
+        {
+          "scenario": "issue-unknown-form",
+          "status": 404,
+          "body_keys": {
+            "error": "Issue form failed",
+            "message": "Unknown form: no-such-form"
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "message": "Unknown form: no-such-form"
+          }
+        },
+        {
+          "scenario": "issue-store-missing",
+          "status": 503,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "FORMS_STORE_MISSING",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "FORMS_STORE_MISSING",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "issue-column-missing",
+          "status": 503,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "FORMS_STORE_MISSING",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "FORMS_STORE_MISSING",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "issue-write-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "22P02",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "22P02",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "issue-db-fails-on-the-write",
+          "status": 500,
+          "body_keys": {
+            "error": "Issue form failed",
+            "code": "53300",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "code": "53300",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "issue-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Issue form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "issue-library-throws",
+          "status": 500,
+          "body_keys": {
+            "error": "Issue form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "issue-library-says-409",
+          "status": 409,
+          "body_keys": {
+            "error": "Issue form failed",
+            "message": "Clash."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "message": "Clash."
+          }
+        },
+        {
+          "scenario": "issue-library-throws-502",
+          "status": 502,
+          "body_keys": {
+            "error": "Issue form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Issue form failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "POST /api/forms/:key/resolve": {
+      "answers": [
+        {
+          "scenario": "bad-id",
+          "status": 404,
+          "body_keys": {
+            "error": "Resolve form failed",
+            "message": "Unknown form: nope"
+          },
+          "fixture": {
+            "error": "Resolve form failed",
+            "message": "Unknown form: nope"
+          }
+        },
+        {
+          "scenario": "resolve-unknown-form",
+          "status": 404,
+          "body_keys": {
+            "error": "Resolve form failed",
+            "message": "Unknown form: no-such-form"
+          },
+          "fixture": {
+            "error": "Resolve form failed",
+            "message": "Unknown form: no-such-form"
+          }
+        },
+        {
+          "scenario": "resolve-name-of-an-object",
+          "status": 500,
+          "body_keys": {
+            "error": "Resolve form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Resolve form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "resolve-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Resolve form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Resolve form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "resolve-library-throws",
+          "status": 500,
+          "body_keys": {
+            "error": "Resolve form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Resolve form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "resolve-library-says-409",
+          "status": 409,
+          "body_keys": {
+            "error": "Resolve form failed",
+            "message": "Clash."
+          },
+          "fixture": {
+            "error": "Resolve form failed",
+            "message": "Clash."
+          }
+        }
+      ]
+    },
+    "POST /api/forms/instances/:id/attach": {
+      "answers": [
+        {
+          "scenario": "viewer-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Not permitted",
+            "message": "Your access is view-only. You can read this chit but not change it.",
+            "code": "read_only",
+            "why": "read_only",
+            "type": "https://chitbridge.com/problems/read_only",
+            "title": "Read only",
+            "status": 403,
+            "detail": "Your access is view-only. You can read this chit but not change it.",
+            "hint": "Check what was sent and try again.",
+            "request_id": "req-test"
+          },
+          "fixture": {
+            "error": "Not permitted",
+            "message": "Your access is view-only. You can read this chit but not change it.",
+            "code": "read_only",
+            "why": "read_only",
+            "type": "https://chitbridge.com/problems/read_only",
+            "title": "Read only",
+            "status": 403,
+            "detail": "Your access is view-only. You can read this chit but not change it.",
+            "hint": "Check what was sent and try again.",
+            "request_id": "req-test"
+          }
+        },
+        {
+          "scenario": "stranger-asks",
+          "status": 400,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          }
+        },
+        {
+          "scenario": "bad-id",
+          "status": 400,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 400,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 400,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          }
+        },
+        {
+          "scenario": "attach-no-chit",
+          "status": 400,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          }
+        },
+        {
+          "scenario": "attach-body-a-list",
+          "status": 400,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "chit_id is required"
+          }
+        },
+        {
+          "scenario": "attach-not-a-participant",
+          "status": 403,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "Not a participant on this chit"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "Not a participant on this chit"
+          }
+        },
+        {
+          "scenario": "attach-unknown-instance",
+          "status": 404,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "attach-store-missing",
+          "status": 503,
+          "body_keys": {
+            "error": "Attach form failed",
+            "code": "FORMS_STORE_MISSING",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "code": "FORMS_STORE_MISSING",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "attach-storage-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "attach-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "attach-library-throws",
+          "status": 500,
+          "body_keys": {
+            "error": "Attach form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Attach form failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "POST /api/forms/instances/:id/sign": {
+      "answers": [
+        {
+          "scenario": "viewer-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Not permitted",
+            "message": "Your access is view-only. You can read this chit but not change it.",
+            "code": "read_only",
+            "why": "read_only",
+            "type": "https://chitbridge.com/problems/read_only",
+            "title": "Read only",
+            "status": 403,
+            "detail": "Your access is view-only. You can read this chit but not change it.",
+            "hint": "Check what was sent and try again.",
+            "request_id": "req-test"
+          },
+          "fixture": {
+            "error": "Not permitted",
+            "message": "Your access is view-only. You can read this chit but not change it.",
+            "code": "read_only",
+            "why": "read_only",
+            "type": "https://chitbridge.com/problems/read_only",
+            "title": "Read only",
+            "status": 403,
+            "detail": "Your access is view-only. You can read this chit but not change it.",
+            "hint": "Check what was sent and try again.",
+            "request_id": "req-test"
+          }
+        },
+        {
+          "scenario": "stranger-asks",
+          "status": 404,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "bad-id",
+          "status": 404,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 404,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "sign-body-a-list",
+          "status": 400,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "No signatory — set an authorised signatory in the vault, or pass one"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "No signatory — set an authorised signatory in the vault, or pass one"
+          }
+        },
+        {
+          "scenario": "sign-no-signatory",
+          "status": 400,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "No signatory — set an authorised signatory in the vault, or pass one"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "No signatory — set an authorised signatory in the vault, or pass one"
+          }
+        },
+        {
+          "scenario": "sign-already-signed",
+          "status": 409,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Form is already signed"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Form is already signed"
+          }
+        },
+        {
+          "scenario": "sign-not-ready",
+          "status": 400,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Cannot sign an unready form"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Cannot sign an unready form"
+          }
+        },
+        {
+          "scenario": "sign-unknown",
+          "status": 404,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Form instance not found"
+          }
+        },
+        {
+          "scenario": "sign-write-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Sign form failed",
+            "code": "53300",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "code": "53300",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "sign-answer-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "sign-library-throws",
+          "status": 500,
+          "body_keys": {
+            "error": "Sign form failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Sign form failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
     }
   },
   "global": {
