@@ -215,7 +215,7 @@ function openStream(port, urlPath, headers) {
   });
 }
 
-const ticketOf = async (port, headers) => (await lab.send(port, 'POST', EV + '/ticket', {}, headers)).json;
+const ticketOf = async (port, headers) => (await lab.send(port, 'POST', EV + '/ticket', {}, undefined, headers)).json;
 
 /** the bell itself, on the real lib/events.js: both spellings, one-time, 60 s, the frames, the heartbeat, a shop screen */
 async function checkBell(port) {
