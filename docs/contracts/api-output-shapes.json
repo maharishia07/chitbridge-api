@@ -16883,6 +16883,1191 @@
           "reason": "a value passed through (an expression: its keys are not written in the handler)"
         }
       ]
+    },
+    "GET /api/books/ledger/:account": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "account",
+          "party",
+          "from",
+          "to",
+          "opening_minor",
+          "lines",
+          "closing_minor"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "account": {
+            "type": "object"
+          },
+          "party": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "opening_minor": {
+            "type": "number"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "closing_minor": {
+            "type": "number"
+          },
+          "page_opening_minor": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "next": {},
+          "totals": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "account",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "lines[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "totals",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/ledger/1300?limit=10"
+      }
+    },
+    "GET /api/books/party/:id/statement": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "party_id",
+          "from",
+          "to",
+          "code",
+          "opening_minor",
+          "closing_minor",
+          "lines"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "party_id": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "opening_minor": {
+            "type": "number"
+          },
+          "closing_minor": {
+            "type": "number"
+          },
+          "lines": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/books/party/22222222-2222-4222-8222-222222222222/statement"
+      }
+    },
+    "GET /api/books/payments/:id/advice": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "payment_id",
+          "party",
+          "advice",
+          "may",
+          "words",
+          "body",
+          "share"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "payment_id": {
+            "type": "string"
+          },
+          "party": {
+            "type": "object"
+          },
+          "advice": {
+            "type": "object"
+          },
+          "may": {
+            "type": "object"
+          },
+          "words": {
+            "type": "string"
+          },
+          "body": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "share": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "party",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "advice",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "may",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "body",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "share",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/payments/22222222-2222-4222-8222-222222222222/advice"
+      }
+    },
+    "GET /api/books/year/:fy/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "fiscal_year",
+          "closed",
+          "can_close",
+          "refusals",
+          "months",
+          "next"
+        ],
+        "properties": {
+          "fiscal_year": {
+            "type": "string"
+          },
+          "closed": {
+            "type": "boolean"
+          },
+          "can_close": {
+            "type": "boolean"
+          },
+          "refusals": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "months": {},
+          "next": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "refusals[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/year/2026-27/status"
+      }
+    },
+    "PATCH /api/books/payments/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "payment_id",
+          "advice"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "payment_id": {
+            "type": "string"
+          },
+          "advice": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "advice",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/payments/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "advice_chit_id": "99999999-9999-4999-8999-999999999999"
+        }
+      }
+    },
+    "POST /api/books/accounts": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "account"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "account": {
+            "type": "object",
+            "required": [
+              "code",
+              "account_id",
+              "name"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "account_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "source_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_code_written": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/books/accounts",
+        "body": {
+          "name": "Fees",
+          "parent_code": "4000"
+        }
+      }
+    },
+    "POST /api/books/cheques/:id/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "status",
+          "items"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "items": {
+            "type": "number"
+          },
+          "posted": {
+            "type": "object"
+          },
+          "reversed": {
+            "type": "object"
+          },
+          "off": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "posted",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "reversed",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/cheques/22222222-2222-4222-8222-222222222222/status",
+        "body": {
+          "status": "bounced"
+        }
+      }
+    },
+    "POST /api/books/enable": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "accounts_added",
+          "fiscal_year",
+          "parties_numbered"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "accounts_added": {
+            "type": "number"
+          },
+          "fiscal_year": {
+            "type": "string"
+          },
+          "parties_numbered": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/enable",
+        "body": {
+          "walkin_grain": "day"
+        }
+      }
+    },
+    "POST /api/books/entries": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "moved",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/entries",
+        "body": {
+          "narration": "Rent",
+          "lines": []
+        }
+      }
+    },
+    "POST /api/books/entries/:id/reverse": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "entry_id",
+          "entry_no",
+          "posting_date",
+          "moved",
+          "reverses",
+          "reverses_entry_id",
+          "items",
+          "reopened",
+          "words"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "moved": {},
+          "reverses": {
+            "type": "string"
+          },
+          "reverses_entry_id": {
+            "type": "string"
+          },
+          "items": {
+            "type": "number"
+          },
+          "reopened": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "words": {
+            "type": "string"
+          },
+          "off": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "reopened[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/entries/22222222-2222-4222-8222-222222222222/reverse",
+        "body": {
+          "reason": "wrong party"
+        }
+      }
+    },
+    "POST /api/books/events": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "kind",
+          "ok",
+          "entry_id",
+          "entry_no",
+          "posting_date"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "moved": {},
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/books/events",
+        "body": {
+          "event": "expense",
+          "amount": 10
+        }
+      }
+    },
+    "POST /api/books/opening": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "entry_id",
+          "entry_no",
+          "posting_date",
+          "suspense_minor"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {},
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "suspense_minor": {
+            "type": "number"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/opening",
+        "body": {
+          "rows": [
+            {
+              "code": "1300",
+              "dr_minor": 1000,
+              "cr_minor": 0
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/books/outbox/retry": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "tried",
+          "posted",
+          "still"
+        ],
+        "properties": {
+          "tried": {
+            "type": "number"
+          },
+          "posted": {
+            "type": "number"
+          },
+          "still": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/outbox/retry",
+        "body": {}
+      }
+    },
+    "POST /api/books/parties/:id/dispute": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "words": {
+            "type": "string"
+          },
+          "against_ref": {
+            "type": "string"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/books/parties/22222222-2222-4222-8222-222222222222/dispute",
+        "body": {
+          "against_ref": "bill:1",
+          "note": "short"
+        }
+      }
+    },
+    "POST /api/books/payments": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "payment",
+          "posted",
+          "advice"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "payment": {
+            "type": "object"
+          },
+          "posted": {
+            "type": "object"
+          },
+          "allocation": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "outcome": {
+            "type": "object"
+          },
+          "advice": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "payment",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "posted",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "allocation",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "outcome",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "advice",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/payments",
+        "body": {
+          "party_id": "22222222-2222-4222-8222-222222222222",
+          "amount_minor": 1000,
+          "mode": "cash"
+        }
+      }
+    },
+    "POST /api/books/payments/:id/confirm": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "number"
+          },
+          "allocated_minor": {
+            "type": "number"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/payments/22222222-2222-4222-8222-222222222222/confirm",
+        "body": {
+          "allocations": [
+            {
+              "against_ref": "bill:1",
+              "amount_minor": 1000
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/books/payments/:id/propose": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "proposal",
+          "open_minor",
+          "apply_minor",
+          "on_account_minor",
+          "skipped",
+          "why"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string"
+          },
+          "proposal": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "open_minor": {
+            "type": "number"
+          },
+          "apply_minor": {
+            "type": "number"
+          },
+          "on_account_minor": {
+            "type": "number"
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "why": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "proposal[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "skipped[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/payments/22222222-2222-4222-8222-222222222222/propose"
+      }
+    },
+    "POST /api/books/payments/preview": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "party",
+          "open_minor",
+          "proposal",
+          "apply_minor",
+          "on_account_minor",
+          "skipped",
+          "why",
+          "warnings",
+          "words"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "party": {
+            "type": "object"
+          },
+          "open_minor": {
+            "type": "number"
+          },
+          "proposal": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "apply_minor": {
+            "type": "number"
+          },
+          "on_account_minor": {
+            "type": "number"
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "why": {},
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "words": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "party",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "proposal[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "skipped[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "warnings[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/payments/preview",
+        "body": {
+          "party_id": "22222222-2222-4222-8222-222222222222",
+          "amount_minor": 1000
+        }
+      }
+    },
+    "POST /api/books/preview": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "kind",
+          "voucher",
+          "date",
+          "lines",
+          "balanced",
+          "totals",
+          "credit",
+          "bill",
+          "flags",
+          "refusals",
+          "code",
+          "duplicate"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "voucher": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "balanced": {
+            "type": "boolean"
+          },
+          "totals": {
+            "type": "object"
+          },
+          "credit": {},
+          "bill": {},
+          "flags": {},
+          "refusals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "code": {},
+          "duplicate": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "voucher",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "lines[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "totals",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/preview",
+        "body": {}
+      }
+    },
+    "POST /api/books/setting": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "enabled",
+          "walkin_grain"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "walkin_grain": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/books/setting",
+        "body": {}
+      }
+    },
+    "POST /api/books/terms": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "terms"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "terms": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "terms",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/terms",
+        "body": {
+          "party_id": "22222222-2222-4222-8222-222222222222",
+          "credit_days": 15
+        }
+      }
+    },
+    "POST /api/books/write-off": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "entry_id",
+          "entry_no",
+          "posting_date"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {},
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/write-off",
+        "body": {
+          "party_id": "22222222-2222-4222-8222-222222222222",
+          "amount_minor": 500,
+          "reason": "bad debt"
+        }
+      }
     }
   },
   "listed": {
@@ -17149,6 +18334,18 @@
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/governance/profile/vault": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/books/ledger/:account": "open at account — a value passed through (an expression: its keys are not written in the handler); lines[] — a value passed through (an expression: its keys are not written in the handler); totals — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/books/payments/:id/advice": "open at party — a value passed through (an expression: its keys are not written in the handler); advice — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler); body — a value passed through (an expression: its keys are not written in the handler); share — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/books/year/:fy/status": "open at refusals[] — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/books/payments/:id": "open at advice — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/cheques/:id/status": "open at posted — a value passed through (an expression: its keys are not written in the handler); reversed — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/entries": "open at moved — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/entries/:id/reverse": "open at reopened[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/payments": "open at payment — a value passed through (an expression: its keys are not written in the handler); posted — a value passed through (an expression: its keys are not written in the handler); allocation — a value passed through (an expression: its keys are not written in the handler); outcome — a value passed through (an expression: its keys are not written in the handler); advice — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/payments/:id/propose": "open at proposal[] — a value passed through (an expression: its keys are not written in the handler); skipped[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/payments/preview": "open at party — a value passed through (an expression: its keys are not written in the handler); proposal[] — a value passed through (an expression: its keys are not written in the handler); skipped[] — a value passed through (an expression: its keys are not written in the handler); warnings[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/preview": "open at voucher — a value passed through (an expression: its keys are not written in the handler); lines[] — a value passed through (an expression: its keys are not written in the handler); totals — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/terms": "open at terms — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
