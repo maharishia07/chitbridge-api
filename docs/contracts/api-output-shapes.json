@@ -1,6 +1,64 @@
 {
   "_about": "The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route's success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.",
   "routes": {
+    "DELETE /api/actors/:id/pin": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor_name",
+          "expires_in",
+          "delivery",
+          "delivery_note",
+          "login_format"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_name": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "show_code": {
+            "type": "string",
+            "description": "R112 owner-only reveal: the first code, shown once to the owner (ownerWrite gate) when the person has no e-mail; never recorded by idempotency, never logged"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "sent_to": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/pin"
+      }
+    },
     "DELETE /api/chits/:chit_id": {
       "status": "200",
       "schema": {
@@ -11015,6 +11073,163 @@
         }
       }
     },
+    "POST /api/actors": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor",
+          "expires_in",
+          "delivery",
+          "delivery_note",
+          "login_instruction"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "bridge_id",
+              "display_name",
+              "actor_key",
+              "actor_role",
+              "login_format",
+              "parent_entity"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "actor_key": {
+                "type": "string"
+              },
+              "actor_role": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "login_format": {
+                "type": "string"
+              },
+              "parent_entity": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "show_code": {
+            "type": "string",
+            "description": "R112 owner-only reveal: the first code, shown once to the owner (ownerWrite gate) when the person has no e-mail; never recorded by idempotency, never logged"
+          },
+          "login_instruction": {
+            "type": "string"
+          },
+          "sent_to": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [],
+      "example": {
+        "url": "/api/actors",
+        "body": {
+          "display_name": "Ravi Kumar",
+          "actor_key": "ravik"
+        }
+      }
+    },
+    "POST /api/actors/:id/otp": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor_name",
+          "expires_in",
+          "delivery",
+          "delivery_note",
+          "login_format"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_name": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "show_code": {
+            "type": "string",
+            "description": "R112 owner-only reveal: the first code, shown once to the owner (ownerWrite gate) when the person has no e-mail; never recorded by idempotency, never logged"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "sent_to": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/otp",
+        "body": []
+      }
+    },
     "POST /api/assist": {
       "status": "200",
       "schema": {
@@ -13573,6 +13788,103 @@
             "22222222-2222-4222-8222-222222222222"
           ],
           "status": "unavailable"
+        }
+      }
+    },
+    "PUT /api/actors/:id/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "audit"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_name": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "audit": {
+            "type": "object"
+          },
+          "tasks_routed": {
+            "type": "number"
+          },
+          "task_action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "return_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "covers_removed": {
+            "type": "number"
+          },
+          "was_default_assignee": {
+            "type": "boolean"
+          },
+          "disputes_cleared": {
+            "type": "number"
+          },
+          "signed_out": {
+            "type": "object"
+          },
+          "had_cover": {
+            "type": "boolean"
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "sent_to": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "audit",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "signed_out",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/status",
+        "body": {
+          "action": "remove",
+          "confirm": "REMOVE"
         }
       }
     },
@@ -23786,7 +24098,6 @@
     }
   },
   "listed": {
-    "DELETE /api/actors/:id/pin": "left open on purpose: the 200 carries the one-time code (show_code · otp on an opted-in stack); a shape that names it is a call for cb-security, not a sweep",
     "DELETE /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
     "DELETE /api/channels/:id": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "DELETE /api/chits/:chit_id/payment": "open at books — a value passed through (a name: its keys are not written in the handler)",
@@ -24025,6 +24336,7 @@
     "POST /api/supplies": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies/:id/issue": "open at balance — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/till/shop": "open at shop — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/actors/:id/status": "open at audit — a value passed through (an expression: its keys are not written in the handler); signed_out — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
     "PUT /api/chits/:chit_id/use": "open at use — a value passed through (an expression: its keys are not written in the handler); effective — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/chits/:chit_id/void": "open at books — a value passed through (an expression: its keys are not written in the handler)",

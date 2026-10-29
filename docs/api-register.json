@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 292
+    "failing": 288
    },
    "foreign_id_404": {
     "applies": 227,
@@ -63,7 +63,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 722,
-   "hash": "ef0e583e98b1b4ef",
+   "hash": "1496623347f83909",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -73,7 +73,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -104,7 +104,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ef0e583e98b1b4ef"
+    "stale_since": "1496623347f83909"
    },
    "status": "partial"
   },
@@ -15631,7 +15631,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 241,
-   "hash": "818035cce72f823f",
+   "hash": "16f20e070269e57e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15641,7 +15641,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15672,7 +15672,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "818035cce72f823f"
+    "stale_since": "16f20e070269e57e"
    },
    "status": "partial"
   },
@@ -15683,7 +15683,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 865,
-   "hash": "96b2b79b2c8bfcfa",
+   "hash": "349deabec4480e01",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -15693,7 +15693,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15724,7 +15724,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "96b2b79b2c8bfcfa"
+    "stale_since": "349deabec4480e01"
    },
    "status": "partial"
   },
@@ -29949,7 +29949,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 947,
-   "hash": "6b97087f638e6255",
+   "hash": "6cfa0cdd467e45c3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29959,7 +29959,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -29990,7 +29990,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6b97087f638e6255"
+    "stale_since": "6cfa0cdd467e45c3"
    },
    "status": "partial"
   },
