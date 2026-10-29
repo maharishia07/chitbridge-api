@@ -843,13 +843,13 @@ const promoteIdOf = (req) => (typeof req.body.promote_draft_id === 'string' && r
  * later source (RAIL-146c, a receipt sent against an order) widens the same call. The owner, a cost-allowed actor and a paired till pay nothing (isCostBlind is false); a sale-side draft is as it was.
  * Answers the 403 COST_BLIND (blocked = key names) or a 400 for a shifted list in the refusal's own words; the write transaction re-checks the stamp (sendWrite).
  */
-async function sendSourceCarry(st, req, res) {
-  const { sender_id, line_items } = st;
+async function sendSourceCarry(state, req, res) {
+  const { sender_id, line_items } = state;
   const promote_draft_id = promoteIdOf(req);
   if (!promote_draft_id || !line_items.length || !(await cost.isCostBlind(req, sender_id))) return false;
   try {
     const carried = await withEntity(sender_id, (db) => costWrite.carryFromSource(db, sender_id, promote_draft_id, line_items, req.body.line_items));
-    if (carried) Object.assign(st, { line_items: carried.lines, sourceCarry: carried.stamp });
+    if (carried) Object.assign(state, { line_items: carried.lines, sourceCarry: carried.stamp });
   } catch (e) {
     if (!e.refused) throw e;
     return problem(req, res, { status: e.status, ...said(e.body, codeOfStatus(e.status)) });
