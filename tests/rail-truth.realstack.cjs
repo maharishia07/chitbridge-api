@@ -276,6 +276,23 @@ async function billPrivacyCase(A, B) {
 }
 
 /** the shops the party cases share: B and C trade with A, D holds no copy of anything */
+/** RL-52: an id that is no uuid names no chit — the door answers the unknown chit's 404, never a 500 from the uuid cast */
+async function idCases(A) {
+  const door = async (method, url, body) => {
+    const seen = await j(url, { method, token: A.token, body });
+    expect(seen.status === 404 && seen.b && seen.b.code === 'NOT_FOUND', method + ' ' + url + ' answered HTTP ' + seen.status + ' ' + JSON.stringify(seen.b).slice(0, 120));
+  };
+  await kase('RL-52', 'Mark paid on a chit id that is not a uuid is a 404 NOT_FOUND, never a 500 (api #499)', async () => {
+    await door('POST', '/api/chits/not-a-bill-1/payment', { method: 'cash', amount: 10 });
+    return '404';
+  });
+  await kase('RL-52b', 'the other /:chit_id doors (read · archive) answer a non-uuid id with the 404, never a 500', async () => {
+    await door('GET', '/api/chits/not-a-bill-1');
+    await door('POST', '/api/chits/not-a-bill-1/archive');
+    return '404 each';
+  }, 'RAIL-144 · the id reaches the uuid cast (500) at GET /:chit_id, archive and the raida routes');
+}
+
 async function partyCases(A) {
   const B = await freshShop(RUN + 'p1', 'Party one'), C = await freshShop(RUN + 'p2', 'Party two'), D = await freshShop(RUN + 'p3', 'Party three');
   await freezeCases(A, B);
@@ -295,6 +312,7 @@ async function partyCases(A) {
     await crossWorldCase(A);
     await attachmentCases(A);
     await partyCases(A);
+    await idCases(A);
   } finally { await pg.end(); }
   finish('rail-truth', process.env.RAIL_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('rail truth could not run:', e && e.message); process.exit(2); });
