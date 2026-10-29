@@ -1,5 +1,9 @@
 'use strict';
 // prove-amend.js — b138. Line-level corrections and THE LIVE SET.
+// OWNS      the proof of the b138 pure layer: liveSet / liveLines, removal is null (never quantity 0), the shape check before any DB call
+// CALLED BY tests/amend-live-set.test.cjs (the offline guards, RAIL-128) · by hand: node scripts/prove-amend.js
+// FLOW      LINES fixture → lib/amend liveSet · liveLines · clean · REASONS → ✓ / ✗ per case → exit 1 on any ✗
+// CARD 01-rail-core-the-chit/amend-reprice-costs
 //
 // Athi, 2026-08-11: *"just new line item, with all the amendments"* · *"old line deleted and new line is nothing
 // — assume if the stock is not available the sku line will become empty."*
@@ -119,7 +123,11 @@ console.log('\n7 · shape validation refuses what must not become a record');
 console.log('\n8 · the reason codes that mean opposite things');
 {
   ok('misread_by_ai and stock_unavailable are both recordable', amend.REASONS.includes('misread_by_ai') && amend.REASONS.includes('stock_unavailable'));
-  ok('⚠️ they produce an IDENTICAL empty line — only the reason distinguishes "never asked" from "declining"', amend.REASONS.length === 5);
+  /* RAIL-128: this case once checked REASONS.length === 5 and broke when 'other' joined; it now proves what it says */
+  const asRemoved = (reason) => { const { reason_code, ...rest } = amend.liveSet(LINES, [A(1, null, 1, reason)])[1]; return { reason_code, rest }; };
+  const misread = asRemoved('misread_by_ai'), declined = asRemoved('stock_unavailable');
+  eq('⚠️ they produce an IDENTICAL empty line — only the reason distinguishes "never asked" from "declining"', misread.rest, declined.rest);
+  ok('…and the reason is what tells them apart', misread.reason_code === 'misread_by_ai' && declined.reason_code === 'stock_unavailable');
 }
 
 console.log('\n────────────────────────────────────────────────────────────────────────────');

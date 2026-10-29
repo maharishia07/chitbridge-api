@@ -92,7 +92,7 @@ const idOf = (req) => {
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res) => {
   try {
-    const out = await crm.list(ctx(req), {
+    const listed = await crm.list(ctx(req), {
       actor: byOf(req),
       view: req.query.view === 'leads' ? 'leads' : null,
       consent:
@@ -102,7 +102,9 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
       page: PL.pageOf(req.query.page),
       limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP)
     });
-    res.json(Object.assign(out, { may: crmMay(req) }));
+    /* S34: every key crm.list can carry is named (consent_migrated only with ?with=consent, leads_migrated only on the leads view: undefined, so JSON leaves it out), then may */
+    // prettier-ignore
+    res.json({ parties: listed.parties, walk_ins: listed.walk_ins, count: listed.count, total: listed.total, page: listed.page, limit: listed.limit, truncated: listed.truncated, alerts: listed.alerts, consent_migrated: listed.consent_migrated, leads_migrated: listed.leads_migrated, may: crmMay(req) });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -153,7 +155,9 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
         may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY }
       });
     rec.may = crmMay(req); /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
-    res.json(rec);
+    /* S34: the party's keys (lib/crm.js assemble, in its order: a supplier-only party has no customer or lead), then what this record adds */
+    // prettier-ignore
+    res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, otp_contact: rec.otp_contact, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, migrated: rec.migrated, followups: rec.followups, may: rec.may });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -376,7 +380,9 @@ router.get('/followups', auth, noKey, ...checked('GET /followups'), async (req, 
     const out = await withEntity(owner, (h) =>
       F.page(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', done: String(req.query.done) === '1', me: byOf(req), page })
     );
-    res.json(Object.assign(out, { may: crmMay(req) }));
+    /* S34: the pager's keys (capped and cap_note only when the page was cut short), the counts, the shop's day, then may */
+    // prettier-ignore
+    res.json({ followups: out.followups, total: out.total, page: out.page, limit: out.limit, capped: out.capped, cap_note: out.cap_note, late: out.late, today: out.today, shop_day: out.shop_day, may: crmMay(req) });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -483,11 +489,12 @@ router.get('/calls', auth, noKey, ...checked('GET /calls'), async (req, res) => 
   try {
     const owner = ctx(req),
       page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
-    res.json(
-      await withEntity(owner, (h) =>
-        require('../lib/crm-calls').queue(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', me: byOf(req), page, write: crmMay(req).write })
-      )
+    const queue = await withEntity(owner, (h) =>
+      require('../lib/crm-calls').queue(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', me: byOf(req), page, write: crmMay(req).write })
     );
+    /* S34: the pager's keys (capped and cap_note only when the page was cut short), then the call desk's own (lib/crm-calls queueAnswer) */
+    // prettier-ignore
+    res.json({ calls: queue.calls, total: queue.total, page: queue.page, limit: queue.limit, capped: queue.capped, cap_note: queue.cap_note, count: queue.count, late: queue.late, today: queue.today, outcomes: queue.outcomes, may: queue.may, shop_day: queue.shop_day });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -609,7 +616,8 @@ router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:
       const c = (await h.query(`SELECT country FROM identities WHERE identity_id = $1`, [owner])).rows[0];
       return Object.assign(p, { law: PV.lawOf(c && c.country) });
     });
-    res.json(Object.assign({ party_id: id }, out));
+    /* S34: the consent history, what may be done on each channel, and the shop's country law (PV.prefs + the law added above) */
+    res.json({ party_id: id, history: out.history, may: out.may, law: out.law });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -631,7 +639,8 @@ router.get('/privacy-requests', auth, noKey, ...checked('GET /privacy-requests')
   try {
     const owner = ctx(req);
     const out = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1', page: req.query.page, limit: req.query.limit }));
-    res.json(Object.assign(out, { may_answer: isOwner(req), why: isOwner(req) ? null : ANSWER_WHY }));
+    /* S34: the register's page and counts (lib/privacy requests), then who may answer */
+    res.json({ requests: out.requests, total: out.total, page: out.page, limit: out.limit, open: out.open, late: out.late, may_answer: isOwner(req), why: isOwner(req) ? null : ANSWER_WHY });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -669,7 +678,9 @@ const whoIs = (req) => ({ owner: isOwner(req), editor: require('../lib/access').
 /** who may: anyone signed in to the shop reads it (a viewer sees every action greyed with the server's sentence — `may`) */
 router.get('/segments', auth, noKey, ...checked('GET /segments'), async (req, res) => {
   try {
-    res.json(await CG.overview(ctx(req), whoIs(req)));
+    const overview = await CG.overview(ctx(req), whoIs(req));
+    /* S34: every key lib/crm-groups overview answers */
+    res.json({ segments: overview.segments, groups: overview.groups, groups_migrated: overview.groups_migrated, consent_migrated: overview.consent_migrated, channel: overview.channel, purpose: overview.purpose, customers: overview.customers, may: overview.may });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -689,7 +700,8 @@ router.delete('/groups/:name', auth, noKey, ...checked('DELETE /groups/:name'), 
   try {
     if (!isOwner(req)) throw bad('Only the owner deletes a group.', 403, 'OWNER_ONLY');
     const owner = ctx(req);
-    res.json(await withEntity(owner, (h) => CG.dropGroup(h, owner, req.params.name)));
+    const dropped = await withEntity(owner, (h) => CG.dropGroup(h, owner, req.params.name));
+    res.json({ name: dropped.name, removed: dropped.removed }); /* S34 */
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }

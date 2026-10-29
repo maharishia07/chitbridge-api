@@ -58,6 +58,10 @@ const fakeLookup = (map) => async (h) => { if (!map[h]) throw new Error('ENOTFOU
   const env = { chit_id: 'c1' };
   const s = await tr.send('http://169.254.169.254/latest', env);
   ok(s.accepted === false && s.status === null && s.chit_id === 'c1' && !!s.why, 'transport refuses (or cannot sign) in the shared shape');
+  /* RAIL-141 (c): a copy canon cannot read is answered in the same shape, never thrown into mint.deliver */
+  let deepSend;
+  try { deepSend = await tr.send('https://far.example/api/ctp/deliver', { chit_id: 'c2', copy: { qty: BigInt(2) } }); } catch (e) { deepSend = { threw: e.message }; }
+  ok(deepSend.accepted === false && deepSend.chit_id === 'c2' && deepSend.why === 'this copy cannot be sealed as one message — nothing was sent', 'an unsealable copy is answered, not thrown: ' + JSON.stringify(deepSend));
   ok(/nothing was sent/.test(s.why) && !/cannot sign/.test(s.why), 'transport refusal is the guard, not a signing failure: ' + s.why);
   keys._reset();
   ok(fetched === 0, 'nothing was fetched');
