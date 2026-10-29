@@ -1728,7 +1728,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#TBD",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
     "lifecycle": "stable"
    },
    "status": "meets standard"
@@ -1872,7 +1872,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#TBD",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
     "lifecycle": "stable"
    },
    "status": "meets standard"
@@ -28462,7 +28462,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#TBD",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
     "lifecycle": "stable"
    },
    "status": "meets standard"
