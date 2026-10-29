@@ -615,6 +615,9 @@
   "POST /api/notifications/seen": {
    "output_allowlist": true
   },
+  "POST /api/notifications/dismiss": {
+   "output_allowlist": true
+  },
   "POST /api/assist/conform": {
    "output_allowlist": true
   },
