@@ -1795,12 +1795,19 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
   }
 });
 
+/* the price column as the catalogue declares it: required, a number (catwrite.validateAgainst reads this row as it reads schema_fields) */
+const PRICE_FIELD = [{ field_key: 'price', field_name: 'Price', field_type: 'number', required: true }];
 router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const item_id = String((req.body && req.body.item_id) || '');
-    const price = Number(req.body && req.body.price);
+    const sent = req.body && req.body.price;
+    const price = Number(sent);
     if (!item_id) return problem(req, res, { status: 400, ...badRequest('item_id required') });
+    /* CTR-168: Number() reads null, "" and [] as 0 and true as 1 - a shelf price wiped by a blank. What is no number at all is refused by
+       the catalogue's own check, in PATCH /products' words (catwrite.validateAgainst); a negative or a word keeps its frozen sentence */
+    const noNumber = Number.isFinite(price) && price >= 0 ? catwrite.validateAgainst(PRICE_FIELD, { price: sent }) : null;
+    if (noNumber) return problem(req, res, { status: 400, ...badRequest(noNumber) });
     if (!Number.isFinite(price) || price < 0) return problem(req, res, { status: 400, ...badRequest('price must be a number, zero or more') });
     /* [OFFR-04] a price typed at the counter is the same write as PATCH /products — the same gate (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['price']);
