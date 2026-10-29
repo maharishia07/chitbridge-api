@@ -2441,6 +2441,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_SHOP",
+   "status": "403",
+   "title": "Not tied to a shop",
+   "shopkeeper": "This sign-in is not tied to a shop, so there is nothing to show or change.",
+   "hint": "Sign in again at the shop's page.",
+   "owner_area": "privacy",
+   "since": "2026-10-24"
+  },
+  {
    "code": "NO_SHOP_COPY",
    "status": "varies",
    "title": "No shop copy",

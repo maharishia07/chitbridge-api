@@ -15621,6 +15621,96 @@
           ]
         }
       }
+    },
+    "GET /api/privacy/facts": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/privacy/facts"
+      }
+    },
+    "GET /api/privacy/me": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 13,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/privacy/me"
+      }
+    },
+    "POST /api/privacy/me/consent": {
+      "status": "201",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 11,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/privacy/me/consent",
+        "body": {
+          "channel": "sms",
+          "purpose": "marketing",
+          "allowed": true,
+          "shop": "99999999-9999-4999-8999-999999999999",
+          "shop_entity_id": "99999999-9999-4999-8999-999999999999",
+          "owner_entity_id": "99999999-9999-4999-8999-999999999999",
+          "party_id": "66666666-6666-4666-8666-666666666666",
+          "identity_id": "66666666-6666-4666-8666-666666666666",
+          "noted_by": "66666666-6666-4666-8666-666666666666",
+          "basis": "legitimate_use",
+          "source": "staff",
+          "source_ref": "x"
+        }
+      }
+    },
+    "POST /api/privacy/me/requests": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "properties": {
+          "request": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 17,
+      "open": [
+        {
+          "path": "request",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/privacy/me/requests",
+        "body": {
+          "kind": "access"
+        }
+      }
     }
   },
   "listed": {
@@ -16361,6 +16451,10 @@
     "GET /api/supplies": "open at supplies[] — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/supplies/:id": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/supplies/:id/issue": "open at balance — a value passed through (an expression: its keys are not written in the handler)"
+    "POST /api/supplies/:id/issue": "open at balance — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/privacy/facts": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/privacy/me": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/privacy/me/consent": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/privacy/me/requests": "open at request — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
