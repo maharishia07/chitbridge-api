@@ -120,10 +120,39 @@ t('⭐⭐⭐ a field INSIDE the seal changing is caught', () => {
   assert.deepStrictEqual(v.covered, ['a']);
 });
 
-t('⚠️ a MISSING sealed field is not the same as a null one… and both are caught', () => {
+t('⚠️ a MISSING sealed field and a null one seal the SAME… and both are caught when the value was set', () => {
   const s = C.seal(['a', 'b'], { a: 1, b: 2 });
   assert.strictEqual(C.verify(s, { a: 1 }).ok, false, 'b went missing');
   assert.strictEqual(C.verify(s, { a: 1, b: null }).ok, false, 'b became null');
+  /* RAIL-141 (f): the old title said "not the same"; seal() maps undefined to null, so they are — pinned */
+  assert.strictEqual(C.seal(['a', 'b'], { a: 1 }).hash, C.seal(['a', 'b'], { a: 1, b: null }).hash);
+});
+
+t('RAIL-141 (f): a seal that covers nothing, or less than it must, is refused', () => {
+  assert.strictEqual(C.verify(C.seal([], { a: 1 }), { a: 999 }).ok, false, 'seal([], x) verified any object');
+  const narrow = C.seal(['a'], { a: 1, amount: 500 });
+  assert.strictEqual(C.verify(narrow, { a: 1, amount: 9 }).ok, true, 'without a required list, the seal\'s own list rules (as before)');
+  const v = C.verify(narrow, { a: 1, amount: 9 }, ['a', 'amount']);
+  assert.strictEqual(v.ok, false);
+  assert.deepStrictEqual(v.uncovered, ['amount']);
+  assert.strictEqual(C.verify(C.seal(['a', 'amount'], { a: 1, amount: 500 }), { a: 1, amount: 500 }, ['amount']).ok, true);
+});
+
+t('RAIL-141 (f): no copy is a reason, never a TypeError', () => {
+  const s = C.seal(['a'], { a: 1 });
+  for (const none of [null, undefined, 'a string', 7]) {
+    const v = C.verify(s, none);
+    assert.strictEqual(v.ok, false);
+    assert.strictEqual(v.why, 'no copy to check against the seal');
+  }
+});
+
+t('RAIL-141 (f): a field named __proto__ is sealed like any other', () => {
+  const copy = JSON.parse('{"__proto__": {"amount": 500}, "a": 1}');
+  const s = C.seal(['__proto__', 'a'], copy);
+  const tampered = JSON.parse('{"__proto__": {"amount": 9}, "a": 1}');
+  assert.strictEqual(C.verify(s, tampered).ok, false, '__proto__ dropped out of the hash');
+  assert.strictEqual(C.verify(s, copy).ok, true);
 });
 
 t('⚠️⚠️ the FIELD LIST is part of the sealed value — a wider seal is a different seal', () => {
@@ -150,6 +179,49 @@ t('⚠️⚠️ verify NEVER claims to know which field moved', () => {
   assert.strictEqual(v.differs, undefined,
     'a hash proves THAT a copy differs, never WHICH field — that needs both copies side by side');
   assert.ok(v.note.indexOf('never WHICH') > -1, 'and it says so out loud');
+});
+
+t('RAIL-141 (e): hash reads a value as JSON carries it — two Dates are two hashes, not one {}', () => {
+  const a = { at: new Date('2026-10-01T00:00:00Z') };
+  const b = { at: new Date('2026-10-02T00:00:00Z') };
+  assert.notStrictEqual(C.hash(a), C.hash(b));
+  assert.strictEqual(C.hash(a), C.hash({ at: '2026-10-01T00:00:00.000Z' }), 'a Date hashes as its ISO text, as it travels');
+});
+
+t('RAIL-141 (e): undefined, NaN and -0 hash as JSON writes them', () => {
+  assert.strictEqual(C.hash({ a: undefined, b: 1 }), C.hash({ b: 1 }), '{a:undefined} was the text {"a":undefined}');
+  assert.strictEqual(C.hash([undefined, 1]), C.hash([null, 1]), '[undefined,1] was the text [,1]');
+  assert.strictEqual(C.hash({ n: NaN }), C.hash({ n: null }));
+  assert.strictEqual(C.hash({ z: -0 }), C.hash({ z: 0 }));
+});
+
+t('RAIL-141 (e): a Map or a Set is refused, not hashed as {}', () => {
+  assert.throws(() => C.hash({ m: new Map([['a', 1]]) }), /Map or Set/);
+  assert.throws(() => C.hash([new Set([1])]), /Map or Set/);
+  assert.throws(() => C.seal(['m'], { m: new Map() }), /Map or Set/);
+});
+
+t('RAIL-141 (e): a seal over a row from Postgres covers its Dates', () => {
+  const row = { chit_id: 'c1', sent_at: new Date('2026-10-01T10:00:00Z') };
+  const s = C.seal(['chit_id', 'sent_at'], row);
+  assert.strictEqual(C.verify(s, { chit_id: 'c1', sent_at: new Date('2026-10-01T10:00:00Z') }).ok, true);
+  assert.strictEqual(C.verify(s, { chit_id: 'c1', sent_at: new Date('2026-10-01T11:00:00Z') }).ok, false, 'a moved sent_at slipped through');
+});
+
+t('RAIL-141 (e): Unicode is not normalised — NFC and NFD are two values (a judgement canon does not make)', () => {
+  assert.notStrictEqual(C.hash({ name: 'caf\u00e9' }), C.hash({ name: 'cafe\u0301' }));
+});
+
+t('RAIL-141 (e): canon() itself is unchanged for the live callers that persist its bytes', () => {
+  assert.strictEqual(C.canon({ at: new Date(0) }), '{"at":{}}', 'idempotency and connector receipts store these bytes as they are');
+});
+
+t('RAIL-141 (e): a JSON-native value hashes exactly as before', () => {
+  const crypto = require('crypto');
+  CORPUS.forEach((v, i) => {
+    if (JSON.stringify(v) === undefined) return;
+    assert.strictEqual(C.hash(v), crypto.createHash('sha256').update(C.canon(JSON.parse(JSON.stringify(v)))).digest('hex'), 'corpus[' + i + ']');
+  });
 });
 
 console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');

@@ -1,19 +1,19 @@
 {
  "version": 1,
  "stage": "2",
- "updated": "2026-10-24",
- "total": 633,
- "not_meeting": 632,
- "codes_total": 387,
- "codes_pending": 54,
- "raw_error_writes": 33,
+ "updated": "2026-10-29",
+ "total": 634,
+ "not_meeting": 608,
+ "codes_total": 417,
+ "codes_pending": 50,
+ "raw_error_writes": 29,
  "columns_failing": {
-  "strict_input": 338,
-  "output_allowlist": 611,
-  "foreign_id_404": 110,
+  "strict_input": 330,
+  "output_allowlist": 469,
+  "foreign_id_404": 107,
   "idempotent_money_write": 12,
   "inbound_validated": 2,
-  "trips_budgeted": 166
+  "trips_budgeted": 164
  },
  "debt": []
 }
