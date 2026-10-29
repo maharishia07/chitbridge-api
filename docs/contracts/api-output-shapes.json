@@ -41,15 +41,30 @@
           "anchor_day": {
             "type": "number"
           },
-          "end_on": {},
+          "end_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "auto": {
             "type": "boolean"
           },
           "active": {
             "type": "boolean"
           },
-          "last_done_on": {},
-          "created_by": {},
+          "last_done_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "created_at": {
             "type": "string"
           },
@@ -61,11 +76,14 @@
           },
           "stopped": {
             "type": "boolean"
+          },
+          "entity": {
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
-      "observed": 1,
+      "observed": 2,
       "open": [
         {
           "path": "event",
@@ -10335,6 +10353,9 @@
           "due"
         ],
         "properties": {
+          "entity": {
+            "type": "string"
+          },
           "recurring_id": {
             "type": "string"
           },
@@ -10354,7 +10375,10 @@
             "type": "number"
           },
           "end_on": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "auto": {
             "type": "boolean"
@@ -10363,10 +10387,16 @@
             "type": "boolean"
           },
           "last_done_on": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "created_by": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "created_at": {
             "type": "string"
@@ -10380,7 +10410,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 1,
+      "observed": 2,
       "open": [
         {
           "path": "event",
@@ -12118,6 +12148,9 @@
           },
           "due": {
             "type": "boolean"
+          },
+          "entity": {
+            "type": "string"
           }
         },
         "additionalProperties": false

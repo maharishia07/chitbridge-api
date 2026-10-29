@@ -243,7 +243,7 @@ const PACK_FULL = { pack_id: PARTY, kind: 'month', fiscal_year: '2026-27', perio
 const PACK_BARE = Object.assign({}, PACK_FULL, { kind: 'exit', fiscal_year: null, period: null, prev_sha256: null, manifest: { files: [] }, storage_path: null, acknowledged_at: null, delete_after: null }); /* books_pack: fiscal_year, period, prev_sha256, storage_path, acknowledged_at, delete_after nullable */
 const PACK_BUILT = (stored) => ({ pack_id: PARTY, sha256: 'abc', stored, manifest: PACK_FULL.manifest, bytes: 1200, zip: stored ? null : Buffer.from('zip') }); /* books-pack build :268 */
 const RECURRING = { recurring_id: PARTY, name: 'Rent', event: { kind: 'expense', amount: 10 }, frequency: 'monthly', next_on: '2026-11-01', anchor_day: 1, end_on: null, auto: false, active: true, last_done_on: null, created_by: null, created_at: STAMP, updated_at: STAMP }; /* recurring_entry COLS: end_on, last_done_on, created_by nullable */
-const RECURRING_FULL = Object.assign({}, RECURRING, { end_on: '2027-03-31', auto: true, last_done_on: '2026-10-01', created_by: SHOP });
+const RECURRING_FULL = Object.assign({ entity: SHOP }, RECURRING, { end_on: '2027-03-31', auto: true, last_done_on: '2026-10-01', created_by: SHOP }); /* entity first, as the web contract's row carries it (tests/support/books-memory rows); the bare row leaves it out */
 const viewOf = (t) => Object.assign({}, t, { due: !!(t.active && t.next_on) }); /* books-recurring view :223 */
 const FX_ROW = { rate_id: PARTY, rate_date: DAY, currency: 'USD', rate: '83.5', source: 'manual', source_ref: null, created_at: STAMP };
 const CSV_TB = 'Particulars,Debit,Credit\nCash,100,0\nSales,0,100';
@@ -261,7 +261,9 @@ const MONTHS_PACKS_RATES = [
   X('recurring-created', 'POST /api/books/recurring', 200, { body: { name: 'Rent', event: { kind: 'expense' }, frequency: 'monthly', next_on: '2026-11-01' }, patch: { recurring: { create: async () => viewOf(RECURRING) } } }),
   X('recurring-created-full', 'POST /api/books/recurring', 200, { body: { name: 'Rent', event: { kind: 'expense' }, frequency: 'monthly', next_on: '2026-11-01', end_on: '2027-03-31', auto: true }, patch: { recurring: { create: async () => viewOf(RECURRING_FULL) } } }),
   X('recurring-patched', 'PATCH /api/books/recurring/:id', 200, { body: { auto: true }, patch: { recurring: { patch: async () => viewOf(RECURRING_FULL) } } }),
+  X('recurring-patched-bare', 'PATCH /api/books/recurring/:id', 200, { body: { name: 'Shop rent' }, patch: { recurring: { patch: async () => viewOf(RECURRING) } } }),
   X('recurring-stopped', 'DELETE /api/books/recurring/:id', 200, { patch: { recurring: { stop: async () => Object.assign(viewOf(Object.assign({}, RECURRING, { active: false })), { stopped: true }) } } }),
+  X('recurring-stopped-full', 'DELETE /api/books/recurring/:id', 200, { patch: { recurring: { stop: async () => Object.assign(viewOf(Object.assign({}, RECURRING_FULL, { active: false })), { stopped: true }) } } }),
   X('recurring-accepted', 'POST /api/books/recurring/:id/post', 200, { body: {}, patch: { recurring: { accept: async () => ({ posted: JOURNAL, template: viewOf(RECURRING_FULL), date: '2026-11-01' }) } } }),
   X('recurring-skipped', 'POST /api/books/recurring/:id/skip', 200, { body: {}, patch: { recurring: { skip: async () => ({ skipped: '2026-11-01', template: viewOf(RECURRING) }) } } }),
   X('fx-rate-added', 'POST /api/books/fx-rates', 201, { body: { date: DAY, currency: 'USD', rate: 83.5 }, patch: { fxr: { add: async () => FX_ROW } } }),
