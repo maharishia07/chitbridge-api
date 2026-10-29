@@ -38,14 +38,14 @@ of file each thing is; this says what already does the job.
 | 47 | `again` | `signin-ui.js` |  |
 | 49 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 43 | `read` | `cap-print.js` |  |
-| 42 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 43 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 43 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 42 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 40 | `view` | `books-payables.js` | group: |
 | 42 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
-| 39 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 40 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 38 | `rules` | `docnumber.js` | the rule set for a country — |
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
 | 39 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
