@@ -348,6 +348,9 @@
   "POST /api/identity/documents/:scheme/verify": {
    "foreign_id_404": true
   },
+  "GET /api/folders": {
+   "output_allowlist": true
+  },
   "GET /api/folders/inventory": {
    "output_allowlist": true
   },
@@ -366,10 +369,19 @@
   "GET /api/folders/rules/vocabulary": {
    "output_allowlist": true
   },
+  "GET /api/folders/rules": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/messages": {
+   "output_allowlist": true
+  },
   "GET /api/folders/worklist": {
    "output_allowlist": true
   },
   "GET /api/folders/groupsum": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/reconcile": {
    "output_allowlist": true
   },
   "GET /api/folders/mis": {

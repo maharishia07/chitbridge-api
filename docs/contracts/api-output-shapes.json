@@ -2826,6 +2826,726 @@
         "url": "/api/crm/segments"
       }
     },
+    "GET /api/folders": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "folders",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "folders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "folder_id",
+                "parent_id",
+                "name",
+                "kind",
+                "scope",
+                "sort",
+                "count"
+              ],
+              "properties": {
+                "folder_id": {
+                  "type": "string"
+                },
+                "parent_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "system": {
+                  "type": "boolean"
+                },
+                "scope": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "side": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ledger": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "required": [
+                    "code",
+                    "name"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "group": {
+                      "type": "string"
+                    },
+                    "folder_id": {},
+                    "parent_id": {},
+                    "kind": {},
+                    "system": {},
+                    "scope": {},
+                    "side": {},
+                    "ledger": {},
+                    "sort": {},
+                    "count": {},
+                    "total": {}
+                  },
+                  "additionalProperties": false
+                },
+                "sort": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "count": {},
+                "total": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "system_error": {
+            "type": "string"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 10,
+      "open": [],
+      "example": {
+        "url": "/api/folders"
+      }
+    },
+    "GET /api/folders/groupsum": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "scope",
+          "folder_id",
+          "chits",
+          "chits_with_lines",
+          "chits_without_lines",
+          "has_catalogue",
+          "requirement",
+          "flags",
+          "money"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "chits": {
+            "type": "number"
+          },
+          "chits_with_lines": {
+            "type": "number"
+          },
+          "chits_without_lines": {
+            "type": "number"
+          },
+          "has_catalogue": {
+            "type": "boolean"
+          },
+          "requirement": {},
+          "flags": {
+            "type": "object"
+          },
+          "money": {
+            "type": "object"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "selection_requested": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "flags",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "money",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/folders/groupsum?scope=order&folder_id=22222222-2222-4222-8222-222222222222&chit_ids=22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/folders/inventory": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "rows",
+          "can_change"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "can_change": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "rows[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/folders/inventory"
+      }
+    },
+    "GET /api/folders/messages": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "message_id",
+                "chit_id",
+                "line_id",
+                "sender_display_name",
+                "sender_entity_id",
+                "message_text",
+                "created_at",
+                "msg_type",
+                "read_at",
+                "kept",
+                "manual_subject",
+                "auto_subject",
+                "track",
+                "particulars",
+                "chit_status"
+              ],
+              "properties": {
+                "message_id": {
+                  "type": "string"
+                },
+                "chit_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "line_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sender_display_name": {
+                  "type": "string"
+                },
+                "sender_entity_id": {
+                  "type": "string"
+                },
+                "message_text": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "msg_type": {
+                  "type": "string"
+                },
+                "read_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kept": {
+                  "type": "boolean"
+                },
+                "manual_subject": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "auto_subject": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "track": {
+                  "type": "string"
+                },
+                "particulars": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "chit_status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 9,
+      "open": [],
+      "example": {
+        "url": "/api/folders/messages"
+      }
+    },
+    "GET /api/folders/mis": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "overdue_days",
+          "since",
+          "truncated",
+          "all",
+          "received",
+          "sent"
+        ],
+        "properties": {
+          "overdue_days": {
+            "type": "number"
+          },
+          "since": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "all": {
+            "type": "object"
+          },
+          "received": {
+            "type": "object"
+          },
+          "sent": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "all",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "received",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "sent",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/folders/mis"
+      }
+    },
+    "GET /api/folders/reconcile": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "scope",
+          "direction",
+          "total",
+          "unfiled",
+          "inbox",
+          "in_bills",
+          "filed",
+          "folders",
+          "overall",
+          "reconciles"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "unfiled": {
+            "type": "number"
+          },
+          "inbox": {
+            "type": "number"
+          },
+          "in_bills": {
+            "type": "number"
+          },
+          "filed": {
+            "type": "number"
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "overall": {
+            "type": "object"
+          },
+          "reconciles": {
+            "type": "boolean"
+          },
+          "discrepancy": {
+            "type": "object",
+            "required": [
+              "filed",
+              "sum_of_folders",
+              "missing"
+            ],
+            "properties": {
+              "filed": {
+                "type": "number"
+              },
+              "sum_of_folders": {
+                "type": "number"
+              },
+              "missing": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "folders[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "overall",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/folders/reconcile"
+      }
+    },
+    "GET /api/folders/rules": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "rules",
+          "migrated",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "rule_id",
+                "folder_id",
+                "name",
+                "when",
+                "enabled",
+                "sort",
+                "stop_processing",
+                "last_matched_at",
+                "match_count",
+                "created_at"
+              ],
+              "properties": {
+                "rule_id": {
+                  "type": "string"
+                },
+                "folder_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "when": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "purpose": {
+                      "type": "string"
+                    },
+                    "direction": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "min_amount": {
+                      "type": "number"
+                    },
+                    "max_amount": {
+                      "type": "number"
+                    },
+                    "has_dispute": {
+                      "type": "boolean"
+                    },
+                    "unread": {
+                      "type": "boolean"
+                    },
+                    "older_than_days": {
+                      "type": "number"
+                    },
+                    "doc": {
+                      "type": "string"
+                    },
+                    "rule_id": {},
+                    "folder_id": {},
+                    "name": {},
+                    "when": {},
+                    "enabled": {},
+                    "sort": {},
+                    "stop_processing": {},
+                    "last_matched_at": {},
+                    "match_count": {},
+                    "created_at": {}
+                  },
+                  "additionalProperties": false
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "sort": {
+                  "type": "number"
+                },
+                "stop_processing": {
+                  "type": "boolean"
+                },
+                "last_matched_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "match_count": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/folders/rules"
+      }
+    },
+    "GET /api/folders/rules/vocabulary": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "keys"
+        ],
+        "properties": {
+          "keys": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "keys",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/folders/rules/vocabulary"
+      }
+    },
+    "GET /api/folders/worklist": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "people",
+          "lines",
+          "migrated"
+        ],
+        "properties": {
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "lines": {
+            "type": "number"
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "scoped_to_self": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "people[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/folders/worklist"
+      }
+    },
     "GET /api/governance/ai-skills": {
       "status": "200",
       "schema": {
@@ -6199,6 +6919,67 @@
       "GET /api/testing/reliability": "open at cases[] — a value passed through (an expression: its keys are not written in the handler)",
       "GET /api/testing/report": "open at sections[] — a map keyed by data (62 keys)",
       "GET /api/testing/requirements": "open at requirements[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (a name: its keys are not written in the handler)"
+    },
+    {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/groupsum": "open at flags — a value passed through (an expression: its keys are not written in the handler); money — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/inventory": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/mis": "open at all — a value passed through (an expression: its keys are not written in the handler); received — a value passed through (an expression: its keys are not written in the handler); sent — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/reconcile": "open at folders[] — a value passed through (an expression: its keys are not written in the handler); overall — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/rules/vocabulary": "open at keys — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/worklist": "open at people[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
     }
   ]
 }
