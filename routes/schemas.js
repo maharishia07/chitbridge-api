@@ -1,12 +1,16 @@
 // routes/schemas.js — Schema engine basic
+// OWNS      the seven routes of the catalogue's schema engine: the shop's definition, its columns (read, remove, retype, reorder) and the definition's visibility
+// CALLED BY server.js (mounted at /api/schemas); the web catalogue setup (cap-catsetup.js, cap-catalogue.js) and the demo scripts
+// FLOW      auth -> schema check (lib/schemas-contract.js) -> lib/catalogue-columns + lib/column-rules -> entity_schemas / schema_fields
+//           a refusal -> problem(req, res, { status, ...words.x() } | fault(e, req, label)) -> the old { error, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
+// CARD      07-catalogue-and-pricing/catalogue-setup
 const express = require('express');
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
-const { body } = require('express-validator');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { contract, words, fault, createRefused, checked } = require('../lib/schemas-contract'); // the contract (each route's operation) and the words of a refusal
 /* ⚠️ withEntity, not bare query, for anything reading catalogue_items: that table carries the b49 per-entity
    policy, and a read with no tenant context matches NOTHING rather than everything. */
 const { query, withEntity } = require('../db');
-const { validate } = require('../middleware/validate');
 /* ⭐ ONE PLACE DECIDES REMOVABILITY — the GET reports it and the DELETE enforces it from the same function, so a
    screen can never be told a column is removable and then refused. */
 const columnRules = require('../lib/column-rules');
@@ -22,7 +26,7 @@ async function attrsReady() {
 }
 
 // GET /api/schemas/my — does entity have a schema?
-router.get('/my', auth, async (req, res) => {
+router.get('/my', auth, ...checked('GET /my'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
     const nestedSchema = await query(
@@ -36,17 +40,17 @@ router.get('/my', auth, async (req, res) => {
     res.json({ schema: nestedSchema.rows[0] || null });
   } catch (err) {
     console.error('Schema fetch error:', err.message);
-    res.status(500).json({ error: 'Failed to get schema', message: safeErr(err) });
+    problem(req, res, fault(err, req, 'Failed to get schema'));
   }
 });
 
 // POST /api/schemas/create-default — create Product Qty Price schema
-router.post('/create-default', auth, async (req, res) => {
+router.post('/create-default', auth, ...checked('POST /create-default'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
     // ONE implementation (also called at mint) — idempotent: returns the existing active schema instead of 400.
     const r = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
-    if (r.error || !r.schema_id) return res.status(500).json({ error: 'Failed to create schema', message: r.error || 'no schema' });
+    if (r.error || !r.schema_id) return problem(req, res, createRefused(req, r)); // ⚠️ relays the bootstrap's own text, as it always did (a finding, see lib/schemas-contract.js)
     const result = await query(
       `SELECT es.*, json_agg(sf ORDER BY sf.display_order) as fields
        FROM entity_schemas es
@@ -58,7 +62,7 @@ router.post('/create-default', auth, async (req, res) => {
     res.json({ message: r.created ? 'Schema created' : 'Schema already exists', schema: result.rows[0] });
   } catch (err) {
     console.error('Schema create error:', err.message);
-    res.status(500).json({ error: 'Failed to create schema', message: safeErr(err) });
+    problem(req, res, fault(err, req, 'Failed to create schema'));
   }
 });
 
@@ -83,7 +87,7 @@ router.post('/create-default', auth, async (req, res) => {
  * it loses no fact. Only a value somebody actually recorded counts, which is the same line `isMatchable` and
  * `countedZero` draw elsewhere: absent is not zero.
  */
-router.get('/fields', auth, async (req, res) => {
+router.get('/fields', auth, ...checked('GET /fields'), async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
     /**
@@ -162,7 +166,7 @@ router.get('/fields', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Schema fields error:', err.message);
-    res.status(500).json({ error: 'Failed to get fields', message: safeErr(err) });
+    problem(req, res, fault(err, req, 'Failed to get fields'));
   }
 });
 
@@ -181,17 +185,13 @@ router.get('/fields', auth, async (req, res) => {
  * column is inert, and it means a removal can be undone by re-adding the column. Rewriting every product to strip
  * a key would make an undo impossible and would be a mass edit nobody asked for.
  */
-router.delete('/fields/:field_key', auth, async (req, res) => {
+router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'), async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
     const key = String(req.params.field_key || '').trim();
-    if (!key) return res.status(400).json({ error: 'No column', message: 'Name the column to remove.' });
+    if (!key) return problem(req, res, { status: 400, ...words.noColumn() });
     if (columnRules.LOCKED.has(key)) {
-      return res.status(409).json({
-        error: 'Cannot remove',
-        code: 'LOCKED',
-        message: `"${key}" is one of the three columns every catalogue keeps — the cart, the storefront and the export all read it.`
-      });
+      return problem(req, res, { status: 409, ...words.locked(key) });
     }
     const f = await query(
       `SELECT sf.field_id, sf.field_name, sf.required, sf.schema_id
@@ -200,13 +200,9 @@ router.delete('/fields/:field_key', auth, async (req, res) => {
         WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true AND sf.field_key = $2`,
       [entity_id, key]
     );
-    if (!f.rows.length) return res.status(404).json({ error: 'Not found', message: 'Your catalogue has no such column.' });
+    if (!f.rows.length) return problem(req, res, { status: 404, ...words.noSuchColumn() });
     if (f.rows[0].required) {
-      return res.status(409).json({
-        error: 'Cannot remove',
-        code: 'REQUIRED',
-        message: `"${f.rows[0].field_name}" is required by your catalogue definition. Make it optional first.`
-      });
+      return problem(req, res, { status: 409, ...words.required(f.rows[0].field_name) });
     }
 
     const u = await withEntity(entity_id, (db) =>
@@ -219,19 +215,14 @@ router.delete('/fields/:field_key', auth, async (req, res) => {
     );
     const n = (u.rows[0] && u.rows[0].n) || 0;
     if (n > 0) {
-      return res.status(409).json({
-        error: 'Cannot remove',
-        code: 'IN_USE',
-        used_by: n,
-        message: `${n} product${n === 1 ? '' : 's'} record a value in "${f.rows[0].field_name}". Clear it on those first, or keep the column.`
-      });
+      return problem(req, res, { status: 409, ...words.inUse(n, f.rows[0].field_name) });
     }
 
     await query(`DELETE FROM schema_fields WHERE field_id = $1`, [f.rows[0].field_id]);
     res.json({ message: `Removed "${f.rows[0].field_name}"`, field_key: key });
   } catch (err) {
     console.error('Schema field delete error:', err.message);
-    res.status(500).json({ error: 'Failed to remove the column', message: safeErr(err) });
+    problem(req, res, fault(err, req, 'Failed to remove the column'));
   }
 });
 
@@ -252,7 +243,7 @@ router.delete('/fields/:field_key', auth, async (req, res) => {
  * its position after the named ones, so a screen that sends only the visible page cannot silently reshuffle
  * columns nobody was looking at.
  */
-router.patch('/fields/order', auth, [body('order').isArray({ min: 1 })], validate, async (req, res) => {
+router.patch('/fields/order', auth, ...checked('PATCH /fields/order'), async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
     const sid = await query(
@@ -260,7 +251,7 @@ router.patch('/fields/order', auth, [body('order').isArray({ min: 1 })], validat
           WHERE entity_id = $1 AND status='active' AND is_default=true LIMIT 1`,
       [entity_id]
     );
-    if (!sid.rows.length) return res.status(404).json({ error: 'Not found', message: 'Your catalogue has no definition.' });
+    if (!sid.rows.length) return problem(req, res, { status: 404, ...words.noDefinition() });
     const schema_id = sid.rows[0].schema_id;
 
     /* ⚠️ ORDERED, or "everything not named keeps its relative order" (below) was whatever order Postgres returned */
@@ -273,7 +264,7 @@ router.patch('/fields/order', auth, [body('order').isArray({ min: 1 })], validat
     /* ⚠️ Only this catalogue's own columns, de-duplicated — a repeated key would otherwise take two positions
          and leave a gap that the next reorder would read as an ordering. */
     const wanted = [...new Set(req.body.order.map(String).filter((item) => mine.has(item)))];
-    if (!wanted.length) return res.status(400).json({ error: 'Nothing to order', message: 'None of those columns are in your catalogue.' });
+    if (!wanted.length) return problem(req, res, { status: 400, ...words.nothingToOrder() });
 
     /* Everything not named keeps its relative order, after the ones that were. */
     const rest = own.rows.map((item) => item.field_key).filter((item) => !wanted.includes(item));
@@ -292,7 +283,7 @@ router.patch('/fields/order', auth, [body('order').isArray({ min: 1 })], validat
     res.json({ message: 'Order saved', ordered: wanted.length, untouched: rest.length });
   } catch (err) {
     console.error('Schema field order error:', err.message);
-    res.status(500).json({ error: 'Failed to save the order', message: safeErr(err) });
+    problem(req, res, fault(err, req, 'Failed to save the order'));
   }
 });
 
@@ -314,15 +305,7 @@ router.patch('/fields/order', auth, [body('order').isArray({ min: 1 })], validat
 router.patch(
   '/fields/:field_key',
   auth,
-  [
-    body('field_name').optional().isString().isLength({ min: 1, max: 80 }),
-    body('field_type').optional().isString(),
-    body('required').optional().isBoolean(),
-    body('unit').optional({ nullable: true }).isString().isLength({ max: 16 }),
-    body('leg').optional({ nullable: true }).isString(),
-    body('via').optional({ nullable: true }).isString()
-  ],
-  validate,
+  ...checked('PATCH /fields/:field_key'),
   async (req, res) => {
     try {
       const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
@@ -334,7 +317,7 @@ router.patch(
           WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true AND sf.field_key = $2`,
         [entity_id, key]
       );
-      if (!f.rows.length) return res.status(404).json({ error: 'Not found', message: 'Your catalogue has no such column.' });
+      if (!f.rows.length) return problem(req, res, { status: 404, ...words.noSuchColumn() });
       const cur = f.rows[0];
       const b = req.body || {};
       const sets = [],
@@ -349,7 +332,7 @@ router.patch(
       if (b.field_type !== undefined && b.field_type !== cur.field_type) {
         const t = String(b.field_type);
         if (!columnRules.TYPES.has(t))
-          return res.status(400).json({ error: 'Unknown type', message: `A column is text, number, choice or date — not "${t}".` });
+          return problem(req, res, { status: 400, ...words.unknownType(t) });
         const u = await withEntity(entity_id, (db) =>
           db.query(
             `SELECT count(*)::int AS n FROM catalogue_items ci
@@ -360,7 +343,7 @@ router.patch(
         );
         const n = (u.rows[0] && u.rows[0].n) || 0;
         const whyNot = columnRules.retypeWhy({ field_key: key, field_name: cur.field_name, used_by: n });
-        if (whyNot) return res.status(409).json({ error: 'Cannot change the type', code: n > 0 ? 'IN_USE' : 'LOCKED', used_by: n, message: whyNot });
+        if (whyNot) return problem(req, res, { status: 409, ...words.retypeRefused(n, whyNot) });
         set('field_type', t);
       }
 
@@ -368,7 +351,7 @@ router.patch(
       if (b.required !== undefined) {
         const want = !!b.required;
         if (!want && columnRules.LOCKED.has(key) && key !== 'unit') {
-          return res.status(409).json({ error: 'Cannot make optional', code: 'LOCKED', message: `"${key}" is required by every catalogue.` });
+          return problem(req, res, { status: 409, ...words.cannotBeOptional(key) });
         }
         if (want && !cur.required) {
           const m = await withEntity(entity_id, (db) =>
@@ -387,21 +370,17 @@ router.patch(
       const wantsAttr = ATTR_COLS.some((item) => b[item] !== undefined);
       if (wantsAttr) {
         if (!(await attrsReady())) {
-          return res.status(409).json({
-            error: 'Not yet available',
-            code: 'MIGRATION',
-            message: 'Unit and source need migration b200 on the database. Type, label and required still work.'
-          });
+          return problem(req, res, { status: 409, ...words.notYet() });
         }
         if (b.unit !== undefined) set('unit', b.unit === null || b.unit === '' ? null : String(b.unit).trim().toUpperCase());
         if (b.leg !== undefined) {
           if (b.leg !== null && b.leg !== '' && !columnRules.LEGS.has(b.leg))
-            return res.status(400).json({ error: 'Unknown source', message: 'A value comes from the system, the customer, a computation or ChitBridge.' });
+            return problem(req, res, { status: 400, ...words.unknownSource() });
           set('leg', b.leg || null);
         }
         if (b.via !== undefined) {
           if (b.via !== null && b.via !== '' && !columnRules.VIAS.has(b.via))
-            return res.status(400).json({ error: 'Unknown channel', message: 'ERP, IoT or AI.' });
+            return problem(req, res, { status: 400, ...words.unknownChannel() });
           set('via', b.via || null);
         }
       }
@@ -418,13 +397,13 @@ router.patch(
       });
     } catch (err) {
       console.error('Schema field patch error:', err.message);
-      res.status(500).json({ error: 'Failed to update the column', message: safeErr(err) });
+      problem(req, res, fault(err, req, 'Failed to update the column'));
     }
   }
 );
 
 // PATCH /api/schemas/visibility — set catalogue visibility (private | restricted | public)
-router.patch('/visibility', auth, [body('visibility').isIn(['private', 'restricted', 'public'])], validate, async (req, res) => {
+router.patch('/visibility', auth, ...checked('PATCH /visibility'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const r = await query(
@@ -433,11 +412,13 @@ router.patch('/visibility', auth, [body('visibility').isIn(['private', 'restrict
          RETURNING schema_id, visibility`,
       [req.body.visibility, entity_id]
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No active catalogue to update' });
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.noActiveCatalogue() });
     res.json({ message: 'Visibility updated', visibility: r.rows[0].visibility });
   } catch (err) {
-    res.status(500).json({ error: 'Visibility update failed', message: safeErr(err) });
+    problem(req, res, fault(err, req, 'Visibility update failed'));
   }
 });
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
 module.exports = router;

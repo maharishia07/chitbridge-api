@@ -3,21 +3,21 @@
  "stage": "2",
  "counts": {
   "routes": 634,
-  "not_started": 143,
-  "partial": 465,
+  "not_started": 116,
+  "partial": 492,
   "meets": 26,
   "columns": {
    "strict_input": {
-    "applies": 345,
-    "failing": 338
+    "applies": 346,
+    "failing": 330
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 479
+    "failing": 469
    },
    "foreign_id_404": {
     "applies": 227,
-    "failing": 118
+    "failing": 116
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -258,7 +258,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5969,
+   "line": 5991,
    "hash": "b1621a61d6a1f385",
    "columns": {
     "schema_in": true,
@@ -308,7 +308,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4581,
+   "line": 4582,
    "hash": "f1e5c5ac7a0e6422",
    "columns": {
     "schema_in": true,
@@ -358,7 +358,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6230,
+   "line": 6252,
    "hash": "045463184137e6f1",
    "columns": {
     "schema_in": true,
@@ -697,8 +697,8 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 300,
-   "hash": "a7a5a0e07f26ec5e",
+   "line": 326,
+   "hash": "b964e5418038a5aa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -747,7 +747,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 540,
+   "line": 562,
    "hash": "29fd16d8665f60b0",
    "columns": {
     "schema_in": true,
@@ -1000,16 +1000,16 @@
    "path": "/api/quick-keys/groups/:id",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 64,
-   "hash": "f61ef17054cd24f2",
+   "line": 76,
+   "hash": "9cc80cfbd129703c",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -1018,16 +1018,23 @@
     "trips_budgeted": false
    },
    "applies": {
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -1036,7 +1043,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "DELETE /api/quick-keys/groups/:id/items/:productId",
@@ -1044,16 +1051,16 @@
    "path": "/api/quick-keys/groups/:id/items/:productId",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 90,
-   "hash": "57e627430cf1470d",
+   "line": 99,
+   "hash": "07e935c1505388a8",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -1069,9 +1076,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -1080,7 +1094,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "DELETE /api/relationships/suppliers/:id",
@@ -1132,16 +1146,16 @@
    "path": "/api/schemas/fields/:field_key",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 184,
-   "hash": "853355f08831cbe1",
+   "line": 188,
+   "hash": "680c9ed819105397",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -1157,9 +1171,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -1168,7 +1190,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /.well-known/ctp.json",
@@ -1176,8 +1198,8 @@
    "path": "/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 119,
-   "hash": "d9ef786ac86d43eb",
+   "line": 137,
+   "hash": "59e047fa21d05e3f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1506,7 +1528,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 331,
-   "hash": "be9e89e246a338e7",
+   "hash": "0c2c7c81bc7f741b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1546,7 +1568,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "be9e89e246a338e7"
+    "stale_since": "0c2c7c81bc7f741b"
    },
    "status": "partial"
   },
@@ -1794,7 +1816,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 577,
-   "hash": "bcd75b131edc2142",
+   "hash": "081cd5e34de055c2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1833,7 +1855,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bcd75b131edc2142"
+    "stale_since": "081cd5e34de055c2"
    },
    "status": "partial"
   },
@@ -1891,7 +1913,7 @@
    "owner_area": "assist",
    "file": "routes/assist.js",
    "line": 543,
-   "hash": "1d6b1f0c87d65d06",
+   "hash": "1bf6dc5f485082e6",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1927,7 +1949,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1d6b1f0c87d65d06"
+    "stale_since": "1bf6dc5f485082e6"
    },
    "status": "partial"
   },
@@ -4429,7 +4451,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3168,
+   "line": 3169,
    "hash": "cbd798d37d6ccc9d",
    "columns": {
     "schema_in": true,
@@ -4480,7 +4502,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4407,
+   "line": 4408,
    "hash": "336f23691ee01d37",
    "columns": {
     "schema_in": true,
@@ -4529,7 +4551,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3717,
+   "line": 3718,
    "hash": "79e8ab51e469ca30",
    "columns": {
     "schema_in": true,
@@ -4580,7 +4602,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5650,
+   "line": 5672,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -4631,7 +4653,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5604,
+   "line": 5626,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -4682,8 +4704,8 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5281,
-   "hash": "670ecd88a1125b2d",
+   "line": 5298,
+   "hash": "f8f7a6340615f1a0",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4733,7 +4755,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3918,
+   "line": 3919,
    "hash": "3431da4ab22159e0",
    "columns": {
     "schema_in": true,
@@ -4783,7 +4805,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4025,
+   "line": 4026,
    "hash": "be91d2bc805731af",
    "columns": {
     "schema_in": true,
@@ -4834,7 +4856,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6529,
+   "line": 6551,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -4885,7 +4907,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6556,
+   "line": 6578,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -4936,7 +4958,7 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5870,
+   "line": 5892,
    "hash": "7f93cf1c14e1278e",
    "columns": {
     "schema_in": true,
@@ -4986,7 +5008,7 @@
    "path": "/api/chits/folder",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2750,
+   "line": 2751,
    "hash": "572705a3b3d06594",
    "columns": {
     "schema_in": true,
@@ -5036,7 +5058,7 @@
    "path": "/api/chits/inbox",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2925,
+   "line": 2926,
    "hash": "045a326ed39e1c35",
    "columns": {
     "schema_in": true,
@@ -5086,7 +5108,7 @@
    "path": "/api/chits/pulse",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3112,
+   "line": 3113,
    "hash": "67e2a779765f3c7d",
    "columns": {
     "schema_in": true,
@@ -5133,7 +5155,7 @@
    "path": "/api/chits/raida/report",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3900,
+   "line": 3901,
    "hash": "aa60ca38a2849a85",
    "columns": {
     "schema_in": true,
@@ -5183,7 +5205,7 @@
    "path": "/api/chits/register/attachables",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3745,
+   "line": 3746,
    "hash": "6c723ef8908ee772",
    "columns": {
     "schema_in": true,
@@ -5232,7 +5254,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3755,
+   "line": 3756,
    "hash": "211750c4fabb452d",
    "columns": {
     "schema_in": true,
@@ -5282,7 +5304,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3797,
+   "line": 3798,
    "hash": "077c4a340f489f7d",
    "columns": {
     "schema_in": true,
@@ -5331,7 +5353,7 @@
    "path": "/api/chits/register/walk/:from",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3859,
+   "line": 3860,
    "hash": "600c2cdb5a83af1a",
    "columns": {
     "schema_in": true,
@@ -5381,7 +5403,7 @@
    "path": "/api/chits/rollup",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2830,
+   "line": 2831,
    "hash": "6263db31de91eae7",
    "columns": {
     "schema_in": true,
@@ -5431,7 +5453,7 @@
    "path": "/api/chits/sent",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2683,
+   "line": 2684,
    "hash": "c4148c7638d93022",
    "columns": {
     "schema_in": true,
@@ -5481,7 +5503,7 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6756,
+   "line": 6778,
    "hash": "e4d84f8cefe1d1a4",
    "columns": {
     "schema_in": true,
@@ -5531,7 +5553,7 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6800,
+   "line": 6822,
    "hash": "f15e538c4e88a8b4",
    "columns": {
     "schema_in": true,
@@ -5582,7 +5604,7 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6981,
+   "line": 7003,
    "hash": "8f9238406a761e84",
    "columns": {
     "schema_in": true,
@@ -5631,7 +5653,7 @@
    "path": "/api/chits/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3139,
+   "line": 3140,
    "hash": "1524b1fea6fa0ce1",
    "columns": {
     "schema_in": true,
@@ -6457,8 +6479,8 @@
    "path": "/api/ctp/.well-known/ctp.json",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 119,
-   "hash": "d9ef786ac86d43eb",
+   "line": 137,
+   "hash": "59e047fa21d05e3f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -7513,7 +7535,7 @@
    "path": "/api/folders/:id/chits",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 414,
+   "line": 436,
    "hash": "bb204c7a8e782061",
    "columns": {
     "schema_in": true,
@@ -7563,7 +7585,7 @@
    "path": "/api/folders/:id/metrics",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 470,
+   "line": 492,
    "hash": "47486dec2da7fddd",
    "columns": {
     "schema_in": true,
@@ -7613,7 +7635,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 506,
+   "line": 528,
    "hash": "c699793f92f8b281",
    "columns": {
     "schema_in": true,
@@ -7663,7 +7685,7 @@
    "path": "/api/folders/groupsum",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 827,
+   "line": 849,
    "hash": "6de17009cdef055b",
    "columns": {
     "schema_in": true,
@@ -7762,7 +7784,7 @@
    "path": "/api/folders/messages",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 635,
+   "line": 657,
    "hash": "60877e20b8df1857",
    "columns": {
     "schema_in": true,
@@ -7812,7 +7834,7 @@
    "path": "/api/folders/mis",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 978,
+   "line": 1000,
    "hash": "a7167645145a889c",
    "columns": {
     "schema_in": true,
@@ -7862,7 +7884,7 @@
    "path": "/api/folders/reconcile",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 877,
+   "line": 899,
    "hash": "ab50db137b09ad6d",
    "columns": {
     "schema_in": true,
@@ -7912,7 +7934,7 @@
    "path": "/api/folders/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 581,
+   "line": 603,
    "hash": "f389be46783c2688",
    "columns": {
     "schema_in": true,
@@ -7962,7 +7984,7 @@
    "path": "/api/folders/rules/vocabulary",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 560,
+   "line": 582,
    "hash": "acd81ea945245e41",
    "columns": {
     "schema_in": true,
@@ -8010,7 +8032,7 @@
    "path": "/api/folders/worklist",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 794,
+   "line": 816,
    "hash": "9cf17566745c9c6b",
    "columns": {
     "schema_in": true,
@@ -8061,18 +8083,18 @@
    "path": "/api/forms",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 22,
-   "hash": "f0cd7970fa8dcdd1",
+   "line": 23,
+   "hash": "a83a138eb0767172",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -8086,9 +8108,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -8097,7 +8123,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/forms/:key",
@@ -8105,16 +8131,16 @@
    "path": "/api/forms/:key",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 30,
-   "hash": "9a65be2dfe766319",
+   "line": 31,
+   "hash": "e8c36f2d5c0ed626",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -8130,9 +8156,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -8141,7 +8173,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/forms/instances/:id",
@@ -8149,16 +8181,16 @@
    "path": "/api/forms/instances/:id",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 62,
-   "hash": "bb075cefda445f9d",
+   "line": 63,
+   "hash": "386ad563bf93c10a",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -8174,9 +8206,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -8185,7 +8223,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/forms/instances/all",
@@ -8193,16 +8231,16 @@
    "path": "/api/forms/instances/all",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 54,
-   "hash": "d397e8cebac3cd66",
+   "line": 55,
+   "hash": "6bb088a3711770a5",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -8218,9 +8256,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -8229,7 +8272,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/governance/ai-skills",
@@ -9942,7 +9985,7 @@
    "owner_area": "network-design",
    "file": "routes/network-design.js",
    "line": 41,
-   "hash": "6938d03fc5912c61",
+   "hash": "25a38d6265b84af6",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9952,7 +9995,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9978,8 +10021,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "25a38d6265b84af6"
    },
    "status": "partial"
   },
@@ -9989,8 +10033,8 @@
    "path": "/api/network-design/availability",
    "owner_area": "network-design",
    "file": "routes/network-design.js",
-   "line": 435,
-   "hash": "e0b8292db349741f",
+   "line": 436,
+   "hash": "d1a389470b2e79c1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10000,7 +10044,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10029,8 +10073,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d1a389470b2e79c1"
    },
    "status": "partial"
   },
@@ -10041,7 +10086,7 @@
    "owner_area": "network-design",
    "file": "routes/network-design.js",
    "line": 399,
-   "hash": "51d96e2bc11f68fe",
+   "hash": "d12a4e5a95ee71e8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -10051,7 +10096,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -10079,8 +10124,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d12a4e5a95ee71e8"
    },
    "status": "partial"
   },
@@ -11118,16 +11164,16 @@
    "path": "/api/quick-keys/groups",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 31,
-   "hash": "82795fb8aa191938",
+   "line": 46,
+   "hash": "084336e713d643ce",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -11143,9 +11189,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11154,7 +11205,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/quick-keys/screen-config/default",
@@ -11162,16 +11213,16 @@
    "path": "/api/quick-keys/screen-config/default",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 110,
-   "hash": "b620a0c0523d2912",
+   "line": 119,
+   "hash": "6a88c6d6993f6760",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -11187,9 +11238,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11198,7 +11254,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/relationships/customers",
@@ -11656,16 +11712,16 @@
    "path": "/api/schemas/fields",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 86,
-   "hash": "2cca986714e4eb0a",
+   "line": 90,
+   "hash": "6323a87fc0aa5778",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -11681,9 +11737,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11692,7 +11752,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/schemas/my",
@@ -11700,16 +11760,16 @@
    "path": "/api/schemas/my",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 25,
-   "hash": "2ebfd03af930d8e3",
+   "line": 29,
+   "hash": "677bfce89941aa2e",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -11725,9 +11785,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -11736,7 +11800,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/service/:chit_id",
@@ -11876,16 +11940,16 @@
    "path": "/api/simulator/content",
    "owner_area": "simulator",
    "file": "routes/simulator.js",
-   "line": 38,
-   "hash": "d5b07d6574858097",
+   "line": 44,
+   "hash": "381d8655bc80219d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -11901,8 +11965,12 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -11910,7 +11978,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/supplies",
@@ -13804,8 +13872,8 @@
    "path": "/api/work/:chit_id",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 63,
-   "hash": "83c889d624c72318",
+   "line": 65,
+   "hash": "e9e78fe254fd3f60",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13815,7 +13883,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13844,8 +13912,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#363",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e9e78fe254fd3f60"
    },
    "status": "partial"
   },
@@ -13855,8 +13924,8 @@
    "path": "/api/work/facts",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 53,
-   "hash": "0b475c2077ad3403",
+   "line": 54,
+   "hash": "c304a00773a7b8db",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13866,7 +13935,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13894,8 +13963,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#363",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c304a00773a7b8db"
    },
    "status": "partial"
   },
@@ -13906,7 +13976,7 @@
    "owner_area": "work",
    "file": "routes/work.js",
    "line": 41,
-   "hash": "09b3a633d4fd5864",
+   "hash": "f8cfdd6ff20234cc",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13916,7 +13986,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13944,8 +14014,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#363",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f8cfdd6ff20234cc"
    },
    "status": "partial"
   },
@@ -14686,8 +14757,8 @@
    "path": "/api/folders/:id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 256,
-   "hash": "8db729f039adb720",
+   "line": 271,
+   "hash": "268b8e179a372c98",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14727,7 +14798,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "8db729f039adb720"
+    "stale_since": "268b8e179a372c98"
    },
    "status": "partial"
   },
@@ -14737,7 +14808,7 @@
    "path": "/api/folders/rules/:rule_id",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 533,
+   "line": 555,
    "hash": "b441eb5a465334ce",
    "columns": {
     "schema_in": true,
@@ -14839,16 +14910,16 @@
    "path": "/api/quick-keys/groups/:id",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 51,
-   "hash": "dbc8772328a5efd6",
+   "line": 65,
+   "hash": "bfe76291e8cd8d51",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -14864,9 +14935,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -14875,7 +14953,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/quick-keys/groups/:id/items",
@@ -14883,16 +14961,16 @@
    "path": "/api/quick-keys/groups/:id/items",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 100,
-   "hash": "e6d544ee52228ec1",
+   "line": 109,
+   "hash": "75e7b85cbbb8098b",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -14908,9 +14986,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -14919,7 +15004,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/relationships/customers/:id",
@@ -15015,17 +15100,17 @@
    "path": "/api/schemas/fields/:field_key",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 314,
-   "hash": "bf777c33e7a34178",
+   "line": 305,
+   "hash": "a5de8807e0b9826d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -15040,9 +15125,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -15051,7 +15143,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/schemas/fields/order",
@@ -15059,17 +15151,17 @@
    "path": "/api/schemas/fields/order",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 255,
-   "hash": "55a24faab8d8c081",
+   "line": 246,
+   "hash": "9389f29f5f100aba",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -15084,9 +15176,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -15095,7 +15193,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/schemas/visibility",
@@ -15103,18 +15201,18 @@
    "path": "/api/schemas/visibility",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 427,
-   "hash": "f0e9f85019332065",
+   "line": 406,
+   "hash": "6a6e1ccd21d59062",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15128,9 +15226,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -15139,7 +15243,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PATCH /api/supplies/:id",
@@ -19323,7 +19427,7 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4298,
+   "line": 4299,
    "hash": "48d4a019e018499b",
    "columns": {
     "schema_in": true,
@@ -19375,7 +19479,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6122,
+   "line": 6144,
    "hash": "bb57518baa5d6aee",
    "columns": {
     "schema_in": true,
@@ -19425,7 +19529,7 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4244,
+   "line": 4245,
    "hash": "3c3e1c899f08d98e",
    "columns": {
     "schema_in": true,
@@ -19476,7 +19580,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4632,
+   "line": 4633,
    "hash": "f1261716ab50b218",
    "columns": {
     "schema_in": true,
@@ -19527,7 +19631,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3698,
+   "line": 3699,
    "hash": "542ce6681b492b26",
    "columns": {
     "schema_in": true,
@@ -19578,7 +19682,7 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4053,
+   "line": 4054,
    "hash": "6f78c4e8b1574ad3",
    "columns": {
     "schema_in": true,
@@ -19629,7 +19733,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5366,
+   "line": 5388,
    "hash": "b751da3f4c8f8917",
    "columns": {
     "schema_in": true,
@@ -19680,8 +19784,8 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5104,
-   "hash": "caeca2235a33877a",
+   "line": 5146,
+   "hash": "2368b7ca43696201",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19731,7 +19835,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4544,
+   "line": 4545,
    "hash": "3d98f0240c735ee5",
    "columns": {
     "schema_in": true,
@@ -19783,7 +19887,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3930,
+   "line": 3931,
    "hash": "659c6ddb81952ef4",
    "columns": {
     "schema_in": true,
@@ -19833,7 +19937,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3986,
+   "line": 3987,
    "hash": "91cf212eca7f8069",
    "columns": {
     "schema_in": true,
@@ -19883,7 +19987,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4005,
+   "line": 4006,
    "hash": "1a2adac71f1176a0",
    "columns": {
     "schema_in": true,
@@ -19933,7 +20037,7 @@
    "path": "/api/chits/:chit_id/reprice",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3662,
+   "line": 3663,
    "hash": "ef6cdb6ac7ae11aa",
    "columns": {
     "schema_in": true,
@@ -19984,7 +20088,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6201,
+   "line": 6223,
    "hash": "bff670d16c1973fc",
    "columns": {
     "schema_in": true,
@@ -20034,7 +20138,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6180,
+   "line": 6202,
    "hash": "53214e1f816dbb5d",
    "columns": {
     "schema_in": true,
@@ -20084,7 +20188,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6162,
+   "line": 6184,
    "hash": "cc6a9bccb319682e",
    "columns": {
     "schema_in": true,
@@ -20134,7 +20238,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6432,
+   "line": 6454,
    "hash": "a5ce4d89eefc0a51",
    "columns": {
     "schema_in": true,
@@ -20183,7 +20287,7 @@
    "path": "/api/chits/register/entries/:raida_id/accept",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3877,
+   "line": 3878,
    "hash": "f38f901b020ba047",
    "columns": {
     "schema_in": true,
@@ -20233,7 +20337,7 @@
    "path": "/api/chits/register/entries/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3851,
+   "line": 3852,
    "hash": "e30bfd0747fe6ca0",
    "columns": {
     "schema_in": true,
@@ -20283,7 +20387,7 @@
    "path": "/api/chits/register/entries/:raida_id/revise",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3868,
+   "line": 3869,
    "hash": "cdd19d12dfb65e3a",
    "columns": {
     "schema_in": true,
@@ -20333,7 +20437,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3769,
+   "line": 3770,
    "hash": "91ef772a2c9c80d6",
    "columns": {
     "schema_in": true,
@@ -20382,7 +20486,7 @@
    "path": "/api/chits/register/subjects/:subject_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3788,
+   "line": 3789,
    "hash": "57091b17e2671ef3",
    "columns": {
     "schema_in": true,
@@ -20432,7 +20536,7 @@
    "path": "/api/chits/register/subjects/:subject_id/entries",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3828,
+   "line": 3829,
    "hash": "2f000d4fac8318c9",
    "columns": {
     "schema_in": true,
@@ -20482,7 +20586,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3808,
+   "line": 3809,
    "hash": "7783fd2adbe4f1d4",
    "columns": {
     "schema_in": true,
@@ -20531,7 +20635,7 @@
    "path": "/api/chits/send",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 349,
+   "line": 350,
    "hash": "8f63a5b5b1666c92",
    "columns": {
     "schema_in": true,
@@ -21920,8 +22024,8 @@
    "path": "/api/ctp/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 131,
-   "hash": "e66d6e5fbc20dda3",
+   "line": 234,
+   "hash": "616220abe11fb194",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -21971,7 +22075,7 @@
    "path": "/api/ctp/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 333,
+   "line": 436,
    "hash": "1678af41fa18644b",
    "columns": {
     "schema_in": true,
@@ -22339,7 +22443,7 @@
    "path": "/api/folders/:id/rules",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 522,
+   "line": 544,
    "hash": "98c0c7c8280fbe49",
    "columns": {
     "schema_in": true,
@@ -22389,7 +22493,7 @@
    "path": "/api/folders/messages/:message_id/mark",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 773,
+   "line": 795,
    "hash": "e1e0553c2e47dfe8",
    "columns": {
     "schema_in": true,
@@ -22441,8 +22545,8 @@
    "path": "/api/folders/move",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 319,
-   "hash": "b7ed471d00dd49f2",
+   "line": 341,
+   "hash": "36e282e1601d3ecb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -22479,8 +22583,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "36e282e1601d3ecb"
    },
    "status": "partial"
   },
@@ -22490,7 +22595,7 @@
    "path": "/api/folders/rules/preview",
    "owner_area": "folders",
    "file": "routes/folders.js",
-   "line": 551,
+   "line": 573,
    "hash": "988b1ca9cc682a67",
    "columns": {
     "schema_in": true,
@@ -22539,17 +22644,17 @@
    "path": "/api/forms/:key/issue",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 46,
-   "hash": "01d1278a1b7995c8",
+   "line": 47,
+   "hash": "6bb72f6be968bf6c",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -22564,9 +22669,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -22575,7 +22687,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/forms/:key/resolve",
@@ -22583,17 +22695,17 @@
    "path": "/api/forms/:key/resolve",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 38,
-   "hash": "0969092914824780",
+   "line": 39,
+   "hash": "0821b35501620684",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -22608,9 +22720,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -22619,7 +22737,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/forms/instances/:id/attach",
@@ -22627,19 +22745,19 @@
    "path": "/api/forms/instances/:id/attach",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 78,
-   "hash": "adc927060051debc",
+   "line": 79,
+   "hash": "e234eb853c333178",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -22652,9 +22770,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -22663,7 +22788,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/forms/instances/:id/sign",
@@ -22671,17 +22796,17 @@
    "path": "/api/forms/instances/:id/sign",
    "owner_area": "forms",
    "file": "routes/forms.js",
-   "line": 70,
-   "hash": "d31267041a77dacf",
+   "line": 71,
+   "hash": "e804ea712cacf61d",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -22696,9 +22821,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -22707,7 +22839,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/governance/ai-draft",
@@ -25446,16 +25578,16 @@
    "path": "/api/quick-keys/groups",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 40,
-   "hash": "3576d7e0e42ff455",
+   "line": 55,
+   "hash": "5b947da4bb4f8595",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -25471,9 +25603,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -25482,7 +25620,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/quick-keys/groups/:id/items",
@@ -25490,19 +25628,19 @@
    "path": "/api/quick-keys/groups/:id/items",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 77,
-   "hash": "59e26d56dc800240",
+   "line": 87,
+   "hash": "eac906ece58e99da",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -25515,9 +25653,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -25526,7 +25671,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/relationships/customers",
@@ -26276,17 +26421,17 @@
    "path": "/api/schemas/create-default",
    "owner_area": "schemas",
    "file": "routes/schemas.js",
-   "line": 44,
-   "hash": "fccd1ad51769f1fb",
+   "line": 48,
+   "hash": "3ff0b50aa54cfba7",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -26301,9 +26446,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -26312,7 +26462,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/service/:chit_id/pause",
@@ -26800,18 +26950,18 @@
    "path": "/api/simulator/feedback",
    "owner_area": "simulator",
    "file": "routes/simulator.js",
-   "line": 88,
-   "hash": "65a0fe94a4d94030",
+   "line": 94,
+   "hash": "1cea72366c798274",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26825,8 +26975,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -26834,7 +26989,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/simulator/lead",
@@ -26842,18 +26997,18 @@
    "path": "/api/simulator/lead",
    "owner_area": "simulator",
    "file": "routes/simulator.js",
-   "line": 63,
-   "hash": "d8d4f50eb93a5515",
+   "line": 69,
+   "hash": "ef1c1dc647a9ede5",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26867,8 +27022,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -26876,7 +27036,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/supplies",
@@ -29032,8 +29192,8 @@
    "path": "/deliver",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 131,
-   "hash": "e66d6e5fbc20dda3",
+   "line": 234,
+   "hash": "616220abe11fb194",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29083,7 +29243,7 @@
    "path": "/query",
    "owner_area": "ctp",
    "file": "routes/ctp.js",
-   "line": 333,
+   "line": 436,
    "hash": "1678af41fa18644b",
    "columns": {
     "schema_in": true,
@@ -29695,7 +29855,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5729,
+   "line": 5751,
    "hash": "c2325cbe73f259fc",
    "columns": {
     "schema_in": true,
@@ -29746,7 +29906,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6014,
+   "line": 6036,
    "hash": "59600f5511771cf4",
    "columns": {
     "schema_in": true,
@@ -29796,7 +29956,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6070,
+   "line": 6092,
    "hash": "bdcc6791026b87ae",
    "columns": {
     "schema_in": true,
@@ -29847,7 +30007,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6145,
+   "line": 6167,
    "hash": "63dac164e0864b45",
    "columns": {
     "schema_in": true,
@@ -29897,7 +30057,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4961,
+   "line": 4962,
    "hash": "bdc0ab6cc433cce6",
    "columns": {
     "schema_in": true,
@@ -29948,7 +30108,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4043,
+   "line": 4044,
    "hash": "7ee86b115feec09f",
    "columns": {
     "schema_in": true,
@@ -29998,7 +30158,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6275,
+   "line": 6297,
    "hash": "66ea83dae3a68cd1",
    "columns": {
     "schema_in": true,
@@ -30740,16 +30900,16 @@
    "path": "/api/quick-keys/screen-config/default",
    "owner_area": "quick-keys",
    "file": "routes/quick-keys.js",
-   "line": 120,
-   "hash": "83bb26ba24e2b32f",
+   "line": 129,
+   "hash": "106e39ad22944762",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -30765,9 +30925,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -30776,7 +30942,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "PUT /api/service/:chit_id",

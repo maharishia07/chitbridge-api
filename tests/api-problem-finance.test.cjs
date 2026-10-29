@@ -207,6 +207,8 @@ const EXTRAS = [
   X('folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { name: 'Mayur' } }),
   X('nothing-to-update', 'PATCH ' + F + '/:id', 400, { body: {} }),
   X('own-parent', 'PATCH ' + F + '/:id', 400, { body: { parent_id: PARTY } }),
+  /* RAIL-137 (c): a parent BELOW the folder (the walk up from it reaches the folder) is refused; nothing is updated */
+  X('parent-below-itself', 'PATCH ' + F + '/:id', 400, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/WITH RECURSIVE up AS/, [{ '?column?': 1 }]), (sql) => { if (/UPDATE folder SET/.test(sql)) throw new Error('the cycle was written'); return null; }) } }),
   X('name-empty', 'PATCH ' + F + '/:id', 400, { body: { name: '' } }),
   N('parent-folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { parent_id: '33333333-3333-4333-8333-333333333333' } }),
   N('parent-not-an-id', 'PATCH ' + F + '/:id', 404, { body: { parent_id: 'nope' } }),
@@ -217,6 +219,8 @@ const EXTRAS = [
   X('chit-missing', 'POST ' + F + '/move', 400, { body: {} }),
   X('into-a-system-folder', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: sysId('B-2100') } }),
   X('into-a-shops-view-folder', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: answering(/to_jsonb\(f\)->>'kind' AS kind/, [{ kind: 'view' }]) } }),
+  /* RAIL-137 (a): a folder_id that is not an id is the schema's 400, never the database's 500 */
+  X('folder-not-an-id', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: 'inbox' }, setup: { sqlRows: (sql) => { if (/FROM folder/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "inbox"'), { code: '22P02' }); return null; } } }),
   X('folder-not-found', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY } }),
   X('wrong-side', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY, direction: 'sent' }, setup: { sqlRows: answering(/SELECT scope FROM folder/, [{ scope: 'task' }]) } }),
   X('move-retried-without-scope', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: raising(/SELECT scope FROM folder/, '42703') } }),
