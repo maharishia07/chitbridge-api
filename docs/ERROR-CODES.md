@@ -127,6 +127,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ENTITY_QUOTA | 409 | Shop limit reached | This installation cannot add another shop on its plan. | Choose a plan with room for more shops. | governance | 2026-10-23 |
 | ENTITY_SEALED | 403 | Protected business | This business is protected and cannot be erased. | Nothing to do: protected businesses stay. | entities | 2026-10-23 |
 | ERR | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | network | 2026-10-23 |
+| EVENTS_NOT_SIGNED_IN | 401 | Not signed in to live updates | Sign in to get live updates. | Sign in, then try again. | events | 2026-10-23 |
+| EVENTS_TICKET_REFUSED | 401 | Live updates link expired | The live-updates link has run out. Reload the page to connect again. | Reload the page. | events | 2026-10-23 |
 | EXISTS | 409 | Already asked or connected | You have already asked, or are already connected. | Open the connection to see where it stands. | network | 2026-10-23 |
 | FOLDER_BAD_REQUEST | 400 | Folder request not accepted | That folder request could not be done. | Read the message, fix what it names and try again. | folders | 2026-10-23 |
 | FOLDER_INVALID | 400 | Folder details not valid | The folder name or id is missing or not valid. | Give the folder a name of 1 to 60 characters, then try again. | folders | 2026-10-23 |
@@ -197,7 +199,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NETWORK_TOO_LARGE | 413 | Drawing too large | The drawing is too big to save. | Take some of it out and save again. | network | 2026-10-23 |
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
 | NOTHING_TO_UPDATE | 400 | Nothing to update | Nothing was sent to change. | Fill in at least one field. | actors | 2026-10-23 |
-| NOTIF_DISMISS_NOT_MIGRATED | 503 | Notif dismiss not migrated | PENDING | - | notifications | 2026-10-22 |
+| NOTIF_DISMISS_NOT_MIGRATED | 503 | Activity clearing update pending | Activity cannot be cleared yet: a database update is still to arrive. | Try again after the next update. | notifications | 2026-10-22 |
+| NOTIF_NOTHING_TO_CLEAR | 400 | Nothing to clear | There is nothing chosen to clear. | Pick an item to clear, or choose clear all. | notifications | 2026-10-23 |
+| NOTIF_SEEN_NOT_MIGRATED | 503 | Unread count update pending | The unread count cannot be cleared yet: a database update is still to arrive. | Try again after the next update. | notifications | 2026-10-23 |
 | NOT_ALLOWED | 403 | Not allowed | Only the two businesses on a connection, or the network above it, can do that. | Ask the other business or the network. | network | 2026-10-23 |
 | NOT_BOARD_WRITER | 403 | Not board writer | Only the board’s own account can change the shared cases and records. | Ask the board’s owner, or record your result instead. | testing | 2026-10-22 |
 | NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |

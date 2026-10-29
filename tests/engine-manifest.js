@@ -251,6 +251,8 @@ const INFRA_LIBS = [
   'assist-contract.js',
   /* API-4 sweep, the test board: the contract of routes/testing.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'testing-contract.js',
+  /* API-4 sweep, the bell: the contract of routes/events.js and routes/notifications.js (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. tests/api-problem-bell.test.cjs (2026-10-23) */
+  'bell-contract.js',
   /* API-4 sweep, the tour: the contract of routes/simulator.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-simulator.test.cjs (2026-10-24) */
   'simulator-contract.js',
   /* API-4 stage-2 sweep, the authority forms: the contract of routes/forms.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-forms.test.cjs (2026-10-23) */
