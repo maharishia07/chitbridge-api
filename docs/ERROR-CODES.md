@@ -115,7 +115,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DISPUTES_NOT_SET_UP | 200 | Disputes not set up yet | Disputes are not switched on on this server yet, so there are none to show. | Nothing to do; they will appear once the update has run. | chits | 2026-10-23 |
 | DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | PENDING | - | folder-inventory | 2026-10-22 |
-| DUPLICATE_PARTY | 409 | Duplicate party | PENDING | - | relationships | 2026-10-22 |
+| DUPLICATE_PARTY | 409 | Duplicate party | Another party on your list already has this tax number. | Check the number, or open the party that holds it. | relationships | 2026-10-22 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | - | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
@@ -447,4 +447,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHANNEL_PLATFORM_ONLY | 403 | Only the platform can approve | Only the platform can mark a template approved. | Mark it as waiting; the platform will approve it. | channels | 2026-10-23 |
 | CHANNEL_REFUSED | varies | Channel request refused | The channel request was refused. | Check the details and try again. | channels | 2026-10-23 |
 | CHANNEL_STORE_MISSING | 503 | Channels not ready | Channels are not ready on this system yet. | Try again after the next update. | channels | 2026-10-23 |
+| REL_NEED_PARTY | 400 | Say who to add | Say who to add: a ChitBridge User ID or email, or a name. | Type a User ID, an email or a name and try again. | relationships | 2026-10-23 |
+| REL_NO_BUSINESS | 404 | No such business | We could not find a business with that User ID, bridge ID or email. | Check what you typed, or add them by name instead. | relationships | 2026-10-23 |
+| REL_SELF | 400 | Cannot add yourself | You cannot add your own business to your list. | Choose another business. | relationships | 2026-10-23 |
+| REL_EXISTS | 409 | Already on your list | They are already on your list. | Open the list to find them. | relationships | 2026-10-23 |
+| REL_NAME_REFUSED | 400 | Name not accepted | That name could not be used to add them. | Type a plain name, not an email, and try again. | relationships | 2026-10-23 |
+| REL_ID_BUSY | 409 | Could not make an id | We could not give them an id just now. | Try once more. | relationships | 2026-10-23 |
+| REL_NOT_YOURS | 403 | Not yours to rename | That is their own business name, so you cannot change it. | Use your own name for them instead. | relationships | 2026-10-23 |
+| REL_NOTHING_TO_UPDATE | 400 | Nothing to change | You sent nothing to change. | Send at least one field to change. | relationships | 2026-10-23 |
+| REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |
+| REL_PARTY_INVALID | 400 | Party detail not accepted | One of the party details was not accepted. | Read the line shown, correct it and try again. | relationships | 2026-10-23 |
 <!-- codes:end -->
