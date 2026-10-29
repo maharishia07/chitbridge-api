@@ -623,14 +623,15 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 422"
    },
    "foreign_id_404": {
     "pass": true
    },
    "idempotent_money_write": {
     "pass": false,
-    "why": "no key answered 200, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
    }
   },
   "DELETE /api/chits/:chit_id/payment": {
