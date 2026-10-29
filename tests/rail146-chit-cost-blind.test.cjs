@@ -89,7 +89,7 @@ function handle(sql, params) {
   if (/can_see_costs FROM identities/.test(s)) return { rows: [{ can_see_costs: !!GRANTS[params[0]] }] };
   if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return { rows: rolesOf(params[1]) };
   if (/SELECT \* FROM chit_header/.test(s)) return { rows: SCENE.header ? [SCENE.header] : [] };
-  if (/FROM chit_detail/.test(s)) return { rows: SCENE.header ? [DETAIL] : [] };
+  if (/FROM chit_detail/.test(s)) return { rows: SCENE.header ? [SCENE.detail || DETAIL] : [] };
   if (/AS participants,/.test(s)) {
     if (SCENE.fallback) throw Object.assign(new Error('relation "chit_line_assignment" does not exist'), { code: '42P01' }); /* the one-shot fails: the route takes its per-read path */
     return { rows: [bundle(SCENE.deliveries || [])] };
@@ -167,6 +167,8 @@ function unitCases() {
   const sell = view.hideChitCosts({ header: structuredClone(SALE), detail: structuredClone(DETAIL) }, { side: 'sell' });
   t('hideChitCosts | sell: the price and the money stay, only the cost-named keys go, and cost_hidden is ABSENT (no money was withheld)', [sell.detail.line_items[0].price, sell.header.summary_json.money.total, costKeys(sell), sell.cost_hidden], [SECRET.price, SECRET.money_total, [], undefined]);
   t('hideChitCosts | unknown side is treated as buy (fails closed): the price goes', view.hideChitCosts({ detail: structuredClone(DETAIL) }, { side: 'unknown' }).detail.line_items[0].price, undefined);
+  const trap = JSON.parse('{"constructor":"₹9","toString":"₹8","valueOf":"₹7","hasOwnProperty":"₹6","__proto__":"₹5","todo":"accept"}');
+  t('prune | a prototype-named key is never "named" by a spec: dropped, counted; the real key stays; the spec has no prototype and is frozen', [view.prune(trap, view.ANSWER_KEEP.books_wait), JSON.stringify(trap), Object.getPrototypeOf(view.ANSWER_KEEP), Object.isFrozen(view.ROW_KEEP)], [5, '{"todo":"accept"}', null, true]);
   t('isMoneyKey | money words and suffixes yes; a rate, a name, a count, the marker no', ['price', 'cgst', 'tax_amount', 'amount_minor', 'their_total', 'unit_cost'].map(view.isMoneyKey).concat(['gst_rate', 'tax_name', 'line_item_count', 'cost_hidden', 'quantity'].map(view.isMoneyKey)), [true, true, true, true, true, true, false, false, false, false, false]);
   t('hideRowCosts | a buy row loses money and total_value and says cost_hidden; a sell row with nothing named is as it was; a buy row with NO money says nothing', [view.hideRowCosts({ summary_json: structuredClone(SUMMARY) }, 'buy'), view.hideRowCosts({ summary_json: { total_value: 5 } }, 'sell'), view.hideRowCosts({ summary_json: { purpose: 'order' } }, 'unknown')], [{ summary_json: { line_item_count: 2, currency_code: 'INR', purpose: 'order' }, cost_hidden: true }, { summary_json: { total_value: 5 } }, { summary_json: { purpose: 'order' } }]);
   t('rollupGroup | the sum keeps the sales members only, the count stays, cost_hidden when one was left out', view.rollupGroup({ key: 'k', chits: 2, members: [{ total_value: '5', purpose: 'invoice', sender_entity_id: SUPPLIER, all_recipients: [] }, { total_value: '7.5', purpose: 'order', sender_entity_id: CUSTOMER, all_recipients: [] }] }, SHOP, new Map([[CUSTOMER, { customer: true, supplier: false }]])), { key: 'k', chits: 2, total_value: '7.50', cost_hidden: true });
@@ -217,6 +219,26 @@ function unitCases() {
   t('bill, fallback path | owner reads both adds', [owner.status, owner.body.line_delivery[CHIT].added.map((a) => a.amount)], [200, [SECRET.add, SECRET.other_add]]);
   t('bill, fallback path | blind: his OWN add stays, the other goes, no secret but his own', [blind.body.cost_hidden, blind.body.line_delivery[CHIT].added.map((a) => a.amount), leaked(blind.raw)], [true, [SECRET.add, undefined], [String(SECRET.add)]]);
   noLeak('bill, fallback path', blind.raw, [String(SECRET.add)]);
+
+  /* 1f · PROTOTYPE keys (fifth review): a sender names a key constructor · toString · valueOf · hasOwnProperty · __proto__ (sent raw as JSON) — a lookup on a plain spec
+     would find an inherited function and keep the value; planted in the header's business_json and summary_json, in books_wait and in a line */
+  const protoKeys = (figure) => JSON.parse('{"constructor":"₹' + figure + '","toString":"₹' + figure + '","valueOf":"₹' + figure + '","hasOwnProperty":"₹' + figure + '","__proto__":"₹' + figure + '"}');
+  /* planted by ONE JSON.parse: Object.assign would SET the prototype on "__proto__" instead of making an own key, which is exactly how a sender's JSON arrives */
+  const withProto = (base, figure) => JSON.parse(JSON.stringify(base).slice(0, -1) + ',' + JSON.stringify(protoKeys(figure)).slice(1));
+  SCENE = {
+    header: Object.assign(structuredClone(BILL), { business_json: withProto({ their_bill: { no: 'INV-7' } }, SECRET.planted), summary_json: withProto(SUMMARY, SECRET.planted) }),
+    detail: Object.assign(structuredClone(DETAIL), { line_items: [withProto(LINES[0], SECRET.planted), LINES[1]] }),
+    books_wait: withProto({ todo: 'accept', candidates: [] }, SECRET.planted)
+  };
+  [owner, granted, blind] = await read('/api/chits/' + CHIT);
+  t('prototype keys | owner reads them all (the sender\'s keys, verbatim)', [owner.status, owner.body.header.business_json.constructor, owner.body.books_wait.__proto__, owner.body.detail.line_items[0].valueOf], [200, '₹' + SECRET.planted, '₹' + SECRET.planted, '₹' + SECRET.planted]);
+  sameRead('prototype keys', owner, granted);
+  t('prototype keys | blind: none of the five keys anywhere; the named keys stay', [/"(constructor|toString|valueOf|hasOwnProperty|__proto__)"/.test(blind.raw), blind.body.books_wait, blind.body.header.business_json, blind.body.header.summary_json.line_item_count], [false, { todo: 'accept' }, { their_bill: { no: 'INV-7' } }, 2]);
+  noLeak('prototype keys', blind.raw, []);
+  SCENE = { rows: [Object.assign(listRow(BILL), { summary_json: withProto(SUMMARY, SECRET.planted) })] };
+  [owner, granted, blind] = await read('/api/chits/inbox');
+  t('prototype keys on a list row | owner reads them; blind: none, no ₹', [owner.body.chits[0].summary_json.toString, /"(constructor|toString|valueOf|hasOwnProperty|__proto__)"/.test(blind.raw), blind.body.chits[0].summary_json], ['₹' + SECRET.planted, false, { line_item_count: 2, currency_code: 'INR', purpose: 'order' }]);
+  noLeak('prototype keys on a list row', blind.raw, []);
 
   /* 1e · the books wait on a GAP (their total above the lines): the rail answers accept with the books' sentence in `say` — the owner reads it, a blind reader never */
   SCENE = { header: BILL, books_wait: { todo: 'record', name: 'Mill', why: 'Their total ₹' + SECRET.theirs + ' is ₹' + SECRET.gap + ' more than the lines', gap: SECRET.gap, candidates: [] } };
