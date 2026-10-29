@@ -308,6 +308,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | PENDING | - | verdict | 2026-10-22 |
+| SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies are not switched on yet. | Ask the operator to run the update, then try again. | supplies | 2026-10-24 |
+| SUPPLY_INVALID | 400 | Supply not accepted | This supply, purchase or use could not be recorded as sent. | Read the sentence shown, fix it and send it again. | supplies | 2026-10-24 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
 | SWITCHED_OFF | 400/404 | Switched off | This person is switched off. | Switch them on first. | actors | 2026-10-22 |
 | TARGET_ACTOR_NOT_ACTIVE | 400 | Colleague cannot take tasks | That colleague cannot take tasks right now. | Pick someone who is active. | actors | 2026-10-23 |

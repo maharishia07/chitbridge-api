@@ -636,6 +636,9 @@
   },
   "GET /api/attachments/:id": {
    "foreign_id_404": true
+  },
+  "PATCH /api/supplies/:id": {
+   "foreign_id_404": true
   }
  }
 }

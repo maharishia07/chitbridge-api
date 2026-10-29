@@ -926,8 +926,17 @@
   "GET /api/supplies": {
    "output_allowlist": true
   },
+  "POST /api/supplies": {
+   "output_allowlist": true
+  },
   "PATCH /api/supplies/:id": {
    "foreign_id_404": true
+  },
+  "POST /api/supplies/purchase": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies/:id/issue": {
+   "output_allowlist": true
   },
   "GET /api/adopt/:chit_id": {
    "output_allowlist": true,
