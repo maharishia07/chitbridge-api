@@ -129,11 +129,12 @@ function harness(options) {
     return generic.concat(named.filter((one) => routes[one.route]));
   }
 
-  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is */
-  function send(port, method, urlPath, body, extraHeaders, until) {
+  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is. `raw` = { headers, text }: the bytes as a provider signs and sends them (a webhook), not JSON; `extraHeaders` = headers added to a JSON request (a platform key); `until` = a stream (SSE) is read up to that text, then closed */
+  function send(port, method, urlPath, body, raw, extraHeaders, until) {
     return new Promise((resolve) => {
-      const data = body === undefined ? null : JSON.stringify(body);
-      const request = http.request({ port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {}) }, (response) => {
+      const data = raw ? raw.text : body === undefined ? null : JSON.stringify(body);
+      const headers = raw ? Object.assign({ 'content-length': Buffer.byteLength(data) }, raw.headers) : Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {});
+      const request = http.request({ port, path: urlPath, method, headers }, (response) => {
         const parts = [];
         const answer = () => {
           const read = Buffer.concat(parts);
@@ -175,7 +176,7 @@ function harness(options) {
   /** a scenario may switch process variables for its one request (`env`); the ones it set are put back (or removed) afterwards */
   function setEnv(given) {
     const before = Object.keys(given || {}).map((name) => [name, process.env[name]]);
-    Object.keys(given || {}).forEach((name) => (process.env[name] = given[name]));
+    Object.keys(given || {}).forEach((name) => (given[name] === null ? delete process.env[name] : (process.env[name] = given[name]))); /* null = not set (process.env would store the text "null") */
     return () => before.forEach(([name, was]) => (was === undefined ? delete process.env[name] : (process.env[name] = was)));
   }
 
@@ -186,7 +187,7 @@ function harness(options) {
     const unset = setEnv(scenario.env);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body, scenario.headers, scenario.until);
+    const answer = await send(port, method, scenario.url, body, scenario.raw, scenario.headers, scenario.until);
     unset();
     restore();
     return answer;

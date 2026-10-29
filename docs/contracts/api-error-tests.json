@@ -361,6 +361,22 @@
   404,
   500
  ],
+ "GET /api/capture/consolidate": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/capture/pending": [
+  401,
+  500
+ ],
+ "GET /api/capture/stores": [
+  401,
+  500
+ ],
+ "GET /api/capture/webhook/whatsapp": [
+  403
+ ],
  "GET /api/catalogue-face": [
   401,
   500
@@ -1719,6 +1735,54 @@
   404,
   422,
   500
+ ],
+ "POST /api/capture/:id/convert": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/capture/:id/dismiss": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/capture/:id/raise": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "POST /api/capture/:id/structure": [
+  400,
+  401,
+  402,
+  404,
+  422,
+  429,
+  500,
+  502,
+  503
+ ],
+ "POST /api/capture/simulate": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/capture/stores": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/capture/webhook/email": [
+  401
+ ],
+ "POST /api/capture/webhook/whatsapp": [
+  401
  ],
  "POST /api/catalogue/:bridge_id/login/verify": [
   400,

@@ -48946,6 +48946,726 @@
      }
     }
    ]
+  },
+  "GET /api/capture/consolidate": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Consolidate failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Consolidate failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "consolidate-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Consolidate failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Consolidate failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/capture/pending": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "pending-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/capture/stores": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Stores list failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Stores list failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "stores-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Stores list failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Stores list failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/:id/convert": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Convert failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Convert failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "convert-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "convert-already-handled",
+     "status": 404,
+     "body_keys": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Convert failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "convert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Convert failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Convert failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/:id/dismiss": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Dismiss failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Dismiss failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dismiss-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "dismiss-already-handled",
+     "status": 404,
+     "body_keys": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     },
+     "fixture": {
+      "error": "Dismiss failed",
+      "message": "Capture not found or already handled"
+     }
+    },
+    {
+     "scenario": "dismiss-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Dismiss failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Dismiss failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/:id/raise": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Capture not found"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Capture not found"
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Capture not found"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Capture not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Read the message first — a request needs lines, and nothing has read them yet"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Read the message first — a request needs lines, and nothing has read them yet"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Read the message first — a request needs lines, and nothing has read them yet"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Read the message first — a request needs lines, and nothing has read them yet"
+     }
+    },
+    {
+     "scenario": "raise-not-read-yet",
+     "status": 409,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Read the message first — a request needs lines, and nothing has read them yet"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Read the message first — a request needs lines, and nothing has read them yet"
+     }
+    },
+    {
+     "scenario": "raise-already-handled",
+     "status": 409,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "That message has already been handled"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "That message has already been handled"
+     }
+    },
+    {
+     "scenario": "raise-nothing-read",
+     "status": 409,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Nothing was read out of that message that could be requested"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Nothing was read out of that message that could be requested"
+     }
+    },
+    {
+     "scenario": "raise-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Capture not found"
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Capture not found"
+     }
+    },
+    {
+     "scenario": "raise-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Raise failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Raise failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/:id/structure": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Capture not found"
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Capture not found"
+     }
+    },
+    {
+     "scenario": "unknown-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Capture not found"
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Capture not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "structure-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Capture not found"
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Capture not found"
+     }
+    },
+    {
+     "scenario": "structure-nothing-usable",
+     "status": 422,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "The reader returned nothing usable for this message. Nothing was saved."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "The reader returned nothing usable for this message. Nothing was saved."
+     }
+    },
+    {
+     "scenario": "structure-budget-used",
+     "status": 402,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "AI budget used ($0.50). Add wallet credits to continue."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "AI budget used ($0.50). Add wallet credits to continue."
+     }
+    },
+    {
+     "scenario": "structure-rate-limit",
+     "status": 429,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "AI rate limit reached (30/hour) — try again shortly."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "AI rate limit reached (30/hour) — try again shortly."
+     }
+    },
+    {
+     "scenario": "structure-cut-off",
+     "status": 422,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "The message was too long for one reading — the reply hit the 2000-token limit and was cut off. Nothing was saved. Send it in two shorter messages, or raise AI_MAX_TOKENS."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "The message was too long for one reading — the reply hit the 2000-token limit and was cut off. Nothing was saved. Send it in two shorter messages, or raise AI_MAX_TOKENS."
+     }
+    },
+    {
+     "scenario": "structure-provider-text",
+     "status": 502,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "structure-not-connected",
+     "status": 503,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "structure-save-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "structure-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Structure failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/simulate": {
+   "answers": [
+    {
+     "scenario": "unknown-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     }
+    },
+    {
+     "scenario": "sim-no-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     }
+    },
+    {
+     "scenario": "sim-text-is-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "raw_text required"
+     }
+    },
+    {
+     "scenario": "sim-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "Capture not migrated yet (b104)."
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "Capture not migrated yet (b104)."
+     }
+    },
+    {
+     "scenario": "sim-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Capture failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Capture failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/stores": {
+   "answers": [
+    {
+     "scenario": "unknown-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Store save failed",
+      "message": "phone required"
+     },
+     "fixture": {
+      "error": "Store save failed",
+      "message": "phone required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Store save failed",
+      "message": "phone required"
+     },
+     "fixture": {
+      "error": "Store save failed",
+      "message": "phone required"
+     }
+    },
+    {
+     "scenario": "found-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Store save failed",
+      "message": "phone required"
+     },
+     "fixture": {
+      "error": "Store save failed",
+      "message": "phone required"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Store save failed",
+      "message": "phone required"
+     },
+     "fixture": {
+      "error": "Store save failed",
+      "message": "phone required"
+     }
+    },
+    {
+     "scenario": "stores-save-no-phone",
+     "status": 400,
+     "body_keys": {
+      "error": "Store save failed",
+      "message": "phone required"
+     },
+     "fixture": {
+      "error": "Store save failed",
+      "message": "phone required"
+     }
+    },
+    {
+     "scenario": "stores-save-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Store save failed",
+      "message": "Stores are not migrated on this environment (b135)."
+     },
+     "fixture": {
+      "error": "Store save failed",
+      "message": "Stores are not migrated on this environment (b135)."
+     }
+    },
+    {
+     "scenario": "stores-save-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Store save failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Store save failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
