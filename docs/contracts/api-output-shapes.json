@@ -190,6 +190,221 @@
         "url": "/api/schemas/fields/grade"
       }
     },
+    "GET /api/actors": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "actors",
+          "total",
+          "page",
+          "limit",
+          "summary"
+        ],
+        "properties": {
+          "actors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "active",
+              "on_break",
+              "deactivated",
+              "removed",
+              "total"
+            ],
+            "properties": {
+              "active": {
+                "type": "number"
+              },
+              "on_break": {
+                "type": "number"
+              },
+              "deactivated": {
+                "type": "number"
+              },
+              "removed": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 11,
+      "open": [
+        {
+          "path": "actors[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/actors?status=all"
+      }
+    },
+    "GET /api/actors/:id/tasks": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "tasks",
+          "total",
+          "page",
+          "limit",
+          "actor",
+          "count"
+        ],
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "current_status",
+                "assigned_at",
+                "assignment_type",
+                "read_at",
+                "auto_subject",
+                "purpose",
+                "created_at",
+                "sender_entity_display_name"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "current_status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "assigned_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "assignment_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "read_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "auto_subject": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sender_entity_display_name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "actor_key",
+              "break_status",
+              "current_task_count",
+              "max_tasks"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "actor_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "break_status": {
+                "type": "string"
+              },
+              "current_task_count": {
+                "type": "number"
+              },
+              "max_tasks": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "count": {
+            "type": "number"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/tasks"
+      }
+    },
     "GET /api/actors/access-events": {
       "status": "200",
       "schema": {
@@ -9814,6 +10029,105 @@
         "url": "/api/work/list?view=orders_out"
       }
     },
+    "PATCH /api/actors/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor",
+          "audit"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "actor_role",
+              "phone",
+              "email",
+              "max_tasks",
+              "hat",
+              "can_see_costs"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "actor_role": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "phone": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "max_tasks": {
+                "type": "number"
+              },
+              "hat": {
+                "type": "string"
+              },
+              "can_see_costs": {
+                "type": "boolean"
+              },
+              "access_level": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "whole_entity": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "audit": {
+            "type": "object",
+            "required": [
+              "recorded",
+              "failed"
+            ],
+            "properties": {
+              "recorded": {
+                "type": "number"
+              },
+              "failed": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "email": ""
+        }
+      }
+    },
     "PATCH /api/quick-keys/groups/:id": {
       "status": "200",
       "schema": {
@@ -9940,6 +10254,82 @@
         "url": "/api/schemas/visibility",
         "body": {
           "visibility": "private"
+        }
+      }
+    },
+    "POST /api/actors/check-key": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "actor_key",
+          "available",
+          "login_format",
+          "message"
+        ],
+        "properties": {
+          "actor_key": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "login_format": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/actors/check-key",
+        "body": {
+          "actor_key": "ravik"
+        }
+      }
+    },
+    "POST /api/actors/suggest-key": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "suggested_key",
+          "available",
+          "login_format",
+          "alternatives"
+        ],
+        "properties": {
+          "suggested_key": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/actors/suggest-key",
+        "body": {
+          "display_name": "Ravi Kumar"
         }
       }
     },
@@ -10576,6 +10966,272 @@
       "open": [],
       "example": {
         "url": "/api/till/state",
+        "body": {}
+      }
+    },
+    "PUT /api/actors/:id/delegate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "delegate_actor_id"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "delegate_actor_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/delegate",
+        "body": {
+          "delegate_actor_id": null
+        }
+      }
+    },
+    "PUT /api/actors/:id/tasks/route": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "to_actor": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/tasks/route",
+        "body": {
+          "chit_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "action": "push",
+          "to_actor_id": "88888888-8888-4888-8888-888888888888"
+        }
+      }
+    },
+    "PUT /api/actors/assign/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "action"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "new_status": {
+            "type": "string"
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/assign/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "action": "pull"
+        }
+      }
+    },
+    "PUT /api/actors/break": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor_id",
+          "state",
+          "audit"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "break_type": {
+            "type": "string"
+          },
+          "tasks": {
+            "type": "string"
+          },
+          "audit": {
+            "type": "object"
+          },
+          "task_action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tasks_routed": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "audit",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/actors/break",
+        "body": {
+          "break_type": "end_break"
+        }
+      }
+    },
+    "PUT /api/actors/change-pin": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/actors/change-pin",
+        "body": {
+          "current_pin": "4821",
+          "new_pin": "7391",
+          "confirm_pin": "7391"
+        }
+      }
+    },
+    "PUT /api/actors/settings": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "required": [
+              "setting_id",
+              "entity_id",
+              "assignment_model",
+              "default_max_tasks",
+              "all_task_visible",
+              "auto_return_on_short_break",
+              "created_at",
+              "updated_at",
+              "auto_assign_mode",
+              "default_assignee_actor_id"
+            ],
+            "properties": {
+              "setting_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "assignment_model": {
+                "type": "string"
+              },
+              "default_max_tasks": {
+                "type": "number"
+              },
+              "all_task_visible": {
+                "type": "boolean"
+              },
+              "auto_return_on_short_break": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "auto_assign_mode": {
+                "type": "string"
+              },
+              "default_assignee_actor_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/settings",
         "body": {}
       }
     },
