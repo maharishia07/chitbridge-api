@@ -3,8 +3,8 @@
  "stage": "2",
  "counts": {
   "routes": 634,
-  "not_started": 116,
-  "partial": 492,
+  "not_started": 114,
+  "partial": 494,
   "meets": 26,
   "columns": {
    "strict_input": {
@@ -2098,16 +2098,16 @@
    "path": "/api/attachments/:id",
    "owner_area": "attachments",
    "file": "routes/attachments.js",
-   "line": 78,
-   "hash": "0edee6d57085b0f5",
+   "line": 83,
+   "hash": "25c3bb3907eaa752",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -2123,9 +2123,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -2134,7 +2140,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "GET /api/books/accounts",
@@ -16076,16 +16082,16 @@
    "path": "/api/attachments",
    "owner_area": "attachments",
    "file": "routes/attachments.js",
-   "line": 32,
-   "hash": "646a123b84899e0e",
+   "line": 38,
+   "hash": "f0ae6bbcf8009b62",
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -16101,9 +16107,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    413,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -16112,7 +16125,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started"
+   "status": "partial"
   },
   {
    "key": "POST /api/books/accounts",

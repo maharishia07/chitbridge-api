@@ -558,6 +558,9 @@
   },
   "PUT /api/connections/:id/respond": {
    "foreign_id_404": true
+  },
+  "GET /api/attachments/:id": {
+   "foreign_id_404": true
   }
  }
 }

@@ -43800,6 +43800,402 @@
      }
     }
    ]
+  },
+  "GET /api/attachments/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 500,
+     "body_keys": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "get-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "get-name-beyond-latin-1-cannot-be-sent",
+     "status": 500,
+     "body_keys": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "get-id-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "get-library-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "get-read-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Fetch failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/attachments": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     }
+    },
+    {
+     "scenario": "up-needs-chit_id",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     }
+    },
+    {
+     "scenario": "up-needs-name",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     }
+    },
+    {
+     "scenario": "up-needs-the-bytes",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     }
+    },
+    {
+     "scenario": "up-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required"
+     }
+    },
+    {
+     "scenario": "up-chit-unknown",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Not a participant on this chit"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Not a participant on this chit"
+     }
+    },
+    {
+     "scenario": "up-chit-text-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-chit-of-another-shop",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Not a participant on this chit"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Not a participant on this chit"
+     }
+    },
+    {
+     "scenario": "up-chit-held-by-another-shop-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Not a participant on this chit"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Not a participant on this chit"
+     }
+    },
+    {
+     "scenario": "up-empty-file",
+     "status": 400,
+     "body_keys": {
+      "error": "Empty file"
+     },
+     "fixture": {
+      "error": "Empty file"
+     }
+    },
+    {
+     "scenario": "up-over-6mb",
+     "status": 413,
+     "body_keys": {
+      "error": "Too large",
+      "message": "Max 6 MB per file"
+     },
+     "fixture": {
+      "error": "Too large",
+      "message": "Max 6 MB per file"
+     }
+    },
+    {
+     "scenario": "up-library-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-roster-read-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-insert-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-first-copy-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-second-copy-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-answer-cannot-be-written",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-line-index-abc-is-nan",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-line-index-empty-text-is-nan",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-line-index-true-is-nan",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-line-index-too-big-for-an-integer",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "up-message-text-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Upload failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
