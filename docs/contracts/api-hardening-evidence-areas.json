@@ -5,19 +5,112 @@
    "foreign_id_404": true
   },
   "DELETE /api/crm/followups/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "DELETE /api/crm/groups/:name": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "DELETE /api/crm/parties/:id": {
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "DELETE /api/products/:id": {
+   "output_allowlist": true
+  },
+  "DELETE /api/products/:id/media/:mid": {
+   "output_allowlist": true
+  },
+  "DELETE /api/quick-keys/groups/:id": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
-  "GET /api/attachments/:id": {
-   "foreign_id_404": true
+  "GET /api/actors/access-events": {
+   "output_allowlist": true
+  },
+  "GET /api/actors/settings": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/catalogue-mine": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/penetration": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/regions": {
+   "output_allowlist": true
+  },
+  "GET /api/books/accounts": {
+   "output_allowlist": true
+  },
+  "GET /api/books/assets": {
+   "output_allowlist": true
+  },
+  "GET /api/books/bank/rail": {
+   "output_allowlist": true
+  },
+  "GET /api/books/bs": {
+   "output_allowlist": true
+  },
+  "GET /api/books/cashflow": {
+   "output_allowlist": true
+  },
+  "GET /api/books/cheques": {
+   "output_allowlist": true
+  },
+  "GET /api/books/compare": {
+   "output_allowlist": true
+  },
+  "GET /api/books/daybook": {
+   "output_allowlist": true
+  },
+  "GET /api/books/dues": {
+   "output_allowlist": true
+  },
+  "GET /api/books/events": {
+   "output_allowlist": true
+  },
+  "GET /api/books/fx-rates": {
+   "output_allowlist": true
+  },
+  "GET /api/books/fx-revalue": {
+   "output_allowlist": true
+  },
+  "GET /api/books/health": {
+   "output_allowlist": true
+  },
+  "GET /api/books/move-in/imports": {
+   "output_allowlist": true
+  },
+  "GET /api/books/packs": {
+   "output_allowlist": true
+  },
+  "GET /api/books/periods": {
+   "output_allowlist": true
+  },
+  "GET /api/books/pl": {
+   "output_allowlist": true
+  },
+  "GET /api/books/recurring": {
+   "output_allowlist": true
+  },
+  "GET /api/books/returns": {
+   "output_allowlist": true
+  },
+  "GET /api/books/status": {
+   "output_allowlist": true
+  },
+  "GET /api/books/terms": {
+   "output_allowlist": true
+  },
+  "GET /api/books/trial-balance": {
+   "output_allowlist": true
   },
   "GET /api/catalogue/:bridge_id": {
    "output_allowlist": true,
@@ -39,14 +132,122 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/crm/calls": {
+   "output_allowlist": true
+  },
+  "GET /api/crm/followups": {
+   "output_allowlist": true
+  },
+  "GET /api/crm/parties": {
+   "output_allowlist": true
+  },
   "GET /api/crm/parties/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/crm/parties/:id/contact-prefs": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/crm/parties/:id/timeline": {
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/crm/privacy-requests": {
+   "output_allowlist": true
+  },
+  "GET /api/crm/segments": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/entitlements": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/header": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/me": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/me/can-see-costs": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/mis": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/policy": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/populations": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/routing": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/search": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/sides": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/usage": {
+   "output_allowlist": true
+  },
+  "GET /api/forms/instances/:id": {
    "foreign_id_404": true
+  },
+  "GET /api/governance/ai-skills": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/ai-usage": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/commerce-standards": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/country-setup": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/instruments": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/journey": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/lanes": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/profile": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/profile/path": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/profile/readiness": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/readiness": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/readiness/:bridge_id": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/track-record": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/vault-schema": {
+   "output_allowlist": true
+  },
+  "GET /api/products": {
+   "output_allowlist": true
+  },
+  "GET /api/products/:id/versions": {
+   "output_allowlist": true
+  },
+  "GET /api/products/lists": {
+   "output_allowlist": true
+  },
+  "GET /api/products/starter-columns": {
+   "output_allowlist": true
   },
   "GET /api/repeat/:id": {
    "foreign_id_404": true
@@ -54,8 +255,57 @@
   "GET /api/testing/cmdb/:ci": {
    "foreign_id_404": true
   },
+  "GET /api/till/bills": {
+   "output_allowlist": true
+  },
+  "GET /api/till/catalogue/blueprints": {
+   "output_allowlist": true
+  },
+  "GET /api/till/counters": {
+   "output_allowlist": true
+  },
+  "GET /api/till/match": {
+   "output_allowlist": true
+  },
+  "GET /api/till/quick-keys/groups": {
+   "output_allowlist": true
+  },
+  "GET /api/till/quick-keys/hidden": {
+   "output_allowlist": true
+  },
+  "GET /api/till/quick-keys/screen-config": {
+   "output_allowlist": true
+  },
+  "GET /api/till/screens": {
+   "output_allowlist": true
+  },
+  "GET /api/till/snapshot": {
+   "output_allowlist": true
+  },
+  "GET /api/till/stock": {
+   "output_allowlist": true
+  },
+  "GET /api/till/summary": {
+   "output_allowlist": true
+  },
+  "GET /api/till/tasks": {
+   "output_allowlist": true
+  },
+  "GET /api/till/verify": {
+   "output_allowlist": true
+  },
+  "GET /api/till/worth-an-offer": {
+   "output_allowlist": true
+  },
   "GET /api/work/:chit_id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/work/facts": {
+   "output_allowlist": true
+  },
+  "GET /api/work/list": {
+   "output_allowlist": true
   },
   "PATCH /api/actors/:id": {
    "foreign_id_404": true
@@ -64,6 +314,12 @@
    "foreign_id_404": true
   },
   "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
   "PATCH /api/testing/incidents/:id": {
@@ -120,6 +376,15 @@
   "POST /api/crm/parties/:id/stage": {
    "foreign_id_404": true
   },
+  "POST /api/forms/instances/:id/attach": {
+   "foreign_id_404": true
+  },
+  "POST /api/forms/instances/:id/sign": {
+   "foreign_id_404": true
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "foreign_id_404": true
+  },
   "POST /api/repeat/:id/accept": {
    "foreign_id_404": true
   },
@@ -150,6 +415,24 @@
   "POST /api/repeat/:id/skip": {
    "foreign_id_404": true
   },
+  "POST /api/till/listen": {
+   "output_allowlist": true
+  },
+  "POST /api/till/pair": {
+   "output_allowlist": true
+  },
+  "POST /api/till/rate": {
+   "output_allowlist": true
+  },
+  "POST /api/till/reconcile": {
+   "output_allowlist": true
+  },
+  "POST /api/till/shop": {
+   "output_allowlist": true
+  },
+  "POST /api/till/state": {
+   "output_allowlist": true
+  },
   "PUT /api/actors/:id/delegate": {
    "foreign_id_404": true
   },
@@ -160,6 +443,9 @@
    "foreign_id_404": true
   },
   "PUT /api/connections/:id/respond": {
+   "foreign_id_404": true
+  },
+  "GET /api/attachments/:id": {
    "foreign_id_404": true
   }
  }

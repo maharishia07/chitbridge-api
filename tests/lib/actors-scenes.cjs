@@ -44,6 +44,50 @@ const PERSON_ROW = {
   current_status: 'pending',
   pin_state: 'none'
 };
+const AT = '2026-10-20T10:00:00.000Z';
+/** a person as GET /api/actors selects them (identities: migrations/000_baseline_2026-10-21.sql), in the statement's order: every column filled, a delegate covering a leave */
+const LIST_ROW = {
+  identity_id: PERSON, bridge_id: 'AAAA1111', display_name: 'Ravi Kumar', actor_key: 'ravik', actor_role: 'cashier', actor_type: 'human', hat: 'act',
+  break_status: 'leave', break_type: 'leave', break_started_at: AT, return_date: '2026-10-30T00:00:00.000Z', max_tasks: 10, current_task_count: 2,
+  phone: '9876543210', created_at: AT, last_active_at: AT, delegate_actor_id: OTHER, last_assigned_at: AT, pin_state: 'set',
+  site: null, last_seen: null, connector_type: null, connector_config: {}
+};
+/** a connector actor: where it runs, when it last checked in, and its own config (free-form, the object the owner sent: routes/connectors.js) */
+const CONNECTOR_ROW = Object.assign({}, LIST_ROW, {
+  identity_id: OTHER, bridge_id: 'BBBB2222', display_name: 'Tally kit', actor_key: 'tally', actor_role: null, actor_type: 'connector', break_status: 'active', break_type: null,
+  break_started_at: null, return_date: null, max_tasks: 0, current_task_count: 0, phone: null, delegate_actor_id: null, last_assigned_at: null, pin_state: 'pending',
+  site: 'Back office', last_seen: AT, connector_type: 'erp', connector_config: { base_url: 'https://erp.example.com', auth_type: 'token', auth_ref: 'tally-1' }
+});
+/** every nullable column of the list statement NULL (created_at too: `DEFAULT now()` without NOT NULL); connector_config is NOT NULL DEFAULT '{}' */
+const LIST_BARE = {
+  identity_id: STRANGER_ID, bridge_id: 'CCCC3333', display_name: 'Anu', actor_key: null, actor_role: null, actor_type: 'human', hat: 'view',
+  break_status: 'active', break_type: null, break_started_at: null, return_date: null, max_tasks: 10, current_task_count: 0,
+  phone: null, created_at: null, last_active_at: null, delegate_actor_id: null, last_assigned_at: null, pin_state: 'none',
+  site: null, last_seen: null, connector_type: null, connector_config: {}
+};
+/** an access event as GET /access-events selects it (access_events + the two identities it names, LEFT JOINed) */
+const EVENT_ROW = {
+  event_id: '99999999-9999-4999-8999-999999999999', subject_identity_id: PERSON, subject_name: 'Ravi Kumar', actor_key: 'ravik', action: 'hat_changed',
+  before_value: { hat: 'act' }, after_value: { hat: 'manager' }, reason: 'Opens the shop on Sundays', at: AT, changed_by: SHOP, changed_by_name: 'Shop A'
+};
+/** before_value, after_value, changed_by and reason are nullable; the LEFT JOINs find no one */
+const EVENT_BARE = {
+  event_id: '77777777-7777-4777-8777-777777777777', subject_identity_id: PERSON, subject_name: null, actor_key: null, action: 'code_issued',
+  before_value: null, after_value: null, reason: null, at: AT, changed_by: null, changed_by_name: null
+};
+/**
+ * the WHOLE vocabulary of the trail's two objects, so their closed shape lists every key a row may hold: lib/access-events.js recordChanges writes one row per
+ * access field that moved (ACTION_FOR: access_level · hat · whole_entity · can_see_costs · break_status) as { field: value | null } before and after, and
+ * lib/employee-code.js recordIssued writes code_issued with after { channel, expires_at } and no before. Those two are the table's only writers.
+ */
+const EVENT_OF = (n, action, before, after) => Object.assign({}, EVENT_ROW, { event_id: '99999999-9999-4999-8999-99999999990' + n, action, before_value: before, after_value: after });
+const EVENT_VOCABULARY = [
+  EVENT_OF(1, 'hat_changed', { access_level: 'editor' }, { access_level: 'viewer' }),
+  EVENT_OF(2, 'reach_changed', { whole_entity: null }, { whole_entity: true }),
+  EVENT_OF(3, 'costs_changed', { can_see_costs: true }, { can_see_costs: false }),
+  EVENT_OF(4, 'break_changed', { break_status: 'active' }, { break_status: 'leave' }),
+  EVENT_OF(5, 'code_issued', null, { channel: 'screen', expires_at: AT })
+];
 
 /** the tools a scene is built from: the harness's own stand-ins, and the PIN hash the test made */
 function extras(tools) {
@@ -69,9 +113,8 @@ function extras(tools) {
   const own = (fn) => ({ sqlRows: fn });
   const T = (patchOf) => ({ patch: patchOf });
   /* a sealed environment: the first-code door refuses unless a sender is set up (503) or the person has an e-mail (400) */
-  const sealed = (mailerReady) => ({
-    empcode: {
-      refusal: (to) => {
+  const sealed = (mailerReady) => {
+    const refusal = (to) => {
         const real = tools.realRefusal;
         const was = ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'FROM_EMAIL'].map((name) => [name, process.env[name]]);
         const sealedWas = tools.devOtp.isSealed;
@@ -83,9 +126,10 @@ function extras(tools) {
           tools.devOtp.isSealed = sealedWas;
           was.forEach(([name, value]) => (value === undefined ? delete process.env[name] : (process.env[name] = value)));
         }
-      }
-    }
-  });
+    };
+    /* SEC-106: the routes ask mayIssue (this refusal, then the code store), so it answers the same refusal */
+    return { empcode: { refusal, mayIssue: async (to) => refusal(to) } };
+  };
   const showsCode = { devotp: { mayExposeOtp: () => true } };
   const mailed = { notify: { sendOtpEmail: async () => ({ delivered: true }) } };
   const BODY_NEW = { display_name: 'Ravi Kumar', actor_key: 'ravik' };
@@ -132,8 +176,8 @@ function extras(tools) {
     X('create-made-and-mailed', 'POST ' + at(''), 200, { body: Object.assign({ email: 'Ravi@Example.com' }, BODY_NEW), patch: mailed, setup: { sqlRows: ENTITY_ROW } }),
     X('create-made-and-code-shown', 'POST ' + at(''), 200, { body: BODY_NEW, patch: showsCode, setup: { sqlRows: ENTITY_ROW } }),
     X('create-mail-not-sent', 'POST ' + at(''), 200, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: ENTITY_ROW } }),
-    X('create-sealed-no-mailer', 'POST ' + at(''), 503, { body: BODY_NEW, patch: sealed(false), setup: { sqlRows: ENTITY_ROW } }),
-    X('create-sealed-needs-an-email', 'POST ' + at(''), 400, { body: BODY_NEW, patch: sealed(true), setup: { sqlRows: ENTITY_ROW } }),
+    X('create-sealed-no-mailer', 'POST ' + at(''), 503, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), patch: sealed(false), setup: { sqlRows: ENTITY_ROW } }),
+    N('create-sealed-no-email-shown', 'POST ' + at(''), 200, { body: BODY_NEW, patch: sealed(true), setup: { sqlRows: ENTITY_ROW } }),
     X('create-email-is-taken', 'POST ' + at(''), 409, { body: Object.assign({ email: 'ravi@example.com' }, BODY_NEW), setup: { sqlRows: firstOf(ENTITY_ROW, failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'identities_email_key' })) } }),
     X('create-key-is-taken-at-the-insert', 'POST ' + at(''), 409, { body: BODY_NEW, setup: { sqlRows: failOn(/INSERT INTO identities/, '23505', 'duplicate', { constraint: 'uq_actor_key_per_entity' }) } }),
     X('create-insert-fails', 'POST ' + at(''), 500, { body: BODY_NEW, setup: { sqlRows: failOn(/INSERT INTO identities/, 'XX000', SECRET_SQL) } }),
@@ -166,29 +210,32 @@ function extras(tools) {
     X('change-pin-wrong-current', 'PUT ' + at('/change-pin'), 400, { body: Object.assign({}, NEW_PIN, { current_pin: '0000' }), setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }) } }),
     X('change-pin-made', 'PUT ' + at('/change-pin'), 200, { body: NEW_PIN, setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }) } }),
     X('change-pin-fails', 'PUT ' + at('/change-pin'), 500, { body: NEW_PIN, setup: { who: STAFF, sqlRows: failOn(/SELECT pin_hash/, 'XX000', SECRET_SQL) } }),
-    X('pin-reset-made', 'DELETE ' + at('/:id/pin'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key FROM identities/, PERSON_ROW) } }),
-    X('pin-reset-made-and-mailed', 'DELETE ' + at('/:id/pin'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key FROM identities/, PERSON_ROW)) } }),
-    X('pin-reset-code-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key FROM identities/, PERSON_ROW) } }),
-    X('pin-reset-sealed-no-mailer', 'DELETE ' + at('/:id/pin'), 503, { patch: sealed(false), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key FROM identities/, PERSON_ROW) } }),
-    X('pin-reset-sealed-needs-an-email', 'DELETE ' + at('/:id/pin'), 400, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key FROM identities/, PERSON_ROW) } }),
-    X('pin-reset-fails', 'DELETE ' + at('/:id/pin'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
-    X('otp-made', 'POST ' + at('/:id/otp'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key\s+FROM identities/, PERSON_ROW) } }),
-    X('otp-made-and-mailed', 'POST ' + at('/:id/otp'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key\s+FROM identities/, PERSON_ROW)) } }),
-    X('otp-code-shown', 'POST ' + at('/:id/otp'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key\s+FROM identities/, PERSON_ROW) } }),
-    X('otp-sealed-no-mailer', 'POST ' + at('/:id/otp'), 503, { patch: sealed(false), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key\s+FROM identities/, PERSON_ROW) } }),
-    X('otp-sealed-needs-an-email', 'POST ' + at('/:id/otp'), 400, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key\s+FROM identities/, PERSON_ROW) } }),
-    X('otp-fails', 'POST ' + at('/:id/otp'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key\s+FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
-    X('otp-body-is-a-list', 'POST ' + at('/:id/otp'), 200, { body: [], setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key\s+FROM identities/, PERSON_ROW) } })
+    X('pin-reset-made', 'DELETE ' + at('/:id/pin'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
+    X('pin-reset-made-and-mailed', 'DELETE ' + at('/:id/pin'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
+    X('pin-reset-code-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
+    X('pin-reset-sealed-no-mailer', 'DELETE ' + at('/:id/pin'), 503, { patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
+    N('pin-reset-sealed-no-email-shown', 'DELETE ' + at('/:id/pin'), 200, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
+    X('pin-reset-fails', 'DELETE ' + at('/:id/pin'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
+    X('otp-made', 'POST ' + at('/:id/otp'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
+    X('otp-made-and-mailed', 'POST ' + at('/:id/otp'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
+    X('otp-code-shown', 'POST ' + at('/:id/otp'), 200, { patch: showsCode, setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
+    X('otp-sealed-no-mailer', 'POST ' + at('/:id/otp'), 503, { patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW)) } }),
+    N('otp-sealed-no-email-shown', 'POST ' + at('/:id/otp'), 200, { patch: sealed(true), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } }),
+    X('otp-fails', 'POST ' + at('/:id/otp'), 500, { setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW), failOn(/UPDATE identities/, 'XX000', SECRET_SQL)) } }),
+    X('otp-body-is-a-list', 'POST ' + at('/:id/otp'), 200, { body: [], setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status\s+FROM identities/, PERSON_ROW) } })
   ];
 
   /* ── GET /api/actors ── */
   const list = [
-    X('list-made', 'GET ' + at(''), 200, { setup: { sqlRows: firstOf(rowsOf(/SELECT\s+break_status,\s+COUNT/, [{ break_status: 'active', count: '2' }, { break_status: 'leave', count: '1' }, { break_status: 'removed', count: '1' }]), rowsOf(/SELECT\s+identity_id, bridge_id/, [PERSON_ROW])) } }),
-    X('list-everyone-of-a-type', 'GET ' + at(''), 200, { url: at('?status=all&type=human'), setup: { sqlRows: rowsOf(/SELECT\s+identity_id, bridge_id/, [PERSON_ROW]) } }),
+    X('list-made', 'GET ' + at(''), 200, { setup: { sqlRows: firstOf(rowsOf(/SELECT\s+break_status,\s+COUNT/, [{ break_status: 'active', count: '2' }, { break_status: 'leave', count: '1' }, { break_status: 'removed', count: '1' }]), rowsOf(/SELECT\s+identity_id, bridge_id/, [LIST_ROW])) } }),
+    X('list-everyone-of-a-type', 'GET ' + at(''), 200, { url: at('?status=all&type=human'), setup: { sqlRows: rowsOf(/SELECT\s+identity_id, bridge_id/, [LIST_ROW]) } }),
+    /* S34: a connector beside a person, and a row with every nullable column NULL */
+    X('list-a-connector-and-a-bare-row', 'GET ' + at(''), 200, { url: at('?status=all'), setup: { sqlRows: rowsOf(/SELECT\s+identity_id, bridge_id/, [LIST_ROW, CONNECTOR_ROW, LIST_BARE]) } }),
+    X('list-past-the-cap', 'GET ' + at(''), 200, { url: at('?limit=500'), setup: { sqlRows: rowsOf(/SELECT\s+identity_id, bridge_id/, Array(201).fill(LIST_BARE)) } }),
     X('list-away', 'GET ' + at(''), 200, { url: at('?status=leave') }),
     X('list-switched-off', 'GET ' + at(''), 200, { url: at('?status=inactive') }),
     X('list-removed', 'GET ' + at(''), 200, { url: at('?status=removed') }),
-    X('list-one-page', 'GET ' + at(''), 200, { url: at('?page=2&limit=1'), setup: { sqlRows: rowsOf(/SELECT\s+identity_id, bridge_id/, [PERSON_ROW, PERSON_ROW, PERSON_ROW]) } }),
+    X('list-one-page', 'GET ' + at(''), 200, { url: at('?page=2&limit=1'), setup: { sqlRows: rowsOf(/SELECT\s+identity_id, bridge_id/, [LIST_ROW, CONNECTOR_ROW, LIST_BARE]) } }),
     X('list-db-fails', 'GET ' + at(''), 500, { setup: failing })
   ];
 
@@ -212,8 +259,8 @@ function extras(tools) {
     X('status-removed', 'PUT ' + at('/:id/status'), 200, { body: { action: 'remove', confirm: 'REMOVE' }, setup: { sqlRows: firstOf(SHOP_FLAGS, NO_TASKS) } }),
     X('status-switched-on', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, setup: { sqlRows: NO_TASKS } }),
     X('status-switched-on-code-shown', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, patch: showsCode, setup: { sqlRows: NO_TASKS } }),
-    X('status-switched-on-sealed-no-mailer', 'PUT ' + at('/:id/status'), 503, { body: { action: 'reactivate' }, patch: sealed(false), setup: { sqlRows: NO_TASKS } }),
-    X('status-switched-on-sealed-needs-an-email', 'PUT ' + at('/:id/status'), 400, { body: { action: 'reactivate' }, patch: sealed(true), setup: { sqlRows: NO_TASKS } }),
+    X('status-switched-on-sealed-no-mailer', 'PUT ' + at('/:id/status'), 503, { body: { action: 'reactivate' }, patch: sealed(false), setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), NO_TASKS) } }),
+    N('status-switched-on-sealed-no-email', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, patch: sealed(true), setup: { sqlRows: NO_TASKS } }),
     X('status-fails', 'PUT ' + at('/:id/status'), 500, { body: { action: 'deactivate' }, setup: { sqlRows: firstOf(SHOP_FLAGS, NO_TASKS, failOn(/SET break_status = 'deactivated'/, 'XX000', SECRET_SQL)) } })
   ];
 
@@ -268,9 +315,12 @@ function extras(tools) {
   ];
 
   /* ── settings ── */
-  const SETTINGS = { entity_id: SHOP, assignment_model: 'both', default_max_tasks: 10, all_task_visible: false, auto_return_on_short_break: false, auto_assign_mode: 'off', default_assignee_actor_id: null };
+  /* the row as SELECT * reads it (entity_actor_settings: migrations/000_baseline_2026-10-21.sql), in the table's column order; default_assignee_actor_id is its one nullable column */
+  const SETTINGS = { setting_id: CHIT, entity_id: SHOP, assignment_model: 'both', default_max_tasks: 10, all_task_visible: false, auto_return_on_short_break: false, created_at: AT, updated_at: AT, auto_assign_mode: 'off', default_assignee_actor_id: null };
+  const SETTINGS_ASSIGNEE = Object.assign({}, SETTINGS, { auto_assign_mode: 'default_assignee', default_assignee_actor_id: OTHER });
   const settings = [
     X('settings-read', 'GET ' + at('/settings'), 200, { setup: { sqlRows: row(/SELECT \* FROM entity_actor_settings/, SETTINGS) } }),
+    X('settings-read-with-an-assignee', 'GET ' + at('/settings'), 200, { setup: { sqlRows: row(/SELECT \* FROM entity_actor_settings/, SETTINGS_ASSIGNEE) } }),
     X('settings-read-first-time', 'GET ' + at('/settings'), 200, { setup: { sqlRows: row(/INSERT INTO entity_actor_settings/, SETTINGS) } }),
     X('settings-read-by-staff', 'GET ' + at('/settings'), 200, { setup: { who: STAFF, sqlRows: row(/SELECT \* FROM entity_actor_settings/, SETTINGS) } }),
     X('settings-read-fails', 'GET ' + at('/settings'), 500, { setup: failing }),
@@ -317,8 +367,7 @@ function extras(tools) {
     X('route-fails', 'PUT ' + at('/:id/tasks/route'), 500, { body: { chit_id: CHIT, action: 'pool' }, setup: failing }),
     X('route-staff-is-refused', 'PUT ' + at('/:id/tasks/route'), 403, { body: { chit_id: CHIT, action: 'pool' }, setup: { who: STAFF } }),
     N('route-body-is-a-list', 'PUT ' + at('/:id/tasks/route'), 400, { body: [] }),
-    X('events-listed', 'GET ' + at('/access-events'), 200, { setup: { sqlRows: rowsOf(/FROM access_events e/, [{ event_id: 1, subject_identity_id: PERSON, subject_name: 'Ravi Kumar', actor_key: 'ravik', action: 'hat_changed', before_value: '{}', after_value: '{}', reason: null, at: '2026-10-20T10:00:00.000Z', changed_by: SHOP, changed_by_name: 'Shop A' }]) } }),
-    X('events-of-one-person', 'GET ' + at('/access-events'), 200, { url: at('/access-events?subject=' + PERSON + '&page=1&limit=5') }),
+    X('events-listed', 'GET ' + at('/access-events'), 200, { setup: { sqlRows: rowsOf(/FROM access_events e/, [EVENT_ROW, EVENT_BARE].concat(EVENT_VOCABULARY)) } }),    X('events-of-one-person', 'GET ' + at('/access-events'), 200, { url: at('/access-events?subject=' + PERSON + '&page=1&limit=5') }),
     X('events-table-not-there-yet', 'GET ' + at('/access-events'), 200, { setup: { sqlRows: failOn(/FROM access_events e/, '42P01', 'relation "access_events" does not exist') } }),
     X('events-fail', 'GET ' + at('/access-events'), 500, { setup: failing })
   ];

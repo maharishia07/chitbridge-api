@@ -14,6 +14,7 @@
  *   node tests/api-problem-finance.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json
  *   node tests/api-problem-finance.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-finance.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
+ *   node tests/api-problem-finance.test.cjs --compare F        the answers now against a capture F: byte for byte (status, content type, body)
  */
 'use strict';
 const path = require('path');
@@ -24,6 +25,9 @@ const express = require('express');
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+const allowlist = require('../lib/output-allowlist');
+const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const MOUNTS = ['/api/folders', '/api/facts', '/api/pricing'];
@@ -121,8 +125,74 @@ const raising = (pattern, code) => (sql) => {
 };
 /** a stand-in db that answers one statement with given rows */
 const answering = (pattern, rows) => (sql) => (pattern.test(sql) ? { rows, rowCount: rows.length } : null);
+/** several stand-in answers, the first that has one wins */
+const firstOf = (...answers) => (sql, params) => answers.map((answer) => answer(sql, params)).find((given) => given) || null;
+/** SEC-100: the folder lookup finds the folder (it is this shop's own) */
+const OWN_FOLDER = answering(/SELECT 1 FROM folder WHERE folder_id = \$1 AND entity_id = \$2/, [{ '?column?': 1 }]);
+/** a scenario for an answer the SEC-100 fix ADDS: the code before answered it otherwise (200 or 500), so nothing is frozen for it */
+const N = (id, route, status, extra) => X(id, route, status, Object.assign({ after: true }, extra));
 const BAD_WHEN = { when: { nonsense: 'x' } };
 const FOLDER_ROW = (extra) => Object.assign({ folder_id: PARTY, name: 'Mayur', scope: 'task', kind: 'filed' }, extra);
+/** a folder row as the folders list selects it (the folder table: migrations/000_baseline_2026-10-21.sql + b133's scope + b275's kind), count as the database answers a COUNT: text */
+const FOLDER_FILED = { folder_id: PARTY, parent_id: null, name: 'Mayur', sort: 1, scope: 'task', kind: 'filed', count: '2' };
+const FOLDER_VIEW = { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'Late bills', sort: 0, scope: null, kind: 'view', count: '0' };
+/** folder.sort is `integer DEFAULT 0` with no NOT NULL (migrations/000_baseline): a row can hold NULL */
+const FOLDER_NO_SORT = { folder_id: '99999999-9999-4999-8999-999999999999', parent_id: null, name: 'Unsorted', sort: null, scope: 'order', kind: 'filed', count: '0' };
+const AT = '2026-10-01T10:00:00.000Z';
+/** every term of the rule vocabulary (lib/match KEYS), so a rule's when is seen with the whole of what a rule may hold */
+const WHEN_FULL = Object.fromEntries(Object.entries(require(path.join(HERE, 'lib', 'match')).KEYS).map(([key, kind]) => [key, { text: 'rice', exact: 'invoice', number: 5, bool: true }[kind]]));
+/** a folder_rule row as lib/folder-rules list selects it: the first with every column filled, the second with every nullable column null */
+const RULE_FULL = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: true, sort: 1, stop_processing: true, last_matched_at: AT, match_count: '3', created_at: AT };
+/** a rule may hold any one term of the vocabulary (lib/match validate): this one only a sender, no doc, so no term is read as required */
+const RULE_FROM_ONLY = { rule_id: '88888888-8888-4888-8888-888888888888', folder_id: PARTY, name: 'From Asha', when: { from: 'asha' }, enabled: true, sort: 2, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
+const RULE_BARE = { rule_id: '33333333-3333-4333-8333-333333333333', folder_id: PARTY, name: null, when: { doc: 'invoice' }, enabled: false, sort: 0, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
+/** a message of the inbox as its statement selects it (chit_messages + the chit's header, line and status) */
+const MESSAGE_FULL = { message_id: PARTY, chit_id: PARTY, line_id: PARTY, sender_display_name: 'Asha', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Ring me', created_at: AT, msg_type: 'query', read_at: AT, kept: true, manual_subject: 'Rice', auto_subject: 'Order', track: 'order', particulars: 'Ponni 24 kg', chit_status: 'pending' };
+/** a product-subject message: chit_messages_subject_ck lets chit_id and line_id be NULL, and the inbox query does not filter it out; the chit joins find nothing */
+const MESSAGE_PRODUCT = { message_id: '77777777-7777-4777-8777-777777777777', chit_id: null, line_id: null, sender_display_name: 'Asha', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Is it in stock', created_at: AT, msg_type: 'query', read_at: null, kept: false, manual_subject: null, auto_subject: null, track: 'task', particulars: null, chit_status: null };
+const MESSAGE_BARE = { message_id: '33333333-3333-4333-8333-333333333333', chit_id: PARTY, line_id: null, sender_display_name: 'Ravi', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Hello', created_at: AT, msg_type: 'info', read_at: null, kept: false, manual_subject: null, auto_subject: null, track: 'task', particulars: null, chit_status: null };
+/** a copy of a chit as lib/select rows hands it to the measure (the status words are lib/rail-actions') */
+const CHIT = (extra) => Object.assign({ chit_id: PARTY, current_status: 'pending', direction: 'received', folder_id: null, created_at: '2026-09-01T10:00:00.000Z', read_at: null, touched_at: null, open_disputes: 0, resolved_disputes: 0, value: '100', currency: 'INR', assigned_to_actor_id: null, doc_kind: 'invoice', counterparty_id: PARTY, counterparty_name: 'Asha Traders' }, extra);
+const CHITS = [
+  CHIT({}),
+  CHIT({ chit_id: '33333333-3333-4333-8333-333333333333', direction: 'sent', current_status: 'completed', folder_id: PARTY, read_at: AT, touched_at: AT, open_disputes: 1, assigned_to_actor_id: '44444444-4444-4444-8444-444444444444', value: null }),
+  CHIT({ chit_id: '55555555-5555-4555-8555-555555555555', doc_kind: 'bill_received', currency: 'AED' })
+];
+/** a chit copy filed into a folder the shop cannot see: the reconcile's discrepancy */
+const STRAY = CHIT({ chit_id: '66666666-6666-4666-8666-666666666666', folder_id: '77777777-7777-4777-8777-777777777777' });
+/** a line of the worklist as its statement selects it (chit_line_assignment + chit_line + the chit's header and status) */
+const WORK_ROW = { assignee_actor_id: '44444444-4444-4444-8444-444444444444', assignee_name: 'Murugan', assignee_type: 'actor', task: 'Pack', due_date: '2026-10-02', note: 'n', chit_id: PARTY, line_id: PARTY, seq: 2, state: 'doing', particulars: 'Ponni 24 kg', quantity: '10', unit: 'kg', removed: false, comment: 'c', asked_as: 'usual rice', raw_phrase: 'the usual rice', needs_human: true, delivered: '4', chit_status: 'pending', manual_subject: 'Rice', auto_subject: 'Order', sender_entity_display_name: 'Asha Traders' };
+const WORK_BARE = { assignee_actor_id: null, assignee_name: null, assignee_type: null, task: null, due_date: null, note: null, chit_id: PARTY, line_id: '33333333-3333-4333-8333-333333333333', seq: 0, state: 'open', particulars: null, quantity: null, unit: null, removed: false, comment: null, asked_as: null, raw_phrase: null, needs_human: false, delivered: null, chit_status: null, manual_subject: null, auto_subject: null, sender_entity_display_name: null };
+/** a system folder as lib/folder-views systemFolders builds it */
+const SYSTEM_ROW = (extra) => Object.assign({ folder_id: PARTY, parent_id: null, name: 'Bills', code: 'B-2100', kind: 'view', system: true, scope: null, side: 'received', ledger: null, sort: 0, count: 0, total: 0 }, extra);
+const withChits = (rows) => ({ select: { rows: async () => rows } });
+const FOLDER_LIST = /ORDER BY f\.parent_id NULLS FIRST/;
+const FOLDER_PAIR = answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur' }, { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'Late' }]);
+const FOLDER_ONE = answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur' }]);
+const READY = [
+  X('folders-ready', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: withChits(CHITS) }),
+  /* lib/folder-inventory ledgerOf answers { code, name, role }, { code, name, group } (a group of the chart, e.g. E-6000) or null: all three are seen */
+  X('folders-ledger-role-group-null', 'GET ' + F, 200, { patch: { views: { systemFolders: async () => [SYSTEM_ROW({ ledger: { code: '2100', name: 'Suppliers', role: 'creditors' } }), SYSTEM_ROW({ code: 'E-6000', ledger: { code: '6000', name: 'Expenses', group: 'expenses' } }), SYSTEM_ROW({ code: 'R-1', ledger: null })] } } }),
+  X('folders-sort-not-set', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_NO_SORT]) } }),
+  X('folders-view-count-fails', 'GET ' + F, 200, { setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED, FOLDER_VIEW]) }, patch: { views: { members: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('folders-past-the-cap', 'GET ' + F, 200, { url: F + '?limit=9999&page=2', setup: { sqlRows: answering(FOLDER_LIST, [FOLDER_FILED]) } }),
+  X('rules-ready', 'GET ' + F + '/rules', 200, { setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY]) } }),
+  X('rules-past-the-cap', 'GET ' + F + '/rules', 200, { url: F + '/rules?limit=9999&page=2', setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL]) } }),
+  X('messages-ready', 'GET ' + F + '/messages', 200, { setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_FULL, MESSAGE_BARE]) } }),
+  X('messages-about-a-product', 'GET ' + F + '/messages', 200, { setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_PRODUCT]) } }),
+  X('messages-past-the-cap', 'GET ' + F + '/messages', 200, { url: F + '/messages?all=1&limit=9999&page=2', setup: { sqlRows: answering(/FROM chit_messages m/, [MESSAGE_FULL]) } }),
+  X('badge-count-of-two', 'GET ' + F + '/messages', 200, { url: F + '/messages?count=true', setup: { sqlRows: answering(/count\(\*\)::int AS n FROM chit_messages/, [{ n: 2 }]) } }),
+  X('worklist-ready', 'GET ' + F + '/worklist', 200, { url: F + '/worklist?due_on=2026-10-02&actor_id=' + PARTY, setup: { sqlRows: answering(/WITH latest AS/, [WORK_ROW, WORK_BARE]) } }),
+  X('worklist-not-migrated', 'GET ' + F + '/worklist', 200, { setup: { sqlRows: raising(/WITH latest AS/, '42P01') } }),
+  X('groupsum-ready', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=order&archived=1', setup: { sqlRows: answering(/FROM chit_detail/, [{ chit_id: PARTY, line_items: [{ particulars: 'Ponni 24 kg', quantity: 2, unit: 'kg', price: 50 }, { particulars: 'Dal', quantity: 1, unit: 'kg' }] }]) }, patch: withChits(CHITS) }),
+  X('mis-ready', 'GET ' + F + '/mis', 200, { patch: withChits(CHITS) }),
+  X('reconcile-ready', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: FOLDER_PAIR }, patch: withChits(CHITS) }),
+  /* a folder that is its own parent (a loop in the tree) is counted once: the answer used to be a stack overflow, a 500 */
+  X('reconcile-folder-loop', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: PARTY, name: 'Loop' }]) }, patch: withChits(CHITS) }),
+  /* two folders that are each other's parent */
+  X('reconcile-two-folder-cycle', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: '33333333-3333-4333-8333-333333333333', name: 'A' }, { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'B' }]) }, patch: withChits(CHITS) }),
+  X('reconcile-does-not-add-up', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: FOLDER_ONE }, patch: withChits(CHITS.concat([STRAY])) })
+];
 const EXTRAS = [
   /* the express-validator chains: a validation refusal keeps its { error, details } body */
   X('name-missing', 'POST ' + F, 400, { body: {} }),
@@ -137,13 +207,20 @@ const EXTRAS = [
   X('folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { name: 'Mayur' } }),
   X('nothing-to-update', 'PATCH ' + F + '/:id', 400, { body: {} }),
   X('own-parent', 'PATCH ' + F + '/:id', 400, { body: { parent_id: PARTY } }),
+  /* RAIL-137 (c): a parent BELOW the folder (the walk up from it reaches the folder) is refused; nothing is updated */
+  X('parent-below-itself', 'PATCH ' + F + '/:id', 400, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/WITH RECURSIVE up AS/, [{ '?column?': 1 }]), (sql) => { if (/UPDATE folder SET/.test(sql)) throw new Error('the cycle was written'); return null; }) } }),
   X('name-empty', 'PATCH ' + F + '/:id', 400, { body: { name: '' } }),
+  N('parent-folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { parent_id: '33333333-3333-4333-8333-333333333333' } }),
+  N('parent-not-an-id', 'PATCH ' + F + '/:id', 404, { body: { parent_id: 'nope' } }),
+  N('moved-under-own-folder', 'PATCH ' + F + '/:id', 200, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/UPDATE folder SET/, [FOLDER_ROW()])) } }),
   X('renamed', 'PATCH ' + F + '/:id', 200, { body: { name: 'Mayur' }, setup: { sqlRows: answering(/UPDATE folder SET/, [FOLDER_ROW()]) } }),
   X('db-fails-with-a-chit', 'POST ' + F + '/move', 500, { body: { chit_id: PARTY }, setup: { db: 'fail' } }),
   X('chit-not-an-id', 'POST ' + F + '/move', 400, { body: { chit_id: 'nope' } }),
   X('chit-missing', 'POST ' + F + '/move', 400, { body: {} }),
   X('into-a-system-folder', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: sysId('B-2100') } }),
   X('into-a-shops-view-folder', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: answering(/to_jsonb\(f\)->>'kind' AS kind/, [{ kind: 'view' }]) } }),
+  /* RAIL-137 (a): a folder_id that is not an id is the schema's 400, never the database's 500 */
+  X('folder-not-an-id', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: 'inbox' }, setup: { sqlRows: (sql) => { if (/FROM folder/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "inbox"'), { code: '22P02' }); return null; } } }),
   X('folder-not-found', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY } }),
   X('wrong-side', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY, direction: 'sent' }, setup: { sqlRows: answering(/SELECT scope FROM folder/, [{ scope: 'task' }]) } }),
   X('move-retried-without-scope', 'POST ' + F + '/move', 400, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: raising(/SELECT scope FROM folder/, '42703') } }),
@@ -153,7 +230,9 @@ const EXTRAS = [
   X('system-rule-shown', 'GET ' + F + '/:id/rules', 200, { url: F + '/' + sysId('B-2100') + '/rules' }),
   X('db-fails-with-a-rule', 'POST ' + F + '/:id/rules', 500, { body: { when: { doc: 'invoice' } }, setup: { db: 'fail' } }),
   X('condition-unknown', 'POST ' + F + '/:id/rules', 400, { body: BAD_WHEN }),
-  X('rules-not-migrated', 'POST ' + F + '/:id/rules', 503, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: raising(/INSERT INTO folder_rule/, '42P01') } }),
+  X('rules-not-migrated', 'POST ' + F + '/:id/rules', 503, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, raising(/INSERT INTO folder_rule/, '42P01')) } }),
+  N('rule-folder-not-found', 'POST ' + F + '/:id/rules', 404, { body: { when: { doc: 'invoice' } } }),
+  N('rule-made-in-own-folder', 'POST ' + F + '/:id/rules', 200, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [{ rule_id: PARTY, folder_id: PARTY }])) } }),
   X('rules-not-migrated', 'DELETE ' + F + '/rules/:rule_id', 503, { setup: { sqlRows: raising(/DELETE FROM folder_rule/, '42P01') } }),
   X('db-fails-with-a-change', 'PATCH ' + F + '/rules/:rule_id', 500, { body: { name: 'Mayur' }, setup: { db: 'fail' } }),
   X('rule-nothing-to-update', 'PATCH ' + F + '/rules/:rule_id', 400, { body: {} }),
@@ -198,6 +277,8 @@ const EXTRAS = [
   X('vocabulary-answer-fails', 'GET ' + F + '/rules/vocabulary', 500, { setup: { jsonThrows: true } }),
   X('vocabulary', 'GET ' + F + '/rules/vocabulary', 200, {}),
   X('inventory-read-fails', 'GET ' + F + '/inventory', 500, { patch: { views: { flagsOf: async () => { throw new Error(SECRET_SQL); } } } }),
+  /* S34: the READY branch of the folder reads: the database holds rows, so the real handlers and the real libraries (lib/page-limit, lib/folder-rules, lib/assign, lib/measure) run over them */
+  ...READY,
   /* the Home facts */
   X('no-such-card', 'GET /api/facts/:card', 404, { url: '/api/facts/nope' }),
   X('prototype-name-is-no-card', 'GET /api/facts/:card', 404, { url: '/api/facts/constructor' }),
@@ -261,7 +342,8 @@ function applyPatch(patch) {
   const modules = {
     policy: require(path.join(HERE, 'lib', 'policy')),
     views: require(path.join(HERE, 'lib', 'folder-views')),
-    home: require(path.join(HERE, 'lib', 'home-facts'))
+    home: require(path.join(HERE, 'lib', 'home-facts')),
+    select: require(path.join(HERE, 'lib', 'select'))
   };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
@@ -316,16 +398,28 @@ function allowedFor() {
   return (route) => made[MOUNTS.find((mount) => route.includes(' ' + mount + '/') || route.endsWith(' ' + mount))](route);
 }
 
+/** a body's random ids and clock stamps are the same answer on every run: masked before a body is hashed */
+const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/d{4}-dd-ddTdd:dd:dd(?:.d+)?Z/g, 'STAMP');
+const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
+/** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
+function compare(captureFile, recording) {
+  const before = JSON.parse(fs.readFileSync(captureFile, 'utf8'));
+  const differing = Object.keys(before).filter((key) => !recording[key] || recording[key].status !== before[key].status || recording[key].type !== before[key].type || recording[key].sha !== before[key].sha);
+  console.log('compared ' + Object.keys(before).length + ' answers: ' + (Object.keys(before).length - differing.length) + ' identical, ' + differing.length + ' different');
+  differing.forEach((key) => console.log('  ' + key + ' [' + before[key].status + ' -> ' + (recording[key] && recording[key].status) + ']'));
+  return differing.length;
+}
+
 /** the shape of a 2xx the extras expect to be an answer, not a refusal: nothing to judge, only the status */
 async function checkRoutes(port, scenarios, recording) {
   const tested = {};
-  const allowed = argv.includes('--capture') ? null : allowedFor();
+  const allowed = argv.includes('--capture') || argv.includes('--compare') ? null : allowedFor();
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json };
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, type: answer.type, body: answer.json, sha: shaOf(answer), request: { url: scenario.url, body: scenario.body } }; /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer */
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
-    if (argv.includes('--capture')) continue;
+    if (argv.includes('--capture') || argv.includes('--compare')) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
     if (scenario.expect !== undefined) check(label + ': answers the status it is built to reach (' + scenario.expect + ')', answer.status === scenario.expect, [answer.status, answer.text.slice(0, 200)]);
     if (answer.status < 400) continue;
@@ -333,7 +427,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (inherited(scenario, answer)) continue;
     checkProblemBody(label, answer);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT|vault|relation "/.test(answer.text), answer.text);
-    else checkLegacy(label, answer, legacyOf(scenario.route, scenario.id));
+    else if (!scenario.after) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id));
   }
   return tested;
 }
@@ -469,6 +563,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const recording = {};
   const tested = await checkRoutes(server.address().port, scenariosOf(routes), recording);
   server.close();
+  if (flagValue('--compare')) process.exit(compare(flagValue('--compare'), recording) ? 1 : 0);
   if (flagValue('--capture')) {
     fs.writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
     console.log('captured ' + Object.keys(recording).length + ' answers over ' + Object.keys(routes).length + ' routes');
@@ -482,6 +577,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
   const answers = Object.values(recording);
+  check('the output allow-list dropped no key from any answer', allowlist.droppedKeys().length === 0, allowlist.droppedKeys());
   check('a caller who is not signed in is refused with 401 on every route that asks for sign-in', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401 || /pricing\/kinds/.test(key)));
   check('a 500 never says its cause: no answer of any route carries the database text', answers.every((one) => !JSON.stringify(one.body || {}).includes('vault')));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));

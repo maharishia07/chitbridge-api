@@ -42,8 +42,8 @@ function newAnswer(schemaCheck, request) {
   return { refused: !passed, status: seen.status, body: legacy };
 }
 
-/** createComparer({ chains, valid, known }) — chains: { route: [chain] }, valid: { route: a body that passes }, known(description, before, after, given) → the kept difference's words, or null */
-function createComparer({ chains, valid, known }) {
+/** createComparer({ chains, valid, known, values? }) — chains: { route: [chain] }, valid: { route: a body that passes }, known(description, before, after, given) → the kept difference's words, or null; values = more values every field is tried with (beside the shared table) */
+function createComparer({ chains, valid, known, values }) {
   async function oldAnswer(route, request) {
     for (const chain of chains[route]) await chain.run(request);
     const { res, seen } = recorder();
@@ -54,7 +54,7 @@ function createComparer({ chains, valid, known }) {
   /** every case of a route: [description, body] */
   function casesOf(route) {
     const fields = chains[route].map((chain) => chain.builder.build().fields[0]);
-    const single = fields.flatMap((field) => VALUES.map((value) => [field + ' = ' + labelOf(value), withField(valid[route], field, value)]));
+    const single = fields.flatMap((field) => VALUES.concat(values || []).map((value) => [field + ' = ' + labelOf(value), withField(valid[route], field, value)]));
     const together = [['every field absent', {}], ['every field null', Object.fromEntries(fields.map((field) => [field, null]))], ['every field a number', Object.fromEntries(fields.map((field) => [field, 7]))]];
     return single.concat(together, WHOLE_BODIES.map((whole) => ['the whole body is ' + labelOf(whole), whole]));
   }
@@ -75,7 +75,8 @@ function createComparer({ chains, valid, known }) {
     const kept = new Set();
     const cases = casesOf(route);
     for (const [description, given] of cases) {
-      const before = await oldAnswer(route, { body: given === undefined ? {} : given, params: {}, query: {} });
+      /* the chain's sanitizers (trim) write into the body they are given: the chain gets its own copy, so the schema is asked about the body that was SENT */
+      const before = await oldAnswer(route, { body: given === undefined ? {} : structuredClone(given), params: {}, query: {} });
       const after = newAnswer(schemaCheck, { body: given, params: { id: 'x', item_id: 'x' }, query: {}, id: 'r1' });
       const verdict = judge(description, before, after, given);
       if (verdict.fault) disagree.push(verdict.fault);

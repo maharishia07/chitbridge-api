@@ -167,6 +167,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
+     govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
+     same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
+  'stocked.js',
   /* ADOPTION, and the name is exact: it decides what one shop may take into its own catalogue from another's
      delivery. Pure policy over shapes — the vertical gate, the resale/own-use split, the seed for a form.
      It decides no money and holds no state, and the day the chit shape changes this file changes alone. */
@@ -223,10 +227,14 @@ const INFRA_LIBS = [
   'chits-input.js',
   /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'orders-contract.js',
+  /* API-4 sweep, the schema engine: the contract of routes/schemas.js (its OpenAPI operations, the words of its refusals and the old 400 of its three chains) — the contract of a door, not a rule of the platform. tests/api-problem-schemas.test.cjs */
+  'schemas-contract.js',
   /* API-4 sweep, the CRM: the contract of the routes/crm.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-crm.test.cjs */
   'crm-contract.js',
   /* API-4 sweep, the attachments: the contract of routes/attachments.js (its OpenAPI operations, the words of its refusals and the one 6 MB limit) — tests/api-problem-attachments.test.cjs */
   'attachments-contract.js',
+  /* API-4 sweep, the quick-key groups: the contract of the routes/quick-keys.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-quick-keys.test.cjs */
+  'quick-keys-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
   'integrations-contract.js',
   /* API-4 sweep, the catalogue items: the contract of routes/products.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
@@ -243,6 +251,10 @@ const INFRA_LIBS = [
   'assist-contract.js',
   /* API-4 sweep, the test board: the contract of routes/testing.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'testing-contract.js',
+  /* API-4 sweep, the tour: the contract of routes/simulator.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-simulator.test.cjs (2026-10-24) */
+  'simulator-contract.js',
+  /* API-4 stage-2 sweep, the authority forms: the contract of routes/forms.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-forms.test.cjs (2026-10-23) */
+  'forms-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
   /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
@@ -351,6 +363,7 @@ const INFRA_LIBS = [
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
   'owner.js',              // is this request the owner — one test for every owner-only switch
+  'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
      flexible while empty, tightened per column once used — and the routes and the screen both read it, so it
      sits here rather than being re-decided at either end. */

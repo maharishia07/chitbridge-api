@@ -104,6 +104,14 @@ function extras(tools) {
   const store = (more) => Object.assign({ identity_id: A, bridge_id: 'AAAA2222', display_name: 'Shop A', purpose: 'Head office', city: 'Pune', lat: null, lng: null, currency_code: 'INR', service_km: null, dispatch_days: null, ship_within_days: null, ship_beyond_days: null, sort_order: null, catalogue_visibility: 'public', plan: null, params_override: {} }, more);
   const stores = answering(/FROM identities\s+WHERE bridge_id = ANY/, [store(), store({ identity_id: C, bridge_id: 'CCCC4444', display_name: 'Shop C', city: 'Goa', sort_order: 1 }), store({ identity_id: B, bridge_id: 'BBBB3333', display_name: 'Closed', catalogue_visibility: 'private' })]);
   const found = answering(/FROM network_search/, [{ store_name: 'Shop C', bridge_id: 'CCCC4444', city: 'Goa', entity_id: C, item_id: 'i1', item_data: { name: 'Tea', price: { amount: 10, currency: 'INR' }, avail: { qty: 4, source: 'count' } }, lat: null, lng: null, currency_code: 'INR', service_km: null, dispatch_days: null, ship_within_days: null, ship_beyond_days: null, catalogue_visibility: 'public', plan: null, params_override: {} }]);
+  /* my own row with a place, so the distance to a store is a number */
+  const ownAt = answering(/SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = \$1/, [{ identity_id: A, bridge_id: 'AAAA2222', display_name: 'Shop A', lat: '19.076000', lng: '72.877700' }]);
+  /* a network_search row as the function returns it: every nullable column null (city, currency_code, lat, lng, service_km, the three days, sort_order), the item holding nothing but what it must */
+  const foundBare = { store_name: 'Shop C', bridge_id: 'CCCC4444', city: null, entity_id: C, item_id: 'i2', item_data: {}, lat: null, lng: null, currency_code: null, service_km: null, dispatch_days: null, ship_within_days: null, ship_beyond_days: null, sort_order: null, catalogue_visibility: 'network', plan: null, params_override: {} };
+  /* the same store placed, with its days declared, an item priced as a bare number, a code only, and a count with no source or date */
+  const foundBare2 = { store_name: 'Shop A', bridge_id: 'AAAA2222', city: 'Pune', entity_id: A, item_id: 'i3', item_data: { code: 'T-1', price: 12, avail: { qty: 0 } }, lat: '18.520000', lng: '73.850000', currency_code: 'INR', service_km: 50, dispatch_days: 2, ship_within_days: 1, ship_beyond_days: 5, sort_order: 1, catalogue_visibility: 'public', plan: null, params_override: {} };
+  /* the search function is not in this database (its message says so): the answer is the slow one and is NOT marked degraded */
+  const missingSearch = (sql) => { if (/network_search/.test(sql)) throw new Error('function network_search(text, text, integer) does not exist'); return null; };
   const items = answering(/FROM catalogue_items/, [{ item_id: 'i1', item_data: { name: 'Tea', price: 10, avail: { qty: 4, source: 'count' } } }]);
   const buildRows = (more) => firstOf(meRow(more), design);
   const designed = [
@@ -151,7 +159,17 @@ function extras(tools) {
     X('stores-no-network', 'GET ' + DES + '/stores', 200, { setup: { sqlRows: own }, patch: members([]) }),
     X('stores-listed', 'GET ' + DES + '/stores', 200, { setup: { sqlRows: firstOf(stores, own) }, patch: members(['AAAA2222', 'CCCC4444', 'BBBB3333']) }),
     X('stores-tree-unread', 'GET ' + DES + '/stores', 503, { setup: { sqlRows: own }, patch: { membership: { treeOf: async () => { throw unread; } } } }),
-    X('stores-db-fails', 'GET ' + DES + '/stores', 500, { setup: failing })
+    X('stores-db-fails', 'GET ' + DES + '/stores', 500, { setup: failing }),
+    /* S34: the nullable columns of identities held as null AND as set (the DDL: purpose, city, currency_code, lat, lng, sort_order allow NULL), and every key an answer may carry */
+    X('design-none-yet', 'GET ' + DES, 200, { setup: { sqlRows: answering(/FROM network_design/, []) } }),
+    X('design-saved-no-stamp', 'GET ' + DES, 200, { setup: { sqlRows: answering(/FROM network_design/, [{ draft: DESIGN, updated_at: null }]) } }),
+    X('stores-bare-and-placed', 'GET ' + DES + '/stores', 200, { setup: { sqlRows: firstOf(answering(/FROM identities\s+WHERE bridge_id = ANY/, [store({ purpose: null, city: null, currency_code: null }), store({ identity_id: C, bridge_id: 'CCCC4444', display_name: 'Shop C', lat: '18.520000', lng: '73.850000', sort_order: 2 })]), ownAt) }, patch: members(['AAAA2222', 'CCCC4444']) }),
+    X('stores-past-the-cap', 'GET ' + DES + '/stores', 200, { setup: { sqlRows: firstOf(stores, own) }, patch: members(Array.from({ length: 41 }, (unused, at2) => 'AAAA' + String(1000 + at2))) }),
+    X('stores-only-private', 'GET ' + DES + '/stores', 200, { setup: { sqlRows: firstOf(answering(/FROM identities\s+WHERE bridge_id = ANY/, [store({ catalogue_visibility: 'private' })]), own) }, patch: members(['AAAA2222']) }),
+    X('availability-one-query-bare', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(answering(/FROM network_search/, [foundBare, foundBare2]), ownAt) }, patch: members(['AAAA2222', 'CCCC4444']) }),
+    X('availability-one-query-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(answering(/FROM network_search/, Array.from({ length: 200 }, () => foundBare2)), own) }, patch: members(['AAAA2222']) }),
+    X('availability-fallback-bare', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(missingSearch, answering(/FROM identities\s+WHERE bridge_id = ANY/, [store({ city: null, currency_code: null, lat: '18.520000', lng: '73.850000', service_km: 50, dispatch_days: 2, ship_within_days: 1, ship_beyond_days: 5 })]), answering(/FROM catalogue_items/, [{ item_id: 'i2', item_data: { code: 'T-1' } }, { item_id: 'i3', item_data: {} }]), ownAt) }, patch: members(['AAAA2222']) }),
+    X('availability-fallback-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(raising(/network_search/, '42883'), stores, items, own) }, patch: members(Array.from({ length: 41 }, (unused, at2) => 'AAAA' + String(1000 + at2))) })
   ];
 
   /* ── /api/connections: the handshake between two businesses ── */

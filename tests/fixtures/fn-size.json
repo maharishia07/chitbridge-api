@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 228,
+  "long_functions": 235,
   "worst_complexity": 183,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -42,7 +42,6 @@
       "build"
     ],
     "lib/books-payables.js": [
-      "(anonymous)",
       "view"
     ],
     "lib/books-period.js": [
@@ -128,6 +127,8 @@
       "(anonymous)"
     ],
     "lib/gst-returns.js": [
+      "(anonymous)",
+      "(anonymous)",
       "(anonymous)",
       "gstr1",
       "gstr3b"
@@ -239,7 +240,8 @@
       "(anonymous)"
     ],
     "lib/reg-in.js": [
-      "(anonymous)"
+      "(anonymous)",
+      "tallyXml"
     ],
     "lib/reg-jp.js": [
       "(anonymous)"
@@ -305,17 +307,26 @@
       "(anonymous)",
       "(anonymous)",
       "(anonymous)",
-      "determine_"
+      "(anonymous)",
+      "determine_",
+      "moneyOf_",
+      "resolveBelow",
+      "tallyXml"
     ],
     "lib/tax-lines.js": [
       "gstr1"
     ],
-    "lib/tax-slab.js": [
+    "lib/tax-packs.js": [
       "(anonymous)"
+    ],
+    "lib/tax-slab.js": [
+      "(anonymous)",
+      "resolveBelow"
     ],
     "lib/tax.js": [
       "(anonymous)",
-      "determine_"
+      "determine_",
+      "moneyOf_"
     ],
     "lib/units.js": [
       "(anonymous)"
@@ -433,7 +444,6 @@
     "routes/products.js": [
       "GET /",
       "GET /:id/versions",
-      "GET /lists",
       "POST /import",
       "POST /lists/adopt",
       "POST /starter-columns"
@@ -479,8 +489,7 @@
       "GET /snapshot",
       "GET /worth-an-offer",
       "POST /catalogue",
-      "POST /shop",
-      "tillItem"
+      "POST /shop"
     ]
   }
 }

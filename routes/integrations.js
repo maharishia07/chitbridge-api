@@ -25,7 +25,7 @@ const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · S
 const { problem, fromError } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 /* the contract (each route's OpenAPI operation) and the answers these routes gave before the standard — lib/integrations-contract.js */
-const { KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
+const { filterFor, KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
 const logger = require('../lib/logger');
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -246,9 +246,11 @@ function kitManifest() {
   return { version, at: new Date().toISOString(), files };
 }
 
-router.get('/kit', auth, (req, res) => {
+router.get('/kit', auth, ...filterFor('/kit'), (req, res) => {
   try {
-    res.json(kitManifest());
+    const manifest = kitManifest();
+    /* every key of kitManifest is named here: a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
+    res.json({ version: manifest.version, at: manifest.at, files: manifest.files });
   } catch (e) {
     fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
   }
@@ -357,21 +359,20 @@ async function countryOf(req) {
 
 /* signed in → the zip carries a key; anonymous (a bare link) → the placeholder, as before. auth only runs when credentials are offered. */
 const authIfOffered = (req, res, next) => (req.headers.authorization || req.headers['x-api-key'] ? auth(req, res, next) : next());
-router.get('/catalogue', authIfOffered, async (req, res) => {
+router.get('/catalogue', authIfOffered, ...filterFor('/catalogue'), async (req, res) => {
   try {
     const country = await countryOf(req);
-    res.json({
-      connectors: catalogueFor(country).map((connector) => {
-        const row = Object.assign({}, connector, {
-          download: '/api/integrations/download/' + connector.id,
-          docs: '/api/integrations/docs/' + connector.id,
-          may: mayFor(connector, country)
-        });
-        delete row.fits;
-        delete row.for;
-        return row;
-      })
+    const connectors = catalogueFor(country).map((connector) => {
+      const row = Object.assign({}, connector, {
+        download: '/api/integrations/download/' + connector.id,
+        docs: '/api/integrations/docs/' + connector.id,
+        may: mayFor(connector, country)
+      });
+      delete row.fits;
+      delete row.for;
+      return row;
     });
+    res.json({ connectors });
   } catch (e) {
     fromError(req, res, e); /* ⚠️ was outside any try: a failing country pack left the request unanswered — no old keys to keep */
   }
@@ -711,10 +712,12 @@ router.post('/books', auth, auth.requireScope('connector'), schemaValidate(BOOKS
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
-router.get('/status', auth, schemaValidate(STATUS_OPERATION), async (req, res) => {
+router.get('/status', auth, schemaValidate(STATUS_OPERATION), ...filterFor('/status'), async (req, res) => {
   try {
     const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]);
-    res.json(PL.pageOut('connectors', r.rows.map(rowOut), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
+    const page = PL.pageOut('connectors', r.rows.map(rowOut), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* every key of PL.pageOut is named here: a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
+    res.json({ connectors: page.connectors, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note });
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
   }
@@ -742,7 +745,7 @@ const STREAM_LIST = [
   { id: 'receipt', label: 'Receipt', dir: 'out', what: 'a payment you marked becomes a receipt against the invoice' },
   { id: 'party', label: 'Parties', dir: 'out', what: 'a counterparty becomes a customer or supplier record' }
 ];
-router.get('/streams', auth, async (req, res) => {
+router.get('/streams', auth, ...filterFor('/streams'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const flags = await require('../lib/policy').get(entity_id);
@@ -824,7 +827,7 @@ function nameOfParty(list) {
   if (typeof pick === 'string') return pick;
   return pick.display_name || pick.name || pick.user_id || pick.handle || null;
 }
-router.get('/reconcile', auth, schemaValidate(RECONCILE_OPERATION), async (req, res) => {
+router.get('/reconcile', auth, schemaValidate(RECONCILE_OPERATION), ...filterFor('/reconcile'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
@@ -950,7 +953,7 @@ router.post('/ask/:handle/stock', schemaValidate(ASK_OPERATION), async (req, res
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
-router.get('/stock/:handle', schemaValidate(STOCK_OPERATION), async (req, res) => {
+router.get('/stock/:handle', schemaValidate(STOCK_OPERATION), ...filterFor('/stock/:handle'), async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle);
     if (!entity_id) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
@@ -959,23 +962,20 @@ router.get('/stock/:handle', schemaValidate(STOCK_OPERATION), async (req, res) =
         entity_id
       ])
     );
-    res.json(
-      Object.assign(
-        PL.pageOut(
-          'stock',
-          r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })),
-          PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)
-        ),
-        { at: new Date().toISOString() }
-      )
+    const page = PL.pageOut(
+      'stock',
+      r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })),
+      PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)
     );
+    /* every key of PL.pageOut is named here: a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
+    res.json({ stock: page.stock, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note, at: new Date().toISOString() });
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
 /* ── THE PROFILE FROM THEIR SYSTEM (Athi, 2026-09-05): what we look for · where it comes from · how trusted ── */
 const PM = require('../lib/profile-map');
-router.get('/profile-map', auth, async (req, res) => {
+router.get('/profile-map', auth, ...filterFor('/profile-map'), async (req, res) => {
   try {
     const P = require('../lib/profile');
     const values = await P.profileValues(auth.entityOf(req));
@@ -986,7 +986,20 @@ router.get('/profile-map', auth, async (req, res) => {
           .replace(/\s+/g, '')
           .toLowerCase();
     if (tn && tn.other && norm(tn.other.value) !== norm(tn.value)) out.name_mismatch = { profile: tn.value, other: tn.other.value, source: tn.other.source };
-    res.json(out);
+    /* every key of PM.assess is named here (the answer is the library's, in its order; name_mismatch only when the trade name differs):
+       a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
+    /* name_mismatch is absent, not undefined, when both names are the same (tests/shop-name: 'name_mismatch' in answer is false) */
+    res.json(Object.assign({
+      engine: out.engine,
+      version: out.version,
+      fields: out.fields,
+      order: out.order,
+      issues: out.issues,
+      filled: out.filled,
+      total: out.total,
+      rungs: out.rungs,
+      state_name: out.state_name
+    }, out.name_mismatch ? { name_mismatch: out.name_mismatch } : null));
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
   }
