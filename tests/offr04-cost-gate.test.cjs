@@ -152,8 +152,11 @@ async function productsCases() {
 
   /* ── PATCH /:id — availability only for cost-blind staff ── */
   WHO = OWNER; CAN_SEE_COSTS = {};
+  WRITTEN = null;
   const ownerPrice = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 80 } });
   t('the owner may change price', ownerPrice.status, 200);
+  /* CAT-237 (c): the owner's replace without merge:true is the old contract, untouched — the body IS the record written */
+  t('…and without merge:true the owner REPLACES the record, as before (the written item_data carries no name)', /"name"/.test(String(WRITTEN && WRITTEN[1])), false);
 
   WHO = STAFF_BLIND;
   const blindPrice = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 80 } });
@@ -164,8 +167,16 @@ async function productsCases() {
   const blindCost = await call(port, 'PATCH', '/api/products/i1', { item_data: { cost: 20 } });
   t('cost-blind staff cannot set cost either — the field this whole feature protects', blindCost.status, 403);
 
+  /* CAT-237 (a): the same flip WITHOUT merge:true would replace the whole record with {status} — the price, cost and name erased by
+     a caller who may touch none of them. Refused in words; nothing is written. */
+  WRITTEN = null;
   const blindStatus = await call(port, 'PATCH', '/api/products/i1', { item_data: { status: 'unavailable' } });
-  t('cost-blind staff MAY flip availability — the one thing they are left with', blindStatus.status, 200);
+  t('cost-blind staff flipping availability WITHOUT merge:true is refused — 403, not a silent wipe', blindStatus.status, 403);
+  t('…under the one cost code the client already branches on', blindStatus.body.code, 'COST_BLIND');
+  t('…naming every stored key the replace would have erased', (blindStatus.body.blocked || []).slice().sort().join(','), 'cost,cost_x,modifiers,name,price');
+  t('…and saying what to send instead', /merge:true/.test(blindStatus.body.message), true);
+  t('…nothing was written: no UPDATE ran', WRITTEN, null);
+  t('…and the stored row keeps its price and cost', FAKE_ITEM.item_data.price + ' ' + FAKE_ITEM.item_data.cost, '70 30');
 
   /* CAT-234: the answer to that flip is the stored row — it must come back WITHOUT the cost, as GET / already does */
   WRITTEN = null;

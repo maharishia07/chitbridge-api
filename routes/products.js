@@ -1461,8 +1461,12 @@ router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async
   }
 });
 
-/** does this edit need the stored row? a merge, a server-owned key, or an editor (whose rate is compared with the stored one, CAT-210) */
-const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data);
+/** CAT-237: a co-assist's replace (no merge:true) writes every stored key it leaves out, so the stored row is read to name them; the owner never pays this */
+const actorReplace = (req, payload) => payload.merge !== true && !!(req.identity && req.identity.identity_type === 'actor');
+/** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row */
+const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !(key in (payload.item_data || {}))));
+/** does this edit need the stored row? a merge, a server-owned key, an editor (whose rate is compared with the stored one, CAT-210) or a co-assist's replace (CAT-237) */
+const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data) || actorReplace(req, payload);
 /** the stored row, read only when merge:true, a server-owned key or an editor (to compare the rate, CAT-210) asks for it → { refusal } (404 or the rate 403) or { stored, bodyItem } */
 async function readStoredForEdit(req, entity_id, item_id, payload) {
   if (!needsStored(req, payload)) return { stored: null, bodyItem: payload.item_data };
@@ -1522,6 +1526,12 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
        no extra trip. */
     const read = await readStoredForEdit(req, entity_id, req.params.id, req.body);
     if (read.refusal) return problem(req, res, read.refusal);
+    /* CAT-237: a replace (no merge:true) also writes every stored key the body leaves out: it ERASES them. Those keys go through the
+       SAME gate as the keys the body names (one rule: a cost-blind co-assist may touch status only), so a status-only replace by such
+       a caller is refused in words, naming the keys it would have wiped, instead of quietly emptying the row. The owner and a
+       cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
+    const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
+    if (erased) return problem(req, res, { status: 403, ...words.costBlindErase(erased) });
     const stored = read.stored,
       bodyItem = read.bodyItem;
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
