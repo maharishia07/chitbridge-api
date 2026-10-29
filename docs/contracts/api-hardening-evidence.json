@@ -219,6 +219,9 @@
   "GET /api/till/quick-keys/hidden": {
    "output_allowlist": true
   },
+  "GET /api/till/quick-keys/screen-config": {
+   "output_allowlist": true
+  },
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
   },

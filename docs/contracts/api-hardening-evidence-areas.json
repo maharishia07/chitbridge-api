@@ -159,6 +159,48 @@
   "GET /api/testing/cmdb/:ci": {
    "foreign_id_404": true
   },
+  "GET /api/till/bills": {
+   "output_allowlist": true
+  },
+  "GET /api/till/catalogue/blueprints": {
+   "output_allowlist": true
+  },
+  "GET /api/till/counters": {
+   "output_allowlist": true
+  },
+  "GET /api/till/match": {
+   "output_allowlist": true
+  },
+  "GET /api/till/quick-keys/groups": {
+   "output_allowlist": true
+  },
+  "GET /api/till/quick-keys/hidden": {
+   "output_allowlist": true
+  },
+  "GET /api/till/quick-keys/screen-config": {
+   "output_allowlist": true
+  },
+  "GET /api/till/screens": {
+   "output_allowlist": true
+  },
+  "GET /api/till/snapshot": {
+   "output_allowlist": true
+  },
+  "GET /api/till/stock": {
+   "output_allowlist": true
+  },
+  "GET /api/till/summary": {
+   "output_allowlist": true
+  },
+  "GET /api/till/tasks": {
+   "output_allowlist": true
+  },
+  "GET /api/till/verify": {
+   "output_allowlist": true
+  },
+  "GET /api/till/worth-an-offer": {
+   "output_allowlist": true
+  },
   "GET /api/work/:chit_id": {
    "foreign_id_404": true
   },
@@ -255,7 +297,22 @@
   "POST /api/repeat/:id/skip": {
    "foreign_id_404": true
   },
+  "POST /api/till/listen": {
+   "output_allowlist": true
+  },
+  "POST /api/till/pair": {
+   "output_allowlist": true
+  },
   "POST /api/till/rate": {
+   "output_allowlist": true
+  },
+  "POST /api/till/reconcile": {
+   "output_allowlist": true
+  },
+  "POST /api/till/shop": {
+   "output_allowlist": true
+  },
+  "POST /api/till/state": {
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
