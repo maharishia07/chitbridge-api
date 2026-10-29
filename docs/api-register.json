@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 504
+    "failing": 502
    },
    "foreign_id_404": {
     "applies": 227,
@@ -1271,7 +1271,7 @@
    "path": "/api/actors/:id/tasks",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1597,
+   "line": 1600,
    "hash": "8706b2506aaf77b4",
    "columns": {
     "schema_in": true,
@@ -1321,8 +1321,8 @@
    "path": "/api/actors/access-events",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1766,
-   "hash": "b5ae4b066598ae9b",
+   "line": 1769,
+   "hash": "8c0f3b62f8a5d36a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1332,7 +1332,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1358,8 +1358,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f00af3b791d45dc1"
    },
    "status": "partial"
   },
@@ -1412,7 +1413,7 @@
    "owner_area": "actors",
    "file": "routes/actors.js",
    "line": 1475,
-   "hash": "63f0748acf99af50",
+   "hash": "67ab400b5c2716dc",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -1422,7 +1423,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1448,8 +1449,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#376",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "aabfcb94eafd498a"
    },
    "status": "partial"
   },
@@ -29111,7 +29113,7 @@
    "path": "/api/actors/:id/delegate",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1562,
+   "line": 1565,
    "hash": "3c22e829c4753516",
    "columns": {
     "schema_in": true,
@@ -29214,7 +29216,7 @@
    "path": "/api/actors/:id/tasks/route",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1666,
+   "line": 1669,
    "hash": "604e3e7a86fdc94f",
    "columns": {
     "schema_in": true,
@@ -29415,7 +29417,7 @@
    "path": "/api/actors/settings",
    "owner_area": "actors",
    "file": "routes/actors.js",
-   "line": 1497,
+   "line": 1500,
    "hash": "85a8330db3f71f02",
    "columns": {
     "schema_in": true,

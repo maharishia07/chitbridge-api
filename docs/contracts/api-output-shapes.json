@@ -121,6 +121,242 @@
         "url": "/api/products/22222222-2222-4222-8222-222222222222/media/22222222-2222-4222-8222-222222222222"
       }
     },
+    "GET /api/actors/access-events": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "events",
+          "total",
+          "page",
+          "limit",
+          "applied"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "subject_identity_id",
+                "subject_name",
+                "actor_key",
+                "action",
+                "before_value",
+                "after_value",
+                "reason",
+                "at",
+                "changed_by",
+                "changed_by_name"
+              ],
+              "properties": {
+                "event_id": {
+                  "type": "string"
+                },
+                "subject_identity_id": {
+                  "type": "string"
+                },
+                "subject_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "actor_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "action": {
+                  "type": "string"
+                },
+                "before_value": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "hat": {
+                      "type": "string"
+                    },
+                    "access_level": {
+                      "type": "string"
+                    },
+                    "whole_entity": {},
+                    "can_see_costs": {
+                      "type": "boolean"
+                    },
+                    "break_status": {
+                      "type": "string"
+                    },
+                    "event_id": {},
+                    "subject_identity_id": {},
+                    "subject_name": {},
+                    "actor_key": {},
+                    "action": {},
+                    "before_value": {},
+                    "after_value": {},
+                    "reason": {},
+                    "at": {},
+                    "changed_by": {},
+                    "changed_by_name": {}
+                  },
+                  "additionalProperties": false
+                },
+                "after_value": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "hat": {
+                      "type": "string"
+                    },
+                    "access_level": {
+                      "type": "string"
+                    },
+                    "whole_entity": {
+                      "type": "boolean"
+                    },
+                    "can_see_costs": {
+                      "type": "boolean"
+                    },
+                    "break_status": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "expires_at": {
+                      "type": "string"
+                    },
+                    "event_id": {},
+                    "subject_identity_id": {},
+                    "subject_name": {},
+                    "actor_key": {},
+                    "action": {},
+                    "before_value": {},
+                    "after_value": {},
+                    "reason": {},
+                    "at": {},
+                    "changed_by": {},
+                    "changed_by_name": {}
+                  },
+                  "additionalProperties": false
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "at": {
+                  "type": "string"
+                },
+                "changed_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "changed_by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "applied": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/actors/access-events"
+      }
+    },
+    "GET /api/actors/settings": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "object",
+            "required": [
+              "setting_id",
+              "entity_id",
+              "assignment_model",
+              "default_max_tasks",
+              "all_task_visible",
+              "auto_return_on_short_break",
+              "created_at",
+              "updated_at",
+              "auto_assign_mode",
+              "default_assignee_actor_id"
+            ],
+            "properties": {
+              "setting_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "assignment_model": {
+                "type": "string"
+              },
+              "default_max_tasks": {
+                "type": "number"
+              },
+              "all_task_visible": {
+                "type": "boolean"
+              },
+              "auto_return_on_short_break": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "auto_assign_mode": {
+                "type": "string"
+              },
+              "default_assignee_actor_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/actors/settings"
+      }
+    },
     "GET /api/assist/catalogue-mine": {
       "status": "200",
       "schema": {
@@ -8342,6 +8578,10 @@
       "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
       "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
       "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
+    {
+      "DELETE /api/actors/:id/pin": "left open on purpose: the 200 carries the one-time code (show_code · otp on an opted-in stack); a shape that names it is a call for cb-security, not a sweep",
+      "GET /api/actors": "open at actors[].connector_config — the connector's own config, stored verbatim from the owner's body (routes/connectors.js: isObject only); a closed shape would cut a key it does not list"
     }
   ]
 }

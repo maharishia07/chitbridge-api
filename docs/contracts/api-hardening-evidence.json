@@ -343,11 +343,17 @@
   "PUT /api/actors/assign/:chit_id": {
    "foreign_id_404": true
   },
+  "GET /api/actors/settings": {
+   "output_allowlist": true
+  },
   "PUT /api/actors/:id/delegate": {
    "foreign_id_404": true
   },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
+  },
+  "GET /api/actors/access-events": {
+   "output_allowlist": true
   },
   "POST /api/identity/documents/:scheme/code": {
    "foreign_id_404": true
