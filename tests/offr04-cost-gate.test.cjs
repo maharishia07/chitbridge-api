@@ -55,19 +55,27 @@ async function productsCases() {
      EXISTING PATCH /api/actors/:id, never a new entity-wide switch */
   let CAN_SEE_COSTS = {};
   let FLAGS_QUERY_THROWS = false;   // simulates a real production failure reading the column
-  const FAKE_ITEM = { item_id: 'i1', item_data: { name: 'Masala Dosa', price: 70, cost: 30, status: 'available' } };
+  let WRITTEN = null;               // CAT-234: the params of the last UPDATE — what the route actually stored
+  /* CAT-236: cost also hides deeper — an importer's option cost and a cost_* key — the strip is one rule at any depth */
+  const FAKE_ITEM = {
+    item_id: 'i1',
+    item_data: { name: 'Masala Dosa', price: 70, cost: 30, cost_x: 9, status: 'available', modifiers: [{ name: 'Size', options: [{ name: 'Large', price: 90, cost: 40 }] }] }
+  };
+  /** CAT-234: does any key named cost or cost_* sit anywhere in this answer? (item, item_data, nested) */
+  const hasCostKey = (value) =>
+    !!value && typeof value === 'object' && Object.keys(value).some((k) => /^cost(_|$)/.test(k) || hasCostKey(value[k]));
 
   require.cache[require.resolve(API + '/middleware/auth')] = {
     exports: Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
       entityOf: (req) => (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
     }),
   };
-  require.cache[require.resolve(API + '/lib/schedule')] = {
-    exports: { enabled: async () => false, TABLE: 'x', pending: async () => [], applyDue: async () => {} },
-  };
+  const SCHED = { enabled: async () => false, TABLE: 'x', pending: async () => [], applyDue: async () => {} };
+  require.cache[require.resolve(API + '/lib/schedule')] = { exports: SCHED };
   require.cache[require.resolve(API + '/db')] = {
     exports: {
-      query: async () => ({ rows: [] }),
+      /* the shop has a currency, or stampItem refuses the price edit (no national default: the stand-in must say it) */
+      query: async (sql) => (/currency_code, country FROM identities/.test(sql) ? { rows: [{ currency_code: 'INR', country: 'IN' }] } : { rows: [] }),
       /* lib/cost.js's canRead() reads can_see_costs through withEntity; the merge-patch read in PATCH
          also uses withEntity — both share this one stub */
       withEntity: async (_id, fn) => fn({
@@ -76,13 +84,18 @@ async function productsCases() {
             if (FLAGS_QUERY_THROWS) throw new Error('simulated DB failure reading can_see_costs');
             return { rows: [{ can_see_costs: !!CAN_SEE_COSTS[params[0]] }] };
           }
-          if (/SELECT item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_data: Object.assign({}, FAKE_ITEM.item_data) }] };
-          if (/UPDATE catalogue_items/.test(sql)) return { rows: [Object.assign({}, FAKE_ITEM)] };
+          if (/SELECT item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_data: JSON.parse(JSON.stringify(FAKE_ITEM.item_data)) }] };
+          /* CAT-234: the stored row is what pg would RETURN — a fresh parse, so what the route does to the ANSWER cannot reach the store */
+          if (/UPDATE catalogue_items/.test(sql)) {
+            WRITTEN = params;
+            return { rows: [JSON.parse(JSON.stringify(FAKE_ITEM))] };
+          }
           return { rows: [] };
         },
       }),
       readBatch: async () => ([
-        { rows: [Object.assign({}, FAKE_ITEM, { item_data: Object.assign({}, FAKE_ITEM.item_data) })] },
+        /* every row is a fresh parse (as pg gives it): a strip on one answer never reaches the store or the next case */
+        { rows: [JSON.parse(JSON.stringify(FAKE_ITEM))] },
         { rows: [{ st: 'available' }] },
         { rows: [] },
         { rows: [{ n: 0 }] },
@@ -107,6 +120,7 @@ async function productsCases() {
   const asBlind = await call(port, 'GET', '/api/products');
   t('cost-blind staff: cost is GONE from the response, not just hidden client-side',
     'cost' in (asBlind.body.items[0].item_data || {}), false);
+  t('…at every depth: no cost / cost_* key anywhere in the listed item (CAT-236)', hasCostKey(asBlind.body.items[0]), false);
   t('…and every other field is untouched', asBlind.body.items[0].item_data.price, 70);
 
   WHO = STAFF_GRANTED; CAN_SEE_COSTS = { a2: true };
@@ -153,6 +167,20 @@ async function productsCases() {
   const blindStatus = await call(port, 'PATCH', '/api/products/i1', { item_data: { status: 'unavailable' } });
   t('cost-blind staff MAY flip availability — the one thing they are left with', blindStatus.status, 200);
 
+  /* CAT-234: the answer to that flip is the stored row — it must come back WITHOUT the cost, as GET / already does */
+  WRITTEN = null;
+  const blindMerge = await call(port, 'PATCH', '/api/products/i1', { merge: true, item_data: { status: 'unavailable' } });
+  t('a cost-blind status flip with merge:true still answers 200', blindMerge.status, 200);
+  t('…and no cost / cost_* key sits anywhere in the answered item', hasCostKey(blindMerge.body.item), false);
+  t('…the other fields of the row still come back', ((blindMerge.body.item || {}).item_data || {}).price, 70);
+  const blindOption = ((((blindMerge.body.item || {}).item_data || {}).modifiers || [{}])[0].options || [{}])[0];
+  t('…a nested option keeps its name and price, loses its cost (CAT-236)', blindOption.name + ' ' + blindOption.price + ' ' + ('cost' in blindOption), 'Large 90 false');
+  t('…and a cost_* key is gone too', 'cost_x' in ((blindMerge.body.item || {}).item_data || {}), false);
+  t('the owner still reads the nested option cost', ((((ownerPrice.body.item || {}).item_data || {}).modifiers || [{}])[0].options || [{}])[0].cost, 40);
+  t('…the strip touched the ANSWER only: the merged item_data the route stored still carries the cost', /"cost":30/.test(String(WRITTEN && WRITTEN[1])), true);
+  t('…and the stored stand-in row was not touched either', FAKE_ITEM.item_data.cost, 30);
+  t('the owner’s own PATCH answer (above) still carries the cost', ownerPrice.body.item.item_data.cost, 30);
+
   const blindBoth = await call(port, 'PATCH', '/api/products/i1', { item_data: { status: 'unavailable', price: 1 } });
   t('status bundled WITH a blocked field still refuses the whole write, not a partial one', blindBoth.status, 403);
 
@@ -165,6 +193,16 @@ async function productsCases() {
   const blindSched = await call(port, 'POST', '/api/products/i1/schedule', { effective_at: '2030-01-01T00:00:00Z', item_data: { price: 80 } });
   t('cost-blind staff cannot SCHEDULE a price either — 403', blindSched.status, 403);
   t('…and the refusal carries its code, not only a sentence', blindSched.body.code, 'COST_BLIND');
+
+  /* CAT-234: the parked list hands back each patch — the owner's parked cost never reaches a cost-blind reader */
+  SCHED.pending = async () => [{ schedule_id: 's1', item_id: 'i1', effective_at: '2030-01-01T00:00:00Z', patch: { status: 'unavailable', cost: 30 } }];
+  const blindList = await call(port, 'GET', '/api/products/i1/schedule');
+  t('cost-blind staff read the parked list', blindList.status, 200);
+  t('…without the owner’s parked cost, the rest of the patch kept', hasCostKey(blindList.body.pending) + ' ' + ((blindList.body.pending || [{}])[0].patch || {}).status, 'false unavailable');
+  WHO = OWNER;
+  const ownerList = await call(port, 'GET', '/api/products/i1/schedule');
+  t('the owner reads the parked cost', ((ownerList.body.pending || [{}])[0].patch || {}).cost, 30);
+  WHO = STAFF_BLIND;
   /* ⚠️ left as the case above left it: lib/cost holds THIS stub's withEntity (cached), so the next block reads these grants */
   CAN_SEE_COSTS = { a2: true };
 

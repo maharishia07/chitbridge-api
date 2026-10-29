@@ -248,11 +248,18 @@ const rateDoor = require('../lib/rate-door'); /* CAT-210: a rate is owner or man
 const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
 /** CAT-210: does an editor's create or parked change NAME a rate? (an owner or manager never does: false) */
 const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
-/** strips item_data.cost from every row in place — the one place a list response leaves this file */
-function stripCosts(items) {
-  items.forEach((item) => {
-    if (item && item.item_data && 'cost' in item.item_data) delete item.item_data.cost;
+/** CAT-234/236: deletes `cost` and every `cost_*` key at ANY depth of a value, in place (modifiers[].options[].cost, a variants block …) */
+function dropCostKeys(value) {
+  if (!value || typeof value !== 'object') return value;
+  Object.keys(value).forEach((key) => {
+    if (/^cost(_|$)/.test(key)) delete value[key];
+    else dropCostKeys(value[key]);
   });
+  return value;
+}
+/** strips cost (and every nested cost / cost_* key) from every row's item_data in place — the ONE rule every cost-blind answer of this file uses */
+function stripCosts(items) {
+  items.forEach((item) => item && dropCostKeys(item.item_data));
   return items;
 }
 /**
@@ -1536,6 +1543,8 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }));
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     shopChanged(entity_id, 'product updated');
+    /* CAT-234: the answer is the stored row — a cost-blind co-assist, who may flip status, gets it without cost, as GET / strips it */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(r.rows);
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Update failed'));
@@ -1560,7 +1569,12 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
 /* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
 router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
   try {
-    res.json({ enabled: await schedule.enabled(), pending: await schedule.pending(ctx(req), req.params.id) });
+    const entity_id = ctx(req);
+    const pending = await schedule.pending(entity_id, req.params.id);
+    /* CAT-234: a parked patch may carry the owner's cost — a cost-blind co-assist reads the list without it, the same strip as GET /.
+       The wrapper { item_data: row.patch } shares the reference, so stripCosts deletes on row.patch itself (in place); nothing is copied. */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(pending.map((row) => ({ item_data: row.patch })));
+    res.json({ enabled: await schedule.enabled(), pending });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not read the schedule'));
   }
