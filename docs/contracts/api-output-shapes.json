@@ -2127,6 +2127,41 @@
         "url": "/api/books/trial-balance"
       }
     },
+    "GET /api/catalogue-face": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "face",
+          "updated_at"
+        ],
+        "properties": {
+          "face": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "face",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/catalogue-face"
+      }
+    },
     "GET /api/chits/disputes/queue": {
       "status": "200",
       "schema": {
@@ -9424,6 +9459,7 @@
     "GET /api/books/returns": "open at asked — a value passed through (an expression: its keys are not written in the handler); period — a value passed through (an expression: its keys are not written in the handler); staggers — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/status": "open at engines — a value passed through (an expression: its keys are not written in the handler); country — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/terms": "open at default — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/catalogue-face": "open at face — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/crm/calls": "open at calls[] — a value passed through (an expression: its keys are not written in the handler); outcomes[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/crm/followups": "open at followups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/crm/parties": "open at parties[] — a value passed through (an expression: its keys are not written in the handler); walk_ins[] — a value passed through (an expression: its keys are not written in the handler); alerts — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
