@@ -301,7 +301,9 @@ function rowOf(leaf, context) {
   const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared);
   const source = ownHandlers.map((fn) => fn.toString()).join('\n');
   const operation = context.operations[key];
-  const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400);
+  /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */
+  const documentedOnly = (operation && operation['x-documented-statuses']) || [];
+  const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400 && !documentedOnly.includes(status));
   const facts = stackFactsOf(leaf, context.shared);
   const legacyEntry = context.legacy[key];
   const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });

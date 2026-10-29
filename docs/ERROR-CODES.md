@@ -63,6 +63,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHIT_NOT_DELIVERED | 503 | Chit not delivered | The reading arrived but its chit could not be delivered. | The device keeps the event and sends it again. | connectors | 2026-10-22 |
 | CHOOSE_IDENTITY | 409 | Choose identity | PENDING | - | signin | 2026-10-22 |
 | CLAIM_RECORDED | 409 | Claim recorded | That claim is already recorded. | Nothing more to do: the points were moved. | reward-store | 2026-10-22 |
+| COMBO_INVALID | 400 | Combo needs groups | A combo needs at least one group, each with a name and options. | Add a group with an option and save again. | combo-templates | 2026-10-23 |
+| COMBO_NAME_INVALID | 400 | Combo needs a name | A saved combo needs a name of up to 120 characters. | Type a name you will look for later. | combo-templates | 2026-10-23 |
+| COMBO_PRICE_INVALID | 400 | Combo price not valid | The price must be a number and cannot be negative. | Type a price of 0 or more, or leave it empty. | combo-templates | 2026-10-23 |
+| COMBO_PRICE_REQUIRED | 400 | Combo price needed | Give this combo a price before pushing it as a new product. | Set the price, then push again. | combo-templates | 2026-10-23 |
+| COMBO_REFUSED | 400 | Combo refused | This combo cannot be saved as it stands. | Read the sentence shown and fix it. | combo-templates | 2026-10-23 |
 | COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
 | CONFIRM_REMOVE | 400 | Confirm remove | Removing a person cannot be undone, so it needs your confirmation. | Confirm the removal to go on. | actors | 2026-10-22 |
@@ -206,21 +211,28 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LAB_CHIT_LIVE_SHOP | 409 | Lab chit on a live shop | A practice chit cannot be sent from a live shop. | Send it from a practice shop, or make a real chit. | chits | 2026-10-23 |
 | LEADS_NOT_MIGRATED | 503 | Leads not migrated | Lead stages are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
 | LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |
+| LINES_REQUIRED | 400 | Lines needed | Send at least one line with a quantity and a unit price. | Add the lines to evaluate and send again. | offers | 2026-10-23 |
 | LOCKED | 409 | Locked | This column is one every catalogue keeps, so it cannot be changed that way. | Leave it as it is. | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | 400 | Max tasks over entity | That is more tasks than the shop allows one person. | Raise the limit in Settings first, or give fewer. | actors | 2026-10-22 |
 | MEMBERSHIP_SUSPENDED | 403 | Membership suspended | The network has suspended your membership, so you cannot send to it. | Ask the network to resume it, then send again. | network | 2026-10-24 |
 | MIGRATION | 409 | Not switched on yet | Unit and source are not switched on for your account yet. | Type, label and required still work; try again after the next update. | schemas | 2026-10-22 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
-| MKT_NOT_MIGRATED | varies | Mkt not migrated | PENDING | - | channels | 2026-10-22 |
+| MKT_NOT_MIGRATED | varies | Who came back update pending | Who came back arrives after the next update. | Try again after the next update. | channels | 2026-10-22 |
 | MSG_ABOVE_CEILING | 409 | Messaging level too high | That folder can be kept internal or switched off, but not shared further than its default. | Pick a lower level. | folders | 2026-10-22 |
 | MSG_FIXED | 409 | Messaging level fixed | This folder's messaging level cannot be changed. | Leave it as it is. | folders | 2026-10-22 |
 | NAME_REQUIRED | 400 | Name needed | A business needs a name. | Send a name. | network | 2026-10-23 |
 | NAME_THE_PERSON | 400 | Name the person | Say who is away. | Pick the person. | actors | 2026-10-22 |
 | NETWORK_BAD_REQUEST | 400 | Network request not usable | What was sent to the network is missing something or cannot be used. | Read the sentence, fix it and try again. | network | 2026-10-23 |
 | NETWORK_NAME_TAKEN | 409 | Network name taken | One of these names was taken while the network was being built. Nothing was created. | Try again. | network | 2026-10-23 |
+| NETWORK_NOTHING_TO_CHANGE | 409 | Stores already up to date | Your stores already have every change. | Nothing to publish. | network-offers | 2026-10-23 |
+| NETWORK_NOTHING_WAITING | 409 | Nothing waiting | Nothing is waiting to be published. | Publish a change first. | network-offers | 2026-10-23 |
+| NETWORK_NOT_ADOPTED | 409 | Catalogue not sold here | This store does not sell that catalogue. | Join the network catalogue first. | network-offers | 2026-10-23 |
 | NETWORK_ORDERS_OFF | 403 | Network orders off | Ordering across this network is not switched on here. | Order from the shop itself instead. | catalogue | 2026-10-22 |
 | NETWORK_OWNER_ONLY | 403 | Owner only | Only the business owner can do this. | Sign in as the business itself. | network | 2026-10-23 |
+| NETWORK_PRICE_MISSING | 409 | No brand price | The brand has no price for that product. | Ask the brand to suggest a price. | network-offers | 2026-10-23 |
+| NETWORK_REFUSED | 409 | Network step refused | The network cannot take that step as it stands. | Read the sentence shown and fix it. | network-offers | 2026-10-23 |
+| NETWORK_REQUEST_INVALID | 400 | Network request not valid | That request is not valid: the sentence says what to change. | Fix what the sentence says and send again. | network-offers | 2026-10-23 |
 | NETWORK_TOO_LARGE | 413 | Drawing too large | The drawing is too big to save. | Take some of it out and save again. | network | 2026-10-23 |
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
 | NOTHING_TO_UPDATE | 400 | Nothing to update | Nothing was sent to change. | Fill in at least one field. | actors | 2026-10-23 |
@@ -261,6 +273,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_TEMPLATE | varies | No template | PENDING | - | marketing-results | 2026-10-22 |
 | NO_TOKEN | varies | No token | PENDING | - | marketing-results | 2026-10-22 |
 | OFFER_CLASH | 409 | Offer clash | Another live offer already covers some of the same items. | Pause the other offer, or take those items out of this one. | offer-clash | 2026-10-22 |
+| OFFER_CLASH | 409 | Offer clash | PENDING | - | offer-clash | 2026-10-22 |
+| OFFER_ENDS_BEFORE_START | 400 | Offer ends before it starts | The offer would end before it starts. | Pick an end after the start. | network-offers | 2026-10-23 |
+| OFFER_NOT_LIVE | 409 | Offer not live | Make the offer live before releasing it to your stores. | Make it live, then release. | network-offers | 2026-10-23 |
+| OFFER_NOT_RELEASED | 409 | Offer never released | That offer was never released to your stores. | Release it first. | network-offers | 2026-10-23 |
+| OFFER_UNKNOWN | 400 | Offer not known | That is not an offer. | Pick an offer from the list. | network-offers | 2026-10-23 |
 | OFFLINE | varies | Offline | PENDING | - | verdict | 2026-10-22 |
 | OK | varies | Ok | PENDING | - | crm-groups | 2026-10-22 |
 | ORIGIN_NOT_ALLOWED | 403 | Origin not allowed | This address is not allowed to call the service. | Use the shop app, or ask us to allow your address. | platform | 2026-10-22 |
@@ -280,6 +297,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PIN_ACTORS_ONLY | 400 | Only a person can change a PIN | Only a person with their own login can change a PIN. | Sign in as that person. | actors | 2026-10-23 |
 | PIN_INCORRECT | 400 | Current PIN is wrong | The current PIN is not right. | Try again with your current PIN. | actors | 2026-10-23 |
 | PLATFORM_BOUND | varies | Set by the platform | The platform sets this for every shop. | It cannot be changed here. | entities | 2026-10-22 |
+| POLICY_NOT_VALID | 400 | Policy not known | The policy must be opt_in or opt_out. | Pick one of the two. | network-offers | 2026-10-23 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
 | PRODUCT_BAD_REQUEST | 400 | The catalogue needs something else | The catalogue could not take that request, and the sentence says why. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
 | PRODUCT_CLASH | 409 | Clashes with the catalogue | That clashes with how this catalogue is set up. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
@@ -322,6 +340,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
 | SESSION_EXPIRED | 401 | Session expired | PENDING | - | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | PENDING | - | identity-auth | 2026-10-22 |
+| SESSION_ONLY | 403 | Sign in as a person | Network offers are managed by a signed-in person. | Sign in as a person, not with a key. | network-offers | 2026-10-23 |
 | SESSION_UPGRADE | varies | Session upgrade | PENDING | - | auth | 2026-10-22 |
 | SHOP_REFUSING | varies | Shop refusing | PENDING | - | verdict | 2026-10-22 |
 | SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
@@ -366,6 +385,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | USER_ID_IMMUTABLE | 409 | User ID cannot change | A User ID cannot be changed once it is set. | Change the business name instead; the User ID stays. | entities | 2026-10-22 |
 | USER_ID_INVALID | 400 | User ID not usable | Choose a User ID that can be used. | Read the sentence shown and try another. | entities | 2026-10-22 |
 | USER_ID_TAKEN | 409 | User ID taken | That User ID is already taken. | Choose another; it cannot be changed later. | entities | 2026-10-22 |
+| VALIDATION_FAILED | 400 | Fields not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send again. | validate | 2026-10-23 |
 | VAULT_CHANGED | 409 | Vault changed | Changed since you opened it — reload? | Reload the vault, then save again. | governance | 2026-10-23 |
 | VAULT_ENC_UNCONFIGURED | 503 | Vault enc unconfigured | Secure storage is not switched on yet, so nothing was stored. | Try again when it is switched on. | identity-docs | 2026-10-22 |
 | VAULT_VERSION_REQUIRED | 409 | Vault version required | This screen is older than the vault — reload it, then save. | Reload the screen, then save. | governance | 2026-10-22 |
@@ -373,6 +393,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | VIEW_ONLY | varies | View only | Your login can only view. | Ask the owner for edit access. | crm-groups | 2026-10-22 |
 | VISIBILITY_CAPPED | 403 | Catalogue visibility closed | The catalogue cannot be that open for this business. | The sentence names who closed it; ask them. | entities | 2026-10-23 |
 | VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | This database does not accept network visibility yet. | Apply the pending database update, then build again. | entities | 2026-10-22 |
+| WITHDRAWN | 403 | They withdrew consent | They withdrew their consent to offers on that channel. | Do not send offers there. | crm | 2026-10-23 |
 | WORKBOOK_CUT | 413 | Workbook cut | This sheet is bigger than we read, so only part of it was read and nothing was imported. | Delete unused columns, or split the sheet, and upload again. | products | 2026-10-22 |
 | WORK_BAD_REQUEST | 400 | Work request not valid | That list request is not valid. | Ask for one view at a time. | work | 2026-10-23 |
 | WORK_STAFF_ONLY | 403 | Staff only | Sign in as staff to see Tasks and Orders. | Sign in with a staff login. | work | 2026-10-23 |
