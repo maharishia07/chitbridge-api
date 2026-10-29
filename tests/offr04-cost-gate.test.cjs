@@ -56,7 +56,11 @@ async function productsCases() {
   let CAN_SEE_COSTS = {};
   let FLAGS_QUERY_THROWS = false;   // simulates a real production failure reading the column
   let WRITTEN = null;               // CAT-234: the params of the last UPDATE — what the route actually stored
-  const FAKE_ITEM = { item_id: 'i1', item_data: { name: 'Masala Dosa', price: 70, cost: 30, status: 'available' } };
+  /* CAT-236: cost also hides deeper — an importer's option cost and a cost_* key — the strip is one rule at any depth */
+  const FAKE_ITEM = {
+    item_id: 'i1',
+    item_data: { name: 'Masala Dosa', price: 70, cost: 30, cost_x: 9, status: 'available', modifiers: [{ name: 'Size', options: [{ name: 'Large', price: 90, cost: 40 }] }] }
+  };
   /** CAT-234: does any key named cost or cost_* sit anywhere in this answer? (item, item_data, nested) */
   const hasCostKey = (value) =>
     !!value && typeof value === 'object' && Object.keys(value).some((k) => /^cost(_|$)/.test(k) || hasCostKey(value[k]));
@@ -80,7 +84,7 @@ async function productsCases() {
             if (FLAGS_QUERY_THROWS) throw new Error('simulated DB failure reading can_see_costs');
             return { rows: [{ can_see_costs: !!CAN_SEE_COSTS[params[0]] }] };
           }
-          if (/SELECT item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_data: Object.assign({}, FAKE_ITEM.item_data) }] };
+          if (/SELECT item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_data: JSON.parse(JSON.stringify(FAKE_ITEM.item_data)) }] };
           /* CAT-234: the stored row is what pg would RETURN — a fresh parse, so what the route does to the ANSWER cannot reach the store */
           if (/UPDATE catalogue_items/.test(sql)) {
             WRITTEN = params;
@@ -90,7 +94,8 @@ async function productsCases() {
         },
       }),
       readBatch: async () => ([
-        { rows: [Object.assign({}, FAKE_ITEM, { item_data: Object.assign({}, FAKE_ITEM.item_data) })] },
+        /* every row is a fresh parse (as pg gives it): a strip on one answer never reaches the store or the next case */
+        { rows: [JSON.parse(JSON.stringify(FAKE_ITEM))] },
         { rows: [{ st: 'available' }] },
         { rows: [] },
         { rows: [{ n: 0 }] },
@@ -115,6 +120,7 @@ async function productsCases() {
   const asBlind = await call(port, 'GET', '/api/products');
   t('cost-blind staff: cost is GONE from the response, not just hidden client-side',
     'cost' in (asBlind.body.items[0].item_data || {}), false);
+  t('…at every depth: no cost / cost_* key anywhere in the listed item (CAT-236)', hasCostKey(asBlind.body.items[0]), false);
   t('…and every other field is untouched', asBlind.body.items[0].item_data.price, 70);
 
   WHO = STAFF_GRANTED; CAN_SEE_COSTS = { a2: true };
@@ -167,6 +173,10 @@ async function productsCases() {
   t('a cost-blind status flip with merge:true still answers 200', blindMerge.status, 200);
   t('…and no cost / cost_* key sits anywhere in the answered item', hasCostKey(blindMerge.body.item), false);
   t('…the other fields of the row still come back', ((blindMerge.body.item || {}).item_data || {}).price, 70);
+  const blindOption = ((((blindMerge.body.item || {}).item_data || {}).modifiers || [{}])[0].options || [{}])[0];
+  t('…a nested option keeps its name and price, loses its cost (CAT-236)', blindOption.name + ' ' + blindOption.price + ' ' + ('cost' in blindOption), 'Large 90 false');
+  t('…and a cost_* key is gone too', 'cost_x' in ((blindMerge.body.item || {}).item_data || {}), false);
+  t('the owner still reads the nested option cost', ((((ownerPrice.body.item || {}).item_data || {}).modifiers || [{}])[0].options || [{}])[0].cost, 40);
   t('…the strip touched the ANSWER only: the merged item_data the route stored still carries the cost', /"cost":30/.test(String(WRITTEN && WRITTEN[1])), true);
   t('…and the stored stand-in row was not touched either', FAKE_ITEM.item_data.cost, 30);
   t('the owner’s own PATCH answer (above) still carries the cost', ownerPrice.body.item.item_data.cost, 30);
