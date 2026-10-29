@@ -14040,8 +14040,8 @@
    "path": "/api/work/:chit_id",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 65,
-   "hash": "e9e78fe254fd3f60",
+   "line": 67,
+   "hash": "8556922c176d7149",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14082,7 +14082,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e9e78fe254fd3f60"
+    "stale_since": "8556922c176d7149"
    },
    "status": "partial"
   },
@@ -14092,8 +14092,8 @@
    "path": "/api/work/facts",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 54,
-   "hash": "c304a00773a7b8db",
+   "line": 56,
+   "hash": "54051ede65553eaf",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14133,7 +14133,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c304a00773a7b8db"
+    "stale_since": "54051ede65553eaf"
    },
    "status": "partial"
   },
@@ -14143,8 +14143,8 @@
    "path": "/api/work/list",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 41,
-   "hash": "f8cfdd6ff20234cc",
+   "line": 43,
+   "hash": "5aae667ec17db95a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14184,7 +14184,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f8cfdd6ff20234cc"
+    "stale_since": "5aae667ec17db95a"
    },
    "status": "partial"
   },
