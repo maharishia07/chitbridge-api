@@ -6,7 +6,8 @@
  *           and the three recordings: --capture (the answers of the code BEFORE the change), --freeze (the refusals of a capture into docs/contracts/api-legacy.json) and
  *           --compare (the answers now, byte for byte against a capture).
  * CALLED BY tests/api-problem-products.test.cjs · tests/api-problem-catalogue.test.cjs · tests/api-problem-network.test.cjs. Not a test itself.
- * Options a sweep may add: `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
+ * A scenario with `until: '<text>'` is a stream (SSE): the answer is what arrived up to that text, masked like any body, and the socket is closed then (the bell sweep, tests/lib/bell-scenes.cjs).
+ * Options a sweep may add: `leak` (a RegExp for the text a 5xx must not carry: a route whose own code word is in the Problem type, e.g. VAULT_ENC_UNCONFIGURED → .../vault_enc_unconfigured, names the stand-in's SQL instead of the word), `cannotRide(route, scenario)` names the frozen keys the Problem owns (status ...) and so cannot carry, and a scenario with `after: true` is a refusal the sweep ADDS (nothing was frozen for it).
  * FLOW      harness({ here, mounts, routeFiles, ... }) → installStubs() → scenariosOf(routes) → runScenario() → record / check / compare
  * CARD      qa/offline-guards
  * No database, no network. A scenario that needs a row the stand-in cannot make says so in its own `setup.sqlRows`.
@@ -128,18 +129,28 @@ function harness(options) {
     return generic.concat(named.filter((one) => routes[one.route]));
   }
 
-  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is */
-  function send(port, method, urlPath, body, extraHeaders) {
+  /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is. `raw` = { headers, text }: the bytes as a provider signs and sends them (a webhook), not JSON; `extraHeaders` = headers added to a JSON request (a platform key); `until` = a stream (SSE) is read up to that text, then closed */
+  function send(port, method, urlPath, body, raw, extraHeaders, until) {
     return new Promise((resolve) => {
-      const data = body === undefined ? null : JSON.stringify(body);
-      const request = http.request({ port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {}) }, (response) => {
+      const data = raw ? raw.text : body === undefined ? null : JSON.stringify(body);
+      const headers = raw ? Object.assign({ 'content-length': Buffer.byteLength(data) }, raw.headers) : Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {});
+      const request = http.request({ port, path: urlPath, method, headers }, (response) => {
         const parts = [];
-        response.on('data', (part) => parts.push(part));
-        response.on('end', () => {
-          const bytes = Buffer.concat(parts);
-          const text = bytes.toString('utf8');
-          resolve({ status: response.statusCode, type: String(response.headers['content-type'] || ''), disposition: String(response.headers['content-disposition'] || ''), cache: String(response.headers['cache-control'] || ''), bytes, text, json: safeParse(text) });
+        const answer = () => {
+          const read = Buffer.concat(parts);
+          const text = until ? steady(read.toString('utf8')) : read.toString('utf8'); /* a stream's first frames carry a clock stamp: masked, as every body is */
+          const bytes = until ? Buffer.from(text) : read;
+          return { status: response.statusCode, type: String(response.headers['content-type'] || ''), disposition: String(response.headers['content-disposition'] || ''), cache: String(response.headers['cache-control'] || ''), bytes, text, json: safeParse(text) };
+        };
+        response.on('data', (part) => {
+          parts.push(part);
+          /* `until`: a stream never ends. The answer is what arrived up to the frame asked for, and the socket is closed so no test holds a stream open. */
+          if (until && Buffer.concat(parts).toString('utf8').includes(until)) {
+            resolve(answer());
+            request.destroy();
+          }
         });
+        response.on('end', () => resolve(answer()));
       });
       request.setTimeout(ANSWER_WAIT_MS, () => {
         request.destroy();
@@ -165,7 +176,7 @@ function harness(options) {
   /** a scenario may switch process variables for its one request (`env`); the ones it set are put back (or removed) afterwards */
   function setEnv(given) {
     const before = Object.keys(given || {}).map((name) => [name, process.env[name]]);
-    Object.keys(given || {}).forEach((name) => (process.env[name] = given[name]));
+    Object.keys(given || {}).forEach((name) => (given[name] === null ? delete process.env[name] : (process.env[name] = given[name]))); /* null = not set (process.env would store the text "null") */
     return () => before.forEach(([name, was]) => (was === undefined ? delete process.env[name] : (process.env[name] = was)));
   }
 
@@ -176,7 +187,7 @@ function harness(options) {
     const unset = setEnv(scenario.env);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body, scenario.headers);
+    const answer = await send(port, method, scenario.url, body, scenario.raw, scenario.headers, scenario.until);
     unset();
     restore();
     return answer;
@@ -222,7 +233,7 @@ function harness(options) {
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (options.inherited(scenario, answer)) return;
     checkProblemBody(label, answer);
-    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT|vault|relation "/.test(answer.text), answer.text);
+    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !(options.leak || /SELECT|vault|relation "/).test(answer.text), answer.text);
     else if (!scenario.after) checkLegacy(label, answer, legacyOf(scenario.route, scenario.id), options.cannotRide ? options.cannotRide(scenario.route, scenario.id) : []); /* `after`: a refusal the sweep adds, so nothing was frozen */
   }
 

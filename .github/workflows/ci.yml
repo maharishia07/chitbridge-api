@@ -12,6 +12,12 @@ on:
     - cron: '30 20 * * *'   # 02:00 IST
   workflow_dispatch:
 
+# CB_GENERATED (design DESIGN-generated-files-in-batch-2026-10-29): ONE mode for every job and every event (pull_request, push, schedule, dispatch).
+#   strict = main and batch/*: every "committed = generated" check runs. regen = any other branch: CI regenerates the derived files itself and skips those equality checks,
+#   so two PRs that touch routes land in one batch with no regenerate round (the batch build regenerates once). Unset (a laptop) means strict. No test works the mode out itself.
+env:
+  CB_GENERATED: ${{ ((github.head_ref || github.ref_name) == 'main' || startsWith(github.head_ref || github.ref_name, 'batch/')) && 'strict' || 'regen' }}
+
 jobs:
   static:
     name: static checks (syntax + LF)
@@ -151,9 +157,20 @@ jobs:
         with:
           node-version: "22"
       - run: npm ci
-      - name: register equals the code (docs/API-REGISTER.md, api-register.json, ERROR-CODES.md)
+      - name: regen mode, regenerate the derived files first (contract evidence, then the register, then the ratchet counts)
+        if: ${{ env.CB_GENERATED == 'regen' }}
+        run: |
+          echo "CB_GENERATED=regen: regenerating docs/contracts/api-*-results and evidence, docs/api-register.json, docs/API-REGISTER.md and the docs/api-ratchet.json counts in this runner; the committed = generated checks are skipped (the batch build regenerates them once)"
+          node tools/api-contract-tests.cjs --write
+          node tools/api-register.cjs
+          node tools/api-ratchet.cjs --write || echo "ratchet --write refused (see above); the check below judges it"
+      - name: register equals the code (docs/API-REGISTER.md, api-register.json, ERROR-CODES.md); in regen mode only the checks that are not equality can fail
         run: node tools/api-register.cjs --check
-      - name: ratchet (a PR labelled hotfix records dated debt instead)
+      - name: sign-offs gone stale (a route whose hash moved since cb-api signed it)
+        if: ${{ always() }}
+        run: |
+          node -e "const r=require('./docs/api-register.json').routes.filter(x=>x.human&&x.human.stale_since);console.log(r.length+' route(s) with a stale sign-off');r.forEach(x=>console.log('  stale_since '+x.human.stale_since+'  '+x.key))"
+      - name: ratchet (a PR labelled hotfix records dated debt instead; counts regenerated from head against the base counts, debt and stage read from head)
         env:
           HOTFIX: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') }}
         run: |

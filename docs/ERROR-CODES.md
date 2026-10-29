@@ -15,6 +15,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
 | AI_LIMIT | 429 | AI limit reached | You have used your AI allowance for now. | Try again later. | governance | 2026-10-23 |
 | AI_PROVIDER | 502 | AI did not answer | The AI did not answer just now. | Try again in a moment. | governance | 2026-10-23 |
+| AI_UNAVAILABLE | 503 | AI not connected | The AI is not available just now. | Try again later, or raise the request by hand. | capture | 2026-10-23 |
 | ALL_REFUSED | varies | All refused | PENDING | - | marketing-results | 2026-10-22 |
 | ALL_SENT | varies | All sent | PENDING | - | verdict | 2026-10-22 |
 | ALREADY_ASSIGNED | 400 | Already assigned | Someone already holds this task. | Ask them to hand it back first. | actors | 2026-10-23 |
@@ -50,22 +51,36 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | This cannot be saved yet: a database update is still to arrive. | Try again after the next update. | books | 2026-10-22 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
-| CAPABILITY_OFF | varies | Capability off | PENDING | - | connectors | 2026-10-22 |
+| CAPTURE_REFUSED | varies | Message not handled | That message could not be handled as asked. | Read the line shown, then try again. | capture | 2026-10-23 |
+| CAPTURE_STORE_MISSING | 503 | Inbox not ready | The inbox is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
+| CAPABILITY_OFF | 403 | Capability off | This shop has switched its connector capability off, so devices and connectors are refused. | Turn the connector capability back on to resume. | connectors | 2026-10-22 |
 | CATALOGUE_NOT_EMPTY | 409 | Shop already has products | This shop already has products. | Start a starter list only on an empty shop. | till | 2026-10-23 |
 | CATALOGUE_STORE_MISSING | 503 | Saved catalogues not ready | Saved catalogues are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | CATEGORIES_NOT_SET_UP | 500 | Categories not set up | Your categories could not be set up, so nothing was added. | Try again in a moment. | till | 2026-10-23 |
 | CHILD_NOT_FOUND | 404 | Business not found | We could not find that business. | Check its handle and try again. | network | 2026-10-23 |
 | CHIT_AND_ACTION_REQUIRED | 400 | Task and action needed | Say which task and what to do with it. | Send the task and the action. | actors | 2026-10-23 |
-| CHIT_NOT_DELIVERED | 503 | Chit not delivered | PENDING | - | connectors | 2026-10-22 |
+| CHIT_NOT_DELIVERED | 503 | Chit not delivered | The reading arrived but its chit could not be delivered. | The device keeps the event and sends it again. | connectors | 2026-10-22 |
 | CHOOSE_IDENTITY | 409 | Choose identity | PENDING | - | signin | 2026-10-22 |
 | CLAIM_RECORDED | 409 | Claim recorded | That claim is already recorded. | Nothing more to do: the points were moved. | reward-store | 2026-10-22 |
+| COMBO_INVALID | 400 | Combo needs groups | A combo needs at least one group, each with a name and options. | Add a group with an option and save again. | combo-templates | 2026-10-23 |
+| COMBO_NAME_INVALID | 400 | Combo needs a name | A saved combo needs a name of up to 120 characters. | Type a name you will look for later. | combo-templates | 2026-10-23 |
+| COMBO_PRICE_INVALID | 400 | Combo price not valid | The price must be a number and cannot be negative. | Type a price of 0 or more, or leave it empty. | combo-templates | 2026-10-23 |
+| COMBO_PRICE_REQUIRED | 400 | Combo price needed | Give this combo a price before pushing it as a new product. | Set the price, then push again. | combo-templates | 2026-10-23 |
+| COMBO_REFUSED | 400 | Combo refused | This combo cannot be saved as it stands. | Read the sentence shown and fix it. | combo-templates | 2026-10-23 |
 | COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
 | CONFIRM_REMOVE | 400 | Confirm remove | Removing a person cannot be undone, so it needs your confirmation. | Confirm the removal to go on. | actors | 2026-10-22 |
 | CONFORMANCE | 422 | Rule not met | That does not meet the platform's rules. | Change it to fit the rules, then try again. | governance | 2026-10-23 |
 | CONNECTION_BAD_REQUEST | 400 | Cannot connect to yourself | You cannot connect to your own business. | Choose another business. | network | 2026-10-23 |
 | CONNECTION_EXISTS | 400 | Already connected | A connection with this business already exists. | Open your connections to see where it stands. | network | 2026-10-23 |
+| CONNECTOR_DEVICE_OFF | 409 | Connection switched off | This device connection is switched off. | Switch it on in the connector’s list. | connectors | 2026-10-23 |
+| CONNECTOR_HAS_DEVICES | 409 | Connector has devices | This connector still has devices attached. | Remove its devices first, then delete it. | connectors | 2026-10-23 |
 | CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
+| CONNECTOR_IN_USE | 409 | Connector in use | This connector has raised records, so it cannot be deleted. | Switch its devices off instead. | connectors | 2026-10-23 |
+| CONNECTOR_KEY_ADMIN_ONLY | 403 | Key reissue not allowed | Only the business admin or a manager can reissue a device key. | Ask the admin or a manager to do it. | connectors | 2026-10-23 |
+| CONNECTOR_NAME_MISMATCH | 400 | Gateway name does not match | The gateway name you typed does not match. | Type the name exactly as it is shown. | connectors | 2026-10-23 |
+| CONNECTOR_NO_EMAIL | 400 | No email to send to | The business has no email address to send the code to. | Add an email address in Settings, then ask again. | connectors | 2026-10-23 |
+| CONNECTOR_WRONG_TYPE | 409 | Wrong kind of connector | This door is only for ERP connectors. | Devices send their readings to the device door. | connectors | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
 | CONTAINER_STORE_MISSING | 503 | Product containers not ready | Product containers are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | COST_BLIND | varies | Cost blind | Your access does not include cost or price. | Ask the owner to give you Sees costs, or change availability only. | cost | 2026-10-22 |
@@ -106,13 +121,20 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NOT_ALLOWED | varies | Currency not available | That currency is not available for this business. | Choose one of the currencies listed. | govresolve | 2026-10-22 |
 | CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | CYCLE | 409 | Would loop | A network cannot sit under one of its own members. | Choose a different network to join. | network | 2026-10-23 |
+| DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Your saved offers, slabs and models are not set up here yet. | Try again after the next update. | definitions | 2026-10-23 |
+| DEFINITION_CITED | 409 | Slab still in use | Products or categories still use this slab. | Choose the slab that takes over, then retire this one. | definitions | 2026-10-23 |
+| DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
+| DEFINITION_INCOMPLETE | 422 | Rule has no value | This rule has no value yet, so it would do nothing. | Fill in the value, then save again. | definitions | 2026-10-23 |
+| DEFINITION_NAME_TAKEN | 409 | Name already used | You already have one of this kind with that name. | Choose another name. | definitions | 2026-10-23 |
+| DEFINITION_TAKEOVER_NOT_LIVE | 400 | Slab cannot take over | The slab chosen to take over is not a live slab here. | Choose one of your live slabs. | definitions | 2026-10-23 |
+| DEFINITION_TAKEOVER_SAME | 400 | Same slab chosen | The slab chosen to take over is the one being retired. | Choose a different slab. | definitions | 2026-10-23 |
 | DEVICE_MISMATCH | 401 | Device mismatch | PENDING | - | auth | 2026-10-22 |
 | DEVICE_REVOKED | 401/403 | Device revoked | PENDING | - | person-session | 2026-10-22 |
-| DEVICE_TO_REFUSED | varies | Device to refused | PENDING | - | connectors | 2026-10-22 |
+| DEVICE_TO_REFUSED | 403 | Device may not send there | A device can send only to its own shop and the shop’s own customers or suppliers. | Send to one of those, or leave the recipient out. | connectors | 2026-10-22 |
 | DISPUTES_NOT_SET_UP | 200 | Disputes not set up yet | Disputes are not switched on on this server yet, so there are none to show. | Nothing to do; they will appear once the update has run. | chits | 2026-10-23 |
 | DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | PENDING | - | folder-inventory | 2026-10-22 |
-| DUPLICATE_PARTY | 409 | Duplicate party | PENDING | - | relationships | 2026-10-22 |
+| DUPLICATE_PARTY | 409 | Duplicate party | Another party on your list already has this tax number. | Check the number, or open the party that holds it. | relationships | 2026-10-22 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | - | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
@@ -127,6 +149,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ENTITY_QUOTA | 409 | Shop limit reached | This installation cannot add another shop on its plan. | Choose a plan with room for more shops. | governance | 2026-10-23 |
 | ENTITY_SEALED | 403 | Protected business | This business is protected and cannot be erased. | Nothing to do: protected businesses stay. | entities | 2026-10-23 |
 | ERR | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | network | 2026-10-23 |
+| EVENTS_NOT_SIGNED_IN | 401 | Not signed in to live updates | Sign in to get live updates. | Sign in, then try again. | events | 2026-10-23 |
+| EVENTS_TICKET_REFUSED | 401 | Live updates link expired | The live-updates link has run out. Reload the page to connect again. | Reload the page. | events | 2026-10-23 |
 | EXISTS | 409 | Already asked or connected | You have already asked, or are already connected. | Open the connection to see where it stands. | network | 2026-10-23 |
 | FOLDER_BAD_REQUEST | 400 | Folder request not accepted | That folder request could not be done. | Read the message, fix what it names and try again. | folders | 2026-10-23 |
 | FOLDER_INVALID | 400 | Folder details not valid | The folder name or id is missing or not valid. | Give the folder a name of 1 to 60 characters, then try again. | folders | 2026-10-23 |
@@ -151,13 +175,17 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | HAS_PARENT | 409 | Already in a network | That business is already in a network, and a business can be in one at a time. | Remove it from that network first. | network | 2026-10-23 |
 | IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
 | IDEMPOTENCY_IN_PROGRESS | 409 | Idempotency in progress | The same request is still being handled. | Wait a moment and look before sending it again. | idempotency | 2026-10-22 |
-| IDOC_CONSENT_REQUIRED | 400 | Idoc consent required | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_EMPLOYER_ONLY | 403 | Idoc employer only | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_NOT_CODE_VERIFIED | varies | Idoc not code verified | PENDING | - | iddoc-verify | 2026-10-22 |
-| IDOC_NOT_FOUND | 404 | Idoc not found | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_NOT_MIGRATED | 503 | Idoc not migrated | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_NO_CODE | 400 | Idoc no code | PENDING | - | iddoc-verify | 2026-10-22 |
-| IDOC_VALUE_UNAVAILABLE | varies | Idoc value unavailable | PENDING | - | iddoc-verify | 2026-10-22 |
+| IDOC_CONSENT_REQUIRED | 400 | Idoc consent required | Someone else's Aadhaar can be recorded only with their agreement. | Confirm they agreed, or ask them to enter it from their own profile. | identity-docs | 2026-10-22 |
+| IDOC_EMPLOYER_ONLY | 403 | Idoc employer only | Your employer records this document after checking it against the original. | Add your mobile and e-mail here; a code confirms them. | identity-docs | 2026-10-22 |
+| IDOC_INVALID_VALUE | 400 | Document number not valid | That does not look like the document you chose. | Check the number and try again. | identity-docs | 2026-10-24 |
+| IDOC_NOT_CODE_VERIFIED | varies | Idoc not code verified | Only a mobile number or an e-mail is confirmed by a code. | Your employer checks the other documents. | iddoc-verify | 2026-10-22 |
+| IDOC_NOT_FOUND | 404 | Idoc not found | That document is not on file yet. | Add it first, then ask for a code. | identity-docs | 2026-10-22 |
+| IDOC_NOT_MIGRATED | 503 | Idoc not migrated | Identity records are not switched on yet. | Try again later. | identity-docs | 2026-10-22 |
+| IDOC_NO_CODE | 400 | Idoc no code | No code has been asked for yet. | Ask for a code first. | iddoc-verify | 2026-10-22 |
+| IDOC_REFUSED | varies | Document request refused | That could not be done. | Read the message shown: it says why. | identity-docs | 2026-10-24 |
+| IDOC_SUBJECT_FORBIDDEN | 403 | Not your co-assist | That person is not one of your co-assists. | Only the account owner can record a document for their own co-assists. | identity-docs | 2026-10-24 |
+| IDOC_UNKNOWN_DOCUMENT | 400 | Document not recognised | That document is not offered for your country. | Pick one from the list. | identity-docs | 2026-10-24 |
+| IDOC_VALUE_UNAVAILABLE | varies | Idoc value unavailable | The saved number or e-mail cannot be read. | Enter it again, then ask for a code. | iddoc-verify | 2026-10-22 |
 | INR | varies | Inr | PENDING | - | locale.browser | 2026-10-22 |
 | INTEGRATION_BAD_REQUEST | 400 | Request not usable | Something this needs is missing or not valid. | Check the order or the fields named, then send it again. | integrations | 2026-10-23 |
 | INTERNAL | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | api | 2026-10-22 |
@@ -175,29 +203,40 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | KEY_CANNOT_SEE_HOME | 403 | A key cannot see Home | Sign in to see the Home figures. | Open the app with your login, not a key. | facts | 2026-10-23 |
 | KEY_CANNOT_SIGN_IN | 403 | Key cannot sign in | PENDING | - | signin | 2026-10-22 |
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
-| KEY_UNKNOWN | 401 | Key unknown | PENDING | - | connectors | 2026-10-22 |
+| KYB_BAD_REQUEST | 400 | Nothing to add | Say what the paper is called, or give its standard, and try again. | Type the name of the paper (for example Village NOC) and add it. | kyb | 2026-10-24 |
+| KYB_REFUSED | varies | Refused | The Know your business page could not do that as asked. | Read the line shown, change what you sent and try again. | kyb | 2026-10-24 |
+| KEY_UNKNOWN | 401 | Key not recognised | This key is not recognised, or its connector is inactive. | Check the key, or issue a new one from the connector. | connectors | 2026-10-22 |
 | LAB_CHIT_LIVE_SHOP | 409 | Lab chit on a live shop | A practice chit cannot be sent from a live shop. | Send it from a practice shop, or make a real chit. | chits | 2026-10-23 |
 | LEADS_NOT_MIGRATED | 503 | Leads not migrated | Lead stages are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
 | LEDGER_OFF | 404 | Ledger switched off | This shop has not switched the ledger on. | The owner can switch it on. | books | 2026-10-23 |
+| LINES_REQUIRED | 400 | Lines needed | Send at least one line with a quantity and a unit price. | Add the lines to evaluate and send again. | offers | 2026-10-23 |
 | LOCKED | 409 | Locked | This column is one every catalogue keeps, so it cannot be changed that way. | Leave it as it is. | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | 400 | Max tasks over entity | That is more tasks than the shop allows one person. | Raise the limit in Settings first, or give fewer. | actors | 2026-10-22 |
 | MEMBERSHIP_SUSPENDED | 403 | Membership suspended | The network has suspended your membership, so you cannot send to it. | Ask the network to resume it, then send again. | network | 2026-10-24 |
 | MIGRATION | 409 | Not switched on yet | Unit and source are not switched on for your account yet. | Type, label and required still work; try again after the next update. | schemas | 2026-10-22 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
-| MKT_NOT_MIGRATED | varies | Mkt not migrated | PENDING | - | channels | 2026-10-22 |
+| MKT_NOT_MIGRATED | varies | Who came back update pending | Who came back arrives after the next update. | Try again after the next update. | channels | 2026-10-22 |
 | MSG_ABOVE_CEILING | 409 | Messaging level too high | That folder can be kept internal or switched off, but not shared further than its default. | Pick a lower level. | folders | 2026-10-22 |
 | MSG_FIXED | 409 | Messaging level fixed | This folder's messaging level cannot be changed. | Leave it as it is. | folders | 2026-10-22 |
 | NAME_REQUIRED | 400 | Name needed | A business needs a name. | Send a name. | network | 2026-10-23 |
 | NAME_THE_PERSON | 400 | Name the person | Say who is away. | Pick the person. | actors | 2026-10-22 |
 | NETWORK_BAD_REQUEST | 400 | Network request not usable | What was sent to the network is missing something or cannot be used. | Read the sentence, fix it and try again. | network | 2026-10-23 |
 | NETWORK_NAME_TAKEN | 409 | Network name taken | One of these names was taken while the network was being built. Nothing was created. | Try again. | network | 2026-10-23 |
+| NETWORK_NOTHING_TO_CHANGE | 409 | Stores already up to date | Your stores already have every change. | Nothing to publish. | network-offers | 2026-10-23 |
+| NETWORK_NOTHING_WAITING | 409 | Nothing waiting | Nothing is waiting to be published. | Publish a change first. | network-offers | 2026-10-23 |
+| NETWORK_NOT_ADOPTED | 409 | Catalogue not sold here | This store does not sell that catalogue. | Join the network catalogue first. | network-offers | 2026-10-23 |
 | NETWORK_ORDERS_OFF | 403 | Network orders off | Ordering across this network is not switched on here. | Order from the shop itself instead. | catalogue | 2026-10-22 |
 | NETWORK_OWNER_ONLY | 403 | Owner only | Only the business owner can do this. | Sign in as the business itself. | network | 2026-10-23 |
+| NETWORK_PRICE_MISSING | 409 | No brand price | The brand has no price for that product. | Ask the brand to suggest a price. | network-offers | 2026-10-23 |
+| NETWORK_REFUSED | 409 | Network step refused | The network cannot take that step as it stands. | Read the sentence shown and fix it. | network-offers | 2026-10-23 |
+| NETWORK_REQUEST_INVALID | 400 | Network request not valid | That request is not valid: the sentence says what to change. | Fix what the sentence says and send again. | network-offers | 2026-10-23 |
 | NETWORK_TOO_LARGE | 413 | Drawing too large | The drawing is too big to save. | Take some of it out and save again. | network | 2026-10-23 |
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
 | NOTHING_TO_UPDATE | 400 | Nothing to update | Nothing was sent to change. | Fill in at least one field. | actors | 2026-10-23 |
-| NOTIF_DISMISS_NOT_MIGRATED | 503 | Notif dismiss not migrated | PENDING | - | notifications | 2026-10-22 |
+| NOTIF_DISMISS_NOT_MIGRATED | 503 | Activity clearing update pending | Activity cannot be cleared yet: a database update is still to arrive. | Try again after the next update. | notifications | 2026-10-22 |
+| NOTIF_NOTHING_TO_CLEAR | 400 | Nothing to clear | There is nothing chosen to clear. | Pick an item to clear, or choose clear all. | notifications | 2026-10-23 |
+| NOTIF_SEEN_NOT_MIGRATED | 503 | Unread count update pending | The unread count cannot be cleared yet: a database update is still to arrive. | Try again after the next update. | notifications | 2026-10-23 |
 | NOT_ALLOWED | 403 | Not allowed | Only the two businesses on a connection, or the network above it, can do that. | Ask the other business or the network. | network | 2026-10-23 |
 | NOT_BOARD_WRITER | 403 | Not board writer | Only the board’s own account can change the shared cases and records. | Ask the board’s owner, or record your result instead. | testing | 2026-10-22 |
 | NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
@@ -217,7 +256,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_COUNTRY | 422 | No country set | This shop has no country set. | Set the country in Country setup. | assist | 2026-10-22 |
 | NO_COUNTRY_PACK | 422 | Country not supported yet | We do not have the rules for this shop's country yet. | Tell us the country. We add countries one at a time. | country-setup | 2026-10-22 |
 | NO_DEVICE | 400 | No device | PENDING | - | person-session | 2026-10-22 |
-| NO_KEY | 401 | No key | PENDING | - | connectors | 2026-10-22 |
+| NO_KEY | 401 | No key sent | No key was sent. | Send the connector key in the X-Bridge-Key header. | connectors | 2026-10-22 |
 | NO_LINES | 400 | No lines sent | Send at least one line. | Add a line and send again. | tax | 2026-10-23 |
 | NO_MONEY | 422 | No money set | This shop has not said which money its books are kept in. | Set the money in Country setup. | catalogue-view | 2026-10-22 |
 | NO_PHONE | varies | No phone | PENDING | - | crm-groups | 2026-10-22 |
@@ -225,12 +264,17 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_PLATFORM_ROOT | 404 | No platform operator | This installation has no platform operator set up. | Only the platform operator can use this. | platformroot | 2026-10-22 |
 | NO_PRICE | 422 | No price for a line | A line has no price on the shelf and none was sent. | Set its price on the shelf, or send one. | tax | 2026-10-23 |
 | NO_SENDS | varies | No sends | PENDING | - | marketing-results | 2026-10-22 |
+| NO_SHOP | 403 | Not tied to a shop | This sign-in is not tied to a shop, so there is nothing to show or change. | Sign in again at the shop's page. | privacy | 2026-10-24 |
 | NO_SHOP_COPY | varies | No shop copy | PENDING | - | verdict | 2026-10-22 |
 | NO_STREAM_NAMED | 400 | No stream named | Pick at least one stream to hand over. | Choose who carries products, stock or orders, then save. | integrations | 2026-10-23 |
 | NO_SUCH_NETWORK | 400/404 | No such network | There is no network store by that name. | Check the link you were given. | catalogue | 2026-10-22 |
 | NO_TEMPLATE | varies | No template | PENDING | - | marketing-results | 2026-10-22 |
 | NO_TOKEN | varies | No token | PENDING | - | marketing-results | 2026-10-22 |
-| OFFER_CLASH | 409 | Offer clash | PENDING | - | offer-clash | 2026-10-22 |
+| OFFER_CLASH | 409 | Offer clash | Another live offer already covers some of the same items. | Pause the other offer, or take those items out of this one. | offer-clash | 2026-10-22 |
+| OFFER_ENDS_BEFORE_START | 400 | Offer ends before it starts | The offer would end before it starts. | Pick an end after the start. | network-offers | 2026-10-23 |
+| OFFER_NOT_LIVE | 409 | Offer not live | Make the offer live before releasing it to your stores. | Make it live, then release. | network-offers | 2026-10-23 |
+| OFFER_NOT_RELEASED | 409 | Offer never released | That offer was never released to your stores. | Release it first. | network-offers | 2026-10-23 |
+| OFFER_UNKNOWN | 400 | Offer not known | That is not an offer. | Pick an offer from the list. | network-offers | 2026-10-23 |
 | OFFLINE | varies | Offline | PENDING | - | verdict | 2026-10-22 |
 | OK | varies | Ok | PENDING | - | crm-groups | 2026-10-22 |
 | ORIGIN_NOT_ALLOWED | 403 | Origin not allowed | This address is not allowed to call the service. | Use the shop app, or ask us to allow your address. | platform | 2026-10-22 |
@@ -245,11 +289,12 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PARENT_NOT_FOUND | 404 | Network not found | We could not find that network. | Check its handle and try again. | network | 2026-10-23 |
 | PENETRATION_STORE_MISSING | 503 | Reach figures not ready | Reach figures are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | PERIOD_LOCKED | 409 | Month locked | That month is locked. | Use a date in an open month, or ask the owner to unlock it. | books | 2026-10-22 |
-| PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | PENDING | - | iddoc-verify | 2026-10-22 |
+| PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | Codes cannot be sent to a mobile number yet, so nothing was changed. | Try again when text messages are set up. | iddoc-verify | 2026-10-22 |
 | PIN | varies | Pin | PENDING | - | country | 2026-10-22 |
 | PIN_ACTORS_ONLY | 400 | Only a person can change a PIN | Only a person with their own login can change a PIN. | Sign in as that person. | actors | 2026-10-23 |
 | PIN_INCORRECT | 400 | Current PIN is wrong | The current PIN is not right. | Try again with your current PIN. | actors | 2026-10-23 |
 | PLATFORM_BOUND | varies | Set by the platform | The platform sets this for every shop. | It cannot be changed here. | entities | 2026-10-22 |
+| POLICY_NOT_VALID | 400 | Policy not known | The policy must be opt_in or opt_out. | Pick one of the two. | network-offers | 2026-10-23 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
 | PRODUCT_BAD_REQUEST | 400 | The catalogue needs something else | The catalogue could not take that request, and the sentence says why. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
 | PRODUCT_CLASH | 409 | Clashes with the catalogue | That clashes with how this catalogue is set up. | Read the sentence shown, fix it and try again. | products | 2026-10-23 |
@@ -292,6 +337,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
 | SESSION_EXPIRED | 401 | Session expired | PENDING | - | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | PENDING | - | identity-auth | 2026-10-22 |
+| SESSION_ONLY | 403 | Sign in as a person | Network offers are managed by a signed-in person. | Sign in as a person, not with a key. | network-offers | 2026-10-23 |
 | SESSION_UPGRADE | varies | Session upgrade | PENDING | - | auth | 2026-10-22 |
 | SHOP_REFUSING | varies | Shop refusing | PENDING | - | verdict | 2026-10-22 |
 | SIGNIN_REFUSED | 400 | Sign-in refused | That sign-in didn't work. Check the details and try again. | Check the details and try again. | signin | 2026-10-22 |
@@ -304,6 +350,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | PENDING | - | verdict | 2026-10-22 |
+| SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies are not switched on yet. | Ask the operator to run the update, then try again. | supplies | 2026-10-24 |
+| SUPPLY_INVALID | 400 | Supply not accepted | This supply, purchase or use could not be recorded as sent. | Read the sentence shown, fix it and send it again. | supplies | 2026-10-24 |
+| STORES_NOT_MIGRATED | 503 | Shop list not ready | The shop list is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
 | SWITCHED_OFF | 400/404 | Switched off | This person is switched off. | Switch them on first. | actors | 2026-10-22 |
 | TARGET_ACTOR_NOT_ACTIVE | 400 | Colleague cannot take tasks | That colleague cannot take tasks right now. | Pick someone who is active. | actors | 2026-10-23 |
@@ -333,13 +382,15 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | USER_ID_IMMUTABLE | 409 | User ID cannot change | A User ID cannot be changed once it is set. | Change the business name instead; the User ID stays. | entities | 2026-10-22 |
 | USER_ID_INVALID | 400 | User ID not usable | Choose a User ID that can be used. | Read the sentence shown and try another. | entities | 2026-10-22 |
 | USER_ID_TAKEN | 409 | User ID taken | That User ID is already taken. | Choose another; it cannot be changed later. | entities | 2026-10-22 |
+| VALIDATION_FAILED | 400 | Fields not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send again. | validate | 2026-10-23 |
 | VAULT_CHANGED | 409 | Vault changed | Changed since you opened it — reload? | Reload the vault, then save again. | governance | 2026-10-23 |
-| VAULT_ENC_UNCONFIGURED | 503 | Vault enc unconfigured | PENDING | - | identity-docs | 2026-10-22 |
+| VAULT_ENC_UNCONFIGURED | 503 | Vault enc unconfigured | Secure storage is not switched on yet, so nothing was stored. | Try again when it is switched on. | identity-docs | 2026-10-22 |
 | VAULT_VERSION_REQUIRED | 409 | Vault version required | This screen is older than the vault — reload it, then save. | Reload the screen, then save. | governance | 2026-10-22 |
 | VERIFICATION_FAILED | 422 | Registry check failed | That registry number could not be confirmed. | Check the number and try again. | governance | 2026-10-23 |
 | VIEW_ONLY | varies | View only | Your login can only view. | Ask the owner for edit access. | crm-groups | 2026-10-22 |
 | VISIBILITY_CAPPED | 403 | Catalogue visibility closed | The catalogue cannot be that open for this business. | The sentence names who closed it; ask them. | entities | 2026-10-23 |
 | VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | This database does not accept network visibility yet. | Apply the pending database update, then build again. | entities | 2026-10-22 |
+| WITHDRAWN | 403 | They withdrew consent | They withdrew their consent to offers on that channel. | Do not send offers there. | crm | 2026-10-23 |
 | WORKBOOK_CUT | 413 | Workbook cut | This sheet is bigger than we read, so only part of it was read and nothing was imported. | Delete unused columns, or split the sheet, and upload again. | products | 2026-10-22 |
 | WORK_BAD_REQUEST | 400 | Work request not valid | That list request is not valid. | Ask for one view at a time. | work | 2026-10-23 |
 | WORK_STAFF_ONLY | 403 | Staff only | Sign in as staff to see Tasks and Orders. | Sign in with a staff login. | work | 2026-10-23 |
@@ -420,4 +471,24 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TOO_LONG | 400 | Message too long | The message is too long. | Shorten it and send again. | crm | 2026-10-23 |
 | TOO_MANY | 400 | Too many | That is too many at a time. | Send fewer, or make a smaller group. | crm | 2026-10-23 |
 | TOO_MANY_GROUPS | 400 | Too many groups | A customer can be in at most 20 groups. | Take them out of one group first. | crm | 2026-10-23 |
+| ATTACHMENT_EMPTY | 400 | File is empty | That file has nothing in it. | Choose a file that is not empty. | attachments | 2026-10-23 |
+| ATTACHMENT_FIELDS_MISSING | 400 | File details missing | The chit, the file's name or the file itself was left out. | Choose the chit and the file again, then send. | attachments | 2026-10-23 |
+| ATTACHMENT_NOT_A_PARTICIPANT | 403 | Not on this chit | You are not on this chit, so you cannot put a file on it. | Open a chit you are part of and try again. | attachments | 2026-10-23 |
+| ADMIN_DISABLED | 503 | Platform approval is off | Platform approval is not switched on here. | Ask the platform operator to set the admin key. | channels | 2026-10-23 |
+| ADMIN_KEY_WRONG | 403 | Platform key not accepted | That platform key is not accepted. | Check the key and try again. | channels | 2026-10-23 |
+| CHANNEL_ADDRESS_TAKEN | 409 | Address already in use | That number or address is already in use. | Use another one, or ask the platform if it is yours. | channels | 2026-10-23 |
+| CHANNEL_BAD_REQUEST | 400 | Channel details not valid | Something in the channel details is missing or not one we know. | Check the details and try again. | channels | 2026-10-23 |
+| CHANNEL_PLATFORM_ONLY | 403 | Only the platform can approve | Only the platform can mark a template approved. | Mark it as waiting; the platform will approve it. | channels | 2026-10-23 |
+| CHANNEL_REFUSED | varies | Channel request refused | The channel request was refused. | Check the details and try again. | channels | 2026-10-23 |
+| CHANNEL_STORE_MISSING | 503 | Channels not ready | Channels are not ready on this system yet. | Try again after the next update. | channels | 2026-10-23 |
+| REL_NEED_PARTY | 400 | Say who to add | Say who to add: a ChitBridge User ID or email, or a name. | Type a User ID, an email or a name and try again. | relationships | 2026-10-23 |
+| REL_NO_BUSINESS | 404 | No such business | We could not find a business with that User ID, bridge ID or email. | Check what you typed, or add them by name instead. | relationships | 2026-10-23 |
+| REL_SELF | 400 | Cannot add yourself | You cannot add your own business to your list. | Choose another business. | relationships | 2026-10-23 |
+| REL_EXISTS | 409 | Already on your list | They are already on your list. | Open the list to find them. | relationships | 2026-10-23 |
+| REL_NAME_REFUSED | 400 | Name not accepted | That name could not be used to add them. | Type a plain name, not an email, and try again. | relationships | 2026-10-23 |
+| REL_ID_BUSY | 409 | Could not make an id | We could not give them an id just now. | Try once more. | relationships | 2026-10-23 |
+| REL_NOT_YOURS | 403 | Not yours to rename | That is their own business name, so you cannot change it. | Use your own name for them instead. | relationships | 2026-10-23 |
+| REL_NOTHING_TO_UPDATE | 400 | Nothing to change | You sent nothing to change. | Send at least one field to change. | relationships | 2026-10-23 |
+| REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |
+| REL_PARTY_INVALID | 400 | Party detail not accepted | One of the party details was not accepted. | Read the line shown, correct it and try again. | relationships | 2026-10-23 |
 <!-- codes:end -->
