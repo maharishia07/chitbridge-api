@@ -3386,6 +3386,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "REL_NOT_ON_YOUR_LIST",
+   "status": "404",
+   "title": "Not on your supplier list",
+   "shopkeeper": "That business is not on your supplier list, so its catalogue is not shown.",
+   "hint": "Add them as a supplier first.",
+   "owner_area": "relationships",
+   "since": "2026-10-30"
+  },
+  {
    "code": "REL_NOT_YOURS",
    "status": "403",
    "title": "Not yours to rename",

@@ -18,7 +18,7 @@ of file each thing is; this says what already does the job.
 | 83 | `answer` | `availability.js` | from March; then nearest. |
 | 78 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 70 | `catalogue` | `books-manual.js` | GET /events → the grid. |
+| 71 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 68 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 66 | `list` | `cap-settings.js` |  |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |

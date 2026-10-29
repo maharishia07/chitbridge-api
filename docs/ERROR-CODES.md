@@ -487,6 +487,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REL_EXISTS | 409 | Already on your list | They are already on your list. | Open the list to find them. | relationships | 2026-10-23 |
 | REL_NAME_REFUSED | 400 | Name not accepted | That name could not be used to add them. | Type a plain name, not an email, and try again. | relationships | 2026-10-23 |
 | REL_ID_BUSY | 409 | Could not make an id | We could not give them an id just now. | Try once more. | relationships | 2026-10-23 |
+| REL_NOT_ON_YOUR_LIST | 404 | Not on your supplier list | That business is not on your supplier list, so its catalogue is not shown. | Add them as a supplier first. | relationships | 2026-10-30 |
 | REL_NOT_YOURS | 403 | Not yours to rename | That is their own business name, so you cannot change it. | Use your own name for them instead. | relationships | 2026-10-23 |
 | REL_NOTHING_TO_UPDATE | 400 | Nothing to change | You sent nothing to change. | Send at least one field to change. | relationships | 2026-10-23 |
 | REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |

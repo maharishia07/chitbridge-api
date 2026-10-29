@@ -161,12 +161,15 @@ function extras(tools) {
   /* ── GET /suppliers/:supplier_entity_id/catalogue ── */
   const cUrl = at('/suppliers/' + SUPP + '/catalogue');
   const identityRow = row(/FROM identities WHERE identity_id = \$1 AND identity_type = 'entity'/, { identity_id: SUPP, display_name: 'Corner Hardware', bridge_id: 'BBBB3333', currency_code: 'INR', business_status: 'open' });
+  const onMyList = row(/FROM supplier_list WHERE owner_entity_id = [$]1 AND supplier_entity_id = [$]2/, { '?column?': 1 });
   const catalogue = [
-    X('catalogue-unknown-supplier', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl }),
-    X('catalogue-not-showing', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: identityRow }, patch: view({ available: false }) }),
-    X('catalogue-read', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: identityRow }, patch: view({ available: true, schema: { fields: [] }, fields: [], items: [{ item_id: 'i1' }], groups: [], finishes: [], offers: [], categories: [] }) }),
+    N('catalogue-unknown-supplier', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 404, { url: cUrl }),
+    /* SEC-91: a business that is not on this shop's supplier list is refused like an unknown id; the supplier list is asked before identities, so no name is read */
+    N('catalogue-stranger-refused', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 404, { url: cUrl, setup: { sqlRows: firstOf(identityRow) } }),
+    X('catalogue-not-showing', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: firstOf(onMyList, identityRow) }, patch: view({ available: false }) }),
+    X('catalogue-read', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: firstOf(onMyList, identityRow) }, patch: view({ available: true, schema: { fields: [] }, fields: [], items: [{ item_id: 'i1' }], groups: [], finishes: [], offers: [], categories: [] }) }),
     X('catalogue-own', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: at('/suppliers/' + SHOP + '/catalogue'), setup: { sqlRows: row(/FROM identities WHERE identity_id = \$1 AND identity_type = 'entity'/, { identity_id: SHOP, display_name: 'Shop A', bridge_id: 'AAAA2222', currency_code: 'INR', business_status: 'open' }) }, patch: view({ available: true, items: [] }) }),
-    X('catalogue-view-fails', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 500, { url: cUrl, setup: { sqlRows: identityRow }, patch: { catalogueView: { buildPublicView: async () => boom() } } }),
+    X('catalogue-view-fails', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 500, { url: cUrl, setup: { sqlRows: firstOf(onMyList, identityRow) }, patch: { catalogueView: { buildPublicView: async () => boom() } } }),
     X('catalogue-lookup-fails', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 500, { url: cUrl, setup: failing })
   ];
 
