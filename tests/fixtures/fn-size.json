@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 235,
+  "long_functions": 234,
   "worst_complexity": 183,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -95,9 +95,6 @@
       "applyDecisions",
       "matchHeader",
       "preflight"
-    ],
-    "lib/ctpaddress.js": [
-      "resolveAddress"
     ],
     "lib/dayopen.js": [
       "(anonymous)"
@@ -474,7 +471,6 @@
       "GET /report",
       "GET /report",
       "PATCH /incidents/:id",
-      "PATCH /requirements/:id",
       "POST /incidents",
       "POST /releases",
       "POST /requirements",

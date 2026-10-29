@@ -13,17 +13,20 @@
  *   node tests/api-problem-books.test.cjs                    check
  *   node tests/api-problem-books.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json
  *   node tests/api-problem-books.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
+ *   node tests/api-problem-books.test.cjs --compare F        the answers now against a capture F: byte for byte (status, content type, body)
  *   node tests/api-problem-books.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  */
 'use strict';
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
+const crypto = require('crypto');
 const express = require('express');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
@@ -138,7 +141,141 @@ const RETURN_BASE = { currency: 'AUD', pack: 'AU', form: 'BAS', name: 'Business 
 const RETURN_READY = { patch: { period: { taxReturn: async () => Object.assign({}, RETURN_BASE, { asked: { simpler: true }, periods: [], period: { period: 'Q2' }, boxes: [], payable_minor: 0, refund_minor: 0, net_minor: 0, notes: [], cite: null }) } } };
 const RETURN_NEEDS = { patch: { period: { taxReturn: async () => Object.assign({}, RETURN_BASE, { asked: {}, needs: 'period', why: 'Which period?', periods: [], period: null, boxes: [], payable_minor: 0, refund_minor: 0, net_minor: 0, notes: [], cite: null, emirates: [], staggers: {} }) } } };
 const REVALUE_READY = { ready: true, date: '2026-09-30', reverses_on: '2026-10-01', functional: 'INR', rows: [], missing: [], gain_minor: 0, posted: null, event: { kind: 'fx_revalue' } };
-const EXTRAS = [
+/* ── API-8 (output allow-list), the writes and the id reads: each stand-in answer mirrors the library's own return literal key for key (the lib/books.js line is named), so the
+   closed root is learned from the answer the real writer gives; the figures are placeholders, no posting runs ── */
+const ENTRY = '33333333-3333-4333-8333-333333333333';
+const ENTRY2 = '55555555-5555-4555-8555-555555555555';
+const CHIT = '99999999-9999-4999-8999-999999999999';
+const DAY = '2026-09-30';
+const PAY_ROW = { payment_id: PARTY, party_id: PARTY, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cheque', reference: null, cheque_no: '1', cheque_bank: 'B', cheque_date: DAY, received_at: DAY, status: 'received', advice_chit_id: null, advice_shared_at: null };
+const JOURNAL = { ok: true, entry_id: ENTRY, entry_no: 'MJ/2026-27/1', posting_date: DAY, doc_date: DAY, moved: null, lines: 2, items: 0, note: null }; /* writeJournal :452 */
+const JOURNAL_MOVED = Object.assign({}, JOURNAL, { doc_date: '2026-09-28', moved: { from: '2026-09-28', to: DAY }, items: 1, note: 'Posted on the first open day.' });
+const DUPLICATE = { ok: true, duplicate: true, entry_id: ENTRY, entry_no: 'MJ/2026-27/1', posting_date: DAY }; /* postEntry :239, the replay of a client_ref */
+const OFF = { ok: false, off: true }; /* postEntry :233 */
+const REVERSAL = { ok: true, entry_id: ENTRY2, entry_no: 'MJ/2026-27/2', posting_date: DAY, moved: null, reverses: 'MJ/2026-27/1', reverses_entry_id: ENTRY, items: 0, reopened: [], words: 'Reversed MJ/2026-27/1.' }; /* writeReversal :1434 */
+const REVERSAL_REOPENS = Object.assign({}, REVERSAL, { items: 1, reopened: [{ against_ref: 'bill:1', bill_no: 'B/1' }] });
+const ALLOCATION = { ok: true, items: 2, allocated_minor: 1000 }; /* writeAllocation :1174 */
+const CHEQUE = (to, extra) => Object.assign({ ok: true, status: to, items: 1 }, extra); /* writeChequeStep :1229 */
+const PROPOSAL = { currency: 'INR', account_id: PARTY, items: [], outstanding: { by_ref: {} }, open_minor: 0, proposal: [], apply_minor: 0, on_account_minor: 1000, skipped: [], why: null }; /* proposeFor :706 */
+const PROPOSAL_SETTLES = Object.assign({}, PROPOSAL, { items: [{ ref: 'bill:1' }], open_minor: 1500, proposal: [{ against_ref: 'bill:1', bill_no: 'B/1', due_date: DAY, open_minor: 1500, apply_minor: 1000, disputed: false }], apply_minor: 1000, on_account_minor: 0, skipped: [{ against_ref: 'bill:2', why: 'disputed' }] });
+/** adviceFor :1110 — may send (on the rail, nothing sent) or may share (off the rail, or already sent) */
+const ADVICE = (sendOk) => ({
+  payment_id: PARTY,
+  party: { party_id: PARTY, name: 'Asha', on_rail: sendOk },
+  advice: { chit_id: sendOk ? null : CHIT, state: sendOk ? 'none' : 'sent', shared_at: sendOk ? null : '2026-09-30T10:00:00.000Z' },
+  may: sendOk ? { send_advice: { ok: true }, share_advice: { ok: false, why: 'on_rail', say: 'They are on ChitBridge.' } } : { send_advice: { ok: false, why: 'already_sent', say: 'An advice is already sent.' }, share_advice: { ok: true } },
+  words: 'Paid Rs 10.00 by cheque.',
+  body: sendOk ? { kind: 'payment_advice', to: PARTY } : null,
+  share: sendOk ? null : { text: 'Paid Rs 10.00', wa: 'https://wa.me/?text=x', mailto: 'mailto:?body=x' }
+});
+const RECORDED = { payment: { payment_id: PARTY, status: 'recorded', duplicate: false }, posted: JOURNAL, allocation: null }; /* recordPayment :1332 */
+const RECORDED_SETTLES = Object.assign({}, RECORDED, { allocation: { settled: [{ against_ref: 'bill:1', bill_no: 'B/1', amount_minor: 1000 }], items: 2, allocated_minor: 1000 } });
+const REPLAY = { payment: { payment_id: PARTY, status: 'cheque_received', duplicate: true }, posted: { ok: true, duplicate: true } }; /* firstPayment :1259 */
+const OUTCOME = { words: 'Paid.', settled: [], applied_minor: 0, on_account_minor: 1000, balance_minor: -1000, balance_words: 'They hold an advance.' }; /* paymentOutcome :1158 */
+const ENABLED = { ok: true, accounts_added: 40, fiscal_year: '2026-27', parties_numbered: 0 }; /* enable :1546 */
+const RETRIED = { tried: 2, posted: 1, still: 1 }; /* books-hooks retryOutbox :1632 */
+const CHART = [
+  { account_id: PARTY, code: '1300', name: 'Debtors', nature: 'asset', role: 'debtors', is_group: false, parent_id: null, tally_group: 'Sundry Debtors', active: true },
+  { account_id: ENTRY, code: '4000', name: 'Income', nature: 'income', role: null, is_group: true, parent_id: null, tally_group: 'Sales', active: true }
+];
+const LEDGER_LINE = { posting_date: DAY, doc_date: DAY, narration: 'Sale', event_type: 'sale_bill', entry_no: 'S/1', entry_id: ENTRY, reverses_entry_id: null, reversed_by: null, source_chit_id: CHIT, party_id: PARTY, dr_minor: '1000', cr_minor: '0', period: 6, covers: 0, source_ref: null, src_chit_id: CHIT, src_ref: 'B/1', src_by: null, src_by_name: 'Asha', src_till: null, counter_id: null };
+const LEDGER_LINE_BARE = Object.assign({}, LEDGER_LINE, { doc_date: null, narration: null, event_type: 'manual', entry_no: 'MJ/1', entry_id: ENTRY2, source_chit_id: null, party_id: null, dr_minor: '0', cr_minor: '1000', src_chit_id: null, src_ref: null, src_by_name: null });
+const LEDGER_PATCH = { store: { accounts: async () => CHART, entryLines: async () => [LEDGER_LINE, LEDGER_LINE_BARE] }, books: { ledgerOf: async () => ({ opening_minor: 0, period0: false }) } };
+const LEDGER_PAGE_PATCH = { store: Object.assign({}, LEDGER_PATCH.store, { entryPage: async () => ({ rows: [LEDGER_LINE], limit: 10, next: null }), pageSums: async () => ({ before_dr: 0, before_cr: 0, dr: 1000, cr: 0, entries: 1 }) }), books: LEDGER_PATCH.books };
+const packIN = () => require(path.join(HERE, 'lib', 'books-engines')).packs().packFor('IN');
+const STATEMENT_PATCH = { books: { ledgerCtx: async () => ({ s: SETTING_ROW, chart: CHART, pack: packIN(), years: [], cache: {} }), yearBalances: async () => ({}) }, store: { ledgerLines: async () => [], entryLines: async () => [] } };
+const MANUAL_PREVIEW = { ok: true, kind: 'expense', voucher: { series: 'MJ', type: 'Journal' }, date: DAY, lines: [{ code: '5000', ledger: 'Rent', dr_minor: 1000, cr_minor: 0, type: 'expense', rule: 'expense' }], balanced: true, totals: { dr_minor: 1000, cr_minor: 1000 }, credit: null, bill: null, flags: [], refusals: [], code: null, duplicate: null }; /* books-manual preview :483 */
+const SHOP_TERMS = { credit_days: 30, credit_limit_minor: null, interest: null, early: null };
+const PAID = { party_id: PARTY, amount_minor: 1000, mode: 'cash' };
+const PAYMENT_PATCH = (recorded) => ({ books: { recordPayment: async () => recorded, paymentOutcome: async () => OUTCOME, adviceFor: async () => ADVICE(true) }, store: { adviceReady: async () => true, payment: async () => PAY_ROW } });
+const ADVICE_PATCH_READY = (sendOk, set) => ({ store: { payment: async () => PAY_ROW, adviceReady: async () => true, setAdvice: async () => set, adviceStates: async () => ({ [CHIT]: 'sent' }) }, books: { adviceFor: async () => ADVICE(sendOk) } });
+const WRITES_READY = [
+  X('setting-grain-shift', 'POST /api/books/setting', 200, { body: { walkin_grain: 'shift' } }),
+  X('setting-switched-off', 'POST /api/books/setting', 200, { body: { enabled: false } }),
+  X('terms-shop-saved', 'POST /api/books/terms', 200, { body: { credit_days: 30 }, patch: { terms: { migrated: async () => true, saveShop: async () => SHOP_TERMS } } }),
+  X('terms-party-saved', 'POST /api/books/terms', 200, { body: { party_id: PARTY, credit_days: 15 }, patch: { terms: { migrated: async () => true, saveParty: async () => ({ credit_days: { value: 15, from: 'party' } }) } } }),
+  X('account-added', 'POST /api/books/accounts', 200, { body: { name: 'Fees', parent_code: '4000' }, patch: { store: { accounts: async () => CHART }, books: { addAccount: async () => ({ code: '4010', account_id: ENTRY2, name: 'Fees' }) } } }),
+  X('account-added-source-code', 'POST /api/books/accounts', 200, { body: { name: 'Fees', parent_id: ENTRY, source_code: '200' }, patch: { books: { addAccount: async () => ({ code: '4010', account_id: ENTRY2, name: 'Fees', source_code: '200', source_code_written: true }) } } }),
+  X('account-added-source-code-unwritten', 'POST /api/books/accounts', 200, { body: { name: 'Fees', parent_id: ENTRY, source_code: '200' }, patch: { books: { addAccount: async () => ({ code: '4010', account_id: ENTRY2, name: 'Fees', source_code: null, source_code_written: false }) } } }), /* addAccount :1678: before b302 the code is not written, null */
+  X('enable-switched-on', 'POST /api/books/enable', 200, { body: { walkin_grain: 'day' }, patch: { books: { enable: async () => ENABLED } } }),
+  X('outbox-retried', 'POST /api/books/outbox/retry', 200, { patch: { hooks: { retryOutbox: async () => RETRIED } } }),
+  X('payment-preview-advance', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000 }, patch: { books: { proposeFor: async () => PROPOSAL, duplicateWarnings: async () => [] } } }),
+  X('payment-preview-settles', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000, allocate: 'oldest_first' }, patch: { books: { proposeFor: async () => PROPOSAL_SETTLES, duplicateWarnings: async () => [{ code: 'W1', words: 'The same money within 24 hours.', entry_no: 'R/1' }] } } }),
+  X('payment-recorded', 'POST /api/books/payments', 200, { body: PAID, patch: PAYMENT_PATCH(RECORDED) }),
+  X('payment-recorded-settles', 'POST /api/books/payments', 200, { body: Object.assign({ allocate: 'oldest_first' }, PAID), patch: PAYMENT_PATCH(RECORDED_SETTLES) }),
+  X('payment-replayed', 'POST /api/books/payments', 200, { body: Object.assign({ client_ref: 'c1' }, PAID), patch: PAYMENT_PATCH(REPLAY) }),
+  X('advice-read', 'GET /api/books/payments/:id/advice', 200, { patch: ADVICE_PATCH_READY(true, null) }),
+  X('advice-read-sent', 'GET /api/books/payments/:id/advice', 200, { patch: ADVICE_PATCH_READY(false, null) }),
+  X('advice-recorded', 'PATCH /api/books/payments/:id', 200, { body: { advice_chit_id: CHIT }, patch: ADVICE_PATCH_READY(true, { advice_chit_id: CHIT, advice_shared_at: null }) }),
+  X('advice-shared', 'PATCH /api/books/payments/:id', 200, { body: { advice_shared_at: true }, patch: ADVICE_PATCH_READY(false, { advice_chit_id: null, advice_shared_at: '2026-09-30T10:00:00.000Z' }) }),
+  X('propose-advance', 'POST /api/books/payments/:id/propose', 200, { patch: { store: { payment: async () => PAY_ROW }, books: { proposeFor: async () => PROPOSAL } } }),
+  X('propose-settles', 'POST /api/books/payments/:id/propose', 200, { patch: { store: { payment: async () => PAY_ROW }, books: { proposeFor: async () => PROPOSAL_SETTLES } } }),
+  X('confirm-allocated', 'POST /api/books/payments/:id/confirm', 200, { body: { allocations: [{ against_ref: 'bill:1', amount_minor: 1000 }] }, patch: { store: { payment: async () => PAY_ROW }, books: { postEntry: async () => ALLOCATION } } }),
+  X('confirm-ledger-off', 'POST /api/books/payments/:id/confirm', 200, { body: { allocations: [] }, patch: { store: { payment: async () => PAY_ROW }, books: { postEntry: async () => OFF } } }),
+  X('cheque-deposited', 'POST /api/books/cheques/:id/status', 200, { body: { status: 'deposited' }, patch: { books: { postEntry: async () => CHEQUE('deposited') } } }),
+  X('cheque-cleared', 'POST /api/books/cheques/:id/status', 200, { body: { status: 'cleared', date: DAY }, patch: { books: { postEntry: async () => CHEQUE('cleared', { posted: JOURNAL }) } } }),
+  X('cheque-bounced', 'POST /api/books/cheques/:id/status', 200, { body: { status: 'bounced' }, patch: { books: { postEntry: async () => CHEQUE('bounced', { reversed: REVERSAL }) } } }),
+  X('dispute-held', 'POST /api/books/parties/:id/dispute', 200, { body: { against_ref: 'bill:1', note: 'short' }, patch: { books: { postEntry: async () => ({ ok: true, status: 'disputed' }) } } }),
+  X('dispute-released', 'POST /api/books/parties/:id/dispute', 200, { body: { against_ref: 'bill:1', disputed: false, side: 'supplier' }, patch: { books: { postEntry: async () => ({ ok: true, status: 'undisputed' }) } } }),
+  X('dispute-ledger-off', 'POST /api/books/parties/:id/dispute', 200, { body: { against_ref: 'bill:1' }, patch: { books: { postEntry: async () => OFF } } }),
+  X('preview-expense', 'POST /api/books/preview', 200, { body: { event: { kind: 'expense', amount: 10 } }, patch: { manual: { preview: async () => MANUAL_PREVIEW } } }),
+  X('event-posted', 'POST /api/books/events', 200, { body: { event: 'expense', amount: 10 }, patch: { manual: { post: async () => Object.assign({ kind: 'expense' }, JOURNAL) } } }),
+  X('event-replayed', 'POST /api/books/events', 200, { body: { event: 'expense', amount: 10, client_ref: 'c1' }, patch: { manual: { post: async () => Object.assign({ kind: 'expense' }, DUPLICATE) } } }),
+  X('event-posted-undated', 'POST /api/books/events', 200, { body: { event: 'expense', amount: 10 }, patch: { manual: { post: async () => Object.assign({ kind: 'expense' }, JOURNAL, { doc_date: null }) } } }), /* composeEntry :362 ymd(ev.date) is null for an undated event */
+  X('entry-posted', 'POST /api/books/entries', 200, { body: { narration: 'Rent', lines: [] }, patch: { books: { postEntry: async () => JOURNAL } } }),
+  X('entry-posted-moved', 'POST /api/books/entries', 200, { body: { narration: 'Rent', date: '2026-09-28', lines: [] }, patch: { books: { postEntry: async () => JOURNAL_MOVED } } }),
+  X('entry-replayed', 'POST /api/books/entries', 200, { body: { narration: 'Rent', lines: [], client_ref: 'c1' }, patch: { books: { postEntry: async () => DUPLICATE } } }),
+  X('entry-ledger-off', 'POST /api/books/entries', 200, { body: { narration: 'Rent', lines: [] }, patch: { books: { postEntry: async () => OFF } } }),
+  X('entry-reversed', 'POST /api/books/entries/:id/reverse', 200, { body: { reason: 'wrong party' }, patch: { books: { reverseEntry: async () => REVERSAL } } }),
+  X('entry-reversed-reopens', 'POST /api/books/entries/:id/reverse', 200, { body: { reason: 'wrong party' }, patch: { books: { reverseEntry: async () => REVERSAL_REOPENS } } }),
+  X('write-off-posted', 'POST /api/books/write-off', 200, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt' }, patch: { books: { postEntry: async () => JOURNAL } } }),
+  X('write-off-replayed', 'POST /api/books/write-off', 200, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt', client_ref: 'c1' }, patch: { books: { postEntry: async () => DUPLICATE } } }),
+  X('opening-posted', 'POST /api/books/opening', 200, { body: { rows: [{ code: '1300', dr_minor: 1000, cr_minor: 0 }] }, patch: { books: { postOpening: async () => Object.assign({}, JOURNAL, { suspense_minor: -1000 }) } } }),
+  X('opening-replayed', 'POST /api/books/opening', 200, { body: { rows: [{ code: '1300', dr_minor: 1000, cr_minor: 0 }], client_ref: 'c1' }, patch: { books: { postOpening: async () => Object.assign({}, DUPLICATE, { suspense_minor: 0 }) } } }),
+  X('ledger-read', 'GET /api/books/ledger/:account', 200, { patch: LEDGER_PATCH }),
+  X('ledger-read-party', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/debtors?party=' + PARTY, patch: LEDGER_PATCH }),
+  X('ledger-page', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/1300?limit=10', patch: LEDGER_PAGE_PATCH }),
+  X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: STATEMENT_PATCH })
+];
+/* ── API-8 (2 of 2): months and the year, audit packs, recurring entries, exchange rates, the parallel run and the move-in preflight ── */
+const STAMP = '2026-09-30T10:00:00.000Z';
+const PACK_FULL = { pack_id: PARTY, kind: 'month', fiscal_year: '2026-27', period: 6, created_at: STAMP, sha256: 'abc', prev_sha256: 'aaa', manifest: { files: [{ file: 'tb.csv', sha256: 'x', bytes: 12, rows: 3 }], controls: { ok: true } }, storage_path: 'packs/x.zip', acknowledged_at: '2026-10-01T10:00:00.000Z', delete_after: '2035-04-01' };
+const PACK_BARE = Object.assign({}, PACK_FULL, { kind: 'exit', fiscal_year: null, period: null, prev_sha256: null, manifest: { files: [] }, storage_path: null, acknowledged_at: null, delete_after: null }); /* books_pack: fiscal_year, period, prev_sha256, storage_path, acknowledged_at, delete_after nullable */
+const PACK_BUILT = (stored) => ({ pack_id: PARTY, sha256: 'abc', stored, manifest: PACK_FULL.manifest, bytes: 1200, zip: stored ? null : Buffer.from('zip') }); /* books-pack build :268 */
+const RECURRING = { recurring_id: PARTY, name: 'Rent', event: { kind: 'expense', amount: 10 }, frequency: 'monthly', next_on: '2026-11-01', anchor_day: 1, end_on: null, auto: false, active: true, last_done_on: null, created_by: null, created_at: STAMP, updated_at: STAMP }; /* recurring_entry COLS: end_on, last_done_on, created_by nullable */
+const RECURRING_FULL = Object.assign({ entity: SHOP }, RECURRING, { end_on: '2027-03-31', auto: true, last_done_on: '2026-10-01', created_by: SHOP }); /* entity first, as the web contract's row carries it (tests/support/books-memory rows); the bare row leaves it out */
+const viewOf = (t) => Object.assign({}, t, { due: !!(t.active && t.next_on) }); /* books-recurring view :223 */
+const FX_ROW = { rate_id: PARTY, rate_date: DAY, currency: 'USD', rate: '83.5', source: 'manual', source_ref: null, created_at: STAMP };
+const CSV_TB = 'Particulars,Debit,Credit\nCash,100,0\nSales,0,100';
+const TB_DECISIONS = [{ incoming: 'Particulars', field: 'account' }, { incoming: 'Debit', field: 'debit' }, { incoming: 'Credit', field: 'credit' }];
+const MONTHS_PACKS_RATES = [
+  X('period-locked', 'POST /api/books/periods/:fy/:p/:act', 200, { url: MOUNT + '/periods/2026-27/6/lock', body: { reason: 'month done' }, patch: { books: { setPeriod: async () => ({ ok: true, fiscal_year: '2026-27', period: 6, status: 'soft_locked' }) } } }),
+  X('period-unlocked', 'POST /api/books/periods/:fy/:p/:act', 200, { url: MOUNT + '/periods/2026-27/6/unlock', body: { reason: 'a late bill' }, patch: { books: { setPeriod: async () => ({ ok: true, fiscal_year: '2026-27', period: 6, status: 'open' }) } } }),
+  X('year-closed', 'POST /api/books/year/:fy/close', 200, { body: {}, patch: { books: { closeYear: async () => ({ ok: true, fiscal_year: '2026-27', next: '2027-28', locked: 12, opening: { rows: 3, retained_minor: 100, profit_minor: 100, balanced: true } }) } } }),
+  X('year-closed-already', 'POST /api/books/year/:fy/close', 200, { body: {}, patch: { books: { closeYear: async () => ({ ok: true, duplicate: true, fiscal_year: '2026-27', next: '2027-28' }) } } }),
+  X('pack-built', 'POST /api/books/packs', 200, { body: { kind: 'month', fiscal_year: '2026-27', period: 6 }, patch: { pack: { build: async () => PACK_BUILT(true) } } }),
+  X('pack-built-unstored', 'POST /api/books/packs', 200, { body: { kind: 'year', fiscal_year: '2026-27' }, patch: { pack: { build: async () => PACK_BUILT(false) } } }),
+  X('pack-read', 'GET /api/books/packs/:id', 200, { patch: { store: { pack: async () => PACK_FULL } } }),
+  X('pack-read-bare', 'GET /api/books/packs/:id', 200, { patch: { store: { pack: async () => PACK_BARE } } }),
+  X('pack-acknowledged', 'POST /api/books/packs/:id/ack', 200, { patch: { store: { pack: async () => PACK_FULL, ackPack: async () => ({ acknowledged_at: STAMP }) } } }),
+  X('recurring-created', 'POST /api/books/recurring', 200, { body: { name: 'Rent', event: { kind: 'expense' }, frequency: 'monthly', next_on: '2026-11-01' }, patch: { recurring: { create: async () => viewOf(RECURRING) } } }),
+  X('recurring-created-full', 'POST /api/books/recurring', 200, { body: { name: 'Rent', event: { kind: 'expense' }, frequency: 'monthly', next_on: '2026-11-01', end_on: '2027-03-31', auto: true }, patch: { recurring: { create: async () => viewOf(RECURRING_FULL) } } }),
+  X('recurring-patched', 'PATCH /api/books/recurring/:id', 200, { body: { auto: true }, patch: { recurring: { patch: async () => viewOf(RECURRING_FULL) } } }),
+  X('recurring-patched-bare', 'PATCH /api/books/recurring/:id', 200, { body: { name: 'Shop rent' }, patch: { recurring: { patch: async () => viewOf(RECURRING) } } }),
+  X('recurring-stopped', 'DELETE /api/books/recurring/:id', 200, { patch: { recurring: { stop: async () => Object.assign(viewOf(Object.assign({}, RECURRING, { active: false })), { stopped: true }) } } }),
+  X('recurring-stopped-full', 'DELETE /api/books/recurring/:id', 200, { patch: { recurring: { stop: async () => Object.assign(viewOf(Object.assign({}, RECURRING_FULL, { active: false })), { stopped: true }) } } }),
+  X('recurring-accepted', 'POST /api/books/recurring/:id/post', 200, { body: {}, patch: { recurring: { accept: async () => ({ posted: JOURNAL, template: viewOf(RECURRING_FULL), date: '2026-11-01' }) } } }),
+  X('recurring-skipped', 'POST /api/books/recurring/:id/skip', 200, { body: {}, patch: { recurring: { skip: async () => ({ skipped: '2026-11-01', template: viewOf(RECURRING) }) } } }),
+  X('fx-rate-added', 'POST /api/books/fx-rates', 201, { body: { date: DAY, currency: 'USD', rate: 83.5 }, patch: { fxr: { add: async () => FX_ROW } } }),
+  X('fx-rates-imported', 'POST /api/books/fx-rates/import', 200, { body: { csv: 'date,currency,rate\n2026-09-30,USD,83.5\n2026-09-30,EUR,' }, patch: { fxr: { importCsv: async () => ({ added: 1, refused: [{ line: 3, why: 'No rate.' }], rates: [FX_ROW] }) } } }),
+  X('fx-revalued', 'POST /api/books/fx-revalue', 200, { body: { fiscal_year: '2026-27', period: 6 }, patch: { fxr: { revalue: async () => ({ ok: true, entry_no: 'MJ/2026-27/3', reversal_no: 'MJ/2026-27/4', gain_minor: 500, date: DAY, reverses_on: '2026-10-01' }) } } }),
+  X('fx-revalue-replayed', 'POST /api/books/fx-revalue', 200, { body: { fiscal_year: '2026-27', period: 6 }, patch: { fxr: { revalue: async () => ({ ok: true, duplicate: true, entry_no: 'MJ/2026-27/3', gain_minor: 500 }) } } }),
+  X('compare-preflight-csv', 'POST /api/books/compare/preflight', 200, { body: { part: 'tb', source: 'tally', csv: CSV_TB } }),
+  X('compare-snapshot-stored', 'POST /api/books/compare/snapshots', 200, { body: { label: 'Tally Q2', source: 'tally', part: 'tb', period_to: '2026-09-30', csv: CSV_TB, decisions: TB_DECISIONS }, patch: { store: { compareReady: async () => true, insertComparePart: async () => PARTY } } }),
+  X('compare-snapshot-second-part', 'POST /api/books/compare/snapshots', 200, { body: { snapshot_id: PARTY, part: 'pl', source: 'tally', csv: 'Particulars,Amount\nSales,100', decisions: [{ incoming: 'Particulars', field: 'account' }, { incoming: 'Amount', field: 'amount' }] }, patch: { store: { compareReady: async () => true, compareParts: async () => [{ part: 'tb', label: 'Tally Q2', source: 'tally', period_from: '2026-07-01', period_to: '2026-09-30' }], insertComparePart: async () => PARTY } } }),
+  X('move-in-preflight-csv', 'POST /api/books/move-in/preflight', 200, { body: { kind: 'contacts', source: 'xero', csv: 'ContactName,PhoneNumber,EmailAddress\nAsha Traders,9999,a@x.in' } })
+];
+const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
   X('returns-needs-period', 'GET /api/books/returns', 200, RETURN_NEEDS),
   X('returns-from-rail-other-pack', 'GET /api/books/returns', 200, { patch: { period: { taxReturn: RAIL_STOP('AU') } } }),
@@ -181,7 +318,7 @@ const EXTRAS = [
   X('snapshot-part-twice', 'POST /api/books/compare/snapshots', 409, { body: { snapshot_id: PARTY, part: 'tb', source: 'tally' }, patch: { store: { compareReady: async () => true, compareParts: async () => [{ part: 'tb', label: 'x', source: 'tally' }] } }, who: 'auditor' }),
   X('advice-already-recorded', 'PATCH /api/books/payments/:id', 409, { body: { advice_chit_id: PARTY }, patch: ADVICE_PATCH(true) }),
   X('advice-not-ready', 'PATCH /api/books/payments/:id', 503, { body: { advice_chit_id: PARTY }, patch: ADVICE_PATCH(false) })
-];
+]);
 
 function send(port, method, urlPath, body) {
   return new Promise((resolve) => {
@@ -226,7 +363,8 @@ function scenariosOf(routes) {
 
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
-  const modules = { books: require(path.join(HERE, 'lib', 'books')), store: require(path.join(HERE, 'lib', 'books-store')), cashflow: require(path.join(HERE, 'lib', 'books-cashflow')), fxr: require(path.join(HERE, 'lib', 'fx-rates')), period: require(path.join(HERE, 'lib', 'books-period')), movein: require(path.join(HERE, 'lib', 'move-in-proof')) };
+  const lib = (name) => require(path.join(HERE, 'lib', name));
+  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -272,15 +410,28 @@ function allowedFor() {
   return (route) => (route.includes(' ' + MOUNT + '/') ? books(route) : tax(route));
 }
 
+/** a body's clock stamps and minted ids (a new snapshot's id) are the same answer on every run: masked before a body is hashed */
+const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
+const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
+/** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
+function compare(captureFile, recording) {
+  const before = JSON.parse(fs.readFileSync(captureFile, 'utf8'));
+  const differing = Object.keys(before).filter((key) => !recording[key] || recording[key].status !== before[key].status || recording[key].type !== before[key].type || recording[key].sha !== before[key].sha);
+  console.log('compared ' + Object.keys(before).length + ' answers: ' + (Object.keys(before).length - differing.length) + ' identical, ' + differing.length + ' different');
+  differing.forEach((key) => console.log('  ' + key + ' [' + before[key].status + ' -> ' + (recording[key] && recording[key].status) + ']'));
+  return differing.length;
+}
+const recordingOnly = () => argv.includes('--capture') || argv.includes('--compare');
+
 async function checkRoutes(port, scenarios, recording) {
   const tested = {};
-  const allowed = argv.includes('--capture') ? null : allowedFor();
+  const allowed = recordingOnly() ? null : allowedFor();
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, request: { url: scenario.url, body: scenario.body } }; /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer (R2-13) */
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, type: answer.type, sha: shaOf(answer), body: answer.json, request: { url: scenario.url, body: scenario.body } }; /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer (R2-13) */
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
-    if (argv.includes('--capture')) continue;
+    if (recordingOnly()) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
     if (answer.status < 400) continue;
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
@@ -327,24 +478,27 @@ function checkRefusals() {
 }
 
 /**
- * API-8 output allow-list (S34), the way tests/api-problem-till.test.cjs proves it: a books read whose 200 schema is CLOSED (additionalProperties false, derived in
- * docs/contracts/api-output-shapes.json) and whose recorded 200 fits that schema, with no key pruned, is proved here — the generator's proxy world cannot seat the
- * ledger, so it never reaches these 200s. → { route: { output_allowlist: true } } for the routes that held
+ * API-8 output allow-list (S34), the way tests/api-problem-till.test.cjs proves it: a books route whose success schema is CLOSED (additionalProperties false, derived in
+ * docs/contracts/api-output-shapes.json) and whose recorded success answers fit that schema, with no key pruned, is proved here — the generator's proxy world cannot seat the
+ * ledger, so it never reaches these answers. → { route: { output_allowlist: true } } for the routes that held
  */
 function checkAllowList(recording) {
   const proved = {};
   const words = require(path.join(HERE, 'lib', 'books-contract.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
-  Object.keys(words.OPERATIONS).filter((route) => route.startsWith('GET ')).sort().forEach((route) => {
-    const schema = (((words.OPERATIONS[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+  Object.keys(words.OPERATIONS).sort().forEach((route) => {
+    const status = Number(Object.keys(words.OPERATIONS[route].responses).find((code) => /^2\d\d$/.test(code)) || 200);
+    const schema = (((words.OPERATIONS[route].responses[status] || {}).content || {})['application/json'] || {}).schema;
     if (!schema || schema.additionalProperties !== false) return;
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === status && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
-    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    check(route + ': every recorded ' + status + ' (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
+  const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
   return proved;
 }
 /** the books reads the evidence file says output_allowlist for */
@@ -428,6 +582,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     console.log('captured ' + Object.keys(recording).length + ' answers over ' + Object.keys(routes).length + ' routes');
     process.exit(0);
   }
+  if (flagValue('--compare')) process.exit(compare(flagValue('--compare'), recording) ? 1 : 0);
   console.log('\n-- lib/books-contract.js: the ledger refusals as a unit --');
   checkRefusals();
   checkTaxWords();
@@ -444,7 +599,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     writeAllowList(proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/books.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the books reads whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(proved).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the books routes whose success answers held closed here', sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(proved).length });
   }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);

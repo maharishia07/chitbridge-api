@@ -13,6 +13,7 @@
  *   node tests/api-problem-governance.test.cjs                    check
  *   node tests/api-problem-governance.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json
  *   node tests/api-problem-governance.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
+ *   node tests/api-problem-governance.test.cjs --compare F        the answers now against a capture F: the status and the body byte for byte
  *   node tests/api-problem-governance.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  */
 'use strict';
@@ -24,6 +25,23 @@ const kit = require('./lib/problem-sweep-kit.cjs');
 const { HERE, argv, flagValue, check, counts } = kit;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+/* --capture / --compare replay the same answers byte for byte: the clock and Math.random are held still, so a difference is the code's and not the run's */
+if (argv.includes('--capture') || argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+}
 const MOUNT = '/api/governance';
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
 const ROUTE_FILE = 'routes/governance.js';
@@ -132,14 +150,15 @@ const READY_ROWS = ANSWERS(
 );
 /** a stranger reads the passport of another shop: its registry value stays with its owner (evidence_ref null) */
 const STRANGER_ROWS = ANSWERS(
+  [/FROM customer_list/, [{ customer: false, supplier: true }]],
   [/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER })]],
   [/SELECT DISTINCT standard_key FROM standard_source/, [{ standard_key: 'gst-registration' }]],
   [/FROM standard_document/, [GST_DOC]],
   [/FROM entity_compliance/, [{ standard_key: 'gst-registration', doc_key: 'gstn', status: 'gathered', evidence_ref: '27AAAAA0000A1Z5', valid_until: null, verification: null }]]
 );
-const NO_FACTS_ROWS = ANSWERS([/FROM identities/, [{ identity_id: OTHER, display_name: 'Quiet Co', bridge_id: 'BRG-2', user_id: 'quiet', gstn: null, country: null, policy_flags: null }]]);
+const NO_FACTS_ROWS = ANSWERS([/FROM customer_list/, [{ customer: true, supplier: false }]], [/FROM identities/, [{ identity_id: OTHER, display_name: 'Quiet Co', bridge_id: 'BRG-2', user_id: 'quiet', gstn: null, country: null, policy_flags: null }]]);
 /** a legacy entity signed up by e-mail has no handle: identities.user_id is nullable (the unique index is WHERE user_id IS NOT NULL) */
-const NO_HANDLE_ROWS = ANSWERS([/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER, user_id: null })]]);
+const NO_HANDLE_ROWS = ANSWERS([/FROM customer_list/, [{ customer: false, supplier: true }]], [/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER, user_id: null })]]);
 const MIGRATED = { mod: 'lib/schema', fn: 'hasColumn', value: async () => true };
 /** a read made with the shop's rows seated, a vault key set, and the b299 column there */
 const READY = (id, route, extra) => X(id, route, 200, Object.assign({ setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED] }, extra));
@@ -178,9 +197,71 @@ const readyExtras = [
   X('supplier-readiness-legacy-without-handle', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: NO_HANDLE_ROWS } }),
   X('supplier-readiness-without-facts', 'GET /api/governance/readiness/:bridge_id', 200, { setup: { sqlRows: NO_FACTS_ROWS } })
 ];
+/* ── the SUCCESS side of the 16 routes API-8 (2nd pass) closed: every nullable column is held as null in one scene and filled in another ── */
+const NEW_ID = '55555555-5555-4555-8555-555555555555';
+const OVER = (first, rest) => (sql) => first(sql) || rest(sql); /* a scene's own rows first, then the shop's ready rows */
+const UNKNOWN_KEY_OVERRIDE = { mystery_key: 1 }; /* resolve() records an unknown override key as a Class C exception */
+const CREATE_ROWS = ANSWERS(ACTIVE, [/count\(\*\)/, [{ n: 0 }]], [/INSERT INTO identities/, [{ identity_id: NEW_ID }]]);
+const STANDARDS_ROWS = ANSWERS([/FROM standard_source WHERE active/, [{ standard_key: 'exim-policy', version: 'v1', facet: 'trade', title: 'EXIM', template: { scope: 'chit', required: ['hs_code'] } }, { standard_key: 'iso-9001', version: 'v2', facet: 'quality', title: null, template: {} }]]);
+const MOULD_ROW = { boilerplate_key: 'trade', version: 'v1', label: 'Trade', region_code: 'IN', locale: { language: 'en' } };
+const MOULD_ROWS = ANSWERS(
+  [/FROM boilerplate_sources/, [{ source_key: 'exim-policy', source_kind: 'standard', facet: 'trade', source_entity_id: NEW_ID, source_bridge: 'CBSRCEXIM1', source_name: 'EXIM' }, { source_key: 'brand-x', source_kind: 'brand', facet: null, source_entity_id: null, source_bridge: null, source_name: null }]],
+  [/FROM region_layer/, [{ currency: 'INR', units: 'metric', language: 'en', jurisdiction: {} }]],
+  [/FROM boilerplate/, [MOULD_ROW]]
+);
+const BARE_MOULD_ROWS = ANSWERS([/FROM boilerplate_sources/, []], [/FROM region_layer/, []], [/FROM boilerplate/, [Object.assign({}, MOULD_ROW, { label: null, region_code: null, locale: {} })]]);
+const SOURCE_OWNED = { standard_key: 'iso-9001', version: 'v1', facet: 'quality', title: 'ISO 9001', template: { scope: 'entity' }, identity_id: NEW_ID, bridge_id: 'CBSRCISO91', display_name: 'ISO 9001' };
+const SOURCE_UNOWNED = Object.assign({}, SOURCE_OWNED, { title: null, identity_id: null, bridge_id: null, display_name: null });
+const SOURCE_ENTITY = { identity_id: NEW_ID, bridge_id: 'CBSRCK', display_name: 'K source' };
+const ACCEPTED = { acceptance_id: '66666666-6666-4666-8666-666666666666', accepted_at: '2026-10-02T00:00:00.000Z' };
+const SUMMARY = { total: 2, met: 1, pending: 1, expiring: 0, expired: 0, ready: false, percent: 50, verified: 1, attested: 0, documented: 0 };
+const ACCEPTANCE_READ = { acceptance_id: ACCEPTED.acceptance_id, summary: SUMMARY, accepted_at: ACCEPTED.accepted_at, note: 'looked at it', accepted_by_name: 'Test shop' }; /* the order the statement selects */
+const SUPPLIER_ROW = [/SELECT identity_id FROM identities/, [{ identity_id: OTHER }]];
+const SKILL_REPLY = (text) => async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text }], usage: { input_tokens: 120, output_tokens: 40 }, stop_reason: 'end_turn' }) });
+const COUNTRY_BODY = { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '27AAPFU0939F1ZV', scheme: 'regular' }, source: { country: 'typed' } };
+const writeExtras = [
+  X('entity-read-own', 'GET /api/governance/entities/:id', 200, { setup: { sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ constitution_version: '1', params_override: UNKNOWN_KEY_OVERRIDE, plan: 'free' }]]) } }),
+  X('entity-read-unstamped', 'GET /api/governance/entities/:id', 200, { setup: { sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ constitution_version: null, params_override: null, plan: 'free' }]]) } }),
+  X('governed-entity-created', 'POST /api/governance/entities', 201, { setup: { who: PLATFORM, sqlRows: CREATE_ROWS }, body: { display_name: 'A', email: 'a@b.c' } }),
+  X('governed-entity-created-with-exception', 'POST /api/governance/entities', 201, { setup: { who: PLATFORM, sqlRows: CREATE_ROWS }, body: { display_name: 'A', email: 'a@b.c', plan: 'free', params_override: UNKNOWN_KEY_OVERRIDE } }),
+  X('governed-entity-reattested', 'POST /api/governance/entities/:id/reattest', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: {} }]]) } }),
+  X('governed-entity-reattested-with-exception', 'POST /api/governance/entities/:id/reattest', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: UNKNOWN_KEY_OVERRIDE }]]) } }),
+  X('conformance-flagged', 'POST /api/governance/conformance', 200, { setup: { sqlRows: STANDARDS_ROWS }, body: { data: {}, scope: 'chit' } }),
+  X('conformance-pass', 'POST /api/governance/conformance', 200, { setup: { sqlRows: STANDARDS_ROWS }, body: { data: { hs_code: '1006' } } }),
+  X('conformance-no-standards', 'POST /api/governance/conformance', 200, { body: { scope: 'entity' } }),
+  X('boilerplate-read', 'GET /api/governance/boilerplate/:key', 200, { setup: { sqlRows: MOULD_ROWS } }),
+  X('boilerplate-read-bare', 'GET /api/governance/boilerplate/:key', 200, { setup: { sqlRows: BARE_MOULD_ROWS } }),
+  X('boilerplate-adopted', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { sqlRows: MOULD_ROWS } }),
+  X('boilerplate-adopted-bare', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { sqlRows: BARE_MOULD_ROWS } }),
+  X('source-registered-new', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/INSERT INTO identities/, [SOURCE_ENTITY]]) }, body: { source_key: 'k', title: 'K source', facet: 'quality', template: { scope: 'entity' } } }),
+  X('source-registered-again-renamed', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/SELECT identity_id, bridge_id, display_name FROM identities WHERE email/, [Object.assign({}, SOURCE_ENTITY)]]) }, body: { source_key: 'k', title: 'K renamed' } }),
+  X('source-registered-a-brand', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/SELECT identity_id, bridge_id, display_name FROM identities WHERE email/, [Object.assign({}, SOURCE_ENTITY)]]) }, body: { source_key: 'k', kind: 'brand' } }),
+  X('source-read-owned', 'GET /api/governance/source/:key', 200, { setup: { sqlRows: ANSWERS([/FROM standard_source s/, [SOURCE_OWNED]]) } }),
+  X('source-read-unowned', 'GET /api/governance/source/:key', 200, { setup: { sqlRows: ANSWERS([/FROM standard_source s/, [SOURCE_UNOWNED]]) } }),
+  X('country-setup-saved', 'PUT /api/governance/country-setup', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: COUNTRY_BODY }),
+  X('country-setup-corrected-before-use', 'PUT /api/governance/country-setup', 200, { setup: { sqlRows: OVER(ANSWERS([/country-setup constituted/, [{ products: false, chits: false, entries: false }]]), READY_ROWS) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: false }, source: { country: 'typed' } } }),
+  X('ai-draft-prose', 'POST /api/governance/ai-draft', 200, { env: { ANTHROPIC_API_KEY: 'sk-test' }, fetch: SKILL_REPLY('Metrics: steady.'), body: { skill_id: 'metrics-narrate', context: {} } }),
+  X('ai-draft-form-fill', 'POST /api/governance/ai-draft', 200, { env: { ANTHROPIC_API_KEY: 'sk-test' }, fetch: SKILL_REPLY('{"line_items":[{"description":"sugar","qty":1}]}'), body: { skill_id: 'line-item-draft', context: { description: '1 kg sugar' } } }),
+  X('ai-draft-cut-off', 'POST /api/governance/ai-draft', 200, { env: { ANTHROPIC_API_KEY: 'sk-test' }, fetch: async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: 'Metrics: ste' }], usage: {}, stop_reason: 'max_tokens' }) }), body: { skill_id: 'metrics-narrate', context: {} } }),
+  X('clearance-gathered', 'POST /api/governance/compliance', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { standard_key: 'gst-registration', doc_key: 'gstn', evidence_ref: '27AAAAA0000A1Z5', status: 'gathered' } }),
+  X('registry-id-format-checked', 'POST /api/governance/verify', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { id_type: 'gstn', id_value: '27AAAAA0000A1Z5', standard_key: 'gst-registration', doc_key: 'gstn' } }),
+  X('registry-id-confirmed', 'POST /api/governance/verify', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED, { mod: 'lib/verify', fn: 'verifyRegistry', value: async () => ({ ok: true, method: 'registry', checked: 'registry', id_type: 'gstn', value: '27AAAAA0000A1Z5', provider: 'sandbox', registry: { legal_name: null, status: 'active' }, note: 'Confirmed active against sandbox.' }) }], body: { id_type: 'gstn', id_value: '27AAAAA0000A1Z5', standard_key: 'gst-registration', doc_key: 'gstn' } }),
+  X('profile-saved', 'PUT /api/governance/profile', 200, { setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { trade_mode: 'export', markets: ['EU'], sectors: ['paint'], adopted: ['iso-9001'] } }),
+  X('profile-saved-first-time', 'PUT /api/governance/profile', 200, { body: { trade_mode: 'domestic' } }),
+  X('vault-filled-first-time', 'PUT /api/governance/profile/vault', 200, { setup: { sqlRows: ANSWERS([/INSERT INTO entity_profile/, [{ version: 'v2' }]], [/FROM identities/, [SHOP_ROW]]) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { vault: VAULT_BODY } }),
+  X('vault-filled-unversioned-write', 'PUT /api/governance/profile/vault', 200, { setup: { sqlRows: ANSWERS([/FROM identities/, [SHOP_ROW]]) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { vault: VAULT_BODY } }),
+  X('vault-patched', 'PUT /api/governance/profile/vault', 200, { setup: { sqlRows: OVER(ANSWERS([/INSERT INTO entity_profile/, [{ version: 'v3' }]]), READY_ROWS) }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED], body: { version: '2026-10-01T00:00:00.000Z', patch: { sections: { 'identity|Business identity': { rows: { 'n:City': { name: 'City', value: 'Mumbai' } } } } } } }),
+  X('acceptance-recorded', 'POST /api/governance/supplier-acceptance', 200, { setup: { sqlRows: OVER(ANSWERS(SUPPLIER_ROW, [/INSERT INTO supplier_readiness_acceptance/, [ACCEPTED]]), READY_ROWS) }, patch: [TABLE_THERE], body: { supplier: 'BRG-2', note: ' seen ' } }),
+  X('acceptance-recorded-without-note', 'POST /api/governance/supplier-acceptance', 200, { setup: { sqlRows: OVER(ANSWERS(SUPPLIER_ROW, [/INSERT INTO supplier_readiness_acceptance/, [ACCEPTED]]), READY_ROWS) }, patch: [TABLE_THERE], body: { supplier: 'BRG-2' } }),
+  X('acceptance-read-latest', 'GET /api/governance/supplier-acceptance/:handle', 200, { setup: { sqlRows: ANSWERS(SUPPLIER_ROW, [/FROM supplier_readiness_acceptance a/, [ACCEPTANCE_READ]]) }, patch: [TABLE_THERE] }),
+  X('acceptance-read-no-note-no-name', 'GET /api/governance/supplier-acceptance/:handle', 200, { setup: { sqlRows: ANSWERS(SUPPLIER_ROW, [/FROM supplier_readiness_acceptance a/, [Object.assign({}, ACCEPTANCE_READ, { note: null, accepted_by_name: null })]]) }, patch: [TABLE_THERE] }),
+  X('acceptance-read-none-yet', 'GET /api/governance/supplier-acceptance/:handle', 200, { setup: { sqlRows: ANSWERS(SUPPLIER_ROW) }, patch: [TABLE_THERE] }),
+  X('acceptance-read-unknown-supplier', 'GET /api/governance/supplier-acceptance/:handle', 200, { patch: [TABLE_THERE] }),
+  X('acceptance-read-not-switched-on', 'GET /api/governance/supplier-acceptance/:handle', 200, { patch: [{ mod: 'lib/schema', fn: 'hasTable', value: async () => false }] })
+];
 const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { patch: FAIL(mod, fn) }));
 const SOURCE_BODY = { source_key: 'k' };
-const EXTRAS = faultExtras.concat(readyExtras).concat([
+const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
   X('foreign-entity-id', 'GET /api/governance/entities/:id', 404, { url: MOUNT + '/entities/' + OTHER }),
   X('platform-reads-any-unknown-id', 'GET /api/governance/entities/:id', 404, { setup: { who: PLATFORM }, url: MOUNT + '/entities/' + OTHER }),
   X('entity-without-constitution', 'GET /api/governance/entities/:id', 503, { setup: { sqlRows: ANSWERS(ENTITY) } }),
@@ -201,7 +282,7 @@ const EXTRAS = faultExtras.concat(readyExtras).concat([
   X('source-fault', 'POST /api/governance/source', 500, { setup: { who: PLATFORM }, body: SOURCE_BODY, patch: FAIL('lib/source', 'registerSource') }),
   X('source-refused-by-the-library', 'POST /api/governance/source', 422, { setup: { who: PLATFORM }, body: SOURCE_BODY, patch: FAIL('lib/source', 'registerSource', LIB_REFUSAL(422)) }),
   X('no-such-supplier-readiness', 'GET /api/governance/readiness/:bridge_id', 404, {}),
-  X('supplier-readiness-fault', 'GET /api/governance/readiness/:bridge_id', 500, { setup: { sqlRows: ANSWERS([/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BRG-1' }]]) }, patch: FAIL('lib/readiness', 'resolveReadiness') }),
+  X('supplier-readiness-fault', 'GET /api/governance/readiness/:bridge_id', 500, { setup: { sqlRows: ANSWERS([/FROM customer_list/, [{ customer: false, supplier: true }]], [/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BRG-1' }]]) }, patch: FAIL('lib/readiness', 'resolveReadiness') }),
   X('acceptance-not-switched-on', 'POST /api/governance/supplier-acceptance', 503, { body: {}, patch: [{ mod: 'lib/schema', fn: 'hasTable', value: async () => false }] }),
   X('supplier-unnamed', 'POST /api/governance/supplier-acceptance', 400, { body: {}, patch: [TABLE_THERE] }),
   X('no-such-supplier', 'POST /api/governance/supplier-acceptance', 404, { body: { supplier: 'nobody' }, patch: [TABLE_THERE] }),
@@ -245,9 +326,12 @@ async function runScenario(port, scenario) {
     process.env[name] = scenario.env[name];
   });
   require(path.join(HERE, 'lib', 'country-setup')).forget(SHOP); /* the gate remembers a shop's answer for a minute: each scenario starts without it */
+  const fetchBefore = global.fetch;
+  if (scenario.fetch) global.fetch = scenario.fetch; /* the model's reply, for the AI draft */
   const method = scenario.route.split(' ')[0];
   const answer = await kit.send(port, method, scenario.url, scenario.body === undefined && kit.BODY_METHODS.includes(method) ? {} : scenario.body);
   restore();
+  global.fetch = fetchBefore;
   Object.keys(envBefore).forEach((name) => {
     if (envBefore[name] === undefined) delete process.env[name];
     else process.env[name] = envBefore[name];
@@ -260,13 +344,13 @@ const inherited = (scenario, answer) => answer.status === 401 && scenario.id ===
 
 async function checkRoutes(port, scenarios, recording) {
   const tested = {};
-  const allowed = argv.includes('--capture') ? null : require(path.join(HERE, 'lib', 'governance-contract.js')).allowedStatuses();
+  const allowed = argv.includes('--capture') || argv.includes('--compare') ? null : require(path.join(HERE, 'lib', 'governance-contract.js')).allowedStatuses();
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
     recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, request: { url: scenario.url, body: scenario.body } }; /* the request is kept so the shape tool can play it */
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
-    if (argv.includes('--capture')) continue;
+    if (argv.includes('--capture') || argv.includes('--compare')) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
     if (scenario.expect) check(label + ': answers the status the scenario was made for (' + scenario.expect + ')', answer.status === scenario.expect, [answer.status, answer.json]);
     if (answer.status < 400) continue;
@@ -304,22 +388,23 @@ function checkKitRefusals() {
 }
 
 /**
- * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a governance read whose 200 schema is CLOSED (additionalProperties false, derived in
+ * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a governance route (read or write) whose success schema (200, or 201 for the governed create) is CLOSED (additionalProperties false, derived in
  * docs/contracts/api-output-shapes.json) and whose recorded 200s ALL fit that schema with no key pruned — the ready side and the not-ready side of each handler both recorded
- * above. → { route: { output_allowlist: true } } for the routes that held
+ * above. → { route: { output_allowlist: true } } for the routes that held. A write counts the same way: its success scenes run the real handler over the stand-in db.
  */
 function checkAllowList(recording) {
   const proved = {};
   const words = require(path.join(HERE, 'lib', 'governance-contract.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
-  Object.keys(words.OPERATIONS).filter((route) => route.startsWith('GET ')).sort().forEach((route) => {
-    const schema = (((words.OPERATIONS[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+  Object.keys(words.OPERATIONS).sort().forEach((route) => {
+    const success = Object.keys(words.OPERATIONS[route].responses).find((code) => Number(code) < 300);
+    const schema = (((words.OPERATIONS[route].responses[success] || {}).content || {})['application/json'] || {}).schema;
     if (!schema || schema.additionalProperties !== false) return;
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === Number(success) && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
-    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    check(route + ': every recorded ' + success + ' (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
   /* under OUTPUT_ALLOWLIST=enforce the recorded answers are already cut, so the filter's own count is the proof that no scenario lost a key */
@@ -327,7 +412,7 @@ function checkAllowList(recording) {
   check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
   return proved;
 }
-/** the governance reads the evidence file says output_allowlist for */
+/** the governance routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
   return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
@@ -343,6 +428,15 @@ function writeAllowList(proved) {
   Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
   const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
   fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
+/** --compare F: every answer now against a capture of the code before the change → the number of answers that differ (status or body bytes), each printed */
+function compareWith(file, recording) {
+  const before = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const different = Object.keys(before).filter((key) => !recording[key] || recording[key].status !== before[key].status || JSON.stringify(recording[key].body) !== JSON.stringify(before[key].body));
+  console.log('compared ' + Object.keys(before).length + ' answers: ' + (Object.keys(before).length - different.length) + ' identical, ' + different.length + ' different');
+  different.forEach((key) => console.log('  different: ' + key));
+  return different.length;
 }
 
 /** the whole sweep in a few sentences: who is refused, the foreign id, and that every recorded refusal was replayed */
@@ -379,6 +473,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const recording = {};
   const tested = await checkRoutes(server.address().port, kit.scenariosOf(routes, WORLDS, EXTRAS, VALUES), recording);
   server.close();
+  if (flagValue('--compare')) process.exit(compareWith(flagValue('--compare'), recording) ? 1 : 0);
   if (flagValue('--capture')) {
     require('fs').writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
     console.log('captured ' + Object.keys(recording).length + ' answers over ' + Object.keys(routes).length + ' routes');

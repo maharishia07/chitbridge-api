@@ -17,6 +17,12 @@
   404,
   500
  ],
+ "DELETE /api/channels/:id": [
+  401,
+  404,
+  500,
+  503
+ ],
  "DELETE /api/chits/:chit_id": [
   401,
   404,
@@ -29,6 +35,14 @@
   500
  ],
  "DELETE /api/chits/:chit_id/purge": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "DELETE /api/connectors/:actorId": [
+  400,
   401,
   403,
   404,
@@ -55,6 +69,15 @@
   404,
   409,
   500
+ ],
+ "DELETE /api/definitions/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
  ],
  "DELETE /api/folders/:id": [
   400,
@@ -98,6 +121,14 @@
  "DELETE /api/quick-keys/groups/:id/items/:productId": [
   401,
   403,
+  500
+ ],
+ "DELETE /api/relationships/suppliers/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
   500
  ],
  "DELETE /api/schemas/fields/:field_key": [
@@ -168,6 +199,11 @@
  ],
  "GET /api/assist/whoami": [
   401
+ ],
+ "GET /api/attachments/:id": [
+  401,
+  404,
+  500
  ],
  "GET /api/books/accounts": [
   401,
@@ -350,6 +386,22 @@
   404,
   500
  ],
+ "GET /api/capture/consolidate": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/capture/pending": [
+  401,
+  500
+ ],
+ "GET /api/capture/stores": [
+  401,
+  500
+ ],
+ "GET /api/capture/webhook/whatsapp": [
+  403
+ ],
  "GET /api/catalogue-face": [
   401,
   500
@@ -391,6 +443,15 @@
   404,
   500,
   503
+ ],
+ "GET /api/channels": [
+  401,
+  500
+ ],
+ "GET /api/channels/outbound": [
+  400,
+  401,
+  500
  ],
  "GET /api/chits/:chit_id": [
   401,
@@ -510,6 +571,32 @@
   401,
   500
  ],
+ "GET /api/connectors": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/connectors/:actorId/connections": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/connectors/:actorId/provisioning": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/connectors/:actorId/receipts": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "GET /api/counters": [
   401,
   403,
@@ -573,6 +660,18 @@
   200,
   500
  ],
+ "GET /api/definitions": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "GET /api/definitions/:id": [
+  401,
+  404,
+  500,
+  503
+ ],
  "GET /api/entities/entitlements": [
   401,
   500
@@ -629,6 +728,16 @@
   500
  ],
  "GET /api/entities/usage": [
+  401,
+  500
+ ],
+ "GET /api/events/stats": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/events/stream": [
   401,
   500
  ],
@@ -794,6 +903,12 @@
   401,
   500
  ],
+ "GET /api/identity/documents": [
+  401,
+  403,
+  500,
+  503
+ ],
  "GET /api/integrations/catalogue": [
   401,
   500
@@ -848,6 +963,18 @@
   403,
   500
  ],
+ "GET /api/kyb/position": [
+  401,
+  500
+ ],
+ "GET /api/kyb/risk": [
+  401,
+  500
+ ],
+ "GET /api/kyb/yourself": [
+  401,
+  500
+ ],
  "GET /api/network-design": [
   401,
   500
@@ -886,7 +1013,19 @@
   401,
   500
  ],
+ "GET /api/notifications": [
+  401,
+  500
+ ],
  "GET /api/pricing/kinds": [
+  500
+ ],
+ "GET /api/privacy/facts": [
+  500
+ ],
+ "GET /api/privacy/me": [
+  401,
+  403,
   500
  ],
  "GET /api/products": [
@@ -938,6 +1077,42 @@
  "GET /api/quick-keys/screen-config/default": [
   401,
   403,
+  500
+ ],
+ "GET /api/relationships/customers": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/relationships/customers/:id/rewards": [
+  401,
+  500
+ ],
+ "GET /api/relationships/customers/groups": [
+  401,
+  500
+ ],
+ "GET /api/relationships/scorecard": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/relationships/scorecard/:entity_id": [
+  401,
+  500
+ ],
+ "GET /api/relationships/suppliers": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": [
+  401,
+  500
+ ],
+ "GET /api/relationships/suppliers/availability": [
+  400,
+  401,
   500
  ],
  "GET /api/repeat": [
@@ -1178,6 +1353,13 @@
   404,
   500
  ],
+ "PATCH /api/connectors/:actorId/connections/:connId": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "PATCH /api/counters/:id": [
   400,
   401,
@@ -1261,6 +1443,21 @@
   400,
   401,
   403,
+  500
+ ],
+ "PATCH /api/relationships/customers/:id": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "PATCH /api/relationships/suppliers/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
   500
  ],
  "PATCH /api/schemas/fields/:field_key": [
@@ -1353,6 +1550,13 @@
  "POST /api/assist/resolve": [
   401,
   410
+ ],
+ "POST /api/attachments": [
+  400,
+  401,
+  403,
+  413,
+  500
  ],
  "POST /api/books/accounts": [
   401,
@@ -1653,6 +1857,54 @@
   422,
   500
  ],
+ "POST /api/capture/:id/convert": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/capture/:id/dismiss": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "POST /api/capture/:id/raise": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "POST /api/capture/:id/structure": [
+  400,
+  401,
+  402,
+  404,
+  422,
+  429,
+  500,
+  502,
+  503
+ ],
+ "POST /api/capture/simulate": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/capture/stores": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/capture/webhook/email": [
+  401
+ ],
+ "POST /api/capture/webhook/whatsapp": [
+  401
+ ],
  "POST /api/catalogue/:bridge_id/login/verify": [
   400,
   404,
@@ -1710,6 +1962,52 @@
   401,
   402,
   429,
+  500,
+  503
+ ],
+ "POST /api/channels": [
+  400,
+  401,
+  409,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/approve": [
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/auto-raise": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/provider-ref": [
+  401,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/revoke": [
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/template": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "POST /api/channels/:id/template-approve": [
+  400,
+  403,
+  404,
   500,
   503
  ],
@@ -1876,6 +2174,62 @@
   404,
   500
  ],
+ "POST /api/connectors": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/connectors/:actorId/connections": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/:actorId/erp-test": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/:actorId/ping": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/:actorId/regenerate-key": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/connectors/erp-ingest": [
+  400,
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/connectors/ingest": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/connectors/reissue-code": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/counters": [
   400,
   401,
@@ -2011,12 +2365,30 @@
   409,
   500
  ],
+ "POST /api/definitions": [
+  400,
+  401,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/definitions/freeze": [
+  400,
+  401,
+  500,
+  503
+ ],
  "POST /api/entities/populations": [
   400,
   401,
   403,
   404,
   409,
+  500
+ ],
+ "POST /api/events/ticket": [
+  401,
   500
  ],
  "POST /api/folders": [
@@ -2144,6 +2516,24 @@
   422,
   500
  ],
+ "POST /api/identity/documents/:scheme/code": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/identity/documents/:scheme/verify": [
+  400,
+  401,
+  403,
+  404,
+  429,
+  500,
+  503
+ ],
  "POST /api/integrations/:actor_id/approve": [
   400,
   401,
@@ -2191,6 +2581,15 @@
   400,
   401,
   403,
+  500
+ ],
+ "POST /api/kyb/credential": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/kyb/field": [
+  401,
   500
  ],
  "POST /api/network-design/build": [
@@ -2276,11 +2675,36 @@
   500,
   503
  ],
+ "POST /api/notifications/dismiss": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/notifications/seen": [
+  401,
+  500,
+  503
+ ],
  "POST /api/pricing/price": [
   400,
   401,
   403,
   500
+ ],
+ "POST /api/privacy/me/consent": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/privacy/me/requests": [
+  400,
+  401,
+  403,
+  500,
+  503
  ],
  "POST /api/products": [
   400,
@@ -2361,6 +2785,28 @@
   401,
   403,
   404,
+  500
+ ],
+ "POST /api/relationships/customers": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "POST /api/relationships/customers/:id/groups": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/relationships/suppliers": [
+  400,
+  401,
+  404,
+  409,
   500
  ],
  "POST /api/repeat": [
@@ -2853,6 +3299,16 @@
   404,
   500
  ],
+ "PUT /api/definitions/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
  "PUT /api/entities/populations/:code/desk": [
   400,
   401,
@@ -2899,6 +3355,13 @@
   500,
   503
  ],
+ "PUT /api/identity/documents/:scheme": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
  "PUT /api/integrations/streams": [
   400,
   401,
@@ -2931,6 +3394,81 @@
   500
  ],
  "PUT /api/testing/cmdb/:ci": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "GET /api/supplies": [
+  401,
+  500
+ ],
+ "PATCH /api/supplies/:id": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/supplies": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/supplies/:id/issue": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/supplies/purchase": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "DELETE /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/combo-templates": [
+  401,
+  500
+ ],
+ "GET /api/marketing/came-back": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/offers/kinds": [
+  500
+ ],
+ "GET /api/offers/openapi.json": [
+  500
+ ],
+ "PATCH /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/combo-templates": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/combo-templates/:id/push": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/offers/evaluate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/offers/explain": [
   400,
   401,
   403,

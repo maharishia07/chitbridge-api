@@ -214,6 +214,10 @@ const INFRA_LIBS = [
   'output-allowlist.js',
   'books-contract.js',
   'tax-contract.js',
+  /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'marketing-contract.js',
+  'offers-contract.js',
+  'combo-templates-contract.js',
   /* API-4 sweep: the contract of the governance routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'governance-contract.js',
   /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
@@ -231,6 +235,20 @@ const INFRA_LIBS = [
   'schemas-contract.js',
   /* API-4 sweep, the CRM: the contract of the routes/crm.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-crm.test.cjs */
   'crm-contract.js',
+  /* API-4 sweep, the attachments: the contract of routes/attachments.js (its OpenAPI operations, the words of its refusals and the one 6 MB limit) — tests/api-problem-attachments.test.cjs */
+  'attachments-contract.js',
+  /* API-4 sweep, the supplies routes: the contract of routes/supplies.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-supplies.test.cjs */
+  'supplies-contract.js',
+  /* API-4 sweep, the privacy routes: the contract of routes/privacy.js (its OpenAPI operations and the way a fault is worded) — the contract of a door, not a rule of the platform. tests/api-problem-privacy.test.cjs */
+  'privacy-contract.js',
+  /* API-4 sweep, identity documents: the contract of routes/identity-docs.js (its OpenAPI operations and the way a fault and a library refusal are worded) — the contract of a door, not a rule of the platform. tests/api-problem-identity-docs.test.cjs */
+  'identity-docs-contract.js',
+  /* API-4 sweep, Know your business: the contract of routes/kyb.js (its OpenAPI operations and the way a fault is worded) — the contract of a door, not a rule of the platform. tests/api-problem-kyb.test.cjs */
+  'kyb-contract.js',
+  /* API-4 sweep, the channels: the contract of the routes/channels.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-channels.test.cjs */
+  'channels-contract.js',
+  /* API-4 sweep, the relationships: the contract of the routes/relationships.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-relationships.test.cjs */
+  'relationships-contract.js',
   /* API-4 sweep, the quick-key groups: the contract of the routes/quick-keys.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-quick-keys.test.cjs */
   'quick-keys-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
@@ -249,6 +267,14 @@ const INFRA_LIBS = [
   'assist-contract.js',
   /* API-4 sweep, the test board: the contract of routes/testing.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'testing-contract.js',
+  /* API-4 sweep, the bell: the contract of routes/events.js and routes/notifications.js (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. tests/api-problem-bell.test.cjs (2026-10-23) */
+  'bell-contract.js',
+  /* API-4 sweep, capture: the contract of the nine signed-in routes of routes/capture.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'capture-contract.js',
+  /* API-4 sweep, the connectors: the contract of routes/connectors.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'connectors-contract.js',
+  /* API-4 sweep, the definitions shelf: the contract of routes/definitions.js (its OpenAPI operations and the words of its refusals) — the contract of a door; the version writes, the freeze and the slab reads stay in the route. (2026-10-23) */
+  'definitions-contract.js',
   /* API-4 sweep, the tour: the contract of routes/simulator.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-simulator.test.cjs (2026-10-24) */
   'simulator-contract.js',
   /* API-4 stage-2 sweep, the authority forms: the contract of routes/forms.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-forms.test.cjs (2026-10-23) */

@@ -87,9 +87,10 @@ function run(sql, p, ctx) {
   /* the two reads whose text also names other tables — matched first */
   if (/FROM chit_disputes cd WHERE cd.status = 'open'/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.status === 'open');   // the queue (before T3)
   /* T3-DISPUTES-ASSIST: the widened queue — $2 status · $3 side · $4 ILIKE words · $5 limit · $6 offset, RLS = my copies; _total = count(*) OVER() */
-  if (/FROM chit_disputes cd WHERE \(\$2::text = 'all'/.test(s)) {
+  if (/FROM chit_disputes cd WHERE cd\.entity_id = \$1 AND \(\$2::text = 'all'/.test(s)) {
     const [me, st, side, like, lim, off] = p, re = like ? new RegExp(like.replace(/^%|%$/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : null;
-    let r = mine(DISPUTES, ctx).filter((d) => st === 'all' || (st === 'open' ? d.status === 'open' : d.status !== 'open'))
+    let r = mine(DISPUTES, ctx).filter((d) => d.entity_id === me)   /* SEC-105: the SQL names my copies, not RLS alone */
+      .filter((d) => st === 'all' || (st === 'open' ? d.status === 'open' : d.status !== 'open'))
       .filter((d) => !side || (side === 'mine' ? d.raised_by_entity_id === me : d.raised_by_entity_id !== me))
       .map((d) => Object.assign({}, d, { auto_subject: 'Order 7 — brake pads', purpose: 'order', sender_display_name: NAME[A] }))
       .filter((d) => !re || re.test([d.auto_subject, d.purpose, d.category, d.reason, d.raised_by_display_name, d.resolution_note].join(' ')));
@@ -97,7 +98,7 @@ function run(sql, p, ctx) {
     const total = r.length; r = r.slice(off || 0, lim == null ? undefined : (off || 0) + lim);
     return r.map((d) => Object.assign(d, { _total: total }));
   }
-  if (/count\(\*\) FILTER \(WHERE status = 'open'\)::int AS open/.test(s)) { const r = mine(DISPUTES, ctx); return [{ open: r.filter((d) => d.status === 'open').length, resolved: r.filter((d) => d.status !== 'open').length }]; }
+  if (/count\(\*\) FILTER \(WHERE status = 'open'\)::int AS open/.test(s)) { const r = mine(DISPUTES, ctx).filter((d) => d.entity_id === p[0]); return [{ open: r.filter((d) => d.status === 'open').length, resolved: r.filter((d) => d.status !== 'open').length }]; }
   if (/CROSS JOIN LATERAL chit_dispute_roster\(u.did\)/.test(s))   // the roster for a whole page (definer: every copy)
     return DISPUTES.filter((d) => (p[0] || []).indexOf(d.dispute_id) >= 0).map((d) => ({ dispute_id: d.dispute_id, entity_id: d.entity_id, role: d.role, status: d.status }));
   /* ── the bell's feed (routes/notifications.js FEED_FROM) — state_log under RLS = my own rows ── */

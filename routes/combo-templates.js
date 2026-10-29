@@ -14,17 +14,17 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a pa
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
-const { body } = require('express-validator');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { said, validationOptions, faultOf, contract } = require('../lib/combo-templates-contract'); // the contract (each route's operation) and the words of a refusal
 const { withEntity } = require('../db');
-const { validate } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 
-function fail(res, e, label) {
-  if (e && e.status && e.status >= 400 && e.status < 500) {
-    return res.status(e.status).json({ error: label, message: e.message });
-  }
-  return res.status(500).json({ error: label, message: safeErr(e) });
+/** the schema check of one route (its own operation in lib/combo-templates-contract.js), as a list to spread after the gates: a route that takes no input has none.
+ *  A malformed save keeps its old 400 "Validation failed" body (validationOptions). */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, validationOptions)] : [];
 }
 const ctx = (req) => auth.entityOf(req);
 
@@ -57,7 +57,7 @@ function badPrice(price) {
 const COLS = 'id, name, definition, price, product_item_id, created_at, updated_at';
 
 // GET /api/combo-templates — the library, newest first
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const r = await withEntity(entity_id, (db) =>
@@ -69,20 +69,20 @@ router.get('/', auth, async (req, res) => {
     );
     res.json(PL.pageOut('templates', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (e) {
-    fail(res, e, 'Could not read your saved combos');
+    problem(req, res, faultOf(e, req, 'Could not read your saved combos'));
   }
 });
 
 // POST /api/combo-templates  { name, definition, price? }  — "Save as"
-router.post('/', auth, [body('name').isString(), body('definition').isArray()], validate, async (req, res) => {
+router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const nameErr = badName(req.body.name);
-    if (nameErr) return res.status(400).json({ error: 'Invalid name', message: nameErr });
+    if (nameErr) return problem(req, res, said(400, 'COMBO_NAME_INVALID', 'Invalid name', nameErr));
     const defErr = badDefinition(req.body.definition);
-    if (defErr) return res.status(400).json({ error: 'Invalid combo', message: defErr });
+    if (defErr) return problem(req, res, said(400, 'COMBO_INVALID', 'Invalid combo', defErr));
     const priceErr = badPrice(req.body.price);
-    if (priceErr) return res.status(400).json({ error: 'Invalid price', message: priceErr });
+    if (priceErr) return problem(req, res, said(400, 'COMBO_PRICE_INVALID', 'Invalid price', priceErr));
     const price = req.body.price === undefined || req.body.price === null || req.body.price === '' ? null : Number(req.body.price);
     const r = await withEntity(entity_id, (db) =>
       db.query(
@@ -93,32 +93,32 @@ router.post('/', auth, [body('name').isString(), body('definition').isArray()], 
     );
     res.json({ message: 'Saved', template: r.rows[0] });
   } catch (e) {
-    fail(res, e, 'Could not save this combo');
+    problem(req, res, faultOf(e, req, 'Could not save this combo'));
   }
 });
 
 // PATCH /api/combo-templates/:id  { name?, definition?, price?, product_item_id? } — rename, replace what it
 // holds, or link it to a product that already exists (see modLabAdoptExisting() in offer-lab-next.html —
 // "bring an already-live combo into this library" without pushing a duplicate product for it).
-router.patch('/:id', auth, [body('name').optional().isString(), body('definition').optional().isArray()], validate, async (req, res) => {
+router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if ('name' in req.body) {
       const nameErr = badName(req.body.name);
-      if (nameErr) return res.status(400).json({ error: 'Invalid name', message: nameErr });
+      if (nameErr) return problem(req, res, said(400, 'COMBO_NAME_INVALID', 'Invalid name', nameErr));
     }
     if ('definition' in req.body) {
       const defErr = badDefinition(req.body.definition);
-      if (defErr) return res.status(400).json({ error: 'Invalid combo', message: defErr });
+      if (defErr) return problem(req, res, said(400, 'COMBO_INVALID', 'Invalid combo', defErr));
     }
     if ('price' in req.body) {
       const priceErr = badPrice(req.body.price);
-      if (priceErr) return res.status(400).json({ error: 'Invalid price', message: priceErr });
+      if (priceErr) return problem(req, res, said(400, 'COMBO_PRICE_INVALID', 'Invalid price', priceErr));
     }
     const cur = await withEntity(entity_id, (db) =>
       db.query(`SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id])
     );
-    if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!cur.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     const name = 'name' in req.body ? String(req.body.name).trim() : cur.rows[0].name;
     const definition = 'definition' in req.body ? req.body.definition : cur.rows[0].definition;
     const price = 'price' in req.body ? (req.body.price === null || req.body.price === '' ? null : Number(req.body.price)) : cur.rows[0].price;
@@ -135,7 +135,7 @@ router.patch('/:id', auth, [body('name').optional().isString(), body('definition
     );
     res.json({ message: 'Updated', template: r.rows[0] });
   } catch (e) {
-    fail(res, e, 'Could not update this combo');
+    problem(req, res, faultOf(e, req, 'Could not update this combo'));
   }
 });
 
@@ -155,7 +155,8 @@ async function updateLinkedProduct(entity_id, existing, wantedFields) {
     ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
     validate: (data, rows) => productsRouter.validateAgainst(rows, data)
   });
-  if (decl.error) return { refusal: { status: 400, body: { error: 'Invalid product', code: decl.code || undefined, message: decl.error } } };
+  if (decl.error)
+    return { refusal: { status: 400, code: 'PRODUCT_INVALID', body: { error: 'Invalid product', code: decl.code || undefined, message: decl.error } } };
   const stamped = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
   const written = await withEntity(entity_id, (db) =>
     require('../lib/catalogue-write').patchItems(db, entity_id /* CAT-W1: the one product writer */, [{ item_id: existing.item_id, replace: stamped }], {
@@ -167,7 +168,13 @@ async function updateLinkedProduct(entity_id, existing, wantedFields) {
 /** push as a NEW product (the link is absent or stale): needs a price; → { item, verb } or { refusal: { status, body } } */
 async function createPushedProduct(entity_id, template, wantedFields, requestId) {
   if (template.price == null)
-    return { refusal: { status: 400, body: { error: 'Price is required', message: 'Give this combo a price before pushing it as a new product.' } } };
+    return {
+      refusal: {
+        status: 400,
+        code: 'COMBO_PRICE_REQUIRED',
+        body: { error: 'Price is required', message: 'Give this combo a price before pushing it as a new product.' }
+      }
+    };
   const productsRouter = require('./products');
   const schema_id = await productsRouter.defaultSchemaId(entity_id);
   const made = await require('../lib/mint-product').mintProduct({
@@ -180,7 +187,7 @@ async function createPushedProduct(entity_id, template, wantedFields, requestId)
     validate: (data, rows) => productsRouter.validateAgainst(rows, data),
     note: 'combo pushed from saved template'
   });
-  if (made.error) return { refusal: { status: 400, body: { error: 'Invalid product', message: made.error } } };
+  if (made.error) return { refusal: { status: 400, code: 'PRODUCT_INVALID', body: { error: 'Invalid product', message: made.error } } };
   return { item: made.item, verb: 'created' };
 }
 /**
@@ -201,19 +208,19 @@ async function createPushedProduct(entity_id, template, wantedFields, requestId)
  * CREATE and re-links — "push" always leaves you with a real, current product, never a refusal over a
  * pointer that no longer resolves.
  */
-router.post('/:id/push', auth, async (req, res) => {
+router.post('/:id/push', auth, ...checked('POST /:id/push'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     /* [OFFR-04] a push writes the product's name, modifiers and price — the same gate as PATCH /products (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['name', 'modifiers', 'price']);
-    if (refused) return res.status(403).json(refused);
+    if (refused) return problem(req, res, { status: 403, code: 'COST_BLIND', detail: refused.message, legacy: refused });
     const cur = await withEntity(entity_id, (db) =>
       db.query(`SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id])
     );
-    if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!cur.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     const t = cur.rows[0];
     const defErr = badDefinition(t.definition);
-    if (defErr) return res.status(400).json({ error: 'Invalid combo', message: defErr });
+    if (defErr) return problem(req, res, { status: 400, code: 'COMBO_INVALID', detail: defErr, legacy: { error: 'Invalid combo', message: defErr } });
 
     const wantedFields = { name: t.name, modifiers: t.definition };
     if (t.price != null) wantedFields.price = Number(t.price);
@@ -227,7 +234,10 @@ router.post('/:id/push', auth, async (req, res) => {
     }
 
     const outcome = existing ? await updateLinkedProduct(entity_id, existing, wantedFields) : await createPushedProduct(entity_id, t, wantedFields, req.id);
-    if (outcome.refusal) return res.status(outcome.refusal.status).json(outcome.refusal.body);
+    if (outcome.refusal) {
+      const { status, code, body } = outcome.refusal; /* the product writer's refusal: its status, its own code when it names one, the old body */
+      return problem(req, res, { status, code: body.code || code, detail: body.message, legacy: body });
+    }
     const { item, verb } = outcome;
 
     const r2 = await withEntity(entity_id, (db) =>
@@ -239,22 +249,23 @@ router.post('/:id/push', auth, async (req, res) => {
     );
     res.json({ message: verb === 'created' ? 'Product created' : 'Product updated', verb, item, template: r2.rows[0] });
   } catch (e) {
-    fail(res, e, 'Could not push this combo to your products');
+    problem(req, res, faultOf(e, req, 'Could not push this combo to your products'));
   }
 });
 
 // DELETE /api/combo-templates/:id
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const r = await withEntity(entity_id, (db) =>
       db.query(`DELETE FROM combo_templates WHERE id=$1 AND entity_id=$2 RETURNING id`, [req.params.id, entity_id])
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
+    if (!r.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     res.json({ message: 'Deleted' });
   } catch (e) {
-    fail(res, e, 'Could not delete this combo');
+    problem(req, res, faultOf(e, req, 'Could not delete this combo'));
   }
 });
 
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;
