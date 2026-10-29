@@ -133,6 +133,22 @@ function checkTrimmedReachesTheRow(recording) {
   check('the enquiry text reaches the database trimmed, and a number reaches it as text, as the chain made it', asked && asked.body.created_at === 'is it fresh?' && number && number.body.created_at === '5', [asked && asked.body, number && number.body]);
 }
 
+/**
+ * API-8 output allow-list (S34), the way tests/api-problem-orders.test.cjs proves it: the face read's derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
+ * and every recorded 200 of it (no face yet · a saved face · a saved face with no stamp) fits it, nullable columns included; the allow-list ran for real (OUTPUT_ALLOWLIST=enforce) and cut nothing.
+ */
+function checkAllowList(recording) {
+  console.log(String.fromCharCode(10) + '-- the closed success shape of the face read holds every recorded 200 --');
+  const { shapeOf, droppedKeys } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const route = 'GET ' + FACE;
+  const shape = shapeOf(route);
+  const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+  const fits = shape && engine.compile(shape.schema);
+  check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body)), { answers: answers.length, errors: fits && fits.errors });
+  check('the output allow-list dropped no key from any answer', droppedKeys().length === 0, droppedKeys());
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
@@ -164,6 +180,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkPublishedPaths();
   await checkChainsAgree();
   checkTrimmedReachesTheRow(recording);
+  checkAllowList(recording);
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 30, frozen);

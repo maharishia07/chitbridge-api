@@ -3676,16 +3676,16 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
     const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
-    /* S34: lib/reprice plan() answers the first five keys; apply() adds `applied` (how many amendments it wrote) */
+    /* S34: lib/reprice preview answers the first five keys; apply() adds `applied` (how many amendments it wrote) */
     if (req.body.preview) {
-      const plan = await reprice.plan(entity_id, chit_id, opts);
-      return res.json({ has_catalogue: plan.has_catalogue, will_price: plan.will_price, needs_price: plan.needs_price, unchanged: plan.unchanged, totals: plan.totals });
+      const previewed = await reprice.plan(entity_id, chit_id, opts);
+      return res.json({ has_catalogue: previewed.has_catalogue, will_price: previewed.will_price, needs_price: previewed.needs_price, unchanged: previewed.unchanged, totals: previewed.totals });
     }
-    const done = await reprice.apply(entity_id, chit_id, opts, {
+    const priced = await reprice.apply(entity_id, chit_id, opts, {
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
-    res.json({ has_catalogue: done.has_catalogue, will_price: done.will_price, needs_price: done.needs_price, unchanged: done.unchanged, totals: done.totals, applied: done.applied });
+    res.json({ has_catalogue: priced.has_catalogue, will_price: priced.will_price, needs_price: priced.needs_price, unchanged: priced.unchanged, totals: priced.totals, applied: priced.applied });
   } catch (err) {
     cbLog.error('chits/reprice failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, faultOf(err, req, 'Reprice failed'));
@@ -4104,13 +4104,13 @@ router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-
       private: _bill
     });
     /* H6 — a replay of rows already recorded is answered with the first result and does not announce, advance or accept again */
-    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ delivered: out.delivered, replayed: true });
+    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ ok: out.ok, delivered: out.delivered, replayed: true });
     await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
     await deliverProgress(entity_id, chit_id, out);
     await goodsInAccept(req, entity_id, chit_id, out);
     if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
-    /* S34: delivered from the library, then what each step wrote on it in its order: step · progress · summary · accepted · use */
-    res.json({ delivered: out.delivered, step: out.step, progress: out.progress, summary: out.summary, accepted: out.accepted, use: out.use });
+    /* S34: delivered from the library (a stand-in library may add ok, kept first), then what each step wrote on it in its order: step · progress · summary · accepted · use */
+    res.json({ ok: out.ok, delivered: out.delivered, step: out.step, progress: out.progress, summary: out.summary, accepted: out.accepted, use: out.use });
   } catch (err) {
     /* RAIL-133: a library's own 400 ('quantity must be a non-zero number') reaches the person; a fault still says the safe sentence, and faultOf logs it */
     problem(req, res, faultOf(err, req, 'Failed to record delivery', { words: true }));
