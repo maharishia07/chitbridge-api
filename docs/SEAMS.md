@@ -36,7 +36,7 @@ of file each thing is; this says what already does the job.
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `record` | `access-events.js` |  |
-| 49 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 50 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 48 | `pack` | `books-store.js` |  |
 | 48 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 47 | `again` | `signin-ui.js` |  |
@@ -109,7 +109,7 @@ of file each thing is; this says what already does the job.
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 22 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
-| 21 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
+| 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |

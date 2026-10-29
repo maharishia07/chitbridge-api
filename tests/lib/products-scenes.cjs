@@ -50,6 +50,8 @@ function extras(tools) {
   const counts = answering(/count\(\*\)::int AS n FROM catalogue_items/, [{ n: 0 }]);
   const listRows = firstOf(counts, answering(/FROM catalogue_items WHERE/, [ITEM()]));
   const costBlind = { who: STAFF };
+  const markedOut = (rows) => answering(/^s*UPDATE catalogue_items/, rows.map((row) => Object.assign({ item_data: ITEM({ status: 'unavailable' }).item_data }, row)));
+  const withMedia = (media) => firstOf(answering(/^s*UPDATE catalogue_items/, [{ item_data: ITEM({ media }).item_data }]), shelf);
   const costHidden = { cost: { canReadSafe: async () => false } };
   const importBody = (more) => Object.assign({ csv: CSV, decisions: DECIDED, confirm: true }, more);
   return [
@@ -73,6 +75,8 @@ function extras(tools) {
     X('an-id-is-not-text', 'POST ' + P + '/status/bulk', 400, { body: { ids: [5], status: 'available' } }),
     X('retired-is-not-bulk', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY], status: 'retired' } }),
     X('bulk-status-set', 'POST ' + P + '/status/bulk', 200, { body: { ids: [PARTY], status: 'unavailable' }, setup: withRows(answering(/^\s*UPDATE catalogue_items/, [{ item_id: PARTY, item_data: ITEM().item_data }])) }),
+    /* the item reads as out of stock (reads_as a sentence, not null) · one id the shop does not hold (missed names it) */
+    X('bulk-status-marked-out', 'POST ' + P + '/status/bulk', 200, { body: { ids: [PARTY, 'no-such-id'], status: 'unavailable' }, setup: withRows(markedOut([{ item_id: PARTY }])) }),
     X('bulk-status-db-fails', 'POST ' + P + '/status/bulk', 500, { body: { ids: [PARTY], status: 'unavailable' }, setup: failing }),
     X('bulk-status-ids-and-status-wrong', 'POST ' + P + '/status/bulk', 400, { body: { ids: 'x', status: 5 } }),
     X('bulk-status-status-missing', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY] } }),
@@ -133,9 +137,15 @@ function extras(tools) {
     X('edit-server-owned-key', 'PATCH ' + P + '/:id', 400, { body: { item_data: { name: 'Tea', image: 'x' } }, setup: withRows(firstOf(own, money)) }),
     X('edit-written', 'PATCH ' + P + '/:id', 200, { body: body(), setup: withRows(shelf) }),
     X('edit-merged', 'PATCH ' + P + '/:id', 200, { body: { merge: true, item_data: { unit: 'g' } }, setup: withRows(shelf) }),
+    /* CAT-234/236: a cost-blind co-assist flips status (merge:true) and gets the row back WITHOUT its cost at any depth (the shelf holds cost: 3, cost_x and an option cost) */
+    X('edit-status-cost-blind', 'PATCH ' + P + '/:id', 200, { body: { merge: true, item_data: { status: 'unavailable' } }, setup: { who: STAFF, sqlRows: firstOf(money, answering(/^\s*UPDATE catalogue_items/, [ITEM({ cost: 3, cost_x: 1, modifiers: [{ name: 'Size', options: [{ name: 'L', price: 12, cost: 2 }] }] })]), answering(/SELECT item_data FROM catalogue_items WHERE item_id/, [{ item_data: ITEM({ cost: 3, cost_x: 1, modifiers: [{ name: 'Size', options: [{ name: 'L', price: 12, cost: 2 }] }] }).item_data }])) }, patch: costHidden }),
+    /* CAT-237: the same flip WITHOUT merge:true would replace the row with {status}: refused, naming the shelf's keys it would erase (`after`: main answered 200 and wiped the row, so nothing was frozen) */
+    X('edit-status-cost-blind-replace', 'PATCH ' + P + '/:id', 403, { after: true, body: { item_data: { status: 'unavailable' } }, setup: { who: STAFF, sqlRows: shelf }, patch: costHidden }),
     X('edit-currency-clash', 'PATCH ' + P + '/:id', 409, { body: { item_data: { name: 'Tea', price: { amount: 3, currency: 'USD' } } }, setup: withRows(shelf) }),
     /* schedule */
     X('schedule-read', 'GET ' + P + '/:id/schedule', 200, { patch: scheduleOn }),
+    /* CAT-234: a parked change the owner made carries a cost; a cost-blind co-assist reads the list without it */
+    X('schedule-read-cost-blind', 'GET ' + P + '/:id/schedule', 200, { setup: costBlind, patch: { schema: scheduleOn.schema, schedule: { pending: async () => [{ schedule_id: PARTY, item_id: PARTY, effective_at: SOMEDAY, patch: { status: 'unavailable', cost: 3 }, created_at: SOMEDAY }] }, cost: costHidden.cost } }),
     X('schedule-read-fails', 'GET ' + P + '/:id/schedule', 500, { patch: { schedule: { pending: boom } } }),
     X('schedule-needs-both', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY } }),
     X('schedule-cost-blind', 'POST ' + P + '/:id/schedule', 403, { body: { effective_at: SOMEDAY, item_data: { price: 5 } }, setup: costBlind, patch: costHidden }),
@@ -164,6 +174,7 @@ function extras(tools) {
     X('status-item-not-found', 'PUT ' + P + '/:id/status', 404, { body: { status: 'unavailable' } }),
     X('status-unknown-word', 'PUT ' + P + '/:id/status', 400, { body: { status: 'sold' }, setup: withRows(shelf) }),
     X('status-set', 'PUT ' + P + '/:id/status', 200, { body: { status: 'unavailable' }, setup: withRows(shelf) }),
+    X('status-marked-out', 'PUT ' + P + '/:id/status', 200, { body: { status: 'unavailable' }, setup: withRows(markedOut([{ item_id: PARTY }])) }),
     X('status-db-fails', 'PUT ' + P + '/:id/status', 500, { body: { status: 'unavailable' }, setup: failing }),
     /* DELETE /:id */
     X('removed', 'DELETE ' + P + '/:id', 200, { setup: withRows(shelf) }),
@@ -177,12 +188,14 @@ function extras(tools) {
     X('media-link-not-a-video', 'POST ' + P + '/:id/media', 400, { body: { url: 'https://example.com/x' } }),
     X('media-link-item-not-found', 'POST ' + P + '/:id/media', 404, { body: { url: 'https://youtu.be/abcdef123' } }),
     X('media-video-linked', 'POST ' + P + '/:id/media', 200, { body: { url: 'https://youtu.be/abcdef123', name: 'Tour' }, setup: withRows(shelf) }),
+    X('media-video-linked-lists-media', 'POST ' + P + '/:id/media', 200, { body: { url: 'https://youtu.be/abcdef123', name: 'Tour' }, setup: withRows(withMedia([{ id: PARTY, kind: 'video' }])) }),
     X('media-name-and-bytes-needed', 'POST ' + P + '/:id/media', 400, { body: { name: 'a.png' } }),
     X('media-store-not-configured', 'POST ' + P + '/:id/media', 503, { body: { name: 'a.png', data_base64: PNG.toString('base64') } }),
     X('media-empty', 'POST ' + P + '/:id/media', 400, { body: { name: 'a.png', data_base64: '!' }, patch: storeOn }),
     X('media-too-large', 'POST ' + P + '/:id/media', 413, { body: { name: 'a.bin', data_base64: Buffer.alloc(8 * 1024 * 1024 + 1).toString('base64') }, patch: storeOn }),
     X('media-upload-item-not-found', 'POST ' + P + '/:id/media', 404, { body: { name: 'a.png', mime: 'image/png', data_base64: PNG.toString('base64') }, patch: storeOn }),
     X('media-uploaded', 'POST ' + P + '/:id/media', 200, { body: { name: 'a.png', mime: 'image/png', data_base64: 'data:image/png;base64,' + PNG.toString('base64') }, patch: storeOn, setup: withRows(shelf) }),
+    X('media-uploaded-lists-media', 'POST ' + P + '/:id/media', 200, { body: { name: 'a.png', mime: 'image/png', data_base64: PNG.toString('base64') }, patch: storeOn, setup: withRows(withMedia([{ id: PARTY, kind: 'image' }])) }),
     X('media-upload-fails', 'POST ' + P + '/:id/media', 500, { body: { name: 'a.png', mime: 'image/png', data_base64: PNG.toString('base64') }, patch: storeWith({ put: boom }) }),
     X('media-removed', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeOn, setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }] } }])) }),
     X('media-removed-one-stays', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeOn, setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }, { id: 'm2', name: 'tour', kind: 'video' }] } }])) }),

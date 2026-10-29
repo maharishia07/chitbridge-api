@@ -295,7 +295,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/chits/sent": {
@@ -356,7 +356,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": true
@@ -388,8 +388,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/chits/register/subjects/:subject_id/close": {
@@ -417,8 +416,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/chits/register/subjects/:subject_id/entries": {
@@ -427,8 +425,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -532,8 +529,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -582,7 +578,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": true
@@ -1122,8 +1118,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/till/stock/bulk": {
@@ -1132,8 +1127,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/till/diagnostic": {
@@ -1171,8 +1165,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/till/counters": {
@@ -1263,8 +1256,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/till/rate": {
@@ -1278,8 +1270,7 @@
   },
   "GET /api/till/reward": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/till/reward": {
@@ -1288,8 +1279,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "idempotent_money_write": {
     "pass": false,
@@ -1302,8 +1292,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "idempotent_money_write": {
     "pass": false,
@@ -1351,7 +1340,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/till/screens/rename": {
@@ -1361,7 +1350,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/till/reconcile": {
@@ -1433,8 +1422,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/till/listen": {
@@ -2783,8 +2771,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/products/bulk-update": {
@@ -2824,8 +2811,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/products/import": {
@@ -2834,8 +2820,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/products/starter-columns": {
@@ -2849,8 +2834,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "PATCH /api/products/:id": {
@@ -2883,7 +2867,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": true
@@ -2913,8 +2897,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -2927,8 +2910,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -2959,8 +2941,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -3044,8 +3025,7 @@
   },
   "GET /api/governance/boilerplate/:key": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/governance/boilerplate/:key/adopt": {
@@ -3069,8 +3049,7 @@
   },
   "GET /api/governance/source/:key": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/governance/readiness": {
@@ -3155,7 +3134,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    }
   },
   "POST /api/governance/ai-draft": {
@@ -3165,7 +3144,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 503"
    }
   },
   "GET /api/governance/ai-usage": {
@@ -3189,8 +3168,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/governance/verify": {
@@ -3199,8 +3177,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "POST /api/governance/supplier-acceptance": {
@@ -3209,14 +3186,12 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/governance/supplier-acceptance/:handle": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -3707,8 +3682,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/testing/trace": {
@@ -3741,8 +3715,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/testing/engine": {
@@ -3766,8 +3739,7 @@
   },
   "GET /api/testing/cmdb/:ci": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -3780,8 +3752,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -3803,8 +3774,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 422"
+    "pass": true
    }
   },
   "GET /api/testing/results": {
@@ -3823,8 +3793,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/testing/cases/gherkin": {
@@ -3838,8 +3807,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/testing/requirements": {
@@ -3848,8 +3816,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/testing/requirements": {
@@ -3863,8 +3830,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -3877,8 +3843,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/testing/incidents": {
@@ -3892,8 +3857,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -3906,8 +3870,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/testing/stale": {
@@ -3936,8 +3899,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/testing/changes": {
@@ -3951,8 +3913,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/testing/releases": {

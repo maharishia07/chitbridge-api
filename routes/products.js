@@ -248,11 +248,18 @@ const rateDoor = require('../lib/rate-door'); /* CAT-210: a rate is owner or man
 const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
 /** CAT-210: does an editor's create or parked change NAME a rate? (an owner or manager never does: false) */
 const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
-/** strips item_data.cost from every row in place — the one place a list response leaves this file */
-function stripCosts(items) {
-  items.forEach((item) => {
-    if (item && item.item_data && 'cost' in item.item_data) delete item.item_data.cost;
+/** CAT-234/236: deletes `cost` and every `cost_*` key at ANY depth of a value, in place (modifiers[].options[].cost, a variants block …) */
+function dropCostKeys(value) {
+  if (!value || typeof value !== 'object') return value;
+  Object.keys(value).forEach((key) => {
+    if (/^cost(_|$)/.test(key)) delete value[key];
+    else dropCostKeys(value[key]);
   });
+  return value;
+}
+/** strips cost (and every nested cost / cost_* key) from every row's item_data in place — the ONE rule every cost-blind answer of this file uses */
+function stripCosts(items) {
+  items.forEach((item) => item && dropCostKeys(item.item_data));
   return items;
 }
 /**
@@ -1054,7 +1061,7 @@ router.get('/export.csv', auth, async (req, res) => {
 router.get('/template', auth, async (req, res) => {
   try {
     const { template, orderInput: oi } = await catalogueShape(ctx(req));
-    res.json({ ...template, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
+    res.json({ columns: template.columns, optional: template.optional, csv: template.csv, notes: template.notes, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Template failed'));
   }
@@ -1339,8 +1346,8 @@ router.post(
           if (inserts.length) await catwrite.insertStamped(db, entity_id, sid, inserts);
         });
       }
-
-      res.json(importAnswer(outcome, created));
+      const answer = importAnswer(outcome, created);
+      res.json({ message: answer.message, created_columns: answer.created_columns, outcome: answer.outcome, summary: answer.summary });
     } catch (e) {
       problem(req, res, faultOf(e, req, 'Import failed'));
     }
@@ -1454,8 +1461,12 @@ router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async
   }
 });
 
-/** does this edit need the stored row? a merge, a server-owned key, or an editor (whose rate is compared with the stored one, CAT-210) */
-const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data);
+/** CAT-237: a co-assist's replace (no merge:true) writes every stored key it leaves out, so the stored row is read to name them; the owner never pays this */
+const actorReplace = (req, payload) => payload.merge !== true && !!(req.identity && req.identity.identity_type === 'actor');
+/** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row */
+const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
+/** does this edit need the stored row? a merge, a server-owned key, an editor (whose rate is compared with the stored one, CAT-210) or a co-assist's replace (CAT-237) */
+const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data) || actorReplace(req, payload);
 /** the stored row, read only when merge:true, a server-owned key or an editor (to compare the rate, CAT-210) asks for it → { refusal } (404 or the rate 403) or { stored, bodyItem } */
 async function readStoredForEdit(req, entity_id, item_id, payload) {
   if (!needsStored(req, payload)) return { stored: null, bodyItem: payload.item_data };
@@ -1515,6 +1526,12 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
        no extra trip. */
     const read = await readStoredForEdit(req, entity_id, req.params.id, req.body);
     if (read.refusal) return problem(req, res, read.refusal);
+    /* CAT-237: a replace (no merge:true) also writes every stored key the body leaves out: it ERASES them. Those keys go through the
+       SAME gate as the keys the body names (one rule: a cost-blind co-assist may touch status only), so a status-only replace by such
+       a caller is refused in words, naming the keys it would have wiped, instead of quietly emptying the row. The owner and a
+       cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
+    const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
+    if (erased) return problem(req, res, { status: 403, ...words.costBlindErase(erased) });
     const stored = read.stored,
       bodyItem = read.bodyItem;
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
@@ -1536,6 +1553,8 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }));
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     shopChanged(entity_id, 'product updated');
+    /* CAT-234: the answer is the stored row — a cost-blind co-assist, who may flip status, gets it without cost, as GET / strips it */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(r.rows);
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Update failed'));
@@ -1560,7 +1579,12 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
 /* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
 router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
   try {
-    res.json({ enabled: await schedule.enabled(), pending: await schedule.pending(ctx(req), req.params.id) });
+    const entity_id = ctx(req);
+    const pending = await schedule.pending(entity_id, req.params.id);
+    /* CAT-234: a parked patch may carry the owner's cost — a cost-blind co-assist reads the list without it, the same strip as GET /.
+       The wrapper { item_data: row.patch } shares the reference, so stripCosts deletes on row.patch itself (in place); nothing is copied. */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(pending.map((row) => ({ item_data: row.patch })));
+    res.json({ enabled: await schedule.enabled(), pending });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not read the schedule'));
   }
@@ -1656,7 +1680,7 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
       await catwrite.patchItems(db, entity_id, edits);
       return { written, unknown, bad: count };
     });
-    res.json(Object.assign({ message: 'Availability updated' }, out));
+    res.json({ message: 'Availability updated', written: out.written, unknown: out.unknown, bad: out.bad });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Availability bulk update failed'));
   }

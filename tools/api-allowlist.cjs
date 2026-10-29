@@ -345,15 +345,32 @@ function webReadsMissing(file, shapes) {
   return Object.fromEntries(Object.entries(missing).map(([key, set]) => [key, [...set]]));
 }
 
-/** write the shapes into docs/contracts/api-output-shapes.json (other routes' rows stay as they are) */
-function writeShapes(result) {
-  const file = readJson(SHAPES_FILE, null) || { _about: 'The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route\'s success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.', routes: {}, listed: {} };
-  Object.assign(file.routes, result.shapes);
-  Object.keys(result.shapes).forEach((key) => delete file.listed[key]);
-  Object.keys(result.listed).filter((key) => !result.shapes[key]).forEach((key) => delete file.routes[key]); /* a route no recorded answer reaches keeps no shape */
-  Object.assign(file.listed, result.listed);
+/** `listed` as ONE map { route key: reason }: a file whose `listed` was written as an array of maps (a merge concatenated it) is flattened, later maps winning; a key that is a bare index (0, 1 …) is such a chunk, never a route */
+function flatListed(listed) {
+  const flat = {};
+  const take = (node) => Object.keys(node || {}).forEach((key) => { if (/^[0-9]+$/.test(key) && node[key] && typeof node[key] === 'object') take(node[key]); else flat[key] = node[key]; });
+  take(Array.isArray(listed) ? Object.assign({}, listed) : listed);
+  return flat;
+}
+
+/** the file after the shapes of one run are merged in (other routes' rows stay as they are); same input twice = same output */
+function mergeShapeFile(file, result) {
+  const routes = Object.assign({}, file.routes, result.shapes);
+  const listed = flatListed(file.listed);
+  Object.keys(result.shapes).forEach((key) => delete listed[key]);
+  Object.keys(result.listed).filter((key) => !result.shapes[key]).forEach((key) => delete routes[key]); /* a route no recorded answer reaches keeps no shape */
+  Object.assign(listed, result.listed);
   const sorted = (object) => Object.fromEntries(Object.keys(object).sort().map((key) => [key, object[key]]));
-  fs.writeFileSync(SHAPES_FILE, JSON.stringify({ _about: file._about, routes: sorted(file.routes), listed: sorted(file.listed) }, null, 1) + '\n');
+  return { _about: file._about, routes: sorted(routes), listed: sorted(listed) };
+}
+
+/** write the shapes into docs/contracts/api-output-shapes.json (other routes' rows stay as they are) */
+function writeShapes(result, target) {
+  const where = target || SHAPES_FILE;
+  const file = readJson(where, null) || { _about: 'The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route\'s success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.', routes: {}, listed: {} };
+  const fileText = fs.existsSync(where) ? fs.readFileSync(where, 'utf8') : '';
+  const indent = (fileText.match(/\n( +)"/) || [, ' '])[1].length; /* the file keeps the indent it has: a merge may have re-indented it, and a rewrite must not touch every line */
+  fs.writeFileSync(where, JSON.stringify(mergeShapeFile(file, result), null, indent) + '\n');
 }
 
 /** --check: every success answer recorded passes through its route's shape unchanged → the keys that would be lost */
@@ -413,4 +430,4 @@ function main(argv) {
 }
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
-module.exports = { foldValues, nodeOf, handlerAnswers, handlerText, closingOf, splitTop, tokensOf, deriveShape, deriveFile, samplesOf, checkCaptures, writeShapes, mergeNodes, SHAPES_FILE };
+module.exports = { foldValues, nodeOf, handlerAnswers, handlerText, closingOf, splitTop, tokensOf, deriveShape, deriveFile, samplesOf, checkCaptures, writeShapes, mergeShapeFile, flatListed, mergeNodes, SHAPES_FILE };
