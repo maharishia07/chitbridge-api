@@ -15,9 +15,14 @@ const G = require('./support/route-golden.cjs');
 const API = G.API;
 
 const TO = '11111111-1111-4111-8111-111111111111';
+const SENDER = '22222222-2222-4222-8222-222222222222';
 function rows(s, p, ctx) {
+  if (/SELECT identity_id FROM identities WHERE bridge_id = \$1/.test(s)) return ctx.labelHere ? [{ identity_id: 'LOCAL-SHOP' }] : [];
   if (/FROM installation WHERE installation_key = \$1/.test(s)) { if (ctx.peerThrows) throw new Error('no table'); return ctx.peer ? [ctx.peer] : []; }
   if (/FROM identities WHERE bridge_id = \$1/.test(s)) return ctx.to ? [ctx.to] : [];
+  /* RAIL-138 (b): is the sender a business with a row here, and which installation is it stamped to? */
+  if (/FROM identities WHERE identity_id = \$1/.test(s)) { if (ctx.homeThrows) throw new Error('rls'); return ctx.senderHere ? [{ identity_id: p[0] }] : []; }
+  if (/f_installation_of/.test(s)) { if (ctx.homeThrows) throw new Error('fn missing'); return [{ installation_key: p[0] === 'LOCAL-SHOP' ? ctx.labelHome || null : ctx.senderHome || null }]; }
   if (/f_ctp_may_deliver/.test(s)) { if (ctx.crossThrows) throw new Error('fn missing'); return [{ ok: !!ctx.mayCross }]; }
   return [];
 }
@@ -26,7 +31,7 @@ const directory = require(path.join(API, 'lib', 'ctpdirectory'));
 directory.publicKeyFor = async (domain, ik) => (h.state.ctx.noKey ? { ok: false, why: 'no manifest at ' + domain } : { ok: true, public_key: 'PK-' + ik });
 const envelope = require(path.join(API, 'lib', 'ctpenvelope'));
 envelope.open = (env, o) => (h.state.ctx.openWhy ? { ok: false, why: h.state.ctx.openWhy }
-  : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, h.state.ctx.noSender ? {} : { sender_entity_id: 'sender-1' }), header: {} });
+  : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, h.state.ctx.noSender ? {} : { sender_entity_id: h.state.ctx.sender || SENDER, sender_entity_bridge_id: 'CBSEND0001' }), header: {} });
 const ctpquery = require(path.join(API, 'lib', 'ctpquery'));
 ctpquery.open = (q) => (h.state.ctx.openWhy ? { ok: false, why: h.state.ctx.openWhy } : { ok: true, ask: (q && q.ask) || {} });
 const mint = require(path.join(API, 'lib', 'mint'));
@@ -58,6 +63,14 @@ const CASES = [
   ['deliver · a local world that does not name the peer', 'deliver', env(), Object.assign({}, ok, { to: { identity_id: TO, population: 'test' }, mayCross: false }), 409, '“test” is a local name on both sides — it must name mx-1 as a peer first'],
   ['deliver · the envelope does not open', 'deliver', env(), Object.assign({}, ok, { openWhy: 'signature does not verify' }), 409, 'signature does not verify'],
   ['deliver · the copy names no sender', 'deliver', env(), Object.assign({}, ok, { noSender: true }), 400, 'the copy does not say who sent it'],
+  /* RAIL-138 (b): the sender must be one the SIGNING installation may name — never a business of ours, or of a third installation */
+  ['deliver · the sender is a business of THIS installation', 'deliver', env(), Object.assign({}, ok, { senderHere: true, senderHome: null }), 403, 'the sender named is not a business of the installation that signed this envelope'],
+  ['deliver · the sender is stamped to a third installation', 'deliver', env(), Object.assign({}, ok, { senderHere: true, senderHome: 'zz-9' }), 403, 'the sender named is not a business of the installation that signed this envelope'],
+  ['deliver · whose the sender is cannot be read → refuse', 'deliver', env(), Object.assign({}, ok, { homeThrows: true }), 503, 'this installation cannot check whose business the sender is — refusing'],
+  ['deliver · the sender is not an id', 'deliver', env(), Object.assign({}, ok, { sender: 'sender-1' }), 400, 'the copy names its sender by something that is not an id'],
+  ['deliver · a foreign sender wearing the bridge id of one of OUR shops', 'deliver', env(), Object.assign({}, ok, { labelHere: true, labelHome: null }), 403, 'the sender named is not a business of the installation that signed this envelope'],
+  ['deliver · a sender whose bridge id is held here for the signing installation is accepted', 'deliver', env(), Object.assign({}, ok, { labelHere: true, labelHome: 'mx-1' }), 200, undefined, true],
+  ['deliver · a sender held here for the signing installation is accepted', 'deliver', env(), Object.assign({}, ok, { senderHere: true, senderHome: 'mx-1' }), 200, undefined, true],
   ['deliver · our store fails → 500, said', 'deliver', env(), Object.assign({}, ok, { storeThrows: true }), 500, 'this installation failed to store it', true],
   ['deliver · accepted, written as OUR recipient', 'deliver', env(), ok, 200, undefined, true],
   ['query · not a CTP/1 query', 'query', { ctp: '1', kind: 'deliver' }, ok, 400, 'not a CTP/1 query'],

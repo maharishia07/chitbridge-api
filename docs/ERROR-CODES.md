@@ -95,6 +95,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_QUERY_REFUSED | 403 | Question refused | The question was not signed by the installation that sent it. | Check the asking installation signs with the key it publishes. | ctp | 2026-10-23 |
 | CTP_RECIPIENT_NOT_HERE | 404 | Recipient not here | There is no active business here with that bridge id. | Check the address of the business. | ctp | 2026-10-23 |
 | CTP_REFUSED | 409 | Not delivered | Another installation did not take its copy of this chit. Nothing was written. | Try again later. If it keeps happening, check the two installations name each other as peers. | rail | 2026-10-28 |
+| CTP_SENDER_NOT_AN_ID | 400 | Sender not named by an id | The chit names the business that sent it by something that is not an id. | The sending installation must name its sender by id. | ctp | 2026-10-28 |
+| CTP_SENDER_NOT_THEIRS | 403 | Sender not theirs to name | The chit names a sender that does not belong to the installation that signed it. | The sending installation may only send for its own businesses. | ctp | 2026-10-28 |
+| CTP_SENDER_UNCHECKABLE | 503 | Sender cannot be checked | We could not check whose business the sender is, so we did not take the chit. | Try again later. | ctp | 2026-10-28 |
 | CTP_STORE_FAILED | 500 | Could not store the chit | This installation could not store the chit just now. | Try again later; it was not written. | ctp | 2026-10-23 |
 | CTP_UNKNOWN_QUESTION | 400 | Unknown question | This installation does not answer that question. | Ask to resolve a business or for its catalogue. | ctp | 2026-10-23 |
 | CURRENCY_ENTITY_ONLY | 403 | Currency is the business’s | The currency your prices are written in belongs to the business. | Ask whoever runs the account to change it in Settings. | entities | 2026-10-22 |
