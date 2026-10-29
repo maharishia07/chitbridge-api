@@ -105,6 +105,29 @@ for (const [who, o] of [['anonymous / stranger / partner / cost-blind / viewer (
     assert.strictEqual(line.fields.mrp, 550); assert.strictEqual(v.items[0].item_data.unit, 'pc');
   });
 }
+/* ⭐⭐⭐ CAT-241 (P1): a REAL adoption. A source shop's item carries unit_cost, supplier_note and cost; the target adopts the source; the public reads the target.
+ * Adopted lines copy every source key (catalogue-read.js), so the strip must run where the adopted items join the answer (catalogue-view publicItemsOf → cost.dropCostKeys). */
+const SRC_ITEM = { name: 'Adopted Widget', sku: 'AW-1', unit: 'pc', commercials: { price: 250, supplier_note: 'SECRET-OVERLAY' }, unit_cost: 7777.77, supplier_note: 'SECRET-SUPPLIER-NOTE', cost: { value: 99.99, source: 'manual' },
+  variants: [{ name: 'L', landed_cost: 8888.88, supplier_name: 'SECRET-NESTED' }] };
+const adoptedDeps = (extra) => { const d = deps(); const w = d.withEntity; const source = { title: 'Source shop', collection: 'S', owner_entity_id: 'src-owner', items: [SRC_ITEM] };
+  d.catalogueBuild = { resolve: async () => source };
+  d.withEntity = async (e, fn) => w(e, (db) => fn({ query: async (sql) => (/catalogue_adoption/.test(sql) ? { rows: [{ source_key: 'src1', commercials: {} }] } : db.query(sql)) }));
+  return Object.assign(d, extra); };
+for (const [who, extra] of [['anonymous', {}], ['a stranger (viewer, no relationship)', { viewer: 'stranger-id', viewer_id: 'stranger-id' }], ['a partner (viewer with a relationship)', { viewer: 'partner-id', viewer_id: 'partner-id' }]]) {
+  t('⭐⭐⭐ [CAT-241] an ADOPTED line carries no buying-side key or value — read by ' + who, async () => {
+    const v = await view.buildPublicView(adoptedDeps(extra));
+    const line = v.lines.find((l) => l.origin === 'source');
+    assert.ok(line, 'the adopted source produced no line - the test is not exercising the adoption path');
+    assert.strictEqual(line.fields.name, 'Adopted Widget'); assert.strictEqual(line.fields.price, 250);
+    const wire = JSON.stringify(v);
+    ['7777.77', '8888.88', '99.99', 'SECRET-SUPPLIER-NOTE', 'SECRET-NESTED', 'SECRET-OVERLAY', 'unit_cost', 'supplier_note', 'landed_cost', 'supplier_name'].forEach((x) => assert.ok(!wire.includes(x), 'the public answer carries ' + x));
+    assert.ok(v.finishes.length === 1 && v.finishes[0].items[0].name === 'Adopted Widget', 'the finish is still served');
+  });
+}
+t('[CAT-241] the strip works on a clone: the source (resolve result) keeps its cost for the readers allowed to see it', async () => {
+  await view.buildPublicView(adoptedDeps({}));
+  assert.strictEqual(SRC_ITEM.unit_cost, 7777.77); assert.strictEqual(SRC_ITEM.supplier_note, 'SECRET-SUPPLIER-NOTE'); assert.ok(SRC_ITEM.variants[0].landed_cost);
+});
 t('[P1] fail-closed: the ONE list (lib/cost.js COST_KEYS) refuses the buying side and spares what a customer reads', () => {
   const cost = require('../lib/cost');
   Object.keys(COST_SIDE_KEYS).filter((k) => k !== 'variants').forEach((k) => assert.ok(cost.isCostKey(k), k + ' must be a cost key'));
