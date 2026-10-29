@@ -633,6 +633,9 @@
   },
   "POST /api/books/year/:fy/close": {
    "output_allowlist": true
+  },
+  "GET /api/attachments/:id": {
+   "foreign_id_404": true
   }
  }
 }

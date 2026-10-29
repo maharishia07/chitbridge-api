@@ -96059,6 +96059,31 @@
    ],
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-10-24T14:30:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-attachments.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 sweep, attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one.",
+   "claim": "API-4 sweep, attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · contract · 417 lines. Run: node chitbridge-api/tests/api-problem-attachments.test.cjs",
+   "layer": "engine",
+   "test_type": "contract",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 417,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
   }
  ]
 }
