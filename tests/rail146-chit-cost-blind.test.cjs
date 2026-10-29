@@ -36,7 +36,7 @@ const GRANTED = Object.assign({}, BLIND, { identity_id: GRANTED_ID, display_name
 const GRANTS = { [GRANTED_ID]: true };
 const AT = '2026-10-01T10:00:00.000Z';
 /* figures no other field could carry: the supplier's rate, the landed rate, the bill total, a payment */
-const SECRET = { price: 4242.5, unit_cost: 4141.25, landed: 4040.75, total: 8485, money_total: 9999.5, invoice_total: 8888.25, their_total: 7777.75, add: 1212.5, other_add: 1313.5 };
+const SECRET = { price: 4242.5, unit_cost: 4141.25, landed: 4040.75, total: 8485, money_total: 9999.5, invoice_total: 8888.25, their_total: 7777.75, add: 1212.5, other_add: 1313.5, gap: 1515.5, theirs: 5151.5, planted: 4747 };
 const SECRETS = Object.values(SECRET).map((n) => String(n));
 
 const call = (port, p, who) => new Promise((done) => {
@@ -53,6 +53,10 @@ const leaked = (raw) => SECRETS.filter((s) => new RegExp('(^|[^0-9.])' + s.repla
 const stripNamed = (v) => JSON.parse(JSON.stringify(v, (k, x) => (COST_KEY.test(k) ? undefined : x)));
 /** a chit read minus its `actions`: the rail answers those by the reader's LEVEL (owner vs editor), so an actor's read differs there by design, never elsewhere */
 const sansActions = (body) => JSON.stringify(Object.assign({}, body, { actions: undefined }));
+/** the rail's actions minus the books' sentence (`say`), which a cost-side prune drops */
+const sansSay = (actions) => JSON.parse(JSON.stringify(actions, (k, x) => (k === 'say' ? undefined : x)));
+/** THE WHOLE-TEXT SCAN of a blind answer: no ₹ anywhere and none of the planted secret figures (but the ones a scene allows, e.g. the actor's own add or a sale's) */
+const noLeak = (label, raw, allowed) => t(label + ' | whole-text scan: no ₹, no secret figure anywhere in the body', [/₹/.test(raw), leaked(raw).filter((s) => !(allowed || []).includes(s))], [false, []]);
 /** the top-level keys two bodies differ on (a failure's own words) */
 const differing = (left, right) => Array.from(new Set(Object.keys(left || {}).concat(Object.keys(right || {})))).filter((k) => JSON.stringify(left[k]) !== JSON.stringify(right[k]));
 
@@ -154,7 +158,7 @@ function unitCases() {
   t('hideChitCosts | money in VALUES: books_wait.why and gap, numbers under figure · paise · n · v · minor, a ₹ in an unknown header key, a log line and a reason with a figure — all gone', [/₹/.test(text), /4242|1234|12\.50|500|\b100\b|4747|4848|4949/.test(text), prose.books_wait, prose.state_log[0].detail, prose.amendments[0].reason], [false, false, { todo: 'accept' }, undefined, undefined]);
   t('hideChitCosts | ...and the allowlisted keys stay: ids, parties, purpose, the engine\'s actions and doc, the line\'s name, their bill\'s number', [prose.header.chit_id, prose.header.purpose, prose.header.all_recipients.length, prose.header.business_json, prose.header.summary_json, prose.actions, prose.doc, prose.amendments[0].line, prose.state_log[0].action], [CHIT, 'invoice', 2, { their_bill: { no: 'INV-7' } }, { line_item_count: 2, currency_code: 'INR' }, { accept: { ok: false, why: 'not_received' } }, 'bill_received', { particulars: 'x' }, 'step']);
   t('hideChitCosts | the input is untouched, byte for byte', JSON.stringify(answer) === before, true);
-  t('hideChitCosts | buy: a line keeps the ALLOWLIST only (name · quantity · unit · gst_rate · hsn · item_data sans money); cgst, sgst, mrp, unit_price, line_total, rate, amount, taxable, discount all go', hidden.live_set[0].live, { line_id: CHIT, particulars: 'x', quantity: 2, unit: 'kg', gst_rate: 5, hsn: '1006', item_data: { lot: 'L1' } });
+  t('hideChitCosts | buy: a line keeps the ALLOWLIST only (name · quantity · unit · gst_rate · hsn · item_data sans money); cgst, sgst, mrp, unit_price, line_total, rate, amount, taxable, discount all go', hidden.live_set[0].live, { line_id: CHIT, particulars: 'x', quantity: 2, unit: 'kg', gst_rate: 5, hsn: '1006', item_data: {} });
   t('hideChitCosts | buy: every other line shape loses its money; the header its money, the invoice and their bill\'s total/tax (their number and the order link stay)', [hidden.live_set[0].original, hidden.live_set[0].history[0], hidden.amendments[0].line, hidden.header.summary_json, hidden.header.business_json], [{}, {}, {}, { line_item_count: 2, currency_code: 'INR', purpose: 'order' }, { their_bill: { no: 'INV-7' }, order: { from: 'ORD-1' } }]);
   t('hideChitCosts | buy: my own add stays (the delivery rows say it is mine), the other goes; charged above my own is refused, the chit sum with it; cost_hidden says money was withheld', [hidden.line_delivery[CHIT].added.map((a) => a.amount), hidden.line_delivery[CHIT].charged, hidden.delivery_summary.charged, hidden.cost_hidden], [[10, undefined], undefined, undefined, true]);
   const own = view.hideChitCosts({ line_delivery: { [CHIT]: { charged: 10, added: [{ delivery_id: CHIT, amount: 10 }] } }, delivery_summary: { charged: 10 } }, { side: 'buy', mine: new Set([CHIT]) });
@@ -199,11 +203,12 @@ function unitCases() {
   t('bill | blind: 200, cost_hidden, the lines keep name · quantity · unit · gst_rate', [blind.status, blind.body.cost_hidden, blind.body.detail.line_items.map((l) => [l.particulars, l.quantity, l.unit, l.gst_rate])], [200, true, [['Basmati rice 1kg', 10, 'kg', 5], ['Toor dal 1kg', 5, 'kg', 5]]]);
   t('bill | blind: no cost-named key at any depth', costKeys(blind.body), []);
   t('bill | blind: no price · total on the payload, the live set, the header, the detail', [blind.body.detail.line_items[0].price, blind.body.live_set[0].live.price, blind.body.live_set[0].original.total, blind.body.header.summary_json.money, blind.body.header.summary_json.total_value, blind.body.detail.total_value, blind.body.header.business_json.invoice, blind.body.header.business_json.their_bill], [undefined, undefined, undefined, undefined, undefined, undefined, undefined, { no: 'INV-7' }]);
-  t('bill | blind: the payload line is the allowlist (cgst · sgst · mrp · unit_price gone with the price)', blind.body.detail.line_items[0], { line_id: CHIT, particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', gst_rate: 5, item_data: { lot: 'L1' } });
+  t('bill | blind: the payload line is the allowlist (cgst · sgst · mrp · unit_price gone with the price)', blind.body.detail.line_items[0], { line_id: CHIT, particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', gst_rate: 5, item_data: {} });
   t('bill | owner: cgst · mrp · unit_price were there to lose', [owner.body.detail.line_items[0].cgst, owner.body.detail.line_items[0].mrp], [2.5, 4343.5]);
   t('bill | blind: his OWN add amount stays, the other actor\'s goes, the sums go', [blind.body.line_delivery[CHIT].added.map((a) => a.amount), blind.body.line_delivery[CHIT].charged, blind.body.delivery_summary.charged], [[SECRET.add, undefined], undefined, undefined]);
   t('bill | blind: no secret figure anywhere in the body (his own add aside)', leaked(blind.raw), [String(SECRET.add)]);
-  t('bill | blind: the actions and the doc are the owner\'s (the real header was read before the strip)', [blind.body.actions, blind.body.doc], [owner.body.actions, owner.body.doc]);
+  t('bill | blind: the actions (minus the books\' sentence `say`) and the doc are the owner\'s (the real header was read before the strip)', [blind.body.actions, blind.body.doc], [sansSay(owner.body.actions), owner.body.doc]);
+  noLeak('bill', blind.raw, [String(SECRET.add)]);
   t('bill | owner\'s rows untouched by the blind read (the next owner read is byte-identical)', (await call(port, '/api/chits/' + CHIT, OWNER)).raw === owner.raw, true);
 
   /* 1b · the same bill on the FALLBACK path (the one-shot statement fails, the route reads per table): the actor's own add still stays, by its by_id */
@@ -211,19 +216,30 @@ function unitCases() {
   [owner, granted, blind] = await read('/api/chits/' + CHIT);
   t('bill, fallback path | owner reads both adds', [owner.status, owner.body.line_delivery[CHIT].added.map((a) => a.amount)], [200, [SECRET.add, SECRET.other_add]]);
   t('bill, fallback path | blind: his OWN add stays, the other goes, no secret but his own', [blind.body.cost_hidden, blind.body.line_delivery[CHIT].added.map((a) => a.amount), leaked(blind.raw)], [true, [SECRET.add, undefined], [String(SECRET.add)]]);
+  noLeak('bill, fallback path', blind.raw, [String(SECRET.add)]);
+
+  /* 1e · the books wait on a GAP (their total above the lines): the rail answers accept with the books' sentence in `say` — the owner reads it, a blind reader never */
+  SCENE = { header: BILL, books_wait: { todo: 'record', name: 'Mill', why: 'Their total ₹' + SECRET.theirs + ' is ₹' + SECRET.gap + ' more than the lines', gap: SECRET.gap, candidates: [] } };
+  [owner, granted, blind] = await read('/api/chits/' + CHIT);
+  t('books gap | owner: accept is refused with the books\' sentence, the figure in it', [owner.status, owner.body.actions.accept.why, /₹/.test(owner.body.actions.accept.say), owner.body.actions.accept.todo], [200, 'books_waiting', true, 'record']);
+  sameRead('books gap', owner, granted);
+  t('books gap | blind: the same verdict without the sentence; the todo code stays', [blind.body.actions.accept, blind.body.actions, blind.body.books_wait], [{ ok: false, why: 'books_waiting', todo: 'record' }, sansSay(owner.body.actions), { todo: 'record' }]);
+  noLeak('books gap', blind.raw, []);
 
   /* 1c · odd purposes received from a supplier, and a priced chit with no sender: not positively a sale, so hidden */
   for (const purpose of ['service', 'inquiry', 'resale', 'general']) {
     SCENE = { header: header({ purpose }) };
     [owner, granted, blind] = await read('/api/chits/' + CHIT);
     t(purpose + ' received from a supplier | blind: hidden; owner priced', [blind.body.cost_hidden, blind.body.detail.line_items[0].price, owner.body.detail.line_items[0].price], [true, undefined, SECRET.price]);
+    noLeak(purpose + ' received', blind.raw, []);
   }
   SCENE = { header: header({ purpose: 'invoice', sender_entity_id: null }) };
   [owner, granted, blind] = await read('/api/chits/' + CHIT);
   t('a priced chit with no sender | blind: hidden, no secret figure', [blind.body.cost_hidden, leaked(blind.raw)], [true, []]);
+  noLeak('no sender', blind.raw, []);
 
   /* 1d · money in VALUES through the route: the books' wait on a bill (why is prose with the figure, gap a number), numbers under keys that are not money words, a ₹ string */
-  SCENE = { header: Object.assign(structuredClone(BILL), { figure: SECRET.total, n: 4747, v: 4848, unknown_words: 'pay ₹' + SECRET.money_total + ' now', business_json: { paise: 4949, their_bill: { no: 'INV-7', total: SECRET.their_total } } }), books_wait: { todo: 'accept', name: 'Mill', why: 'Accept it at ₹' + SECRET.invoice_total + ' (₹' + SECRET.add + ' short of their bill)', gap: SECRET.add, short: { offer: SECRET.invoice_total, theirs_minor: 5050 }, candidates: [] } };
+  SCENE = { header: Object.assign(structuredClone(BILL), { figure: SECRET.total, n: SECRET.planted, v: 4848, unknown_words: 'pay ₹' + SECRET.money_total + ' now', business_json: { paise: 4949, their_bill: { no: 'INV-7', total: SECRET.their_total } } }), books_wait: { todo: 'accept', name: 'Mill', why: 'Accept it at ₹' + SECRET.invoice_total + ' (₹' + SECRET.add + ' short of their bill)', gap: SECRET.add, short: { offer: SECRET.invoice_total, theirs_minor: 5050 }, candidates: [] } };
   [owner, granted, blind] = await read('/api/chits/' + CHIT);
   t('money in values | owner reads the wait sentence, the gap and the planted numbers', [owner.status, owner.body.books_wait.gap, owner.body.header.figure, /₹/.test(owner.raw)], [200, SECRET.add, SECRET.total, true]);
   sameRead('money in values', owner, granted);
@@ -235,6 +251,7 @@ function unitCases() {
   [owner, granted, blind] = await read('/api/chits/' + CHIT);
   sameRead('receipt', owner, granted);
   t('receipt | blind: costs · goods · landed_total off the header, no secret figure', [blind.body.cost_hidden, blind.body.header.business_json, leaked(blind.raw)], [true, {}, []]);
+  noLeak('receipt', blind.raw, []);
 
   /* 3 · a customer's order (a SALE): the price stays; only the cost-named keys go (half i) */
   SCENE = { header: SALE };
@@ -250,6 +267,7 @@ function unitCases() {
     [owner, granted, blind] = await read('/api/chits/' + CHIT);
     sameRead('sent to ' + want, owner, granted);
     t('sent order, counterparty ' + (party === SUPPLIER ? 'a supplier' : party === STRANGER ? 'on no list' : 'a customer') + ' | blind: price ' + want, blind.body.detail.line_items[0].price === undefined ? 'hidden' : 'kept', want);
+    if (want === 'hidden') noLeak('sent order, ' + (party === SUPPLIER ? 'supplier' : 'no list'), blind.raw, []);
   }
 
   /* 5 · the three lists: the summary money goes on a cost-side row, stays on a sale; the side columns never reach the wire */
@@ -260,6 +278,7 @@ function unitCases() {
     t(name + ' | owner: both rows carry the money; no _sender / _bj on the wire', [owner.status, owner.body.chits.map((c) => c.summary_json.money.total), Object.keys(owner.body.chits[0]).filter((k) => k.startsWith('_'))], [200, [SECRET.money_total, SECRET.money_total], []]);
     t(name + ' | blind: the bill row loses money · total_value and says cost_hidden; the sale row keeps them', [blind.body.chits[0].summary_json.money, blind.body.chits[0].summary_json.total_value, blind.body.chits[0].cost_hidden, blind.body.chits[1].summary_json.money.total, blind.body.chits[1].cost_hidden], [undefined, undefined, true, SECRET.money_total, undefined]);
     t(name + ' | blind: no secret figure but the sale\'s', leaked(blind.raw).sort(), [String(SECRET.money_total), String(SECRET.total)].sort());
+    noLeak(name + ' list', blind.raw, [String(SECRET.money_total), String(SECRET.total)]);
     t(name + ' | nobody asked for an amount filter: no cost_params_ignored', [owner.body.cost_params_ignored, blind.body.cost_params_ignored], [undefined, undefined]);
   }
   /* 5b · the ORACLE: an amount filter or an amount sort over the hidden total would let a blind reader search for it — taken off, named back; the owner's statement keeps them */
@@ -288,6 +307,7 @@ function unitCases() {
   t('rollup | owner: the sum as the statement gave it (the stand-in answers the member column to everyone)', [owner.status, owner.body.groups[0].total_value, owner.body.groups[0].cost_hidden], [200, String(SECRET.total * 2), undefined]);
   same('rollup', owner, granted);
   t('rollup | blind: the sale alone, two chits, cost_hidden', blind.body.groups[0], { key: 'pending', chits: 2, total_value: SECRET.total.toFixed(2), cost_hidden: true });
+  noLeak('rollup', blind.raw, [String(SECRET.total)]);
   const crowd = Array.from({ length: 201 }, () => member(SALE));
   SCENE = { groups: [{ key: 'pending', chits: 500, total_value: '99999.00', members: crowd }] };
   [owner, granted, blind] = await read('/api/chits/rollup?group_by=state');
