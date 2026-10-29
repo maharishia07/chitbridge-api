@@ -45,7 +45,8 @@ identity_documents kyb_field_cache network_design notif_dismissed quick_key_audi
 quick_key_group_item register_acceptance register_attachable register_entry register_entry_standard
 register_subject register_template register_template_standard retention_config reward_ledger signup_context
 state_log stock_balance stock_movement supplier_readiness_acceptance supply_item test_result
-wholesaler_store`.split(/\s+/).filter(Boolean);
+wholesaler_store
+cb_device cb_external_reference cb_entity_supplier cb_contact cb_entity_employee cb_consumer_traction cb_catalogue_category cb_catalogue_item cb_chit cb_chit_item cb_chit_log cb_task cb_transaction_history`.split(/\s+/).filter(Boolean);
 
 const ROOT = path.join(__dirname, '..');
 const DIRS = ['lib', 'routes'];
