@@ -297,15 +297,20 @@ router.patch(
 );
 
 // DELETE /api/folders/:id — delete a folder (children cascade via FK); UNFILE its chits (folder_id -> NULL) so nothing is lost.
+/* RAIL-137 (b): the folder and EVERY folder below it (the foreign key cascades the whole subtree, and nothing constrains
+   chit_status.folder_id). Unfiling only the direct children left a chit in a grandchild pointing at a folder no one holds.
+   UNION, not UNION ALL, so a parent loop already in the table cannot make this walk forever. */
+const UNFILE_SUBTREE_SQL = `WITH RECURSIVE subtree AS (
+     SELECT folder_id FROM folder WHERE entity_id = $1 AND folder_id = $2
+     UNION
+     SELECT child.folder_id FROM folder child JOIN subtree ON child.parent_id = subtree.folder_id WHERE child.entity_id = $1
+   )
+   UPDATE chit_status SET folder_id = NULL WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM subtree)`;
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const e = ent(req);
     const deleted = await withEntity(e, async (db) => {
-      await db.query(
-        `UPDATE chit_status SET folder_id = NULL
-          WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM folder WHERE entity_id = $1 AND (folder_id = $2 OR parent_id = $2))`,
-        [e, req.params.id]
-      );
+      await db.query(UNFILE_SUBTREE_SQL, [e, req.params.id]);
       const r = await db.query(`DELETE FROM folder WHERE folder_id = $1 AND entity_id = $2`, [req.params.id, e]);
       return r.rowCount;
     });
