@@ -14020,6 +14020,182 @@
         "url": "/api/kyb/field",
         "body": {}
       }
+    },
+    "DELETE /api/channels/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/66666666-6666-4666-8666-666666666666"
+      }
+    },
+    "GET /api/channels": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels"
+      }
+    },
+    "GET /api/channels/outbound": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/outbound?status=failed&page=1&limit=10"
+      }
+    },
+    "POST /api/channels": {
+      "status": "201",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels",
+        "body": {
+          "channel": "whatsapp",
+          "address": "+91 98765 43210",
+          "label": "Shop"
+        }
+      }
+    },
+    "POST /api/channels/:id/approve": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/66666666-6666-4666-8666-666666666666/approve",
+        "body": []
+      }
+    },
+    "POST /api/channels/:id/auto-raise": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/66666666-6666-4666-8666-666666666666/auto-raise",
+        "body": []
+      }
+    },
+    "POST /api/channels/:id/provider-ref": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/66666666-6666-4666-8666-666666666666/provider-ref",
+        "body": []
+      }
+    },
+    "POST /api/channels/:id/revoke": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/66666666-6666-4666-8666-666666666666/revoke"
+      }
+    },
+    "POST /api/channels/:id/template": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/66666666-6666-4666-8666-666666666666/template",
+        "body": {
+          "name": "order_status_update",
+          "state": "pending"
+        }
+      }
+    },
+    "POST /api/channels/:id/template-approve": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/channels/66666666-6666-4666-8666-666666666666/template-approve",
+        "body": {
+          "entity_id": "11111111-1111-4111-8111-111111111111",
+          "name": "order_status_update"
+        }
+      }
     }
   },
   "listed": {
@@ -14749,6 +14925,16 @@
     "GET /api/kyb/risk": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/kyb/yourself": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "DELETE /api/channels/:id": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/channels": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/channels/outbound": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/approve": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/auto-raise": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/provider-ref": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/revoke": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/template": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/template-approve": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
