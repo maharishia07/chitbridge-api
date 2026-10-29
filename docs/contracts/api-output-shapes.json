@@ -6492,6 +6492,472 @@
         "url": "/api/integrations/streams"
       }
     },
+    "GET /api/network-design": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "draft",
+          "updated_at"
+        ],
+        "properties": {
+          "draft": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "draft",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/network-design"
+      }
+    },
+    "GET /api/network-design/availability": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "q",
+          "rows",
+          "summary"
+        ],
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "store",
+                "bridge_id",
+                "city",
+                "entity_id",
+                "price",
+                "price_currency",
+                "lat",
+                "lng",
+                "service_km",
+                "dispatch_days",
+                "ship_within_days",
+                "ship_beyond_days",
+                "item_id",
+                "name",
+                "code",
+                "currency",
+                "qty",
+                "is_me",
+                "known",
+                "freshness",
+                "km",
+                "eta"
+              ],
+              "properties": {
+                "store": {
+                  "type": "string"
+                },
+                "bridge_id": {
+                  "type": "string"
+                },
+                "city": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "entity_id": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "price_currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "lat": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "lng": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "service_km": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "dispatch_days": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "ship_within_days": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "ship_beyond_days": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "item_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "qty": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "is_me": {
+                  "type": "boolean"
+                },
+                "known": {
+                  "type": "boolean"
+                },
+                "freshness": {
+                  "type": "object",
+                  "required": [
+                    "minutes",
+                    "bucket",
+                    "stale",
+                    "label"
+                  ],
+                  "properties": {
+                    "minutes": {},
+                    "bucket": {
+                      "type": "string"
+                    },
+                    "stale": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "store": {},
+                    "bridge_id": {},
+                    "city": {},
+                    "entity_id": {},
+                    "price": {},
+                    "price_currency": {},
+                    "lat": {},
+                    "lng": {},
+                    "service_km": {},
+                    "dispatch_days": {},
+                    "ship_within_days": {},
+                    "ship_beyond_days": {},
+                    "item_id": {},
+                    "name": {},
+                    "code": {},
+                    "currency": {},
+                    "qty": {},
+                    "source": {},
+                    "as_of": {},
+                    "is_me": {},
+                    "known": {},
+                    "freshness": {},
+                    "km": {},
+                    "eta": {},
+                    "days": {},
+                    "basis": {},
+                    "declared": {}
+                  },
+                  "additionalProperties": false
+                },
+                "km": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "eta": {
+                  "type": "object",
+                  "required": [
+                    "days",
+                    "basis",
+                    "declared"
+                  ],
+                  "properties": {
+                    "days": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "basis": {
+                      "type": "string"
+                    },
+                    "declared": {
+                      "type": "boolean"
+                    },
+                    "store": {},
+                    "bridge_id": {},
+                    "city": {},
+                    "entity_id": {},
+                    "price": {},
+                    "price_currency": {},
+                    "lat": {},
+                    "lng": {},
+                    "service_km": {},
+                    "dispatch_days": {},
+                    "ship_within_days": {},
+                    "ship_beyond_days": {},
+                    "item_id": {},
+                    "name": {},
+                    "code": {},
+                    "currency": {},
+                    "qty": {},
+                    "source": {},
+                    "as_of": {},
+                    "is_me": {},
+                    "known": {},
+                    "freshness": {},
+                    "minutes": {},
+                    "bucket": {},
+                    "stale": {},
+                    "label": {},
+                    "km": {},
+                    "eta": {}
+                  },
+                  "additionalProperties": false
+                },
+                "as_of": {},
+                "minutes": {},
+                "bucket": {},
+                "stale": {},
+                "label": {},
+                "days": {},
+                "basis": {},
+                "declared": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "summary": {
+            "type": "string"
+          },
+          "not_in_network": {
+            "type": "boolean"
+          },
+          "from": {
+            "type": "object",
+            "required": [
+              "city",
+              "lat",
+              "lng"
+            ],
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "lat": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "lng": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "total": {
+            "type": "number"
+          },
+          "stores_with_stock": {
+            "type": "number"
+          },
+          "stores_unknown": {
+            "type": "number"
+          },
+          "one_query": {
+            "type": "boolean"
+          },
+          "degraded": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "object",
+            "properties": {
+              "shown": {
+                "type": "number"
+              },
+              "note": {
+                "type": "string"
+              },
+              "asked": {
+                "type": "number"
+              },
+              "of": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/network-design/availability?q=tea"
+      }
+    },
+    "GET /api/network-design/stores": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "stores"
+        ],
+        "properties": {
+          "stores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "entity_id",
+                "bridge_id",
+                "name",
+                "purpose",
+                "city",
+                "currency",
+                "km",
+                "is_me",
+                "sort_order"
+              ],
+              "properties": {
+                "entity_id": {
+                  "type": "string"
+                },
+                "bridge_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "city": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "km": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "is_me": {
+                  "type": "boolean"
+                },
+                "sort_order": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "not_in_network": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "object",
+            "required": [
+              "asked",
+              "of"
+            ],
+            "properties": {
+              "asked": {
+                "type": "number"
+              },
+              "of": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/network-design/stores"
+      }
+    },
     "GET /api/products": {
       "status": "200",
       "schema": {
@@ -9558,6 +10024,7 @@
     "GET /api/chits/sent": "open at chits[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/trace/by-batch": "open at nodes[] — a value passed through (an expression: its keys are not written in the handler); edges[] — a value passed through (a name: its keys are not written in the handler)",
     "DELETE /api/actors/:id/pin": "left open on purpose: the 200 carries the one-time code (show_code · otp on an opted-in stack); a shape that names it is a call for cb-security, not a sweep",
-    "GET /api/actors": "open at actors[].connector_config — the connector's own config, stored verbatim from the owner's body (routes/connectors.js: isObject only); a closed shape would cut a key it does not list"
+    "GET /api/actors": "open at actors[].connector_config — the connector's own config, stored verbatim from the owner's body (routes/connectors.js: isObject only); a closed shape would cut a key it does not list",
+    "GET /api/network-design": "open at draft - the saved drawing, stored verbatim from the owner body (PUT /: any object up to 2 MB, the design tool owns its keys); a closed shape would cut a key it does not list"
   }
 }
