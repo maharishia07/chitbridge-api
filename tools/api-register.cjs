@@ -340,30 +340,20 @@ const readSignoffs = () => readJson('docs/api-signoffs.json', null);
 
 const blankHuman = () => Object.fromEntries(HUMAN_COLUMNS.map((name) => [name, null]));
 
-/** a hand-file entry as the human block of a row: signed while its hash is the row's hash, stale (date null, stale_since = the row's hash) once the code moved; the entry itself is never touched */
+/** a hand-file entry as the human block of a row: signed while its hash is the row's hash, stale (date null, stale_since = the row's hash) once the code moved; the entry itself is never touched; a key that is neither a human column nor `hash` is refused (it would reach the derived register) */
 function humanFromEntry(entry, row) {
   const { hash, ...block } = entry;
+  const stray = Object.keys(block).filter((name) => !HUMAN_COLUMNS.includes(name));
+  if (stray.length) throw new Error('docs/api-signoffs.json: "' + row.key + '" has keys that are not human columns: ' + stray.join(', '));
   const human = Object.assign(blankHuman(), block);
   return hash === row.hash ? human : Object.assign(human, { signed_off_by_date: null, stale_since: row.hash });
 }
 
-/** the human columns come from docs/api-signoffs.json by route key (S15); a base checkout with no hand file yet falls back to the committed register's blocks (removed in the next api PR) */
-function mergeHuman(rows, previous, signoffs) {
-  if (signoffs) {
-    rows.forEach((row) => {
-      const entry = signoffs.routes && signoffs.routes[row.key];
-      row.human = entry ? humanFromEntry(entry, row) : blankHuman();
-      row.status = statusOf(row.columns, row.human);
-    });
-    return;
-  }
-  console.log('docs/api-signoffs.json not found: human columns taken from the committed docs/api-register.json (fallback until the hand file lands)');
-  const before = new Map((previous.routes || []).map((row) => [row.key, row]));
+/** the human columns come from docs/api-signoffs.json by route key (S15); no hand file means no sign-offs (the old fallback to the committed register is gone: it let a derived file carry hand facts) */
+function mergeHuman(rows, signoffs) {
   rows.forEach((row) => {
-    const old = before.get(row.key);
-    const human = old && old.human ? old.human : blankHuman();
-    const stale = !!(human.signed_off_by_date && old.hash !== row.hash);
-    row.human = stale ? Object.assign({}, human, { signed_off_by_date: null, stale_since: row.hash }) : human;
+    const entry = signoffs && signoffs.routes && signoffs.routes[row.key];
+    row.human = entry ? humanFromEntry(entry, row) : blankHuman();
     row.status = statusOf(row.columns, row.human);
   });
 }
@@ -396,7 +386,7 @@ function buildRegister() {
     .filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path))
     .map((leaf) => rowOf(leaf, context))
     .sort((left, right) => (left.key < right.key ? -1 : 1));
-  mergeHuman(rows, readJson('docs/api-register.json', {}), readSignoffs());
+  mergeHuman(rows, readSignoffs());
   return { version: 1, stage: STAGE, counts: countsOf(rows), machine_columns: MACHINE_COLUMNS, human_columns: HUMAN_COLUMNS, routes: rows };
 }
 
@@ -477,4 +467,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { mergeHuman, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
