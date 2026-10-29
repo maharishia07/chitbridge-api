@@ -36,7 +36,7 @@ of file each thing is; this says what already does the job.
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `record` | `access-events.js` |  |
-| 49 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 50 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 48 | `pack` | `books-store.js` |  |
 | 48 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 47 | `again` | `signin-ui.js` |  |
