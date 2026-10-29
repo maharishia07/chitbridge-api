@@ -14196,6 +14196,479 @@
           "name": "order_status_update"
         }
       }
+    },
+    "GET /api/capture/consolidate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "date",
+          "dates",
+          "requirement",
+          "flags",
+          "unmatched_phrase_count",
+          "note"
+        ],
+        "properties": {
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dates": {},
+          "requirement": {},
+          "flags": {
+            "type": "object"
+          },
+          "unmatched_phrase_count": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "flags",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/capture/consolidate"
+      }
+    },
+    "GET /api/capture/pending": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/capture/pending"
+      }
+    },
+    "GET /api/capture/stores": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/capture/stores"
+      }
+    },
+    "POST /api/capture/:id/convert": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/capture/22222222-2222-4222-8222-222222222222/convert",
+        "body": {
+          "chit_id": "88888888-8888-4888-8888-888888888888"
+        }
+      }
+    },
+    "POST /api/capture/:id/dismiss": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/capture/22222222-2222-4222-8222-222222222222/dismiss"
+      }
+    },
+    "POST /api/capture/:id/raise": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "purpose",
+          "subject",
+          "line_items",
+          "recipients",
+          "self_copy",
+          "business_json",
+          "original"
+        ],
+        "properties": {
+          "purpose": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "particulars",
+                "quantity",
+                "price",
+                "total",
+                "unit",
+                "raw_phrase",
+                "qty_missing",
+                "needs_human"
+              ],
+              "properties": {
+                "particulars": {
+                  "type": "string"
+                },
+                "quantity": {},
+                "price": {
+                  "type": "number"
+                },
+                "total": {
+                  "type": "number"
+                },
+                "unit": {
+                  "type": "string"
+                },
+                "raw_phrase": {
+                  "type": "string"
+                },
+                "qty_missing": {
+                  "type": "boolean"
+                },
+                "needs_human": {
+                  "type": "boolean"
+                },
+                "useCatalogue": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "self",
+                "role"
+              ],
+              "properties": {
+                "self": {
+                  "type": "boolean"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "useCatalogue": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "self_copy": {
+            "type": "string"
+          },
+          "business_json": {
+            "type": "object",
+            "required": [
+              "via"
+            ],
+            "properties": {
+              "via": {
+                "type": "object",
+                "required": [
+                  "channel",
+                  "from",
+                  "from_name",
+                  "to",
+                  "provider_msg_id",
+                  "capture_id",
+                  "received_at",
+                  "read_by",
+                  "sender_verified",
+                  "delivery_at",
+                  "raw_excerpt",
+                  "media_count",
+                  "label",
+                  "priced"
+                ],
+                "properties": {
+                  "channel": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "from_name": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "provider_msg_id": {
+                    "type": "string"
+                  },
+                  "capture_id": {
+                    "type": "string"
+                  },
+                  "received_at": {
+                    "type": "string"
+                  },
+                  "read_by": {
+                    "type": "string"
+                  },
+                  "sender_verified": {
+                    "type": "boolean"
+                  },
+                  "delivery_at": {
+                    "type": "string"
+                  },
+                  "raw_excerpt": {
+                    "type": "string"
+                  },
+                  "media_count": {
+                    "type": "number"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "priced": {
+                    "type": "object",
+                    "required": [
+                      "from_catalogue",
+                      "unpriced",
+                      "ambiguous",
+                      "asked_differs",
+                      "catalogue_used"
+                    ],
+                    "properties": {
+                      "from_catalogue": {
+                        "type": "number"
+                      },
+                      "unpriced": {
+                        "type": "number"
+                      },
+                      "ambiguous": {},
+                      "asked_differs": {},
+                      "catalogue_used": {
+                        "type": "boolean"
+                      },
+                      "useCatalogue": {}
+                    },
+                    "additionalProperties": false
+                  },
+                  "useCatalogue": {}
+                },
+                "additionalProperties": false
+              },
+              "useCatalogue": {}
+            },
+            "additionalProperties": false
+          },
+          "original": {
+            "type": "object",
+            "required": [
+              "filename",
+              "text"
+            ],
+            "properties": {
+              "filename": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "useCatalogue": {}
+            },
+            "additionalProperties": false
+          },
+          "useCatalogue": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/capture/22222222-2222-4222-8222-222222222222/raise"
+      }
+    },
+    "POST /api/capture/:id/structure": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/capture/22222222-2222-4222-8222-222222222222/structure"
+      }
+    },
+    "POST /api/capture/simulate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "channel",
+          "sender_ref",
+          "sender_name",
+          "subject",
+          "raw_text",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "sender_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sender_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "raw_text": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "media_refs": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/capture/simulate",
+        "body": {
+          "channel": "whatsapp",
+          "sender_ref": "919840012345",
+          "raw_text": "hello"
+        }
+      }
+    },
+    "POST /api/capture/stores": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/capture/stores",
+        "body": {
+          "phone": "+91 98400 12345",
+          "display_name": "Chola Stores",
+          "address": "Anna Nagar",
+          "notes": "gate 2"
+        }
+      }
+    },
+    "POST /api/capture/webhook/email": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "captured": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/capture/webhook/email"
+      }
+    },
+    "POST /api/capture/webhook/whatsapp": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "captured": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 13,
+      "open": [],
+      "example": {
+        "url": "/api/capture/webhook/whatsapp"
+      }
     }
   },
   "listed": {
@@ -14935,6 +15408,14 @@
     "POST /api/channels/:id/provider-ref": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/channels/:id/revoke": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/channels/:id/template": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/channels/:id/template-approve": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "POST /api/channels/:id/template-approve": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/capture/consolidate": "open at flags — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/capture/pending": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/capture/stores": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/capture/webhook/whatsapp": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+    "POST /api/capture/:id/convert": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/capture/:id/dismiss": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/capture/:id/structure": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/capture/stores": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

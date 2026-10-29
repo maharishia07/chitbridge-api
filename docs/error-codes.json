@@ -74,6 +74,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "AI_UNAVAILABLE",
+   "status": "503",
+   "title": "AI not connected",
+   "shopkeeper": "The AI is not available just now.",
+   "hint": "Try again later, or raise the request by hand.",
+   "owner_area": "capture",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ALL_REFUSED",
    "status": "varies",
    "title": "All refused",
@@ -540,6 +549,24 @@
    "hint": "-",
    "owner_area": "connectors",
    "since": "2026-10-22"
+  },
+  {
+   "code": "CAPTURE_REFUSED",
+   "status": "varies",
+   "title": "Message not handled",
+   "shopkeeper": "That message could not be handled as asked.",
+   "hint": "Read the line shown, then try again.",
+   "owner_area": "capture",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CAPTURE_STORE_MISSING",
+   "status": "503",
+   "title": "Inbox not ready",
+   "shopkeeper": "The inbox is not set up on this system yet.",
+   "hint": "Ask your administrator to finish the update.",
+   "owner_area": "capture",
+   "since": "2026-10-23"
   },
   {
    "code": "CATALOGUE_NOT_EMPTY",
@@ -3384,6 +3411,15 @@
    "hint": "-",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "STORES_NOT_MIGRATED",
+   "status": "503",
+   "title": "Shop list not ready",
+   "shopkeeper": "The shop list is not set up on this system yet.",
+   "hint": "Ask your administrator to finish the update.",
+   "owner_area": "capture",
+   "since": "2026-10-23"
   },
   {
    "code": "SUBMISSION_REJECTED",
