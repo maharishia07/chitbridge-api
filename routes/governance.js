@@ -315,7 +315,9 @@ router.get('/readiness', auth, ...checked('GET /readiness'), async (req, res) =>
       : await R.resolveReadiness(entity_id);
     /* G8: what this login may do here — the server answers, the screen greys a refused button WITH the sentence */
     const m = require('../lib/access').mayWrite(req);
-    res.json({ ...out, may: { gather: m, verify: m } });
+    /* S34: every key either branch (the entity's own standards, or a destination) can carry is named; a key the branch does not carry is undefined, and JSON leaves it out */
+    // prettier-ignore
+    res.json({ origin: out.origin, vertical: out.vertical, destination: out.destination, dest_name: out.dest_name, domestic: out.domestic, asked: out.asked, code: out.code, why: out.why, standards: out.standards, clearances: out.clearances, summary: out.summary, may: { gather: m, verify: m } });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Readiness failed'));
   }
@@ -326,7 +328,8 @@ router.get('/lanes', auth, ...checked('GET /lanes'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const m = require('../lib/access').mayWrite(req); /* G8 */
-    res.json({ ...(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin)), may: { gather: m, verify: m } });
+    const matrix = await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin);
+    res.json({ vertical: matrix.vertical, origin: matrix.origin, asked: matrix.asked, code: matrix.code, why: matrix.why, lanes: matrix.lanes, may: { gather: m, verify: m } });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Lanes failed'));
   }
@@ -338,7 +341,10 @@ router.get('/lanes', auth, ...checked('GET /lanes'), async (req, res) => {
 router.get('/track-record', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/reference').resolveTrackRecord(entity_id));
+    const record = await require('../lib/reference').resolveTrackRecord(entity_id);
+    /* S34: the reference's strength words, then its counts */
+    // prettier-ignore
+    res.json({ rung: record.rung, note: record.note, disputes_clean: record.disputes_clean, counterparties: record.counterparties, dealings: record.dealings, settled: record.settled, disputes_open: record.disputes_open, disputes_resolved: record.disputes_resolved, on_rail_since: record.on_rail_since, last_dealing: record.last_dealing });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Track record failed'));
   }
@@ -349,7 +355,8 @@ router.get('/track-record', auth, async (req, res) => {
 router.get('/instruments', auth, ...checked('GET /instruments'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
-    res.json(require('../lib/instruments').resolveInstruments({ cross_border, incoterm: req.query.incoterm }));
+    const cluster = require('../lib/instruments').resolveInstruments({ cross_border, incoterm: req.query.incoterm });
+    res.json({ framework: cluster.framework, cross_border: cluster.cross_border, incoterm: cluster.incoterm, cargo_insured_by: cluster.cargo_insured_by, frm_classes: cluster.frm_classes, cluster: cluster.cluster });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Instruments failed'));
   }
@@ -358,7 +365,8 @@ router.get('/instruments', auth, ...checked('GET /instruments'), async (req, res
 router.get('/journey', auth, ...checked('GET /journey'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
-    res.json(require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm }));
+    const journey = require('../lib/instruments').resolveJourney({ cross_border, incoterm: req.query.incoterm });
+    res.json({ cross_border: journey.cross_border, incoterm: journey.incoterm, chain: journey.chain });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Journey failed'));
   }
@@ -366,7 +374,8 @@ router.get('/journey', auth, ...checked('GET /journey'), async (req, res) => {
 // GET /api/governance/commerce-standards — the commerce standards (Incoterms/UCP/FRM) as governed source-entities (b93).
 router.get('/commerce-standards', auth, async (req, res) => {
   try {
-    res.json(await require('../lib/instruments').commerceStandards());
+    const standards = await require('../lib/instruments').commerceStandards();
+    res.json({ framework: standards.framework, governed: standards.governed, sources: standards.sources });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Commerce standards failed'));
   }
@@ -376,7 +385,10 @@ router.get('/commerce-standards', auth, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/profile').getProfile(entity_id));
+    const held = await require('../lib/profile').getProfile(entity_id);
+    /* S34: the trade profile and the vault beside it, every key named (the same eight keys PUT /profile answers) */
+    // prettier-ignore
+    res.json({ trade_mode: held.trade_mode, markets: held.markets, sectors: held.sectors, adopted: held.adopted, vault: held.vault, vault_version: held.vault_version, invoice_party: held.invoice_party, vault_encrypted: held.vault_encrypted });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Profile failed'));
   }
@@ -457,7 +469,8 @@ router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), 
 router.get('/profile/readiness', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/profile').resolveProfileReadiness(entity_id));
+    const ownReadiness = await require('../lib/profile').resolveProfileReadiness(entity_id);
+    res.json({ profile: ownReadiness.profile, asked: ownReadiness.asked, code: ownReadiness.code, why: ownReadiness.why, clearances: ownReadiness.clearances, summary: ownReadiness.summary });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Profile readiness failed'));
   }
@@ -466,7 +479,8 @@ router.get('/profile/readiness', auth, async (req, res) => {
 router.get('/profile/path', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/profile').resolvePath(entity_id));
+    const road = await require('../lib/profile').resolvePath(entity_id);
+    res.json({ profile: road.profile, sector: road.sector, origin: road.origin, asked: road.asked, code: road.code, why: road.why, lanes: road.lanes, adoptable: road.adoptable });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Path failed'));
   }
@@ -487,7 +501,10 @@ router.get('/country-setup', auth, ...checked('GET /country-setup'), async (req,
   try {
     const entity_id = auth.entityOf(req);
     const CS = require('../lib/country-setup');
-    res.json(await withEntity(entity_id, (h) => CS.profile(h, entity_id)));
+    const setup = await withEntity(entity_id, (h) => CS.profile(h, entity_id));
+    /* S34: the profile's keys, all named (lib/country-setup.js profile) */
+    // prettier-ignore
+    res.json({ migrated: setup.migrated, done: setup.done, set_at: setup.set_at, required: setup.required, country: setup.country, currency: setup.currency, fy_start_month: setup.fy_start_month, tax: setup.tax, timezone: setup.timezone, zones: setup.zones, constituted: setup.constituted, constituted_by: setup.constituted_by, countries: setup.countries, source: setup.source, pack: setup.pack });
   } catch (err) {
     problem(req, res, countrySetupFault(err, req, 'Country setup could not be read', 500));
   }
@@ -533,7 +550,10 @@ router.post('/ai-draft', auth, ...checked('POST /ai-draft'), async (req, res) =>
 router.get('/ai-usage', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/ai').usageSummary(entity_id));
+    const spend = await require('../lib/ai').usageSummary(entity_id);
+    /* S34: the metered answer, then the one a shop gets before b99 (calls · tokens · spent_usd · credits_usd · balance_usd · free_usd · budget_usd · remaining_usd are in both; rates and note in one each) */
+    // prettier-ignore
+    res.json({ calls: spend.calls, tokens: spend.tokens, spent_usd: spend.spent_usd, credits_usd: spend.credits_usd, balance_usd: spend.balance_usd, free_usd: spend.free_usd, budget_usd: spend.budget_usd, remaining_usd: spend.remaining_usd, rate_per_hour: spend.rate_per_hour, rate_per_day: spend.rate_per_day, note: spend.note });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'AI usage failed'));
   }
@@ -585,7 +605,8 @@ router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'
     const shown = isOwnRow
       ? rd
       : Object.assign({}, rd, { clearances: (rd.clearances || []).map((clearance) => Object.assign({}, clearance, { evidence_ref: null })) });
-    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...shown });
+    /* S34: the passport is the entity's own readiness answer (standards · clearances · summary) beside the supplier and the facts */
+    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, standards: shown.standards, clearances: shown.clearances, summary: shown.summary });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Readiness failed'));
   }

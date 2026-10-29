@@ -182,6 +182,11 @@ async function readPage(db, sel, from, order, params, q, size) {
   });
   return { rows, total, page, limit };
 }
+/* S34: the report's two row lists are the columns their statements select, each named (the answer is these rows as they came) */
+// prettier-ignore
+const coverRowOf = (x) => ({ module_key: x.module_key, module_name: x.module_name, total: x.total, passed: x.passed, failed: x.failed, blocked: x.blocked, skipped: x.skipped, untested: x.untested, high_untested: x.high_untested, untested_swept: x.untested_swept, untested_written: x.untested_written });
+// prettier-ignore
+const badRowOf = (x) => ({ case_key: x.case_key, module_key: x.module_key, status: x.status, note: x.note, evidence: x.evidence, tester_name: x.tester_name, run_kind: x.run_kind, layer: x.layer, at: x.at, case_version: x.case_version });
 /* the ?state= filter of a findings list, its value at $2: 'all' · 'open' (any of `open`) · one state. The lists are constants. */
 function stateWhere(col, open) {
   return `($2 = 'all' OR ($2 = 'open' AND ${col} IN (${open.map((item) => `'${item}'`).join(',')})) OR ${col} = $2)`;
@@ -322,7 +327,9 @@ router.get('/trace', auth, ...checked('GET /trace'), (req, res) => {
   try {
     const me = auth.entityOf(req);
     if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
-    return res.json(require('../lib/trips').traceState(me));
+    const state = require('../lib/trips').traceState(me);
+    /* S34: the keys the library's answer can carry, named; a key it does not carry is undefined, and JSON leaves it out */
+    return res.json({ on: state.on, until: state.until, seconds: state.seconds });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Failed'));
   }
@@ -1379,9 +1386,10 @@ router.get('/results', auth, ...checked('GET /results'), async (req, res) => {
     const pj = projectOf(q.project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
 
+    let r = null;
     if (q.case_key || q.run_id) {
       const where = q.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
-      const nestedR = await withEntity(entity_id, async (db) =>
+      r = await withEntity(entity_id, async (db) =>
         readPage(
           db,
           '*',
@@ -1393,36 +1401,30 @@ router.get('/results', auth, ...checked('GET /results'), async (req, res) => {
         )
       );
       /* ⚠️ `history` named which branch answered and no caller read it — dropped by the envelope besides */
-      return res.json({
-        results: nestedR.rows,
-        count: nestedR.rows.length,
-        total: nestedR.total,
-        page: nestedR.page,
-        limit: nestedR.limit,
-        project: pj.project
-      });
+    } else {
+      /**
+       * ⚠️ LATEST PER (case, layer), not per case. One case is often proved at two levels — the offer engine's
+       * arithmetic by a unit test AND by a person at the counter — and collapsing those would let a green unit test
+       * hide a red counter, which is precisely the pair of facts worth keeping apart.
+       */
+      /* ⭐ with ?project= it is the latest word per case WITHIN that project — "where did this sprint leave it" */
+      r = await withEntity(entity_id, async (db) =>
+        readPage(
+          db,
+          '*',
+          `FROM (SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
+           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 2)}
+          ORDER BY case_key, COALESCE(layer,''), at DESC) latest`,
+          `case_key, COALESCE(layer,'')`,
+          [entity_id, pj.project],
+          q,
+          PAGE.results
+        )
+      );
     }
-
-    /**
-     * ⚠️ LATEST PER (case, layer), not per case. One case is often proved at two levels — the offer engine's
-     * arithmetic by a unit test AND by a person at the counter — and collapsing those would let a green unit test
-     * hide a red counter, which is precisely the pair of facts worth keeping apart.
-     */
-    /* ⭐ with ?project= it is the latest word per case WITHIN that project — "where did this sprint leave it" */
-    const r = await withEntity(entity_id, async (db) =>
-      readPage(
-        db,
-        '*',
-        `FROM (SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
-         FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 2)}
-        ORDER BY case_key, COALESCE(layer,''), at DESC) latest`,
-        `case_key, COALESCE(layer,'')`,
-        [entity_id, pj.project],
-        q,
-        PAGE.results
-      )
-    );
-    res.json({ results: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
+    /* S34: a row of the ledger is test_result as the table holds it (migrations/000_baseline_2026-10-21.sql, project from b292), every column named; a column the database does not hold yet is undefined, and JSON leaves it out */
+    // prettier-ignore
+    res.json({ results: r.rows.map((x) => ({ result_id: x.result_id, entity_id: x.entity_id, definition_id: x.definition_id, case_version: x.case_version, case_key: x.case_key, module_key: x.module_key, status: x.status, run_kind: x.run_kind, layer: x.layer, tested_by: x.tested_by, tester_name: x.tester_name, at: x.at, run_id: x.run_id, run_label: x.run_label, note: x.note, evidence: x.evidence, build: x.build, project: x.project })), count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the results'));
   }
@@ -1468,7 +1470,9 @@ router.get('/runs', auth, ...checked('GET /runs'), async (req, res) => {
         PAGE.runs
       );
     });
-    res.json({ runs: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project, projects });
+    /* S34: a sitting and a project are the columns their statements select, each named */
+    // prettier-ignore
+    res.json({ runs: r.rows.map((x) => ({ run_id: x.run_id, run_label: x.run_label, build: x.build, project: x.project, started: x.started, finished: x.finished, kinds: x.kinds, testers: x.testers, total: x.total, passed: x.passed, failed: x.failed, blocked: x.blocked, skipped: x.skipped })), count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project, projects: projects.map((x) => ({ project: x.project, runs: x.runs, last_at: x.last_at })) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read the runs'));
   }
@@ -3023,8 +3027,8 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
         byLayer = fold('layer');
 
       return {
-        cover: cover.rows,
-        bad: bad.rows,
+        cover: cover.rows.map(coverRowOf),
+        bad: bad.rows.map(badRowOf),
         runs: runs.rows,
         people: people.rows,
         kinds: Object.keys(byKind)
@@ -3209,8 +3213,8 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
              * otherwise. [[feedback-silence-is-the-bug]]
              */
             tested_by:
-              [
-                ...new Set(
+              Array.from(
+                new Set(
                   data.runs
                     .flatMap((item) =>
                       String(item.testers || '')
@@ -3219,12 +3223,12 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
                     )
                     .filter(Boolean)
                 )
-              ].join(', ') || '—',
+              ).join(', ') || '—',
             period: data.runs.length ? { from: data.runs[data.runs.length - 1].started, to: data.runs[0].finished } : null,
             runs: data.runs.length,
-            kinds: [...new Set(data.runs.flatMap((item) => String(item.kinds || '').split(', ')))].filter(Boolean),
-            layers: [...new Set(data.runs.flatMap((item) => String(item.layers || '').split(', ')))].filter(Boolean),
-            builds: [...new Set(data.runs.map((item) => item.build).filter(Boolean))]
+            kinds: Array.from(new Set(data.runs.flatMap((item) => String(item.kinds || '').split(', ')))).filter(Boolean),
+            layers: Array.from(new Set(data.runs.flatMap((item) => String(item.layers || '').split(', ')))).filter(Boolean),
+            builds: Array.from(new Set(data.runs.map((item) => item.build).filter(Boolean)))
           }
         },
 
@@ -3807,11 +3811,11 @@ router.get('/changes', auth, ...checked('GET /changes'), async (req, res) => {
     });
     const open = all.filter((item) => item.state === 'proposed' || item.state === 'reviewed');
     const list = want === 'all' ? all : want === 'open' ? open : all.filter((item) => item.state === want);
-    res.json(
-      Object.assign(pageOut('changes', list, pageArgs(req.query, PAGE.findings, PAGE.findings)), {
-        counts: { all: all.length, open: open.length, unproven: all.filter((item) => !(item.proves || []).length).length }
-      })
-    );
+    const answer = Object.assign(pageOut('changes', list, pageArgs(req.query, PAGE.findings, PAGE.findings)), {
+      counts: { all: all.length, open: open.length, unproven: all.filter((item) => !(item.proves || []).length).length }
+    });
+    /* S34: every key the pager can add is named (capped and cap_note only when the caller asked past the cap); an absent one is undefined, and JSON leaves it out */
+    res.json({ changes: answer.changes, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, counts: answer.counts });
   } catch (e) {
     console.error('changes list:', e.code || '', e.message);
     problem(req, res, bareFaultOf(e, req, 'Failed to list changes'));
@@ -4027,8 +4031,7 @@ router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
         [entity_id]
       )
     );
-    res.json(
-      pageOut(
+    const answer = pageOut(
         'releases',
         r.rows.map((x) => ({
           definition_id: x.definition_id,
@@ -4041,8 +4044,9 @@ router.get('/releases', auth, ...checked('GET /releases'), async (req, res) => {
           at: x.updated_at
         })),
         pageArgs(req.query, PAGE.releases, PAGE.releases)
-      )
-    );
+      );
+    /* S34: every key the pager can add is named (capped and cap_note only when the caller asked past the cap); an absent one is undefined, and JSON leaves it out */
+    res.json({ releases: answer.releases, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (e) {
     console.error('releases list:', e.code || '', e.message);
     problem(req, res, bareFaultOf(e, req, 'Failed to list releases'));
