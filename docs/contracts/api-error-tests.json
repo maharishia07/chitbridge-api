@@ -908,6 +908,14 @@
  "GET /api/pricing/kinds": [
   500
  ],
+ "GET /api/privacy/facts": [
+  500
+ ],
+ "GET /api/privacy/me": [
+  401,
+  403,
+  500
+ ],
  "GET /api/products": [
   400,
   401,
@@ -2322,6 +2330,20 @@
   401,
   403,
   500
+ ],
+ "POST /api/privacy/me/consent": [
+  400,
+  401,
+  403,
+  500,
+  503
+ ],
+ "POST /api/privacy/me/requests": [
+  400,
+  401,
+  403,
+  500,
+  503
  ],
  "POST /api/products": [
   400,

@@ -20,6 +20,11 @@
  *                                      through the lifecycle path (PATCH /api/entities/:id/erase, platform scope) — never from this page.
  *   Before b306 / b307: 503 PRIVACY_NOT_MIGRATED in words (the GET says it in may_consent / may_request so the page greys, not breaks).
  *
+ * FLOW  facts: no sign-in → the answer of lib/privacy.js. The three shopper routes: customerAuth (a shopper's token only) → schema check (lib/privacy-contract.js) → the handler
+ *       (the shop and the shopper from the token) → lib/privacy.js. A refusal or a fault → problem(req, res, faultOf(e, req)), the old { code, error, message } kept beside the Problem
+ *       fields (docs/contracts/api-legacy.json). NO route here takes an id: the shopper and the shop are the token's, never named by the caller.
+ * CARD  11-crm-and-marketing/privacy-consent
+ *
  * ⭐ It is the Standards register's live check: the register's privacy rows point here, so a reviewer runs one GET and sees the facts,
  *   and sees just as plainly what is NOT done yet. The shop's own registers (consent, requests) are /api/crm — signed in, per shop.
  */
@@ -28,12 +33,20 @@ const router = express.Router();
 const { withEntity } = require('../db');
 const customerAuth = require('../middleware/customer-auth');
 const PV = require('../lib/privacy');
-const { safeErr } = require('../lib/respond');
-const log = require('../lib/logger');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { contract, faultOf } = require('../lib/privacy-contract'); // the contract (each route's operation) and the one way a fault is worded
+const { declaresStatuses } = require('../lib/contract-kit'); // names the statuses lib/privacy.js can refuse with (a sentence of its own, the migration not run)
 
-router.get('/facts', (req, res) => {
-  res.set('Cache-Control', 'public, max-age=300');
-  res.json(PV.facts());
+/** a catch that cannot spell its statuses: they are the library's (400 a sentence, 503 the migration not run) and the sign-in's (403 no shop) */
+const mayRefuse = declaresStatuses([503]);
+
+router.get('/facts', ...contract.checked('GET /facts'), (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(PV.facts());
+  } catch (e) {
+    next(e); // what express did with a throw here; server.js's one error handler answers it
+  }
 });
 
 /** the shop and the party, from the token alone (the server decides; the body never names them) */
@@ -47,23 +60,16 @@ function whoOf(req) {
   }
   return { shop: c.shop_entity_id, me: c.identity_id, name: c.display_name || null };
 }
-function fail(res, e) {
-  if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
-  if (e && e.status && e.status < 500)
-    return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
-  log.error('privacy/me failed', { err: e && e.message });
-  return res.status(500).json({ error: 'Failed', message: safeErr(e) });
-}
 
-router.get('/me', customerAuth, async (req, res) => {
+router.get('/me', customerAuth, ...contract.checked('GET /me'), async (req, res) => {
   try {
     const w = whoOf(req);
     res.json(await withEntity(w.shop, (h) => PV.shopper(h, w.shop, w.me)));
   } catch (e) {
-    fail(res, e);
+    problem(req, res, faultOf(e, req)); // 503 migration not run · a refusal's fixed words (under 500) · else the generic 500; old keys kept
   }
 });
-router.post('/me/consent', customerAuth, async (req, res) => {
+router.post('/me/consent', customerAuth, ...contract.checked('POST /me/consent'), mayRefuse, async (req, res) => {
   try {
     const w = whoOf(req),
       b = req.body || {};
@@ -73,10 +79,10 @@ router.post('/me/consent', customerAuth, async (req, res) => {
     });
     res.status(201).json(out);
   } catch (e) {
-    fail(res, e);
+    problem(req, res, faultOf(e, req)); // 503 migration not run · a refusal's fixed words (under 500) · else the generic 500; old keys kept
   }
 });
-router.post('/me/requests', customerAuth, async (req, res) => {
+router.post('/me/requests', customerAuth, ...contract.checked('POST /me/requests'), mayRefuse, async (req, res) => {
   try {
     const w = whoOf(req),
       b = req.body || {};
@@ -87,7 +93,8 @@ router.post('/me/requests', customerAuth, async (req, res) => {
     });
     res.status(201).json({ request: r });
   } catch (e) {
-    fail(res, e);
+    problem(req, res, faultOf(e, req)); // 503 migration not run · a refusal's fixed words (under 500) · else the generic 500; old keys kept
   }
 });
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;
