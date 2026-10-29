@@ -1734,12 +1734,15 @@ router.post(
       if (custLocality) {
         try {
           const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
-          for (const sk of srcs)
-            await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
-              sk,
-              entity.identity_id,
-              custLocality
-            ]);
+          /* SEC-75c: source_penetration is RLS-closed (b831) — the distributor writes its own rows, so bind it */
+          await withEntity(entity.identity_id, async (db) => {
+            for (const sk of srcs)
+              await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
+                sk,
+                entity.identity_id,
+                custLocality
+              ]);
+          });
         } catch (e) {
           logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */
         }
