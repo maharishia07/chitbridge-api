@@ -10847,6 +10847,47 @@
       "example": {
         "url": "/api/pricing/kinds"
       }
+    },
+    "POST /api/attachments": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "mime",
+          "size"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object"
+          },
+          "mime": {},
+          "size": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 25,
+      "open": [
+        {
+          "path": "name",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/attachments",
+        "body": {
+          "chit_id": "77777777-7777-4777-8777-777777777777",
+          "name": "receipt.png",
+          "mime": "image/png",
+          "data_base64": 246810
+        }
+      }
     }
   },
   "listed": {
@@ -11533,6 +11574,8 @@
     "POST /api/quick-keys/groups/:id/items": "open at item — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)",
-    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)"
+    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/attachments/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+    "POST /api/attachments": "open at name — a value passed through (a name: its keys are not written in the handler)"
   }
 }

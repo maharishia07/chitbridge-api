@@ -218,6 +218,33 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ATTACHMENT_EMPTY",
+   "status": "400",
+   "title": "File is empty",
+   "shopkeeper": "That file has nothing in it.",
+   "hint": "Choose a file that is not empty.",
+   "owner_area": "attachments",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ATTACHMENT_FIELDS_MISSING",
+   "status": "400",
+   "title": "File details missing",
+   "shopkeeper": "The chit, the file's name or the file itself was left out.",
+   "hint": "Choose the chit and the file again, then send.",
+   "owner_area": "attachments",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ATTACHMENT_NOT_A_PARTICIPANT",
+   "status": "403",
+   "title": "Not on this chit",
+   "shopkeeper": "You are not on this chit, so you cannot put a file on it.",
+   "hint": "Open a chit you are part of and try again.",
+   "owner_area": "attachments",
+   "since": "2026-10-23"
+  },
+  {
    "code": "AUTO_TOKEN",
    "status": "varies",
    "title": "Auto token",

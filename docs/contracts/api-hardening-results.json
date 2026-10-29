@@ -3229,11 +3229,11 @@
   "POST /api/attachments": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/attachments/:id": {
