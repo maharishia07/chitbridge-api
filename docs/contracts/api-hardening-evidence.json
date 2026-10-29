@@ -41,6 +41,18 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/chits/sent": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/folder": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/rollup": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/inbox": {
+   "output_allowlist": true
+  },
   "GET /api/chits/pulse": {
    "output_allowlist": true
   },
@@ -56,6 +68,15 @@
   },
   "POST /api/chits/:chit_id/costs": {
    "foreign_id_404": true
+  },
+  "GET /api/chits/register/attachables": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/register/subjects": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/register/templates": {
+   "output_allowlist": true
   },
   "GET /api/chits/register/walk/:from": {
    "output_allowlist": true
@@ -114,6 +135,9 @@
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "foreign_id_404": true
   },
+  "GET /api/chits/disputes/queue": {
+   "output_allowlist": true
+  },
   "DELETE /api/chits/:chit_id": {
    "foreign_id_404": true
   },
@@ -157,6 +181,9 @@
    "foreign_id_404": true
   },
   "GET /api/chits/trace/batches": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/trace/by-batch": {
    "output_allowlist": true
   },
   "GET /api/chits/trace/networks": {
