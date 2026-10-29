@@ -40,8 +40,12 @@
   "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
+  "GET /api/actors": {
+   "output_allowlist": true
+  },
   "GET /api/actors/:id/tasks": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/actors/access-events": {
    "output_allowlist": true
@@ -344,7 +348,8 @@
    "output_allowlist": true
   },
   "PATCH /api/actors/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PATCH /api/counters/:id": {
    "foreign_id_404": true
@@ -372,6 +377,12 @@
   },
   "POST /api/actors/:id/otp": {
    "foreign_id_404": true
+  },
+  "POST /api/actors/check-key": {
+   "output_allowlist": true
+  },
+  "POST /api/actors/suggest-key": {
+   "output_allowlist": true
   },
   "POST /api/capture/:id/convert": {
    "foreign_id_404": true
@@ -602,13 +613,27 @@
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PUT /api/actors/:id/status": {
    "foreign_id_404": true
   },
+  "PUT /api/actors/:id/tasks/route": {
+   "output_allowlist": true
+  },
   "PUT /api/actors/assign/:chit_id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "PUT /api/actors/break": {
+   "output_allowlist": true
+  },
+  "PUT /api/actors/change-pin": {
+   "output_allowlist": true
+  },
+  "PUT /api/actors/settings": {
+   "output_allowlist": true
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "output_allowlist": true
