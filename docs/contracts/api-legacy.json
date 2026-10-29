@@ -35962,11 +35962,11 @@
      "status": 400,
      "body_keys": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      },
      "fixture": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      }
     },
     {
@@ -35974,11 +35974,11 @@
      "status": 400,
      "body_keys": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      },
      "fixture": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      }
     },
     {
@@ -35986,11 +35986,11 @@
      "status": 400,
      "body_keys": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      },
      "fixture": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      }
     },
     {
@@ -35998,11 +35998,11 @@
      "status": 400,
      "body_keys": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      },
      "fixture": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      }
     },
     {
@@ -36032,11 +36032,11 @@
      "status": 400,
      "body_keys": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      },
      "fixture": {
       "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)"
+      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
      }
     },
     {

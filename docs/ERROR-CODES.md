@@ -113,7 +113,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | PENDING | - | folder-inventory | 2026-10-22 |
 | DUPLICATE_PARTY | 409 | Duplicate party | Another party on your list already has this tax number. | Check the number, or open the party that holds it. | relationships | 2026-10-22 |
-| DUPLICATE_PARTY | 409 | Duplicate party | PENDING | - | relationships | 2026-10-22 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | - | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |

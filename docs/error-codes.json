@@ -1262,15 +1262,6 @@
    "since": "2026-10-22"
   },
   {
-   "code": "DUPLICATE_PARTY",
-   "status": "409",
-   "title": "Duplicate party",
-   "shopkeeper": "PENDING",
-   "hint": "-",
-   "owner_area": "relationships",
-   "since": "2026-10-22"
-  },
-  {
    "code": "EDGE_NOT_FOUND",
    "status": "404",
    "title": "Connection not found",

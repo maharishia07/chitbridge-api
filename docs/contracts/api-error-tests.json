@@ -100,6 +100,14 @@
   403,
   500
  ],
+ "DELETE /api/relationships/suppliers/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "DELETE /api/schemas/fields/:field_key": [
   400,
   401,
@@ -940,6 +948,42 @@
   403,
   500
  ],
+ "GET /api/relationships/customers": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/relationships/customers/:id/rewards": [
+  401,
+  500
+ ],
+ "GET /api/relationships/customers/groups": [
+  401,
+  500
+ ],
+ "GET /api/relationships/scorecard": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/relationships/scorecard/:entity_id": [
+  401,
+  500
+ ],
+ "GET /api/relationships/suppliers": [
+  400,
+  401,
+  500
+ ],
+ "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": [
+  401,
+  500
+ ],
+ "GET /api/relationships/suppliers/availability": [
+  400,
+  401,
+  500
+ ],
  "GET /api/repeat": [
   401,
   500
@@ -1261,6 +1305,21 @@
   400,
   401,
   403,
+  500
+ ],
+ "PATCH /api/relationships/customers/:id": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "PATCH /api/relationships/suppliers/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
   500
  ],
  "PATCH /api/schemas/fields/:field_key": [
@@ -2363,6 +2422,28 @@
   404,
   500
  ],
+ "POST /api/relationships/customers": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "POST /api/relationships/customers/:id/groups": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/relationships/suppliers": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
  "POST /api/repeat": [
   400,
   401,
@@ -2934,87 +3015,6 @@
   400,
   401,
   403,
-  500
- ],
- "DELETE /api/relationships/suppliers/:id": [
-  400,
-  401,
-  403,
-  404,
-  409,
-  500
- ],
- "GET /api/relationships/customers": [
-  400,
-  401,
-  500
- ],
- "GET /api/relationships/customers/:id/rewards": [
-  401,
-  500
- ],
- "GET /api/relationships/customers/groups": [
-  401,
-  500
- ],
- "GET /api/relationships/scorecard": [
-  400,
-  401,
-  500
- ],
- "GET /api/relationships/scorecard/:entity_id": [
-  401,
-  500
- ],
- "GET /api/relationships/suppliers": [
-  400,
-  401,
-  500
- ],
- "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": [
-  401,
-  500
- ],
- "GET /api/relationships/suppliers/availability": [
-  400,
-  401,
-  500
- ],
- "PATCH /api/relationships/customers/:id": [
-  400,
-  401,
-  404,
-  409,
-  500
- ],
- "PATCH /api/relationships/suppliers/:id": [
-  400,
-  401,
-  403,
-  404,
-  409,
-  500
- ],
- "POST /api/relationships/customers": [
-  400,
-  401,
-  404,
-  409,
-  500
- ],
- "POST /api/relationships/customers/:id/groups": [
-  400,
-  401,
-  403,
-  404,
-  409,
-  500
- ],
- "POST /api/relationships/suppliers": [
-  400,
-  401,
-  404,
-  409,
   500
  ]
 }
