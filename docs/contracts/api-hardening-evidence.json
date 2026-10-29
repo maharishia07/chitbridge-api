@@ -400,6 +400,12 @@
   "POST /api/actors/suggest-key": {
    "output_allowlist": true
   },
+  "POST /api/actors/check-key": {
+   "output_allowlist": true
+  },
+  "PATCH /api/actors/:id": {
+   "output_allowlist": true
+  },
   "GET /api/actors/check-login": {
    "output_allowlist": true
   },
@@ -420,11 +426,19 @@
   "GET /api/actors/settings": {
    "output_allowlist": true
   },
+  "PUT /api/actors/settings": {
+   "output_allowlist": true
+  },
   "PUT /api/actors/:id/delegate": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/actors/:id/tasks": {
+   "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PUT /api/actors/:id/tasks/route": {
+   "output_allowlist": true
   },
   "GET /api/actors/access-events": {
    "output_allowlist": true

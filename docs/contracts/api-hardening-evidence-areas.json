@@ -2,7 +2,8 @@
  "about": "Evidence for the hardening columns proved by the area tests worlds (tests/api-problem-<area>.test.cjs --write, each writes only its own routes). The generator writes api-hardening-evidence.json; tools/api-register.cjs reads the union. Never by hand.",
  "routes": {
   "DELETE /api/actors/:id/pin": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "DELETE /api/channels/:id": {
    "foreign_id_404": true
@@ -40,8 +41,12 @@
   "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
+  "GET /api/actors": {
+   "output_allowlist": true
+  },
   "GET /api/actors/:id/tasks": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/actors/access-events": {
    "output_allowlist": true
@@ -279,8 +284,12 @@
   "GET /api/products/starter-columns": {
    "output_allowlist": true
   },
+  "GET /api/repeat": {
+   "output_allowlist": true
+  },
   "GET /api/repeat/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/testing/cmdb/:ci": {
    "foreign_id_404": true
@@ -344,7 +353,8 @@
    "output_allowlist": true
   },
   "PATCH /api/actors/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PATCH /api/counters/:id": {
    "foreign_id_404": true
@@ -370,8 +380,18 @@
   "PATCH /api/testing/requirements/:id": {
    "foreign_id_404": true
   },
+  "POST /api/actors": {
+   "output_allowlist": true
+  },
   "POST /api/actors/:id/otp": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "POST /api/actors/check-key": {
+   "output_allowlist": true
+  },
+  "POST /api/actors/suggest-key": {
+   "output_allowlist": true
   },
   "POST /api/capture/:id/convert": {
    "foreign_id_404": true
@@ -497,34 +517,44 @@
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/accept": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/agree": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/counter": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/decline": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/end": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/pause": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/refuse": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/resume": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/run": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/skip": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/till/alias": {
    "output_allowlist": true
@@ -602,13 +632,28 @@
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PUT /api/actors/:id/status": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "PUT /api/actors/:id/tasks/route": {
+   "output_allowlist": true
   },
   "PUT /api/actors/assign/:chit_id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "PUT /api/actors/break": {
+   "output_allowlist": true
+  },
+  "PUT /api/actors/change-pin": {
+   "output_allowlist": true
+  },
+  "PUT /api/actors/settings": {
+   "output_allowlist": true
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "output_allowlist": true
@@ -878,6 +923,12 @@
    "output_allowlist": true
   },
   "PUT /api/governance/profile/vault": {
+   "output_allowlist": true
+  },
+  "POST /api/repeat": {
+   "output_allowlist": true
+  },
+  "POST /api/repeat/sweep": {
    "output_allowlist": true
   }
  }

@@ -1,6 +1,64 @@
 {
   "_about": "The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route's success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.",
   "routes": {
+    "DELETE /api/actors/:id/pin": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor_name",
+          "expires_in",
+          "delivery",
+          "delivery_note",
+          "login_format"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_name": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "show_code": {
+            "type": "string",
+            "description": "R112 owner-only reveal: the first code, shown once to the owner (ownerWrite gate) when the person has no e-mail; never recorded by idempotency, never logged"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "sent_to": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/pin"
+      }
+    },
     "DELETE /api/chits/:chit_id": {
       "status": "200",
       "schema": {
@@ -11015,6 +11073,163 @@
         }
       }
     },
+    "POST /api/actors": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor",
+          "expires_in",
+          "delivery",
+          "delivery_note",
+          "login_instruction"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "bridge_id",
+              "display_name",
+              "actor_key",
+              "actor_role",
+              "login_format",
+              "parent_entity"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "actor_key": {
+                "type": "string"
+              },
+              "actor_role": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "login_format": {
+                "type": "string"
+              },
+              "parent_entity": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "show_code": {
+            "type": "string",
+            "description": "R112 owner-only reveal: the first code, shown once to the owner (ownerWrite gate) when the person has no e-mail; never recorded by idempotency, never logged"
+          },
+          "login_instruction": {
+            "type": "string"
+          },
+          "sent_to": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [],
+      "example": {
+        "url": "/api/actors",
+        "body": {
+          "display_name": "Ravi Kumar",
+          "actor_key": "ravik"
+        }
+      }
+    },
+    "POST /api/actors/:id/otp": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor_name",
+          "expires_in",
+          "delivery",
+          "delivery_note",
+          "login_format"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_name": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "show_code": {
+            "type": "string",
+            "description": "R112 owner-only reveal: the first code, shown once to the owner (ownerWrite gate) when the person has no e-mail; never recorded by idempotency, never logged"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "sent_to": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/otp",
+        "body": []
+      }
+    },
     "POST /api/assist": {
       "status": "200",
       "schema": {
@@ -13573,6 +13788,103 @@
             "22222222-2222-4222-8222-222222222222"
           ],
           "status": "unavailable"
+        }
+      }
+    },
+    "PUT /api/actors/:id/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "audit"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_name": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "audit": {
+            "type": "object"
+          },
+          "tasks_routed": {
+            "type": "number"
+          },
+          "task_action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "return_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "covers_removed": {
+            "type": "number"
+          },
+          "was_default_assignee": {
+            "type": "boolean"
+          },
+          "disputes_cleared": {
+            "type": "number"
+          },
+          "signed_out": {
+            "type": "object"
+          },
+          "had_cover": {
+            "type": "boolean"
+          },
+          "expires_in": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "delivery": {
+            "type": "string"
+          },
+          "delivery_note": {
+            "type": "string"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "dev_otp": {
+            "type": "string",
+            "description": "a local stack only (lib/dev-otp.js mayExposeOtp: DEV_OTP + DEV_OTP_IN_RESPONSE, never a sealed env)"
+          },
+          "sent_to": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "audit",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "signed_out",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/status",
+        "body": {
+          "action": "remove",
+          "confirm": "REMOVE"
         }
       }
     },
@@ -23783,10 +24095,6428 @@
           }
         }
       }
+    },
+    "GET /api/actors": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "actors",
+          "total",
+          "page",
+          "limit",
+          "summary"
+        ],
+        "properties": {
+          "actors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "active",
+              "on_break",
+              "deactivated",
+              "removed",
+              "total"
+            ],
+            "properties": {
+              "active": {
+                "type": "number"
+              },
+              "on_break": {
+                "type": "number"
+              },
+              "deactivated": {
+                "type": "number"
+              },
+              "removed": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 11,
+      "open": [
+        {
+          "path": "actors[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/actors?status=all"
+      }
+    },
+    "GET /api/actors/:id/tasks": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "tasks",
+          "total",
+          "page",
+          "limit",
+          "actor",
+          "count"
+        ],
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "current_status",
+                "assigned_at",
+                "assignment_type",
+                "read_at",
+                "auto_subject",
+                "purpose",
+                "created_at",
+                "sender_entity_display_name"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "current_status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "assigned_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "assignment_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "read_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "auto_subject": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sender_entity_display_name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "actor_key",
+              "break_status",
+              "current_task_count",
+              "max_tasks"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "actor_key": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "break_status": {
+                "type": "string"
+              },
+              "current_task_count": {
+                "type": "number"
+              },
+              "max_tasks": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "count": {
+            "type": "number"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/tasks"
+      }
+    },
+    "PATCH /api/actors/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor",
+          "audit"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "actor_role",
+              "phone",
+              "email",
+              "max_tasks",
+              "hat",
+              "can_see_costs"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "actor_role": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "phone": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "max_tasks": {
+                "type": "number"
+              },
+              "hat": {
+                "type": "string"
+              },
+              "can_see_costs": {
+                "type": "boolean"
+              },
+              "access_level": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "whole_entity": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "audit": {
+            "type": "object",
+            "required": [
+              "recorded",
+              "failed"
+            ],
+            "properties": {
+              "recorded": {
+                "type": "number"
+              },
+              "failed": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "email": ""
+        }
+      }
+    },
+    "POST /api/actors/check-key": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "actor_key",
+          "available",
+          "login_format",
+          "message"
+        ],
+        "properties": {
+          "actor_key": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "login_format": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/actors/check-key",
+        "body": {
+          "actor_key": "ravik"
+        }
+      }
+    },
+    "POST /api/actors/suggest-key": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "suggested_key",
+          "available",
+          "login_format",
+          "alternatives"
+        ],
+        "properties": {
+          "suggested_key": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "login_format": {
+            "type": "string"
+          },
+          "alternatives": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/actors/suggest-key",
+        "body": {
+          "display_name": "Ravi Kumar"
+        }
+      }
+    },
+    "PUT /api/actors/:id/delegate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "delegate_actor_id"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "delegate_actor_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/delegate",
+        "body": {
+          "delegate_actor_id": null
+        }
+      }
+    },
+    "PUT /api/actors/:id/tasks/route": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "to_actor": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/actors/22222222-2222-4222-8222-222222222222/tasks/route",
+        "body": {
+          "chit_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "action": "push",
+          "to_actor_id": "88888888-8888-4888-8888-888888888888"
+        }
+      }
+    },
+    "PUT /api/actors/assign/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "action"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "new_status": {
+            "type": "string"
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/assign/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "action": "pull"
+        }
+      }
+    },
+    "PUT /api/actors/break": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "actor_id",
+          "state",
+          "audit"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "break_type": {
+            "type": "string"
+          },
+          "tasks": {
+            "type": "string"
+          },
+          "audit": {
+            "type": "object"
+          },
+          "task_action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tasks_routed": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "audit",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/actors/break",
+        "body": {
+          "break_type": "end_break"
+        }
+      }
+    },
+    "PUT /api/actors/change-pin": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/actors/change-pin",
+        "body": {
+          "current_pin": "4821",
+          "new_pin": "7391",
+          "confirm_pin": "7391"
+        }
+      }
+    },
+    "PUT /api/actors/settings": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "required": [
+              "setting_id",
+              "entity_id",
+              "assignment_model",
+              "default_max_tasks",
+              "all_task_visible",
+              "auto_return_on_short_break",
+              "created_at",
+              "updated_at",
+              "auto_assign_mode",
+              "default_assignee_actor_id"
+            ],
+            "properties": {
+              "setting_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "assignment_model": {
+                "type": "string"
+              },
+              "default_max_tasks": {
+                "type": "number"
+              },
+              "all_task_visible": {
+                "type": "boolean"
+              },
+              "auto_return_on_short_break": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "auto_assign_mode": {
+                "type": "string"
+              },
+              "default_assignee_actor_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/actors/settings",
+        "body": {}
+      }
+    },
+    "GET /api/repeat": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreements",
+          "migrated"
+        ],
+        "properties": {
+          "agreements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "agreement_id",
+                "entity_id",
+                "chit_id",
+                "customer_entity_id",
+                "source_chit_id",
+                "every",
+                "unit",
+                "anchor_day",
+                "next_on",
+                "end_on",
+                "runs_max",
+                "runs_done",
+                "mode",
+                "state",
+                "terms",
+                "counter",
+                "skips",
+                "runs",
+                "last_run_on",
+                "state_by",
+                "state_at",
+                "state_note",
+                "created_by",
+                "created_at",
+                "updated_at",
+                "customer",
+                "money",
+                "currency",
+                "subject",
+                "side",
+                "actions",
+                "words",
+                "due"
+              ],
+              "properties": {
+                "agreement_id": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string"
+                },
+                "chit_id": {
+                  "type": "string"
+                },
+                "customer_entity_id": {
+                  "type": "string"
+                },
+                "source_chit_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "every": {
+                  "type": "number"
+                },
+                "unit": {
+                  "type": "string"
+                },
+                "anchor_day": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "next_on": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "end_on": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "runs_max": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "runs_done": {
+                  "type": "number"
+                },
+                "mode": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "terms": {
+                  "type": "object"
+                },
+                "counter": {
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "skips": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "date",
+                      "by_entity_id",
+                      "reason",
+                      "at"
+                    ],
+                    "properties": {
+                      "date": {
+                        "type": "string"
+                      },
+                      "by_entity_id": {
+                        "type": "string"
+                      },
+                      "reason": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "at": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "runs": {
+                  "type": "object"
+                },
+                "last_run_on": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "state_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "state_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "state_note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "created_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "updated_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "customer": {
+                  "type": "object",
+                  "required": [
+                    "entity_id",
+                    "name"
+                  ],
+                  "properties": {
+                    "entity_id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "money": {
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "subject": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "side": {
+                  "type": "string"
+                },
+                "actions": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "pause": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "resume": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "end": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "skip": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "run": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "agree": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "refuse": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "accept": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "counter": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "decline": {
+                      "type": "object",
+                      "required": [
+                        "ok"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": "string"
+                        },
+                        "say": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "words": {
+                  "type": "string"
+                },
+                "due": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 10,
+      "open": [],
+      "example": {
+        "url": "/api/repeat"
+      }
+    },
+    "GET /api/repeat/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "read_only": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333"
+      }
+    },
+    "POST /api/repeat": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/repeat",
+        "body": {
+          "chit_id": "66666666-6666-4666-8666-666666666666",
+          "every": 1,
+          "unit": "weekly",
+          "start_on": "2099-01-01",
+          "until": {
+            "runs": 3
+          },
+          "mode": "draft"
+        }
+      }
+    },
+    "POST /api/repeat/:id/accept": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/accept?chit=55555555-5555-4555-8555-555555555555"
+      }
+    },
+    "POST /api/repeat/:id/agree": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/agree"
+      }
+    },
+    "POST /api/repeat/:id/counter": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/counter?chit=55555555-5555-4555-8555-555555555555",
+        "body": {
+          "every": 2,
+          "unit": "weekly",
+          "start_on": "2099-02-01",
+          "note": "fortnightly"
+        }
+      }
+    },
+    "POST /api/repeat/:id/decline": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/decline?chit=55555555-5555-4555-8555-555555555555",
+        "body": {
+          "reason": "no"
+        }
+      }
+    },
+    "POST /api/repeat/:id/end": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/end"
+      }
+    },
+    "POST /api/repeat/:id/pause": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/pause"
+      }
+    },
+    "POST /api/repeat/:id/refuse": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/refuse"
+      }
+    },
+    "POST /api/repeat/:id/resume": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/resume"
+      }
+    },
+    "POST /api/repeat/:id/run": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement",
+          "ran",
+          "problems"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "ran": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "date",
+                "chit_id",
+                "duplicate"
+              ],
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "chit_id": {
+                  "type": "string"
+                },
+                "duplicate": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "why"
+              ],
+              "properties": {
+                "agreement_id": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/run"
+      }
+    },
+    "POST /api/repeat/:id/skip": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "agreement"
+        ],
+        "properties": {
+          "agreement": {
+            "type": "object",
+            "required": [
+              "agreement_id",
+              "entity_id",
+              "chit_id",
+              "customer_entity_id",
+              "source_chit_id",
+              "every",
+              "unit",
+              "anchor_day",
+              "next_on",
+              "end_on",
+              "runs_max",
+              "runs_done",
+              "mode",
+              "state",
+              "terms",
+              "counter",
+              "skips",
+              "runs",
+              "last_run_on",
+              "state_by",
+              "state_at",
+              "state_note",
+              "created_by",
+              "created_at",
+              "updated_at",
+              "customer",
+              "money",
+              "currency",
+              "subject",
+              "side",
+              "actions",
+              "words",
+              "due"
+            ],
+            "properties": {
+              "agreement_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "chit_id": {
+                "type": "string"
+              },
+              "customer_entity_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "every": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "anchor_day": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "end_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "runs_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "runs_done": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "terms": {
+                "type": "object"
+              },
+              "counter": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "skips": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "date",
+                    "by_entity_id",
+                    "reason",
+                    "at"
+                  ],
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "by_entity_id": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "runs": {
+                "type": "object"
+              },
+              "last_run_on": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state_note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "updated_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "customer": {
+                "type": "object",
+                "required": [
+                  "entity_id",
+                  "name"
+                ],
+                "properties": {
+                  "entity_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "money": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "side": {
+                "type": "string"
+              },
+              "actions": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "pause": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "resume": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "end": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "skip": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "run": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "agree": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "refuse": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "accept": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "counter": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "decline": {
+                    "type": "object",
+                    "required": [
+                      "ok"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "type": "boolean"
+                      },
+                      "why": {
+                        "type": "string"
+                      },
+                      "say": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "words": {
+                "type": "string"
+              },
+              "due": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/33333333-3333-4333-8333-333333333333/skip"
+      }
+    },
+    "POST /api/repeat/sweep": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ran",
+          "problems"
+        ],
+        "properties": {
+          "ran": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "date",
+                "chit_id",
+                "duplicate"
+              ],
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "chit_id": {
+                  "type": "string"
+                },
+                "duplicate": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "why"
+              ],
+              "properties": {
+                "agreement_id": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 11,
+      "open": [],
+      "example": {
+        "url": "/api/repeat/sweep",
+        "body": {}
+      }
     }
   },
   "listed": {
-    "DELETE /api/actors/:id/pin": "left open on purpose: the 200 carries the one-time code (show_code · otp on an opted-in stack); a shape that names it is a call for cb-security, not a sweep",
     "DELETE /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
     "DELETE /api/channels/:id": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "DELETE /api/chits/:chit_id/payment": "open at books — a value passed through (a name: its keys are not written in the handler)",
@@ -24025,6 +30755,7 @@
     "POST /api/supplies": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies/:id/issue": "open at balance — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/till/shop": "open at shop — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/actors/:id/status": "open at audit — a value passed through (an expression: its keys are not written in the handler); signed_out — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
     "PUT /api/chits/:chit_id/use": "open at use — a value passed through (an expression: its keys are not written in the handler); effective — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/chits/:chit_id/void": "open at books — a value passed through (an expression: its keys are not written in the handler)",

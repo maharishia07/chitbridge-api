@@ -65,6 +65,14 @@ const LIST_BARE = {
   phone: null, created_at: null, last_active_at: null, delegate_actor_id: null, last_assigned_at: null, pin_state: 'none',
   site: null, last_seen: null, connector_type: null, connector_config: {}
 };
+/** a person as PATCH /:id reads them back (UPDATE ... RETURNING: identities, migrations/000_baseline_2026-10-21.sql): actor_role, phone and email are nullable; access_level and whole_entity ride only after b173 */
+const PATCH_ROW = { identity_id: PERSON, display_name: 'Ravi Kumar', actor_role: 'lead', phone: '9876543210', email: 'ravi@example.com', max_tasks: 8, hat: 'manager', can_see_costs: true };
+const PATCH_BARE = Object.assign({}, PATCH_ROW, { actor_role: null, phone: null, email: null, can_see_costs: false });
+const PATCH_LEVEL = Object.assign({}, PATCH_ROW, { access_level: 'viewer', whole_entity: true });
+const PATCH_LEVEL_BARE = Object.assign({}, PATCH_BARE, { access_level: null, whole_entity: false });
+/** a person as PUT /:id/delegate reads them back (RETURNING identity_id, display_name, delegate_actor_id): the delegate is nullable */
+const DELEGATE_ROW = { identity_id: PERSON, display_name: 'Ravi Kumar', delegate_actor_id: OTHER };
+const DELEGATE_NONE = Object.assign({}, DELEGATE_ROW, { delegate_actor_id: null });
 /** an access event as GET /access-events selects it (access_events + the two identities it names, LEFT JOINed) */
 const EVENT_ROW = {
   event_id: '99999999-9999-4999-8999-999999999999', subject_identity_id: PERSON, subject_name: 'Ravi Kumar', actor_key: 'ravik', action: 'hat_changed',
@@ -191,9 +199,12 @@ function extras(tools) {
     X('edit-over-the-shops-ceiling', 'PATCH ' + at('/:id'), 400, { body: { max_tasks: 50 }, patch: { schema: { hasTable: async () => true } }, setup: { sqlRows: row(/SELECT default_max_tasks FROM entity_actor_settings/, { default_max_tasks: 20 }) } }),
     X('edit-costs-by-an-actor', 'PATCH ' + at('/:id'), 403, { body: { can_see_costs: true }, setup: { who: ORPHAN_ACTOR } }),
     X('edit-unknown-person', 'PATCH ' + at('/:id'), 404, { body: { display_name: 'Ravi Kumar' } }),
-    X('edit-made', 'PATCH ' + at('/:id'), 200, { body: { display_name: 'Ravi Kumar', actor_role: 'lead', phone: '9876543210', max_tasks: 8, email: 'Ravi@Example.com', hat: 'manager', can_see_costs: true }, setup: { sqlRows: row(/UPDATE identities SET display_name/, PERSON_ROW) } }),
-    X('edit-level-moves-the-trail', 'PATCH ' + at('/:id'), 200, { body: { access_level: 'viewer', whole_entity: true, reason: ' re-grade ' }, patch: columnsThere, setup: { sqlRows: firstOf(row(/UPDATE identities SET access_level/, Object.assign({}, PERSON_ROW, { access_level: 'viewer', whole_entity: true })), row(/SELECT hat, can_see_costs, break_status/, Object.assign({}, PERSON_ROW, { access_level: 'editor', whole_entity: false }))) } }),
-    X('edit-email-cleared', 'PATCH ' + at('/:id'), 200, { body: { email: '' }, setup: { sqlRows: row(/UPDATE identities SET email/, PERSON_ROW) } }),
+    X('edit-made', 'PATCH ' + at('/:id'), 200, { body: { display_name: 'Ravi Kumar', actor_role: 'lead', phone: '9876543210', max_tasks: 8, email: 'Ravi@Example.com', hat: 'manager', can_see_costs: true }, setup: { sqlRows: row(/UPDATE identities SET display_name/, PATCH_ROW) } }),
+    /* S34: every nullable column of the read-back NULL */
+    X('edit-made-bare', 'PATCH ' + at('/:id'), 200, { body: { display_name: 'Ravi Kumar', actor_role: '', phone: '', can_see_costs: false }, setup: { sqlRows: row(/UPDATE identities SET display_name/, PATCH_BARE) } }),
+    X('edit-level-moves-the-trail', 'PATCH ' + at('/:id'), 200, { body: { access_level: 'viewer', whole_entity: true, reason: ' re-grade ' }, patch: columnsThere, setup: { sqlRows: firstOf(row(/UPDATE identities SET access_level/, PATCH_LEVEL), row(/SELECT hat, can_see_costs, break_status/, Object.assign({}, PERSON_ROW, { access_level: 'editor', whole_entity: false }))) } }),
+    X('edit-level-bare', 'PATCH ' + at('/:id'), 200, { body: { access_level: 'viewer', whole_entity: false }, patch: columnsThere, setup: { sqlRows: row(/UPDATE identities SET access_level/, PATCH_LEVEL_BARE) } }),
+    X('edit-email-cleared', 'PATCH ' + at('/:id'), 200, { body: { email: '' }, setup: { sqlRows: row(/UPDATE identities SET email/, PATCH_BARE) } }),
     X('edit-email-is-taken', 'PATCH ' + at('/:id'), 409, { body: { email: 'ravi@example.com' }, setup: { sqlRows: failOn(/UPDATE identities SET/, '23505', 'duplicate', { constraint: 'identities_email_key' }) } }),
     X('edit-fails', 'PATCH ' + at('/:id'), 500, { body: { display_name: 'Ravi Kumar' }, setup: { sqlRows: failOn(/UPDATE identities SET/, 'XX000', SECRET_SQL) } }),
     N('edit-body-is-a-list', 'PATCH ' + at('/:id'), 400, { body: [] })
@@ -329,7 +340,7 @@ function extras(tools) {
     X('settings-bad-assignee-id', 'PUT ' + at('/settings'), 400, { body: { default_assignee_actor_id: 'nope' } }),
     X('settings-assignee-not-assignable', 'PUT ' + at('/settings'), 400, { body: { default_assignee_actor_id: OTHER } }),
     X('settings-saved', 'PUT ' + at('/settings'), 200, { body: { assignment_model: 'pull', default_max_tasks: 12, all_task_visible: true, auto_return_on_short_break: true, auto_assign_mode: 'least_loaded' }, setup: { sqlRows: row(/SELECT \* FROM entity_actor_settings/, SETTINGS) } }),
-    X('settings-saved-with-an-assignee', 'PUT ' + at('/settings'), 200, { body: { auto_assign_mode: 'default_assignee', default_assignee_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT 1 FROM identities WHERE identity_id/, { '?column?': 1 }), row(/SELECT \* FROM entity_actor_settings/, SETTINGS)) } }),
+    X('settings-saved-with-an-assignee', 'PUT ' + at('/settings'), 200, { body: { auto_assign_mode: 'default_assignee', default_assignee_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT 1 FROM identities WHERE identity_id/, { '?column?': 1 }), row(/SELECT \* FROM entity_actor_settings/, SETTINGS_ASSIGNEE)) } }),
     X('settings-assignee-cleared', 'PUT ' + at('/settings'), 200, { body: { default_assignee_actor_id: null }, setup: { sqlRows: row(/SELECT \* FROM entity_actor_settings/, SETTINGS) } }),
     X('settings-save-fails', 'PUT ' + at('/settings'), 500, { body: { assignment_model: 'pull' }, setup: failing }),
     X('settings-staff-is-refused', 'PUT ' + at('/settings'), 403, { body: { assignment_model: 'pull' }, setup: { who: STAFF } }),
@@ -342,18 +353,24 @@ function extras(tools) {
     X('delegate-to-themselves', 'PUT ' + at('/:id/delegate'), 400, { body: { delegate_actor_id: PERSON } }),
     X('delegate-not-assignable', 'PUT ' + at('/:id/delegate'), 400, { body: { delegate_actor_id: OTHER } }),
     X('delegate-unknown-person', 'PUT ' + at('/:id/delegate'), 404, { body: {} }),
-    X('delegate-set', 'PUT ' + at('/:id/delegate'), 200, { body: { delegate_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT delegate_actor_id FROM identities/, { delegate_actor_id: null }), row(/UPDATE identities SET delegate_actor_id/, PERSON_ROW)) } }),
-    X('delegate-cleared', 'PUT ' + at('/:id/delegate'), 200, { body: { delegate_actor_id: null }, setup: { sqlRows: row(/UPDATE identities SET delegate_actor_id/, PERSON_ROW) } }),
+    X('delegate-set', 'PUT ' + at('/:id/delegate'), 200, { body: { delegate_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT delegate_actor_id FROM identities/, { delegate_actor_id: null }), row(/UPDATE identities SET delegate_actor_id/, DELEGATE_ROW)) } }),
+    X('delegate-cleared', 'PUT ' + at('/:id/delegate'), 200, { body: { delegate_actor_id: null }, setup: { sqlRows: row(/UPDATE identities SET delegate_actor_id/, DELEGATE_NONE) } }),
     X('delegate-fails', 'PUT ' + at('/:id/delegate'), 500, { body: {}, setup: failing }),
     X('delegate-staff-is-refused', 'PUT ' + at('/:id/delegate'), 403, { body: {}, setup: { who: STAFF } }),
-    N('delegate-body-is-a-list', 'PUT ' + at('/:id/delegate'), 400, { body: [], setup: { sqlRows: row(/UPDATE identities SET delegate_actor_id/, PERSON_ROW) } })
+    N('delegate-body-is-a-list', 'PUT ' + at('/:id/delegate'), 400, { body: [], setup: { sqlRows: row(/UPDATE identities SET delegate_actor_id/, DELEGATE_NONE) } })
   ];
 
   /* ── GET /:id/tasks, PUT /:id/tasks/route, GET /access-events ── */
   const TASK = { chit_id: CHIT, current_status: 'pending', assigned_at: '2026-10-20T10:00:00.000Z', assignment_type: 'pull', read_at: null, auto_subject: 'Order 12', purpose: 'order', created_at: '2026-10-20T09:00:00.000Z', sender_entity_display_name: 'Shop B' };
+  /** every nullable column of the task statement NULL (chit_status: current_status, assigned_at, assignment_type, read_at, created_at; chit_header: auto_subject, created_at) */
+  const TASK_BARE = { chit_id: OTHER, current_status: null, assigned_at: null, assignment_type: null, read_at: null, auto_subject: null, purpose: 'general', created_at: null, sender_entity_display_name: 'Shop B' };
+  const TASK_READ = Object.assign({}, TASK, { chit_id: STRANGER_ID, read_at: AT });
   const tasks = [
     X('tasks-unknown-person', 'GET ' + at('/:id/tasks'), 404, {}),
     X('tasks-listed', 'GET ' + at('/:id/tasks'), 200, { setup: { sqlRows: firstOf(rowsOf(/FROM chit_status cs\s+JOIN chit_header/, [TASK, TASK]), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
+    /* a person with no key (identities.actor_key is nullable) and a task with every nullable column NULL */
+    X('tasks-listed-bare', 'GET ' + at('/:id/tasks'), 200, { setup: { sqlRows: firstOf(rowsOf(/FROM chit_status cs\s+JOIN chit_header/, [TASK_BARE, TASK_READ]), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, Object.assign({}, PERSON_ROW, { actor_key: null }))) } }),
+    X('tasks-listed-past-the-cap', 'GET ' + at('/:id/tasks'), 200, { url: at('/' + PERSON + '/tasks?limit=500'), setup: { sqlRows: firstOf(rowsOf(/FROM chit_status cs\s+JOIN chit_header/, Array(201).fill(TASK_BARE)), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
     X('tasks-listed-one-page', 'GET ' + at('/:id/tasks'), 200, { url: at('/' + PERSON + '/tasks?page=2&limit=1'), setup: { sqlRows: firstOf(rowsOf(/FROM chit_status cs\s+JOIN chit_header/, [TASK, TASK]), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
     X('tasks-fails', 'GET ' + at('/:id/tasks'), 500, { setup: failing }),
     N('tasks-page-asked-twice', 'GET ' + at('/:id/tasks'), 400, { url: at('/' + PERSON + '/tasks?page=1&page=2'), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW) } }),

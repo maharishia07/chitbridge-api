@@ -194,13 +194,16 @@ ok('Australia: the bill stores what the cash took — cash_round +0.02, change a
 
 ok('Australia → the books: the cash taken at A$10.05 on a A$10.03 invoice posts +0.02 as round-off by the EXISTING path (books-hooks · daySummary)', () => {
   const K = require('../lib/books-hooks');
-  const invoice = { currency: 'AUD', ItemList: [{ GstRt: 10, AssAmt: 9.12, CgstAmt: 0, SgstAmt: 0, IgstAmt: 0.91, CesAmt: 0 }], ValDtls: { TotInvVal: 10.03 } };
+  /* an AU bill as the engine freezes it: ONE head (scheme GST, the line's TaxAmt), never IGST */
+  const invoice = { currency: 'AUD', _cb: { scheme: 'GST' }, ItemList: [{ GstRt: 10, AssAmt: 9.12, CgstAmt: 0, SgstAmt: 0, IgstAmt: 0, TaxAmt: 0.91, CesAmt: 0 }], ValDtls: { TotInvVal: 10.03 } };
   const walk = K.classify({ chit: { chit_id: 'c1', purpose: 'order', currency_code: 'AUD', business_json: { bill_no: 'A1-1', till: { id: 'C1' }, billed_at: '2026-10-17T05:00:00Z',
     payment: { parts: [{ how: 'Cash', amount: 10.05 }], cash_round: 0.02 } } }, entry: { sells: true, invoice }, setting: { enabled: true, walkin_grain: 'day', country: 'AU', functional_currency: 'AUD' } });
   assert.strictEqual(walk.kind, 'walkin');
   assert.strictEqual(walk.bill.round_off, 0.02);
-  const day = require('../lib/books-engines').posting().daySummary([walk.bill], { ref: 'walkin C1 2026-10-17', date: '2026-10-17', counter: 'C1', pack: require('../lib/regulation').packFor('AU') });
+  const day = require('../lib/books-engines').posting().daySummary([walk.bill], { ref: 'walkin C1 2026-10-17', date: '2026-10-17', counter: 'C1' }, { pack: require('../lib/regulation').packFor('AU') });
   assert.strictEqual(day.round_off, 0.02);
+  assert.strictEqual(day.by_rate[0].gst, 0.91, 'the AU day posts its one GST head (ACC-201: the pack is the engine\'s THIRD argument, never the head)');
+  assert.strictEqual('cgst' in day.by_rate[0], false, 'no India head on an AU day');
   assert.strictEqual(day.modes.cash, 10.05);
 });
 ok('shelf price default (lib/policy.flagOf, the ONE place): unset → the country\'s convention — US excludes tax, MY the shop\'s default, a stored value wins', () => {
