@@ -4,14 +4,14 @@
  "updated": "2026-10-29",
  "total": 634,
  "not_meeting": 539,
- "codes_total": 481,
+ "codes_total": 482,
  "codes_pending": 37,
  "raw_error_writes": 3,
  "routes_without_does": 624,
  "columns_failing": {
   "strict_input": 330,
   "output_allowlist": 263,
-  "foreign_id_404": 103,
+  "foreign_id_404": 102,
   "idempotent_money_write": 12,
   "inbound_validated": 2,
   "trips_budgeted": 164
