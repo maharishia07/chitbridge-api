@@ -209,6 +209,11 @@ async function productsCases() {
   t('…under the one cost code', blindBulkStatus.body.code, 'COST_BLIND');
   t('…naming every stored key the replace would have erased', (blindBulkStatus.body.blocked || []).slice().sort().join(','), 'cost,cost_x,modifiers,name,price');
   t('…nothing was written: no UPDATE ran', WRITTEN, null);
+  /* an item's own merge:true is not a merge at this door (it always replaces), so it cannot slip the erase past the gate */
+  WRITTEN = null;
+  const blindBulkMerge = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', merge: true, item_data: { status: 'unavailable' } }] });
+  t('…and the same edit with merge:true on the item is refused the same way', blindBulkMerge.status + ' ' + blindBulkMerge.body.code + ' ' + (blindBulkMerge.body.blocked || []).includes('cost'), '403 COST_BLIND true');
+  t('…nothing was written', WRITTEN, null);
   /* what the workshop's categorise sends for such a caller: the record GET / handed it, which carries no cost — until now that click erased the stored cost */
   WRITTEN = null;
   const RECORD_WITHOUT_COST = { name: 'Masala Dosa', price: 70, status: 'available', category_ids: ['c1'] };
