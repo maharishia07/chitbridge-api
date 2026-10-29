@@ -53,6 +53,7 @@ of file each thing is; this says what already does the job.
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
+| 35 | `checked` | `connectors-contract.js` | the schema check of one route as a list to spread after its chains (a route that takes no input has none) |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 33 | `closeModal` | `app.html` |  |
 | 38 | `register` | `regulation.js` | register(pack) → the pack — |
@@ -62,7 +63,6 @@ of file each thing is; this says what already does the job.
 | 32 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 31 | `facts` | `bill-steps.js` | MY state_log — |
 | 32 | `live` | `receivables.js` | the allocations that still count: |
-| 33 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `rate` | `convert.js` | A rate, with its evidence. |
 | 29 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
