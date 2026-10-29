@@ -2,7 +2,8 @@
  "about": "Evidence for the hardening columns proved by the area tests worlds (tests/api-problem-<area>.test.cjs --write, each writes only its own routes). The generator writes api-hardening-evidence.json; tools/api-register.cjs reads the union. Never by hand.",
  "routes": {
   "DELETE /api/actors/:id/pin": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "DELETE /api/channels/:id": {
    "foreign_id_404": true
@@ -379,8 +380,12 @@
   "PATCH /api/testing/requirements/:id": {
    "foreign_id_404": true
   },
+  "POST /api/actors": {
+   "output_allowlist": true
+  },
   "POST /api/actors/:id/otp": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/actors/check-key": {
    "output_allowlist": true
@@ -631,7 +636,8 @@
    "output_allowlist": true
   },
   "PUT /api/actors/:id/status": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PUT /api/actors/:id/tasks/route": {
    "output_allowlist": true
