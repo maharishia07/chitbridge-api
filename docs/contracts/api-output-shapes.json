@@ -13527,6 +13527,208 @@
           "kind": "access"
         }
       }
+    },
+    "GET /api/identity/documents": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "documents",
+          "total",
+          "page",
+          "limit",
+          "catalogue"
+        ],
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "scheme",
+                "country",
+                "value_masked",
+                "status",
+                "verified_at",
+                "verified_by",
+                "submitted_by",
+                "consent_at",
+                "verified"
+              ],
+              "properties": {
+                "scheme": {
+                  "type": "string"
+                },
+                "country": {
+                  "type": "string"
+                },
+                "value_masked": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "verified_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "verified_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "submitted_by": {
+                  "type": "string"
+                },
+                "consent_at": {},
+                "verified": {
+                  "type": "boolean"
+                },
+                "catalogue": {},
+                "label": {},
+                "verify": {},
+                "stored": {},
+                "selfServe": {},
+                "documents": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "catalogue": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "scheme",
+                "label",
+                "verify",
+                "stored",
+                "selfServe"
+              ],
+              "properties": {
+                "scheme": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "verify": {
+                  "type": "string"
+                },
+                "stored": {
+                  "type": "boolean"
+                },
+                "selfServe": {
+                  "type": "boolean"
+                },
+                "catalogue": {},
+                "documents": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "scheme": {},
+          "label": {},
+          "verify": {},
+          "stored": {},
+          "selfServe": {},
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [],
+      "example": {
+        "url": "/api/identity/documents"
+      }
+    },
+    "POST /api/identity/documents/:scheme/code": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/identity/documents/PHONE/code?identity_id=77777777-7777-4777-8777-777777777777",
+        "body": {}
+      }
+    },
+    "POST /api/identity/documents/:scheme/verify": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/identity/documents/PHONE/verify",
+        "body": {
+          "code": 482910
+        }
+      }
+    },
+    "PUT /api/identity/documents/:scheme": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "document",
+          "verified_by"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "document": {
+            "type": "object"
+          },
+          "verified_by": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 14,
+      "open": [
+        {
+          "path": "document",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/identity/documents/AADHAAR",
+        "body": {
+          "value": "000000000000",
+          "identity_id": "77777777-7777-4777-8777-777777777777",
+          "consent": "true"
+        }
+      }
     }
   },
   "listed": {
@@ -14249,6 +14451,9 @@
     "GET /api/privacy/facts": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/privacy/me": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/privacy/me/consent": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/privacy/me/requests": "open at request — a value passed through (an expression: its keys are not written in the handler)"
+    "POST /api/privacy/me/requests": "open at request — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/identity/documents/:scheme/code": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/identity/documents/:scheme/verify": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

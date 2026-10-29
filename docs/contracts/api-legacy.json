@@ -46432,6 +46432,982 @@
      }
     }
    ]
+  },
+  "GET /api/identity/documents": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "list-stranger-named",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     }
+    },
+    {
+     "scenario": "list-staff-names-other",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     }
+    },
+    {
+     "scenario": "list-db-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-db-throws-code",
+     "status": 500,
+     "body_keys": {
+      "error": "42501",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "42501",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-country-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-answer-not-written",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-502",
+     "status": 502,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-503",
+     "status": 503,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-409-with-unregistered-code",
+     "status": 409,
+     "body_keys": {
+      "error": "SOMETHING_ELSE",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "SOMETHING_ELSE",
+      "message": "A relayed sentence."
+     }
+    }
+   ]
+  },
+  "POST /api/identity/documents/:scheme/code": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "code-pan-not-by-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Not verifiable by code",
+      "code": "IDOC_NOT_CODE_VERIFIED",
+      "message": "Only a mobile number or an e-mail is confirmed by a code. The other documents are checked by your employer."
+     },
+     "fixture": {
+      "error": "Not verifiable by code",
+      "code": "IDOC_NOT_CODE_VERIFIED",
+      "message": "Only a mobile number or an e-mail is confirmed by a code. The other documents are checked by your employer."
+     }
+    },
+    {
+     "scenario": "code-aadhaar-not-by-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Not verifiable by code",
+      "code": "IDOC_NOT_CODE_VERIFIED",
+      "message": "Only a mobile number or an e-mail is confirmed by a code. The other documents are checked by your employer."
+     },
+     "fixture": {
+      "error": "Not verifiable by code",
+      "code": "IDOC_NOT_CODE_VERIFIED",
+      "message": "Only a mobile number or an e-mail is confirmed by a code. The other documents are checked by your employer."
+     }
+    },
+    {
+     "scenario": "code-unknown-scheme-no-row",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "IDOC_NOT_FOUND",
+      "message": "Add that document first, then ask for a code."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "IDOC_NOT_FOUND",
+      "message": "Add that document first, then ask for a code."
+     }
+    },
+    {
+     "scenario": "code-no-row",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "IDOC_NOT_FOUND",
+      "message": "Add that document first, then ask for a code."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "IDOC_NOT_FOUND",
+      "message": "Add that document first, then ask for a code."
+     }
+    },
+    {
+     "scenario": "code-value-unreadable",
+     "status": 409,
+     "body_keys": {
+      "error": "Value unavailable",
+      "code": "IDOC_VALUE_UNAVAILABLE",
+      "message": "The saved phone cannot be read. Enter it again, then ask for a code."
+     },
+     "fixture": {
+      "error": "Value unavailable",
+      "code": "IDOC_VALUE_UNAVAILABLE",
+      "message": "The saved phone cannot be read. Enter it again, then ask for a code."
+     }
+    },
+    {
+     "scenario": "code-phone-sealed",
+     "status": 503,
+     "body_keys": {
+      "error": "Phone delivery is not configured",
+      "code": "PHONE_DELIVERY_NOT_CONFIGURED",
+      "message": "Codes cannot be sent to a mobile number yet. Nothing was changed."
+     },
+     "fixture": {
+      "error": "Phone delivery is not configured",
+      "code": "PHONE_DELIVERY_NOT_CONFIGURED",
+      "message": "Codes cannot be sent to a mobile number yet. Nothing was changed."
+     }
+    },
+    {
+     "scenario": "code-email-sealed",
+     "status": 503,
+     "body_keys": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment cannot send e-mail yet, so a code cannot be delivered. Nothing was changed."
+     },
+     "fixture": {
+      "error": "E-mail delivery is not configured",
+      "code": "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "message": "This environment cannot send e-mail yet, so a code cannot be delivered. Nothing was changed."
+     }
+    },
+    {
+     "scenario": "code-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "code-stranger-named",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     }
+    },
+    {
+     "scenario": "code-staff-names-colleague",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     }
+    },
+    {
+     "scenario": "code-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "code-read-throws-code",
+     "status": 500,
+     "body_keys": {
+      "error": "42501",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "42501",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "code-save-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "code-answer-not-written",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-502",
+     "status": 502,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-503",
+     "status": 503,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    }
+   ]
+  },
+  "POST /api/identity/documents/:scheme/verify": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "verify-wrong-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Incorrect code",
+      "code": "OTP_WRONG",
+      "message": "Incorrect code — 4 attempts left."
+     },
+     "fixture": {
+      "error": "Incorrect code",
+      "code": "OTP_WRONG",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    },
+    {
+     "scenario": "verify-wrong-code-one-left",
+     "status": 400,
+     "body_keys": {
+      "error": "Incorrect code",
+      "code": "OTP_WRONG",
+      "message": "Incorrect code — 1 attempt left."
+     },
+     "fixture": {
+      "error": "Incorrect code",
+      "code": "OTP_WRONG",
+      "message": "Incorrect code — 1 attempt left."
+     }
+    },
+    {
+     "scenario": "verify-wrong-code-last",
+     "status": 429,
+     "body_keys": {
+      "error": "Locked",
+      "code": "OTP_LOCKED",
+      "message": "Too many incorrect attempts — request a new code."
+     },
+     "fixture": {
+      "error": "Locked",
+      "code": "OTP_LOCKED",
+      "message": "Too many incorrect attempts — request a new code."
+     }
+    },
+    {
+     "scenario": "verify-locked",
+     "status": 429,
+     "body_keys": {
+      "error": "Locked",
+      "code": "OTP_LOCKED",
+      "message": "Too many incorrect attempts — request a new code."
+     },
+     "fixture": {
+      "error": "Locked",
+      "code": "OTP_LOCKED",
+      "message": "Too many incorrect attempts — request a new code."
+     }
+    },
+    {
+     "scenario": "verify-no-code-typed",
+     "status": 400,
+     "body_keys": {
+      "error": "Incorrect code",
+      "code": "OTP_WRONG",
+      "message": "Incorrect code — 4 attempts left."
+     },
+     "fixture": {
+      "error": "Incorrect code",
+      "code": "OTP_WRONG",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    },
+    {
+     "scenario": "verify-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Expired",
+      "code": "OTP_EXPIRED",
+      "message": "Code expired — request a new one."
+     },
+     "fixture": {
+      "error": "Expired",
+      "code": "OTP_EXPIRED",
+      "message": "Code expired — request a new one."
+     }
+    },
+    {
+     "scenario": "verify-no-code-asked",
+     "status": 400,
+     "body_keys": {
+      "error": "No code requested",
+      "code": "IDOC_NO_CODE",
+      "message": "Ask for a code first."
+     },
+     "fixture": {
+      "error": "No code requested",
+      "code": "IDOC_NO_CODE",
+      "message": "Ask for a code first."
+     }
+    },
+    {
+     "scenario": "verify-pan-no-code-asked",
+     "status": 400,
+     "body_keys": {
+      "error": "No code requested",
+      "code": "IDOC_NO_CODE",
+      "message": "Ask for a code first."
+     },
+     "fixture": {
+      "error": "No code requested",
+      "code": "IDOC_NO_CODE",
+      "message": "Ask for a code first."
+     }
+    },
+    {
+     "scenario": "verify-no-row",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "code": "IDOC_NOT_FOUND",
+      "message": "Add that document first."
+     },
+     "fixture": {
+      "error": "Not found",
+      "code": "IDOC_NOT_FOUND",
+      "message": "Add that document first."
+     }
+    },
+    {
+     "scenario": "verify-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet."
+     }
+    },
+    {
+     "scenario": "verify-stranger-named",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     }
+    },
+    {
+     "scenario": "verify-staff-names-colleague",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     }
+    },
+    {
+     "scenario": "verify-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "verify-stamp-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "verify-stamp-throws-code",
+     "status": 500,
+     "body_keys": {
+      "error": "40001",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "40001",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "verify-wrong-count-save-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-502",
+     "status": 502,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-503",
+     "status": 503,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    }
+   ]
+  },
+  "PUT /api/identity/documents/:scheme": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+     }
+    },
+    {
+     "scenario": "put-staff-pan",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "IDOC_EMPLOYER_ONLY",
+      "message": "Your PAN is recorded by your employer, who checks it against the document itself. You can add your mobile and email here — those are confirmed by a code sent to them."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "IDOC_EMPLOYER_ONLY",
+      "message": "Your PAN is recorded by your employer, who checks it against the document itself. You can add your mobile and email here — those are confirmed by a code sent to them."
+     }
+    },
+    {
+     "scenario": "put-aadhaar-for-co-assist-no-consent",
+     "status": 400,
+     "body_keys": {
+      "error": "Consent required",
+      "code": "IDOC_CONSENT_REQUIRED",
+      "message": "Recording someone else's Aadhaar needs their agreement. Confirm they have agreed, or ask them to enter it themselves from their own profile."
+     },
+     "fixture": {
+      "error": "Consent required",
+      "code": "IDOC_CONSENT_REQUIRED",
+      "message": "Recording someone else's Aadhaar needs their agreement. Confirm they have agreed, or ask them to enter it themselves from their own profile."
+     }
+    },
+    {
+     "scenario": "put-aadhaar-for-co-assist-consent-yes",
+     "status": 400,
+     "body_keys": {
+      "error": "Consent required",
+      "code": "IDOC_CONSENT_REQUIRED",
+      "message": "Recording someone else's Aadhaar needs their agreement. Confirm they have agreed, or ask them to enter it themselves from their own profile."
+     },
+     "fixture": {
+      "error": "Consent required",
+      "code": "IDOC_CONSENT_REQUIRED",
+      "message": "Recording someone else's Aadhaar needs their agreement. Confirm they have agreed, or ask them to enter it themselves from their own profile."
+     }
+    },
+    {
+     "scenario": "put-for-stranger",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "That person is not one of your co-assists."
+     }
+    },
+    {
+     "scenario": "put-staff-for-colleague",
+     "status": 403,
+     "body_keys": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     },
+     "fixture": {
+      "error": "IDOC_SUBJECT_FORBIDDEN",
+      "message": "Only the account owner can record a document for someone else."
+     }
+    },
+    {
+     "scenario": "put-unknown-scheme",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown document",
+      "message": "That document is not recognised for IN."
+     },
+     "fixture": {
+      "error": "Unknown document",
+      "message": "That document is not recognised for IN."
+     }
+    },
+    {
+     "scenario": "put-pan-in-australia",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown document",
+      "message": "That document is not recognised for AU."
+     },
+     "fixture": {
+      "error": "Unknown document",
+      "message": "That document is not recognised for AU."
+     }
+    },
+    {
+     "scenario": "put-no-country",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown document",
+      "message": "That document is not recognised for ."
+     },
+     "fixture": {
+      "error": "Unknown document",
+      "message": "That document is not recognised for ."
+     }
+    },
+    {
+     "scenario": "put-bad-pan",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "field": "PAN",
+      "message": "That does not look like a PAN. Check it and try again."
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "field": "PAN",
+      "message": "That does not look like a PAN. Check it and try again."
+     }
+    },
+    {
+     "scenario": "put-no-value",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "field": "PAN",
+      "message": "That does not look like a PAN. Check it and try again."
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "field": "PAN",
+      "message": "That does not look like a PAN. Check it and try again."
+     }
+    },
+    {
+     "scenario": "put-value-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "field": "PHONE",
+      "message": "That does not look like a Mobile. Check it and try again."
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "field": "PHONE",
+      "message": "That does not look like a Mobile. Check it and try again."
+     }
+    },
+    {
+     "scenario": "put-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "field": "PHONE",
+      "message": "That does not look like a Mobile. Check it and try again."
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "field": "PHONE",
+      "message": "That does not look like a Mobile. Check it and try again."
+     }
+    },
+    {
+     "scenario": "put-vault-unconfigured",
+     "status": 503,
+     "body_keys": {
+      "error": "Not configured",
+      "code": "VAULT_ENC_UNCONFIGURED",
+      "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     },
+     "fixture": {
+      "error": "Not configured",
+      "code": "VAULT_ENC_UNCONFIGURED",
+      "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     }
+    },
+    {
+     "scenario": "put-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+     },
+     "fixture": {
+      "error": "Not enabled",
+      "code": "IDOC_NOT_MIGRATED",
+      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+     }
+    },
+    {
+     "scenario": "put-db-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "put-db-throws-code",
+     "status": 500,
+     "body_keys": {
+      "error": "23514",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "23514",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "put-country-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "put-co-assist-lookup-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "put-answer-not-written",
+     "status": 500,
+     "body_keys": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "thrown-502",
+     "status": 502,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-503",
+     "status": 503,
+     "body_keys": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "Server error",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "thrown-503-with-code",
+     "status": 503,
+     "body_keys": {
+      "error": "VAULT_ENC_UNCONFIGURED",
+      "message": "A relayed sentence."
+     },
+     "fixture": {
+      "error": "VAULT_ENC_UNCONFIGURED",
+      "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "put-aadhaar-vault-unconfigured",
+     "status": 503,
+     "body_keys": {
+      "error": "Not configured",
+      "code": "VAULT_ENC_UNCONFIGURED",
+      "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     },
+     "fixture": {
+      "error": "Not configured",
+      "code": "VAULT_ENC_UNCONFIGURED",
+      "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     }
+    }
+   ]
   }
  },
  "global": {

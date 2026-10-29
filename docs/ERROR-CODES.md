@@ -153,13 +153,17 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | HAS_PARENT | 409 | Already in a network | That business is already in a network, and a business can be in one at a time. | Remove it from that network first. | network | 2026-10-23 |
 | IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
 | IDEMPOTENCY_IN_PROGRESS | 409 | Idempotency in progress | The same request is still being handled. | Wait a moment and look before sending it again. | idempotency | 2026-10-22 |
-| IDOC_CONSENT_REQUIRED | 400 | Idoc consent required | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_EMPLOYER_ONLY | 403 | Idoc employer only | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_NOT_CODE_VERIFIED | varies | Idoc not code verified | PENDING | - | iddoc-verify | 2026-10-22 |
-| IDOC_NOT_FOUND | 404 | Idoc not found | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_NOT_MIGRATED | 503 | Idoc not migrated | PENDING | - | identity-docs | 2026-10-22 |
-| IDOC_NO_CODE | 400 | Idoc no code | PENDING | - | iddoc-verify | 2026-10-22 |
-| IDOC_VALUE_UNAVAILABLE | varies | Idoc value unavailable | PENDING | - | iddoc-verify | 2026-10-22 |
+| IDOC_CONSENT_REQUIRED | 400 | Idoc consent required | Someone else's Aadhaar can be recorded only with their agreement. | Confirm they agreed, or ask them to enter it from their own profile. | identity-docs | 2026-10-22 |
+| IDOC_EMPLOYER_ONLY | 403 | Idoc employer only | Your employer records this document after checking it against the original. | Add your mobile and e-mail here; a code confirms them. | identity-docs | 2026-10-22 |
+| IDOC_INVALID_VALUE | 400 | Document number not valid | That does not look like the document you chose. | Check the number and try again. | identity-docs | 2026-10-24 |
+| IDOC_NOT_CODE_VERIFIED | varies | Idoc not code verified | Only a mobile number or an e-mail is confirmed by a code. | Your employer checks the other documents. | iddoc-verify | 2026-10-22 |
+| IDOC_NOT_FOUND | 404 | Idoc not found | That document is not on file yet. | Add it first, then ask for a code. | identity-docs | 2026-10-22 |
+| IDOC_NOT_MIGRATED | 503 | Idoc not migrated | Identity records are not switched on yet. | Try again later. | identity-docs | 2026-10-22 |
+| IDOC_NO_CODE | 400 | Idoc no code | No code has been asked for yet. | Ask for a code first. | iddoc-verify | 2026-10-22 |
+| IDOC_REFUSED | varies | Document request refused | That could not be done. | Read the message shown: it says why. | identity-docs | 2026-10-24 |
+| IDOC_SUBJECT_FORBIDDEN | 403 | Not your co-assist | That person is not one of your co-assists. | Only the account owner can record a document for their own co-assists. | identity-docs | 2026-10-24 |
+| IDOC_UNKNOWN_DOCUMENT | 400 | Document not recognised | That document is not offered for your country. | Pick one from the list. | identity-docs | 2026-10-24 |
+| IDOC_VALUE_UNAVAILABLE | varies | Idoc value unavailable | The saved number or e-mail cannot be read. | Enter it again, then ask for a code. | iddoc-verify | 2026-10-22 |
 | INR | varies | Inr | PENDING | - | locale.browser | 2026-10-22 |
 | INTEGRATION_BAD_REQUEST | 400 | Request not usable | Something this needs is missing or not valid. | Check the order or the fields named, then send it again. | integrations | 2026-10-23 |
 | INTERNAL | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | api | 2026-10-22 |
@@ -250,7 +254,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PARENT_NOT_FOUND | 404 | Network not found | We could not find that network. | Check its handle and try again. | network | 2026-10-23 |
 | PENETRATION_STORE_MISSING | 503 | Reach figures not ready | Reach figures are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | PERIOD_LOCKED | 409 | Month locked | That month is locked. | Use a date in an open month, or ask the owner to unlock it. | books | 2026-10-22 |
-| PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | PENDING | - | iddoc-verify | 2026-10-22 |
+| PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | Codes cannot be sent to a mobile number yet, so nothing was changed. | Try again when text messages are set up. | iddoc-verify | 2026-10-22 |
 | PIN | varies | Pin | PENDING | - | country | 2026-10-22 |
 | PIN_ACTORS_ONLY | 400 | Only a person can change a PIN | Only a person with their own login can change a PIN. | Sign in as that person. | actors | 2026-10-23 |
 | PIN_INCORRECT | 400 | Current PIN is wrong | The current PIN is not right. | Try again with your current PIN. | actors | 2026-10-23 |
@@ -341,7 +345,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | USER_ID_INVALID | 400 | User ID not usable | Choose a User ID that can be used. | Read the sentence shown and try another. | entities | 2026-10-22 |
 | USER_ID_TAKEN | 409 | User ID taken | That User ID is already taken. | Choose another; it cannot be changed later. | entities | 2026-10-22 |
 | VAULT_CHANGED | 409 | Vault changed | Changed since you opened it — reload? | Reload the vault, then save again. | governance | 2026-10-23 |
-| VAULT_ENC_UNCONFIGURED | 503 | Vault enc unconfigured | PENDING | - | identity-docs | 2026-10-22 |
+| VAULT_ENC_UNCONFIGURED | 503 | Vault enc unconfigured | Secure storage is not switched on yet, so nothing was stored. | Try again when it is switched on. | identity-docs | 2026-10-22 |
 | VAULT_VERSION_REQUIRED | 409 | Vault version required | This screen is older than the vault — reload it, then save. | Reload the screen, then save. | governance | 2026-10-22 |
 | VERIFICATION_FAILED | 422 | Registry check failed | That registry number could not be confirmed. | Check the number and try again. | governance | 2026-10-23 |
 | VIEW_ONLY | varies | View only | Your login can only view. | Ask the owner for edit access. | crm-groups | 2026-10-22 |

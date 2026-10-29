@@ -809,6 +809,12 @@
   401,
   500
  ],
+ "GET /api/identity/documents": [
+  401,
+  403,
+  500,
+  503
+ ],
  "GET /api/integrations/catalogue": [
   401,
   500
@@ -2182,6 +2188,24 @@
   422,
   500
  ],
+ "POST /api/identity/documents/:scheme/code": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/identity/documents/:scheme/verify": [
+  400,
+  401,
+  403,
+  404,
+  429,
+  500,
+  503
+ ],
  "POST /api/integrations/:actor_id/approve": [
   400,
   401,
@@ -2959,6 +2983,13 @@
   401,
   403,
   409,
+  500,
+  503
+ ],
+ "PUT /api/identity/documents/:scheme": [
+  400,
+  401,
+  403,
   500,
   503
  ],
