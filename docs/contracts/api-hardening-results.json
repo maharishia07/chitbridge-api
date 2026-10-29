@@ -85,8 +85,7 @@
   },
   "GET /api/entities/search": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/entities/policy": {
@@ -301,26 +300,22 @@
   },
   "GET /api/chits/sent": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/chits/folder": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/chits/rollup": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/chits/inbox": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/chits/pulse": {
@@ -379,14 +374,12 @@
   },
   "GET /api/chits/register/attachables": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/chits/register/subjects": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/chits/register/subjects": {
@@ -415,8 +408,7 @@
   },
   "GET /api/chits/register/templates": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/chits/register/templates": {
@@ -624,14 +616,15 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 422"
    },
    "foreign_id_404": {
     "pass": true
    },
    "idempotent_money_write": {
     "pass": false,
-    "why": "no key answered 200, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
    }
   },
   "DELETE /api/chits/:chit_id/payment": {
@@ -742,8 +735,7 @@
   },
   "GET /api/chits/disputes/queue": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "DELETE /api/chits/:chit_id": {
@@ -875,21 +867,19 @@
   "GET /api/chits/:id/children": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "an unknown id answered 200, not 404"
    }
   },
   "GET /api/chits/:id/trace": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/trace/batches": {
@@ -899,8 +889,7 @@
   },
   "GET /api/chits/trace/by-batch": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/chits/trace/networks": {
@@ -1240,8 +1229,7 @@
   },
   "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/till/quick-keys/screen-config": {
@@ -2016,8 +2004,7 @@
   },
   "GET /api/actors/settings": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "PUT /api/actors/settings": {
@@ -2068,8 +2055,7 @@
   },
   "GET /api/actors/access-events": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/identity/documents": {
@@ -2290,8 +2276,7 @@
   },
   "GET /api/folders": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/folders/inventory": {
@@ -2438,14 +2423,12 @@
   },
   "GET /api/folders/rules": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/folders/messages": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/folders/messages/:message_id/mark": {
@@ -2455,11 +2438,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/folders/worklist": {
@@ -2474,8 +2457,7 @@
   },
   "GET /api/folders/reconcile": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "GET /api/folders/mis": {
@@ -3193,8 +3175,7 @@
   },
   "GET /api/governance/ai-usage": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/governance/ai-skills": {
@@ -3664,8 +3645,7 @@
   },
   "GET /api/assist/regions": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/assist/resolve": {
@@ -3675,8 +3655,7 @@
   },
   "GET /api/assist/penetration": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/assist/catalogue-source/:key": {
@@ -3839,14 +3818,12 @@
   },
   "GET /api/testing/results": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/testing/runs": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/testing/results/junit": {
@@ -3954,8 +3931,7 @@
   },
   "GET /api/testing/report": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/testing/reliability": {
@@ -5331,21 +5307,21 @@
   "GET /api/crm/parties/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/crm/parties/:id/timeline": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/crm/parties/:id/interactions": {
@@ -5358,8 +5334,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/crm/followups": {
@@ -5387,28 +5362,25 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "DELETE /api/crm/followups/:id": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "DELETE /api/crm/parties/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/crm/leads": {
@@ -5476,12 +5448,10 @@
   },
   "GET /api/crm/parties/:id/contact-prefs": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "POST /api/crm/parties/:id/contact-prefs": {
@@ -5494,8 +5464,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/crm/privacy-requests": {

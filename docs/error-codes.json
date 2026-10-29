@@ -938,6 +938,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CTP_DRAFT",
+   "status": "409",
+   "title": "Draft stays here",
+   "shopkeeper": "A draft is not sent anywhere, and some of its copies belong to another installation.",
+   "hint": "Send it for real, or keep only this installation's copies.",
+   "owner_area": "rail",
+   "since": "2026-10-28"
+  },
+  {
    "code": "CTP_ENVELOPE_REFUSED",
    "status": "409",
    "title": "Envelope refused",
@@ -1053,6 +1062,15 @@
    "hint": "Check the address of the business.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_REFUSED",
+   "status": "409",
+   "title": "Not delivered",
+   "shopkeeper": "Another installation did not take its copy of this chit. Nothing was written.",
+   "hint": "Try again later. If it keeps happening, check the two installations name each other as peers.",
+   "owner_area": "rail",
+   "since": "2026-10-28"
   },
   {
    "code": "CTP_STORE_FAILED",
