@@ -4497,7 +4497,7 @@ async function markChitPaid(db, press) {
   if (bj.payment && Array.isArray(bj.payment.parts)) return { parts: true };
   const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }), {
     by: payment.by,
-    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge.map(String) : [],
+    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge : [] /* a code, or { code, over_minor } — books.acknowledgements reads both */,
     name: (bj.customer && bj.customer.name) || undefined
   });
   const marked = await db.query(

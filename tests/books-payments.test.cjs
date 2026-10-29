@@ -279,6 +279,44 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       ok('…confirmed once (acknowledge: [excess]) → recorded through recordPayment: the bill settled in full (₹1,180) and ₹120 kept as an advance from Ravi — no second posting rule',
         r5.payment && r5.payment.duplicate === false && r5.allocation && JSON.stringify(r5.allocation.settled) === JSON.stringify([{ against_ref: BILL('z'), amount_minor: 118000 }])
         && r5.outcome && r5.outcome.on_account_minor === 12000 && /₹120 kept as an advance from Ravi/.test(r5.outcome.words) && counts(X).payments - c5.payments === 1, JSON.stringify(r5));
+
+      /* critic probe 2: a SECOND press on the settled bill z asks (W1 nothing_owed against THAT bill) — never a silent ₹500 advance */
+      const againOnSettled = await door(chitOf('z', { amount: 500, client_ref: 'press-again' }), { name: 'Ravi' }).then((r) => r, (e) => e);
+      ok('probe 2: ₹500 again on settled z → 409 nothing_owed, "More than is owed" by ₹500 (over_minor 50000); nothing written',
+        againOnSettled instanceof Error && againOnSettled.code === 'ALREADY_PAID' && (againOnSettled.warnings || []).map((w) => w.code).join() === 'nothing_owed'
+        && againOnSettled.warnings[0].over_minor === 50000 && againOnSettled.title === 'More than is owed' && counts(X).payments - c5.payments === 1,
+        againOnSettled instanceof Error ? againOnSettled.message + ' ' + JSON.stringify(againOnSettled.warnings) : JSON.stringify(againOnSettled));
+
+      /* critic probe 1: Sita owes v ₹1,180 and w ₹2,360; Mark paid ₹1,300 on v must ask against v (₹120 over), not against her ₹3,540 */
+      const SITA = '77777777-7777-4777-8777-777777777777'; /* not TT (6666…), the rail party of section 7 */
+      X.T.parties.push({ owner: SHOP, party_id: SITA, party_no: 'P-00004', name: 'Sita', customer: true });
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: SITA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-27', currency: 'INR', party: SITA, source_chit_id: BILL('v'), source_ref: 'chit:v',
+        by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-28', currency: 'INR', party: SITA, source_chit_id: BILL('w'), source_ref: 'chit:w',
+        by_rate: [{ rate: 18, taxable: 2000, cgst: 180, sgst: 180, igst: 0 }], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL('v'), bill_no: 'C1-0052', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0052' } },
+        { chit_id: BILL('w'), bill_no: 'C1-0053', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0053' } });
+      const c6 = counts(X);
+      const onV = await door(chitOf('v', { amount: 1300 }), { name: 'Sita' }).then((r) => r, (e) => e);
+      ok('probe 1: ₹1,300 on v (₹1,180) while w (₹2,360) is also open → 409 excess measured against v: over ₹120 (the removed route gate read the same input)',
+        onV instanceof Error && onV.code === 'ALREADY_PAID' && (onV.warnings || []).map((w) => w.code).join() === 'excess' && onV.warnings[0].over_minor === 12000
+        && /more than the ₹1,180 open/.test(onV.warnings[0].words) && counts(X).payments === c6.payments, onV instanceof Error ? onV.message : JSON.stringify(onV));
+      const onVYes = await door(chitOf('v', { amount: 1300 }), { name: 'Sita', acknowledge: [{ code: 'excess', over_minor: 12000 }] });
+      ok('…acknowledged WITH the figure shown ({ code, over_minor }) → v settled ₹1,180, ₹120 advance; w untouched',
+        onVYes.payment && onVYes.payment.duplicate === false && JSON.stringify(onVYes.allocation.settled) === JSON.stringify([{ against_ref: BILL('v'), amount_minor: 118000 }])
+        && onVYes.outcome.on_account_minor === 12000, JSON.stringify(onVYes));
+
+      /* critic probe 3: a stale acknowledgement — the ask showed ₹140 over on w; a colleague records ₹500 against w in between; the Yes with 14000 is asked AGAIN with the fresh figure */
+      const onW = await door(chitOf('w', { amount: 2500 }), { name: 'Sita' }).then((r) => r, (e) => e);
+      ok('probe 3: ₹2,500 on w (₹2,360) → asks, over ₹140', onW instanceof Error && onW.warnings[0].code === 'excess' && onW.warnings[0].over_minor === 14000, onW instanceof Error ? onW.message : JSON.stringify(onW));
+      await X.B.recordPayment(X.db, SHOP, { party_id: SITA, direction: 'in', amount_minor: 50000, currency: 'INR', mode: 'upi', received_at: '2026-10-05', client_ref: 'colleague-1',
+        allocations: [{ against_ref: BILL('w'), amount_minor: 50000 }], by: SHOP });
+      const stale = await door(chitOf('w', { amount: 2500 }), { name: 'Sita', acknowledge: [{ code: 'excess', over_minor: 14000 }] }).then((r) => r, (e) => e);
+      ok('…a colleague recorded ₹500 on w in between: the Yes carrying 14000 is a 409 again, now over ₹640 (64000) — never ₹640 on account under a ₹140 question',
+        stale instanceof Error && stale.code === 'ALREADY_PAID' && stale.warnings[0].over_minor === 64000, stale instanceof Error ? stale.message : JSON.stringify(stale));
+      const fresh = await door(chitOf('w', { amount: 2500 }), { name: 'Sita', acknowledge: [{ code: 'excess', over_minor: 64000 }] });
+      ok('…the fresh Yes (64000) records: w settled ₹1,860, ₹640 advance', fresh.payment && fresh.outcome.on_account_minor === 64000 && JSON.stringify(fresh.allocation.settled) === JSON.stringify([{ against_ref: BILL('w'), amount_minor: 186000 }]), JSON.stringify(fresh));
       TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
 
       /* what the door cannot post says so — never a silent mark */

@@ -1164,7 +1164,7 @@ router.post('/payments', auth, noKey, editor, on, ...checked('POST /payments'), 
     const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
     const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
-    const ack = Array.isArray(b.acknowledge) ? b.acknowledge.map(String) : [];
+    const ack = Array.isArray(b.acknowledge) ? b.acknowledge : []; /* a code, or { code, over_minor } — books.acknowledgements reads both */
     const allocations = Array.isArray(b.allocations)
       ? b.allocations
           .filter((item) => item && typeof item === 'object')
