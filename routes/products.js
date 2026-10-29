@@ -1536,6 +1536,8 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }));
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     shopChanged(entity_id, 'product updated');
+    /* CAT-234: the answer is the stored row — a cost-blind co-assist (it may flip status) gets it without cost, as GET / strips it */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(r.rows);
     res.json({ message: 'Product updated', item: r.rows[0] });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Update failed'));
@@ -1560,7 +1562,11 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
 /* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
 router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
   try {
-    res.json({ enabled: await schedule.enabled(), pending: await schedule.pending(ctx(req), req.params.id) });
+    const entity_id = ctx(req);
+    const pending = await schedule.pending(entity_id, req.params.id);
+    /* CAT-234: a parked patch may carry the owner's cost — a cost-blind co-assist reads the list without it, the same strip as GET / */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(pending.map((row) => ({ item_data: row.patch })));
+    res.json({ enabled: await schedule.enabled(), pending });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not read the schedule'));
   }

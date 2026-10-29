@@ -133,9 +133,13 @@ function extras(tools) {
     X('edit-server-owned-key', 'PATCH ' + P + '/:id', 400, { body: { item_data: { name: 'Tea', image: 'x' } }, setup: withRows(firstOf(own, money)) }),
     X('edit-written', 'PATCH ' + P + '/:id', 200, { body: body(), setup: withRows(shelf) }),
     X('edit-merged', 'PATCH ' + P + '/:id', 200, { body: { merge: true, item_data: { unit: 'g' } }, setup: withRows(shelf) }),
+    /* CAT-234: a cost-blind co-assist flips status (merge:true) and gets the row back WITHOUT its cost (the shelf holds cost: 3) */
+    X('edit-status-cost-blind', 'PATCH ' + P + '/:id', 200, { body: { merge: true, item_data: { status: 'unavailable' } }, setup: { who: STAFF, sqlRows: firstOf(money, answering(/^\s*UPDATE catalogue_items/, [ITEM({ cost: 3 })]), answering(/SELECT item_data FROM catalogue_items WHERE item_id/, [{ item_data: ITEM({ cost: 3 }).item_data }])) }, patch: costHidden }),
     X('edit-currency-clash', 'PATCH ' + P + '/:id', 409, { body: { item_data: { name: 'Tea', price: { amount: 3, currency: 'USD' } } }, setup: withRows(shelf) }),
     /* schedule */
     X('schedule-read', 'GET ' + P + '/:id/schedule', 200, { patch: scheduleOn }),
+    /* CAT-234: a parked change the owner made carries a cost; a cost-blind co-assist reads the list without it */
+    X('schedule-read-cost-blind', 'GET ' + P + '/:id/schedule', 200, { setup: costBlind, patch: { schema: scheduleOn.schema, schedule: { pending: async () => [{ schedule_id: PARTY, item_id: PARTY, effective_at: SOMEDAY, patch: { status: 'unavailable', cost: 3 }, created_at: SOMEDAY }] }, cost: costHidden.cost } }),
     X('schedule-read-fails', 'GET ' + P + '/:id/schedule', 500, { patch: { schedule: { pending: boom } } }),
     X('schedule-needs-both', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY } }),
     X('schedule-cost-blind', 'POST ' + P + '/:id/schedule', 403, { body: { effective_at: SOMEDAY, item_data: { price: 5 } }, setup: costBlind, patch: costHidden }),
