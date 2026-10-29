@@ -6492,6 +6492,49 @@
         "url": "/api/integrations/streams"
       }
     },
+    "GET /api/pricing/kinds": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "order",
+          "kinds"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "kinds[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/pricing/kinds"
+      }
+    },
     "GET /api/products": {
       "status": "200",
       "schema": {
@@ -9473,6 +9516,7 @@
     "GET /api/integrations/status": "open at connectors[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/integrations/stock/:handle": "open at stock[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/integrations/streams": "open at streams[] — a value passed through (an expression: its keys are not written in the handler); owner — a value passed through (an expression: its keys are not written in the handler); connectors[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/products": "open at items[] — a value passed through (a name: its keys are not written in the handler); status_counts — a value passed through (an expression: its keys are not written in the handler); category_counts — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/products/:id/versions": "open at current — a value passed through (an expression: its keys are not written in the handler); versions[] — a value passed through (an expression: its keys are not written in the handler); version — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/products/lists": "open at lists[] — a value passed through (an expression: its keys are not written in the handler); mine[] — a value passed through (a name: its keys are not written in the handler)",

@@ -518,6 +518,20 @@ function checkOtherContracts() {
   check('facts: both routes are for a signed-in person and say a key is refused (403)', Object.values(facts.OPERATIONS).every((operation) => '403' in operation.responses && '401' in operation.responses));
 }
 
+/**
+ * API-8 output allow-list (S34): the pricing kinds read's derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root and every recorded 200 of it fits that shape.
+ * The answer is one fixed table, so there is no nullable column; the rows of kinds[] stay open and are listed (the table owns their keys).
+ */
+function checkPricingAllowList(recording) {
+  console.log('\n-- the closed success shape of the pricing kinds read holds every recorded 200 --');
+  const route = 'GET /api/pricing/kinds';
+  const shape = allowlist.shapeOf(route);
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+  const fits = shape && engine.compile(shape.schema);
+  check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body)), { answers: answers.length, errors: fits && fits.errors });
+}
+
 /** lib/contract-kit.js as built for this sweep: a public row, and a schema that refuses with the status a route always used */
 function checkKitWidening() {
   console.log('\n-- lib/contract-kit.js: public rows and the status of the schema refusal --');
@@ -569,6 +583,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   await checkChainsAgree();
   checkOtherContracts();
   checkKitWidening();
+  checkPricingAllowList(recording);
   const legacy = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
