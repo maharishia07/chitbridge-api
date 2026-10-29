@@ -8389,6 +8389,314 @@
         "url": "/api/till/worth-an-offer"
       }
     },
+    "GET /api/work/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "kind",
+          "tab",
+          "stage",
+          "word",
+          "status",
+          "side",
+          "subject",
+          "ref",
+          "party",
+          "party_id",
+          "channel",
+          "fulfilment",
+          "address",
+          "requested_for",
+          "remark",
+          "total_minor",
+          "currency",
+          "lines_n",
+          "lines_open_n",
+          "billed",
+          "despatched",
+          "assignee",
+          "lines_assigned_n",
+          "created_at",
+          "age_days",
+          "actions",
+          "lines"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "tab": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "word": {
+            "type": "string"
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "side": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject": {
+            "type": "string"
+          },
+          "ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "party": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "party_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fulfilment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requested_for": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "remark": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total_minor": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines_n": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "lines_open_n": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "billed": {
+            "type": "boolean"
+          },
+          "despatched": {
+            "type": "boolean"
+          },
+          "assignee": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "lines_assigned_n": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "age_days": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "object"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 10,
+      "open": [
+        {
+          "path": "assignee",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "actions",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "lines[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/work/20000000-0000-4000-8000-000000000003"
+      }
+    },
+    "GET /api/work/facts": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "truncated",
+          "counts",
+          "lines",
+          "figures"
+        ],
+        "properties": {
+          "truncated": {
+            "type": "boolean"
+          },
+          "counts": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "figures": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "counts",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "lines[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "figures",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/work/facts"
+      }
+    },
+    "GET /api/work/list": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "view",
+          "page",
+          "limit",
+          "truncated",
+          "counts",
+          "total",
+          "rows"
+        ],
+        "properties": {
+          "view": {
+            "type": "string"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "counts": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "total": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 13,
+      "open": [
+        {
+          "path": "counts",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "rows[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/work/list?view=orders_out"
+      }
+    },
     "POST /api/assist": {
       "status": "200",
       "schema": {
@@ -9558,6 +9866,9 @@
     "GET /api/chits/sent": "open at chits[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/trace/by-batch": "open at nodes[] — a value passed through (an expression: its keys are not written in the handler); edges[] — a value passed through (a name: its keys are not written in the handler)",
     "DELETE /api/actors/:id/pin": "left open on purpose: the 200 carries the one-time code (show_code · otp on an opted-in stack); a shape that names it is a call for cb-security, not a sweep",
-    "GET /api/actors": "open at actors[].connector_config — the connector's own config, stored verbatim from the owner's body (routes/connectors.js: isObject only); a closed shape would cut a key it does not list"
+    "GET /api/actors": "open at actors[].connector_config — the connector's own config, stored verbatim from the owner's body (routes/connectors.js: isObject only); a closed shape would cut a key it does not list",
+    "GET /api/work/:chit_id": "open at assignee — a value passed through (an expression: its keys are not written in the handler); actions — a value passed through (an expression: its keys are not written in the handler); lines[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/work/facts": "open at counts — a value passed through (an expression: its keys are not written in the handler); lines[] — a value passed through (an expression: its keys are not written in the handler); figures — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/work/list": "open at counts — a value passed through (an expression: its keys are not written in the handler); rows[] — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

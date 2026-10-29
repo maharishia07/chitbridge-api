@@ -280,7 +280,14 @@
    "output_allowlist": true
   },
   "GET /api/work/:chit_id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/work/facts": {
+   "output_allowlist": true
+  },
+  "GET /api/work/list": {
+   "output_allowlist": true
   },
   "PATCH /api/actors/:id": {
    "foreign_id_404": true
