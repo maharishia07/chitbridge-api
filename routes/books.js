@@ -1096,7 +1096,8 @@ async function meName(req, h, e) {
 }
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
 function alreadyPaid(res, err) {
-  return problem(res.req, res, { status: 409, code: 'ALREADY_PAID', detail: err.message, legacy: { error: 'Already paid?', message: err.message, warnings: err.warnings || [] } });
+  /* FIN-53: the title follows the list — "Already paid?" for the same money twice, "More than is owed" for W1/W2 alone (books.warningTitle) */
+  return problem(res.req, res, { status: 409, code: 'ALREADY_PAID', detail: err.message, legacy: { error: err.title || 'Already paid?', message: err.message, warnings: err.warnings || [] } });
 }
 
 /**
@@ -1166,7 +1167,7 @@ router.post('/payments', auth, noKey, editor, on, ...checked('POST /payments'), 
     const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
     const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
-    const ack = Array.isArray(b.acknowledge) ? b.acknowledge.map(String) : [];
+    const ack = Array.isArray(b.acknowledge) ? b.acknowledge : []; /* a code, or { code, over_minor } — books.acknowledgements reads both */
     const allocations = Array.isArray(b.allocations)
       ? b.allocations
           .filter((item) => item && typeof item === 'object')

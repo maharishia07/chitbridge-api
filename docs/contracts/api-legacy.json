@@ -22068,20 +22068,6 @@
      }
     },
     {
-     "scenario": "payment-above-the-quote",
-     "status": 422,
-     "body_keys": {
-      "error": "Above the quoted amount",
-      "message": "Received 500 against a quote of 100. Add a note saying why, or record the quoted amount.",
-      "quoted": 100
-     },
-     "fixture": {
-      "error": "Above the quoted amount",
-      "message": "Received 500 against a quote of 100. Add a note saying why, or record the quoted amount.",
-      "quoted": 100
-     }
-    },
-    {
      "scenario": "payment-books-refuse",
      "status": 409,
      "body_keys": {

@@ -2479,9 +2479,9 @@
   {
    "code": "PAYMENT_ABOVE_QUOTE",
    "status": "422",
-   "title": "Above the quoted amount",
-   "shopkeeper": "The amount received is above what the bill asked for.",
-   "hint": "Add a note saying why, or record the quoted amount.",
+   "title": "DEPRECATED 2026-10-29 (FIN-53): Above the quoted amount",
+   "shopkeeper": "No longer answered: money above what a bill owes is the books' one question (409 ALREADY_PAID, \"More than is owed\"), confirmed once as an advance.",
+   "hint": "Nothing to do; an old client reading this code should ask the 409's warnings instead.",
    "owner_area": "chits",
    "since": "2026-10-23"
   },

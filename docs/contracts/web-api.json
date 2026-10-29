@@ -4808,11 +4808,13 @@
    "status": 409,
    "note": "M26 (api #57) - a duplicate-rule warning not named in acknowledge[]; nothing is written.",
    "example": {
-    "error": "Already paid?",
-    "message": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
+    "error": "More than is owed",
+    "message": "More than is owed by ₹3,820. ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Keep ₹3,820 as an advance?",
     "warnings": [
      {
       "code": "excess",
+      "over_minor": 382000,
+      "over_words": "₹3,820",
       "words": "₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores."
      }
     ],
@@ -4820,7 +4822,7 @@
     "title": "Already paid",
     "status": 409,
     "code": "ALREADY_PAID",
-    "detail": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
+    "detail": "More than is owed by ₹3,820. ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Keep ₹3,820 as an advance?",
     "hint": "Check the list, then confirm if it is really a new one.",
     "request_id": null
    },
