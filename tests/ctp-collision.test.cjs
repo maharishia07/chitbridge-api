@@ -134,6 +134,13 @@ const stub = {
     const r = await A.resolveAddress(SAME + '@stranger.example');
     assert.strictEqual(r.ok, false);
     assert.ok(/no installation we deal with/.test(r.why), r.why);
+    assert.ok(!/stranger/.test(r.why), 'RAIL-140 (e) · Q19: the domain the caller typed is not echoed: ' + r.why);
+  });
+
+  await okA('an unknown bare bridge id is refused without echoing it (RAIL-140 e)', async () => {
+    const r = await A.resolveAddress('CBNOTHERE1');
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.why, 'no active business here has that bridge id');
   });
 
   /* ── ③ WHAT THE IDENTICAL SHOPS MEAN ───────────────────────────────────────────────────────────────────── */
