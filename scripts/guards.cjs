@@ -446,6 +446,9 @@ const GUARDS = [
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
   'party-contact-patch.test.cjs',
+  /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
+  'party-merge-target.test.cjs',
+  'party-merge-guard-sql.test.cjs',
   'r58-no-sales-offer-on-receipt.test.js'
 ];
 

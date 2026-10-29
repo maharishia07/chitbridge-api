@@ -13,7 +13,9 @@ DECLARE
   me uuid;
 BEGIN
   IF NEW.merged_into IS NULL THEN RETURN NEW; END IF;
-  me := CASE TG_TABLE_NAME WHEN 'customer_list' THEN NEW.customer_identity_id ELSE NEW.supplier_entity_id END;
+  /* an IF, never a CASE: plpgsql resolves NEW.<column> while evaluating the expression, so a CASE that names a column the other table lacks
+     fails with 'record "new" has no field ...' on every merge (found by CI's fresh-db build of PR 505, 29 Oct) */
+  IF TG_TABLE_NAME = 'customer_list' THEN me := NEW.customer_identity_id; ELSE me := NEW.supplier_entity_id; END IF;
   IF NEW.merged_into = me THEN RAISE EXCEPTION 'A party cannot be merged into itself.' USING ERRCODE = '23514'; END IF;
   IF EXISTS (SELECT 1 FROM customer_list c WHERE c.owner_entity_id = NEW.owner_entity_id AND c.customer_identity_id = NEW.merged_into AND c.merged_into IS NOT NULL)
      OR EXISTS (SELECT 1 FROM supplier_list s WHERE s.owner_entity_id = NEW.owner_entity_id AND s.supplier_entity_id = NEW.merged_into AND s.merged_into IS NOT NULL) THEN
