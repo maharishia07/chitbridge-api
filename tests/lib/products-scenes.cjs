@@ -115,6 +115,8 @@ function extras(tools) {
     X('import-decisions-not-a-list', 'POST ' + P + '/import', 400, { body: importBody({ decisions: 'all' }) }),
     /* starter columns */
     X('starter-list', 'GET ' + P + '/starter-columns', 200, { url: P + '/starter-columns?vertical=gold' }),
+    X('starter-list-bare', 'GET ' + P + '/starter-columns', 200, {}),
+    X('starter-list-unknown-trade', 'GET ' + P + '/starter-columns', 200, { url: P + '/starter-columns?vertical=nope' }),
     X('starter-list-fails', 'GET ' + P + '/starter-columns', 500, { patch: { starter: { list: crash } } }),
     X('starter-unknown-trade', 'POST ' + P + '/starter-columns', 400, { body: { vertical: 'nope' } }),
     X('starter-no-definition', 'POST ' + P + '/starter-columns', 500, { body: { vertical: 'gold' }, patch: { boot: { ensureDefaultSchema: async () => ({}) } } }),
@@ -183,16 +185,24 @@ function extras(tools) {
     X('media-uploaded', 'POST ' + P + '/:id/media', 200, { body: { name: 'a.png', mime: 'image/png', data_base64: 'data:image/png;base64,' + PNG.toString('base64') }, patch: storeOn, setup: withRows(shelf) }),
     X('media-upload-fails', 'POST ' + P + '/:id/media', 500, { body: { name: 'a.png', mime: 'image/png', data_base64: PNG.toString('base64') }, patch: storeWith({ put: boom }) }),
     X('media-removed', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeOn, setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }] } }])) }),
+    X('media-removed-one-stays', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeOn, setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }, { id: 'm2', name: 'tour', kind: 'video' }] } }])) }),
     X('media-remove-key-outside-the-shop', 'DELETE ' + P + '/:id/media/:mid', 200, { patch: storeWith({ del: async () => { throw Object.assign(new Error('no'), { code: 'NOT_OWNER' }); } }), setup: withRows(answering(/SELECT item_data FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, [{ item_data: { media: [{ id: PARTY, key: 'k', kind: 'image' }] } }])) }),
     /* versions */
     X('versions-bad-date', 'GET ' + P + '/:id/versions', 400, { url: P + '/' + PARTY + '/versions?at=yesterday' }),
     X('versions-not-migrated', 'GET ' + P + '/:id/versions', 503, { setup: withRows(raising(/SELECT item_id FROM catalogue_items/, '42P01')) }),
     X('versions-listed', 'GET ' + P + '/:id/versions', 200, { setup: withRows(firstOf(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }]), answering(/FROM catalogue_item_version v/, [{ version_no: 1, valid_to: null, snapshot: { cost: 3 } }]))) }),
     X('versions-as-of', 'GET ' + P + '/:id/versions', 200, { url: P + '/' + PARTY + '/versions?at=2026-10-01T00:00:00.123Z', setup: withRows(firstOf(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }]), answering(/FROM catalogue_item_version/, [{ version_no: 1, snapshot: { cost: 3 } }]))) }),
+    /* versions: no row at that moment (version null) · a history with no open version (current null) · no history at all */
+    X('versions-as-of-no-row', 'GET ' + P + '/:id/versions', 200, { url: P + '/' + PARTY + '/versions?at=2026-10-01T00:00:00.123Z', setup: withRows(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }])) }),
+    X('versions-none-open', 'GET ' + P + '/:id/versions', 200, { setup: withRows(firstOf(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }]), answering(/FROM catalogue_item_version v/, [{ version_no: 1, valid_to: '2026-10-01T00:00:00.000Z', snapshot: { name: 'Tea' } }]))) }),
+    X('versions-no-history', 'GET ' + P + '/:id/versions', 200, { setup: withRows(answering(/SELECT item_id FROM catalogue_items/, [{ item_id: PARTY }])) }),
     /* the lists */
     X('lists-db-fails', 'GET ' + P + '/lists', 200, { setup: failing }),
     X('lists-trade-unreadable', 'GET ' + P + '/lists', 500, { patch: { gov: { verticalOf: boom } } }),
     X('lists-shown', 'GET ' + P + '/lists', 200, { setup: withRows(firstOf(money, answering(/FROM catalogue_items WHERE entity_id/, [{ name: 'Tea', unit: 'kg', price: { amount: 10, currency: 'INR' }, is_active: true }]))) }),
+    /* the trade opens on a list (pick) · a trade no list fits (pick null, vertical named) · a shop with no stated trade (vertical null) */
+    X('lists-for-a-grocer', 'GET ' + P + '/lists', 200, { patch: { gov: { verticalOf: async () => ({ key: 'kirana' }) } }, setup: withRows(money) }),
+    X('lists-for-an-unlisted-trade', 'GET ' + P + '/lists', 200, { patch: { gov: { verticalOf: async () => ({ key: 'gold' }) } }, setup: withRows(money) }),
     X('lists-adopt-list-missing', 'POST ' + P + '/lists/adopt', 400, { body: {} }),
     X('lists-adopt-unknown-list', 'POST ' + P + '/lists/adopt', 400, { body: { list: 'nope' } }),
     X('lists-adopt-nothing-selected', 'POST ' + P + '/lists/adopt', 200, { body: { list: 'veg', names: [{ name: 'no such product', unit: 'kg' }] }, setup: withRows(money) }),

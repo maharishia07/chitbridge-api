@@ -259,12 +259,41 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       /* what the door cannot post says so — never a silent mark */
       const c4 = counts(X);
       const q1 = await door(chitOf('i', { method: 'other' }));
-      const q2 = await door(chitOf('j', { amount: 0 }, { summary_json: {} }));
       TCp.entryFor = async () => ({ sells: true, buyer: {}, me: { entity_id: SHOP } });
       const q3 = await door(chitOf('k'));
-      ok('"other" has no ledger · no amount and no quoted total · a payer the shop does not know → { queued, why } in words, nothing written (the route parks it, named)',
-        q1.queued === true && /no ledger yet/.test(q1.why) && q2.queued === true && /no amount/.test(q2.why) && q3.queued === true && /nobody the shop knows/.test(q3.why)
-        && counts(X).payments === c4.payments && counts(X).entries === c4.entries, JSON.stringify([q1, q2, q3]));
+      ok('"other" has no ledger · a payer the shop does not know → { queued, why } in words, nothing written (the route parks it, named)',
+        q1.queued === true && /no ledger yet/.test(q1.why) && q3.queued === true && /nobody the shop knows/.test(q3.why)
+        && counts(X).payments === c4.payments && counts(X).entries === c4.entries, JSON.stringify([q1, q3]));
+      /* FIN-52: a press for nothing is REFUSED at the door (422, the books' words), never queued, never marked — a retry could never find an amount */
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      const zeros = [];
+      for (const copy of [chitOf('j', { amount: 0 }), chitOf('j', { amount: 0 }, { summary_json: {} }), chitOf('j', { amount: null }, { summary_json: {} })]) {
+        try { zeros.push(await door(copy)); } catch (e) { zeros.push(e); }
+      }
+      ok('FIN-52: ₹0 typed against a quote · ₹0 with no quote · no amount and no quote → each THROWS BOOKS_REFUSED (refused: true) in words naming the 0; nothing queued, nothing written',
+        zeros.every((z) => z instanceof Error && z.code === 'BOOKS_REFUSED' && z.refused === true && /amount is 0/.test(z.message))
+        && counts(X).payments === c4.payments && counts(X).entries === c4.entries, JSON.stringify(zeros.map((z) => (z instanceof Error ? z.code + ': ' + z.message : z))));
+      /* FIN-55: a party on NEITHER list, pressed by "other" (no ledger) — the stranger rule answers before the ledger waits: refused, never a wait, never a mark */
+      const STRANGER = '44444444-4444-4444-8444-444444444444';
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: STRANGER }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      let stranger = null;
+      try { stranger = await door(chitOf('l', { method: 'other', amount: 500 })); } catch (e) { stranger = e; }
+      ok('FIN-55: a stranger\'s bill by "other" → THROWS BOOKS_REFUSED "not on this shop\'s customer or supplier list" (books.partyOnList, the ONE stranger rule), not { queued }',
+        stranger instanceof Error && stranger.code === 'BOOKS_REFUSED' && /customer or supplier list/.test(stranger.message) && counts(X).payments === c4.payments,
+        stranger instanceof Error ? stranger.message : JSON.stringify(stranger));
+      ok('…the same stranger by UPI is refused by the same sentence from recordPayment (one rule, two doors)',
+        await door(chitOf('m', { method: 'upi', amount: 500 })).then(() => false, (e) => e.code === 'BOOKS_REFUSED' && /customer or supplier list/.test(e.message)));
+      /* critic on #504: every order of the facts — no amount, no quote AND no known party must still refuse (the amount is asked first; it depends on no party) */
+      TCp.entryFor = async () => ({ sells: true, buyer: {}, me: { entity_id: SHOP } });
+      const nobodyNothing = await door(chitOf('o', { amount: null }, { summary_json: {} })).then((r) => r, (e) => e);
+      ok('no amount · no quote · nobody the shop knows → BOOKS_REFUSED "the amount is 0" (never "choose the customer" + a mark)',
+        nobodyNothing instanceof Error && nobodyNothing.code === 'BOOKS_REFUSED' && /amount is 0/.test(nobodyNothing.message), JSON.stringify(nobodyNothing instanceof Error ? nobodyNothing.message : nobodyNothing));
+      /* the ledger OFF (SUPP has none): ₹0 is still refused — a ₹0 "paid" mark is wrong on any copy; a stranger is allowed there (the stranger rule is the ledger's; the mark is a note, nothing is recorded) */
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: STRANGER }, seller: { entity_id: SUPP }, me: { entity_id: SUPP } });
+      const offZero = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('p', { amount: 0 }), { by: SUPP })).then((r) => r, (e) => e);
+      const offStranger = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('q', { amount: 500 }), { by: SUPP }));
+      ok('ledger off: ₹0 → BOOKS_REFUSED; a stranger for ₹500 → { off: true } (finance\'s call on critic point 3)',
+        offZero instanceof Error && offZero.code === 'BOOKS_REFUSED' && JSON.stringify(offStranger) === JSON.stringify({ off: true }), JSON.stringify([offZero instanceof Error ? offZero.message : offZero, offStranger]));
       const off = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('f'), { by: SUPP }));
       eq('a shop with no ledger → { off: true } (the copy still says paid, as the counter\'s money chit does; nothing to post into)', off, { off: true });
     } finally { TCp.entryFor = wasEntryFor; }
