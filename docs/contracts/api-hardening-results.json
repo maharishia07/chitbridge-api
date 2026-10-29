@@ -85,8 +85,7 @@
   },
   "GET /api/entities/search": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/entities/policy": {

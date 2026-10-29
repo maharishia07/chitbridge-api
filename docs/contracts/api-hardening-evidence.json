@@ -10,6 +10,9 @@
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
+  "GET /api/entities/search": {
+   "output_allowlist": true
+  },
   "GET /api/entities/policy": {
    "output_allowlist": true
   },
