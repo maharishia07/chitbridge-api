@@ -3578,6 +3578,12 @@
           "limit"
         ],
         "properties": {
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "chits": {
             "type": "array",
             "items": {
@@ -3621,6 +3627,12 @@
           "next"
         ],
         "properties": {
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "chits": {
             "type": "array",
             "items": {
@@ -4032,7 +4044,10 @@
                   "type": "number"
                 },
                 "total_value": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "cost_hidden": {
                   "type": "boolean"
@@ -4065,6 +4080,12 @@
           "next"
         ],
         "properties": {
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "chits": {
             "type": "array",
             "items": {

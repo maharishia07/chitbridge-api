@@ -9,14 +9,14 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 136 | `list` | `amend.js` |  |
+| 137 | `list` | `amend.js` |  |
 | 109 | `rows` | `crm.js` | still in them: |
 | 102 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 92 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
 | 82 | `answer` | `availability.js` | from March; then nearest. |
-| 76 | `money` | `bill-privacy.js` |  |
+| 77 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 70 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 68 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -61,7 +61,7 @@ of file each thing is; this says what already does the job.
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 34 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 34 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 33 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
@@ -70,7 +70,7 @@ of file each thing is; this says what already does the job.
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
-| 30 | `rate` | `convert.js` | A rate, with its evidence. |
+| 31 | `rate` | `convert.js` | A rate, with its evidence. |
 | 30 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 29 | `lines` | `cart.js` |  |
 | 29 | `sentence` | `one-person.js` |  |
@@ -107,7 +107,7 @@ of file each thing is; this says what already does the job.
 | 22 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 24 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
+| 23 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
 | 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 21 | `chart` | `fx-rates.js` |  |

@@ -58,7 +58,7 @@ const differing = (left, right) => Array.from(new Set(Object.keys(left || {}).co
 
 /* ── the copies ──────────────────────────────────────────────────────────────────────────────────────────────── */
 const LINES = [
-  { line_id: CHIT, particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', price: SECRET.price, total: SECRET.total, gst_rate: 5, item_data: { unit_cost: SECRET.unit_cost, landed: SECRET.landed, lot: 'L1' } },
+  { line_id: CHIT, particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', price: SECRET.price, total: SECRET.total, gst_rate: 5, cgst: 2.5, sgst: 2.5, mrp: 4343.5, unit_price: SECRET.price, item_data: { unit_cost: SECRET.unit_cost, landed: SECRET.landed, lot: 'L1' } },
   { line_id: SUPPLIER, particulars: 'Toor dal 1kg', quantity: 5, unit: 'kg', price: 12, gst_rate: 5 }
 ];
 const SUMMARY = { line_item_count: 2, total_value: SECRET.total, currency_code: 'INR', money: { gross: SECRET.money_total, net: SECRET.money_total, total: SECRET.money_total }, purpose: 'order' };
@@ -77,7 +77,7 @@ const SALE = header({ sender_entity_id: CUSTOMER, sender_entity_display_name: 'R
 const sentTo = (party) => header({ direction: 'sent', role: 'Sent', sender_entity_id: SHOP, all_recipients: [{ entity_id: SHOP, display_name: 'Shop' }, { entity_id: party, display_name: 'Party' }] });
 
 /* ── the stand-in db ─────────────────────────────────────────────────────────────────────────────────────────── */
-let WHO = OWNER, SCENE = {};
+let WHO = OWNER, SCENE = {}, LAST_LIST_SQL = '';
 const UUID = /[0-9a-f-]{36}/g;
 const rolesOf = (ids) => ids.map((id) => ({ id, customer: id === CUSTOMER, supplier: id === SUPPLIER }));
 function handle(sql, params) {
@@ -86,7 +86,11 @@ function handle(sql, params) {
   if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return { rows: rolesOf(params[1]) };
   if (/SELECT \* FROM chit_header/.test(s)) return { rows: SCENE.header ? [SCENE.header] : [] };
   if (/FROM chit_detail/.test(s)) return { rows: SCENE.header ? [DETAIL] : [] };
-  if (/AS participants,/.test(s)) return { rows: [bundle(SCENE.deliveries || [])] };
+  if (/AS participants,/.test(s)) {
+    if (SCENE.fallback) throw Object.assign(new Error('relation "chit_line_assignment" does not exist'), { code: '42P01' }); /* the one-shot fails: the route takes its per-read path */
+    return { rows: [bundle(SCENE.deliveries || [])] };
+  }
+  if (/FROM chit_header ch\s+JOIN chit_status cs|FROM chit_status cs\s+JOIN chit_header ch/.test(s) && /LIMIT \$/.test(s)) LAST_LIST_SQL = s;
   if (/LEFT JOIN chit_line_delivery d/.test(s)) return { rows: SCENE.deliveries || [] }; /* the bill's own delivery picture (lib/bill-privacy path) */
   if (/COUNT\(\*\)::int AS chits/.test(s)) return { rows: SCENE.groups || [] }; /* the rollup statement, with or without the blind actor's members column */
   if (/SELECT ch\.chit_id, ch\.all_recipients/.test(s) || /SELECT DISTINCT ON/.test(s) || /SELECT\s+ch\.chit_id,/.test(s)) return { rows: SCENE.rows || [] };
@@ -115,30 +119,49 @@ function unitCases() {
     ['stock to own use', header({ purpose: 'own_use', sender_entity_id: SHOP }), null, 'buy'],
     ['an order from a supplier', header({}), SUP, 'buy'],
     ['an order from a customer', SALE, CUS, 'sell'],
-    ['an order with a declared side (side wins)', header({ business_json: { side: 'sell' } }), SUP, 'sell'],
-    ['an order whose counterparty is on both lists: unknown', header({}), BOTH, 'unknown'],
+    ['an order with a SENDER-declared "sell": ignored (the sender wrote it), the supplier role hides', header({ business_json: { side: 'sell' } }), SUP, 'buy'],
+    ['an order with a sender-declared "buy": hides even for a customer (a declared side can only hide more)', header({ business_json: { side: 'buy' } }), CUS, 'buy'],
+    ['an order whose counterparty is on both lists: the supplier role wins (hidden either way)', header({}), BOTH, 'buy'],
     ['an order whose counterparty is on no list: unknown (fails closed)', header({}), null, 'unknown'],
+    ['an order I SENT to a party on the customer list only: a sale by my own lists (a PO to such a party is a mis-listed party; the fix is the list)', sentTo(CUSTOMER), CUS, 'sell'],
     ['a subscription from a brand on my supplier list', header({ purpose: 'subscription' }), SUP, 'buy'],
     ['a despatch note I received', header({ purpose: 'delivery_note' }), null, 'buy'],
     ['a despatch note I sent', header({ purpose: 'delivery_note', sender_entity_id: SHOP }), null, 'sell'],
-    ['a marketing chit: never hidden', header({ purpose: 'marketing' }), null, 'sell']
+    ['income: money in, whoever holds it', header({ purpose: 'income' }), null, 'sell'],
+    ['a service chit received from a supplier: not positively a sale, hidden', header({ purpose: 'service' }), SUP, 'unknown'],
+    ['an inquiry received from a party on no list: hidden', header({ purpose: 'inquiry' }), null, 'unknown'],
+    ['a resale chit received from a supplier: hidden', header({ purpose: 'resale' }), SUP, 'unknown'],
+    ['general with no kind, received: hidden', header({ purpose: 'general' }), null, 'unknown'],
+    ['a priced invoice with NO sender (docOf null): hidden', header({ purpose: 'invoice', sender_entity_id: null }), null, 'unknown'],
+    ['a service chit I SENT to a customer: a sale', Object.assign(sentTo(CUSTOMER), { purpose: 'service' }), CUS, 'sell'],
+    ['a service chit I sent to a party on no list: hidden (an unlisted party may be a supplier not yet listed)', Object.assign(sentTo(STRANGER), { purpose: 'service' }), null, 'unknown'],
+    ['a marketing chit received from a brand: hidden — nothing priced is lost, and a trade list from a supplier stays off', header({ purpose: 'marketing' }), null, 'unknown'],
+    ['a marketing chit I sent to a customer: a sale (my own offer)', Object.assign(sentTo(CUSTOMER), { purpose: 'marketing' }), CUS, 'sell']
   ];
   cases.forEach(([label, copy, role, want]) => t('costSideOf | ' + label, view.costSideOf(copy, SHOP, role), want));
   t('counterpartyOf | the sender when not me; else the first recipient that is not me; a self chit has none', [view.counterpartyOf(BILL, SHOP), view.counterpartyOf(sentTo(CUSTOMER), SHOP), view.counterpartyOf(RECEIPT, SHOP)], [SUPPLIER, CUSTOMER, null]);
   console.log('   lib/cost-view · hideChitCosts never changes what it was given (the sealed body stays)');
-  const answer = { header: structuredClone(BILL), detail: structuredClone(DETAIL), live_set: [{ live: { price: 1, particulars: 'x' }, original: { total: 2 }, history: [{ price: 3 }] }], amendments: [{ line: { price: 4 } }], line_delivery: { [CHIT]: { charged: 17, added: [{ delivery_id: CHIT, amount: 10 }, { delivery_id: SUPPLIER, amount: 7 }] } }, delivery_summary: { charged: 17 } };
+  const fatLine = { line_id: CHIT, particulars: 'x', quantity: 2, unit: 'kg', gst_rate: 5, hsn: '1006', price: 1, total: 2, unit_price: 1, line_total: 2, cgst: 0.05, sgst: 0.05, igst: 0, cess: 0, mrp: 3, rate: 1, amount: 2, taxable: 2, discount: 0, item_data: { lot: 'L1', mrp: 3, unit_cost: 0.5, tax_amount: 0.1 } };
+  const answer = { header: Object.assign(structuredClone(BILL), { business_json: { their_bill: { no: 'INV-7', total: 9, tax: 1, taxable: 8 }, invoice: { total: 9 }, order: { from: 'ORD-1' } } }), detail: structuredClone(DETAIL), live_set: [{ live: structuredClone(fatLine), original: { total: 2 }, history: [{ price: 3 }] }], amendments: [{ line: { price: 4 } }], line_delivery: { [CHIT]: { charged: 17, added: [{ delivery_id: CHIT, amount: 10, by_id: BLIND_ID }, { delivery_id: SUPPLIER, amount: 7, by_id: GRANTED_ID }] } }, delivery_summary: { charged: 17 } };
   const before = JSON.stringify(answer);
-  const hidden = view.hideChitCosts(answer, { side: 'buy', mine: new Set([CHIT]) });
+  const hidden = view.hideChitCosts(answer, { side: 'buy', actorId: BLIND_ID });
   t('hideChitCosts | the input is untouched, byte for byte', JSON.stringify(answer) === before, true);
-  t('hideChitCosts | buy: every line shape loses its price, the header its money, the invoice goes, their number stays', [hidden.live_set[0].live, hidden.live_set[0].original, hidden.live_set[0].history[0], hidden.amendments[0].line, hidden.header.summary_json.money, hidden.header.business_json], [{ particulars: 'x' }, {}, {}, {}, undefined, { their_bill: { no: 'INV-7' } }]);
-  t('hideChitCosts | buy: my own add stays, the other goes; charged above my own is refused, the chit sum with it', [hidden.line_delivery[CHIT].added.map((a) => a.amount), hidden.line_delivery[CHIT].charged, hidden.delivery_summary.charged, hidden.cost_hidden], [[10, undefined], undefined, undefined, true]);
-  const own = view.hideChitCosts({ line_delivery: { [CHIT]: { charged: 10, added: [{ delivery_id: CHIT, amount: 10 }] } }, delivery_summary: { charged: 10 } }, { side: 'buy', mine: new Set([CHIT]) });
+  t('hideChitCosts | buy: a line keeps the ALLOWLIST only (name · quantity · unit · gst_rate · hsn · item_data sans money); cgst, sgst, mrp, unit_price, line_total, rate, amount, taxable, discount all go', hidden.live_set[0].live, { line_id: CHIT, particulars: 'x', quantity: 2, unit: 'kg', gst_rate: 5, hsn: '1006', item_data: { lot: 'L1' } });
+  t('hideChitCosts | buy: every other line shape loses its money; the header its money, the invoice and their bill\'s total/tax (their number and the order link stay)', [hidden.live_set[0].original, hidden.live_set[0].history[0], hidden.amendments[0].line, hidden.header.summary_json, hidden.header.business_json], [{}, {}, {}, { line_item_count: 2, currency_code: 'INR', purpose: 'order' }, { their_bill: { no: 'INV-7' }, order: { from: 'ORD-1' } }]);
+  t('hideChitCosts | buy: my own add stays (by_id), the other goes; charged above my own is refused, the chit sum with it; cost_hidden says money was withheld', [hidden.line_delivery[CHIT].added.map((a) => a.amount), hidden.line_delivery[CHIT].charged, hidden.delivery_summary.charged, hidden.cost_hidden], [[10, undefined], undefined, undefined, true]);
+  const own = view.hideChitCosts({ line_delivery: { [CHIT]: { charged: 10, added: [{ delivery_id: CHIT, amount: 10, by_id: BLIND_ID }] } }, delivery_summary: { charged: 10 } }, { side: 'buy', actorId: BLIND_ID });
   t('hideChitCosts | buy: charged that is exactly my own sum stays, and so does the chit\'s', [own.line_delivery[CHIT].charged, own.delivery_summary.charged], [10, 10]);
   const sell = view.hideChitCosts({ header: structuredClone(SALE), detail: structuredClone(DETAIL) }, { side: 'sell' });
-  t('hideChitCosts | sell: the price and the money stay, only the cost-named keys go', [sell.detail.line_items[0].price, sell.header.summary_json.money.total, costKeys(sell), sell.cost_hidden], [SECRET.price, SECRET.money_total, [], true]);
+  t('hideChitCosts | sell: the price and the money stay, only the cost-named keys go, and cost_hidden is ABSENT (no money was withheld)', [sell.detail.line_items[0].price, sell.header.summary_json.money.total, costKeys(sell), sell.cost_hidden], [SECRET.price, SECRET.money_total, [], undefined]);
   t('hideChitCosts | unknown side is treated as buy (fails closed): the price goes', view.hideChitCosts({ detail: structuredClone(DETAIL) }, { side: 'unknown' }).detail.line_items[0].price, undefined);
+  t('isMoneyKey | money words and suffixes yes; a rate, a name, a count, the marker no', ['price', 'cgst', 'tax_amount', 'amount_minor', 'their_total', 'unit_cost'].map(view.isMoneyKey).concat(['gst_rate', 'tax_name', 'line_item_count', 'cost_hidden', 'quantity'].map(view.isMoneyKey)), [true, true, true, true, true, true, false, false, false, false, false]);
   t('hideRowCosts | a buy row loses money and total_value and says cost_hidden; a sell row with nothing named is as it was', [view.hideRowCosts({ summary_json: structuredClone(SUMMARY) }, 'buy'), view.hideRowCosts({ summary_json: { total_value: 5 } }, 'sell')], [{ summary_json: { line_item_count: 2, currency_code: 'INR', purpose: 'order' }, cost_hidden: true }, { summary_json: { total_value: 5 } }]);
   t('rollupGroup | the sum keeps the sales members only, the count stays, cost_hidden when one was left out', view.rollupGroup({ key: 'k', chits: 2, members: [{ total_value: '5', purpose: 'invoice', sender_entity_id: SUPPLIER, all_recipients: [] }, { total_value: '7.5', purpose: 'order', sender_entity_id: CUSTOMER, all_recipients: [] }] }, SHOP, new Map([[CUSTOMER, { customer: true, supplier: false }]])), { key: 'k', chits: 2, total_value: '7.50', cost_hidden: true });
+  const many = Array.from({ length: view.ROLLUP_MEMBER_CAP + 1 }, () => ({ total_value: '1', purpose: 'order', sender_entity_id: CUSTOMER, all_recipients: [] }));
+  t('rollupGroup | a group above the member cap answers no sum at all (null, cost_hidden), never a plausible wrong number', view.rollupGroup({ key: 'k', chits: many.length, members: many }, SHOP, new Map([[CUSTOMER, { customer: true, supplier: false }]])), { key: 'k', chits: many.length, total_value: null, cost_hidden: true });
+  t('rollupMembersSql | the wire is capped at the member cap + 1', /\[1:201\] AS members/.test(view.rollupMembersSql('ch', true)) && view.rollupMembersSql('ch', false) === '', true);
+  const asked = { query: { amount_min: '1', amount_max: '9', sort: 'amount', q: 'tea' } };
+  t('moneyParams | a blind reader\'s amount filter and sort are taken off and named; the rest stays; everyone else keeps theirs', [view.moneyParams(asked, true), asked.query, view.moneyParams({ query: { sort: 'amount' } }, false)], [['amount_min', 'amount_max', 'sort'], { q: 'tea' }, []]);
 }
 
 (async () => {
@@ -165,10 +188,28 @@ function unitCases() {
   t('bill | blind: 200, cost_hidden, the lines keep name · quantity · unit · gst_rate', [blind.status, blind.body.cost_hidden, blind.body.detail.line_items.map((l) => [l.particulars, l.quantity, l.unit, l.gst_rate])], [200, true, [['Basmati rice 1kg', 10, 'kg', 5], ['Toor dal 1kg', 5, 'kg', 5]]]);
   t('bill | blind: no cost-named key at any depth', costKeys(blind.body), []);
   t('bill | blind: no price · total on the payload, the live set, the header, the detail', [blind.body.detail.line_items[0].price, blind.body.live_set[0].live.price, blind.body.live_set[0].original.total, blind.body.header.summary_json.money, blind.body.header.summary_json.total_value, blind.body.detail.total_value, blind.body.header.business_json.invoice, blind.body.header.business_json.their_bill], [undefined, undefined, undefined, undefined, undefined, undefined, undefined, { no: 'INV-7' }]);
+  t('bill | blind: the payload line is the allowlist (cgst · sgst · mrp · unit_price gone with the price)', blind.body.detail.line_items[0], { line_id: CHIT, particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', gst_rate: 5, item_data: { lot: 'L1' } });
+  t('bill | owner: cgst · mrp · unit_price were there to lose', [owner.body.detail.line_items[0].cgst, owner.body.detail.line_items[0].mrp], [2.5, 4343.5]);
   t('bill | blind: his OWN add amount stays, the other actor\'s goes, the sums go', [blind.body.line_delivery[CHIT].added.map((a) => a.amount), blind.body.line_delivery[CHIT].charged, blind.body.delivery_summary.charged], [[SECRET.add, undefined], undefined, undefined]);
   t('bill | blind: no secret figure anywhere in the body (his own add aside)', leaked(blind.raw), [String(SECRET.add)]);
   t('bill | blind: the actions and the doc are the owner\'s (the real header was read before the strip)', [blind.body.actions, blind.body.doc], [owner.body.actions, owner.body.doc]);
   t('bill | owner\'s rows untouched by the blind read (the next owner read is byte-identical)', (await call(port, '/api/chits/' + CHIT, OWNER)).raw === owner.raw, true);
+
+  /* 1b · the same bill on the FALLBACK path (the one-shot statement fails, the route reads per table): the actor's own add still stays, by its by_id */
+  SCENE = { header: BILL, fallback: true, deliveries: [DELIVERY(CHIT, BLIND_ID, SECRET.add), DELIVERY(SUPPLIER, GRANTED_ID, SECRET.other_add)] };
+  [owner, granted, blind] = await read('/api/chits/' + CHIT);
+  t('bill, fallback path | owner reads both adds', [owner.status, owner.body.line_delivery[CHIT].added.map((a) => a.amount)], [200, [SECRET.add, SECRET.other_add]]);
+  t('bill, fallback path | blind: his OWN add stays, the other goes, no secret but his own', [blind.body.cost_hidden, blind.body.line_delivery[CHIT].added.map((a) => a.amount), leaked(blind.raw)], [true, [SECRET.add, undefined], [String(SECRET.add)]]);
+
+  /* 1c · odd purposes received from a supplier, and a priced chit with no sender: not positively a sale, so hidden */
+  for (const purpose of ['service', 'inquiry', 'resale', 'general']) {
+    SCENE = { header: header({ purpose }) };
+    [owner, granted, blind] = await read('/api/chits/' + CHIT);
+    t(purpose + ' received from a supplier | blind: hidden; owner priced', [blind.body.cost_hidden, blind.body.detail.line_items[0].price, owner.body.detail.line_items[0].price], [true, undefined, SECRET.price]);
+  }
+  SCENE = { header: header({ purpose: 'invoice', sender_entity_id: null }) };
+  [owner, granted, blind] = await read('/api/chits/' + CHIT);
+  t('a priced chit with no sender | blind: hidden, no secret figure', [blind.body.cost_hidden, leaked(blind.raw)], [true, []]);
 
   /* 2 · the counter's goods receipt (sent to self): a purchase — the receipt figures on the header go too */
   SCENE = { header: RECEIPT };
@@ -181,8 +222,8 @@ function unitCases() {
   [owner, granted, blind] = await read('/api/chits/' + CHIT);
   sameRead('sale', owner, granted);
   t('sale | blind: price, total and the header money stay', [blind.body.detail.line_items[0].price, blind.body.live_set[0].live.price, blind.body.header.summary_json.money.total, blind.body.detail.total_value], [SECRET.price, owner.body.live_set[0].live.price, SECRET.money_total, String(SECRET.total)]);
-  t('sale | blind: the cost-named keys still go, cost_hidden says so', [costKeys(blind.body), blind.body.cost_hidden], [[], true]);
-  t('sale | blind: exactly the owner\'s answer minus the cost-named keys', blind.body, Object.assign(stripNamed(owner.body), { cost_hidden: true }));
+  t('sale | blind: the cost-named keys still go; cost_hidden is ABSENT because no money was withheld', [costKeys(blind.body), blind.body.cost_hidden], [[], undefined]);
+  t('sale | blind: exactly the owner\'s answer minus the cost-named keys', blind.body, stripNamed(owner.body));
 
   /* 4 · my own order SENT with no declared side: the counterparty decides — a supplier hides, a stranger hides (unknown), a customer keeps */
   for (const [party, want] of [[SUPPLIER, 'hidden'], [STRANGER, 'hidden'], [CUSTOMER, 'kept']]) {
@@ -200,6 +241,17 @@ function unitCases() {
     t(name + ' | owner: both rows carry the money; no _sender / _bj on the wire', [owner.status, owner.body.chits.map((c) => c.summary_json.money.total), Object.keys(owner.body.chits[0]).filter((k) => k.startsWith('_'))], [200, [SECRET.money_total, SECRET.money_total], []]);
     t(name + ' | blind: the bill row loses money · total_value and says cost_hidden; the sale row keeps them', [blind.body.chits[0].summary_json.money, blind.body.chits[0].summary_json.total_value, blind.body.chits[0].cost_hidden, blind.body.chits[1].summary_json.money.total, blind.body.chits[1].cost_hidden], [undefined, undefined, true, SECRET.money_total, undefined]);
     t(name + ' | blind: no secret figure but the sale\'s', leaked(blind.raw).sort(), [String(SECRET.money_total), String(SECRET.total)].sort());
+    t(name + ' | nobody asked for an amount filter: no cost_params_ignored', [owner.body.cost_params_ignored, blind.body.cost_params_ignored], [undefined, undefined]);
+  }
+  /* 5b · the ORACLE: an amount filter or an amount sort over the hidden total would let a blind reader search for it — taken off, named back; the owner's statement keeps them */
+  for (const [p, name] of [['/api/chits/inbox?sort=amount&amount_min=100&amount_max=9000', 'inbox'], ['/api/chits/sent?sort=amount&dir=asc&amount_min=100', 'sent'], ['/api/chits/folder?view=archive&amount_max=9000', 'folder']]) {
+    SCENE = { rows: [listRow(BILL)] };
+    const ownerAsked = await call(port, p, OWNER);
+    const ownerSql = LAST_LIST_SQL;
+    const blindAsked = await call(port, p, BLIND);
+    const blindSql = LAST_LIST_SQL;
+    t(name + ' oracle | owner: the filter and the amount order are in the statement, nothing ignored', [ownerAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(ownerSql), /ORDER BY \(?.*total_value.*numeric/.test(ownerSql) || !/sort=amount/.test(p), ownerAsked.body.cost_params_ignored], [200, true, true, undefined]);
+    t(name + ' oracle | blind: no amount filter, no amount order, and the ask named back', [blindAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(blindSql), /ORDER BY[^;]*total_value/.test(blindSql), (blindAsked.body.cost_params_ignored || []).slice().sort()], [200, false, false, p.split('?')[1].split('&').map((kv) => kv.split('=')[0]).filter((k) => k === 'amount_min' || k === 'amount_max' || k === 'sort').sort()]);
   }
 
   /* 6 · the rollup: the blind actor's sum leaves out the supplier's bill, the count stays, the group says cost_hidden */
@@ -209,6 +261,10 @@ function unitCases() {
   t('rollup | owner: the sum as the statement gave it (the stand-in answers the member column to everyone)', [owner.status, owner.body.groups[0].total_value, owner.body.groups[0].cost_hidden], [200, String(SECRET.total * 2), undefined]);
   same('rollup', owner, granted);
   t('rollup | blind: the sale alone, two chits, cost_hidden', blind.body.groups[0], { key: 'pending', chits: 2, total_value: SECRET.total.toFixed(2), cost_hidden: true });
+  const crowd = Array.from({ length: 201 }, () => member(SALE));
+  SCENE = { groups: [{ key: 'pending', chits: 500, total_value: '99999.00', members: crowd }] };
+  [owner, granted, blind] = await read('/api/chits/rollup?group_by=state');
+  t('rollup | a group too big to sum honestly (members capped on the wire): blind reads no sum, the count; owner reads the statement\'s', [blind.body.groups[0], owner.body.groups[0].total_value], [{ key: 'pending', chits: 500, total_value: null, cost_hidden: true }, '99999.00']);
 
   server.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

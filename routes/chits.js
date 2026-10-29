@@ -2690,7 +2690,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
     const pg = listPage(req),
       page = pg.page,
       limit = pg.limit;
-    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read per request; the owner pays none */
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146: ONE cost read per request; a blind reader's amount filter and sort are taken off and named back */
 
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
     const params = [entity_id];
@@ -2727,7 +2727,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
                 WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
                 WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
-              ${keyCol('ch')}, ${costView.sideColsSql('ch')}
+              ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
         ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
@@ -2741,7 +2741,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
     const total = countResult ? parseInt(countResult.rows[0].count) : null;
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
     /* S34: a chit is sentRow (the statement above, in its order); capped and cap_note only when the pager cut the page */
-    res.json({ chits: costView.listRows(result.rows, sentRow, { blind, shopId: entity_id, roles }), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note });
+    res.json({ chits: costView.listRows(result.rows, sentRow, { blind, shopId: entity_id, roles }), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Sent list error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get sent items'));
@@ -2757,7 +2757,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     const pg = listPage(req),
       { page, limit, offset } = pg;
     const view = req.query.view || 'drafts';
-    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read per request; the owner pays none */
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146: ONE cost read per request; a blind reader's amount filter and sort are taken off and named back */
 
     const params = [entity_id];
     let where = `cs.entity_id = $1`;
@@ -2802,7 +2802,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
                  not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
                  "the other party holds a matching copy" about a chit nobody had ever been sent. */
               ch.role,
-              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction, ${costView.sideColsSql('ch')},
+              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
                 WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
@@ -2821,7 +2821,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     const total = parseInt(countResult.rows[0].count);
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
     /* S34: a chit is folderRow (the DISTINCT ON statement above, in its order); capped and cap_note only when the pager cut the page */
-    res.json({ chits: costView.listRows(result.rows, folderRow, { blind, shopId: entity_id, roles }), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note });
+    res.json({ chits: costView.listRows(result.rows, folderRow, { blind, shopId: entity_id, roles }), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Folder error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get folder'));
@@ -2934,7 +2934,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
       page = pg.page,
       limit = pg.limit;
     const status_filter = req.query.status || null;
-    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read per request; the owner pays none */
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146: ONE cost read per request; a blind reader's amount filter and sort are taken off and named back */
 
     let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
@@ -3052,7 +3052,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
           LEFT JOIN identities i ON i.identity_id = sl.action_by_identity_id
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_type,
-         ${keyCol('ch')}, ${costView.sideColsSql('ch')}
+         ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
@@ -3070,7 +3070,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` (absent otherwise) */
     /* S34: a chit is inboxRow (the statement above, in its order). Top-level total/page/limit mirror /sent so the web pager treats both lists the same; next is the ?after= of the next page (newest-first only; null on
        the last). ⚠️ the `pagination` object said the same three numbers a second time: two spellings of one fact is how they start disagreeing. */
-    res.json({ chits: costView.listRows(result.rows, inboxRow, { blind, shopId: entity_id, roles }), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note });
+    res.json({ chits: costView.listRows(result.rows, inboxRow, { blind, shopId: entity_id, roles }), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('Inbox error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get inbox'));
@@ -3407,7 +3407,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
           my_received: g.my_received || null,
           books_wait: g.books_wait || null,
-          order_billed: g.order_billed /* W36: orderBilledSql */, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], g.deliveries)) /* RAIL-146: a blind actor's party role and delivery rows; {} for everyone else */,
+          order_billed: g.order_billed /* W36: orderBilledSql */, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0])) /* RAIL-146: a blind actor's party role; {} for everyone else */,
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -3482,7 +3482,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
               .then((reply) => (reply.rows[0] && reply.rows[0].w) || null),
           null
         );
-        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], null)) };
+        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0])) };
       });
 
     _mark('bundle_6_reads');
