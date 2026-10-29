@@ -1054,7 +1054,7 @@ router.get('/export.csv', auth, async (req, res) => {
 router.get('/template', auth, async (req, res) => {
   try {
     const { template, orderInput: oi } = await catalogueShape(ctx(req));
-    res.json({ ...template, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
+    res.json({ columns: template.columns, optional: template.optional, csv: template.csv, notes: template.notes, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Template failed'));
   }
@@ -1339,8 +1339,8 @@ router.post(
           if (inserts.length) await catwrite.insertStamped(db, entity_id, sid, inserts);
         });
       }
-
-      res.json(importAnswer(outcome, created));
+      const answer = importAnswer(outcome, created);
+      res.json({ message: answer.message, created_columns: answer.created_columns, outcome: answer.outcome, summary: answer.summary });
     } catch (e) {
       problem(req, res, faultOf(e, req, 'Import failed'));
     }
@@ -1656,7 +1656,7 @@ router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), a
       await catwrite.patchItems(db, entity_id, edits);
       return { written, unknown, bad: count };
     });
-    res.json(Object.assign({ message: 'Availability updated' }, out));
+    res.json({ message: 'Availability updated', written: out.written, unknown: out.unknown, bad: out.bad });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Availability bulk update failed'));
   }
