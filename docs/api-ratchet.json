@@ -4,15 +4,15 @@
  "updated": "2026-10-29",
  "total": 634,
  "not_meeting": 608,
- "codes_total": 413,
- "codes_pending": 55,
- "raw_error_writes": 29,
+ "codes_total": 481,
+ "codes_pending": 37,
+ "raw_error_writes": 4,
  "columns_failing": {
   "strict_input": 330,
-  "output_allowlist": 469,
-  "foreign_id_404": 116,
+  "output_allowlist": 363,
+  "foreign_id_404": 103,
   "idempotent_money_write": 12,
-  "inbound_validated": 4,
+  "inbound_validated": 2,
   "trips_budgeted": 164
  },
  "debt": []

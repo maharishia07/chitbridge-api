@@ -75,7 +75,16 @@
   "GET /api/chits/register/subjects": {
    "output_allowlist": true
   },
+  "POST /api/chits/register/subjects": {
+   "output_allowlist": true
+  },
   "GET /api/chits/register/templates": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/register/templates": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/register/subjects/:subject_id/entries": {
    "output_allowlist": true
   },
   "GET /api/chits/register/walk/:from": {
@@ -92,6 +101,9 @@
   },
   "POST /api/chits/:chit_id/raida": {
    "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+   "output_allowlist": true
   },
   "GET /api/chits/:chit_id/use": {
    "foreign_id_404": true
