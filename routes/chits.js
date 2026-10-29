@@ -4496,16 +4496,11 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
     problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
-/** the quote a Mark-paid is held against: the summary's total, else the frozen invoice's grand total, else null */
-function quotedTotalOf(copy) {
-  const summary = copy.summary_json || {},
-    invoice = (copy.business_json || {}).invoice;
-  if (summary.total_value != null) return Number(summary.total_value);
-  return invoice && invoice.grand_total != null ? Number(invoice.grand_total) : null;
-}
 /**
  * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
- * → null (no copy) · { parts } (the bill carries its own tender) · { over } (above the quote, no note) · { books }
+ * → null (no copy) · { parts } (the bill carries its own tender) · { books }
+ * An amount above what the bill owes is NOT judged here (FIN-53, Athi 2026-10-29): the books' one rule (`excess`, 409) asks, the
+ * owner confirms once with `acknowledge`, and the rest records as an advance — no tolerance, no note path, no second calculation.
  */
 async function markChitPaid(db, press) {
   const { entity_id, chit_id, payment, hooks } = press;
@@ -4514,12 +4509,9 @@ async function markChitPaid(db, press) {
   const bj = copy.business_json || {};
   /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
   if (bj.payment && Array.isArray(bj.payment.parts)) return { parts: true };
-  /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
-  const quoted = quotedTotalOf(copy);
-  if (payment.amount != null && !payment.note && quoted != null && payment.amount > quoted * 1.005 + 1) return { over: quoted };
   const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }), {
     by: payment.by,
-    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge.map(String) : [],
+    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge : [] /* a code, or { code, over_minor } — books.acknowledgements reads both */,
     name: (bj.customer && bj.customer.name) || undefined
   });
   const marked = await db.query(
@@ -4570,12 +4562,6 @@ router.post(
           error: 'The tender is on the bill',
           message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
         }, 'PAYMENT_TENDER_ON_BILL') });
-      if (out.over != null)
-        return problem(req, res, { status: 422, ...said({
-          error: 'Above the quoted amount',
-          message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.',
-          quoted: out.over
-        }, 'PAYMENT_ABOVE_QUOTE') });
       /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
       if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
       /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
