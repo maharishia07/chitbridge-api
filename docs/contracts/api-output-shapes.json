@@ -10837,7 +10837,26 @@
             "type": "boolean"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "address",
+              "remark",
+              "total_minor"
+            ]
+          },
+          {
+            "required": [
+              "cost_hidden"
+            ],
+            "properties": {
+              "cost_hidden": {
+                "const": true
+              }
+            }
+          }
+        ]
       },
       "observed": 10,
       "open": [
