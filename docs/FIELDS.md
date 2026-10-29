@@ -175,6 +175,7 @@ Every row: **layer E** (the entity's own settings, layer 7 of the GOV cascade) u
 | GET /api/people `people[].may.remove` | `{ ok, why }` | lib/people.js — open for the owner (switched off too). |
 | GET /api/people `people[].away` · `counts.away` | `'short_break'\|'leave'\|null` · number | Derived from `identities.break_status`; `counts.away` is inside `counts.on`. |
 | GET /api/facts/people `figures` | `{ total, at_work, away, off }` | Derived — one grouped count over lib/people.peopleSql (the people GET /api/people lists), words by lib/people.stateOf. Read by web shell.js (the CB Employees Home card). |
+| GET /api/facts/till `figures.sales` · `figures.takings` | major-unit decimals in `figures.currency` (REP-52, 2026-10-29) | Derived — lib/home-facts.booksDay over books-store.entryLines (the Day book's one read) for the shop's day: `sales` = net Dr − Cr on cash · upi · card · bank · debtors of the walk-in day, sale_bill, credit_given and return entries (bill value incl. tax, net of returns, paid or on credit — G-MONEY's "sold"); `takings` = the tender roles only (what came in across the counter), present only when the books hold the day (the summary fallback gives `sales` = gross − refunds and no `takings`). Lines "Sold {money} · n bills" and "Takings {money}". Read by web shell.js (the Till Home card) and toolset/lifecycle/09-books.cjs S9-9a. |
 
 ## POST /api/connectors/ingest · /erp-ingest · GET /api/events/stats — device keys in their shop and switch (SEC3, 2026-10-14)
 
