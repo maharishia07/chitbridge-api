@@ -10,6 +10,9 @@
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
+  "GET /api/entities/search": {
+   "output_allowlist": true
+  },
   "GET /api/entities/policy": {
    "output_allowlist": true
   },
@@ -149,6 +152,10 @@
   "POST /api/chits/assign-bulk": {
    "output_allowlist": true
   },
+  "GET /api/chits/:id/trace": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/chits/trace/batches": {
    "output_allowlist": true
   },
@@ -217,6 +224,9 @@
    "output_allowlist": true
   },
   "GET /api/till/quick-keys/hidden": {
+   "output_allowlist": true
+  },
+  "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": true
   },
   "GET /api/till/worth-an-offer": {
@@ -345,6 +355,9 @@
   "POST /api/identity/documents/:scheme/verify": {
    "foreign_id_404": true
   },
+  "GET /api/folders": {
+   "output_allowlist": true
+  },
   "GET /api/folders/inventory": {
    "output_allowlist": true
   },
@@ -363,10 +376,19 @@
   "GET /api/folders/rules/vocabulary": {
    "output_allowlist": true
   },
+  "GET /api/folders/rules": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/messages": {
+   "output_allowlist": true
+  },
   "GET /api/folders/worklist": {
    "output_allowlist": true
   },
   "GET /api/folders/groupsum": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/reconcile": {
    "output_allowlist": true
   },
   "GET /api/folders/mis": {
@@ -502,6 +524,9 @@
   "GET /api/governance/country-setup": {
    "output_allowlist": true
   },
+  "GET /api/governance/ai-usage": {
+   "output_allowlist": true
+  },
   "GET /api/governance/ai-skills": {
    "output_allowlist": true
   },
@@ -612,6 +637,12 @@
   "POST /api/testing/cmdb/seed": {
    "output_allowlist": true
   },
+  "GET /api/testing/results": {
+   "output_allowlist": true
+  },
+  "GET /api/testing/runs": {
+   "output_allowlist": true
+  },
   "GET /api/testing/cases/gherkin": {
    "output_allowlist": true
   },
@@ -625,6 +656,9 @@
    "output_allowlist": true
   },
   "GET /api/testing/coverage": {
+   "output_allowlist": true
+  },
+  "GET /api/testing/report": {
    "output_allowlist": true
   },
   "GET /api/testing/reliability": {
@@ -733,11 +767,28 @@
   "GET /api/crm/parties": {
    "output_allowlist": true
   },
+  "POST /api/crm/parties/:id/interactions": {
+   "foreign_id_404": true
+  },
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
+  "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/crm/followups/:id": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/crm/calls": {
    "output_allowlist": true
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/crm/parties/:id/contact-prefs": {
+   "foreign_id_404": true
   },
   "GET /api/crm/privacy-requests": {
    "output_allowlist": true
