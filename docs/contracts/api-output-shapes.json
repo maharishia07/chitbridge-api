@@ -6492,6 +6492,77 @@
         "url": "/api/integrations/streams"
       }
     },
+    "GET /api/keys": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "keys",
+          "scopes",
+          "may"
+        ],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "revoke"
+            ],
+            "properties": {
+              "revoke": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "keys[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/keys"
+      }
+    },
     "GET /api/products": {
       "status": "200",
       "schema": {
@@ -9473,6 +9544,7 @@
     "GET /api/integrations/status": "open at connectors[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/integrations/stock/:handle": "open at stock[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/integrations/streams": "open at streams[] — a value passed through (an expression: its keys are not written in the handler); owner — a value passed through (an expression: its keys are not written in the handler); connectors[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/products": "open at items[] — a value passed through (a name: its keys are not written in the handler); status_counts — a value passed through (an expression: its keys are not written in the handler); category_counts — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/products/:id/versions": "open at current — a value passed through (an expression: its keys are not written in the handler); versions[] — a value passed through (an expression: its keys are not written in the handler); version — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/products/lists": "open at lists[] — a value passed through (an expression: its keys are not written in the handler); mine[] — a value passed through (a name: its keys are not written in the handler)",
