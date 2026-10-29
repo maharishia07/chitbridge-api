@@ -82,6 +82,39 @@ t('a caller WITH cost visibility still sees it nowhere on the public view — th
   assert.strictEqual(v.items[0].item_data.cost, undefined);
 });
 
+/* ⭐⭐⭐ P1 HOTFIX 2026-10-29 (leak hammer): item_data.unit_cost = 7777.77 and supplier_note went to ANYONE — the stripper dropped only `cost`.
+ * Every buying-side key below must be absent from the WHOLE public answer (items, lines[].fields, detail, anywhere) whoever asks:
+ * anonymous / stranger / partner / cost-blind / viewer all get the one public payload (asOwner:false, no switch), and an owner reading his own too. */
+const COST_SIDE_KEYS = { cost: { value: 380 }, unit_cost: 7777.77, landed_cost: 7001.11, purchase_cost: 6001.11, purchase_price: 5001.11, last_cost: 4001.11,
+  avg_cost: 3001.11, buy_price: 2001.11, buying_cost: 1001.11, supplier_note: 'SECRET-SUPPLIER-NOTE', supplier_name: 'SECRET-SUPPLIER', supplier_price: 901.11,
+  vendor_note: 'SECRET-VENDOR-NOTE', margin: 41.11, margin_pct: 42.22, markup: 43.33, cogs: 44.44, gross_profit: 45.55,
+  variants: [{ name: 'L', unit_cost: 8888.88, supplier_note: 'SECRET-NESTED' }] };
+const SECRETS = ['7777.77', '7001.11', '6001.11', '5001.11', '4001.11', '3001.11', '2001.11', '1001.11', '901.11', '8888.88', '41.11', '42.22', '43.33', '44.44', '45.55',
+  'SECRET-SUPPLIER', 'SECRET-VENDOR', 'SECRET-NESTED', 'unit_cost', 'supplier_note', 'landed_cost', 'purchase_price', 'margin', 'markup', 'cogs'];
+const SEEDED = Object.assign({}, ITEM_ROW, { item_data: Object.assign({ name: 'Widget', price: 500, mrp: 550, unit: 'pc' }, COST_SIDE_KEYS) });
+const seededDeps = (opts) => { const d = deps(opts); const w = d.withEntity;
+  d.withEntity = async (e, fn) => w(e, (db) => fn({ query: async (sql) => (/FROM catalogue_items/.test(sql) ? { rows: [SEEDED] } : db.query(sql)) }));
+  return d; };
+for (const [who, o] of [['anonymous / stranger / partner / cost-blind / viewer (the one public payload)', {}], ['an owner reading his own catalogue (asOwner)', { asOwner: true }], ['a shop whose cost flag is on', { can_see_cost: true }]]) {
+  t('⭐⭐⭐ [P1] no buying-side key or value anywhere in the answer — ' + who, async () => {
+    const v = await view.buildPublicView(Object.assign(seededDeps(o), o.asOwner ? { asOwner: true } : {}));
+    const wire = JSON.stringify(v);
+    SECRETS.forEach((s) => assert.ok(!wire.includes(s), 'the public answer carries ' + s));
+    const line = v.lines.find((l) => l.item_id === ITEM_ID);
+    assert.strictEqual(line.fields.name, 'Widget'); assert.strictEqual(line.fields.price, 500);
+    assert.strictEqual(line.fields.mrp, 550); assert.strictEqual(v.items[0].item_data.unit, 'pc');
+  });
+}
+t('[P1] fail-closed: the ONE list (lib/cost.js COST_KEYS) refuses the buying side and spares what a customer reads', () => {
+  const cost = require('../lib/cost');
+  Object.keys(COST_SIDE_KEYS).filter((k) => k !== 'variants').forEach((k) => assert.ok(cost.isCostKey(k), k + ' must be a cost key'));
+  ['name', 'price', 'mrp', 'unit', 'description', 'category', 'hsn', 'costume', 'cost_hidden', 'discount', 'sku'].forEach((k) => assert.ok(!cost.isCostKey(k), k + ' is not a cost key'));
+});
+t('[P1] a cost-allowed reader is byte-identical: products.js strips only for a cost-blind caller, so the Labs still read unit_cost', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../routes/products.js'), 'utf8');
+  assert.ok(src.includes('if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(items);'), 'the cost-blind-only guard on the product list changed');
+});
+
 (async () => {
   for (const [name, fn] of CASES) {
     try { await fn(); console.log('\x1b[32mok\x1b[0m  ' + name); pass++; }
