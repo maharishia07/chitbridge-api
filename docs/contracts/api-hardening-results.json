@@ -3837,14 +3837,12 @@
   },
   "GET /api/testing/results": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/testing/runs": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "POST /api/testing/results/junit": {
@@ -3952,8 +3950,7 @@
   },
   "GET /api/testing/report": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "GET /api/testing/reliability": {

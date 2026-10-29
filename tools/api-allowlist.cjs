@@ -120,10 +120,13 @@ function nodeOf(expression) {
   return { kind: 'opaque', tokens: tokensOf(text), spread: /\.\.\.\s*[\w$(\[{]/.test(text) };
 }
 
+/** an entry of a literal without the comments written before its key (a comment is not a computed key) */
+const withoutLeadingComments = (entry) => entry.replace(/^(?:\s*(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*))+\s*/, '');
+
 /** a literal `{ a: 1, b, ...c, [d]: 2 }` as an object node */
 function objectNodeOf(text) {
   const node = { kind: 'object', keys: new Map(), spread: false, computed: false };
-  splitTop(text.slice(1, -1)).forEach((entry) => {
+  splitTop(text.slice(1, -1)).map(withoutLeadingComments).forEach((entry) => {
     if (entry.startsWith('...')) node.spread = true;
     else if (entry.startsWith('[')) node.computed = true;
     else {
