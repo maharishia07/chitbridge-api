@@ -20,6 +20,7 @@ const entityId = (req) => auth.entityOf(req);
 
 // GET / — every channel, its provider state, and this entity's bindings. One read, so the panel cannot show a
 // binding and a provider state that disagree with each other.
+// @does Nothing in -> we read your channels, whether each provider is set up and your bound numbers in one go -> the list for the Channels panel.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     res.json(await channels.listChannels(entityId(req)));
@@ -29,6 +30,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
 });
 
 // GET /outbound — the receipts: what we tried to send back, and what became of it (b126). ?purpose=marketing → Offers sent; ?page= ?limit= (total · page · limit).
+// @does Optional purpose and page in -> we read the messages we tried to send for you and what became of each -> a page of sent-message receipts.
 router.get('/outbound', auth, ...checked('GET /outbound'), async (req, res) => {
   try {
     res.json(await channels.listOutbound(entityId(req), req.query));
@@ -38,6 +40,7 @@ router.get('/outbound', auth, ...checked('GET /outbound'), async (req, res) => {
 });
 
 // POST /:id/provider-ref — Meta's phone_number_id for this line; a send cannot be addressed without it. { provider_ref }
+// @does The provider's line id for one of your channels -> we save it so sends can be addressed -> the updated channel.
 router.post('/:id/provider-ref', auth, ...checked('POST /:id/provider-ref'), async (req, res) => {
   try {
     res.json(await channels.setProviderRef(entityId(req), req.params.id, (req.body || {}).provider_ref));
@@ -53,6 +56,7 @@ router.post('/:id/provider-ref', auth, ...checked('POST /:id/provider-ref'), asy
  * POST /:id/auto-raise { on } — hands-free raising for ONE line (b131).
  * ⚠️ The switch is not the permission: an unverified binding auto-raises nothing whatever this says.
  */
+// @does On or off for one of your channels -> we switch hands-free raising of chits for that line (a line not yet verified still raises nothing) -> the updated channel.
 router.post('/:id/auto-raise', auth, ...checked('POST /:id/auto-raise'), async (req, res) => {
   try {
     res.json(await channels.setAutoRaise(entityId(req), req.params.id, !!(req.body || {}).on));
@@ -61,6 +65,7 @@ router.post('/:id/auto-raise', auth, ...checked('POST /:id/auto-raise'), async (
   }
 });
 
+// @does A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.
 router.post('/:id/template', auth, ...checked('POST /:id/template'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -71,6 +76,7 @@ router.post('/:id/template', auth, ...checked('POST /:id/template'), async (req,
 });
 
 // POST / — bind an address to this entity. { channel, address, label }
+// @does A channel, an address and a label -> we bind that address to your shop, waiting for platform approval -> the new binding.
 router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     res.status(201).json(await channels.addBinding(entityId(req), req.body || {}));
@@ -99,6 +105,7 @@ function admin(req, res, next) {
   if (!ok) return problem(req, res, { status: 403, ...adminWrongKey() });
   next();
 }
+// @does A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).
 router.post('/:id/approve', admin, ...checked('POST /:id/approve'), async (req, res) => {
   try {
     res.json(await channels.approveBinding(req.params.id, (req.body || {}).via || 'platform'));
@@ -107,6 +114,7 @@ router.post('/:id/approve', admin, ...checked('POST /:id/approve'), async (req, 
   }
 });
 // POST /:id/template-approve { entity_id, name } — the platform records Meta's approval (SEC-FIX3 S7: a shop cannot say it for itself)
+// @does A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).
 router.post('/:id/template-approve', admin, ...checked('POST /:id/template-approve'), async (req, res) => {
   try {
     const given = req.body || {};
@@ -115,6 +123,7 @@ router.post('/:id/template-approve', admin, ...checked('POST /:id/template-appro
     problem(req, res, faultOf(err, req, 'Template update failed', 'below500'));
   }
 });
+// @does A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).
 router.post('/:id/revoke', admin, ...checked('POST /:id/revoke'), async (req, res) => {
   try {
     res.json(await channels.revokeBinding(req.params.id));
@@ -123,6 +132,7 @@ router.post('/:id/revoke', admin, ...checked('POST /:id/revoke'), async (req, re
   }
 });
 
+// @does A channel id of yours -> we remove that binding -> a confirmation that it is gone.
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     res.json(await channels.removeBinding(entityId(req), req.params.id));

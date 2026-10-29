@@ -1,0 +1,1353 @@
+{
+ "about": "Web screens that call each route, and the routes the web outbox queues offline, derived from the web checkout by node tools/api-register.cjs --callers (api(key) calls and literal paths, screens only). Read by the register; refresh by hand, never in CI.",
+ "routes": {
+  "DELETE /api/actors/:id/pin": [
+   "cap-employees.js"
+  ],
+  "DELETE /api/books/recurring/:id": [
+   "cap-period.js"
+  ],
+  "DELETE /api/chits/:chit_id": [
+   "till.html"
+  ],
+  "DELETE /api/combo-templates/:id": [
+   "combo-mode.js"
+  ],
+  "DELETE /api/connectors/:actorId": [
+   "cap-connector.js",
+   "core.js"
+  ],
+  "DELETE /api/crm/followups/:id": [
+   "cap-crm.js"
+  ],
+  "DELETE /api/crm/groups/:name": [
+   "cap-crm-groups.js"
+  ],
+  "DELETE /api/crm/parties/:id": [
+   "cap-crm-record.js"
+  ],
+  "DELETE /api/definitions/:id": [
+   "cap-categories.js",
+   "cap-definitions.js"
+  ],
+  "DELETE /api/folders/:id": [
+   "cap-folders.js",
+   "core.js"
+  ],
+  "DELETE /api/folders/rules/:rule_id": [
+   "cap-folders.js"
+  ],
+  "DELETE /api/keys/:jti": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "DELETE /api/products/:id": [
+   "app.html",
+   "catalogue-lines.js",
+   "combo-mode.js",
+   "core.js",
+   "till.html"
+  ],
+  "DELETE /api/products/:id/media/:mid": [
+   "catalogue-lines.js"
+  ],
+  "DELETE /api/products/:id/schedule/:sid": [
+   "catalogue-lines.js"
+  ],
+  "DELETE /api/relationships/suppliers/:id": [
+   "app.html",
+   "cap-suppliers.js",
+   "core.js"
+  ],
+  "GET /api/actors": [
+   "cap-worklist.js"
+  ],
+  "GET /api/assist/questions": [
+   "app.html",
+   "cap-admin.js",
+   "cap-assist.js"
+  ],
+  "GET /api/assist/whoami": [
+   "app.html",
+   "cap-assist.js"
+  ],
+  "GET /api/attachments/:id": [
+   "app.html",
+   "attach-ui.js"
+  ],
+  "GET /api/books/accounts": [
+   "cap-bank.js",
+   "cap-books.js",
+   "cap-entry.js"
+  ],
+  "GET /api/books/assets": [
+   "cap-period.js"
+  ],
+  "GET /api/books/bank/rail": [
+   "cap-bank.js",
+   "cap-books.js"
+  ],
+  "GET /api/books/bs": [
+   "cap-books.js"
+  ],
+  "GET /api/books/cashflow": [
+   "cap-finance-cash.js"
+  ],
+  "GET /api/books/cheques": [
+   "cap-books.js"
+  ],
+  "GET /api/books/compare": [
+   "cap-compare.js"
+  ],
+  "GET /api/books/compare/:id": [
+   "cap-compare.js"
+  ],
+  "GET /api/books/daybook": [
+   "cap-books.js"
+  ],
+  "GET /api/books/dues": [
+   "cap-books.js",
+   "cap-finance-pay.js",
+   "cap-finance.js"
+  ],
+  "GET /api/books/events": [
+   "cap-entry.js",
+   "cap-period.js"
+  ],
+  "GET /api/books/fx-rates": [
+   "cap-fx.js"
+  ],
+  "GET /api/books/fx-revalue": [
+   "cap-fx.js"
+  ],
+  "GET /api/books/health": [
+   "accounts.html",
+   "app.html",
+   "cap-books.js",
+   "cap-move-in.js",
+   "crm.html",
+   "index.html"
+  ],
+  "GET /api/books/ledger/:account": [
+   "cap-bank.js",
+   "cap-books.js",
+   "cap-period.js"
+  ],
+  "GET /api/books/packs": [
+   "cap-books.js"
+  ],
+  "GET /api/books/packs/:id": [
+   "cap-books.js"
+  ],
+  "GET /api/books/party/:id/statement": [
+   "cap-books.js"
+  ],
+  "GET /api/books/payments/:id/advice": [
+   "rail-advice.js"
+  ],
+  "GET /api/books/periods": [
+   "cap-books.js"
+  ],
+  "GET /api/books/pl": [
+   "cap-books.js"
+  ],
+  "GET /api/books/recurring": [
+   "cap-period.js"
+  ],
+  "GET /api/books/returns": [
+   "cap-period.js"
+  ],
+  "GET /api/books/status": [
+   "cap-admin.js"
+  ],
+  "GET /api/books/terms": [
+   "cap-crm-record.js",
+   "cap-finance-terms.js"
+  ],
+  "GET /api/books/todo": [
+   "accounts.html",
+   "cap-period.js"
+  ],
+  "GET /api/books/trial-balance": [
+   "cap-books.js"
+  ],
+  "GET /api/books/year/:fy/status": [
+   "cap-period.js"
+  ],
+  "GET /api/capture/pending": [
+   "intake.html"
+  ],
+  "GET /api/catalogue-face": [
+   "app.html",
+   "cap-catalogue.js",
+   "cap-catsetup.js"
+  ],
+  "GET /api/channels": [
+   "cap-admin.js"
+  ],
+  "GET /api/channels/outbound": [
+   "cap-marketing.js"
+  ],
+  "GET /api/chits/:chit_id": [
+   "app.html",
+   "authority-forms.html",
+   "cap-admin.js",
+   "cap-books.js",
+   "cap-chit2.js",
+   "cap-crm-chits.js",
+   "cap-crm-record.js",
+   "cap-crm.js",
+   "cap-dispute.js",
+   "cap-messages.js",
+   "cap-register.js",
+   "cap-worklist.js",
+   "chit-sheet.js",
+   "core.js",
+   "intake.html",
+   "rail-thread.js",
+   "screen-id.js",
+   "tasks.html",
+   "till.html"
+  ],
+  "GET /api/chits/:chit_id/disputes": [
+   "app.html",
+   "cap-dispute.js",
+   "screen-id.js",
+   "screens.js",
+   "tasks.html"
+  ],
+  "GET /api/chits/:chit_id/messages": [
+   "app.html",
+   "cap-chit2.js",
+   "cap-crm-record.js",
+   "cap-dispute.js",
+   "cap-intake.js",
+   "core.js",
+   "rail-thread.js",
+   "screens.js"
+  ],
+  "GET /api/chits/:chit_id/raida": [
+   "cap-worklist.js"
+  ],
+  "GET /api/chits/:id/trace": [
+   "cap-traceability.js"
+  ],
+  "GET /api/chits/disputes/queue": [
+   "cap-admin.js",
+   "cap-dispute.js"
+  ],
+  "GET /api/chits/trace/batches": [
+   "cap-traceability.js"
+  ],
+  "GET /api/chits/trace/by-batch": [
+   "cap-traceability.js"
+  ],
+  "GET /api/combo-templates": [
+   "combo-mode.js"
+  ],
+  "GET /api/connectors": [
+   "cap-workforce.js"
+  ],
+  "GET /api/connectors/:actorId/connections": [
+   "cap-connector.js"
+  ],
+  "GET /api/connectors/:actorId/provisioning": [
+   "cap-connector.js"
+  ],
+  "GET /api/connectors/:actorId/receipts": [
+   "cap-connector.js"
+  ],
+  "GET /api/counters": [
+   "app.html",
+   "cap-admin.js",
+   "cap-settings.js",
+   "screen-id.js",
+   "settings.html"
+  ],
+  "GET /api/crm/calls": [
+   "cap-crm-calls.js"
+  ],
+  "GET /api/crm/followups": [
+   "cap-crm.js"
+  ],
+  "GET /api/crm/parties": [
+   "cap-crm-leads.js",
+   "cap-crm.js",
+   "cap-finance-terms.js"
+  ],
+  "GET /api/crm/parties/:id": [
+   "cap-crm-groups.js",
+   "cap-crm-record.js"
+  ],
+  "GET /api/crm/parties/:id/contact-prefs": [
+   "cap-crm-privacy.js"
+  ],
+  "GET /api/crm/parties/:id/timeline": [
+   "cap-crm-record.js",
+   "cap-crm.js"
+  ],
+  "GET /api/crm/privacy-requests": [
+   "cap-crm-privacy.js"
+  ],
+  "GET /api/crm/segments": [
+   "cap-crm-groups.js"
+  ],
+  "GET /api/definitions": [
+   "app.html",
+   "cap-categories.js",
+   "cap-catsetup.js",
+   "core.js"
+  ],
+  "GET /api/entities/constitutions": [
+   "register-form.js"
+  ],
+  "GET /api/entities/entitlements": [
+   "cap-settings.js"
+  ],
+  "GET /api/entities/header": [
+   "shell.js"
+  ],
+  "GET /api/entities/me": [
+   "_walk-panel.js",
+   "app.html",
+   "avatar.js",
+   "cap-admin.js",
+   "cap-country.js",
+   "cap-finance-returns.js",
+   "cap-print.js",
+   "cap-shop.js",
+   "cap-workforce.js",
+   "catalogue.html",
+   "till.html"
+  ],
+  "GET /api/entities/me/can-see-costs": [
+   "cap-catalogue.js",
+   "cap-catsetup.js"
+  ],
+  "GET /api/entities/policy": [
+   "cap-admin.js",
+   "cap-catsetup.js",
+   "cap-country.js",
+   "cap-crm-groups.js",
+   "cap-settings.js"
+  ],
+  "GET /api/entities/search": [
+   "app.html",
+   "cap-crm.js"
+  ],
+  "GET /api/entities/sides": [
+   "sides.js"
+  ],
+  "GET /api/entities/usage": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "GET /api/events/stats": [
+   "core.js",
+   "promo.html",
+   "rail-bell.js",
+   "till.html"
+  ],
+  "GET /api/events/stream": [
+   "core.js",
+   "promo.html",
+   "rail-bell.js",
+   "till.html"
+  ],
+  "GET /api/facts/rail/chits": [
+   "cap-crm-chits.js",
+   "cap-tasks.js"
+  ],
+  "GET /api/folders": [
+   "accounts.html",
+   "cap-folders.js"
+  ],
+  "GET /api/folders/:id/chits": [
+   "accounts.html",
+   "cap-folders.js"
+  ],
+  "GET /api/folders/:id/metrics": [
+   "cap-folders.js"
+  ],
+  "GET /api/folders/:id/rules": [
+   "cap-folders.js"
+  ],
+  "GET /api/folders/groupsum": [
+   "cap-folders.js"
+  ],
+  "GET /api/folders/messages": [
+   "cap-admin.js",
+   "cap-messages.js"
+  ],
+  "GET /api/folders/mis": [
+   "cap-admin.js",
+   "cap-mis.js"
+  ],
+  "GET /api/folders/reconcile": [
+   "cap-folders.js"
+  ],
+  "GET /api/folders/rules": [
+   "cap-folders.js"
+  ],
+  "GET /api/folders/worklist": [
+   "app.html",
+   "cap-messages.js",
+   "cap-worklist.js",
+   "screens.js"
+  ],
+  "GET /api/forms": [
+   "authority-forms.html"
+  ],
+  "GET /api/forms/instances/:id": [
+   "authority-forms.html"
+  ],
+  "GET /api/governance/country-setup": [
+   "cap-country.js"
+  ],
+  "GET /api/governance/instruments": [
+   "cap-readiness.js"
+  ],
+  "GET /api/governance/lanes": [
+   "cap-readiness.js"
+  ],
+  "GET /api/governance/profile": [
+   "app.html",
+   "cap-print.js",
+   "cap-readiness.js",
+   "cap-shop.js"
+  ],
+  "GET /api/governance/readiness": [
+   "cap-admin.js",
+   "cap-definitions.js",
+   "cap-readiness.js"
+  ],
+  "GET /api/governance/readiness/:bridge_id": [
+   "app.html"
+  ],
+  "GET /api/identity/documents": [
+   "cap-iddocs.js"
+  ],
+  "GET /api/integrations/catalogue": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "GET /api/integrations/download/:id": [
+   "cap-settings.js"
+  ],
+  "GET /api/integrations/profile-map": [
+   "cap-admin.js"
+  ],
+  "GET /api/integrations/reconcile": [
+   "cap-admin.js"
+  ],
+  "GET /api/integrations/status": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "GET /api/integrations/streams": [
+   "cap-admin.js"
+  ],
+  "GET /api/keys": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "GET /api/kyb/position": [
+   "know-your-business.html"
+  ],
+  "GET /api/kyb/risk": [
+   "know-your-business.html"
+  ],
+  "GET /api/kyb/yourself": [
+   "know-your-business.html"
+  ],
+  "GET /api/marketing/came-back": [
+   "cap-marketing.js"
+  ],
+  "GET /api/network-design": [
+   "network-app.js"
+  ],
+  "GET /api/network-design/stores": [
+   "network-app.js"
+  ],
+  "GET /api/network-offers": [
+   "cap-admin.js",
+   "network-app.js"
+  ],
+  "GET /api/notifications": [
+   "rail-bell.js"
+  ],
+  "GET /api/people": [
+   "app.html",
+   "cap-books.js",
+   "cap-employees.js",
+   "cap-tasks.js",
+   "employees.html",
+   "screen-id.js",
+   "shell.js"
+  ],
+  "GET /api/privacy/me": [
+   "shop-privacy.js"
+  ],
+  "GET /api/products": [
+   "app.html",
+   "cap-catalogue.js",
+   "cap-categories.js",
+   "cap-catsetup.js",
+   "cap-chit2.js",
+   "cap-definitions.js",
+   "combo-mode.js"
+  ],
+  "GET /api/products/:id/schedule": [
+   "catalogue-lines.js"
+  ],
+  "GET /api/products/:id/versions": [
+   "catalogue-lines.js"
+  ],
+  "GET /api/products/export.csv": [
+   "app.html",
+   "catalogue-lines.js"
+  ],
+  "GET /api/products/lists": [
+   "catalogue-lines.js"
+  ],
+  "GET /api/products/media/:item_id/:mid": [
+   "app.html",
+   "catalogue-lines.js"
+  ],
+  "GET /api/products/starter-columns": [
+   "catalogue-lines.js"
+  ],
+  "GET /api/products/template": [
+   "cap-catalogue.js",
+   "catalogue-lines.js"
+  ],
+  "GET /api/products/workbook.xlsx": [
+   "catalogue-lines.js",
+   "till.html"
+  ],
+  "GET /api/relationships/customers/:id/rewards": [
+   "cap-rewards.js"
+  ],
+  "GET /api/relationships/suppliers": [
+   "app.html",
+   "cap-admin.js",
+   "cap-chit2.js",
+   "cap-suppliers.js"
+  ],
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": [
+   "app.html"
+  ],
+  "GET /api/repeat": [
+   "cap-repeat.js"
+  ],
+  "GET /api/repeat/:id": [
+   "cap-repeat.js"
+  ],
+  "GET /api/schemas/fields": [
+   "app.html",
+   "cap-catalogue.js",
+   "cap-catsetup.js"
+  ],
+  "GET /api/signin/devices": [
+   "cap-settings.js"
+  ],
+  "GET /api/signin/sessions": [
+   "cap-settings.js"
+  ],
+  "GET /api/tax/gstr": [
+   "cap-admin.js",
+   "helpers.js"
+  ],
+  "GET /api/tax/invoice/:chit_id": [
+   "cap-admin.js"
+  ],
+  "GET /api/tax/ledger": [
+   "cap-admin.js"
+  ],
+  "GET /api/testing/cmdb": [
+   "record.html"
+  ],
+  "GET /api/testing/cmdb/:ci": [
+   "record.html"
+  ],
+  "GET /api/till/bills": [
+   "till.html"
+  ],
+  "GET /api/till/catalogue/blueprints": [
+   "till.html"
+  ],
+  "GET /api/till/counters": [
+   "till.html"
+  ],
+  "GET /api/till/engine/:name": [
+   "till.html"
+  ],
+  "GET /api/till/match": [
+   "cap-match.js",
+   "till.html"
+  ],
+  "GET /api/till/quick-keys/groups": [
+   "till.html"
+  ],
+  "GET /api/till/quick-keys/hidden": [
+   "till.html"
+  ],
+  "GET /api/till/quick-keys/screen-config": [
+   "till.html"
+  ],
+  "GET /api/till/quick-keys/state": [
+   "till.html"
+  ],
+  "GET /api/till/reward": [
+   "till.html"
+  ],
+  "GET /api/till/screens": [
+   "till.html"
+  ],
+  "GET /api/till/snapshot": [
+   "promo.html",
+   "till.html"
+  ],
+  "GET /api/till/stock": [
+   "till.html"
+  ],
+  "GET /api/till/summary": [
+   "cap-mis-trend.js",
+   "till.html"
+  ],
+  "GET /api/till/tasks": [
+   "till.html"
+  ],
+  "GET /api/till/verify": [
+   "till.html"
+  ],
+  "GET /api/till/worth-an-offer": [
+   "till.html"
+  ],
+  "GET /api/work/:chit_id": [
+   "cap-tasks.js"
+  ],
+  "GET /api/work/facts": [
+   "cap-finance.js"
+  ],
+  "GET /api/work/list": [
+   "cap-tasks.js"
+  ],
+  "PATCH /api/actors/:id": [
+   "cap-employees.js",
+   "cap-workforce.js"
+  ],
+  "PATCH /api/books/payments/:id": [
+   "rail-advice.js"
+  ],
+  "PATCH /api/books/recurring/:id": [
+   "cap-period.js"
+  ],
+  "PATCH /api/combo-templates/:id": [
+   "combo-mode.js"
+  ],
+  "PATCH /api/connectors/:actorId/connections/:connId": [
+   "cap-connector.js",
+   "core.js"
+  ],
+  "PATCH /api/counters/:id": [
+   "cap-settings.js"
+  ],
+  "PATCH /api/crm/followups/:id": [
+   "cap-crm.js"
+  ],
+  "PATCH /api/entities/me/prefs/:kind": [
+   "avatar.js",
+   "core.js"
+  ],
+  "PATCH /api/entities/policy": [
+   "cap-admin.js",
+   "cap-catsetup.js",
+   "cap-country.js",
+   "cap-crm-groups.js",
+   "cap-settings.js"
+  ],
+  "PATCH /api/entities/profile": [
+   "app.html",
+   "cap-admin.js",
+   "cap-country.js",
+   "cap-network.js",
+   "cap-shop.js",
+   "core.js"
+  ],
+  "PATCH /api/folders/:id": [
+   "cap-folders.js",
+   "core.js"
+  ],
+  "PATCH /api/folders/rules/:rule_id": [
+   "cap-folders.js"
+  ],
+  "PATCH /api/products/:id": [
+   "app.html",
+   "cap-catalogue.js",
+   "cap-categories.js",
+   "catalogue-lines.js",
+   "combo-mode.js",
+   "core.js",
+   "till.html"
+  ],
+  "PATCH /api/relationships/customers/:id": [
+   "app.html",
+   "cap-books.js",
+   "cap-crm-record.js"
+  ],
+  "PATCH /api/relationships/suppliers/:id": [
+   "app.html",
+   "cap-books.js",
+   "cap-crm-record.js",
+   "cap-suppliers.js",
+   "core.js"
+  ],
+  "POST /api/actors": [
+   "cap-employees.js"
+  ],
+  "POST /api/actors/suggest-key": [
+   "cap-employees.js"
+  ],
+  "POST /api/assist/publish": [
+   "app.html",
+   "cap-admin.js",
+   "cap-assist.js",
+   "core.js"
+  ],
+  "POST /api/books/accounts": [
+   "cap-books.js"
+  ],
+  "POST /api/books/accruals": [
+   "cap-period.js"
+  ],
+  "POST /api/books/accruals/:ref/reverse": [
+   "cap-period.js"
+  ],
+  "POST /api/books/assets": [
+   "cap-period.js"
+  ],
+  "POST /api/books/assets/:id/dispose": [
+   "cap-period.js"
+  ],
+  "POST /api/books/cheques/:id/status": [
+   "cap-books.js"
+  ],
+  "POST /api/books/closing-stock": [
+   "cap-period.js"
+  ],
+  "POST /api/books/compare/preflight": [
+   "cap-compare.js"
+  ],
+  "POST /api/books/compare/snapshots": [
+   "cap-compare.js"
+  ],
+  "POST /api/books/depreciation/run": [
+   "cap-period.js"
+  ],
+  "POST /api/books/enable": [
+   "accounts-shell.js"
+  ],
+  "POST /api/books/entries": [
+   "cap-books.js"
+  ],
+  "POST /api/books/entries/:id/reverse": [
+   "cap-entry.js"
+  ],
+  "POST /api/books/events": [
+   "cap-entry.js"
+  ],
+  "POST /api/books/fx-rates": [
+   "cap-fx.js"
+  ],
+  "POST /api/books/fx-rates/import": [
+   "cap-fx.js"
+  ],
+  "POST /api/books/fx-revalue": [
+   "cap-fx.js"
+  ],
+  "POST /api/books/gst/close": [
+   "cap-period.js"
+  ],
+  "POST /api/books/gst/pay": [
+   "cap-period.js"
+  ],
+  "POST /api/books/move-in/import": [
+   "cap-move-in.js"
+  ],
+  "POST /api/books/move-in/preflight": [
+   "cap-move-in.js"
+  ],
+  "POST /api/books/move-in/preview": [
+   "cap-move-in.js"
+  ],
+  "POST /api/books/opening": [
+   "cap-books.js"
+  ],
+  "POST /api/books/outbox/retry": [
+   "cap-books.js"
+  ],
+  "POST /api/books/packs": [
+   "cap-books.js"
+  ],
+  "POST /api/books/packs/:id/ack": [
+   "cap-books.js"
+  ],
+  "POST /api/books/parties/:id/dispute": [
+   "cap-finance-pay.js"
+  ],
+  "POST /api/books/payments": [
+   "cap-books.js"
+  ],
+  "POST /api/books/payments/preview": [
+   "cap-books.js",
+   "cap-finance-pay.js"
+  ],
+  "POST /api/books/preview": [
+   "cap-entry.js"
+  ],
+  "POST /api/books/recurring": [
+   "cap-period.js"
+  ],
+  "POST /api/books/recurring/:id/post": [
+   "cap-period.js"
+  ],
+  "POST /api/books/recurring/:id/skip": [
+   "cap-period.js"
+  ],
+  "POST /api/books/setting": [
+   "accounts-shell.js"
+  ],
+  "POST /api/books/terms": [
+   "cap-finance-cheques.js",
+   "cap-finance-terms.js"
+  ],
+  "POST /api/books/year/:fy/close": [
+   "cap-period.js"
+  ],
+  "POST /api/capture/:id/convert": [
+   "intake.html"
+  ],
+  "POST /api/capture/:id/dismiss": [
+   "intake.html"
+  ],
+  "POST /api/capture/:id/structure": [
+   "intake.html"
+  ],
+  "POST /api/capture/simulate": [
+   "intake.html"
+  ],
+  "POST /api/channels": [
+   "cap-admin.js"
+  ],
+  "POST /api/chits/:chit_id/assign-lines": [
+   "cap-chit2.js",
+   "cap-tasks.js",
+   "cap-worklist.js"
+  ],
+  "POST /api/chits/:chit_id/deliver-lines": [
+   "cap-chit2.js",
+   "cap-tasks.js",
+   "cap-worklist.js",
+   "till.html"
+  ],
+  "POST /api/chits/:chit_id/disputes": [
+   "app.html",
+   "cap-crm-record.js",
+   "cap-dispute.js",
+   "cap-legend.js",
+   "cap-match.js",
+   "cap-network.js",
+   "chit-sheet.js",
+   "screens.js"
+  ],
+  "POST /api/chits/:chit_id/messages": [
+   "rail-thread.js"
+  ],
+  "POST /api/chits/:chit_id/raida/:raida_id/close": [
+   "cap-worklist.js"
+  ],
+  "POST /api/chits/:chit_id/reprice": [
+   "cap-chit2.js"
+  ],
+  "POST /api/chits/send": [
+   "intake.html",
+   "till.html"
+  ],
+  "POST /api/combo-templates": [
+   "combo-mode.js"
+  ],
+  "POST /api/combo-templates/:id/push": [
+   "combo-mode.js"
+  ],
+  "POST /api/connectors": [
+   "cap-workforce.js"
+  ],
+  "POST /api/connectors/:actorId/connections": [
+   "cap-connector.js"
+  ],
+  "POST /api/connectors/:actorId/erp-test": [
+   "cap-connector.js"
+  ],
+  "POST /api/connectors/:actorId/ping": [
+   "cap-connector.js"
+  ],
+  "POST /api/connectors/:actorId/regenerate-key": [
+   "cap-connector.js"
+  ],
+  "POST /api/connectors/reissue-code": [
+   "cap-connector.js"
+  ],
+  "POST /api/counters": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "POST /api/counters/:id/open": [
+   "cap-admin.js",
+   "cap-settings.js",
+   "screens.js"
+  ],
+  "POST /api/counters/:id/release": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "POST /api/crm/followups": [
+   "cap-crm-record.js",
+   "cap-crm.js",
+   "cap-finance-cheques.js"
+  ],
+  "POST /api/crm/groups": [
+   "cap-crm-groups.js"
+  ],
+  "POST /api/crm/leads": [
+   "cap-crm-leads.js"
+  ],
+  "POST /api/crm/leads/import": [
+   "cap-crm-leads.js"
+  ],
+  "POST /api/crm/parties/:id/contact-prefs": [
+   "cap-crm-privacy.js"
+  ],
+  "POST /api/crm/parties/:id/interactions": [
+   "cap-crm-groups.js",
+   "cap-crm-record.js"
+  ],
+  "POST /api/crm/parties/:id/outcome": [
+   "cap-crm-calls.js"
+  ],
+  "POST /api/crm/parties/:id/stage": [
+   "cap-crm-leads.js"
+  ],
+  "POST /api/crm/privacy-requests": [
+   "cap-crm-privacy.js"
+  ],
+  "POST /api/crm/privacy-requests/:id/answer": [
+   "cap-crm-privacy.js"
+  ],
+  "POST /api/crm/segments/:key/send": [
+   "cap-crm-groups.js"
+  ],
+  "POST /api/crm/walk-ins/add": [
+   "cap-crm-record.js"
+  ],
+  "POST /api/definitions": [
+   "cap-categories.js",
+   "cap-catsetup.js",
+   "cap-definitions.js",
+   "core.js"
+  ],
+  "POST /api/entities/register": [
+   "app.html",
+   "cap-register.js",
+   "cap-worklist.js",
+   "intake.html",
+   "register-form.js",
+   "signin-ui.js"
+  ],
+  "POST /api/entities/verify": [
+   "app.html",
+   "intake.html",
+   "register-form.js"
+  ],
+  "POST /api/events/ticket": [
+   "core.js",
+   "promo.html",
+   "rail-bell.js",
+   "till.html"
+  ],
+  "POST /api/folders": [
+   "app.html",
+   "cap-folders.js"
+  ],
+  "POST /api/folders/:id/rules": [
+   "cap-folders.js"
+  ],
+  "POST /api/folders/messages/:message_id/mark": [
+   "cap-messages.js"
+  ],
+  "POST /api/folders/move": [
+   "cap-folders.js",
+   "core.js"
+  ],
+  "POST /api/folders/rules/preview": [
+   "cap-folders.js"
+  ],
+  "POST /api/forms/:key/issue": [
+   "authority-forms.html"
+  ],
+  "POST /api/forms/:key/resolve": [
+   "authority-forms.html"
+  ],
+  "POST /api/forms/instances/:id/attach": [
+   "authority-forms.html"
+  ],
+  "POST /api/forms/instances/:id/sign": [
+   "authority-forms.html"
+  ],
+  "POST /api/governance/ai-draft": [
+   "app.html",
+   "cap-assist.js",
+   "cap-dispute.js",
+   "cap-readiness.js"
+  ],
+  "POST /api/governance/compliance": [
+   "cap-readiness.js",
+   "core.js"
+  ],
+  "POST /api/governance/verify": [
+   "cap-readiness.js",
+   "core.js"
+  ],
+  "POST /api/identity/documents/:scheme/code": [
+   "cap-iddocs.js"
+  ],
+  "POST /api/identity/documents/:scheme/verify": [
+   "cap-iddocs.js"
+  ],
+  "POST /api/integrations/:actor_id/approve": [
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "POST /api/integrations/books/skip": [
+   "cap-admin.js"
+  ],
+  "POST /api/keys": [
+   "app.html",
+   "cap-admin.js",
+   "cap-settings.js"
+  ],
+  "POST /api/kyb/credential": [
+   "know-your-business.html"
+  ],
+  "POST /api/kyb/field": [
+   "know-your-business.html"
+  ],
+  "POST /api/network-design/validate": [
+   "network-app.js"
+  ],
+  "POST /api/network-offers/:id/choice": [
+   "cap-admin.js",
+   "network-app.js"
+  ],
+  "POST /api/network-offers/:id/release": [
+   "cap-admin.js"
+  ],
+  "POST /api/network-offers/:id/withdraw": [
+   "cap-admin.js"
+  ],
+  "POST /api/network-offers/catalogue/cancel": [
+   "cap-admin.js"
+  ],
+  "POST /api/network-offers/catalogue/price": [
+   "cap-admin.js"
+  ],
+  "POST /api/network-offers/catalogue/publish": [
+   "cap-admin.js"
+  ],
+  "POST /api/notifications/dismiss": [
+   "rail-bell.js"
+  ],
+  "POST /api/notifications/seen": [
+   "rail-bell.js"
+  ],
+  "POST /api/privacy/me/consent": [
+   "shop-privacy.js"
+  ],
+  "POST /api/privacy/me/requests": [
+   "shop-privacy.js"
+  ],
+  "POST /api/products": [
+   "app.html",
+   "cap-catalogue.js",
+   "combo-mode.js"
+  ],
+  "POST /api/products/:id/media": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/products/:id/schedule": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/products/availability/bulk": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/products/bulk": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/products/bulk-update": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/products/import": [
+   "cap-catalogue.js",
+   "catalogue-lines.js",
+   "till.html"
+  ],
+  "POST /api/products/import/preflight": [
+   "cap-catalogue.js",
+   "catalogue-lines.js",
+   "till.html"
+  ],
+  "POST /api/products/lists/adopt": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/products/starter-columns": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/products/status/bulk": [
+   "catalogue-lines.js"
+  ],
+  "POST /api/relationships/customers": [
+   "app.html",
+   "cap-crm-record.js",
+   "cap-crm.js"
+  ],
+  "POST /api/relationships/suppliers": [
+   "app.html",
+   "cap-books.js",
+   "cap-crm-record.js",
+   "cap-crm.js",
+   "cap-suppliers.js"
+  ],
+  "POST /api/repeat": [
+   "cap-repeat.js"
+  ],
+  "POST /api/repeat/:id/counter": [
+   "cap-repeat.js"
+  ],
+  "POST /api/repeat/sweep": [
+   "cap-repeat.js"
+  ],
+  "POST /api/signin/ask": [
+   "signin-ui.js"
+  ],
+  "POST /api/signin/pin": [
+   "signin-ui.js"
+  ],
+  "POST /api/signin/renew": [
+   "till.html"
+  ],
+  "POST /api/signin/sessions/revoke": [
+   "cap-settings.js"
+  ],
+  "POST /api/signin/verify": [
+   "signin-ui.js"
+  ],
+  "POST /api/tax/compute": [
+   "cap-admin.js"
+  ],
+  "POST /api/tax/rate": [
+   "cap-admin.js"
+  ],
+  "POST /api/till/alias": [
+   "till.html"
+  ],
+  "POST /api/till/catalogue": [
+   "till.html"
+  ],
+  "POST /api/till/close": [
+   "till.html"
+  ],
+  "POST /api/till/diagnostic": [
+   "till.html"
+  ],
+  "POST /api/till/enrol": [
+   "till.html"
+  ],
+  "POST /api/till/flags": [
+   "till.html"
+  ],
+  "POST /api/till/listen": [
+   "till.html"
+  ],
+  "POST /api/till/offer-item": [
+   "till.html"
+  ],
+  "POST /api/till/pair": [
+   "till.html"
+  ],
+  "POST /api/till/pair/claim": [
+   "promo.html",
+   "till.html"
+  ],
+  "POST /api/till/price": [
+   "till.html"
+  ],
+  "POST /api/till/quick-keys/hide": [
+   "till.html"
+  ],
+  "POST /api/till/quick-keys/screen-config": [
+   "till.html"
+  ],
+  "POST /api/till/quick-keys/state": [
+   "till.html"
+  ],
+  "POST /api/till/quick-keys/unhide": [
+   "till.html"
+  ],
+  "POST /api/till/rate": [
+   "till.html"
+  ],
+  "POST /api/till/reconcile": [
+   "till.html"
+  ],
+  "POST /api/till/reward": [
+   "till.html"
+  ],
+  "POST /api/till/reward/claim": [
+   "till.html"
+  ],
+  "POST /api/till/screens/rename": [
+   "till.html"
+  ],
+  "POST /api/till/screens/revoke": [
+   "till.html"
+  ],
+  "POST /api/till/shop": [
+   "till.html"
+  ],
+  "POST /api/till/state": [
+   "till.html"
+  ],
+  "POST /api/till/stock": [
+   "till.html"
+  ],
+  "POST /api/till/stock/bulk": [
+   "till.html"
+  ],
+  "PUT /api/actors/:id/delegate": [
+   "cap-employees.js"
+  ],
+  "PUT /api/actors/:id/status": [
+   "cap-employees.js"
+  ],
+  "PUT /api/actors/assign/:chit_id": [
+   "app.html",
+   "cap-admin.js",
+   "cap-tasks.js",
+   "core.js",
+   "workflow.js"
+  ],
+  "PUT /api/catalogue-face": [
+   "app.html",
+   "cap-catsetup.js"
+  ],
+  "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": [
+   "cap-dispute.js",
+   "core.js",
+   "screens.js"
+  ],
+  "PUT /api/chits/:chit_id/status": [
+   "app.html",
+   "cap-assist.js",
+   "cap-bank.js",
+   "cap-books.js",
+   "cap-catalogue.js",
+   "cap-compare.js",
+   "cap-country.js",
+   "cap-crm-calls.js",
+   "cap-crm-groups.js",
+   "cap-crm-leads.js",
+   "cap-crm-privacy.js",
+   "cap-crm-record.js",
+   "cap-crm.js",
+   "cap-dispute.js",
+   "cap-employees.js",
+   "cap-finance-cheques.js",
+   "cap-finance-returns.js",
+   "cap-marketing.js",
+   "cap-period.js",
+   "cap-register.js",
+   "cap-settings.js",
+   "cap-shop.js",
+   "cap-suppliers.js",
+   "cap-tasks.js",
+   "chit-sheet.js",
+   "core.js",
+   "country-profiles.js",
+   "shop-privacy.js",
+   "till.html"
+  ],
+  "PUT /api/chits/:chit_id/use": [
+   "app.html",
+   "cap-books.js",
+   "chit-sheet.js"
+  ],
+  "PUT /api/definitions/:id": [
+   "app.html",
+   "cap-categories.js",
+   "cap-definitions.js",
+   "core.js"
+  ],
+  "PUT /api/governance/country-setup": [
+   "cap-country.js"
+  ],
+  "PUT /api/governance/profile/vault": [
+   "cap-print.js",
+   "cap-shop.js",
+   "core.js"
+  ],
+  "PUT /api/identity/documents/:scheme": [
+   "cap-iddocs.js",
+   "cap-workforce.js"
+  ],
+  "PUT /api/integrations/streams": [
+   "cap-admin.js"
+  ],
+  "PUT /api/network-design": [
+   "cap-network.js"
+  ],
+  "PUT /api/network-offers/policy": [
+   "cap-admin.js"
+  ],
+  "PUT /api/products/:id/availability": [
+   "catalogue-lines.js"
+  ],
+  "PUT /api/products/:id/status": [
+   "app.html",
+   "cap-catalogue.js",
+   "catalogue-lines.js"
+  ],
+  "PUT /api/testing/cmdb/:ci": [
+   "record.html"
+  ]
+ },
+ "queueable": [
+  "DELETE /api/connectors/:actorId",
+  "DELETE /api/folders/:id",
+  "DELETE /api/products/:id",
+  "DELETE /api/relationships/suppliers/:id",
+  "PATCH /api/connectors/:actorId/connections/:connId",
+  "PATCH /api/entities/me/prefs/:kind",
+  "PATCH /api/entities/profile",
+  "PATCH /api/folders/:id",
+  "PATCH /api/products/:id",
+  "PATCH /api/relationships/suppliers/:id",
+  "POST /api/assist/publish",
+  "POST /api/folders/move",
+  "POST /api/governance/compliance",
+  "POST /api/governance/verify",
+  "PUT /api/actors/assign/:chit_id",
+  "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",
+  "PUT /api/chits/:chit_id/status",
+  "PUT /api/governance/profile/vault"
+ ]
+}
