@@ -1,3 +1,4 @@
+// CARD 07-offers-pricing-and-combos/offers-engine-as-service
 /**
  * /api/offers — THE OFFER ENGINE AS A SERVICE.
  *
@@ -14,7 +15,9 @@
  * still writes its own order; this only says what would come off and why. Same engine, same answer, in every system.
  */
 const express = require('express');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { SAID, faultOf, contract } = require('../lib/offers-contract'); // the contract (each route's operation) and the words of a refusal and of a fault
 const {
   round: roundMoney
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
@@ -22,6 +25,11 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const eng = require('../lib/offers-engine').CBOffers;
+/** the schema check of one route (its own operation in lib/offers-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
 
 const FIELDS = {
   percent_off: ['percent', 'scope', 'applies_to'],
@@ -35,12 +43,16 @@ const FIELDS = {
 };
 
 router.get('/kinds', (req, res) => {
-  const kinds = (eng && eng.kinds) || [];
-  res.json({
-    engine: 'chitbridge-offers',
-    version: 1,
-    kinds: kinds.map((item) => ({ kind: item, scope: (eng.KINDS[item] || {}).scope || 'line', fields: FIELDS[item] || [] }))
-  });
+  try {
+    const kinds = (eng && eng.kinds) || [];
+    res.json({
+      engine: 'chitbridge-offers',
+      version: 1,
+      kinds: kinds.map((item) => ({ kind: item, scope: (eng.KINDS[item] || {}).scope || 'line', fields: FIELDS[item] || [] }))
+    });
+  } catch (e) {
+    problem(req, res, faultOf(e, req));
+  }
 });
 
 function normLines(body) {
@@ -60,38 +72,47 @@ async function ownOffers(req) {
   const catalogueView = require('../lib/catalogue-view');
   return catalogueView.liveOffers({ entity_id, withEntity });
 }
-async function run(req, res, explain) {
-  try {
-    const lines = normLines(req.body || {});
-    if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required: { key, item_id?, qty, unitPrice }' });
-    const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
-    const ctx = Object.assign({ now: new Date(), currency: null }, req.body.ctx || {}); /* T2-NATDEF: the caller's stated money, never INR by name */
-    /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */
-    if (typeof ctx.money !== 'function') ctx.money = (n) => (ctx.currency ? String(ctx.currency) + ' ' : '') + roundMoney(Number(n) || 0).toFixed(2);
-    const ev = eng.evaluate({ lines, offers, ctx });
-    const out = {
-      subtotal: ev.subtotal,
-      total: ev.total,
-      adjustments: ev.adjustments || [],
-      notes: ev.notes || [],
-      skipped: ev.skipped || [],
-      perLine: eng.perLine ? eng.perLine(ev, lines) : {},
-      offers_considered: offers.length,
-      engine: 'chitbridge-offers',
-      version: 1
-    };
-    if (explain)
-      out.explain = (ev.adjustments || []).map((item) => ({ label: item.label, why: item.why, amount: item.amount, scope: item.scope, target: item.target }));
-    res.json(out);
-  } catch (e) {
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
-  }
-}
-router.post('/evaluate', auth, auth.requireScope('offers'), (req, res) => run(req, res, false));
-router.post('/explain', auth, auth.requireScope('offers'), (req, res) => run(req, res, true));
+/** the handler of evaluate (explain = false) and of explain (true): same engine, same answer, with a reason per adjustment on the second */
+const answer = (explain) =>
+  async function offersAnswer(req, res) {
+    try {
+      const lines = normLines(req.body || {});
+      if (!lines.length)
+        return problem(req, res, { status: 400, code: 'LINES_REQUIRED', detail: SAID.lines, legacy: { error: 'validation', message: SAID.lines } });
+      const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
+      const ctx = Object.assign({ now: new Date(), currency: null }, req.body.ctx || {}); /* T2-NATDEF: the caller's stated money, never INR by name */
+      /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */
+      if (typeof ctx.money !== 'function') ctx.money = (n) => (ctx.currency ? String(ctx.currency) + ' ' : '') + roundMoney(Number(n) || 0).toFixed(2);
+      const ev = eng.evaluate({ lines, offers, ctx });
+      const out = {
+        subtotal: ev.subtotal,
+        total: ev.total,
+        adjustments: ev.adjustments || [],
+        notes: ev.notes || [],
+        skipped: ev.skipped || [],
+        perLine: eng.perLine ? eng.perLine(ev, lines) : {},
+        offers_considered: offers.length,
+        engine: 'chitbridge-offers',
+        version: 1
+      };
+      if (explain)
+        out.explain = (ev.adjustments || []).map((item) => ({ label: item.label, why: item.why, amount: item.amount, scope: item.scope, target: item.target }));
+      res.json(out);
+    } catch (e) {
+      problem(req, res, faultOf(e, req));
+    }
+  };
+router.post('/evaluate', auth, auth.requireScope('offers'), ...checked('POST /evaluate'), answer(false));
+router.post('/explain', auth, auth.requireScope('offers'), ...checked('POST /explain'), answer(true));
 
 /* OpenAPI 3.0 — what another system reads to attach. Kept beside the code that it describes so it cannot drift far. */
-router.get('/openapi.json', (req, res) => res.json(require('./openapi').assemble(req)));
+router.get('/openapi.json', (req, res) => {
+  try {
+    res.json(require('./openapi').assemble(req));
+  } catch (e) {
+    problem(req, res, faultOf(e, req));
+  }
+});
 router.openapi = (function () {
   const line = {
     type: 'object',
@@ -178,38 +199,7 @@ router.openapi = (function () {
   };
   return {
     schemas: { Line: line, Offer: offer, Adjustment: adjustment, Result: result, EvaluateBody: body },
-    paths: {
-      '/api/offers/kinds': {
-        get: {
-          summary: 'The registry of offer kinds',
-          tags: ['offers'],
-          responses: { 200: { description: 'kinds', content: { 'application/json': { schema: { type: 'object' } } } } }
-        }
-      },
-      '/api/offers/evaluate': {
-        post: {
-          summary: 'Evaluate offers on lines',
-          tags: ['offers'],
-          security: [{ apiKey: [] }, { bearer: [] }],
-          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/EvaluateBody' } } } },
-          responses: {
-            200: { description: 'result', content: { 'application/json': { schema: { $ref: '#/components/schemas/Result' } } } },
-            401: { description: 'no or revoked key' },
-            403: { description: 'key not scoped for offers' },
-            429: { description: 'rate limited (240/min per key)' }
-          }
-        }
-      },
-      '/api/offers/explain': {
-        post: {
-          summary: 'Evaluate, with a one-line reason per adjustment',
-          tags: ['offers'],
-          security: [{ apiKey: [] }, { bearer: [] }],
-          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/EvaluateBody' } } } },
-          responses: { 200: { description: 'result + explain', content: { 'application/json': { schema: { $ref: '#/components/schemas/Result' } } } } }
-        }
-      }
-    }
+    paths: contract.pathsOf()
   };
 })();
 module.exports = router;

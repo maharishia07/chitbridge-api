@@ -75,6 +75,7 @@ function extras(tools) {
     /* the catalogue face */
     X('face-none', 'GET ' + F, 200, {}),
     X('face-saved', 'GET ' + F, 200, { setup: withRows(answering(/SELECT face, updated_at FROM catalogue_face/, [{ face: { purpose: 'shop' }, updated_at: '2026-10-01T00:00:00.000Z' }])) }),
+    X('face-saved-no-stamp', 'GET ' + F, 200, { setup: withRows(answering(/SELECT face, updated_at FROM catalogue_face/, [{ face: {}, updated_at: null }])) }),
     X('face-read-fails', 'GET ' + F, 500, { setup: failing }),
     X('face-missing', 'PUT ' + F, 400, { body: {} }),
     X('face-null', 'PUT ' + F, 400, { body: { face: null } }),

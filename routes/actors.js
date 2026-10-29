@@ -864,7 +864,7 @@ router.get('/', auth, async (req, res) => {
       summary[item.break_status] = parseInt(item.count);
     });
 
-    const answer = PL.pageOut('actors', result.rows, pg);
+    const answer = PL.pageOut('actors', result.rows.map(contract.listedActor), pg);
     /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
     res.json({
       actors: answer.actors,
