@@ -138,6 +138,14 @@
     400
    ]
   },
+  "DELETE /api/schemas/fields/:field_key": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/actors/:id/tasks": {
    "cases": 3,
    "failed": 0,
@@ -1314,6 +1322,30 @@
     400
    ]
   },
+  "PATCH /api/schemas/fields/:field_key": {
+   "cases": 9,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/schemas/fields/order": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/schemas/visibility": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PATCH /api/testing/incidents/:id": {
    "cases": 4,
    "failed": 0,
@@ -2219,7 +2251,7 @@
    ]
   },
   "POST /api/folders/move": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2696,6 +2728,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/schemas/create-default": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/simulator/feedback": {
@@ -3296,46 +3336,6 @@
    "missing_input_ok": true,
    "statuses": [
     400
-   ]
-  },
-  "DELETE /api/schemas/fields/:field_key": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "PATCH /api/schemas/fields/:field_key": {
-   "cases": 9,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "PATCH /api/schemas/fields/order": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "PATCH /api/schemas/visibility": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "POST /api/schemas/create-default": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
    ]
   }
  }

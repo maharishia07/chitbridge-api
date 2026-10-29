@@ -182,7 +182,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LOCKED | 409 | Locked | This column is one every catalogue keeps, so it cannot be changed that way. | Leave it as it is. | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | 400 | Max tasks over entity | That is more tasks than the shop allows one person. | Raise the limit in Settings first, or give fewer. | actors | 2026-10-22 |
 | MEMBERSHIP_SUSPENDED | 403 | Membership suspended | The network has suspended your membership, so you cannot send to it. | Ask the network to resume it, then send again. | network | 2026-10-24 |
-| MIGRATION | 409 | Migration | PENDING | - | schemas | 2026-10-22 |
 | MIGRATION | 409 | Not switched on yet | Unit and source are not switched on for your account yet. | Type, label and required still work; try again after the next update. | schemas | 2026-10-22 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |

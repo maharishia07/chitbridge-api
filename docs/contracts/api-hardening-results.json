@@ -3295,8 +3295,7 @@
   },
   "GET /api/network-design/availability": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/catalogue-face": {
