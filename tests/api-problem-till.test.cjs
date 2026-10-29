@@ -167,6 +167,11 @@ const EXTRAS = [
   X('offer-item-write-breaks', 'POST /api/till/offer-item', 500, { setup: { db: 'fail' }, body: { offer_id: ITEM, item_id: ITEM, on: true } }),
   X('price-no-item', 'POST /api/till/price', 400, { body: {} }),
   X('price-not-a-number', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: -1 } }),
+  /* CTR-168: no number at all is refused in PATCH /products' words, never read as 0 or 1 */
+  X('price-null', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: null }, said: 'Price is required' }),
+  X('price-blank', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: '' }, said: 'Price is required' }),
+  X('price-empty-list', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: [] }, said: 'Price is required' }),
+  X('price-true', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: true }, said: 'Price must be a number' }),
   X('price-cost-blind', 'POST /api/till/price', 403, {
     body: { item_id: ITEM, price: 5 },
     patch: [['lib/cost.js', 'writeRefusal', async () => ({ error: 'Not permitted', code: 'COST_BLIND', blocked: ['price'], message: 'Your access does not include cost or price.' })]]
@@ -352,6 +357,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (answer.json && answer.json.code) check(label + ': its code ' + answer.json.code + ' is registered with a shopkeeper sentence', registered.has(answer.json.code), answer.json.code);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/party_secret|SELECT|vault|relation/.test(answer.text), answer.text);
     else kit.checkLegacy(check, label, answer, kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id));
+    if (scenario.said) check(label + ': ' + scenario.expect + ' "' + scenario.said + '"', answer.status === scenario.expect && answer.json && answer.json.message === scenario.said, answer.json);
   }
   return tested;
 }
