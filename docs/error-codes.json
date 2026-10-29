@@ -3269,6 +3269,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "SUPPLIES_NOT_MIGRATED",
+   "status": "503",
+   "title": "Supplies not switched on",
+   "shopkeeper": "Supplies are not switched on yet.",
+   "hint": "Ask the operator to run the update, then try again.",
+   "owner_area": "supplies",
+   "since": "2026-10-24"
+  },
+  {
+   "code": "SUPPLY_INVALID",
+   "status": "400",
+   "title": "Supply not accepted",
+   "shopkeeper": "This supply, purchase or use could not be recorded as sent.",
+   "hint": "Read the sentence shown, fix it and send it again.",
+   "owner_area": "supplies",
+   "since": "2026-10-24"
+  },
+  {
    "code": "SUPPORT_NOT_TAKEN",
    "status": "502",
    "title": "Report not delivered",

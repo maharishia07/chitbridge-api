@@ -2976,5 +2976,31 @@
   401,
   403,
   500
+ ],
+ "GET /api/supplies": [
+  401,
+  500
+ ],
+ "PATCH /api/supplies/:id": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/supplies": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/supplies/:id/issue": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/supplies/purchase": [
+  400,
+  401,
+  500,
+  503
  ]
 }
