@@ -20886,6 +20886,18 @@
       ],
       "message": "Your access does not include cost or price. You can change the item, the quantity and the unit; the account owner can grant \"Sees costs\" in Co-assists to change: price."
      }
+    },
+    {
+     "scenario": "amend-cost-blind-two-lines",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to amend",
+      "message": "line_id and line_index name two different lines; send the line's own id (or its number alone)."
+     },
+     "fixture": {
+      "error": "Failed to amend",
+      "message": "line_id and line_index name two different lines; send the line's own id (or its number alone)."
+     }
     }
    ]
   },

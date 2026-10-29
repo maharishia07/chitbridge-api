@@ -9,11 +9,11 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 138 | `list` | `amend.js` |  |
+| 137 | `list` | `amend.js` |  |
 | 110 | `rows` | `crm.js` | still in them: |
 | 103 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 93 | `words` | `variant.browser.js` |  |
+| 92 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
 | 82 | `answer` | `availability.js` | from March; then nearest. |
 | 78 | `money` | `bill-privacy.js` |  |
@@ -31,7 +31,7 @@ of file each thing is; this says what already does the job.
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 53 | `entry` | `books-store.js` |  |
+| 54 | `entry` | `books-store.js` |  |
 | 52 | `register` | `regulation.js` | register(pack) → the pack — |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -40,7 +40,7 @@ of file each thing is; this says what already does the job.
 | 48 | `pack` | `books-store.js` |  |
 | 48 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 47 | `again` | `signin-ui.js` |  |
-| 45 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 47 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 43 | `read` | `cap-print.js` |  |
 | 44 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 43 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
@@ -53,8 +53,8 @@ of file each thing is; this says what already does the job.
 | 38 | `rules` | `docnumber.js` | the rule set for a country — |
 | 37 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 36 | `host` | `chit-sheet.js` |  |
-| 36 | `faultOf` | `capture-contract.js` | keeps that status: |
-| 37 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
+| 37 | `faultOf` | `capture-contract.js` | keeps that status: |
+| 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `modal` | `app.html` |  |
 | 35 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
@@ -66,7 +66,7 @@ of file each thing is; this says what already does the job.
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
 | 32 | `live` | `receivables.js` | the allocations that still count: |
-| 32 | `facts` | `bill-steps.js` | MY state_log — |
+| 31 | `facts` | `bill-steps.js` | MY state_log — |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
@@ -140,7 +140,7 @@ of file each thing is; this says what already does the job.
 | 17 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 17 | `step` | `cart.js` |  |
 | 17 | `today` | `kural.js` |  |
-| 17 | `notMigrated` | `crm-followups.js` |  |
+| 18 | `notMigrated` | `crm-followups.js` |  |
 | 17 | `governance` | `home-facts.js` |  |
 | 18 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
@@ -149,7 +149,7 @@ of file each thing is; this says what already does the job.
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
 | 16 | `panel` | `sides.js` |  |
 | 18 | `plan` | `crm-leads.js` | `existing`: |
-| 16 | `update` | `folder-rules.js` |  |
+| 17 | `update` | `folder-rules.js` |  |
 | 16 | `connectors` | `home-facts.js` | declare (said in words — |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |

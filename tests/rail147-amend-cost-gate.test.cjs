@@ -3,10 +3,12 @@
  *
  * OWNS      the proof, per door, that an actor without can_see_costs on a chit the shop BUYS on (or whose side is unknown) is refused 403 COST_BLIND with `blocked`
  *           naming the money keys he sent, and NOTHING is written; that his quantity-only or name-only amend (the price omitted or null, or re-sent unchanged)
- *           is recorded with the STORED price kept, and the answer carries no money; that a reprice (preview and apply) is refused; that on a SALES chit he amends and
- *           reprices exactly as today; and that the owner and a cost-allowed actor are untouched (no can_see_costs read, the library's answer byte for byte).
- * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/chits.js over a stand-in db and auth; every write statement is recorded, never run.
- * FLOW      world (who · the stored lines · the counterparty's role) → real route → status, body, the writes the stand-in saw → the rule
+ *           is recorded with the STORED price kept — read under FOR UPDATE inside the writing transaction, so an owner's reprice landing in between survives — and the
+ *           answer carries no money; that a line named by line_index alone is carried through the overlay and a pair of keys naming two lines is refused 400; that a
+ *           reprice (preview and apply) is refused; that on a SALES chit he amends and reprices exactly as today; and that the owner and a cost-allowed actor are
+ *           untouched (no can_see_costs read, the library's answer byte for byte).
+ * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/chits.js and lib/amend over a stand-in db and auth; every write statement is recorded, never run.
+ * FLOW      world (who · the stored lines · the counterparty's role) → real route → status, body, the statements the stand-in saw → the rule
  * CARD      01-rail-core-the-chit/chits-routes
  *
  * Run: node tests/rail147-amend-cost-gate.test.cjs
@@ -37,9 +39,9 @@ const BLIND = { identity_id: BLIND_ID, identity_type: 'actor', access_level: 'ed
 const GRANTED = Object.assign({}, BLIND, { identity_id: GRANTED_ID, display_name: 'Granted' });
 const GRANTS = { [GRANTED_ID]: true };
 const AT = '2026-10-01T10:00:00.000Z';
-/* the supplier's rate on the stored line, a figure no other field could carry; and the figure a blind actor tries to write */
-const STORED = 4242.5, TRIED = 9797.25;
-const SECRETS = [String(STORED), String(TRIED), '42425', '97972'];
+/* the supplier's rate on the stored line, a figure no other field could carry; the figure a blind actor tries to write; the figure the owner's reprice lands in between */
+const STORED = 4242.5, TRIED = 9797.25, REPRICED = 6161.75;
+const SECRETS = [String(STORED), String(TRIED), String(REPRICED), '42425', '97972', '61617'];
 
 /* ── the copies ──────────────────────────────────────────────────────────────────────────────────────────────── */
 /** the header's side columns as lib/cost-write SIDE_SQL selects them */
@@ -48,23 +50,32 @@ const PURCHASE = header({}); /* an order from a party on my supplier list: my PO
 const SALE = header({ sender_entity_id: CUSTOMER, all_recipients: [{ entity_id: CUSTOMER, display_name: 'Ravi' }, { entity_id: SHOP, display_name: 'Shop' }] }); /* a customer's order: a SALE */
 const UNLISTED = header({ sender_entity_id: STRANGER, all_recipients: [{ entity_id: STRANGER, display_name: 'Who' }, { entity_id: SHOP, display_name: 'Shop' }] }); /* no list names him: unknown */
 const BILL = header({ purpose: 'invoice', business_json: { their_bill: { no: 'INV-7' } } }); /* a bill received: a BUY by its document kind, whatever the lists say */
-/** the stored lines (chit_line, as lib/amend readLines selects them): one priced at the supplier's rate, one with no price yet */
+/** the stored lines (chit_line, as lib/amend readLines and the FOR UPDATE read select them): one priced at the supplier's rate, one with no price yet */
 const LINE_ROWS = [
   { line_id: LINE, seq: 1, particulars: 'Basmati rice 1kg', quantity: '10', unit: 'kg', unit_size: null, price: String(STORED), comment: null, asked_as: null, asked_unit: null, raw_phrase: null, removed: false, removed_reason: null, needs_human: false, flags: null },
   { line_id: LINE2, seq: 2, particulars: 'Toor dal 1kg', quantity: '5', unit: 'kg', unit_size: null, price: null, comment: null, asked_as: null, asked_unit: null, raw_phrase: null, removed: false, removed_reason: null, needs_human: false, flags: null }
 ];
+/** the frozen payload (chit_detail.line_items): the same two lines as they arrived, with their ids */
+const PAYLOAD = [{ line_id: LINE, particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', price: STORED }, { line_id: LINE2, particulars: 'Toor dal 1kg', quantity: 5, unit: 'kg' }];
 const CATALOGUE = [{ item_id: LINE, item_data: { name: 'Basmati rice 1kg', price: { amount: 61, currency: 'INR' } }, updated_at: AT }];
 
 /* ── the stand-in db: reads answer the scene, WRITES are recorded and echoed, never run ──────────────────────── */
 let WHO = OWNER, SCENE = {}, WRITES = [], READS = [];
 function handle(sql, params) {
   const s = String(sql).replace(/\s+/g, ' ');
-  READS.push(s.slice(0, 60));
+  READS.push(s);
   if (/can_see_costs FROM identities/.test(s)) return { rows: [{ can_see_costs: !!GRANTS[params[0]] }] };
   if (/SELECT 1 FROM chit_header/.test(s)) return { rows: [{ '?column?': 1 }] };
   if (/SELECT ch\.purpose, ch\.sender_entity_id, ch\.all_recipients/.test(s)) return { rows: SCENE.header ? [SCENE.header] : [] };
   if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return { rows: params[1].map((id) => ({ id, customer: id === CUSTOMER, supplier: id === SUPPLIER })) };
+  if (/FROM chit_line WHERE entity_id = \$1 AND chit_id = \$2 ORDER BY seq, line_id FOR UPDATE/.test(s)) {
+    /* the interleave: the owner's reprice COMMITS just before this lock is taken — the locked read sees his price; any read before it saw the old one */
+    if (SCENE.repriceLands) SCENE.lines = LINE_ROWS.map((l) => (l.line_id === LINE ? Object.assign({}, l, { price: String(REPRICED) }) : l));
+    return { rows: (SCENE.lines || LINE_ROWS).map((l) => ({ line_id: l.line_id, seq: l.seq, price: l.price })) };
+  }
   if (/FROM chit_line WHERE entity_id = \$1 AND chit_id = \$2 ORDER BY seq/.test(s)) return { rows: SCENE.lines || LINE_ROWS };
+  if (/SELECT line_items FROM chit_detail WHERE entity_id = \$1 AND chit_id = \$2 LIMIT 1 FOR UPDATE/.test(s)) return { rows: [{ line_items: SCENE.payload || PAYLOAD }] };
+  if (/FROM chit_line_amendment WHERE entity_id = \$1 AND chit_id = \$2 ORDER BY line_index, seq/.test(s)) return { rows: SCENE.amendments || [] };
   if (/chit_line_delivered_qty/.test(s)) return { rows: (SCENE.lines || LINE_ROWS).map((l) => ({ line_id: l.line_id, particulars: l.particulars, ordered_unit: l.unit, delivered: '0' })) };
   if (/INSERT INTO chit_line_amendment/.test(s)) {
     WRITES.push({ what: 'amendment', line: params[4] === null ? null : JSON.parse(params[4]) });
@@ -91,6 +102,9 @@ const leaked = (raw) => SECRETS.filter((s) => new RegExp('(^|[^0-9.])' + s.repla
 const edit = (line, over) => ({ edits: [Object.assign({ line_index: 0, line_id: LINE, line, reason_code: 'misread_by_ai' }, over)] });
 const AMEND = '/api/chits/' + CHIT + '/amend', REPRICE = '/api/chits/' + CHIT + '/reprice';
 const QTY_ONLY = { particulars: 'Basmati rice 1kg', quantity: 12, unit: 'kg' };
+const FOR_UPDATE = /FOR UPDATE/;
+/** the position of the first statement matching `re` among a request's reads (-1: never) */
+const at = (reads, re) => reads.findIndex((r) => re.test(r));
 
 /* ── the lib on its own ──────────────────────────────────────────────────────────────────────────────────────── */
 function unitCases() {
@@ -98,18 +112,25 @@ function unitCases() {
   try { lib = require(API + '/lib/cost-write'); } catch (_) { lib = null; }
   t('lib/cost-write | the module exists (RAIL-147)', !!lib, true);
   if (!lib) return;
-  const stored = { line_id: LINE, price: STORED };
+  try {
+  const stored = { price: STORED };
   console.log('   lib/cost-write · moneyKeysOf: the money keys a replacement line would SET or CHANGE against the stored line');
   t('moneyKeysOf | a new price is a change; total, rate, discount, a cost name, a nested price (a picker\'s ref) are all named as sent', lib.moneyKeysOf({ particulars: 'x', price: TRIED, total: 1, rate: 2, discount: 3, unit_cost: 4, ref: { item_id: 'i', price: { amount: 5 } } }, stored), ['price', 'total', 'rate', 'discount', 'unit_cost']);
   t('moneyKeysOf | the stored price re-sent (as a number or text, to the money unit\'s rounding) is NOT a change; quantity, unit, name, comment, lot are not money', [lib.moneyKeysOf({ particulars: 'x', quantity: 12, unit: 'kg', comment: 'c', lot: { batch: 'B1' }, price: STORED }, stored), lib.moneyKeysOf({ price: String(STORED) }, stored), lib.moneyKeysOf({ price: STORED + 0.001 }, stored)], [[], [], []]);
   t('moneyKeysOf | an omitted or null price is not a set (it is carried); a price where the stored line has NONE is a set; no stored line at all: any price is a set; a removal names nothing', [lib.moneyKeysOf({ particulars: 'x' }, stored), lib.moneyKeysOf({ price: null }, stored), lib.moneyKeysOf({ price: STORED }, { price: null }), lib.moneyKeysOf({ price: 1 }, null), lib.moneyKeysOf(null, stored)], [[], [], ['price'], ['price'], []]);
   t('moneyKeysOf | gst_rate, tax_name and quantity are not money (a rate is not a price)', lib.moneyKeysOf({ gst_rate: 5, tax_name: 'GST', quantity: 2 }, stored), []);
-  const given = edit({ particulars: 'x', quantity: 12 }).edits[0];
-  const carried = lib.carryStoredPrice(given, stored);
-  t('carryStoredPrice | the stored price is filled in on a COPY (the body is untouched); null is treated as omitted; a sent price and a removal pass as they are', [carried.line.price, given.line.price, lib.carryStoredPrice(edit({ price: null, particulars: 'x' }).edits[0], stored).line.price, lib.carryStoredPrice(edit({ price: 7 }).edits[0], stored).line.price, lib.carryStoredPrice(edit(null).edits[0], stored).line], [STORED, undefined, STORED, 7, null]);
-  t('carryStoredPrice | nothing to carry when the stored line has no price', lib.carryStoredPrice(given, { price: null }).line.price, undefined);
+  const rawEdit = edit({ particulars: 'x', quantity: 12 }).edits[0];
+  const prepared = { idx: 0, line_id: LINE, line: { particulars: 'x', quantity: 12 } };
+  t('priceCarried | the stored price is filled into a RE-CLEANED line (lib/amend clean computes the total); null is treated as omitted; a sent price and a removal pass as they are', [lib.priceCarried(prepared, rawEdit, stored), lib.priceCarried(prepared, edit({ particulars: 'x', quantity: 12, price: null }).edits[0], stored).price, lib.priceCarried({ idx: 0, line: { particulars: 'x', price: 7 } }, edit({ particulars: 'x', price: 7 }).edits[0], stored).price, lib.priceCarried({ idx: 0, line: null }, edit(null).edits[0], stored)], [{ particulars: 'x', quantity: 12, price: STORED, total: 12 * STORED }, STORED, 7, null]);
+  t('priceCarried | nothing to carry when the stored line has no price', lib.priceCarried(prepared, rawEdit, { price: null }).price, undefined);
+  const locked = { byId: new Map([[LINE, { price: STORED }], [LINE2, { price: null }]]), byIndex: new Map([[0, { line_id: LINE, price: STORED }], [1, { line_id: LINE2, price: null }], [2, { line_id: null, price: 5 }]]) };
+  t('storedFor | by line_id (the key amend writes the live row by); by line_index alone through the overlay; an index whose original has no id trusts the id given; nothing known → null', [lib.storedFor(locked, { idx: 0, line_id: LINE }), lib.storedFor(locked, { idx: 1, line_id: null }), lib.storedFor(locked, { idx: 2, line_id: STRANGER }), lib.storedFor(locked, { idx: 7, line_id: null })], [{ price: STORED }, { line_id: LINE2, price: null }, { line_id: null, price: 5 }, null]);
+  let mismatch = null;
+  try { lib.storedFor(locked, { idx: 0, line_id: LINE2 }); } catch (e) { mismatch = [e.status, e.message]; }
+  t('storedFor | line_id and line_index naming two different lines is a 400 with its sentence (never line A\'s price onto line B)', mismatch, [400, 'line_id and line_index name two different lines; send the line\'s own id (or its number alone).']);
   const hidden = lib.hideAmendments({ amendments: [{ amendment_id: CHIT, line_index: 0, line_id: LINE, seq: 1, line: { particulars: 'x', quantity: 12, unit: 'kg', price: STORED, total: 50910, unit_cost: 1 }, reason_code: 'misread_by_ai', reason: 'they charged ₹9', actor_name: 'Blind', created_at: AT }] });
   t('hideAmendments | the line keeps LINE_KEEP only (no price, total or cost), the typed reason goes, the ids and codes stay', hidden.amendments[0], { amendment_id: CHIT, line_index: 0, line_id: LINE, seq: 1, line: { particulars: 'x', quantity: 12, unit: 'kg' }, reason_code: 'misread_by_ai', actor_name: 'Blind', created_at: AT });
+  } catch (e) { fail++; console.log("  FAIL  lib/cost-write unit cases threw (an older lib lacks a helper): " + e.message); }
 }
 
 (async () => {
@@ -127,7 +148,7 @@ function unitCases() {
     t(label + ' | NOTHING written (no amendment, no chit_line, no state_log) and no secret figure in the answer', [r.writes, leaked(r.raw)], [[], []]);
   };
   const recorded = (label, r, price) => {
-    t(label + ' | 200, the amendment and the live row both carry the STORED price (' + STORED + '), the total recomputed from it', [r.status, r.writes.filter((w) => w.what === 'amendment').map((w) => w.line.price), r.writes.filter((w) => w.what === 'chit_line').map((w) => w.price), r.writes[0].line.total], [200, [price], [price], 12 * price]);
+    t(label + ' | 200, the amendment and the live row both carry the STORED price (' + price + '), the total recomputed from it', [r.status, r.writes.filter((w) => w.what === 'amendment').map((w) => w.line.price), r.writes.filter((w) => w.what === 'chit_line').map((w) => w.price), r.writes[0].line.total], [200, [price], [price], 12 * price]);
     t(label + ' | the answer carries no price, no total, no secret figure, no typed reason; the line\'s name, quantity and unit stay', [leaked(r.raw), 'price' in r.body.amendments[0].line, 'total' in r.body.amendments[0].line, 'reason' in r.body.amendments[0], r.body.amendments[0].line], [[], false, false, false, { particulars: 'Basmati rice 1kg', quantity: 12, unit: 'kg' }]);
   };
 
@@ -135,23 +156,47 @@ function unitCases() {
   SCENE = { header: PURCHASE };
   refused('blind sets a price', await post(port, AMEND, BLIND, edit(Object.assign({}, QTY_ONLY, { price: TRIED }))), ['price']);
   refused('blind sends total and a cost name beside the stored price', await post(port, AMEND, BLIND, edit(Object.assign({}, QTY_ONLY, { price: STORED, total: 1, unit_cost: 2 }))), ['total', 'unit_cost']);
-  refused('blind prices the line that has NO price yet (a set)', await post(port, AMEND, BLIND, edit({ particulars: 'Toor dal 1kg', quantity: 5, unit: 'kg', price: 12 }, { line_id: LINE2 })), ['price']);
-  refused('blind: one bad edit in a batch of two refuses the WHOLE batch', await post(port, AMEND, BLIND, { edits: [edit(QTY_ONLY).edits[0], edit({ particulars: 'Toor dal 1kg', quantity: 5, unit: 'kg', price: 12 }, { line_id: LINE2 }).edits[0]] }), ['price']);
+  refused('blind prices the line that has NO price yet (a set)', await post(port, AMEND, BLIND, edit({ particulars: 'Toor dal 1kg', quantity: 5, unit: 'kg', price: 12 }, { line_id: LINE2, line_index: 1 })), ['price']);
+  refused('blind: one bad edit in a batch of two refuses the WHOLE batch', await post(port, AMEND, BLIND, { edits: [edit(QTY_ONLY).edits[0], edit({ particulars: 'Toor dal 1kg', quantity: 5, unit: 'kg', price: 12 }, { line_id: LINE2, line_index: 1 }).edits[0]] }), ['price']);
   refused('blind sets a price as text', await post(port, AMEND, BLIND, edit(Object.assign({}, QTY_ONLY, { price: '12' }))), ['price']);
   refused('blind reprice (apply)', await post(port, REPRICE, BLIND, {}), ['price']);
   refused('blind reprice (preview)', await post(port, REPRICE, BLIND, { preview: true, line_ids: [LINE] }), ['price']);
   const previewed = await post(port, REPRICE, BLIND, { preview: true });
   t('blind reprice | refused before the catalogue is read (no catalogue price computed for him)', previewed.reads.some((r) => /catalogue_items/.test(r)), false);
   console.log('\n   the same purchase: what the blind actor MAY do, and the stored price survives it');
-  recorded('blind amends the quantity only (no price key at all — the screen after RAIL-146)', await post(port, AMEND, BLIND, edit(QTY_ONLY)), STORED);
+  const qty = await post(port, AMEND, BLIND, edit(QTY_ONLY));
+  recorded('blind amends the quantity only (no price key at all — the screen after RAIL-146)', qty, STORED);
+  t('blind quantity-only | the stored price was read under FOR UPDATE (chit_line and chit_detail) and INSIDE the transaction that writes: locked reads come before the first write, and no unlocked chit_line price read ran before them', [qty.reads.filter((r) => FOR_UPDATE.test(r)).length, at(qty.reads, /FOR UPDATE/) < at(qty.reads, /INSERT INTO chit_line_amendment/), qty.reads.slice(0, at(qty.reads, /FOR UPDATE/)).some((r) => /FROM chit_line WHERE/.test(r))], [2, true, false]);
   recorded('blind amends with price: null (a blank field)', await post(port, AMEND, BLIND, edit(Object.assign({}, QTY_ONLY, { price: null }))), STORED);
   recorded('blind re-sends the stored price unchanged', await post(port, AMEND, BLIND, edit(Object.assign({}, QTY_ONLY, { price: STORED }))), STORED);
   const removed = await post(port, AMEND, BLIND, edit(null));
-  t('blind removes a line (line: null): recorded as today, nothing priced', [removed.status, removed.writes.map((w) => w.what), removed.body.amendments[0].line], [200, ['amendment', 'chit_line', 'state_log'], null]);
+  t('blind removes a line (line: null): recorded as today, nothing priced, no payload lock needed', [removed.status, removed.writes.map((w) => w.what), removed.body.amendments[0].line, removed.reads.filter((r) => FOR_UPDATE.test(r)).length], [200, ['amendment', 'chit_line', 'state_log'], null, 1]);
   const nameOnly = await post(port, AMEND, BLIND, edit({ particulars: 'Basmati rice 1 kg', quantity: 10, unit: 'kg' }, { reason_code: 'misread_by_ai' }));
   t('blind corrects the name: the synonym candidate still comes back (names are not money)', [nameOnly.status, nameOnly.body.synonym_candidates && nameOnly.body.synonym_candidates[0].means], [200, 'Basmati rice 1 kg']);
   const empty = await post(port, AMEND, BLIND, { edits: [] });
   t('blind sends an empty batch: 400 "Nothing to amend" as today (no door read)', [empty.status, empty.reads.some((r) => /can_see_costs/.test(r))], [400, false]);
+
+  console.log('\n   the CARRY RACE (cb-security, CAT-238 class): the owner reprices between the blind actor\'s read and write');
+  SCENE = { header: PURCHASE, repriceLands: true };
+  const raced = await post(port, AMEND, BLIND, edit(QTY_ONLY));
+  recorded('the owner\'s reprice landed just before the lock: the blind amend carries the OWNER\'S price, never the stale one', raced, REPRICED);
+  t('carry race | the carried figure is the one the FOR UPDATE read answered (the stale figure appears in no write)', JSON.stringify(raced.writes).includes(String(STORED)), false);
+
+  console.log('\n   the CARRY HOLES (cb-security): a line named by its number alone, and a pair of keys naming two lines');
+  SCENE = { header: PURCHASE };
+  const byIndex = await post(port, AMEND, BLIND, edit(QTY_ONLY, { line_id: undefined }));
+  t('blind amends by line_index alone (an older line: the web sends no line_id): 200, the amendment carries the STORED price from the payload overlay, the live row is not written (no id, as today)', [byIndex.status, byIndex.writes.filter((w) => w.what === 'amendment').map((w) => w.line.price), byIndex.writes.some((w) => w.what === 'chit_line'), leaked(byIndex.raw)], [200, [STORED], false, []]);
+  SCENE = { header: PURCHASE, amendments: [{ amendment_id: CHIT, line_index: 0, line_id: null, seq: 1, line: { particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', price: REPRICED }, reason_code: 'rate_agreed', reason: null, actor_name: 'Owner', created_at: AT }] };
+  const overlaid = await post(port, AMEND, BLIND, edit(QTY_ONLY, { line_id: undefined }));
+  t('by line_index alone, after an earlier id-less amendment repriced the line: the LIVE overlay price is carried, not the payload\'s', [overlaid.status, overlaid.writes.filter((w) => w.what === 'amendment').map((w) => w.line.price)], [200, [REPRICED]]);
+  SCENE = { header: PURCHASE };
+  const crossed = await post(port, AMEND, BLIND, edit(QTY_ONLY, { line_id: LINE2, line_index: 0 }));
+  t('line_id names the dal, line_index the rice: 400 with the sentence, NOTHING written (one line\'s price is never carried onto another)', [crossed.status, crossed.body.code, crossed.body.message, crossed.writes], [400, 'CHIT_BAD_REQUEST', 'line_id and line_index name two different lines; send the line\'s own id (or its number alone).', []]);
+  const agreed = await post(port, AMEND, BLIND, edit(QTY_ONLY, { line_id: LINE, line_index: 0 }));
+  t('both keys naming the same line: carried from the live row by line_id', [agreed.status, agreed.writes.filter((w) => w.what === 'chit_line').map((w) => w.price)], [200, [STORED]]);
+  SCENE = { header: PURCHASE, payload: [{ particulars: 'Basmati rice 1kg', quantity: 10, unit: 'kg', price: STORED }] };
+  const legacy = await post(port, AMEND, BLIND, edit(QTY_ONLY, { line_id: LINE, line_index: 0 }));
+  t('a payload whose lines carry no id (older chit) cannot contradict the id given: carried by line_id', [legacy.status, legacy.writes.filter((w) => w.what === 'chit_line').map((w) => w.price)], [200, [STORED]]);
 
   console.log('\n   a BILL received and an order from a party on NO list: gated the same (a document kind; unknown fails closed)');
   SCENE = { header: BILL };
@@ -165,7 +210,7 @@ function unitCases() {
   console.log('\n   a SALE (a customer\'s order): the blind actor\'s rights are as today');
   SCENE = { header: SALE };
   const saleAmend = await post(port, AMEND, BLIND, edit(Object.assign({}, QTY_ONLY, { price: TRIED })));
-  t('blind sets a price on a sale: 200, written as sent, the answer carries the price (as today)', [saleAmend.status, saleAmend.writes.filter((w) => w.what === 'chit_line').map((w) => w.price), saleAmend.body.amendments[0].line.price, saleAmend.body.amendments[0].reason_code], [200, [TRIED], TRIED, 'misread_by_ai']);
+  t('blind sets a price on a sale: 200, written as sent, the answer carries the price (as today), no lock taken', [saleAmend.status, saleAmend.writes.filter((w) => w.what === 'chit_line').map((w) => w.price), saleAmend.body.amendments[0].line.price, saleAmend.body.amendments[0].reason_code, saleAmend.reads.some((r) => FOR_UPDATE.test(r))], [200, [TRIED], TRIED, 'misread_by_ai', false]);
   const saleOmit = await post(port, AMEND, BLIND, edit(QTY_ONLY));
   t('blind omits the price on a sale: the replacement line has none, as today (the library\'s own rule, unchanged on a sale)', [saleOmit.status, saleOmit.writes.filter((w) => w.what === 'chit_line').map((w) => w.price)], [200, [null]]);
   const saleReprice = await post(port, REPRICE, BLIND, { preview: true });
@@ -180,7 +225,7 @@ function unitCases() {
     t(name + ' omits the price on a purchase: the replacement line has none (the library\'s rule as today; he can see what he erases)', [omit.status, omit.writes.filter((w) => w.what === 'chit_line').map((w) => w.price)], [200, [null]]);
     const rp = await post(port, REPRICE, who, { preview: true });
     t(name + ' reprice preview on a purchase: 200 with the catalogue price', [rp.status, rp.body.will_price.map((w) => w.to), rp.body.will_price[0].replaces_stated_price], [200, [61], true]);
-    t(name + ' | ' + (who === OWNER ? 'no can_see_costs read at all and ' : '') + 'no side read (the door costs the owner nothing)', [who === OWNER && r.reads.some((x) => /can_see_costs/.test(x)), r.reads.some((x) => /SELECT ch.purpose, ch.sender_entity_id/.test(x))], [false, false]);
+    t(name + ' | ' + (who === OWNER ? 'no can_see_costs read at all, ' : '') + 'no side read and no lock (the door costs the owner nothing)', [who === OWNER && r.reads.some((x) => /can_see_costs/.test(x)), r.reads.some((x) => /SELECT ch.purpose, ch.sender_entity_id/.test(x)), r.reads.some((x) => FOR_UPDATE.test(x))], [false, false, false]);
   }
   server.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
