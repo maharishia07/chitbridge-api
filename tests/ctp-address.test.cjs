@@ -147,6 +147,66 @@ function loadAddress(dbStub) {
     });
   }
 
+  /* ── ⑤ RAIL-142 (a): once something IS remote, a failure is not "local" ───────────────────────────────────── */
+  {
+    let topologyFails = false, stampFails = false;
+    const stub = {
+      query: async (sql, args) => {
+        if (/FROM installation/i.test(sql)) {
+          if (topologyFails) { const e = new Error('boom'); e.code = '08006'; throw e; }
+          return { rows: [{ installation_key: 'platform-ae', ctp_endpoint: 'https://ae.example/ctp', region: 'AE' }] };
+        }
+        if (/ops\.f_installation_of/.test(sql)) {
+          if (stampFails) { const e = new Error('rls'); e.code = '42501'; throw e; }
+          return { rows: [{ installation_key: args[0] === 'far' ? 'platform-ae' : 'platform-0' }] };
+        }
+        return { rows: [] };
+      },
+    };
+    const A = loadAddress(stub);
+    await A.resolve('far'); /* a good read: platform-ae is remote */
+    const realNow = Date.now;
+    Date.now = () => realNow() + 5 * 60 * 1000; /* past the one-minute memo */
+    topologyFails = true;
+    try {
+      await okAsync('once something has been remote, a failed topology read places nobody (resolved:false)', async () => {
+        const far = await A.resolve('far');
+        const near = await A.resolve('near');
+        assert.strictEqual(far.resolved, false, 'a blip guessed where a remote party lives: ' + JSON.stringify(far));
+        assert.strictEqual(near.resolved, false, 'a blip guessed where a local party lives (a lift back home would send it away)');
+      });
+      A.invalidate();
+      await okAsync('…and invalidate() does not reopen "nothing is remote"', async () => {
+        assert.strictEqual((await A.resolve('far')).resolved, false);
+      });
+    } finally { Date.now = realNow; topologyFails = false; }
+
+    stampFails = true;
+    await okAsync('a failed stamp read, with something remote, is resolved:false — not a guess of "here"', async () => {
+      const a = await A.resolve('far');
+      assert.strictEqual(a.resolved, false, 'expected resolved:false, got ' + JSON.stringify(a));
+      assert.ok(!/42501|rls/.test(a.why), 'the database code is for the log, not the answer');
+    });
+    stampFails = false;
+  }
+
+  /* ── ⑥ RAIL-142 (a): deliver() refuses an unresolved copy BEFORE writing anything ───────────────────────────── */
+  {
+    const src = require('fs').readFileSync(path.join(__dirname, '..', 'lib', 'mint.js'), 'utf8').replace(/\r\n/g, '\n');
+    const d = src.slice(src.indexOf('async function deliver('));
+    const body = d.slice(0, d.indexOf('\n}\n') + 1);
+    ok('deliver() refuses an unresolved copy before the remote branch and before chit_deliver', () => {
+      const refuseAt = body.indexOf('awayCopies(copies, addressed)');
+      assert.ok(refuseAt > 0, 'deliver() does not check for unresolved copies');
+      assert.ok(refuseAt < body.indexOf('transport.send') && refuseAt < body.indexOf("'SELECT chit_deliver"), 'the refusal must come before any send or write');
+    });
+    const fn = src.slice(src.indexOf('function refuseUnresolved('));
+    const helper = fn.slice(0, fn.indexOf('\n}\n') + 1);
+    ok('…with a named code, a 503 and words that say nothing was written', () => {
+      assert.ok(/CTP_UNRESOLVABLE/.test(helper) && /status = 503/.test(helper) && /Nothing was written/.test(helper), helper.slice(0, 200));
+    });
+  }
+
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })();
