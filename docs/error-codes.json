@@ -20,6 +20,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ADMIN_DISABLED",
+   "status": "503",
+   "title": "Platform approval is off",
+   "shopkeeper": "Platform approval is not switched on here.",
+   "hint": "Ask the platform operator to set the admin key.",
+   "owner_area": "channels",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "ADMIN_KEY_WRONG",
+   "status": "403",
+   "title": "Platform key not accepted",
+   "shopkeeper": "That platform key is not accepted.",
+   "hint": "Check the key and try again.",
+   "owner_area": "channels",
+   "since": "2026-10-23"
+  },
+  {
    "code": "ADVICE_EXISTS",
    "status": "409",
    "title": "Advice already recorded",
@@ -551,12 +569,57 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHANNEL_ADDRESS_TAKEN",
+   "status": "409",
+   "title": "Address already in use",
+   "shopkeeper": "That number or address is already in use.",
+   "hint": "Use another one, or ask the platform if it is yours.",
+   "owner_area": "channels",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHANNEL_BAD_REQUEST",
+   "status": "400",
+   "title": "Channel details not valid",
+   "shopkeeper": "Something in the channel details is missing or not one we know.",
+   "hint": "Check the details and try again.",
+   "owner_area": "channels",
+   "since": "2026-10-23"
+  },
+  {
    "code": "CHANNEL_NOT_SENDABLE",
    "status": "400",
    "title": "Channel not sendable",
    "shopkeeper": "Only WhatsApp can be sent from here today.",
    "hint": "Use WhatsApp.",
    "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHANNEL_PLATFORM_ONLY",
+   "status": "403",
+   "title": "Only the platform can approve",
+   "shopkeeper": "Only the platform can mark a template approved.",
+   "hint": "Mark it as waiting; the platform will approve it.",
+   "owner_area": "channels",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHANNEL_REFUSED",
+   "status": "varies",
+   "title": "Channel request refused",
+   "shopkeeper": "The channel request was refused.",
+   "hint": "Check the details and try again.",
+   "owner_area": "channels",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "CHANNEL_STORE_MISSING",
+   "status": "503",
+   "title": "Channels not ready",
+   "shopkeeper": "Channels are not ready on this system yet.",
+   "hint": "Try again after the next update.",
+   "owner_area": "channels",
    "since": "2026-10-23"
   },
   {

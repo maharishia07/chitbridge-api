@@ -645,6 +645,18 @@
   },
   "PATCH /api/supplies/:id": {
    "foreign_id_404": true
+  },
+  "DELETE /api/channels/:id": {
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/auto-raise": {
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/template": {
+   "foreign_id_404": true
   }
  }
 }
