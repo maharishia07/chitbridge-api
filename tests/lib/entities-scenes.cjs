@@ -15,6 +15,11 @@ const SHOP = '11111111-1111-4111-8111-111111111111';
 const STRANGER_ID = '66666666-6666-4666-8666-666666666666';
 const OTHER = '88888888-8888-4888-8888-888888888888';
 const HANDLER = '99999999-9999-4999-8999-999999999999';
+const AT = '2026-10-01T10:00:00.000Z';
+/** an identities row as /me selects it (migrations/000_baseline_2026-10-21.sql + b176 timezone, b178/b237 supplies): every column filled, then the nullable ones null */
+const ME_COLUMNS = ['timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs', 'policy_flags', 'catalogue_visibility', 'plan', 'params_override'];
+const ME_FULL = { identity_id: SHOP, bridge_id: 'AAAA2222', display_name: 'Shop A', email: 'a@example.com', user_id: 'shop-a', self_copy_pref: 'received', dispute_handler_actor_id: HANDLER, country: 'IN', currency_code: 'INR', created_at: AT, last_active_at: AT, gstn: '29ABCDE1234F1Z5', is_verified: true, logo_url: 'https://x/y.png', address: '1 Main Rd', business_status: 'open', purpose: 'Retail', sort_order: 1, city: 'Chennai', lat: '13.082700', lng: '80.270700', service_km: 5, actor_key: 'asha', phone: '9000000000', timezone: 'Asia/Kolkata', supplies: 'goods', storefront_access: 'browse', locale_prefs: { lang: 'ta' }, ui_prefs: { theme: 'dark' }, catalogue_visibility: 'public', plan: 'test', params_override: { a: 1 }, policy_flags: { books: true }, parent_user_id: 'chain' };
+const ME_BARE = { identity_id: SHOP, bridge_id: 'AAAA2222', display_name: 'Shop A', email: null, user_id: null, self_copy_pref: 'received', dispute_handler_actor_id: null, country: null, currency_code: null, created_at: null, last_active_at: null, gstn: null, is_verified: false, logo_url: null, address: null, business_status: 'open', purpose: null, sort_order: null, city: null, lat: null, lng: null, service_km: null, actor_key: null, phone: null, timezone: null, supplies: 'unknown', storefront_access: 'browse', locale_prefs: null, ui_prefs: null, catalogue_visibility: 'private', plan: 'test', params_override: {}, policy_flags: null, parent_user_id: null };
 
 /** the tools a scene is built from: the harness's own stand-ins */
 function extras(tools) {
@@ -60,7 +65,8 @@ function extras(tools) {
     X('search-nothing-asked', 'GET ' + at('/search'), 400, {}),
     X('search-found', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b', created_at: '2026-10-01T00:00:00.000Z' }]) } }),
     X('search-db-fails', 'GET ' + at('/search'), 500, { url: at('/search?q=shop'), setup: failing }),
-    X('header-read', 'GET ' + at('/header'), 200, { patch: { header: { read: async () => ({ business: { name: 'Shop A' }, licences: [], trade_ready: false }) } } }),
+    /* the header as lib/entity-header.js build() makes it from a shop row and one gathered licence the country's rules do not know (the same keys, a licence of each kind) */
+    X('header-read', 'GET ' + at('/header'), 200, { patch: { header: { read: async () => require('../../lib/entity-header').build({ me: { display_name: 'Shop A', country: 'IN', currency_code: 'INR', phone: '9000000000', address: '1 Main Rd', gstn: '29ABCDE1234F1Z5', policy_flags: {} }, profile: {}, vault: null, compliance: [{ standard_key: 'unknown_scheme', doc_key: 'some_doc', valid_until: '2027-01-01', verification: { number_masked: 'XXXX1234' } }], docs: {} }) } } }),
     X('header-fails', 'GET ' + at('/header'), 500, { patch: { header: { read: async () => { throw new Error(SECRET_SQL); } } } }),
     X('sides-read', 'GET ' + at('/sides'), 200, { patch: { sides: { read: async () => ({ lean: [], use: [], impact: null }) } } }),
     X('sides-fails', 'GET ' + at('/sides'), 500, { patch: { sides: { read: async () => { throw new Error(SECRET_SQL); } } } }),
@@ -215,7 +221,37 @@ function extras(tools) {
     X('routing-save-fails', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident' }, setup: failing }),
     N('routing-body-a-list', 'PUT ' + at('/routing'), 400, { body: [] })
   ];
-  return signin.concat(reads, policy, prefs, profile, platform, routing);
+  return signin.concat(reads, policy, prefs, profile, platform, routing, readyBranch(tools));
+}
+
+/**
+ * The READY branch of the shop's reads: the database holds rows with every column their statement selects (each named from the table's DDL), a nullable column null in a second row,
+ * so the shape tools/api-allowlist.cjs derives (docs/contracts/api-output-shapes.json) is the whole of what these routes can answer, and the output filter drops nothing real.
+ */
+function readyBranch(tools) {
+  const { STAFF, answering, firstOf } = tools;
+  const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const at = (tail) => ENT + tail;
+  const probed = answering(/FROM information_schema.columns/, ME_COLUMNS.map((column_name) => ({ column_name })));
+  const meWorld = (one, who) => Object.assign(who ? { who } : {}, { sqlRows: firstOf(probed, answering(/SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref/, [one])) });
+  const withDesk = { code: 'trial', label: 'Trial', is_live: false, note: null, desk_entity_id: OTHER, desk_name: 'Desk', desk_bridge_id: 'DDDD4444', entities: 1 };
+  const plain = { code: 'live', label: 'Live', is_live: true, note: 'n', desk_entity_id: null, desk_name: null, desk_bridge_id: null, entities: 3 };
+  const candidate = { identity_id: OTHER, display_name: 'Shop B', bridge_id: 'BBBB3333', population: 'live' };
+  const day = { day: AT, events: 2, cost: '0.0100' };
+  const meter = { meter: 'sms', events: 2, quantity: '3', cost: '0.0100' };
+  const recent = { meter: 'sms', detail: 'd', quantity: 1, cost_usd: '0.0050', meta: { k: 1 }, created_at: AT };
+  const recentBare = { meter: 'sms', detail: null, quantity: 1, cost_usd: '0.0050', meta: null, created_at: AT };
+  return [
+    /* the governance read fails: `governance` is null in the answer, and `envelope` of /entitlements too */
+    X('me-governance-unresolved', 'GET ' + at('/me'), 200, { setup: meWorld(ME_FULL), patch: { govresolve: { resolveEntityGovernance: async () => { throw new Error('governance unreadable'); } } } }),
+    X('entitlements-governance-unresolved', 'GET ' + at('/entitlements'), 200, { patch: { govresolve: { resolveEntityGovernance: async () => { throw new Error('governance unreadable'); } } } }),
+    X('me-every-column', 'GET ' + at('/me'), 200, { setup: meWorld(ME_FULL) }),
+    X('me-nullable-columns-null', 'GET ' + at('/me'), 200, { setup: meWorld(ME_BARE, STAFF) }),
+    X('search-found-bare-row', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: null, created_at: null }]) } }),
+    X('populations-with-a-desk', 'GET ' + at('/populations'), 200, { setup: { sqlRows: firstOf(answering(/AS population/, [candidate]), answering(/FROM ops.population/, [plain, withDesk])) } }),
+    X('usage-with-rows', 'GET ' + at('/usage'), 200, { setup: { sqlRows: firstOf(answering(/GROUP BY 1 ORDER BY 1 DESC/, [day]), answering(/GROUP BY 1 ORDER BY cost/, [meter]), answering(/LIMIT 100/, [recent, recentBare])) } }),
+    X('routing-with-folders-people-teams', 'GET ' + at('/routing'), 200, { setup: { sqlRows: firstOf(answering(/FROM folder/, [{ folder_id: OTHER, name: 'Inbox' }]), answering(/entity_kind = 'actor'/, [{ identity_id: HANDLER, display_name: 'Asha' }]), answering(/FROM cb_entity|JOIN cb_entity/, [{ identity_id: OTHER, display_name: 'Branch', path: 'a.b' }])) } })
+  ];
 }
 
 module.exports = { extras, ENT, SHOP, STRANGER_ID, OTHER };
