@@ -399,7 +399,7 @@ function allowedFor() {
 }
 
 /** a body's random ids and clock stamps are the same answer on every run: masked before a body is hashed */
-const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/d{4}-dd-ddTdd:dd:dd(?:.d+)?Z/g, 'STAMP');
+const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
 const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
 /** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
 function compare(captureFile, recording) {
