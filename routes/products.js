@@ -622,6 +622,14 @@ async function editorImportRateRows(req, entity_id, applied, ident) {
     return changed ? rows.concat(applied.lines[index]) : rows;
   }, []);
 }
+/** the whole-file refusal of an import by a co-assist, before any write: a rate (CAT-210) first, then a cost column (CAT-235) — null when the file may go ahead.
+ *  The cost half reads the sheet rows as parsed; a new row and an update-by-key row are asked alike (the update merges prior+row, so no stored key is ever dropped) */
+async function importRefusal(req, entity_id, applied, ident) {
+  const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
+  if (rateRows.length) return rateRefusal(rateRows);
+  const blind = isActor(req) && (await cost.costKeyRefusal(req, entity_id, applied.items.map((fileRow) => sheet.fromSheet(fileRow, { source: 'upload' }).item_data)));
+  return blind ? { status: 403, ...words.costBlind(blind) } : null;
+}
 /** CAT-210/235: the stored rows a bulk edit is compared with — ONE read for the lot, shared by the rate check (an editor, CAT-210) and the erase check
  *  (a co-assist, CAT-235); null for the owner, who is never compared and never pays the read */
 async function storedForEdits(req, entity_id, items) {
@@ -1221,11 +1229,8 @@ router.post(
         return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
       }
 
-      const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
-      if (rateRows.length) return problem(req, res, rateRefusal(rateRows));
-      /* CAT-235: the sheet rows as parsed, before any write — a cost column from a cost-blind co-assist refuses the whole import (create and update-by-key alike; the update merges prior+row, so no stored key is ever dropped) */
-      const blind = isActor(req) && (await cost.costKeyRefusal(req, entity_id, applied.items.map((fileRow) => sheet.fromSheet(fileRow, { source: 'upload' }).item_data)));
-      if (blind) return problem(req, res, { status: 403, ...words.costBlind(blind) });
+      const refusal = await importRefusal(req, entity_id, applied, ident);
+      if (refusal) return problem(req, res, refusal);
 
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
