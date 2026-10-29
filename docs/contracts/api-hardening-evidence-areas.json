@@ -111,6 +111,48 @@
   "GET /api/crm/parties/:id/timeline": {
    "foreign_id_404": true
   },
+  "GET /api/governance/ai-skills": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/ai-usage": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/commerce-standards": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/country-setup": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/instruments": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/journey": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/lanes": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/profile": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/profile/path": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/profile/readiness": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/readiness": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/readiness/:bridge_id": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/track-record": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/vault-schema": {
+   "output_allowlist": true
+  },
   "GET /api/repeat/:id": {
    "foreign_id_404": true
   },

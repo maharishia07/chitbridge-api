@@ -1,2531 +1,3525 @@
 {
- "_about": "The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route's success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.",
- "routes": {
-  "GET /api/assist/catalogue-mine": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "count",
-     "catalogues",
-     "total",
-     "page",
-     "limit"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "count": {
-      "type": "number"
-     },
-     "catalogues": {
-      "type": "array",
-      "items": {
-       "type": "object",
-       "required": [
-        "source",
-        "version",
-        "visible",
-        "updated_at",
-        "resolved"
-       ],
-       "properties": {
-        "source": {
-         "type": "string"
-        },
-        "version": {
-         "type": "string"
-        },
-        "visible": {
-         "type": "boolean"
-        },
-        "updated_at": {
-         "type": "string"
-        },
-        "resolved": {
-         "type": "object",
-         "required": [
-          "source",
-          "for_entity",
-          "title",
-          "collection",
-          "from_db",
-          "is_member",
-          "owner_entity_id",
-          "experience",
-          "formatting",
-          "layers",
-          "adoption_model",
-          "schema",
-          "items",
-          "commercials_fields",
-          "counts",
-          "adopted",
-          "detached"
-         ],
-         "properties": {
-          "source": {
-           "type": "string"
+  "_about": "The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route's success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.",
+  "routes": {
+    "GET /api/assist/catalogue-mine": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "count",
+          "catalogues",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
           },
-          "for_entity": {
-           "type": "string"
+          "count": {
+            "type": "number"
           },
-          "title": {
-           "type": "string"
-          },
-          "collection": {
-           "type": "string"
-          },
-          "from_db": {
-           "type": "boolean"
-          },
-          "is_member": {},
-          "owner_entity_id": {},
-          "experience": {
-           "type": "object",
-           "properties": {
-            "ok": {},
-            "count": {},
-            "catalogues": {}
-           },
-           "additionalProperties": false
-          },
-          "formatting": {
-           "type": "object",
-           "properties": {
-            "ok": {},
-            "count": {},
-            "catalogues": {}
-           },
-           "additionalProperties": false
-          },
-          "layers": {
-           "type": "object",
-           "required": [
-            "shared",
-            "entity"
-           ],
-           "properties": {
-            "shared": {
-             "type": "string"
-            },
-            "entity": {
-             "type": "string"
-            },
-            "ok": {},
-            "count": {},
-            "catalogues": {}
-           },
-           "additionalProperties": false
-          },
-          "adoption_model": {
-           "type": "object",
-           "required": [
-            "source_ref",
-            "version",
-            "stores",
-            "overlay"
-           ],
-           "properties": {
-            "source_ref": {
-             "type": "string"
-            },
-            "version": {
-             "type": "string"
-            },
-            "stores": {
-             "type": "string"
-            },
-            "overlay": {
-             "type": "string"
-            },
-            "ok": {},
-            "count": {},
-            "catalogues": {}
-           },
-           "additionalProperties": false
-          },
-          "schema": {
-           "type": "object",
-           "required": [
-            "name",
-            "facets",
-            "fields"
-           ],
-           "properties": {
-            "name": {
-             "type": "string"
-            },
-            "facets": {
-             "type": "object",
-             "required": [
-              "design",
-              "colour",
-              "application"
-             ],
-             "properties": {
-              "design": {
-               "type": "array",
-               "items": {
-                "type": "string"
-               }
-              },
-              "colour": {
-               "type": "array",
-               "items": {
-                "type": "string"
-               }
-              },
-              "application": {
-               "type": "array",
-               "items": {
-                "type": "string"
-               }
-              },
-              "ok": {},
-              "count": {},
-              "catalogues": {}
-             },
-             "additionalProperties": false
-            },
-            "fields": {
-             "type": "array",
-             "items": {
+          "catalogues": {
+            "type": "array",
+            "items": {
               "type": "object",
               "required": [
-               "key",
-               "label",
-               "type"
+                "source",
+                "version",
+                "visible",
+                "updated_at",
+                "resolved"
               ],
               "properties": {
-               "key": {
-                "type": "string"
-               },
-               "label": {
-                "type": "string"
-               },
-               "type": {
-                "type": "string"
-               },
-               "values": {
-                "type": "array",
-                "items": {
-                 "type": "string"
-                }
-               },
-               "ok": {},
-               "count": {},
-               "catalogues": {}
-              },
-              "additionalProperties": false
-             }
-            },
-            "ok": {},
-            "count": {},
-            "catalogues": {}
-           },
-           "additionalProperties": false
-          },
-          "items": {
-           "type": "array",
-           "items": {
-            "type": "object",
-            "required": [
-             "name",
-             "texture_family",
-             "region",
-             "effect",
-             "scale",
-             "sheen",
-             "inspiration",
-             "tools",
-             "coats",
-             "combinations",
-             "commercials"
-            ],
-            "properties": {
-             "name": {
-              "type": "string"
-             },
-             "texture_family": {
-              "type": "string"
-             },
-             "region": {
-              "type": "string"
-             },
-             "effect": {
-              "type": "array",
-              "items": {
-               "type": "string"
-              }
-             },
-             "scale": {
-              "type": "string"
-             },
-             "sheen": {
-              "type": "string"
-             },
-             "inspiration": {
-              "type": "string"
-             },
-             "tools": {
-              "type": "array",
-              "items": {
-               "type": "string"
-              }
-             },
-             "coats": {
-              "type": "string"
-             },
-             "combinations": {
-              "type": "array",
-              "items": {
-               "type": "object",
-               "required": [
-                "name",
-                "colours"
-               ],
-               "properties": {
-                "name": {
-                 "type": "string"
+                "source": {
+                  "type": "string"
                 },
-                "colours": {
-                 "type": "array",
-                 "items": {
+                "version": {
+                  "type": "string"
+                },
+                "visible": {
+                  "type": "boolean"
+                },
+                "updated_at": {
+                  "type": "string"
+                },
+                "resolved": {
                   "type": "object",
                   "required": [
-                   "name",
-                   "hex"
+                    "source",
+                    "for_entity",
+                    "title",
+                    "collection",
+                    "from_db",
+                    "is_member",
+                    "owner_entity_id",
+                    "experience",
+                    "formatting",
+                    "layers",
+                    "adoption_model",
+                    "schema",
+                    "items",
+                    "commercials_fields",
+                    "counts",
+                    "adopted",
+                    "detached"
                   ],
                   "properties": {
-                   "name": {
-                    "type": "string"
-                   },
-                   "hex": {
-                    "type": "string"
-                   },
-                   "ok": {},
-                   "count": {},
-                   "catalogues": {}
+                    "source": {
+                      "type": "string"
+                    },
+                    "for_entity": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "collection": {
+                      "type": "string"
+                    },
+                    "from_db": {
+                      "type": "boolean"
+                    },
+                    "is_member": {},
+                    "owner_entity_id": {},
+                    "experience": {
+                      "type": "object",
+                      "properties": {
+                        "ok": {},
+                        "count": {},
+                        "catalogues": {}
+                      },
+                      "additionalProperties": false
+                    },
+                    "formatting": {
+                      "type": "object",
+                      "properties": {
+                        "ok": {},
+                        "count": {},
+                        "catalogues": {}
+                      },
+                      "additionalProperties": false
+                    },
+                    "layers": {
+                      "type": "object",
+                      "required": [
+                        "shared",
+                        "entity"
+                      ],
+                      "properties": {
+                        "shared": {
+                          "type": "string"
+                        },
+                        "entity": {
+                          "type": "string"
+                        },
+                        "ok": {},
+                        "count": {},
+                        "catalogues": {}
+                      },
+                      "additionalProperties": false
+                    },
+                    "adoption_model": {
+                      "type": "object",
+                      "required": [
+                        "source_ref",
+                        "version",
+                        "stores",
+                        "overlay"
+                      ],
+                      "properties": {
+                        "source_ref": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string"
+                        },
+                        "stores": {
+                          "type": "string"
+                        },
+                        "overlay": {
+                          "type": "string"
+                        },
+                        "ok": {},
+                        "count": {},
+                        "catalogues": {}
+                      },
+                      "additionalProperties": false
+                    },
+                    "schema": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "facets",
+                        "fields"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "facets": {
+                          "type": "object",
+                          "required": [
+                            "design",
+                            "colour",
+                            "application"
+                          ],
+                          "properties": {
+                            "design": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "colour": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "application": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "ok": {},
+                            "count": {},
+                            "catalogues": {}
+                          },
+                          "additionalProperties": false
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "key",
+                              "label",
+                              "type"
+                            ],
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "values": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "ok": {},
+                              "count": {},
+                              "catalogues": {}
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "ok": {},
+                        "count": {},
+                        "catalogues": {}
+                      },
+                      "additionalProperties": false
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "texture_family",
+                          "region",
+                          "effect",
+                          "scale",
+                          "sheen",
+                          "inspiration",
+                          "tools",
+                          "coats",
+                          "combinations",
+                          "commercials"
+                        ],
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "texture_family": {
+                            "type": "string"
+                          },
+                          "region": {
+                            "type": "string"
+                          },
+                          "effect": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "scale": {
+                            "type": "string"
+                          },
+                          "sheen": {
+                            "type": "string"
+                          },
+                          "inspiration": {
+                            "type": "string"
+                          },
+                          "tools": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "coats": {
+                            "type": "string"
+                          },
+                          "combinations": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "name",
+                                "colours"
+                              ],
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "colours": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "required": [
+                                      "name",
+                                      "hex"
+                                    ],
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "hex": {
+                                        "type": "string"
+                                      },
+                                      "ok": {},
+                                      "count": {},
+                                      "catalogues": {}
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "ok": {},
+                                "count": {},
+                                "catalogues": {}
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "commercials": {},
+                          "ok": {},
+                          "count": {},
+                          "catalogues": {}
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "commercials_fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "key",
+                          "label",
+                          "type"
+                        ],
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "ok": {},
+                          "count": {},
+                          "catalogues": {}
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "counts": {
+                      "type": "object",
+                      "required": [
+                        "finishes",
+                        "fields",
+                        "combinations",
+                        "colours"
+                      ],
+                      "properties": {
+                        "finishes": {
+                          "type": "number"
+                        },
+                        "fields": {
+                          "type": "number"
+                        },
+                        "combinations": {
+                          "type": "number"
+                        },
+                        "colours": {
+                          "type": "number"
+                        },
+                        "ok": {},
+                        "count": {},
+                        "catalogues": {}
+                      },
+                      "additionalProperties": false
+                    },
+                    "adopted": {
+                      "type": "number"
+                    },
+                    "detached": {},
+                    "ok": {},
+                    "count": {},
+                    "catalogues": {}
                   },
                   "additionalProperties": false
-                 }
                 },
                 "ok": {},
                 "count": {},
                 "catalogues": {}
-               },
-               "additionalProperties": false
-              }
-             },
-             "commercials": {},
-             "ok": {},
-             "count": {},
-             "catalogues": {}
-            },
-            "additionalProperties": false
-           }
+              },
+              "additionalProperties": false
+            }
           },
-          "commercials_fields": {
-           "type": "array",
-           "items": {
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/assist/catalogue-mine?limit=1"
+      }
+    },
+    "GET /api/assist/catalogue-source/:key": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/catalogue-source/beta-royale-play@v1"
+      }
+    },
+    "GET /api/assist/catalogue-sources": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "data"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "data[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/catalogue-sources"
+      }
+    },
+    "GET /api/assist/container/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/container/a%2Fb"
+      }
+    },
+    "GET /api/assist/erp-handoffs": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "count",
+          "handoffs",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "count": {
+            "type": "number"
+          },
+          "handoffs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "handoff_id",
+                "chit_id",
+                "summary",
+                "payload_hash",
+                "status",
+                "created_at"
+              ],
+              "properties": {
+                "handoff_id": {
+                  "type": "string"
+                },
+                "chit_id": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {},
+                    "count": {},
+                    "rows": {}
+                  },
+                  "additionalProperties": false
+                },
+                "payload_hash": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "ok": {},
+                "count": {},
+                "rows": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "rows": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/assist/erp-handoffs"
+      }
+    },
+    "GET /api/assist/gaps": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "data",
+          "deprecated"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {},
+          "deprecated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/assist/gaps"
+      }
+    },
+    "GET /api/assist/penetration": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "total_orders",
+          "localities",
+          "by_locality"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "total_orders": {
+            "type": "number"
+          },
+          "localities": {
+            "type": "number"
+          },
+          "by_locality": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "by_locality[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/penetration"
+      }
+    },
+    "GET /api/assist/questions": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "data",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "q",
+                "a",
+                "topics",
+                "context",
+                "fit",
+                "media"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "q": {
+                  "type": "string"
+                },
+                "a": {
+                  "type": "string"
+                },
+                "topics": {},
+                "context": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "fit": {},
+                "media": {},
+                "ok": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/assist/questions"
+      }
+    },
+    "GET /api/assist/regions": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "regions"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "regions[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/regions"
+      }
+    },
+    "GET /api/assist/resolve": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/resolve?container=a%2Fb&region=AU"
+      }
+    },
+    "GET /api/assist/standards": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "data"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "data[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/standards"
+      }
+    },
+    "GET /api/assist/whoami": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "is_helpdesk",
+          "actions"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "is_helpdesk": {
+            "type": "boolean"
+          },
+          "actions": {
             "type": "object",
             "required": [
-             "key",
-             "label",
-             "type"
+              "publish"
             ],
             "properties": {
-             "key": {
-              "type": "string"
-             },
-             "label": {
-              "type": "string"
-             },
-             "type": {
-              "type": "string"
-             },
-             "values": {
-              "type": "array",
-              "items": {
-               "type": "string"
+              "publish": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "say": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
               }
-             },
-             "ok": {},
-             "count": {},
-             "catalogues": {}
             },
             "additionalProperties": false
-           }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/assist/whoami"
+      }
+    },
+    "GET /api/books/accounts": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "accounts"
+        ],
+        "properties": {
+          "accounts": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/books/accounts"
+      }
+    },
+    "GET /api/books/assets": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "asOf",
+          "assets",
+          "net_block",
+          "total_wdv_minor"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
           },
-          "counts": {
-           "type": "object",
-           "required": [
-            "finishes",
-            "fields",
-            "combinations",
-            "colours"
-           ],
-           "properties": {
-            "finishes": {
-             "type": "number"
+          "asOf": {
+            "type": "string"
+          },
+          "assets": {},
+          "net_block": {},
+          "total_wdv_minor": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/assets"
+      }
+    },
+    "GET /api/books/bank/rail": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "from",
+          "to",
+          "me",
+          "rail_chits",
+          "parties",
+          "may"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "me": {
+            "type": "string"
+          },
+          "rail_chits": {},
+          "parties": {},
+          "may": {
+            "type": "object",
+            "required": [
+              "ask"
+            ],
+            "properties": {
+              "ask": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "say": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
             },
-            "fields": {
-             "type": "number"
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/books/bank/rail"
+      }
+    },
+    "GET /api/books/bs": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "asOf",
+          "assets",
+          "liabilities",
+          "equity",
+          "total_assets_minor",
+          "total_liab_equity_minor",
+          "profit_to_date_minor",
+          "balanced",
+          "by_line",
+          "schedule_iii"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "assets": {},
+          "liabilities": {},
+          "equity": {},
+          "total_assets_minor": {
+            "type": "number"
+          },
+          "total_liab_equity_minor": {
+            "type": "number"
+          },
+          "profit_to_date_minor": {
+            "type": "number"
+          },
+          "balanced": {
+            "type": "boolean"
+          },
+          "by_line": {
+            "type": "object",
+            "required": [
+              "assets",
+              "liabilities"
+            ],
+            "properties": {
+              "assets": {},
+              "liabilities": {},
+              "currency": {},
+              "asOf": {}
             },
-            "combinations": {
-             "type": "number"
+            "additionalProperties": false
+          },
+          "schedule_iii": {
+            "type": "object",
+            "required": [
+              "equity_and_liabilities",
+              "assets",
+              "balanced",
+              "difference_minor"
+            ],
+            "properties": {
+              "equity_and_liabilities": {
+                "type": "object",
+                "required": [
+                  "heads",
+                  "total_minor"
+                ],
+                "properties": {
+                  "heads": {},
+                  "total_minor": {
+                    "type": "number"
+                  },
+                  "currency": {},
+                  "asOf": {}
+                },
+                "additionalProperties": false
+              },
+              "assets": {
+                "type": "object",
+                "required": [
+                  "heads",
+                  "total_minor"
+                ],
+                "properties": {
+                  "heads": {},
+                  "total_minor": {
+                    "type": "number"
+                  },
+                  "currency": {},
+                  "asOf": {}
+                },
+                "additionalProperties": false
+              },
+              "balanced": {
+                "type": "boolean"
+              },
+              "difference_minor": {
+                "type": "number"
+              },
+              "currency": {},
+              "asOf": {}
             },
-            "colours": {
-             "type": "number"
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/books/bs"
+      }
+    },
+    "GET /api/books/cashflow": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "asOf",
+          "days",
+          "from",
+          "to",
+          "currency",
+          "opening_minor",
+          "drawer_minor",
+          "bank_minor",
+          "opening",
+          "in_minor",
+          "out_minor",
+          "closing_minor",
+          "lowest",
+          "shortfall",
+          "words",
+          "uncounted",
+          "gst",
+          "series"
+        ],
+        "properties": {
+          "asOf": {
+            "type": "string"
+          },
+          "days": {
+            "type": "number"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "opening_minor": {
+            "type": "number"
+          },
+          "drawer_minor": {
+            "type": "number"
+          },
+          "bank_minor": {
+            "type": "number"
+          },
+          "opening": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "in_minor": {
+            "type": "number"
+          },
+          "out_minor": {
+            "type": "number"
+          },
+          "closing_minor": {
+            "type": "number"
+          },
+          "lowest": {
+            "type": "object"
+          },
+          "shortfall": {},
+          "words": {
+            "type": "string"
+          },
+          "uncounted": {
+            "type": "object"
+          },
+          "gst": {
+            "type": "object"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "opening[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "lowest",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "uncounted",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "gst",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "series[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/cashflow"
+      }
+    },
+    "GET /api/books/cheques": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "asOf",
+          "cheques",
+          "pdc_reminders",
+          "remind"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "cheques": {},
+          "pdc_reminders": {},
+          "remind": {
+            "type": "object",
+            "required": [
+              "on",
+              "lead_days",
+              "from",
+              "may_set",
+              "why_not"
+            ],
+            "properties": {
+              "on": {
+                "type": "boolean"
+              },
+              "lead_days": {
+                "type": "number"
+              },
+              "from": {},
+              "may_set": {
+                "type": "boolean"
+              },
+              "why_not": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
             },
-            "ok": {},
-            "count": {},
-            "catalogues": {}
-           },
-           "additionalProperties": false
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/books/cheques"
+      }
+    },
+    "GET /api/books/compare": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "ready",
+          "why",
+          "may",
+          "parts",
+          "sources",
+          "snapshots"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "load"
+            ],
+            "properties": {
+              "load": {
+                "type": "object",
+                "required": [
+                  "may",
+                  "why"
+                ],
+                "properties": {
+                  "may": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "part",
+                "label"
+              ],
+              "properties": {
+                "part": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source",
+                "label"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "snapshots": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/compare"
+      }
+    },
+    "GET /api/books/daybook": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "from",
+          "to",
+          "entries",
+          "count"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "entries": {},
+          "count": {
+            "type": "number"
+          },
+          "total": {},
+          "page": {},
+          "limit": {},
+          "next": {},
+          "totals": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/books/daybook"
+      }
+    },
+    "GET /api/books/dues": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "asOf",
+          "parties",
+          "total_minor"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "parties": {},
+          "total_minor": {
+            "type": "number"
+          },
+          "payables": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/books/dues"
+      }
+    },
+    "GET /api/books/events": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "events",
+          "picks",
+          "pending",
+          "golden"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "picks": {
+            "type": "object"
+          },
+          "pending": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "golden": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "events[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "picks",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "pending[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "golden",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/events"
+      }
+    },
+    "GET /api/books/fx-rates": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "ready",
+          "why",
+          "may",
+          "sources",
+          "rule",
+          "rates"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "add"
+            ],
+            "properties": {
+              "add": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": false
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rule": {
+            "type": "object",
+            "required": [
+              "standard",
+              "tax_rate_rule",
+              "official_name"
+            ],
+            "properties": {
+              "standard": {
+                "type": "string"
+              },
+              "tax_rate_rule": {
+                "type": "string"
+              },
+              "official_name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "rates": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "may.add",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/fx-rates"
+      }
+    },
+    "GET /api/books/fx-revalue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ready",
+          "why",
+          "may",
+          "date",
+          "reverses_on",
+          "functional",
+          "rows",
+          "missing",
+          "gain_minor",
+          "posted"
+        ],
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "post"
+            ],
+            "properties": {
+              "post": {
+                "type": "object",
+                "required": [
+                  "may",
+                  "why"
+                ],
+                "properties": {
+                  "may": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "date": {
+            "type": "string"
+          },
+          "reverses_on": {
+            "type": "string"
+          },
+          "functional": {
+            "type": "string"
+          },
+          "rows": {},
+          "missing": {},
+          "gain_minor": {
+            "type": "number"
+          },
+          "posted": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/fx-revalue?fiscal_year=2026-27&period=6"
+      }
+    },
+    "GET /api/books/health": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "currency",
+          "country",
+          "walkin_grain",
+          "last_check",
+          "engines",
+          "year",
+          "waiting",
+          "total",
+          "page",
+          "limit",
+          "todo"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "country": {
+            "type": "object"
+          },
+          "walkin_grain": {
+            "type": "string"
+          },
+          "last_check": {},
+          "engines": {
+            "type": "object"
+          },
+          "year": {
+            "type": "object",
+            "required": [
+              "fiscal_year",
+              "from",
+              "start_month"
+            ],
+            "properties": {
+              "fiscal_year": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "start_month": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "waiting": {},
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "todo": {
+            "type": "object",
+            "required": [
+              "accept",
+              "add_supplier",
+              "record"
+            ],
+            "properties": {
+              "accept": {
+                "type": "number"
+              },
+              "add_supplier": {
+                "type": "number"
+              },
+              "record": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "country",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "engines",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/health"
+      }
+    },
+    "GET /api/books/move-in/imports": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ready",
+          "why",
+          "imports"
+        ],
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imports": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/move-in/imports"
+      }
+    },
+    "GET /api/books/packs": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "packs"
+        ],
+        "properties": {
+          "packs": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/packs"
+      }
+    },
+    "GET /api/books/periods": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "periods"
+        ],
+        "properties": {
+          "periods": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/books/periods"
+      }
+    },
+    "GET /api/books/pl": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "from",
+          "to",
+          "income",
+          "expense",
+          "total_income_minor",
+          "total_expense_minor",
+          "profit_minor",
+          "by_line"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "income": {},
+          "expense": {},
+          "total_income_minor": {
+            "type": "number"
+          },
+          "total_expense_minor": {
+            "type": "number"
+          },
+          "profit_minor": {
+            "type": "number"
+          },
+          "by_line": {
+            "type": "object",
+            "required": [
+              "income",
+              "expense"
+            ],
+            "properties": {
+              "income": {},
+              "expense": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/books/pl"
+      }
+    },
+    "GET /api/books/recurring": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "recurring"
+        ],
+        "properties": {
+          "recurring": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/recurring"
+      }
+    },
+    "GET /api/books/returns": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "form",
+          "pack"
+        ],
+        "properties": {
+          "form": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pack": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          },
+          "rail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "short": {
+            "type": "string"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "portal": {
+            "type": "string"
+          },
+          "prepared": {
+            "type": "string"
+          },
+          "asked": {
+            "type": "object"
+          },
+          "periods": {},
+          "period": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "boxes": {},
+          "payable_minor": {
+            "type": "number"
+          },
+          "refund_minor": {
+            "type": "number"
+          },
+          "net_minor": {
+            "type": "number"
+          },
+          "notes": {},
+          "cite": {},
+          "needs": {
+            "type": "string"
+          },
+          "emirates": {},
+          "staggers": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "asked",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "period",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "staggers",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/returns"
+      }
+    },
+    "GET /api/books/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "migrated",
+          "enabled",
+          "engines",
+          "country"
+        ],
+        "properties": {
+          "migrated": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "engines": {
+            "type": "object"
+          },
+          "country": {
+            "type": "object"
+          },
+          "walkin_grain": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "engines",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "country",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/status"
+      }
+    },
+    "GET /api/books/terms": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "terms_migrated",
+          "may_set",
+          "why_not",
+          "default",
+          "party",
+          "events"
+        ],
+        "properties": {
+          "terms_migrated": {
+            "type": "boolean"
+          },
+          "may_set": {
+            "type": "boolean"
+          },
+          "why_not": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "default": {
+            "type": "object"
+          },
+          "party": {},
+          "events": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "default",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/terms"
+      }
+    },
+    "GET /api/books/trial-balance": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "asOf",
+          "rows",
+          "total_dr_minor",
+          "total_cr_minor",
+          "balanced"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string"
+          },
+          "rows": {},
+          "total_dr_minor": {
+            "type": "number"
+          },
+          "total_cr_minor": {
+            "type": "number"
+          },
+          "balanced": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/books/trial-balance"
+      }
+    },
+    "GET /api/governance/ai-skills": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "skills"
+        ],
+        "properties": {
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "skills[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/ai-skills"
+      }
+    },
+    "GET /api/governance/ai-usage": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "calls",
+          "tokens",
+          "spent_usd",
+          "credits_usd",
+          "balance_usd",
+          "free_usd",
+          "budget_usd",
+          "remaining_usd"
+        ],
+        "properties": {
+          "calls": {
+            "type": "number"
+          },
+          "tokens": {},
+          "spent_usd": {},
+          "credits_usd": {
+            "type": "number"
+          },
+          "balance_usd": {
+            "type": "number"
+          },
+          "free_usd": {
+            "type": "number"
+          },
+          "budget_usd": {
+            "type": "number"
+          },
+          "remaining_usd": {
+            "type": "number"
+          },
+          "rate_per_hour": {
+            "type": "number"
+          },
+          "rate_per_day": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/governance/ai-usage"
+      }
+    },
+    "GET /api/governance/commerce-standards": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "framework",
+          "governed",
+          "sources"
+        ],
+        "properties": {
+          "framework": {
+            "type": "string"
+          },
+          "governed": {
+            "type": "boolean"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "sources[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/commerce-standards"
+      }
+    },
+    "GET /api/governance/country-setup": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "migrated",
+          "done",
+          "set_at",
+          "required",
+          "country",
+          "currency",
+          "fy_start_month",
+          "tax",
+          "timezone",
+          "zones",
+          "constituted",
+          "constituted_by",
+          "countries",
+          "source",
+          "pack"
+        ],
+        "properties": {
+          "migrated": {
+            "type": "boolean"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "set_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "country": {
+            "type": "object"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fy_start_month": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "tax": {
+            "type": "object"
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "constituted": {
+            "type": "boolean"
+          },
+          "constituted_by": {
+            "type": "object"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "source": {
+            "type": "object"
+          },
+          "pack": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "country",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "tax",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "constituted_by",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "countries[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "source",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "pack",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/country-setup"
+      }
+    },
+    "GET /api/governance/instruments": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "framework",
+          "cross_border",
+          "incoterm",
+          "cargo_insured_by",
+          "frm_classes",
+          "cluster"
+        ],
+        "properties": {
+          "framework": {
+            "type": "string"
+          },
+          "cross_border": {
+            "type": "boolean"
+          },
+          "incoterm": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cargo_insured_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "frm_classes": {
+            "type": "object"
+          },
+          "cluster": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "frm_classes",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "cluster[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/instruments"
+      }
+    },
+    "GET /api/governance/journey": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "cross_border",
+          "incoterm",
+          "chain"
+        ],
+        "properties": {
+          "cross_border": {
+            "type": "boolean"
+          },
+          "incoterm": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "chain": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "chain[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/journey"
+      }
+    },
+    "GET /api/governance/lanes": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "vertical",
+          "origin",
+          "asked",
+          "code",
+          "why",
+          "lanes",
+          "may"
+        ],
+        "properties": {
+          "vertical": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "origin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "asked": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lanes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "gather",
+              "verify"
+            ],
+            "properties": {
+              "gather": {
+                "type": "object"
+              },
+              "verify": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "lanes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "may.gather",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "may.verify",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/lanes"
+      }
+    },
+    "GET /api/governance/profile": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "trade_mode",
+          "markets",
+          "sectors",
+          "adopted",
+          "vault",
+          "vault_version",
+          "invoice_party",
+          "vault_encrypted"
+        ],
+        "properties": {
+          "trade_mode": {
+            "type": "string"
+          },
+          "markets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sectors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "adopted": {
-           "type": "number"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
-          "detached": {},
-          "ok": {},
-          "count": {},
-          "catalogues": {}
-         },
-         "additionalProperties": false
-        },
-        "ok": {},
-        "count": {},
-        "catalogues": {}
-       },
-       "additionalProperties": false
-      }
-     },
-     "total": {
-      "type": "number"
-     },
-     "page": {
-      "type": "number"
-     },
-     "limit": {
-      "type": "number"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 6,
-   "open": [],
-   "example": {
-    "url": "/api/assist/catalogue-mine?limit=1"
-   }
-  },
-  "GET /api/assist/catalogue-source/:key": {
-   "status": "200",
-   "schema": {
-    "type": "object"
-   },
-   "observed": 1,
-   "open": [
-    {
-     "path": "(answer)",
-     "reason": "a spread (...x) adds keys the text does not name"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/catalogue-source/beta-royale-play@v1"
-   }
-  },
-  "GET /api/assist/catalogue-sources": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "data"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "data": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 6,
-   "open": [
-    {
-     "path": "data[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/catalogue-sources"
-   }
-  },
-  "GET /api/assist/container/:id": {
-   "status": "200",
-   "schema": {
-    "type": "object"
-   },
-   "observed": 1,
-   "open": [
-    {
-     "path": "(answer)",
-     "reason": "a spread (...x) adds keys the text does not name"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/container/a%2Fb"
-   }
-  },
-  "GET /api/assist/erp-handoffs": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "count",
-     "handoffs",
-     "total",
-     "page",
-     "limit"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "count": {
-      "type": "number"
-     },
-     "handoffs": {
-      "type": "array",
-      "items": {
-       "type": "object",
-       "required": [
-        "handoff_id",
-        "chit_id",
-        "summary",
-        "payload_hash",
-        "status",
-        "created_at"
-       ],
-       "properties": {
-        "handoff_id": {
-         "type": "string"
-        },
-        "chit_id": {
-         "type": "string"
-        },
-        "summary": {
-         "type": "object",
-         "properties": {
-          "ok": {},
-          "count": {},
-          "rows": {}
-         },
-         "additionalProperties": false
-        },
-        "payload_hash": {
-         "type": "string"
-        },
-        "status": {
-         "type": "string"
-        },
-        "created_at": {
-         "type": "string"
-        },
-        "ok": {},
-        "count": {},
-        "rows": {}
-       },
-       "additionalProperties": false
-      }
-     },
-     "total": {
-      "type": "number"
-     },
-     "page": {
-      "type": "number"
-     },
-     "limit": {
-      "type": "number"
-     },
-     "rows": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [],
-   "example": {
-    "url": "/api/assist/erp-handoffs"
-   }
-  },
-  "GET /api/assist/gaps": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "data",
-     "deprecated"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "data": {},
-     "deprecated": {
-      "type": "boolean"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 5,
-   "open": [],
-   "example": {
-    "url": "/api/assist/gaps"
-   }
-  },
-  "GET /api/assist/penetration": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "total_orders",
-     "localities",
-     "by_locality"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "total_orders": {
-      "type": "number"
-     },
-     "localities": {
-      "type": "number"
-     },
-     "by_locality": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 5,
-   "open": [
-    {
-     "path": "by_locality[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/penetration"
-   }
-  },
-  "GET /api/assist/questions": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "data",
-     "total",
-     "page",
-     "limit"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "data": {
-      "type": "array",
-      "items": {
-       "type": "object",
-       "required": [
-        "id",
-        "q",
-        "a",
-        "topics",
-        "context",
-        "fit",
-        "media"
-       ],
-       "properties": {
-        "id": {
-         "type": "string"
-        },
-        "q": {
-         "type": "string"
-        },
-        "a": {
-         "type": "string"
-        },
-        "topics": {},
-        "context": {
-         "type": "array",
-         "items": {
-          "type": "string"
-         }
-        },
-        "fit": {},
-        "media": {},
-        "ok": {},
-        "PAGE_DEFAULT": {}
-       },
-       "additionalProperties": false
-      }
-     },
-     "total": {
-      "type": "number"
-     },
-     "page": {
-      "type": "number"
-     },
-     "limit": {
-      "type": "number"
-     },
-     "PAGE_DEFAULT": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 6,
-   "open": [],
-   "example": {
-    "url": "/api/assist/questions"
-   }
-  },
-  "GET /api/assist/regions": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "regions"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "regions": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 7,
-   "open": [
-    {
-     "path": "regions[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/regions"
-   }
-  },
-  "GET /api/assist/resolve": {
-   "status": "200",
-   "schema": {
-    "type": "object"
-   },
-   "observed": 1,
-   "open": [
-    {
-     "path": "(answer)",
-     "reason": "a spread (...x) adds keys the text does not name"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/resolve?container=a%2Fb&region=AU"
-   }
-  },
-  "GET /api/assist/standards": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "data"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "data": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 6,
-   "open": [
-    {
-     "path": "data[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/standards"
-   }
-  },
-  "GET /api/assist/whoami": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "is_helpdesk",
-     "actions"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "is_helpdesk": {
-      "type": "boolean"
-     },
-     "actions": {
-      "type": "object",
-      "required": [
-       "publish"
-      ],
-      "properties": {
-       "publish": {
-        "type": "object",
-        "required": [
-         "ok"
-        ],
-        "properties": {
-         "ok": {
-          "type": "boolean"
-         },
-         "why": {
-          "type": "string"
-         },
-         "say": {
-          "type": "string"
-         }
+          "vault": {
+            "type": "object"
+          },
+          "vault_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "invoice_party": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "vault_encrypted": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
-       }
       },
-      "additionalProperties": false
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 7,
-   "open": [],
-   "example": {
-    "url": "/api/assist/whoami"
-   }
-  },
-  "GET /api/books/accounts": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "accounts"
-    ],
-    "properties": {
-     "accounts": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [],
-   "example": {
-    "url": "/api/books/accounts"
-   }
-  },
-  "GET /api/books/assets": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "asOf",
-     "assets",
-     "net_block",
-     "total_wdv_minor"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "asOf": {
-      "type": "string"
-     },
-     "assets": {},
-     "net_block": {},
-     "total_wdv_minor": {
-      "type": "number"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/books/assets"
-   }
-  },
-  "GET /api/books/bank/rail": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "from",
-     "to",
-     "me",
-     "rail_chits",
-     "parties",
-     "may"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "from": {
-      "type": "string"
-     },
-     "to": {
-      "type": "string"
-     },
-     "me": {
-      "type": "string"
-     },
-     "rail_chits": {},
-     "parties": {},
-     "may": {
-      "type": "object",
-      "required": [
-       "ask"
-      ],
-      "properties": {
-       "ask": {
-        "type": "object",
-        "required": [
-         "ok"
-        ],
-        "properties": {
-         "ok": {
-          "type": "boolean"
-         },
-         "why": {
-          "type": "string"
-         },
-         "say": {
-          "type": "string"
-         }
+      "observed": 6,
+      "open": [
+        {
+          "path": "vault",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
         },
-        "additionalProperties": false
-       }
-      },
-      "additionalProperties": false
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 3,
-   "open": [],
-   "example": {
-    "url": "/api/books/bank/rail"
-   }
-  },
-  "GET /api/books/bs": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "asOf",
-     "assets",
-     "liabilities",
-     "equity",
-     "total_assets_minor",
-     "total_liab_equity_minor",
-     "profit_to_date_minor",
-     "balanced",
-     "by_line",
-     "schedule_iii"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "asOf": {
-      "type": "string"
-     },
-     "assets": {},
-     "liabilities": {},
-     "equity": {},
-     "total_assets_minor": {
-      "type": "number"
-     },
-     "total_liab_equity_minor": {
-      "type": "number"
-     },
-     "profit_to_date_minor": {
-      "type": "number"
-     },
-     "balanced": {
-      "type": "boolean"
-     },
-     "by_line": {
-      "type": "object",
-      "required": [
-       "assets",
-       "liabilities"
-      ],
-      "properties": {
-       "assets": {},
-       "liabilities": {},
-       "currency": {},
-       "asOf": {}
-      },
-      "additionalProperties": false
-     },
-     "schedule_iii": {
-      "type": "object",
-      "required": [
-       "equity_and_liabilities",
-       "assets",
-       "balanced",
-       "difference_minor"
-      ],
-      "properties": {
-       "equity_and_liabilities": {
-        "type": "object",
-        "required": [
-         "heads",
-         "total_minor"
-        ],
-        "properties": {
-         "heads": {},
-         "total_minor": {
-          "type": "number"
-         },
-         "currency": {},
-         "asOf": {}
-        },
-        "additionalProperties": false
-       },
-       "assets": {
-        "type": "object",
-        "required": [
-         "heads",
-         "total_minor"
-        ],
-        "properties": {
-         "heads": {},
-         "total_minor": {
-          "type": "number"
-         },
-         "currency": {},
-         "asOf": {}
-        },
-        "additionalProperties": false
-       },
-       "balanced": {
-        "type": "boolean"
-       },
-       "difference_minor": {
-        "type": "number"
-       },
-       "currency": {},
-       "asOf": {}
-      },
-      "additionalProperties": false
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [],
-   "example": {
-    "url": "/api/books/bs"
-   }
-  },
-  "GET /api/books/cashflow": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "asOf",
-     "days",
-     "from",
-     "to",
-     "currency",
-     "opening_minor",
-     "drawer_minor",
-     "bank_minor",
-     "opening",
-     "in_minor",
-     "out_minor",
-     "closing_minor",
-     "lowest",
-     "shortfall",
-     "words",
-     "uncounted",
-     "gst",
-     "series"
-    ],
-    "properties": {
-     "asOf": {
-      "type": "string"
-     },
-     "days": {
-      "type": "number"
-     },
-     "from": {
-      "type": "string"
-     },
-     "to": {
-      "type": "string"
-     },
-     "currency": {
-      "type": "string"
-     },
-     "opening_minor": {
-      "type": "number"
-     },
-     "drawer_minor": {
-      "type": "number"
-     },
-     "bank_minor": {
-      "type": "number"
-     },
-     "opening": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     },
-     "in_minor": {
-      "type": "number"
-     },
-     "out_minor": {
-      "type": "number"
-     },
-     "closing_minor": {
-      "type": "number"
-     },
-     "lowest": {
-      "type": "object"
-     },
-     "shortfall": {},
-     "words": {
-      "type": "string"
-     },
-     "uncounted": {
-      "type": "object"
-     },
-     "gst": {
-      "type": "object"
-     },
-     "series": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 2,
-   "open": [
-    {
-     "path": "opening[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "lowest",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "uncounted",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "gst",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "series[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/books/cashflow"
-   }
-  },
-  "GET /api/books/cheques": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "asOf",
-     "cheques",
-     "pdc_reminders",
-     "remind"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "asOf": {
-      "type": "string"
-     },
-     "cheques": {},
-     "pdc_reminders": {},
-     "remind": {
-      "type": "object",
-      "required": [
-       "on",
-       "lead_days",
-       "from",
-       "may_set",
-       "why_not"
-      ],
-      "properties": {
-       "on": {
-        "type": "boolean"
-       },
-       "lead_days": {
-        "type": "number"
-       },
-       "from": {},
-       "may_set": {
-        "type": "boolean"
-       },
-       "why_not": {
-        "type": [
-         "string",
-         "null"
-        ]
-       }
-      },
-      "additionalProperties": false
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 3,
-   "open": [],
-   "example": {
-    "url": "/api/books/cheques"
-   }
-  },
-  "GET /api/books/compare": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "ready",
-     "why",
-     "may",
-     "parts",
-     "sources",
-     "snapshots"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "ready": {
-      "type": "boolean"
-     },
-     "why": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "may": {
-      "type": "object",
-      "required": [
-       "load"
-      ],
-      "properties": {
-       "load": {
-        "type": "object",
-        "required": [
-         "may",
-         "why"
-        ],
-        "properties": {
-         "may": {
-          "type": "boolean"
-         },
-         "why": {
-          "type": [
-           "string",
-           "null"
-          ]
-         }
-        },
-        "additionalProperties": false
-       }
-      },
-      "additionalProperties": false
-     },
-     "parts": {
-      "type": "array",
-      "items": {
-       "type": "object",
-       "required": [
-        "part",
-        "label"
-       ],
-       "properties": {
-        "part": {
-         "type": "string"
-        },
-        "label": {
-         "type": "string"
+        {
+          "path": "invoice_party",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
         }
-       },
-       "additionalProperties": false
-      }
-     },
-     "sources": {
-      "type": "array",
-      "items": {
-       "type": "object",
-       "required": [
-        "source",
-        "label"
-       ],
-       "properties": {
-        "source": {
-         "type": "string"
-        },
-        "label": {
-         "type": "string"
-        }
-       },
-       "additionalProperties": false
-      }
-     },
-     "snapshots": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 2,
-   "open": [],
-   "example": {
-    "url": "/api/books/compare"
-   }
-  },
-  "GET /api/books/daybook": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "from",
-     "to",
-     "entries",
-     "count"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "from": {
-      "type": "string"
-     },
-     "to": {
-      "type": "string"
-     },
-     "entries": {},
-     "count": {
-      "type": "number"
-     },
-     "total": {},
-     "page": {},
-     "limit": {},
-     "next": {},
-     "totals": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [],
-   "example": {
-    "url": "/api/books/daybook"
-   }
-  },
-  "GET /api/books/dues": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "asOf",
-     "parties",
-     "total_minor"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "asOf": {
-      "type": "string"
-     },
-     "parties": {},
-     "total_minor": {
-      "type": "number"
-     },
-     "payables": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 3,
-   "open": [],
-   "example": {
-    "url": "/api/books/dues"
-   }
-  },
-  "GET /api/books/events": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "events",
-     "picks",
-     "pending",
-     "golden"
-    ],
-    "properties": {
-     "events": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     },
-     "picks": {
-      "type": "object"
-     },
-     "pending": {
-      "type": "array",
-      "items": {
-       "type": "object"
-      }
-     },
-     "golden": {
-      "type": "object"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 3,
-   "open": [
-    {
-     "path": "events[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "picks",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "pending[]",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "golden",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/books/events"
-   }
-  },
-  "GET /api/books/fx-rates": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "ready",
-     "why",
-     "may",
-     "sources",
-     "rule",
-     "rates"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "ready": {
-      "type": "boolean"
-     },
-     "why": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "may": {
-      "type": "object",
-      "required": [
-       "add"
       ],
-      "properties": {
-       "add": {
+      "example": {
+        "url": "/api/governance/profile"
+      }
+    },
+    "GET /api/governance/profile/path": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "profile",
+          "sector",
+          "origin",
+          "asked",
+          "code",
+          "why",
+          "lanes",
+          "adoptable"
+        ],
+        "properties": {
+          "profile": {
+            "type": "object"
+          },
+          "sector": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "origin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "asked": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lanes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "adoptable": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "profile",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "lanes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/profile/path"
+      }
+    },
+    "GET /api/governance/profile/readiness": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "profile",
+          "asked",
+          "code",
+          "why",
+          "clearances",
+          "summary"
+        ],
+        "properties": {
+          "profile": {
+            "type": "object"
+          },
+          "asked": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clearances": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "summary": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "profile",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "clearances[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/profile/readiness"
+      }
+    },
+    "GET /api/governance/readiness": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "standards",
+          "clearances",
+          "summary",
+          "may"
+        ],
+        "properties": {
+          "standards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "clearances": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "summary": {
+            "type": "object"
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "gather",
+              "verify"
+            ],
+            "properties": {
+              "gather": {
+                "type": "object"
+              },
+              "verify": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": false
+          },
+          "origin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vertical": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destination": {
+            "type": "string"
+          },
+          "dest_name": {
+            "type": "string"
+          },
+          "domestic": {
+            "type": "boolean"
+          },
+          "asked": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "clearances[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "may.gather",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "may.verify",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/readiness"
+      }
+    },
+    "GET /api/governance/readiness/:bridge_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "supplier",
+          "facts",
+          "standards",
+          "clearances",
+          "summary"
+        ],
+        "properties": {
+          "supplier": {
+            "type": "object",
+            "required": [
+              "bridge_id",
+              "user_id",
+              "display_name"
+            ],
+            "properties": {
+              "bridge_id": {
+                "type": "string"
+              },
+              "user_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "display_name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "facts": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "standards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "clearances": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "summary": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "facts",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "clearances[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/readiness/BRG-1"
+      }
+    },
+    "GET /api/governance/track-record": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "rung",
+          "note",
+          "disputes_clean",
+          "counterparties",
+          "dealings",
+          "settled",
+          "disputes_open",
+          "disputes_resolved",
+          "on_rail_since",
+          "last_dealing"
+        ],
+        "properties": {
+          "rung": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "disputes_clean": {
+            "type": "boolean"
+          },
+          "counterparties": {
+            "type": "number"
+          },
+          "dealings": {
+            "type": "number"
+          },
+          "settled": {
+            "type": "number"
+          },
+          "disputes_open": {
+            "type": "number"
+          },
+          "disputes_resolved": {
+            "type": "number"
+          },
+          "on_rail_since": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_dealing": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/governance/track-record"
+      }
+    },
+    "GET /api/governance/vault-schema": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "section_types",
+          "verifiable_tags"
+        ],
+        "properties": {
+          "section_types": {
+            "type": "object"
+          },
+          "verifiable_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "section_types",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/vault-schema"
+      }
+    },
+    "POST /api/assist": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "properties": {
+          "answer": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/assist",
+        "body": {
+          "q": "what is a chit?",
+          "context": "compose"
+        }
+      }
+    },
+    "POST /api/assist/catalogue-adopt": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "persisted",
+          "source",
+          "resolved",
+          "acted_by"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "persisted": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "resolved": {
+            "type": "object"
+          },
+          "acted_by": {
+            "type": "object",
+            "required": [
+              "deputy",
+              "rung",
+              "principal",
+              "delegator",
+              "confirmed_by",
+              "grant"
+            ],
+            "properties": {
+              "deputy": {
+                "type": "string"
+              },
+              "rung": {
+                "type": "string"
+              },
+              "principal": {
+                "type": "string"
+              },
+              "delegator": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "id"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "confirmed_by": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "grant": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "resolved",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/catalogue-adopt",
+        "body": {
+          "commercials": {}
+        }
+      }
+    },
+    "POST /api/assist/catalogue-structure": {
+      "status": "200",
+      "schema": {
         "type": "object"
-       }
       },
-      "additionalProperties": false
-     },
-     "sources": {
-      "type": "array",
-      "items": {
-       "type": "string"
+      "observed": 8,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/catalogue-structure",
+        "body": {}
       }
-     },
-     "rule": {
-      "type": "object",
-      "required": [
-       "standard",
-       "tax_rate_rule",
-       "official_name"
-      ],
-      "properties": {
-       "standard": {
-        "type": "string"
-       },
-       "tax_rate_rule": {
-        "type": "string"
-       },
-       "official_name": {
-        "type": "string"
-       }
-      },
-      "additionalProperties": false
-     },
-     "rates": {}
     },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [
-    {
-     "path": "may.add",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/books/fx-rates"
-   }
-  },
-  "GET /api/books/fx-revalue": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ready",
-     "why",
-     "may",
-     "date",
-     "reverses_on",
-     "functional",
-     "rows",
-     "missing",
-     "gain_minor",
-     "posted"
-    ],
-    "properties": {
-     "ready": {
-      "type": "boolean"
-     },
-     "why": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "may": {
-      "type": "object",
-      "required": [
-       "post"
+    "POST /api/assist/conform": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
       ],
-      "properties": {
-       "post": {
+      "example": {
+        "url": "/api/assist/conform",
+        "body": {
+          "standard": "food-safety@v1",
+          "payload": {}
+        }
+      }
+    },
+    "POST /api/assist/gap": {
+      "status": "200",
+      "schema": {
         "type": "object",
         "required": [
-         "may",
-         "why"
+          "ok",
+          "noted",
+          "via"
         ],
         "properties": {
-         "may": {
-          "type": "boolean"
-         },
-         "why": {
-          "type": [
-           "string",
-           "null"
+          "ok": {
+            "type": "boolean"
+          },
+          "noted": {
+            "type": "boolean"
+          },
+          "via": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/assist/gap",
+        "body": {
+          "q": "how do I pay?",
+          "context": "compose"
+        }
+      }
+    },
+    "POST /api/assist/publish": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "qa_id"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "qa_id": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/assist/publish",
+        "body": {
+          "question": "q?",
+          "answer": "a.",
+          "context": [
+            "compose",
+            3
           ]
-         }
-        },
-        "additionalProperties": false
-       }
-      },
-      "additionalProperties": false
-     },
-     "date": {
-      "type": "string"
-     },
-     "reverses_on": {
-      "type": "string"
-     },
-     "functional": {
-      "type": "string"
-     },
-     "rows": {},
-     "missing": {},
-     "gain_minor": {
-      "type": "number"
-     },
-     "posted": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 2,
-   "open": [],
-   "example": {
-    "url": "/api/books/fx-revalue?fiscal_year=2026-27&period=6"
-   }
-  },
-  "GET /api/books/health": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "enabled",
-     "currency",
-     "country",
-     "walkin_grain",
-     "last_check",
-     "engines",
-     "year",
-     "waiting",
-     "total",
-     "page",
-     "limit",
-     "todo"
-    ],
-    "properties": {
-     "enabled": {
-      "type": "boolean"
-     },
-     "currency": {
-      "type": "string"
-     },
-     "country": {
-      "type": "object"
-     },
-     "walkin_grain": {
-      "type": "string"
-     },
-     "last_check": {},
-     "engines": {
-      "type": "object"
-     },
-     "year": {
-      "type": "object",
-      "required": [
-       "fiscal_year",
-       "from",
-       "start_month"
-      ],
-      "properties": {
-       "fiscal_year": {
-        "type": "string"
-       },
-       "from": {
-        "type": "string"
-       },
-       "start_month": {
-        "type": "number"
-       }
-      },
-      "additionalProperties": false
-     },
-     "waiting": {},
-     "total": {
-      "type": "number"
-     },
-     "page": {
-      "type": "number"
-     },
-     "limit": {
-      "type": "number"
-     },
-     "todo": {
-      "type": "object",
-      "required": [
-       "accept",
-       "add_supplier",
-       "record"
-      ],
-      "properties": {
-       "accept": {
-        "type": "number"
-       },
-       "add_supplier": {
-        "type": "number"
-       },
-       "record": {
-        "type": "number"
-       }
-      },
-      "additionalProperties": false
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [
-    {
-     "path": "country",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "engines",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/books/health"
-   }
-  },
-  "GET /api/books/move-in/imports": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ready",
-     "why",
-     "imports"
-    ],
-    "properties": {
-     "ready": {
-      "type": "boolean"
-     },
-     "why": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "imports": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 2,
-   "open": [],
-   "example": {
-    "url": "/api/books/move-in/imports"
-   }
-  },
-  "GET /api/books/packs": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "packs"
-    ],
-    "properties": {
-     "packs": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/books/packs"
-   }
-  },
-  "GET /api/books/periods": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "periods"
-    ],
-    "properties": {
-     "periods": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [],
-   "example": {
-    "url": "/api/books/periods"
-   }
-  },
-  "GET /api/books/pl": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "from",
-     "to",
-     "income",
-     "expense",
-     "total_income_minor",
-     "total_expense_minor",
-     "profit_minor",
-     "by_line"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "from": {
-      "type": "string"
-     },
-     "to": {
-      "type": "string"
-     },
-     "income": {},
-     "expense": {},
-     "total_income_minor": {
-      "type": "number"
-     },
-     "total_expense_minor": {
-      "type": "number"
-     },
-     "profit_minor": {
-      "type": "number"
-     },
-     "by_line": {
-      "type": "object",
-      "required": [
-       "income",
-       "expense"
-      ],
-      "properties": {
-       "income": {},
-       "expense": {}
-      },
-      "additionalProperties": false
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [],
-   "example": {
-    "url": "/api/books/pl"
-   }
-  },
-  "GET /api/books/recurring": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "recurring"
-    ],
-    "properties": {
-     "recurring": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/books/recurring"
-   }
-  },
-  "GET /api/books/returns": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "form",
-     "pack"
-    ],
-    "properties": {
-     "form": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "pack": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "code": {
-      "type": "string"
-     },
-     "why": {
-      "type": "string"
-     },
-     "rail": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "currency": {
-      "type": "string"
-     },
-     "name": {
-      "type": "string"
-     },
-     "short": {
-      "type": "string"
-     },
-     "authority": {
-      "type": "string"
-     },
-     "portal": {
-      "type": "string"
-     },
-     "prepared": {
-      "type": "string"
-     },
-     "asked": {
-      "type": "object"
-     },
-     "periods": {},
-     "period": {
-      "type": [
-       "object",
-       "null"
-      ]
-     },
-     "boxes": {},
-     "payable_minor": {
-      "type": "number"
-     },
-     "refund_minor": {
-      "type": "number"
-     },
-     "net_minor": {
-      "type": "number"
-     },
-     "notes": {},
-     "cite": {},
-     "needs": {
-      "type": "string"
-     },
-     "emirates": {},
-     "staggers": {
-      "type": "object"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 5,
-   "open": [
-    {
-     "path": "asked",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "period",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "staggers",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/books/returns"
-   }
-  },
-  "GET /api/books/status": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "migrated",
-     "enabled",
-     "engines",
-     "country"
-    ],
-    "properties": {
-     "migrated": {
-      "type": "boolean"
-     },
-     "enabled": {
-      "type": "boolean"
-     },
-     "engines": {
-      "type": "object"
-     },
-     "country": {
-      "type": "object"
-     },
-     "walkin_grain": {
-      "type": [
-       "string",
-       "null"
-      ]
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 3,
-   "open": [
-    {
-     "path": "engines",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    },
-    {
-     "path": "country",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/books/status"
-   }
-  },
-  "GET /api/books/terms": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "terms_migrated",
-     "may_set",
-     "why_not",
-     "default",
-     "party",
-     "events"
-    ],
-    "properties": {
-     "terms_migrated": {
-      "type": "boolean"
-     },
-     "may_set": {
-      "type": "boolean"
-     },
-     "why_not": {
-      "type": [
-       "string",
-       "null"
-      ]
-     },
-     "default": {
-      "type": "object"
-     },
-     "party": {},
-     "events": {}
-    },
-    "additionalProperties": false
-   },
-   "observed": 3,
-   "open": [
-    {
-     "path": "default",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/books/terms"
-   }
-  },
-  "GET /api/books/trial-balance": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "currency",
-     "asOf",
-     "rows",
-     "total_dr_minor",
-     "total_cr_minor",
-     "balanced"
-    ],
-    "properties": {
-     "currency": {
-      "type": "string"
-     },
-     "asOf": {
-      "type": "string"
-     },
-     "rows": {},
-     "total_dr_minor": {
-      "type": "number"
-     },
-     "total_cr_minor": {
-      "type": "number"
-     },
-     "balanced": {
-      "type": "boolean"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 4,
-   "open": [],
-   "example": {
-    "url": "/api/books/trial-balance"
-   }
-  },
-  "POST /api/assist": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "answer"
-    ],
-    "properties": {
-     "answer": {
-      "type": "string"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/assist",
-    "body": {
-     "q": "what is a chit?",
-     "context": "compose"
-    }
-   }
-  },
-  "POST /api/assist/catalogue-adopt": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "persisted",
-     "source",
-     "resolved",
-     "acted_by"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "persisted": {
-      "type": "boolean"
-     },
-     "source": {
-      "type": "string"
-     },
-     "resolved": {
-      "type": "object"
-     },
-     "acted_by": {
-      "type": "object",
-      "required": [
-       "deputy",
-       "rung",
-       "principal",
-       "delegator",
-       "confirmed_by",
-       "grant"
-      ],
-      "properties": {
-       "deputy": {
-        "type": "string"
-       },
-       "rung": {
-        "type": "string"
-       },
-       "principal": {
-        "type": "string"
-       },
-       "delegator": {
-        "type": "object",
-        "required": [
-         "type",
-         "id"
-        ],
-        "properties": {
-         "type": {
-          "type": "string"
-         },
-         "id": {
-          "type": "string"
-         }
-        },
-        "additionalProperties": false
-       },
-       "confirmed_by": {
-        "type": "object",
-        "required": [
-         "id"
-        ],
-        "properties": {
-         "id": {
-          "type": "string"
-         }
-        },
-        "additionalProperties": false
-       },
-       "grant": {
-        "type": "string"
-       }
-      },
-      "additionalProperties": false
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 5,
-   "open": [
-    {
-     "path": "resolved",
-     "reason": "a value passed through (an expression: its keys are not written in the handler)"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/catalogue-adopt",
-    "body": {
-     "commercials": {}
-    }
-   }
-  },
-  "POST /api/assist/catalogue-structure": {
-   "status": "200",
-   "schema": {
-    "type": "object"
-   },
-   "observed": 8,
-   "open": [
-    {
-     "path": "(answer)",
-     "reason": "a spread (...x) adds keys the text does not name"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/catalogue-structure",
-    "body": {}
-   }
-  },
-  "POST /api/assist/conform": {
-   "status": "200",
-   "schema": {
-    "type": "object"
-   },
-   "observed": 3,
-   "open": [
-    {
-     "path": "(answer)",
-     "reason": "a spread (...x) adds keys the text does not name"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/conform",
-    "body": {
-     "standard": "food-safety@v1",
-     "payload": {}
-    }
-   }
-  },
-  "POST /api/assist/gap": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "noted",
-     "via"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "noted": {
-      "type": "boolean"
-     },
-     "via": {
-      "type": "string"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/assist/gap",
-    "body": {
-     "q": "how do I pay?",
-     "context": "compose"
-    }
-   }
-  },
-  "POST /api/assist/publish": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "qa_id"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "qa_id": {
-      "type": "string"
-     },
-     "updated": {
-      "type": "boolean"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 2,
-   "open": [],
-   "example": {
-    "url": "/api/assist/publish",
-    "body": {
-     "question": "q?",
-     "answer": "a.",
-     "context": [
-      "compose",
-      3
-     ]
-    }
-   }
-  },
-  "POST /api/till/rate": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "item_id",
-     "slab_id",
-     "rate",
-     "changed",
-     "words"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "item_id": {
-      "type": "string"
-     },
-     "slab_id": {
-      "type": "string"
-     },
-     "rate": {
-      "type": "number"
-     },
-     "changed": {
-      "type": "boolean"
-     },
-     "words": {
-      "type": "string"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/till/rate",
-    "body": {
-     "item_id": "22222222-2222-4222-8222-222222222222",
-     "slab_id": "00000000-0000-4000-8000-0000000001d1"
-    }
-   }
-  },
-  "PUT /api/assist/catalogue-source": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "source_key",
-     "owner_entity_id",
-     "authored",
-     "containers"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "source_key": {
-      "type": "string"
-     },
-     "owner_entity_id": {
-      "type": "string"
-     },
-     "authored": {
-      "type": "boolean"
-     },
-     "containers": {
-      "type": "number"
-     }
-    },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/assist/catalogue-source",
-    "body": {
-     "source_key": "x@v1",
-     "title": "T",
-     "items": [
-      {
-       "name": "Tussar"
+        }
       }
-     ]
-    }
-   }
-  },
-  "PUT /api/assist/container": {
-   "status": "200",
-   "schema": {
-    "type": "object"
-   },
-   "observed": 2,
-   "open": [
-    {
-     "path": "(answer)",
-     "reason": "a spread (...x) adds keys the text does not name"
-    }
-   ],
-   "example": {
-    "url": "/api/assist/container",
-    "body": {
-     "container_id": "a/b",
-     "name": "N",
-     "content": {
-      "a": 1
-     }
-    }
-   }
-  },
-  "PUT /api/assist/region-override": {
-   "status": "200",
-   "schema": {
-    "type": "object",
-    "required": [
-     "ok",
-     "container_id",
-     "region"
-    ],
-    "properties": {
-     "ok": {
-      "type": "boolean"
-     },
-     "container_id": {
-      "type": "string"
-     },
-     "region": {
-      "type": "string"
-     }
     },
-    "additionalProperties": false
-   },
-   "observed": 1,
-   "open": [],
-   "example": {
-    "url": "/api/assist/region-override",
-    "body": {
-     "container_id": "a/b",
-     "region": "AU",
-     "overrides": {
-      "x": 1
-     }
+    "POST /api/till/rate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "item_id",
+          "slab_id",
+          "rate",
+          "changed",
+          "words"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "slab_id": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "words": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/till/rate",
+        "body": {
+          "item_id": "22222222-2222-4222-8222-222222222222",
+          "slab_id": "00000000-0000-4000-8000-0000000001d1"
+        }
+      }
+    },
+    "PUT /api/assist/catalogue-source": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "source_key",
+          "owner_entity_id",
+          "authored",
+          "containers"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "source_key": {
+            "type": "string"
+          },
+          "owner_entity_id": {
+            "type": "string"
+          },
+          "authored": {
+            "type": "boolean"
+          },
+          "containers": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/assist/catalogue-source",
+        "body": {
+          "source_key": "x@v1",
+          "title": "T",
+          "items": [
+            {
+              "name": "Tussar"
+            }
+          ]
+        }
+      }
+    },
+    "PUT /api/assist/container": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/assist/container",
+        "body": {
+          "container_id": "a/b",
+          "name": "N",
+          "content": {
+            "a": 1
+          }
+        }
+      }
+    },
+    "PUT /api/assist/region-override": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "container_id",
+          "region"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "container_id": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/assist/region-override",
+        "body": {
+          "container_id": "a/b",
+          "region": "AU",
+          "overrides": {
+            "x": 1
+          }
+        }
+      }
     }
-   }
-  }
- },
- "listed": {
-  "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
-  "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
-  "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
-  "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/books/cashflow": "open at opening[] — a value passed through (an expression: its keys are not written in the handler); lowest — a value passed through (an expression: its keys are not written in the handler); uncounted — a value passed through (an expression: its keys are not written in the handler); gst — a value passed through (an expression: its keys are not written in the handler); series[] — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/books/events": "open at events[] — a value passed through (an expression: its keys are not written in the handler); picks — a value passed through (an expression: its keys are not written in the handler); pending[] — a value passed through (an expression: its keys are not written in the handler); golden — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/books/fx-rates": "open at may.add — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/books/health": "open at country — a value passed through (an expression: its keys are not written in the handler); engines — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/books/returns": "open at asked — a value passed through (an expression: its keys are not written in the handler); period — a value passed through (an expression: its keys are not written in the handler); staggers — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/books/status": "open at engines — a value passed through (an expression: its keys are not written in the handler); country — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/books/terms": "open at default — a value passed through (an expression: its keys are not written in the handler)",
-  "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
-  "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
-  "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
-  "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-  "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
- }
+  },
+  "listed": [
+    {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/cashflow": "open at opening[] — a value passed through (an expression: its keys are not written in the handler); lowest — a value passed through (an expression: its keys are not written in the handler); uncounted — a value passed through (an expression: its keys are not written in the handler); gst — a value passed through (an expression: its keys are not written in the handler); series[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/events": "open at events[] — a value passed through (an expression: its keys are not written in the handler); picks — a value passed through (an expression: its keys are not written in the handler); pending[] — a value passed through (an expression: its keys are not written in the handler); golden — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/fx-rates": "open at may.add — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/health": "open at country — a value passed through (an expression: its keys are not written in the handler); engines — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/returns": "open at asked — a value passed through (an expression: its keys are not written in the handler); period — a value passed through (an expression: its keys are not written in the handler); staggers — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/status": "open at engines — a value passed through (an expression: its keys are not written in the handler); country — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/terms": "open at default — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
+    {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/ai-skills": "open at skills[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/boilerplate/:key": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/governance/commerce-standards": "open at sources[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/country-setup": "open at country — a value passed through (an expression: its keys are not written in the handler); tax — a value passed through (an expression: its keys are not written in the handler); constituted_by — a value passed through (an expression: its keys are not written in the handler); countries[] — a value passed through (an expression: its keys are not written in the handler); source — a value passed through (an expression: its keys are not written in the handler); pack — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/entities/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/governance/instruments": "open at frm_classes — a value passed through (an expression: its keys are not written in the handler); cluster[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/journey": "open at chain[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/lanes": "open at lanes[] — a value passed through (an expression: its keys are not written in the handler); may.gather — a value passed through (an expression: its keys are not written in the handler); may.verify — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/profile": "open at vault — a value passed through (an expression: its keys are not written in the handler); invoice_party — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/profile/path": "open at profile — a value passed through (an expression: its keys are not written in the handler); lanes[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/profile/readiness": "open at profile — a value passed through (an expression: its keys are not written in the handler); clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/readiness": "open at clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler); may.gather — a value passed through (an expression: its keys are not written in the handler); may.verify — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/readiness/:bridge_id": "open at facts — a value passed through (a name: its keys are not written in the handler); clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/source/:key": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/governance/vault-schema": "open at section_types — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/ai-draft": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/boilerplate/:key/adopt": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/compliance": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/governance/entities": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/entities/:id/reattest": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/source": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/supplier-acceptance": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "PUT /api/governance/country-setup": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+      "PUT /api/governance/profile/vault": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial"
+    }
+  ]
 }
