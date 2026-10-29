@@ -831,6 +831,54 @@
   },
   "PUT /api/products/:id/status": {
    "output_allowlist": true
+  },
+  "GET /api/governance/boilerplate/:key": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/entities/:id": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/source/:key": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/supplier-acceptance/:handle": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/ai-draft": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/boilerplate/:key/adopt": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/compliance": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/conformance": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/entities": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/entities/:id/reattest": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/source": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/supplier-acceptance": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/verify": {
+   "output_allowlist": true
+  },
+  "PUT /api/governance/country-setup": {
+   "output_allowlist": true
+  },
+  "PUT /api/governance/profile": {
+   "output_allowlist": true
+  },
+  "PUT /api/governance/profile/vault": {
+   "output_allowlist": true
   }
  }
 }

@@ -22677,6 +22677,1112 @@
           "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: admin\n  annotations:\n    chitbridge.io/ci: CAP-ADMIN\n    chitbridge.io/asset: CAP001\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/entities.js\n    - routes/governance.js\n    - routes/tax.js\n    - routes/chits.js\n    - routes/actors.js\n    - routes/relationships.js\n    - routes/channels.js\n    - routes/keys.js\n    - routes/counters.js\n    - routes/network-offers.js\n    - routes/integrations.js\n    - routes/folders.js\n    - routes/openapi.js"
         }
       }
+    },
+    "GET /api/governance/boilerplate/:key": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "key",
+          "version",
+          "label",
+          "region_code",
+          "locale",
+          "brand",
+          "standards",
+          "sources"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locale": {
+            "type": "object"
+          },
+          "brand": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "standards": {
+            "type": "object"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source_key",
+                "source_kind",
+                "facet",
+                "source_entity_id",
+                "source_bridge",
+                "source_name"
+              ],
+              "properties": {
+                "source_key": {
+                  "type": "string"
+                },
+                "source_kind": {
+                  "type": "string"
+                },
+                "facet": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_entity_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_bridge": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "locale",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "standards",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/boilerplate/nobody"
+      }
+    },
+    "GET /api/governance/entities/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "minted_version",
+          "active_version",
+          "drift",
+          "plan",
+          "effective",
+          "exceptions"
+        ],
+        "properties": {
+          "minted_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "active_version": {
+            "type": "string"
+          },
+          "drift": {
+            "type": "boolean"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "effective": {
+            "type": "object"
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "effective",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "exceptions[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/entities/11111111-1111-4111-8111-111111111111"
+      }
+    },
+    "GET /api/governance/source/:key": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "standard_key",
+          "version",
+          "facet",
+          "title",
+          "template",
+          "identity_id",
+          "bridge_id",
+          "display_name"
+        ],
+        "properties": {
+          "standard_key": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "facet": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "template": {
+            "type": "object"
+          },
+          "identity_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bridge_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "template",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/source/nobody"
+      }
+    },
+    "GET /api/governance/supplier-acceptance/:handle": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "acceptance",
+          "applied"
+        ],
+        "properties": {
+          "acceptance": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "acceptance_id",
+              "summary",
+              "accepted_at",
+              "note",
+              "accepted_by_name"
+            ],
+            "properties": {
+              "acceptance_id": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "object",
+                "required": [
+                  "total",
+                  "met",
+                  "pending",
+                  "expiring",
+                  "expired",
+                  "ready",
+                  "percent",
+                  "verified",
+                  "attested",
+                  "documented"
+                ],
+                "properties": {
+                  "total": {
+                    "type": "number"
+                  },
+                  "met": {
+                    "type": "number"
+                  },
+                  "pending": {
+                    "type": "number"
+                  },
+                  "expiring": {
+                    "type": "number"
+                  },
+                  "expired": {
+                    "type": "number"
+                  },
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "percent": {
+                    "type": "number"
+                  },
+                  "verified": {
+                    "type": "number"
+                  },
+                  "attested": {
+                    "type": "number"
+                  },
+                  "documented": {
+                    "type": "number"
+                  },
+                  "acceptance_id": {},
+                  "summary": {},
+                  "accepted_at": {},
+                  "note": {},
+                  "accepted_by_name": {}
+                },
+                "additionalProperties": false
+              },
+              "accepted_at": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "accepted_by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "applied": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 11,
+      "open": [],
+      "example": {
+        "url": "/api/governance/supplier-acceptance/nobody"
+      }
+    },
+    "POST /api/governance/ai-draft": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "skill",
+          "kind",
+          "gate",
+          "draft",
+          "model",
+          "usage",
+          "note"
+        ],
+        "properties": {
+          "skill": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "gate": {
+            "type": "string"
+          },
+          "draft": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object"
+          },
+          "note": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "usage",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "data",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/ai-draft",
+        "body": {
+          "skill_id": "metrics-narrate",
+          "context": {}
+        }
+      }
+    },
+    "POST /api/governance/boilerplate/:key/adopt": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "boilerplate",
+          "standards",
+          "locale"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "boilerplate": {
+            "type": "string"
+          },
+          "standards": {
+            "type": "object"
+          },
+          "locale": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "standards",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "locale",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/boilerplate/nobody/adopt"
+      }
+    },
+    "POST /api/governance/compliance": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "total",
+          "met",
+          "pending",
+          "expiring",
+          "expired",
+          "ready",
+          "percent",
+          "verified",
+          "attested",
+          "documented"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "met": {
+            "type": "number"
+          },
+          "pending": {
+            "type": "number"
+          },
+          "expiring": {
+            "type": "number"
+          },
+          "expired": {
+            "type": "number"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "percent": {
+            "type": "number"
+          },
+          "verified": {
+            "type": "number"
+          },
+          "attested": {
+            "type": "number"
+          },
+          "documented": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/governance/compliance",
+        "body": {
+          "standard_key": "gst-registration",
+          "doc_key": "gstn",
+          "evidence_ref": "27AAAAA0000A1Z5",
+          "status": "gathered"
+        }
+      }
+    },
+    "POST /api/governance/conformance": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "status",
+          "scope",
+          "advisory",
+          "note",
+          "checked",
+          "gaps"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "advisory": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "checked": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "checked[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "gaps[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/conformance",
+        "body": {
+          "data": {},
+          "scope": "chit"
+        }
+      }
+    },
+    "POST /api/governance/entities": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "effective",
+          "exceptions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "effective": {
+            "type": "object"
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "effective",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "exceptions[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/entities",
+        "body": {
+          "display_name": "A",
+          "email": "a@b.c"
+        }
+      }
+    },
+    "POST /api/governance/entities/:id/reattest": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "constitution_version",
+          "drift",
+          "effective",
+          "exceptions"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "constitution_version": {
+            "type": "string"
+          },
+          "drift": {
+            "type": "boolean"
+          },
+          "effective": {
+            "type": "object"
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "effective",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "exceptions[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/entities/11111111-1111-4111-8111-111111111111/reattest"
+      }
+    },
+    "POST /api/governance/source": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "source"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "source_key",
+              "kind",
+              "facet",
+              "entity"
+            ],
+            "properties": {
+              "source_key": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "facet": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "entity": {
+                "type": "object",
+                "required": [
+                  "identity_id",
+                  "bridge_id",
+                  "display_name"
+                ],
+                "properties": {
+                  "identity_id": {
+                    "type": "string"
+                  },
+                  "bridge_id": {
+                    "type": "string"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/governance/source",
+        "body": {
+          "source_key": "k",
+          "kind": "brand"
+        }
+      }
+    },
+    "POST /api/governance/supplier-acceptance": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "acceptance",
+          "summary"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "acceptance": {
+            "type": "object",
+            "required": [
+              "acceptance_id",
+              "accepted_at"
+            ],
+            "properties": {
+              "acceptance_id": {
+                "type": "string"
+              },
+              "accepted_at": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "summary": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/supplier-acceptance",
+        "body": {
+          "supplier": "BRG-2",
+          "note": " seen "
+        }
+      }
+    },
+    "POST /api/governance/verify": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "verdict",
+          "total",
+          "met",
+          "pending",
+          "expiring",
+          "expired",
+          "ready",
+          "percent",
+          "verified",
+          "attested",
+          "documented"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "object"
+          },
+          "total": {
+            "type": "number"
+          },
+          "met": {
+            "type": "number"
+          },
+          "pending": {
+            "type": "number"
+          },
+          "expiring": {
+            "type": "number"
+          },
+          "expired": {
+            "type": "number"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "percent": {
+            "type": "number"
+          },
+          "verified": {
+            "type": "number"
+          },
+          "attested": {
+            "type": "number"
+          },
+          "documented": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "verdict",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/verify",
+        "body": {
+          "id_type": "gstn",
+          "id_value": "27AAAAA0000A1Z5",
+          "standard_key": "gst-registration",
+          "doc_key": "gstn"
+        }
+      }
+    },
+    "PUT /api/governance/country-setup": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "migrated",
+          "done",
+          "set_at",
+          "required",
+          "country",
+          "currency",
+          "fy_start_month",
+          "tax",
+          "timezone",
+          "zones",
+          "constituted",
+          "constituted_by",
+          "countries",
+          "source",
+          "pack"
+        ],
+        "properties": {
+          "migrated": {
+            "type": "boolean"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "set_at": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "country": {
+            "type": "object"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "fy_start_month": {
+            "type": "number"
+          },
+          "tax": {
+            "type": "object"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "zones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "constituted": {
+            "type": "boolean"
+          },
+          "constituted_by": {
+            "type": "object"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "source": {
+            "type": "object"
+          },
+          "pack": {
+            "type": "object"
+          },
+          "rederived": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "country",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "tax",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "constituted_by",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "countries[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "source",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "pack",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "rederived",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/country-setup",
+        "body": {
+          "country": "AU",
+          "currency": "AUD",
+          "fy_start_month": 7,
+          "timezone": "Australia/Sydney",
+          "tax": {
+            "registered": false
+          },
+          "source": {
+            "country": "typed"
+          }
+        }
+      }
+    },
+    "PUT /api/governance/profile": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "trade_mode",
+          "markets",
+          "sectors",
+          "adopted",
+          "vault",
+          "vault_version",
+          "invoice_party",
+          "vault_encrypted"
+        ],
+        "properties": {
+          "trade_mode": {
+            "type": "string"
+          },
+          "markets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sectors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "adopted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "vault": {
+            "type": "object"
+          },
+          "vault_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "invoice_party": {
+            "type": "object"
+          },
+          "vault_encrypted": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "vault",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "invoice_party",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/profile",
+        "body": {}
+      }
+    },
+    "PUT /api/governance/profile/vault": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "vault",
+          "version"
+        ],
+        "properties": {
+          "vault": {
+            "type": "object"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "vault",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/governance/profile/vault",
+        "body": {
+          "vault": {
+            "sections": [
+              {
+                "type": "identity",
+                "label": "Business identity",
+                "rows": [
+                  {
+                    "name": "Legal name",
+                    "value": "Test Traders",
+                    "tag": "legal_name",
+                    "source": "typed",
+                    "as_of": "2026-10-01T00:00:00.000Z",
+                    "rung": "declared"
+                  },
+                  {
+                    "name": "City",
+                    "value": "Pune",
+                    "rung": "declared"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
     }
   },
   "listed": {
