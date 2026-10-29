@@ -16,6 +16,7 @@ const PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPh
 const JUNIT_OK = '<testsuites><testsuite name="s"><testcase name="[CTR-05] a single click chooses" classname="x"/></testsuite></testsuites>';
 const JUNIT_NO_KEY = '<testsuites><testsuite name="s"><testcase name="nothing here" classname="x"/></testsuite></testsuites>';
 const FEATURE = 'Feature: CTR-01 Clicks\n  Scenario: [CTR-05] a click\n    Given a screen\n    When I click\n    Then it opens\n';
+const FEATURE_OK = 'Feature: CTR-01 Clicks\n  Scenario: CTR-05 a click\n    Given a screen\n    When I click\n    Then it opens\n';
 const TOO_LONG = 'p'.repeat(81);
 const SHIPPED_RECORD = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'data', 'cmdb', 'CAP-ADMIN.json'), 'utf8'));
 const cannotWrite = { board: { canWrite: () => false } };
@@ -183,7 +184,64 @@ function extras(tools) {
     N('release-body-a-list', 'POST ' + T + '/releases', 400, { body: [] }),
     X('releases-list', 'GET ' + T + '/releases', 200, {}),
     X('releases-list-fails', 'GET ' + T + '/releases', 500, { setup: failing }),
+    ...writeBranch(tools),
     ...readyBranch(tools)
+  ];
+}
+
+/**
+ * The WRITE branch of the board: the database holds rows and answers the statements a write makes, so the real handler and the real libraries (importCases, upsertVersioned,
+ * recordResults, lib/cmdb, lib/gherkin) give the whole of what each write can answer. Every route here names the keys of its success answer in the handler (S34), and each
+ * key an answer can leave out (retired, retire_held, project_not_written, cite_held, cited) has a scene on each side, so the shape tools/api-allowlist.cjs derives
+ * (docs/contracts/api-output-shapes.json) is the whole of what the route can say and the output filter drops nothing real.
+ */
+function writeBranch(tools) {
+  const { PARTY, firstOf } = tools;
+  const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const world = (...answers) => ({ sqlRows: firstOf(...answers) });
+  const projectColumn = rowsWhen(/information_schema\.columns/, [{ ok: 1 }]);
+  const named = (...keys) => keys.map((key) => ({ definition_id: PARTY, name: key }));
+  const created = (...keys) => rowsWhen(/INSERT INTO definition \(/, named(...keys));
+  const liveCases = (...keys) => rowsWhen(/AND status <> 'retired'/, named(...keys));
+  const haveCase = (rules) => rowsWhen(/d\.name = ANY\(\$2::text\[\]\)/, [{ definition_id: PARTY, name: 'CTR-05', current_version: 1, rules }]);
+  const cases = [{ case_key: 'CTR-05', module_key: 'CTR', title: 'Sign in', zzz: 1 }, { case_key: 'CTR-06', module_key: 'CTR', title: 'Sign out' }];
+  const shaped = require('../../lib/cmdb').shape(SHIPPED_RECORD).record;
+  const heldCmdb = (rules) => rowsWhen(/d\.kind = \$2 AND d\.name = \$3/, [{ definition_id: PARTY, current_version: 3, rules }]);
+  const savedRows = [{ result_id: RUN, case_key: 'CTR-05', status: 'pass', at: AT }, { result_id: RUN, case_key: 'CTR-06', status: 'fail', at: AT }];
+  const savedWorld = (rows, ...more) => world(...more, rowsWhen(/INSERT INTO test_result/, rows));
+  const result = { case_key: 'CTR-05', status: 'pass', run_kind: 't1' };
+  const change = { definition_id: PARTY, name: 'CHG-1', current_version: 1, rules: { risk: 'routine', proves: ['CTR-05'], cites: { kind: 'incident', ref: 'INC-1', definition_id: PARTY, entity_id: SHOP }, history: [] } };
+  const changeBare = { definition_id: PARTY, name: 'CHG-2', current_version: 2, rules: {} };
+  const releaseWorld = (...rows) => world(rowsWhen(/d\.kind = 'change' AND d\.definition_id = ANY/, rows), created('REL-1'));
+  return [
+    /* POST /cases/import and /cases/seed: a rebuild that retires what the document dropped, one held back for being too small, an edit, an addition */
+    X('import-rebuild', 'POST ' + T + '/cases/import', 200, { body: { cases }, setup: world(created('CTR-05', 'CTR-06'), liveCases('CTR-05', 'CTR-06', 'OLD-1')) }),
+    X('import-rebuild-held', 'POST ' + T + '/cases/import', 200, { body: { cases: [cases[1]] }, setup: world(created('CTR-06'), liveCases(...Array.from({ length: 10 }, (one, at) => 'OLD-' + at))) }),
+    X('import-edited', 'POST ' + T + '/cases/import', 200, { body: { cases: [cases[0]] }, setup: world(haveCase({}), liveCases('CTR-05')) }),
+    X('import-add', 'POST ' + T + '/cases/import', 200, { body: { cases: [cases[1]], mode: 'add' }, setup: world(created('CTR-06'), liveCases('CTR-06', 'CTR-05')) }),
+    X('seed-loaded', 'POST ' + T + '/cases/seed', 200, { setup: world(liveCases('OLD-1')) }),
+    X('seed-nothing-to-retire', 'POST ' + T + '/cases/seed', 200, {}),
+    /* POST /cases/gherkin */
+    X('gherkin-import-done', 'POST ' + T + '/cases/gherkin', 200, { body: { text: FEATURE_OK }, setup: world(created('CTR-05')) }),
+    X('gherkin-import-with-problems', 'POST ' + T + '/cases/gherkin', 200, { body: { text: FEATURE }, setup: world(created('CTR-05')) }),
+    X('gherkin-import-without-cases', 'POST ' + T + '/cases/gherkin', 200, { body: { text: 'Feature: CTR-01 Clicks\n' }, setup: world(created('CTR-01')) }),
+    /* PUT /cmdb/:ci and POST /cmdb/seed */
+    X('cmdb-put-new', 'PUT ' + T + '/cmdb/:ci', 200, { url: T + '/cmdb/CAP-ADMIN', body: SHIPPED_RECORD, setup: world(created('CAP-ADMIN')) }),
+    X('cmdb-put-unchanged', 'PUT ' + T + '/cmdb/:ci', 200, { url: T + '/cmdb/CAP-ADMIN', body: SHIPPED_RECORD, setup: world(heldCmdb(shaped)) }),
+    X('cmdb-put-edited', 'PUT ' + T + '/cmdb/:ci', 200, { url: T + '/cmdb/CAP-ADMIN', body: SHIPPED_RECORD, setup: world(heldCmdb({ title: 'older' })) }),
+    X('cmdb-seed-loaded', 'POST ' + T + '/cmdb/seed', 200, { setup: world(created('CAP-ADMIN')) }),
+    /* POST /results and /results/junit: the project column there or not, the rows the insert gave back */
+    X('result-recorded-rows', 'POST ' + T + '/results', 200, { body: { results: [result, { case_key: 'CTR-06', status: 'fail', run_kind: 't1' }] }, setup: savedWorld(savedRows) }),
+    X('result-recorded-project', 'POST ' + T + '/results', 200, { body: Object.assign({ project: 'Sprint 4', run_label: 'Sprint 4', build: 'b1' }, result), setup: savedWorld(savedRows.slice(0, 1), projectColumn) }),
+    X('result-project-not-written', 'POST ' + T + '/results', 200, { body: Object.assign({ project: 'Sprint 4' }, result), setup: savedWorld(savedRows.slice(0, 1)) }),
+    X('junit-recorded-rows', 'POST ' + T + '/results/junit', 200, { body: { xml: JUNIT_OK, project: 'Sprint 4', run_label: 'nightly' }, setup: savedWorld(savedRows.slice(0, 1), projectColumn) }),
+    /* POST /requirements: a case to cite */
+    X('requirement-raised-cited', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not', case_key: 'CTR-05', clause: 'CLAUSE-9' }, setup: world(rowsWhen(/d\.kind = 'testcase' AND d\.name = \$2/, [{ definition_id: PARTY, current_version: 1, rules: { title: 'Sign in' } }]), created('CLAUSE-9')) }),
+    X('requirement-raised-case-on-shared-board', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not', case_key: 'CTR-05' }, patch: { board: { entityFor: () => '99999999-9999-4999-8999-999999999999' } }, setup: world(rowsWhen(/SELECT 1 FROM definition/, [{ '?column?': 1 }]), created('CLAUSE-8')) }),
+    X('requirement-raised-no-such-case', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not', case_key: 'CTR-09' }, patch: { board: { entityFor: () => '99999999-9999-4999-8999-999999999999' } }, setup: world(created('CLAUSE-7')) }),
+    /* POST /releases: a change that proves a case and cites an incident, one that proves nothing and cites none */
+    X('release-cut', 'POST ' + T + '/releases', 201, { body: { name: 'v1', note: 'first', changes: [PARTY] }, setup: releaseWorld(change, changeBare) }),
+    X('release-cut-bare', 'POST ' + T + '/releases', 201, { body: { name: 'v2', changes: [PARTY] }, setup: releaseWorld(changeBare) })
   ];
 }
 

@@ -318,7 +318,9 @@ router.post('/trace', auth, ...checked('POST /trace'), (req, res) => {
     if (!me) return problem(req, res, { status: 401, ...notSignedIn() });
     const t = require('../lib/trips');
     const b = req.body || {};
-    return res.json(b.off ? t.traceOff(me) : t.traceOn(me, b.minutes));
+    const state = b.off ? t.traceOff(me) : t.traceOn(me, b.minutes);
+    /* S34: the keys the library's answer can carry, named: off and no-entity answer { on } alone, on answers all four */
+    return res.json(state.on ? { on: state.on, minutes: state.minutes, until: state.until, seconds: state.seconds } : { on: state.on });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Failed'));
   }
@@ -854,7 +856,17 @@ router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req,
     } catch (e) {
       logger.fellBack('testing POST /cases/import: the helper failed — carried on without it', e);
     }
-    res.json(_out);
+    /* S34: the keys importCases can carry, named; orphans, retired and retire_held are set only after a read of the board, and JSON leaves out one that was never set */
+    res.json({
+      added: _out.added,
+      updated: _out.updated,
+      unchanged: _out.unchanged,
+      cases: _out.cases,
+      dropped_fields: _out.dropped_fields,
+      orphans: _out.orphans,
+      retired: _out.retired,
+      retire_held: _out.retire_held
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Import failed'));
   }
@@ -907,7 +919,19 @@ router.post('/cases/seed', auth, ...checked('POST /cases/seed'), async (req, res
     }
     const doc = JSON.parse(require('fs').readFileSync(file, 'utf8'));
     const out = await importCases(testboard.entityFor(auth.entityOf(req)), testerOf(req), doc.cases || []);
-    res.json(Object.assign({ version: doc.version, date: doc.date }, out));
+    /* S34: the document's version and date, then the keys importCases can carry (see POST /cases/import) */
+    res.json({
+      version: doc.version,
+      date: doc.date,
+      added: out.added,
+      updated: out.updated,
+      unchanged: out.unchanged,
+      cases: out.cases,
+      dropped_fields: out.dropped_fields,
+      orphans: out.orphans,
+      retired: out.retired,
+      retire_held: out.retire_held
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not load the documented cases'));
   }
@@ -1078,7 +1102,8 @@ router.put('/cmdb/:ci', auth, ...checked('PUT /cmdb/:ci'), async (req, res) => {
     if (!v.ok) return problem(req, res, { status: 400, ...badRequest('That record does not fit', v.why) });
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const out = await withEntity(entity_id, (db) => upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
-    res.json(Object.assign({ ci: rec.ci, flags: cmdb.flags(rec) }, out));
+    /* S34: upsertVersioned answers definition_id, version and changed */
+    res.json({ ci: rec.ci, flags: cmdb.flags(rec), definition_id: out.definition_id, version: out.version, changed: out.changed });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not save the record'));
   }
@@ -1119,7 +1144,7 @@ router.post('/cmdb/seed', auth, ...checked('POST /cmdb/seed'), async (req, res) 
         (w.changed ? out.seeded : out.unchanged).push(x.r.ci + ' v' + w.version);
       }
     });
-    res.json(out);
+    res.json({ seeded: out.seeded, unchanged: out.unchanged, refused: out.refused });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not load the CMDB records'));
   }
@@ -1366,7 +1391,19 @@ router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
   try {
     const out = await recordResults(resultsEntityOf(req), testerOf(req), req.body || {});
     if (out.status >= 400) return problem(req, res, { status: 422, ...refused(out.body) }); /* recordResults answers 200 or 422 */
-    res.json(out.body);
+    const done = out.body;
+    /* S34: the keys recordResults can carry, named; project_not_written only when a project was asked for and not written */
+    res.json({
+      run_id: done.run_id,
+      run_label: done.run_label,
+      project: done.project,
+      project_not_written: done.project_not_written,
+      recorded: done.recorded,
+      skipped: done.skipped,
+      folded: done.folded,
+      not_on_board: done.not_on_board,
+      results: done.results.map((row) => ({ result_id: row.result_id, case_key: row.case_key, status: row.status, at: row.at })) /* the four columns the INSERT returns */
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not record the result'));
   }
@@ -1578,7 +1615,19 @@ router.post('/results/junit', auth, ...checked('POST /results/junit'), async (re
     });
     const answered = Object.assign({ unmatched }, out.body);
     if (out.status >= 400) return problem(req, res, { status: 422, ...refused(answered) }); /* recordResults answers 200 or 422 */
-    return res.json(answered);
+    /* S34: the unmatched cases, then the keys recordResults can carry (see POST /results) */
+    return res.json({
+      unmatched,
+      run_id: out.body.run_id,
+      run_label: out.body.run_label,
+      project: out.body.project,
+      project_not_written: out.body.project_not_written,
+      recorded: out.body.recorded,
+      skipped: out.body.skipped,
+      folded: out.body.folded,
+      not_on_board: out.body.not_on_board,
+      results: out.body.results.map((row) => ({ result_id: row.result_id, case_key: row.case_key, status: row.status, at: row.at })) /* the four columns the INSERT returns */
+    });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not read that report'));
   }
@@ -1705,7 +1754,7 @@ router.post('/cases/gherkin', auth, ...checked('POST /cases/gherkin'), async (re
       out.unchanged += r.unchanged;
       out.cases = out.cases.concat(r.cases);
     }
-    res.json(out);
+    res.json({ added: out.added, updated: out.updated, unchanged: out.unchanged, clauses: out.clauses, problems: out.problems, cases: out.cases });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not import'));
   }
@@ -1947,7 +1996,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
     } catch (e) {
       logger.fellBack('testing POST /requirements: the helper failed — carried on without it', e);
     }
-    res.json(Object.assign({ raised: true, state: 'raised', support }, out));
+    res.json({ raised: true, state: 'raised', support, definition_id: out.definition_id, clause: out.clause, cited: out.cited, cite_held: out.cite_held });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not raise it'));
   }
@@ -2114,10 +2163,7 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
     } catch (e) {
       logger.fellBack('testing PATCH /requirements/:id: the helper failed — carried on without it', e);
     }
-    delete out._ref;
-    delete out._raiser;
-    delete out._screen;
-    res.json(Object.assign({ ok: true }, out));
+    res.json({ ok: true, state: out.state, shelf: out.shelf, version: out.version });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not set it'));
   }
@@ -2187,7 +2233,6 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
     /* ⚠️ refused, not defaulted: an incident with no account of what happened cannot be investigated by
        anybody but the person who filed it, and they are the one person who will not need to. */
     if (!observed) return problem(req, res, { status: 400, ...badRequest('Nothing recorded', 'Say what happened.') });
-
     const codeOf = (v) => (/^[A-Z]{3}[0-9]{3}$/.test(String(v || '').trim()) ? String(v).trim() : null);
     const sev = INC_SEV.indexOf(String(b.severity || '')) >= 0 ? String(b.severity) : 'Sev-3';
     const now = new Date().toISOString();
@@ -2300,7 +2345,8 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
       support = { copied: false, why: String(e.message || e) };
     }
 
-    res.json(Object.assign({ recorded: true, state: 'raised', support }, out));
+    res.json({ recorded: true, state: 'raised', support, definition_id: out.definition_id, ref: out.ref, severity: out.severity,
+      happened_at: out.happened_at, rules: out.rules, note: out.note });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not record it'));
   }
@@ -2552,10 +2598,7 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
     } catch (e) {
       logger.fellBack('testing PATCH /incidents/:id: the helper failed — carried on without it', e);
     }
-    delete out._ref;
-    delete out._raiser;
-    delete out._screen;
-    res.json(Object.assign({ ok: true }, out));
+    res.json({ ok: true, state: out.state, severity: out.severity, shelf: out.shelf, version: out.version, changes: out.changes, defects: out.defects });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not set it'));
   }
@@ -3756,14 +3799,8 @@ router.post('/changes', auth, ...checked('POST /changes'), async (req, res) => {
 
     require('../lib/testnews').testRaised(entity_id, 'change', out.ref, { state: 'proposed', by: who.id, byName: who.name });
 
-    res.status(201).json({
-      ok: true,
-      ...out,
-      forced_risk: forced,
-      /* ⭐ said out loud rather than silently applied — a rule that changes your answer without telling you is
-         one you will argue with the first time it matters. */
-      needs_review: risk !== 'routine'
-    });
+    /* ⭐ forced_risk and needs_review are said out loud, not silently applied: a rule that changes your answer without telling you is one you will argue with */
+    res.status(201).json({ ok: true, definition_id: out.definition_id, ref: out.ref, risk: out.risk, rules: out.rules, forced_risk: forced, needs_review: risk !== 'routine' });
   } catch (e) {
     console.error('change create:', e.code || '', e.message);
     problem(req, res, faultOf(e, req, 'Failed to record the change'));

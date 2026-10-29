@@ -166,7 +166,7 @@ router.post('/enable', auth, owner, ...checked('POST /enable'), async (req, res)
     const grain = ['day', 'shift', 'bill'].indexOf(b.walkin_grain) >= 0 ? b.walkin_grain : undefined;
     const r = await B.enable(null, ctx(req), { by: byOf(req), walkin_grain: grain });
     require('../lib/books-hooks').forget(ctx(req));
-    res.json(r);
+    res.json({ ok: r.ok, accounts_added: r.accounts_added, fiscal_year: r.fiscal_year, parties_numbered: r.parties_numbered });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -299,7 +299,8 @@ router.post('/check', auth, owner, on, ...checked('POST /check'), async (req, re
 });
 router.post('/outbox/retry', auth, owner, on, ...checked('POST /outbox/retry'), async (req, res) => {
   try {
-    res.json(await require('../lib/books-hooks').retryOutbox(ctx(req), 100));
+    const out = await require('../lib/books-hooks').retryOutbox(ctx(req), 100);
+    res.json({ tried: out.tried, posted: out.posted, still: out.still });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -641,7 +642,8 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
         : base;
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such ledger.');
-    res.json(Object.assign({ currency: curOf(req) }, out));
+    /* every root key named (the page keys are undefined on an unpaged read and leave the JSON): the output allow-list reads them here */
+    res.json({ currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -717,7 +719,7 @@ router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/s
         })
       };
     });
-    res.json(Object.assign({ currency: curOf(req), party_id: id, from, to }, out));
+    res.json({ currency: curOf(req), party_id: id, from, to, code: out.code, opening_minor: out.opening_minor, closing_minor: out.closing_minor, lines: out.lines });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1137,7 +1139,7 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
         words: B.previewWords(prop, name, q.direction)
       };
     });
-    res.json(out);
+    res.json({ currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1246,7 +1248,7 @@ router.post('/payments', auth, noKey, editor, on, ...checked('POST /payments'), 
         console.error('bill money steps:', e2.message);
       }
     }
-    res.json(Object.assign({ ok: true }, out));
+    res.json({ ok: true, payment: out.payment, posted: out.posted, allocation: out.allocation, outcome: out.outcome, advice: out.advice }); /* a replay has no allocation or outcome: undefined leaves the JSON as before */
   } catch (err) {
     if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err);
     problem(req, res, refusalOf(err, req));
@@ -1270,7 +1272,7 @@ router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:i
       return B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such payment.');
-    res.json(Object.assign({ currency: curOf(req) }, out));
+    res.json({ currency: curOf(req), payment_id: out.payment_id, party: out.party, advice: out.advice, may: out.may, words: out.words, body: out.body, share: out.share });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1382,7 +1384,7 @@ router.patch('/payments/:id', auth, noKey, on, ...checked('PATCH /payments/:id')
       const legacy = Object.assign({ error: out.error || out.words, message: out.words }, out.why ? { why: out.why } : {}, out.advice_chit_id ? { advice_chit_id: out.advice_chit_id } : {});
       return problem(req, res, { status: out.status, code: out.code || 'NOT_FOUND', detail: out.words, legacy });
     }
-    res.json(out.body);
+    res.json({ ok: out.body.ok, payment_id: out.body.payment_id, advice: out.body.advice });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1413,7 +1415,7 @@ router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /
       };
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(Object.assign({ payment_id: id }, out));
+    res.json({ payment_id: id, proposal: out.proposal, open_minor: out.open_minor, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1448,7 +1450,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, ...checked('POST /
     } catch (e2) {
       console.error('bill money steps:', e2.message);
     }
-    res.json(out);
+    res.json({ ok: out.ok, off: out.off, items: out.items, allocated_minor: out.allocated_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1576,7 +1578,8 @@ router.post('/cheques/:id/status', auth, editor, on, ...checked('POST /cheques/:
     if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const to = ['deposited', 'cleared', 'bounced'].indexOf(b.status) >= 0 ? b.status : null;
     if (!to) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Deposited, cleared or bounced?', 'Deposited, cleared or bounced?');
-    res.json(await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today(req)), strict_date: true, by: byOf(req) }));
+    const out = await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today(req)), strict_date: true, by: byOf(req) });
+    res.json({ ok: out.ok, off: out.off, status: out.status, items: out.items, posted: out.posted, reversed: out.reversed });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1607,7 +1610,8 @@ router.post('/parties/:id/dispute', auth, editor, on, ...checked('POST /parties/
       currency: curOf(req),
       by: byOf(req)
     });
-    res.json(Object.assign({}, posted, posted.ok && !posted.off ? { words: STATUS_WORDS[status], against_ref: String(b.against_ref) } : {}));
+    const said = posted.ok && !posted.off ? { words: STATUS_WORDS[status], against_ref: String(b.against_ref) } : {}; /* the words ride only on a status the books wrote */
+    res.json({ ok: posted.ok, off: posted.off, status: posted.status, words: said.words, against_ref: said.against_ref });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1630,7 +1634,8 @@ router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => 
  */
 router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req, res) => {
   try {
-    res.json(await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) }));
+    const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) });
+    res.json({ ok: out.ok, kind: out.kind, voucher: out.voucher, date: out.date, lines: out.lines, balanced: out.balanced, totals: out.totals, credit: out.credit, bill: out.bill, flags: out.flags, refusals: out.refusals, code: out.code, duplicate: out.duplicate });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1638,7 +1643,8 @@ router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req
 /** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
 router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async (req, res) => {
   try {
-    res.json(await M().post(ctx(req), req.books, req.body || {}, byOf(req)));
+    const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
+    res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1651,21 +1657,21 @@ router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
        CB Finance · Payables sends the early-pay discount this way: Dr the supplier against the bill · Cr Discount received (books-payables.view `record`). */
-    res.json(
-      await B.postEntry(null, ctx(req), {
-        type: 'manual',
-        owner: true,
-        narration: b.narration,
-        date: dateQ(b.date, today(req)),
-        currency: curOf(req),
-        strict_date: true,
-        lines: givenLines(b.lines),
-        ref: b.ref || null,
-        source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null,
-        by: byOf(req),
-        against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null
-      })
-    );
+    const out = await B.postEntry(null, ctx(req), {
+      type: 'manual',
+      owner: true,
+      narration: b.narration,
+      date: dateQ(b.date, today(req)),
+      currency: curOf(req),
+      strict_date: true,
+      lines: givenLines(b.lines),
+      ref: b.ref || null,
+      source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null,
+      by: byOf(req),
+      against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null
+    });
+    /* the writer's answer, key for key (a replay has duplicate and no doc_date; a switched-off ledger has off): named so the allow-list reads them */
+    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1681,7 +1687,7 @@ router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:
       const m = 'This entry was already reversed by ' + r.entry_no + '.';
       return problem(req, res, { status: 409, code: 'ALREADY_REVERSED', detail: m, legacy: { error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id } });
     }
-    res.json(r);
+    res.json({ ok: r.ok, off: r.off, entry_id: r.entry_id, entry_no: r.entry_no, posting_date: r.posting_date, moved: r.moved, reverses: r.reverses, reverses_entry_id: r.reverses_entry_id, items: r.items, reopened: r.reopened, words: r.words });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1694,22 +1700,21 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
     /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
     const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
-    res.json(
-      await B.postEntry(null, ctx(req), {
-        type: 'write_off',
-        owner: true,
-        party,
-        amount: minorOf(b) / 100,
-        reason: b.reason,
-        currency: curOf(req),
-        strict_date: true,
-        date: dateQ(b.date, today(req)),
-        against_ref: b.against_ref ? String(b.against_ref) : null,
-        source_ref: ref ? 'wo:' + ref : null,
-        doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()),
-        by: byOf(req)
-      })
-    );
+    const out = await B.postEntry(null, ctx(req), {
+      type: 'write_off',
+      owner: true,
+      party,
+      amount: minorOf(b) / 100,
+      reason: b.reason,
+      currency: curOf(req),
+      strict_date: true,
+      date: dateQ(b.date, today(req)),
+      against_ref: b.against_ref ? String(b.against_ref) : null,
+      source_ref: ref ? 'wo:' + ref : null,
+      doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()),
+      by: byOf(req)
+    });
+    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1733,7 +1738,7 @@ router.post('/opening', auth, owner, on, ...checked('POST /opening'), async (req
     const out = await withEntity(e, (h) =>
       B.postOpening(h, e, { rows, date: dateQ(b.date, fyStart(req, today(req))), currency: cur, client_ref: b.client_ref, by: byOf(req) })
     );
-    res.json(out);
+    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note, suspense_minor: out.suspense_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1773,15 +1778,20 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
   try {
     const { kind, source, parsed } = moveInBody(req);
     const g = MI.guess(kind, parsed.headers);
-    res.json(
-      Object.assign({ kind, source, headers: parsed.headers }, g, {
-        rows_total: parsed.rows.length,
-        sample: parsed.rows.slice(0, 5),
-        sheet: parsed.sheet || null,
-        sheets: parsed.sheets || null,
-        header_row: parsed.headerRow || 1
-      })
-    );
+    res.json({
+      kind,
+      source,
+      headers: parsed.headers,
+      fields: g.fields,
+      guess: g.guess,
+      missing: g.missing,
+      ready: g.ready,
+      rows_total: parsed.rows.length,
+      sample: parsed.rows.slice(0, 5),
+      sheet: parsed.sheet || null,
+      sheets: parsed.sheets || null,
+      header_row: parsed.headerRow || 1
+    });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1900,7 +1910,8 @@ router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /c
       throw Object.assign(new Error('Only a Tally export comes as XML — export ' + PR.SOURCE_WORD[source] + "'s report as CSV or Excel."), {
         code: 'BOOKS_BAD_REQUEST'
       });
-    res.json(Object.assign({ part, source }, PR.preflight(b, part, curOf(req))));
+    const guessed = PR.preflight(b, part, curOf(req)); /* a Tally XML carries no sheet, sheets or header_row (undefined, as before) */
+    res.json({ part, source, format: guessed.format, headers: guessed.headers, fields: guessed.fields, guess: guessed.guess, missing: guessed.missing, ready: guessed.ready, rows_total: guessed.rows_total, sample: guessed.sample, sheet: guessed.sheet, sheets: guessed.sheets, header_row: guessed.header_row });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1958,7 +1969,7 @@ router.post('/compare/snapshots', auth, noKey, on, comparer, ...checked('POST /c
       if (!id) throw Object.assign(new Error('This snapshot already has their ' + PR.PART_WORD[part].toLowerCase() + '.'), { status: 409 });
       return Object.assign({}, head, { part, rows: r.rows.length, skipped: r.skipped });
     });
-    res.json(out);
+    res.json({ snapshot_id: out.snapshot_id, label: out.label, source: out.source, period_from: out.period_from, period_to: out.period_to, part: out.part, rows: out.rows, skipped: out.skipped });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2075,7 +2086,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req));
-    if (r.ok) return res.json(r);
+    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
     const message = r.refusals.map((x) => x.why).join(' ');
     problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy: { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals } });
   } catch (err) {
@@ -2264,7 +2275,9 @@ router.get('/recurring', auth, owner, on, ...checked('GET /recurring'), async (r
 /** POST /recurring { name, event: { kind, …fields as POST /events, no date }, frequency: monthly|quarterly|yearly, next_on, end_on?, auto? } */
 router.post('/recurring', auth, owner, on, ...checked('POST /recurring'), async (req, res) => {
   try {
-    res.json(await RC().create(ctx(req), req.books, req.body || {}, byOf(req)));
+    const template = await RC().create(ctx(req), req.books, req.body || {}, byOf(req));
+    /* entity first: the web contract reads it on the row (docs/contracts/web-api.json); absent when the store's COLS do not select it */
+    res.json({ entity: template.entity, recurring_id: template.recurring_id, name: template.name, event: template.event, frequency: template.frequency, next_on: template.next_on, anchor_day: template.anchor_day, end_on: template.end_on, auto: template.auto, active: template.active, last_done_on: template.last_done_on, created_by: template.created_by, created_at: template.created_at, updated_at: template.updated_at, due: template.due });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2273,7 +2286,8 @@ router.post('/recurring', auth, owner, on, ...checked('POST /recurring'), async 
 router.patch('/recurring/:id', auth, owner, on, ...checked('PATCH /recurring/:id'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req)));
+    const template = await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req));
+    res.json({ entity: template.entity, recurring_id: template.recurring_id, name: template.name, event: template.event, frequency: template.frequency, next_on: template.next_on, anchor_day: template.anchor_day, end_on: template.end_on, auto: template.auto, active: template.active, last_done_on: template.last_done_on, created_by: template.created_by, created_at: template.created_at, updated_at: template.updated_at, due: template.due });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2282,7 +2296,8 @@ router.patch('/recurring/:id', auth, owner, on, ...checked('PATCH /recurring/:id
 router.delete('/recurring/:id', auth, owner, on, ...checked('DELETE /recurring/:id'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().stop(ctx(req), String(req.params.id)));
+    const template = await RC().stop(ctx(req), String(req.params.id));
+    res.json({ entity: template.entity, recurring_id: template.recurring_id, name: template.name, event: template.event, frequency: template.frequency, next_on: template.next_on, anchor_day: template.anchor_day, end_on: template.end_on, auto: template.auto, active: template.active, last_done_on: template.last_done_on, created_by: template.created_by, created_at: template.created_at, updated_at: template.updated_at, due: template.due, stopped: template.stopped });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2291,7 +2306,8 @@ router.delete('/recurring/:id', auth, owner, on, ...checked('DELETE /recurring/:
 router.post('/recurring/:id/post', auth, owner, on, ...checked('POST /recurring/:id/post'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req)));
+    const out = await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req));
+    res.json({ posted: out.posted, template: out.template, date: out.date });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2299,7 +2315,8 @@ router.post('/recurring/:id/post', auth, owner, on, ...checked('POST /recurring/
 router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/:id/skip'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().skip(ctx(req), String(req.params.id)));
+    const out = await RC().skip(ctx(req), String(req.params.id));
+    res.json({ skipped: out.skipped, template: out.template });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2430,7 +2447,8 @@ router.post('/fx-rates/import', auth, noKey, on, owner, ...checked('POST /fx-rat
   try {
     const e = ctx(req),
       b = req.body || {};
-    res.json(await withEntity(e, (h) => FXR.importCsv(h, e, req.books, b.csv, b.file_name ? String(b.file_name).slice(0, 120) : null, byOf(req))));
+    const out = await withEntity(e, (h) => FXR.importCsv(h, e, req.books, b.csv, b.file_name ? String(b.file_name).slice(0, 120) : null, byOf(req)));
+    res.json({ added: out.added, refused: out.refused, rates: out.rates });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2474,7 +2492,8 @@ router.post('/fx-revalue', auth, noKey, on, owner, ...checked('POST /fx-revalue'
   try {
     const e = ctx(req),
       { fy, p } = fxPeriod(req.body || {});
-    res.json(await withEntity(e, (h) => FXR.revalue(h, e, req.books, fy, p, byOf(req))));
+    const out = await withEntity(e, (h) => FXR.revalue(h, e, req.books, fy, p, byOf(req)));
+    res.json({ ok: out.ok, duplicate: out.duplicate, entry_no: out.entry_no, reversal_no: out.reversal_no, gain_minor: out.gain_minor, date: out.date, reverses_on: out.reverses_on }); /* a month already revalued answers duplicate, no reversal or dates */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
