@@ -7,6 +7,7 @@
  "codes_total": 481,
  "codes_pending": 37,
  "raw_error_writes": 3,
+ "routes_without_does": 624,
  "columns_failing": {
   "strict_input": 330,
   "output_allowlist": 263,
