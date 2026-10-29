@@ -227,7 +227,11 @@ const tally = {};
       const o = await call(BEFORE, x.method, '/api/chits/' + x.chit + x.sub, x.who.token, x.body);
       /* a refusal now carries the Problem fields after its old keys (API-4 sweep): they are taken off, and so is a `code` the old body did not carry */
       const strip = (b, old) => { const c = Object.assign({}, b); delete c.why; delete c.created_at; delete c.message_id; delete c.dispute_id; if (c.type && /\/problems\//.test(String(c.type))) { ['type', 'title', 'status', 'detail', 'hint', 'request_id'].forEach((name) => delete c[name]); if (!old || old.code === undefined) delete c.code; } return JSON.stringify(c); };
-      const ok = o.status === x.after.status && strip(o.body) === strip(x.after.body, o.body);
+      /* RAIL-133 (deliberate, 28 Oct): on deliver-lines, assign-lines and amend a library's own 400 now says its words where the old route
+         said the safe sentence. ONLY that: same status, same keys, the old message must be the safe sentence and the new one a sentence of its own. */
+      const saidNow = (old, now) => o.status === 400 && /\/(deliver-lines|assign-lines|amend)$/.test(x.sub) && old && now && old.message === 'Something went wrong — please try again.' && typeof now.message === 'string' && now.message !== old.message
+        ? Object.assign({}, now, { message: old.message }) : now;
+      const ok = o.status === x.after.status && strip(o.body) === strip(saidNow(o.body, x.after.body), o.body);
       if (ok) same++;
       t(x.name + ' · ' + x.a + ': before ' + o.status + ' = after ' + x.after.status + ', same body but `why`', ok,
         'before ' + o.status + ' ' + strip(o.body).slice(0, 160) + '\n       after  ' + x.after.status + ' ' + strip(x.after.body).slice(0, 160));

@@ -30,12 +30,38 @@ const {
   round: roundMoney
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const { ownerOnly } = require('../lib/owner');
+const { setsRate, RATE_ASK_OWNER, RATE_OWNER_ONLY } = require('../lib/rate-door'); // CAT-210: who may set a rate, once for every door
+const taxSlab = require('../lib/tax-slab'); /* ⭐ F5 A1: categoryIdsOf for the counter's item, setOn for the rate door — the engine's one writer */
+const taxPacks = require('../lib/tax-packs'); /* the shop's tax pack (collect_without_tax_id) for tax-shelf.chargesTax */
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ CAT-W1: the one product writer (patchItems) */
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
+/** what tax-shelf.readShelf needs from this router — the db, the region layer, the catalogue face — in ONE place for its two callers (the snapshot, the rate door) */
+const shelfDeps = () => ({ withEntity, query, regionLayer: regional.regionLayer, getFace: (shopId) => catalogueView.getFace({ entity_id: shopId, withEntity }) });
+/** a stored rate as a number, or null for a blank or junk value (a rate is a percentage, never money) */
+const rateOf = (value) => (value == null || value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
+/**
+ * ⭐⭐ THE ITEM'S TAX FACTS, AS THE ENGINE'S ONE INPUT READS THEM (F5 A1, critic 2 and 12; tax-slab inputOf from engines 1.72.0). A rate typed on the
+ * item, or set at the counter's door (POST /rate), reached the catalogue view and never the counter's projection, so the counter billed 0%.
+ * gst_rate · tax_slab_name · cess_rate are the slab's travelling copy; `categories` is EVERY id the product cites (the category rung is keyed by id;
+ * the resolved NAME still travels as `category` for old tills); hsn also reads `sac` (a service's code) and NEVER `code`: a shop code "D01" would
+ * land on a tax invoice. A blank is null — "nobody said", never 0.
+ */
+function taxFactsOf(item_data) {
+  /* engines 1.72.0: the ONE builder (tax_slab · tax_slab_name · gst_rate · cess_rate · categories[] · hsn || sac), blanks left out — the wire says null for them */
+  const facts = taxSlab.inputOf(item_data);
+  return {
+    hsn: facts.hsn !== undefined ? facts.hsn : item_data.hs_code || item_data.hsn_code || null /* the two legacy keys old rows still carry */,
+    tax_slab: facts.tax_slab || null,
+    gst_rate: rateOf(facts.gst_rate),
+    tax_slab_name: facts.tax_slab_name || null,
+    cess_rate: rateOf(facts.cess_rate),
+    categories: facts.categories || []
+  };
+}
 /**
  * ⭐⭐ THE CATEGORY MASTER, READ WITHOUT THE TAX GATE ([TILL-114]). taxShelf.readShelf() also returns
  * categories — and answers NULL for a seller with no GSTIN, so an unregistered shop could not get its own
@@ -396,13 +422,7 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
      * is asked only for slabs, categories and the face; the items come from the catalogue, whoever the shop is.
      */
     const [shelf, itemRows, liveCount] = await Promise.all([
-      taxShelf
-        .readShelf(
-          entity_id,
-          { withEntity, query, regionLayer: regional.regionLayer, getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) },
-          { withItems: false }
-        )
-        .catch(log.orElse('till GET /snapshot: the read failed — answered with nothing', null)),
+      taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false }).catch(log.orElse('till GET /snapshot: the read failed — answered with nothing', null)),
       /* ⭐ the items and the live count — read in the shared transaction above (OWN.items, OWN.count), each on its own if it failed */
       Promise.resolve()
         .then(() => ownRead('items'))
@@ -461,8 +481,7 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
     }
 
     /* the counter's customer list — a name and a phone, nothing more; the till looks up a repeat customer, it does not hold history */
-    let customers = [],
-      snapshotBooksOn = false;
+    let customers = [], snapshotBooksOn = false;
     try {
       /**
        * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
@@ -597,19 +616,19 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
 
     /**
      * ⭐ THE PEOPLE WHO MAY STAND AT A COUNTER (2026-09-07). The shop's own co-assists — never the connectors, which are actors too
-     * and would otherwise offer "Zoho Books connector" as a cashier. Name and id only: the till records WHO billed, it does not
+     * and would otherwise offer "Zoho Books connector" as a cashier. Name, id and the sign-in user ID only (R132: a picked name must carry who the person is, so the counter asks only for the PIN or first code; the ID is not a secret and no contact detail travels): the till records WHO billed, it does not
      * authenticate anybody, and nothing about a person's contact details belongs on a device at a counter.
      */
     let staff = [];
     try {
       const st = await query(
-        `SELECT identity_id, display_name, hat FROM identities
+        `SELECT identity_id, display_name, hat, user_id FROM identities
           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND status = 'active'
             AND (actor_type IS NULL OR actor_type <> 'connector') AND connector_type IS NULL
           ORDER BY display_name LIMIT 200`,
         [entity_id]
       );
-      staff = st.rows.map((item) => ({ id: item.identity_id, name: item.display_name, hat: item.hat || null }));
+      staff = st.rows.map((item) => ({ id: item.identity_id, name: item.display_name, hat: item.hat || null, user_id: item.user_id || null }));
     } catch (e) {
       log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no co-assists bills as the shop itself */
     }
@@ -702,18 +721,18 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
       require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) });
     }
 
-    const tillItem = (item_id, d) => {
+    /* ⭐⭐ F5 A1: taxFacts = the facts tax-slab inputOf reads (taxFactsOf), named key by key below so the projection guard sees each; hsn never from `code` */
+    const tillItem = (item_id, d, taxFacts = taxFactsOf(d)) => {
       return {
         item_id,
         name: d.name,
         code: d.code || d.sku || null,
         unit: d.unit || 'piece',
-        /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure,
-                  and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
+        /* ⚠️ A PRICE IS SOMETIMES MONEY, NOT A NUMBER: the catalogue stores { amount, currency } as well as a bare figure, and reading only the bare one gave the counter a shelf of zeroes ([TILL-01], first run). Same reader as pricing-engine. */
         price: amountOf(d.price),
         mrp: amountOf(d.mrp),
-        hsn: d.hsn || d.hs_code || d.hsn_code || null,
-        tax_slab: d.tax_slab || null,
+        hsn: taxFacts.hsn, tax_slab: taxFacts.tax_slab, gst_rate: taxFacts.gst_rate,
+        tax_slab_name: taxFacts.tax_slab_name, cess_rate: taxFacts.cess_rate, categories: taxFacts.categories,
         /**
          * ⚠️⚠️⚠️ THE NAME, RESOLVED — not the legacy key ([TILL-114]). This was `d.category || null`, and
          * `category` is the key catalogue-columns calls *"legacy … read, never written again"*. A product
@@ -1096,7 +1115,8 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
      */
     if (snapshotBooksOn) body.books = true;
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
-    res.json(screen ? screenView(body) : body);
+    const answer = screen ? screenView(body) : body;
+    res.json({ at: answer.at, more: answer.more, limit: answer.limit, entity_id: answer.entity_id, till: answer.till, shop: answer.shop, items: answer.items, removed: answer.removed, delta: answer.delta, since: answer.since, offers: answer.offers, staff: answer.staff, category_master: answer.category_master, total: answer.total, network: answer.network, slabs: answer.slabs, categories: answer.categories, face: answer.face, customers: answer.customers, suppliers: answer.suppliers, reward: answer.reward, policy: answer.policy, lot_fields: answer.lot_fields, books: answer.books, version: answer.version }); /* S34: the keys named; a TV's screenView leaves most undefined and JSON leaves those out, so each answer is byte for byte what it was */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -1544,7 +1564,7 @@ router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), ...chec
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
     const cfg = await withEntity(entity_id, (db) => qk.getScreenConfig(db, entity_id, counter_id));
-    res.json(cfg);
+    res.json({ config: cfg.config, updated_at: cfg.updated_at }); /* S34: the row's two columns, named (lib/quick-keys getScreenConfig reads only these) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -1702,12 +1722,12 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), ...checked('GET /
         out.push({ item_id: r.item_id, name: r.name, expiry: r.expiry || null, last_sold: r.last_sold || null, why: list, urgency: Math.round(urgency) });
     }
     out.sort((first, second) => second.urgency - first.urgency);
+    /* ⚠️ said out loud (basis): this is what the shop RECORDED, not a stock count nobody has taken */
     res.json({
       ok: true,
       days,
       quiet,
       items: out.slice(0, 60),
-      /* ⚠️ said out loud: this is what the shop RECORDED, not a stock count nobody has taken */
       basis: 'expiry recorded at goods-in, and the last time each product was on a bill'
     });
   } catch (e) {
@@ -1775,12 +1795,19 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
   }
 });
 
+/* the price column as the catalogue declares it: required, a number (catwrite.validateAgainst reads this row as it reads schema_fields) */
+const PRICE_FIELD = [{ field_key: 'price', field_name: 'Price', field_type: 'number', required: true }];
 router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const item_id = String((req.body && req.body.item_id) || '');
-    const price = Number(req.body && req.body.price);
+    const sent = req.body && req.body.price;
+    const price = Number(sent);
     if (!item_id) return problem(req, res, { status: 400, ...badRequest('item_id required') });
+    /* CTR-168: Number() reads null, "" and [] as 0 and true as 1 - a shelf price wiped by a blank. What is no number at all is refused by
+       the catalogue's own check, in PATCH /products' words (catwrite.validateAgainst); a negative or a word keeps its frozen sentence */
+    const noNumber = Number.isFinite(price) && price >= 0 ? catwrite.validateAgainst(PRICE_FIELD, { price: sent }) : null;
+    if (noNumber) return problem(req, res, { status: 400, ...badRequest(noNumber) });
     if (!Number.isFinite(price) || price < 0) return problem(req, res, { status: 400, ...badRequest('price must be a number, zero or more') });
     /* [OFFR-04] a price typed at the counter is the same write as PATCH /products — the same gate (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['price']);
@@ -1814,6 +1841,81 @@ router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price')
     if (!out) return problem(req, res, { status: 404, ...notFound() });
     shopChanged(entity_id, 'price changed');
     res.json({ ok: true, item_id, name: out.name, was: out.was, now: out.now, currency });
+  } catch (e) {
+    problem(req, res, failed(e, req));
+  }
+});
+
+/**
+ * ── ⭐⭐ POST /api/till/rate — SET ONE PRODUCT'S TAX RATE, ONCE, FROM THE COUNTER (F5 A1; DECISIONS 2026-10-18 "TAX MISSING", 2026-10-24 "yes F5" (b)) ──
+ * A registered shop rings up "Veg Meals" and it carries no rate: the counter ASKS ONCE and the sale goes on — the api never refuses a sale (that
+ * would also bounce an offline-queued bill). Only an OWNER or a MANAGER answers: the signed-in person's hat (read from the DB by auth), never the
+ * counter's key — a till key may not edit tax (POST /flags: "catalogue decisions"), and a cashier is told to ask the owner, in words.
+ *   { item_id, slab_id } → one of the shop's slabs (own or governed, tax-shelf.readShelf), written through the engine's ONE writer (tax-slab.setOn:
+ *   the citation AND its travelling copy) as a merge-patch by the catalogue's ONE product writer (catalogue-write.patchItems).
+ * Idempotent: a product already citing that slab is answered changed:false and nothing is written. Gated on the shop CHARGING its tax
+ * (tax-shelf.chargesTax: registration + tax id, the twin of the counter's shopTax().charges) — never "has a GSTIN". The words are the pack's
+ * (tax-shelf.taxWordOf), never "GST" in code. Trips: readShelf (its transaction, the face, the governed slabs) + ONE transaction (shop · item · write).
+ */
+/* who may answer the counter's "which rate?" is lib/rate-door setsRate: the business itself, or a co-assist whose hat is manager (one rule on every door, CAT-210) */
+/** the merge-patch setOn makes on this product: every key it changed; a key it removed travels as null (jsonb || keeps every other key) */
+function slabPatchOf(item_data, slab) {
+  const before = Object.assign({}, item_data || {});
+  const after = taxSlab.setOn(Object.assign({}, before), slab);
+  const patch = {};
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key]) patch[key] = after[key] === undefined ? null : after[key];
+  return patch;
+}
+/** the shop's tax facts in ONE read → { word, charges }: the pack's word for its tax, and whether a sale of this shop carries it (tax-shelf.chargesTax) */
+async function shopTaxFacts(db, entity_id) {
+  const shop = (await db.query('SELECT gstn, country, policy_flags FROM identities WHERE identity_id = $1', [entity_id])).rows[0] || {};
+  const flags = shop.policy_flags || {};
+  return { word: taxShelf.taxWordOf(shop.country), charges: taxShelf.chargesTax({ gstin: shop.gstn, reg_type: flags.gst_registration }, taxPacks.packFor(shop.country)) };
+}
+/** the slab the owner picked, if the shop's shelf (own + governed) holds it */
+const slabOnShelf = (shelf, slab_id) => (shelf && shelf.slabs instanceof Map && shelf.slabs.get(slab_id)) || null;
+/** the body, read once: { item_id, slab_id, missing } — `missing` is the sentence for a blank id, else null */
+function rateBodyOf(req) {
+  const body = req.body || {};
+  const item_id = String(body.item_id || ''),
+    slab_id = String(body.slab_id || '');
+  return { item_id, slab_id, missing: !item_id ? 'item_id required' : !slab_id ? 'slab_id required' : null };
+}
+/** the door's one transaction: the shop's tax facts, the slab, the product, the write — or WHICH refusal the handler answers ('no_tax' · 'no_slab' · 'no_item'; the statuses stay in the handler, S15) */
+async function setRateOnce(db, entity_id, shelf, item_id, slab_id) {
+  const facts = await shopTaxFacts(db, entity_id);
+  if (!facts.charges) return { refused: 'no_tax', word: facts.word };
+  const slab = slabOnShelf(shelf, slab_id);
+  if (!slab) return { refused: 'no_slab', word: facts.word };
+  const current = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2 AND is_active = true', [entity_id, item_id]);
+  if (!current.rows.length) return { refused: 'no_item', word: facts.word };
+  const item_data = current.rows[0].item_data || {};
+  const patch = slabPatchOf(item_data, slab);
+  const changed = Object.keys(patch).length > 0;
+  if (changed) await catwrite.patchItems(db, entity_id, [{ item_id, merge: patch }]);
+  return { changed, name: item_data.name || null, slab, word: facts.word };
+}
+/** the 200's two worked parts: the rate (null when the slab names none) and the words a counter shows */
+function rateAnswer(out) {
+  const slabWords = out.slab.name || out.word + ' ' + out.slab.rate + '%';
+  const rate = out.slab.rate == null ? null : out.slab.rate;
+  return { rate, words: (out.name || 'The product') + (out.changed ? ' now carries ' : ' already carries ') + slabWords + '.' };
+}
+router.post('/rate', auth, ...checked('POST /rate'), async (req, res) => {
+  try {
+    /* the door, before any lookup (cb-api round 1, rule 2): a key or a cashier is refused with the same sentence, and nothing is read */
+    if (!setsRate(req)) return problem(req, res, { status: 403, ...said(RATE_OWNER_ONLY, 'Forbidden', RATE_ASK_OWNER, { may: false, why: RATE_ASK_OWNER }) });
+    const entity_id = auth.entityOf(req);
+    const { item_id, slab_id, missing } = rateBodyOf(req);
+    if (missing) return problem(req, res, { status: 400, ...badRequest(missing) });
+    const shelf = await taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false });
+    const out = await withEntity(entity_id, (db) => setRateOnce(db, entity_id, shelf, item_id, slab_id));
+    /* the refusals, in the pack's word for its tax (never "GST" in code), the caller's values never echoed (Q19) */
+    if (out.refused === 'no_tax') return problem(req, res, { status: 409, ...said('TILL_NO_TAX_SCHEME', 'refused', 'This shop charges no ' + out.word + ', so no rate is needed.') });
+    if (out.refused) return problem(req, res, { status: 404, ...notFound(out.refused === 'no_slab' ? 'That rate is not one of this shop’s ' + out.word + ' slabs.' : 'That product is not in this shop’s catalogue.') });
+    if (out.changed) shopChanged(entity_id, 'rate set');
+    const answer = rateAnswer(out);
+    res.json({ ok: true, item_id, slab_id: out.slab.id, rate: answer.rate, changed: out.changed, words: answer.words });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -2537,6 +2639,18 @@ router.post('/shop', auth, auth.requireScope('till'), ...checked('POST /shop'), 
  * everything else `lib/stock-store.js` already says about v1. A tracked product's balance is still the sum
  * across its batches, which is exactly what "total qty" asks for.
  */
+/** the answer's shape per product: qty · avg_cost (the ledger's own rounding); with detail its lots and `counted` (R104), and how many are not counted */
+function stockBalancesOf(by, inventoryEngine, detail) {
+  const out = {};
+  let notCounted = 0;
+  for (const id of Object.keys(by)) {
+    const b = by[id];
+    out[id] = { qty: b.qty, avg_cost: b.qty ? inventoryEngine.m2(b.value / b.qty) : 0 };
+    if (detail) Object.assign(out[id], { lots: b.lots, counted: b.counted !== false });
+    if (b.counted === false) notCounted++;
+  }
+  return { out, notCounted };
+}
 router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2555,13 +2669,11 @@ router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), 
         not_ready: 'STOCK_LEDGER_MISSING',
         says: 'Stock is not switched on for this shop yet. Receive a delivery and it starts.'
       });
-    const by = await stockStore.onHand(entity_id, withEntity, detail ? { lots: true } : {});
-    const out = {};
-    for (const id of Object.keys(by)) {
-      const b = by[id];
-      out[id] = { qty: b.qty, avg_cost: b.qty ? inv.m2(b.value / b.qty) : 0 };
-      if (detail) out[id].lots = b.lots;
-    }
+    /* R104: with detail, each balance says whether the shop COUNTS it (`counted`, lib/stocked — a dish made to order is false) and
+       `not_counted` says how many are not, so the screen can say so instead of listing a dish at −40 "below zero"; the counter's
+       plain call is unchanged (the till does not show stock). The rows stay: a dish keeps its old figure, greyed. */
+    const by = await stockStore.onHand(entity_id, withEntity, detail ? { lots: true, counted: 'stamp' } : {});
+    const { out, notCounted } = stockBalancesOf(by, inv, detail);
     if (detail && Object.keys(out).length) {
       const ids = Object.keys(out);
       const r = await withEntity(entity_id, (db) => db.query(require('../lib/catalogue-read').ITEM_NAMES_SQL, [entity_id, ids]));
@@ -2573,7 +2685,8 @@ router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), 
     }
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
-    res.json({ balances: out, at: new Date().toISOString() });
+    /* S34: not_counted is named; it is asked for with ?detail=1 only (undefined is left out by JSON, so the plain call answers as before) */
+    res.json({ balances: out, at: new Date().toISOString(), not_counted: detail ? notCounted : undefined });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -2784,7 +2897,8 @@ router.get('/summary', auth, ...checked('GET /summary'), async (req, res) => {
     if (req.query.compare === '1') {
       const out = await TS.trend(entity_id, req.identity && req.identity.identity_id, { period: req.query.period, n: req.query.n, now: Date.now() });
       if (out.status !== 200) return problem(req, res, { status: out.status, ...relayed(out.body) }); // the trend's refusals (400 BAD_PERIOD, 422 NO_COUNTRY / NO_MONEY) keep its own codes and words
-      return res.json(out.body);
+      /* S34: the trend's answer, every key lib/till-summary trend() returns (JSON leaves an undefined one out) */
+      return res.status(200).json({ period: out.body.period, n: out.body.n, currency: out.body.currency, fy_start_month: out.body.fy_start_month, slots: out.body.slots });
     }
     const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
     const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX); /* the one clamp */
@@ -2815,8 +2929,7 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
-    const pg = PL.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX),
-      limit = pg.limit; /* always a page: the statement cuts */
+    const pg = PL.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX), limit = pg.limit; /* always a page: the statement cuts */
     const by = typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by) ? req.query.by : null;
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
@@ -2894,7 +3007,8 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
         };
       })
       .filter((x) => x.no && (!by || (x.by && x.by.id === by)));
-    res.json(Object.assign({ days, count: rows.length }, PL.pageOut('bills', rows, pg, rows.length)));
+    const page = PL.pageOut('bills', rows, pg, rows.length);
+    res.json({ days, count: rows.length, bills: page.bills, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note }); /* S34: every key the pager can add is named (capped, cap_note: only on a cut list; JSON leaves an undefined key out) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -3106,13 +3220,9 @@ router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
       return orders;
     });
     /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
-    if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
-      out.forEach((item) =>
-        (item.receipts || []).forEach((entry) => {
-          delete entry.landed;
-        })
-      );
-    res.json(Object.assign({ days, count: out.length }, PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    if (!(await require('../lib/cost').canReadSafe(req, entity_id))) out.forEach((item) => (item.receipts || []).forEach((entry) => delete entry.landed));
+    const page = PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    res.json({ days, count: out.length, orders: page.orders, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note }); /* S34: every key the pager can add is named (capped, cap_note: only on a cut list; JSON leaves an undefined key out) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }

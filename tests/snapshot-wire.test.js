@@ -1658,7 +1658,8 @@ it('⚠️⚠️ the snapshot reads the shop\'s particulars from invoiceParty, n
  */
 it('⚠️⚠️ every field the counter ACTS on is carried by the snapshot projection', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const at = src.indexOf('const tillItem = (item_id, d) =>');
+  /* F5 A1: the projection takes a third parameter (taxFacts, defaulted from taxFactsOf(d)) — the anchor is the name and its first two parameters */
+  const at = src.indexOf('const tillItem = (item_id, d');
   assert.ok(at > 0, 'tillItem is gone or renamed — this guard is stale');
   /* the projection object, to its closing brace */
   let depth = 0, started = false, end = at;
