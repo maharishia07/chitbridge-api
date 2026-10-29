@@ -742,7 +742,13 @@
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
+  "DELETE /api/crm/followups/:id": {
+   "output_allowlist": true
+  },
   "GET /api/crm/calls": {
+   "output_allowlist": true
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
    "output_allowlist": true
   },
   "GET /api/crm/privacy-requests": {
