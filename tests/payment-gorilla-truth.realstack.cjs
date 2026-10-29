@@ -49,7 +49,9 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const G = require('./lib/gorilla.cjs');
-const { DB, j, ok, kase, pause, freshShop, finish } = H;
+const R = require('./lib/rail-buyer.cjs');
+const { DB, j, ok, kase, freshShop, finish } = H;
+const { textOf } = R;
 
 /* the run tag names the fresh SHOPS only (the world); nothing in a record reads it */
 const RUN = 'gp' + (Date.now() % 1e10).toString(36);
@@ -57,7 +59,6 @@ const FIXED_SEED = 20261030;
 const BILLED_FROM = Date.parse('2026-10-29T06:00:00Z');
 const cents = (value) => Math.round(Number(value) * 100);
 const round2 = (value) => Math.round(value * 100) / 100;
-const textOf = (reply) => [reply && reply.error, reply && reply.message, reply && reply.why, reply && reply.detail].find((said) => typeof said === 'string' && said.trim());
 
 const METHODS = ['upi', 'cash', 'card', 'bank', 'other'];
 const KINDS = ['exact', 'exact', 'quote', 'part', 'within', 'over', 'overNote', 'zero', 'badMethod', 'noMethod', 'negative', 'word', 'longRef'];
@@ -114,24 +115,9 @@ function makeRecord(products) {
   };
 }
 
-/** wait (≤ 3 s) until the books hold the bill open — a payment pressed before that is an advance, and GP-6 would grade nothing.
- *  → the bill row's own ref (the posting names it; the pack does not assume it is the chit id), else null */
-async function openInBooks(pg, entity, party) {
-  for (let tries = 0; tries < 30; tries += 1) {
-    const open = await pg.query("SELECT ref FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill' LIMIT 1", [entity, party]);
-    if (open.rows.length) return open.rows[0].ref;
-    await pause(100);
-  }
-  return null;
-}
-
 /** before each record: the bill its press lands on (see TARGETS) */
 function billMaker(shop, other, pg) {
-  const send = async (token, body) => {
-    const sent = await j('/api/chits/send', { method: 'POST', token, body });
-    if (sent.status >= 300 || !sent.b.chit_id) throw new Error('the bill to press on was not stored: HTTP ' + sent.status + ' ' + (textOf(sent.b) || ''));
-    return sent.b.chit_id;
-  };
+  const send = R.sendChit;
   return async (record) => {
     const no = 'P' + record.index;
     const billedAt = new Date(BILLED_FROM + record.index * 1000).toISOString();
@@ -147,17 +133,12 @@ function billMaker(shop, other, pg) {
         business_json: { customer: { name: 'Walk-in' }, till: { id: 'C1', name: 'Counter 1', host: 'browser' }, bill_no: no, billed_at: billedAt, payment: tender, slip: 'cash' },
         line_items: record.lines }), tender };
     }
-    /* a sale invoice posts only when its buyer is ON THE RAIL (lib/books-hooks.js classify, purpose 'invoice': a self invoice to a
-       local customer is queued "no buyer on the rail") — so each record's buyer is a fresh shop, added to my customers by its User ID */
-    const tag = RUN + 'b' + record.index;
-    const buyer = await freshShop(tag, 'Gorilla Buyer');
-    const added = ok(await j('/api/relationships/customers', { method: 'POST', token: shop.token, body: { handle: tag } }), 'customer ' + record.index).b;
-    const party = added.customer.customer_identity_id;
-    const chitId = await send(shop.token, { recipients: [{ display_name: buyer.name, bridge_id: buyer.bridge, kind: 'to' }], purpose: 'invoice', subject: 'Invoice ' + no,
-      manual_subject: 'Invoice ' + no, client_ref: no, business_json: { bill_no: no, billed_at: billedAt }, line_items: record.lines });
-    const billRef = await openInBooks(pg, shop.entity, party);
-    if (!billRef) throw new Error('the invoice never opened in the books (no party_item bill row for its buyer in 3 s)');
-    return { chit_id: chitId, billRef };
+    /* each record's buyer is a fresh shop ON THE RAIL (tests/lib/rail-buyer.cjs says why) */
+    const { buyer, party } = await R.buyerOnRail(shop, RUN + 'b' + record.index, 'Gorilla Buyer');
+    const chitId = await R.invoiceTo(shop, buyer, { no, billedAt, lines: record.lines });
+    const open = await R.openBills(pg, shop.entity, party, 1);
+    if (!open) throw new Error('the invoice never opened in the books (no party_item bill row for its buyer in 3 s)');
+    return { chit_id: chitId, billRef: open[0].ref };
   };
 }
 
