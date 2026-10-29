@@ -120,10 +120,39 @@ t('⭐⭐⭐ a field INSIDE the seal changing is caught', () => {
   assert.deepStrictEqual(v.covered, ['a']);
 });
 
-t('⚠️ a MISSING sealed field is not the same as a null one… and both are caught', () => {
+t('⚠️ a MISSING sealed field and a null one seal the SAME… and both are caught when the value was set', () => {
   const s = C.seal(['a', 'b'], { a: 1, b: 2 });
   assert.strictEqual(C.verify(s, { a: 1 }).ok, false, 'b went missing');
   assert.strictEqual(C.verify(s, { a: 1, b: null }).ok, false, 'b became null');
+  /* RAIL-141 (f): the old title said "not the same"; seal() maps undefined to null, so they are — pinned */
+  assert.strictEqual(C.seal(['a', 'b'], { a: 1 }).hash, C.seal(['a', 'b'], { a: 1, b: null }).hash);
+});
+
+t('RAIL-141 (f): a seal that covers nothing, or less than it must, is refused', () => {
+  assert.strictEqual(C.verify(C.seal([], { a: 1 }), { a: 999 }).ok, false, 'seal([], x) verified any object');
+  const narrow = C.seal(['a'], { a: 1, amount: 500 });
+  assert.strictEqual(C.verify(narrow, { a: 1, amount: 9 }).ok, true, 'without a required list, the seal\'s own list rules (as before)');
+  const v = C.verify(narrow, { a: 1, amount: 9 }, ['a', 'amount']);
+  assert.strictEqual(v.ok, false);
+  assert.deepStrictEqual(v.uncovered, ['amount']);
+  assert.strictEqual(C.verify(C.seal(['a', 'amount'], { a: 1, amount: 500 }), { a: 1, amount: 500 }, ['amount']).ok, true);
+});
+
+t('RAIL-141 (f): no copy is a reason, never a TypeError', () => {
+  const s = C.seal(['a'], { a: 1 });
+  for (const none of [null, undefined, 'a string', 7]) {
+    const v = C.verify(s, none);
+    assert.strictEqual(v.ok, false);
+    assert.strictEqual(v.why, 'no copy to check against the seal');
+  }
+});
+
+t('RAIL-141 (f): a field named __proto__ is sealed like any other', () => {
+  const copy = JSON.parse('{"__proto__": {"amount": 500}, "a": 1}');
+  const s = C.seal(['__proto__', 'a'], copy);
+  const tampered = JSON.parse('{"__proto__": {"amount": 9}, "a": 1}');
+  assert.strictEqual(C.verify(s, tampered).ok, false, '__proto__ dropped out of the hash');
+  assert.strictEqual(C.verify(s, copy).ok, true);
 });
 
 t('⚠️⚠️ the FIELD LIST is part of the sealed value — a wider seal is a different seal', () => {
