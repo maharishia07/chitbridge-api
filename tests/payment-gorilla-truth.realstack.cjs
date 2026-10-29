@@ -23,7 +23,8 @@
  * exceeds what is open):
  *   GP-1  never a 500: recorded, or refused with a sentence
  *   GP-2  a body the contract refuses (method, amount, ref) is a 400: the copy is not marked and the books hold nothing for it
- *   GP-3  above the quote with no note is a 422 PAYMENT_ABOVE_QUOTE naming the quote, and nothing is marked or recorded
+ *   GP-3  FIN-53 · above what the bill owes (½% over · over · over WITH a note — no tolerance, no note path) is ASKED: 409 ALREADY_PAID
+ *         carrying the `excess` warning with over_minor (the amount over the bill, in paise) and over_words; nothing is marked or recorded
  *   GP-4  a valid press on my open bill is RECORDED (never queued, never "books off"), on MY copy as pressed (method · amount · ref)
  *         and in the books ONCE, for the amount (the quote when none was typed), in paise · method 'other' names no ledger: it may
  *         be queued, but only with a why, and then the books hold nothing for it
@@ -34,9 +35,9 @@
  *         > 0 gate, and the route marks first-come. RECORDED here so the fix turns it green, not written around.
  *   GP-8  a bill I may not mark is refused, and nothing is marked or recorded: a party on neither list 422 · a counter bill 422
  *         PAYMENT_TENDER_ON_BILL (its own tender untouched) · the other shop's bill 404 (their copy untouched) · no such bill 404 / 400
- *   GP-10 gap FIN-53 · a press the route lets through (½% over, inside its tolerance · over the quote WITH a note) is recorded.
- *         TODAY the books' duplicate rule raises `excess` on it and answers 409 "Already paid?": two gates, two meanings. REPORTED
- *         here, not asserted either way — cb-finance decides which gate is right (GP-4 leaves these two kinds to GP-10).
+ *   GP-10 FIN-53 · the ask confirmed: the same press with acknowledge [{ code: 'excess', over_minor }] — the figure it was asked — is
+ *         recorded once, for the whole amount; the bill is settled exactly and the rest is kept as an advance. A STALE figure (over_minor
+ *         one paisa off, as if a colleague recorded in between) is asked again, and writes nothing
  *   GP-11 gap FIN-55 · a stranger's bill pressed "other" is refused 422 and never marked. TODAY the books queue "other" ("no ledger
  *         yet") before the stranger refusal, so it answers 200 and marks my copy paid (GP-8 leaves this pair to GP-11).
  *   GP-9  the duplicate rule: the same amount again on a new press is a 409 ALREADY_PAID that leaves one payment and the first mark;
@@ -65,9 +66,10 @@ const KINDS = ['exact', 'exact', 'quote', 'part', 'within', 'over', 'overNote', 
 const TARGETS = ['stranger', 'counter', 'notMine', 'badId', 'unknownId'];
 const AGAIN = ['replay', 'second', 'same', 'sameAck'];
 const REFUSED_BY_CONTRACT = new Set(['badMethod', 'noMethod', 'negative', 'word', 'longRef']);
-const VALID = new Set(['exact', 'quote', 'part', 'within', 'overNote']);
-/* FIN-53: the route lets these through (inside the ½% tolerance · over with a note), then the books' excess rule answers 409 — GP-10 */
-const LET_THROUGH = new Set(['within', 'overNote']);
+const VALID = new Set(['exact', 'quote', 'part']);
+/* FIN-53 (Athi, 2026-10-29): money above what the bill owes has ONE gate, the books' `excess` ask (409 ALREADY_PAID with over_minor) —
+   no ½% tolerance, no note path. A press of these kinds is asked first (GP-3), then confirmed with the figure it was asked (GP-10) */
+const OVER = new Set(['within', 'over', 'overNote']);
 const ACK_ALL = ['same_again', 'just_settled', 'excess', 'nothing_owed'];
 
 /** the press body for one kind, against a bill of `total` */
@@ -109,7 +111,9 @@ function makeRecord(products) {
     const target = h.chance(0.15) ? h.pick(TARGETS) : 'own';
     const kind = target === 'own' ? h.pick(KINDS) : 'exact';
     const press = pressOf(h, kind, total, index);
-    const again = target === 'own' && h.chance(0.4) ? h.pick(AGAIN) : null;
+    const drawn = target === 'own' && h.chance(0.4) ? h.pick(AGAIN) : null;
+    /* a press above the bill makes its own second press, the confirm (GP-10): no other second press beside it */
+    const again = OVER.has(kind) ? null : drawn;
     const second = again ? secondOf(again, press, total, index, h) : null;
     return { index, target, kind, total, lines, press, again, second };
   };
@@ -142,26 +146,40 @@ function billMaker(shop, other, pg) {
   };
 }
 
-/** press Mark paid (and maybe again), then read what the copy and the books hold */
+/** what my copy's mark and the books hold for this bill now: { mark, payments, settledMinor } */
+async function stateOf(shop, pg, made) {
+  const back = await j('/api/chits/' + made.chit_id, { token: made.token || shop.token });
+  const business = back.b && back.b.header && back.b.header.business_json;
+  const paid = await pg.query('SELECT client_ref, amount_minor FROM books_payment WHERE entity_id = $1 AND client_ref LIKE $2', [shop.entity, 'chitpay:' + made.chit_id + '%']);
+  const settled = await pg.query("SELECT COALESCE(SUM(ABS(amount_minor)), 0) AS minor FROM party_item WHERE entity_id = $1 AND ref_kind = 'allocation' AND against_ref = $2", [shop.entity, String(made.billRef || made.chit_id)]);
+  return { mark: business ? business.payment || null : null, payments: paid.rows.map((row) => ({ key: row.client_ref, minor: Number(row.amount_minor) })), settledMinor: Number(settled.rows[0].minor) };
+}
+/** the `excess` warning of an answer, if it carries one */
+const excessOf = (body) => ((body && body.warnings) || []).find((warning) => warning && warning.code === 'excess') || null;
+
+/** press Mark paid (and maybe again — or, above the bill, confirm the ask), then read what the copy and the books hold */
 function presser(shop, pg) {
   return async (record, index, made) => {
     const url = '/api/chits/' + encodeURIComponent(made.chit_id) + '/payment';
     const first = await j(url, { method: 'POST', token: shop.token, body: record.press });
-    const seen = { status: first.status, said: textOf(first.b), body: first.b, chit_id: made.chit_id, tender: made.tender };
+    const seen = { status: first.status, said: textOf(first.b), body: first.b, chit_id: made.chit_id, tender: made.tender, billRef: made.billRef || null };
     if (record.second) {
       const again = await j(url, { method: 'POST', token: shop.token, body: record.second });
       Object.assign(seen, { againStatus: again.status, againSaid: textOf(again.b), againBody: again.b });
     }
     if (record.target === 'badId' || record.target === 'unknownId') return Object.assign(seen, { mark: null, payments: [], settledMinor: 0 });
-    const back = await j('/api/chits/' + made.chit_id, { token: made.token || shop.token });
-    const business = back.b && back.b.header && back.b.header.business_json;
-    seen.mark = business ? business.payment || null : null;
-    const paid = await pg.query('SELECT client_ref, amount_minor FROM books_payment WHERE entity_id = $1 AND client_ref LIKE $2', [shop.entity, 'chitpay:' + made.chit_id + '%']);
-    seen.payments = paid.rows.map((row) => ({ key: row.client_ref, minor: Number(row.amount_minor) }));
-    const settled = await pg.query("SELECT COALESCE(SUM(ABS(amount_minor)), 0) AS minor FROM party_item WHERE entity_id = $1 AND ref_kind = 'allocation' AND against_ref = $2", [shop.entity, String(made.billRef || made.chit_id)]);
-    seen.billRef = made.billRef || null;
-    seen.settledMinor = Number(settled.rows[0].minor);
-    return seen;
+    const asked = own(record) && OVER.has(record.kind) && first.status === 409 ? excessOf(first.b) : null;
+    if (asked) {
+      /* GP-3 reads what the ask left behind; GP-10 confirms it — first with a STALE figure on a ½%-over press, then with the one it was asked */
+      seen.afterAsk = await stateOf(shop, pg, made);
+      if (record.kind === 'within') {
+        const stale = await j(url, { method: 'POST', token: shop.token, body: Object.assign({}, record.press, { acknowledge: [{ code: 'excess', over_minor: asked.over_minor + 1 }] }) });
+        Object.assign(seen, { staleStatus: stale.status, staleBody: stale.b, afterStale: await stateOf(shop, pg, made) });
+      }
+      const confirm = await j(url, { method: 'POST', token: shop.token, body: Object.assign({}, record.press, { acknowledge: [{ code: 'excess', over_minor: asked.over_minor }] }) });
+      Object.assign(seen, { confirmStatus: confirm.status, confirmSaid: textOf(confirm.b), confirmBody: confirm.b });
+    }
+    return Object.assign(seen, await stateOf(shop, pg, made));
   };
 }
 
@@ -178,7 +196,7 @@ const nothingFor = (seen, press) => seen.payments.some((pay) => pay.key === keyO
 const CHECKS = [
   { id: 'GP-1', title: 'never a 500: every press is recorded, or refused with a sentence', check: (record, seen) => {
     if (seen.thrown) return 'the call threw: ' + seen.thrown;
-    for (const [status, said] of [[seen.status, seen.said], [seen.againStatus, seen.againSaid]]) {
+    for (const [status, said] of [[seen.status, seen.said], [seen.againStatus, seen.againSaid], [seen.staleStatus, textOf(seen.staleBody)], [seen.confirmStatus, seen.confirmSaid]]) {
       if (status === undefined) continue;
       if (status >= 500) return 'HTTP ' + status + (said ? ' "' + said.slice(0, 80) + '"' : '');
       if (status >= 400 && !said) return 'HTTP ' + status + ' with no sentence';
@@ -191,15 +209,19 @@ const CHECKS = [
     if (nothingFor(seen, record.press)) return 'refused, but the books hold it';
     return seen.mark && !marksAgain(record) ? 'refused, but the copy is marked ' + JSON.stringify(seen.mark) : null;
   } },
-  { id: 'GP-3', title: 'above the quote with no note is a 422 naming the quote, and nothing is marked or recorded', check: (record, seen) => {
-    if (seen.thrown || !own(record) || record.kind !== 'over') return null;
-    if (seen.status !== 422 || !seen.body || seen.body.code !== 'PAYMENT_ABOVE_QUOTE') return '₹' + record.press.amount + ' on a bill of ₹' + record.total + ' answered HTTP ' + seen.status + ' ' + (seen.body && seen.body.code);
-    if (cents(seen.body.quoted) !== cents(record.total)) return 'the refusal names a quote of ' + seen.body.quoted + ', the bill is ' + record.total;
-    if (nothingFor(seen, record.press)) return 'refused, but the books hold it';
-    return seen.mark && !marksAgain(record) ? 'refused, but the copy is marked ' + JSON.stringify(seen.mark) : null;
+  { id: 'GP-3', title: 'above what the bill owes (½% over · over · over with a note) is asked: 409 ALREADY_PAID with the excess and its over_minor; nothing marked or recorded', check: (record, seen) => {
+    if (seen.thrown || !own(record) || !OVER.has(record.kind)) return null;
+    /* 'other' names no ledger: the books queue it with a why before any ask, and hold nothing (as GP-4) */
+    if (record.press.method === 'other' && seen.status === 200 && waits(seen.body)) return seen.body.books.why && !nothingFor(seen, record.press) ? null : '"other" above the bill: queued with no why, or the books hold it';
+    const asked = excessOf(seen.body);
+    if (seen.status !== 409 || seen.body.code !== 'ALREADY_PAID' || !asked) return record.kind + ' ₹' + record.press.amount + ' on a bill of ₹' + record.total + ' answered HTTP ' + seen.status + ' ' + (seen.body && seen.body.code) + ' "' + (seen.said || '').slice(0, 60) + '"';
+    const over = cents(record.press.amount) - cents(record.total);
+    if (asked.over_minor !== over || typeof asked.over_words !== 'string' || !asked.over_words) return 'asked with over_minor ' + asked.over_minor + ' (' + JSON.stringify(asked.over_words) + '); the press is ' + over + ' paise over the bill';
+    if (!seen.afterAsk || seen.afterAsk.payments.length) return 'asked, but the books hold ' + (seen.afterAsk ? seen.afterAsk.payments.length : '?') + ' payment(s)';
+    return seen.afterAsk.mark ? 'asked, but the copy is marked ' + JSON.stringify(seen.afterAsk.mark) : null;
   } },
   { id: 'GP-4', title: 'a valid press on my open bill is recorded (never queued), on my copy as pressed, and in the books once in paise', check: (record, seen) => {
-    if (seen.thrown || !own(record) || !VALID.has(record.kind) || LET_THROUGH.has(record.kind)) return null;
+    if (seen.thrown || !own(record) || !VALID.has(record.kind)) return null;
     if (seen.status !== 200) return record.kind + ' answered HTTP ' + seen.status + ' "' + (seen.said || '') + '"';
     const press = record.press;
     /* 'other' names no ledger of its own: the books queue it and SAY why ("… which has no ledger yet") — honest, not silent */
@@ -260,9 +282,17 @@ const CHECKS = [
     if (seen.status !== 422) return 'a stranger, "other", answered HTTP ' + seen.status + ' "' + (seen.said || '').slice(0, 60) + '"' + (seen.mark ? ' and my copy is marked paid' : '');
     return seen.mark ? 'refused, but the copy is marked ' + JSON.stringify(seen.mark) : seen.payments.length ? 'refused, but the books hold it' : null;
   } },
-  { id: 'GP-10', title: 'a press the route lets through (inside the ½% tolerance · over the quote with a note) is recorded, not refused by the books', gap: 'FIN-53 · the route lets it through (tolerance · a note), then the books\' excess rule answers 409', check: (record, seen) => {
-    if (seen.thrown || !own(record) || !LET_THROUGH.has(record.kind)) return null;
-    return seen.status === 200 ? null : record.kind + ' answered HTTP ' + seen.status + ' "' + (seen.said || '').slice(0, 80) + '"';
+  { id: 'GP-10', title: 'the ask confirmed with the figure it was asked is recorded once for the whole amount (the bill settled exactly, the rest an advance); a stale figure is asked again', check: (record, seen) => {
+    if (seen.thrown || !own(record) || !OVER.has(record.kind) || seen.confirmStatus === undefined) return null;
+    if (seen.staleStatus !== undefined) {
+      if (seen.staleStatus !== 409 || !excessOf(seen.staleBody)) return 'confirmed with a stale figure (one paisa off), it answered HTTP ' + seen.staleStatus + ' ' + (seen.staleBody && seen.staleBody.code);
+      if (seen.afterStale.payments.length || seen.afterStale.mark) return 'a stale confirm was asked again, but it wrote: ' + seen.afterStale.payments.length + ' payment(s), mark ' + JSON.stringify(seen.afterStale.mark);
+    }
+    if (seen.confirmStatus !== 200 || !seen.confirmBody || seen.confirmBody.message !== 'Payment recorded') return 'confirmed with the figure asked, it answered HTTP ' + seen.confirmStatus + ' ' + (seen.confirmBody && seen.confirmBody.code) + ' "' + (seen.confirmSaid || '').slice(0, 80) + '"';
+    const mine = seen.payments.filter((pay) => pay.key === keyOf(seen, record.press));
+    if (mine.length !== 1 || mine[0].minor !== cents(record.press.amount)) return 'confirmed: the books hold ' + JSON.stringify(mine.map((pay) => pay.minor)) + ', the press was ' + cents(record.press.amount) + ' paise';
+    if (seen.settledMinor !== cents(record.total)) return 'confirmed: ' + seen.settledMinor + ' paise settled against a bill of ' + cents(record.total) + ' (the rest belongs on account)';
+    return seen.mark && cents(seen.mark.amount) === cents(record.press.amount) ? null : 'confirmed, but my copy says ' + JSON.stringify(seen.mark);
   } }
 ];
 
