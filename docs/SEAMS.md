@@ -53,6 +53,7 @@ of file each thing is; this says what already does the job.
 | 35 | `modal` | `app.html` |  |
 | 35 | `host` | `chit-sheet.js` |  |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
+| 35 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 34 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 33 | `closeModal` | `app.html` |  |
 | 38 | `register` | `regulation.js` | register(pack) → the pack — |
@@ -62,7 +63,6 @@ of file each thing is; this says what already does the job.
 | 32 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 31 | `facts` | `bill-steps.js` | MY state_log — |
 | 31 | `live` | `receivables.js` | the allocations that still count: |
-| 33 | `checked` | `till-contract.js` | the schema check of one route (its own operation above), as a list to spread after the gates: |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `rate` | `convert.js` | A rate, with its evidence. |
 | 29 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
@@ -140,6 +140,7 @@ of file each thing is; this says what already does the job.
 | 22 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
+| 17 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
@@ -202,7 +203,6 @@ of file each thing is; this says what already does the job.
 | 11 | `tabs` | `workflow.js` | the folder tabs, in the order the screen shows them |
 | 11 | `actions` | `workflow.js` | actions(chit, me) — |
 | 11 | `patch` | `books-recurring.js` |  |
-| 15 | `faultOf` | `chits-contract.js` | `extra` keys ride after the message (the gate that names what is still open). |
 | 11 | `format` | `ctpaddress.js` | Render one. |
 | 11 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 11 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
