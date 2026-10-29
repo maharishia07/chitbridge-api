@@ -96140,6 +96140,62 @@
    "needs": [
     "the API running (via truth-harness.cjs)"
    ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-supplies.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE SUPPLIES ROUTES (ROUTES/SUPPLIES.JS: WHAT A SHOP BUYS TO USE, THE LIST, ADD, EDIT, PURCHASE AND ISSUE) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; ANOTHER SHOP'S SUPPLY ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE SUPPLIES ROUTES (ROUTES/SUPPLIES.JS: WHAT A SHOP BUYS TO USE, THE LIST, ADD, EDIT, PURCHASE AND ISSUE) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; ANOTHER SHOP'S SUPPLY ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 233 lines. Run: node chitbridge-api/tests/api-problem-supplies.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 233,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/supplies-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SUPPLIES TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/supplies.js).",
+   "claim": "SUPPLIES TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/supplies.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 99 lines. Run: node chitbridge-api/tests/supplies-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 99,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
   }
  ]
 }
