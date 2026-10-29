@@ -75,6 +75,18 @@ const CS = require(path.join(API, 'lib', 'country-setup'));
   const stamped = await CS.stampAtSignup ? await CS.stampAtSignup(h, 'E2') : false;
   ok('a country with no pack answer (no money, no year) is NOT stamped — the step still asks', stamped === false && STAMPS === 0);
 
+  const reset = (row) => { Object.assign(ROW, { country: 'AU', currency_code: 'AUD', gstn: null, timezone: 'Australia/Sydney' }, row); GOV = { fy_start_month: null, tax_registration: null, setup_source: { country: 'you chose it at sign-up' }, country_setup_at: null }; STAMPS = 0; CS.forget('E3'); };
+  reset({ timezone: 'Asia/Kolkata' });
+  await CS.acceptAtSignup(h, 'E3', { country: 'AU', country_source: 'chosen' }, at);
+  CS.forget('E3'); p = await CS.profile(h, 'E3');
+  ok('skip: AU with a zone of another country (several AU zones, none picked) → unstamped, the step still asks', STAMPS === 0 && p.done === false && p.required === true, JSON.stringify([STAMPS, p.done]));
+  reset({ gstn: 'NOT-AN-ABN' });
+  await CS.acceptAtSignup(h, 'E3', { country: 'AU', country_source: 'chosen' }, at);
+  CS.forget('E3'); p = await CS.profile(h, 'E3');
+  ok('skip: a bad tax number → unstamped, the step still asks', STAMPS === 0 && p.done === false && p.required === true, JSON.stringify([STAMPS, p.done]));
+  reset({});
+  await CS.acceptAtSignup(h, 'E3', { country: 'AU', country_source: 'chosen', timezone: 'Australia/Sydney' }, at);
+  ok('the accepted words ride on money and year too (never "what you set")', !!GOV.setup_source.country && GOV.setup_source.currency === GOV.setup_source.country && GOV.setup_source.fy_start_month === GOV.setup_source.country, JSON.stringify(GOV.setup_source));
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
