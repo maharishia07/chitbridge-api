@@ -4645,12 +4645,12 @@
      "scenario": "nothing-found",
      "status": 400,
      "body_keys": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      },
      "fixture": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      }
     }
    ]
@@ -21348,7 +21348,7 @@
      },
      "fixture": {
       "error": "Failed to record delivery",
-      "message": "Something went wrong — please try again."
+      "message": "Each delivery needs a line_id"
      }
     },
     {
@@ -21400,7 +21400,7 @@
      },
      "fixture": {
       "error": "Failed to record delivery",
-      "message": "Something went wrong — please try again."
+      "message": "Nothing to record"
      }
     }
    ]
@@ -22299,20 +22299,6 @@
         "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\"."
        }
       ]
-     }
-    },
-    {
-     "scenario": "payment-above-the-quote",
-     "status": 422,
-     "body_keys": {
-      "error": "Above the quoted amount",
-      "message": "Received 500 against a quote of 100. Add a note saying why, or record the quoted amount.",
-      "quoted": 100
-     },
-     "fixture": {
-      "error": "Above the quoted amount",
-      "message": "Received 500 against a quote of 100. Add a note saying why, or record the quoted amount.",
-      "quoted": 100
      }
     }
    ]

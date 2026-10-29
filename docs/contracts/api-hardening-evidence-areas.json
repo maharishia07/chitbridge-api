@@ -22,6 +22,9 @@
   "DELETE /api/products/:id/media/:mid": {
    "output_allowlist": true
   },
+  "DELETE /api/quick-keys/groups/:id": {
+   "foreign_id_404": true
+  },
   "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
@@ -32,6 +35,15 @@
    "output_allowlist": true
   },
   "GET /api/actors/settings": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/catalogue-mine": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/penetration": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/regions": {
    "output_allowlist": true
   },
   "GET /api/books/accounts": {
@@ -147,6 +159,42 @@
   "GET /api/crm/segments": {
    "output_allowlist": true
   },
+  "GET /api/entities/entitlements": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/header": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/me": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/me/can-see-costs": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/mis": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/policy": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/populations": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/routing": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/search": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/sides": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/usage": {
+   "output_allowlist": true
+  },
+  "GET /api/forms/instances/:id": {
+   "foreign_id_404": true
+  },
   "GET /api/governance/ai-skills": {
    "output_allowlist": true
   },
@@ -189,39 +237,6 @@
   "GET /api/governance/vault-schema": {
    "output_allowlist": true
   },
-  "GET /api/entities/entitlements": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/header": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/me": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/me/can-see-costs": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/mis": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/policy": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/populations": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/routing": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/search": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/sides": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/usage": {
-   "output_allowlist": true
-  },
   "GET /api/products": {
    "output_allowlist": true
   },
@@ -233,9 +248,6 @@
   },
   "GET /api/products/starter-columns": {
    "output_allowlist": true
-  },
-  "GET /api/forms/instances/:id": {
-   "foreign_id_404": true
   },
   "GET /api/repeat/:id": {
    "foreign_id_404": true
@@ -304,6 +316,9 @@
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true
   },
+  "PATCH /api/quick-keys/groups/:id": {
+   "foreign_id_404": true
+  },
   "PATCH /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
@@ -367,6 +382,9 @@
   "POST /api/forms/instances/:id/sign": {
    "foreign_id_404": true
   },
+  "POST /api/quick-keys/groups/:id/items": {
+   "foreign_id_404": true
+  },
   "POST /api/repeat/:id/accept": {
    "foreign_id_404": true
   },
@@ -425,24 +443,6 @@
    "foreign_id_404": true
   },
   "PUT /api/connections/:id/respond": {
-   "foreign_id_404": true
-  },
-  "GET /api/assist/catalogue-mine": {
-   "output_allowlist": true
-  },
-  "GET /api/assist/penetration": {
-   "output_allowlist": true
-  },
-  "GET /api/assist/regions": {
-   "output_allowlist": true
-  },
-  "DELETE /api/quick-keys/groups/:id": {
-   "foreign_id_404": true
-  },
-  "PATCH /api/quick-keys/groups/:id": {
-   "foreign_id_404": true
-  },
-  "POST /api/quick-keys/groups/:id/items": {
    "foreign_id_404": true
   }
  }

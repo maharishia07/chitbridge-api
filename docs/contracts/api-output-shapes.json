@@ -837,6 +837,12 @@
           },
           "limit": {
             "type": "number"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
           }
         },
         "additionalProperties": false
