@@ -10944,6 +10944,110 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "price-null",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "price-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "price-empty-list",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "price-true",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price must be a number",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price must be a number",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price must be a number",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price must be a number",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },

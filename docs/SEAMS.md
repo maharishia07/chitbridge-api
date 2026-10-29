@@ -9,13 +9,13 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 122 | `list` | `amend.js` |  |
+| 123 | `list` | `amend.js` |  |
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
 | 89 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
-| 75 | `answer` | `availability.js` | from March; then nearest. |
+| 77 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 65 | `list` | `cap-settings.js` |  |
@@ -32,7 +32,7 @@ of file each thing is; this says what already does the job.
 | 52 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 50 | `entry` | `books-store.js` |  |
 | 49 | `toast` | `accounts-shell.js` |  |
-| 49 | `record` | `access-events.js` |  |
+| 50 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `pack` | `books-store.js` |  |
 | 47 | `again` | `signin-ui.js` |  |
@@ -40,9 +40,9 @@ of file each thing is; this says what already does the job.
 | 43 | `read` | `cap-print.js` |  |
 | 41 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 41 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 41 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 42 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 40 | `view` | `books-payables.js` | group: |
-| 40 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
+| 41 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 38 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `write` | `junitresults.js` | control characters are not legal XML at all — |
@@ -89,7 +89,7 @@ of file each thing is; this says what already does the job.
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 26 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
-| 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
+| 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 25 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `money` | `cart.js` |  |
@@ -134,7 +134,7 @@ of file each thing is; this says what already does the job.
 | 17 | `verify` | `bookpack.js` | manifest's own hash. |
 | 17 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 17 | `notMigrated` | `crm-followups.js` |  |
-| 17 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 18 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 17 | `governance` | `home-facts.js` |  |
 | 17 | `match` | `itemmatch.js` | actually state. |
 | 17 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
@@ -170,7 +170,7 @@ of file each thing is; this says what already does the job.
 | 14 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `where` | `istest.js` | READING is_test is fine and stays — |
-| 14 | `report` | `raida.js` | register at the one moment it must not. |
+| 15 | `report` | `raida.js` | register at the one moment it must not. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
