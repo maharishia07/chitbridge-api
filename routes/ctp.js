@@ -70,9 +70,18 @@ const ctpLimiter = rateLimit({
  * where a pairing has been declared, because a population code is a LOCAL name (§7.1).
  */
 async function manifest() {
+  return (await manifestRead()).body;
+}
+/**
+ * manifestRead() → { body, whole } — the manifest, and whether both reads answered (only a whole one may be cached).
+ * ⚠️ RAIL-140 (b): the door set `public, max-age=900` before reading, so a failed read went out as a 200 with no label and no
+ * populations, and every peer kept that blip for 15 minutes as the truth.
+ */
+async function manifestRead() {
   const k = keys.status();
   let me = null,
-    pops = [];
+    pops = [],
+    whole = true;
   try {
     /**
      * ⚠️ WHO I AM IS CONFIGURATION, NOT A FLAG ABOUT OTHERS. This filtered on `hosted_locally = true` and so
@@ -93,6 +102,7 @@ async function manifest() {
   } catch (e) {
     log.fellBack('ctp manifest: the read failed — answered with nothing', e);
     me = null;
+    whole = false;
   }
   try {
     /* ⚠️ only `live` by default. Publishing every sandbox code would tell the world what we are testing and
@@ -102,9 +112,10 @@ async function manifest() {
   } catch (e) {
     log.fellBack('ctp manifest: the read failed — answered with none', e);
     pops = [];
+    whole = false;
   }
 
-  return {
+  const body = {
     ctp: '1',
     installation_key: me ? me.installation_key : process.env.INSTALLATION_KEY || 'platform-0',
     label: me ? me.label : null,
@@ -115,14 +126,19 @@ async function manifest() {
     /* ⚠️ said out loud. An installation that cannot sign is one whose envelopes nobody should accept, and a
        peer deserves to learn that from the manifest rather than from a failed delivery. */
     can_sign: k.can_sign,
-    note: k.can_sign ? undefined : k.why
+    /* RAIL-140 (b): a fixed sentence. k.why names the variable and carries the crypto library's error text — for our own log
+       and health check, not for every stranger who reads the manifest. */
+    note: k.can_sign ? undefined : CANNOT_SIGN
   };
+  return { body, whole };
 }
+const CANNOT_SIGN = 'this installation cannot sign envelopes — do not accept any that claim to come from it';
 
 router.get('/.well-known/ctp.json', async (req, res) => {
   try {
-    res.set('Cache-Control', 'public, max-age=900');
-    res.json(await manifest());
+    const read = await manifestRead();
+    res.set('Cache-Control', read.whole ? 'public, max-age=900' : 'no-store'); /* RAIL-140 (b): never cache a blip */
+    res.json(read.body);
   } catch (e) {
     safeErr(e, { id: req.id, path: req.path });
     res.set('Cache-Control', 'no-store'); /* a peer must not keep a failure for 15 minutes */
