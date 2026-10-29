@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 35,
-  "partial": 539,
-  "meets": 60,
+  "partial": 504,
+  "meets": 95,
   "columns": {
    "strict_input": {
     "applies": 346,
@@ -102,11 +102,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1496623347f83909"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/books/recurring/:id",
@@ -265,7 +264,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6021,
+   "line": 6025,
    "hash": "696cfc274508482e",
    "columns": {
     "schema_in": true,
@@ -304,11 +303,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "696cfc274508482e"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/chits/:chit_id/payment",
@@ -316,7 +314,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4610,
+   "line": 4614,
    "hash": "42d31fa87e8d8a95",
    "columns": {
     "schema_in": true,
@@ -367,7 +365,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6282,
+   "line": 6286,
    "hash": "fc31a63bfe103fc8",
    "columns": {
     "schema_in": true,
@@ -407,11 +405,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fc31a63bfe103fc8"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/combo-templates/:id",
@@ -877,7 +874,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1778,
+   "line": 1769,
    "hash": "65c79891d0d65e2b",
    "columns": {
     "schema_in": true,
@@ -927,7 +924,7 @@
    "path": "/api/products/:id/media/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1928,
+   "line": 1919,
    "hash": "4b7298a6835be858",
    "columns": {
     "schema_in": true,
@@ -977,7 +974,7 @@
    "path": "/api/products/:id/schedule/:sid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1659,
+   "line": 1650,
    "hash": "e1ba6d46b5072d1f",
    "columns": {
     "schema_in": true,
@@ -1315,11 +1312,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "db74ffb600c474b0"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/actors/:id/tasks",
@@ -1516,8 +1512,8 @@
    "path": "/api/adopt/:chit_id",
    "owner_area": "adopt",
    "file": "routes/adopt.js",
-   "line": 143,
-   "hash": "11d0aeb826b4841f",
+   "line": 144,
+   "hash": "7d975202c510f93b",
    "columns": {
     "schema_in": true,
     "schema_out": false,
@@ -4514,8 +4510,8 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3172,
-   "hash": "5dda7efbdb81bb24",
+   "line": 3176,
+   "hash": "0a6f999b3e6b83d1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4555,7 +4551,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5dda7efbdb81bb24"
+    "stale_since": "0a6f999b3e6b83d1"
    },
    "status": "partial"
   },
@@ -4565,7 +4561,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4436,
+   "line": 4440,
    "hash": "8c5c87ac7afd70af",
    "columns": {
     "schema_in": true,
@@ -4614,7 +4610,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3723,
+   "line": 3727,
    "hash": "4a7a64bbf05a9fdb",
    "columns": {
     "schema_in": true,
@@ -4665,7 +4661,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5702,
+   "line": 5706,
    "hash": "d314b7303243841c",
    "columns": {
     "schema_in": true,
@@ -4716,7 +4712,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5656,
+   "line": 5660,
    "hash": "3d7ed7659b7e4ede",
    "columns": {
     "schema_in": true,
@@ -4767,7 +4763,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5326,
+   "line": 5330,
    "hash": "ffa44464ffc2fb1f",
    "columns": {
     "schema_in": true,
@@ -4818,7 +4814,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3930,
+   "line": 3934,
    "hash": "5314575a13d964fd",
    "columns": {
     "schema_in": true,
@@ -4868,7 +4864,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4041,
+   "line": 4045,
    "hash": "48686d79860a87fc",
    "columns": {
     "schema_in": true,
@@ -4920,7 +4916,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6581,
+   "line": 6585,
    "hash": "e0f68ab161a07cc0",
    "columns": {
     "schema_in": true,
@@ -4971,7 +4967,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6608,
+   "line": 6612,
    "hash": "bddc64e2800083d8",
    "columns": {
     "schema_in": true,
@@ -5011,11 +5007,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bddc64e2800083d8"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/disputes/queue",
@@ -5023,7 +5018,7 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5922,
+   "line": 5926,
    "hash": "447d15bd5a3a6945",
    "columns": {
     "schema_in": true,
@@ -5061,11 +5056,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "447d15bd5a3a6945"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/folder",
@@ -5073,8 +5067,8 @@
    "path": "/api/chits/folder",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2751,
-   "hash": "572705a3b3d06594",
+   "line": 2755,
+   "hash": "55d4d0593ffb2a8c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5111,10 +5105,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "55d4d0593ffb2a8c"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/inbox",
@@ -5122,8 +5117,8 @@
    "path": "/api/chits/inbox",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2926,
-   "hash": "045a326ed39e1c35",
+   "line": 2930,
+   "hash": "043cd9e70f06789d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5160,10 +5155,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "043cd9e70f06789d"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/pulse",
@@ -5171,7 +5167,7 @@
    "path": "/api/chits/pulse",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3113,
+   "line": 3117,
    "hash": "54cb3e4dc8ed64b1",
    "columns": {
     "schema_in": true,
@@ -5218,7 +5214,7 @@
    "path": "/api/chits/raida/report",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3912,
+   "line": 3916,
    "hash": "aa60ca38a2849a85",
    "columns": {
     "schema_in": true,
@@ -5267,7 +5263,7 @@
    "path": "/api/chits/register/attachables",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3752,
+   "line": 3756,
    "hash": "6c723ef8908ee772",
    "columns": {
     "schema_in": true,
@@ -5315,7 +5311,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3762,
+   "line": 3766,
    "hash": "211750c4fabb452d",
    "columns": {
     "schema_in": true,
@@ -5364,7 +5360,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3804,
+   "line": 3808,
    "hash": "077c4a340f489f7d",
    "columns": {
     "schema_in": true,
@@ -5412,7 +5408,7 @@
    "path": "/api/chits/register/walk/:from",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3869,
+   "line": 3873,
    "hash": "ac296de840414378",
    "columns": {
     "schema_in": true,
@@ -5462,8 +5458,8 @@
    "path": "/api/chits/rollup",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2831,
-   "hash": "6263db31de91eae7",
+   "line": 2835,
+   "hash": "bf8ab9c162ab85dc",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5500,10 +5496,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bf8ab9c162ab85dc"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/sent",
@@ -5511,8 +5508,8 @@
    "path": "/api/chits/sent",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2684,
-   "hash": "c4148c7638d93022",
+   "line": 2688,
+   "hash": "81a3de9166377e50",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5549,10 +5546,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "81a3de9166377e50"
    },
-   "status": "meets standard"
+   "status": "partial"
   },
   {
    "key": "GET /api/chits/trace/batches",
@@ -5560,7 +5558,7 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6808,
+   "line": 6812,
    "hash": "e4d84f8cefe1d1a4",
    "columns": {
     "schema_in": true,
@@ -5609,7 +5607,7 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6852,
+   "line": 6856,
    "hash": "f15e538c4e88a8b4",
    "columns": {
     "schema_in": true,
@@ -5659,7 +5657,7 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 7033,
+   "line": 7037,
    "hash": "8f9238406a761e84",
    "columns": {
     "schema_in": true,
@@ -5707,7 +5705,7 @@
    "path": "/api/chits/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3140,
+   "line": 3144,
    "hash": "1524b1fea6fa0ce1",
    "columns": {
     "schema_in": true,
@@ -6829,11 +6827,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1ecf5a03e800a3af"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/lookup",
@@ -6929,11 +6926,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "923ae667956b75ae"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/me/can-see-costs",
@@ -6978,11 +6974,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b43d5b8b4da152b9"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/mis",
@@ -7029,11 +7024,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "11720064f2b88a42"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/policy",
@@ -7078,11 +7072,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b266e6cd0e2948a9"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/populations",
@@ -7129,11 +7122,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6a13bf4d7882b36c"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/routing",
@@ -7178,11 +7170,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bd72f1910c24b423"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/routing/preview",
@@ -7275,11 +7266,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5ad0154eda5f0382"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/sides",
@@ -7324,11 +7314,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ff462dcb06f9ef9e"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/usage",
@@ -7373,11 +7362,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "15ee27fbadd385d3"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/events/stats",
@@ -7621,11 +7609,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3aa7dc583807a82a"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/:id/chits",
@@ -7821,11 +7808,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6de17009cdef055b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/inventory",
@@ -7870,11 +7856,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b6e727a5f02eaf0b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/messages",
@@ -7920,11 +7905,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "60877e20b8df1857"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/mis",
@@ -7970,11 +7954,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a7167645145a889c"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/reconcile",
@@ -8020,11 +8003,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ab50db137b09ad6d"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/rules",
@@ -8070,11 +8052,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f389be46783c2688"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/rules/vocabulary",
@@ -8118,11 +8099,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "acd81ea945245e41"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/folders/worklist",
@@ -8169,11 +8149,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9cf17566745c9c6b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/forms",
@@ -8215,13 +8194,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/forms/:key",
@@ -8415,11 +8394,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cf1d3b18bbcc525b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/ai-usage",
@@ -8464,11 +8442,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "328373386394ebd9"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/boilerplate/:key",
@@ -8564,11 +8541,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4345a64878ef69f5"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/country-setup",
@@ -8613,11 +8589,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "334f5920ce6e77df"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/entities/:id",
@@ -8715,11 +8690,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0bce9d98503ac909"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/journey",
@@ -8765,11 +8739,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "31b9ee010d1c6425"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/lanes",
@@ -8815,11 +8788,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ed18220df1d5093b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/profile",
@@ -8864,11 +8836,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "094e8e3e410dcf65"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/profile/path",
@@ -8913,11 +8884,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "16ad5c28a4f1437c"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/profile/readiness",
@@ -8962,11 +8932,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f5ab03811ab83248"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/readiness",
@@ -9012,11 +8981,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bf302810e657e9d2"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/readiness/:bridge_id",
@@ -9063,11 +9031,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "247f6375ed55e55e"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/source/:key",
@@ -9213,11 +9180,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c62ac0e212831a25"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/governance/vault-schema",
@@ -10868,7 +10834,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 704,
+   "line": 695,
    "hash": "a85c20451df4101f",
    "columns": {
     "schema_in": true,
@@ -10918,7 +10884,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1609,
+   "line": 1600,
    "hash": "ea2d7e6880efeff6",
    "columns": {
     "schema_in": true,
@@ -10968,7 +10934,7 @@
    "path": "/api/products/:id/versions",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1964,
+   "line": 1955,
    "hash": "80271132220845aa",
    "columns": {
     "schema_in": true,
@@ -11020,7 +10986,7 @@
    "path": "/api/products/export.csv",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1063,
+   "line": 1054,
    "hash": "e6c365a0051bb1fc",
    "columns": {
     "schema_in": true,
@@ -11068,7 +11034,7 @@
    "path": "/api/products/lists",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2079,
+   "line": 2070,
    "hash": "53042587c8e14b98",
    "columns": {
     "schema_in": true,
@@ -11117,7 +11083,7 @@
    "path": "/api/products/media/:item_id/:mid",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1823,
+   "line": 1814,
    "hash": "37dfa7e57774ac5a",
    "columns": {
     "schema_in": true,
@@ -11166,7 +11132,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1394,
+   "line": 1385,
    "hash": "63089576d01de346",
    "columns": {
     "schema_in": true,
@@ -11216,7 +11182,7 @@
    "path": "/api/products/template",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1092,
+   "line": 1083,
    "hash": "450991b1787aac03",
    "columns": {
     "schema_in": true,
@@ -11265,7 +11231,7 @@
    "path": "/api/products/workbook.xlsx",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 992,
+   "line": 983,
    "hash": "f926495a5d767afd",
    "columns": {
     "schema_in": true,
@@ -12180,7 +12146,7 @@
    "owner_area": "supplies",
    "file": "routes/supplies.js",
    "line": 34,
-   "hash": "c4953df700becb6a",
+   "hash": "33e67c8520a5c1fa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14074,8 +14040,8 @@
    "path": "/api/work/:chit_id",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 65,
-   "hash": "e9e78fe254fd3f60",
+   "line": 67,
+   "hash": "8556922c176d7149",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14116,7 +14082,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e9e78fe254fd3f60"
+    "stale_since": "8556922c176d7149"
    },
    "status": "partial"
   },
@@ -14126,8 +14092,8 @@
    "path": "/api/work/facts",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 54,
-   "hash": "c304a00773a7b8db",
+   "line": 56,
+   "hash": "54051ede65553eaf",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14167,7 +14133,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c304a00773a7b8db"
+    "stale_since": "54051ede65553eaf"
    },
    "status": "partial"
   },
@@ -14177,8 +14143,8 @@
    "path": "/api/work/list",
    "owner_area": "work",
    "file": "routes/work.js",
-   "line": 41,
-   "hash": "f8cfdd6ff20234cc",
+   "line": 43,
+   "hash": "5aae667ec17db95a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14218,7 +14184,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f8cfdd6ff20234cc"
+    "stale_since": "5aae667ec17db95a"
    },
    "status": "partial"
   },
@@ -15076,7 +15042,7 @@
    "path": "/api/products/:id",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1535,
+   "line": 1526,
    "hash": "2b44e4f050d7693b",
    "columns": {
     "schema_in": true,
@@ -15483,7 +15449,7 @@
    "path": "/api/supplies/:id",
    "owner_area": "supplies",
    "file": "routes/supplies.js",
-   "line": 79,
+   "line": 76,
    "hash": "2ea7dda86e1cb9cb",
    "columns": {
     "schema_in": true,
@@ -15925,7 +15891,7 @@
    "path": "/api/adopt/:chit_id",
    "owner_area": "adopt",
    "file": "routes/adopt.js",
-   "line": 183,
+   "line": 186,
    "hash": "9f5085b47dbf0034",
    "columns": {
     "schema_in": false,
@@ -19785,8 +19751,8 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4321,
-   "hash": "ce7fc1a3d103c73f",
+   "line": 4325,
+   "hash": "af07e17fde45da9c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19827,7 +19793,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ce7fc1a3d103c73f"
+    "stale_since": "af07e17fde45da9c"
    },
    "status": "partial"
   },
@@ -19837,7 +19803,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6174,
+   "line": 6178,
    "hash": "cb34c7ed90a137a9",
    "columns": {
     "schema_in": true,
@@ -19888,7 +19854,7 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4267,
+   "line": 4271,
    "hash": "4063fb6f59ac6ff8",
    "columns": {
     "schema_in": true,
@@ -19939,7 +19905,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4661,
+   "line": 4665,
    "hash": "ee3617b9ff3ada02",
    "columns": {
     "schema_in": true,
@@ -19991,7 +19957,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3705,
+   "line": 3709,
    "hash": "fce2b3aa9996ee1a",
    "columns": {
     "schema_in": true,
@@ -20042,7 +20008,7 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4075,
+   "line": 4079,
    "hash": "e275be90e73d1615",
    "columns": {
     "schema_in": true,
@@ -20093,7 +20059,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5418,
+   "line": 5422,
    "hash": "a58a2860682470dd",
    "columns": {
     "schema_in": true,
@@ -20144,7 +20110,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5174,
+   "line": 5178,
    "hash": "d5e42d1087e1fec2",
    "columns": {
     "schema_in": true,
@@ -20195,7 +20161,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4573,
+   "line": 4577,
    "hash": "e497f7a73e38b01a",
    "columns": {
     "schema_in": true,
@@ -20247,7 +20213,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3944,
+   "line": 3948,
    "hash": "479526d135d780a1",
    "columns": {
     "schema_in": true,
@@ -20298,7 +20264,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4000,
+   "line": 4004,
    "hash": "a2a7aa5d1d83d8de",
    "columns": {
     "schema_in": true,
@@ -20348,7 +20314,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4020,
+   "line": 4024,
    "hash": "a6b86a1d6d491d8f",
    "columns": {
     "schema_in": true,
@@ -20398,8 +20364,8 @@
    "path": "/api/chits/:chit_id/reprice",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3666,
-   "hash": "cf5caff5d70499f0",
+   "line": 3670,
+   "hash": "be798ba1eee325c9",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -20439,7 +20405,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cf5caff5d70499f0"
+    "stale_since": "be798ba1eee325c9"
    },
    "status": "partial"
   },
@@ -20449,7 +20415,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6253,
+   "line": 6257,
    "hash": "de599def3fd8151d",
    "columns": {
     "schema_in": true,
@@ -20500,7 +20466,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6232,
+   "line": 6236,
    "hash": "a4bc9af3df307f6e",
    "columns": {
     "schema_in": true,
@@ -20551,7 +20517,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6214,
+   "line": 6218,
    "hash": "4b88a41af9602e17",
    "columns": {
     "schema_in": true,
@@ -20602,7 +20568,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6484,
+   "line": 6488,
    "hash": "75e5de25ab8a058b",
    "columns": {
     "schema_in": true,
@@ -20652,7 +20618,7 @@
    "path": "/api/chits/register/entries/:raida_id/accept",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3890,
+   "line": 3894,
    "hash": "40945af1720316ac",
    "columns": {
     "schema_in": true,
@@ -20702,7 +20668,7 @@
    "path": "/api/chits/register/entries/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3859,
+   "line": 3863,
    "hash": "4da9aa2267f6a5f5",
    "columns": {
     "schema_in": true,
@@ -20752,7 +20718,7 @@
    "path": "/api/chits/register/entries/:raida_id/revise",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3880,
+   "line": 3884,
    "hash": "f562f4561052b995",
    "columns": {
     "schema_in": true,
@@ -20802,7 +20768,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3776,
+   "line": 3780,
    "hash": "dc988275757c672d",
    "columns": {
     "schema_in": true,
@@ -20852,7 +20818,7 @@
    "path": "/api/chits/register/subjects/:subject_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3794,
+   "line": 3798,
    "hash": "7631077758f063ea",
    "columns": {
     "schema_in": true,
@@ -20902,7 +20868,7 @@
    "path": "/api/chits/register/subjects/:subject_id/entries",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3836,
+   "line": 3840,
    "hash": "b7c1d5b5f6e060a8",
    "columns": {
     "schema_in": true,
@@ -20952,7 +20918,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3815,
+   "line": 3819,
    "hash": "c3904d51d26c89aa",
    "columns": {
     "schema_in": true,
@@ -21002,7 +20968,7 @@
    "path": "/api/chits/send",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 350,
+   "line": 354,
    "hash": "3c76bd61695c1790",
    "columns": {
     "schema_in": true,
@@ -25556,7 +25522,7 @@
    "path": "/api/products",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 433,
+   "line": 424,
    "hash": "2bdad3b0043c841f",
    "columns": {
     "schema_in": true,
@@ -25607,7 +25573,7 @@
    "path": "/api/products/:id/media",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1863,
+   "line": 1854,
    "hash": "58fd041e164a2b0c",
    "columns": {
     "schema_in": true,
@@ -25660,7 +25626,7 @@
    "path": "/api/products/:id/schedule",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1627,
+   "line": 1618,
    "hash": "7ea6a92aeb157dc6",
    "columns": {
     "schema_in": true,
@@ -25713,7 +25679,7 @@
    "path": "/api/products/availability/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1673,
+   "line": 1664,
    "hash": "a768421e9f8b3239",
    "columns": {
     "schema_in": true,
@@ -25763,7 +25729,7 @@
    "path": "/api/products/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 497,
+   "line": 488,
    "hash": "d01d6bef91d31044",
    "columns": {
     "schema_in": true,
@@ -25814,7 +25780,7 @@
    "path": "/api/products/bulk-update",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 651,
+   "line": 642,
    "hash": "d908395d7388c9ab",
    "columns": {
     "schema_in": true,
@@ -25865,7 +25831,7 @@
    "path": "/api/products/import",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1189,
+   "line": 1180,
    "hash": "666b6537800e318e",
    "columns": {
     "schema_in": true,
@@ -25918,7 +25884,7 @@
    "path": "/api/products/import/preflight",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1116,
+   "line": 1107,
    "hash": "39622ebf11654c79",
    "columns": {
     "schema_in": true,
@@ -25968,7 +25934,7 @@
    "path": "/api/products/lists/adopt",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 2181,
+   "line": 2172,
    "hash": "52a72c7438622ba6",
    "columns": {
     "schema_in": true,
@@ -26018,7 +25984,7 @@
    "path": "/api/products/starter-columns",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1404,
+   "line": 1395,
    "hash": "6aa71f5674d69c65",
    "columns": {
     "schema_in": true,
@@ -26068,7 +26034,7 @@
    "path": "/api/products/status/bulk",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 548,
+   "line": 539,
    "hash": "377f87c3c07abfe8",
    "columns": {
     "schema_in": true,
@@ -27618,7 +27584,7 @@
    "path": "/api/supplies",
    "owner_area": "supplies",
    "file": "routes/supplies.js",
-   "line": 55,
+   "line": 52,
    "hash": "4bc2bbc1f21a36b9",
    "columns": {
     "schema_in": true,
@@ -27669,7 +27635,7 @@
    "path": "/api/supplies/:id/issue",
    "owner_area": "supplies",
    "file": "routes/supplies.js",
-   "line": 118,
+   "line": 115,
    "hash": "eacf63dcd79a6a2e",
    "columns": {
     "schema_in": true,
@@ -27720,7 +27686,7 @@
    "path": "/api/supplies/purchase",
    "owner_area": "supplies",
    "file": "routes/supplies.js",
-   "line": 99,
+   "line": 96,
    "hash": "157ae23f58e75039",
    "columns": {
     "schema_in": true,
@@ -30484,7 +30450,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5781,
+   "line": 5785,
    "hash": "c51f1ee9a3f9e58d",
    "columns": {
     "schema_in": true,
@@ -30536,7 +30502,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6066,
+   "line": 6070,
    "hash": "7c91c6607d810af7",
    "columns": {
     "schema_in": true,
@@ -30587,7 +30553,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6122,
+   "line": 6126,
    "hash": "ac2768c0c89bd282",
    "columns": {
     "schema_in": true,
@@ -30639,7 +30605,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6197,
+   "line": 6201,
    "hash": "9641c194ec49396a",
    "columns": {
     "schema_in": true,
@@ -30690,7 +30656,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4990,
+   "line": 4994,
    "hash": "bdc0ab6cc433cce6",
    "columns": {
     "schema_in": true,
@@ -30741,7 +30707,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4064,
+   "line": 4068,
    "hash": "bf8d67dc430c628c",
    "columns": {
     "schema_in": true,
@@ -30792,7 +30758,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6327,
+   "line": 6331,
    "hash": "1e84c1a78e82bbcf",
    "columns": {
     "schema_in": true,
@@ -31456,7 +31422,7 @@
    "path": "/api/products/:id/availability",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1718,
+   "line": 1709,
    "hash": "4542ca9a59f3af0b",
    "columns": {
     "schema_in": true,
@@ -31507,7 +31473,7 @@
    "path": "/api/products/:id/status",
    "owner_area": "products",
    "file": "routes/products.js",
-   "line": 1748,
+   "line": 1739,
    "hash": "9c17b0e78a2b8f1c",
    "columns": {
     "schema_in": true,

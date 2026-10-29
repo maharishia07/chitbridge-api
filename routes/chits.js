@@ -437,6 +437,7 @@ const SEND_STEPS = [
   sendReplay,
   sendTillGate,
   sendBody,
+  sendSourceCarry,
   sendCredit,
   sendSource,
   sendFanOut,
@@ -834,6 +835,32 @@ async function sendBody(st, req, res) {
   Object.assign(st, { purpose, manual_subject, line_items, business_json, pageAsked, pageStamp, currency_code });
 }
 
+/** the draft this send promotes (the id the body names), or null — read by sendFanOut and, earlier, by sendSourceCarry */
+const promoteIdOf = (req) => (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id ? req.body.promote_draft_id : null);
+
+/** before the definers (b50) the write is the legacy fan-out, which cannot re-check the carried money under the lock: a blind promote is refused there, nothing written */
+const legacyRefusal = () => Object.assign(new Error('not sent'), { status: 409, refused: true, code: 'CHIT_CONFLICT', body: { error: 'Not sent', code: 'CHIT_CONFLICT', message: 'This draft cannot be sent with this access until the system update finishes; ask the account owner to send it.' } });
+
+/**
+ * RAIL-149 — a cost-blind co-assist re-sending a draft (promote_draft_id): the stored money of the draft's lines is carried onto the lines sent, never null over it. One named step so a
+ * later source (RAIL-146c, a receipt sent against an order) widens the same call. The owner, a cost-allowed actor and a paired till pay nothing (isCostBlind is false); a sale-side draft is as it was.
+ * Answers the 403 COST_BLIND (blocked = key names) or a 400 for a shifted list in the refusal's own words; the write transaction re-checks the stamp (sendWrite).
+ */
+async function sendSourceCarry(state, req, res) {
+  const { sender_id, line_items } = state;
+  const promote_draft_id = promoteIdOf(req);
+  if (!promote_draft_id || !line_items.length || !(await cost.isCostBlind(req, sender_id))) return false;
+  try {
+    const carried = await withEntity(sender_id, (db) => costWrite.carryFromSource(db, sender_id, promote_draft_id, line_items, req.body.line_items));
+    if (carried && !(await definersReady())) throw legacyRefusal();
+    if (carried) Object.assign(state, { line_items: carried.lines, sourceCarry: carried.stamp });
+  } catch (e) {
+    if (!e.refused) throw e;
+    return problem(req, res, { status: e.status, ...said(e.body, codeOfStatus(e.status)) });
+  }
+  return false;
+}
+
 /** the credit limit (F2) and the bill's own facts stamped on the chit */
 async function sendCredit(st, req, res) {
   const { sender_id, client_ref, number_check, purpose, business_json } = st;
@@ -917,7 +944,7 @@ async function sendFanOut(st, req, res) {
   const is_draft = !!req.body.is_draft;
   // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
   // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
-  const promote_draft_id = typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id ? req.body.promote_draft_id : null;
+  const promote_draft_id = promoteIdOf(req);
 
   // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
   const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
@@ -2099,6 +2126,7 @@ async function sendWrite(st, req, res) {
     const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
     const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
     await withEntity(sender_id, async (c) => {
+      if (st.sourceCarry) await costWrite.verifySourceCarry(c, sender_id, promote_draft_id, st.sourceCarry); /* RAIL-149: the draft's money is still what was carried, read under the lock */
       await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
       if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
     });
@@ -3604,7 +3632,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
-    res.json(costView.chitAnswer({ /* ⭐ RAIL-146, LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone (lib/cost-view); the actions and docOf above read the real header */
+    res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
@@ -3617,7 +3645,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
          only way to discover that is to tap it and get a 503 — an affordance that exists solely to fail. */
       amendments_migrated: amd.migrated !== false,
       /* ⭐⭐ R01 — MAY I DO X ON THIS COPY, answered by the rail engine (lib/rail.js) over the facts of MY copy: one verdict per
-         action, { ok:true } or { ok:false, why } with why from the engine's vocabulary. The writing routes ask the same
+         action, { ok:true } or { ok:false, why } with why from the vocabulary of the engine. The writing routes ask the same
          engine before they write, so a ✓ here is never refused there. A host paints this; it never computes it. */
       actions: railActions.forBill(
         _doc,
@@ -3679,7 +3707,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
-    const opts = await costWrite.repriceOpts(req, entity_id, chit_id, { line_ids: ids, only_unpriced: !!req.body.only_unpriced }); /* RAIL-147: a cost-blind co-assist is refused on a cost-side chit (preview too); everyone else's options as before */
+    const opts = await costWrite.repriceOpts(req, entity_id, chit_id, { line_ids: ids, only_unpriced: !!req.body.only_unpriced }); /* RAIL-147: a cost-blind co-assist is refused on a cost-side chit (preview too); the options of everyone else are as before */
     /* S34: lib/reprice preview answers the first five keys; apply() adds `applied` (how many amendments it wrote) */
     if (req.body.preview) {
       const previewed = await reprice.plan(entity_id, chit_id, opts);
