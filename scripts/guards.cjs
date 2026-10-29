@@ -45,6 +45,7 @@ const GUARDS = [
   'shop-day-tz.test.cjs', // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
   'line-rules.test.cjs', // RAIL-133 (e): the line-model rules that had none — a delivery row's check, progress arithmetic (mine is the headline, other units beside, adds never delivered, pending ≥ 0, agree/divergent/unacknowledged), an assignment's check and bounds, a person's done ≠ the events' done
   'ctp-manifest.test.cjs', // RAIL-140 (a): the manifest names THIS installation — our configured key, decorated only by our own row, never another active row's key
+  'ctp-manifest-fetch.test.cjs', // RAIL-140 (c): a peer's manifest is read within the 5 s deadline, body included, and capped at 64 KB in BYTES as they arrive (a real local server; ~5 s)
   'till-t2a.test.cjs', // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-fix2.test.cjs', // ⭐ TILL-FIX2 (review H5 M6 L4): a reward queued behind its bill and carried by a renumber · one series lock, no duplicate number · the close's last SALE by series number
   'till-shippable.test.cjs', // the installable till carries only modules with no database behind them
