@@ -153,7 +153,21 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
       fetch: async () => ({ ok: false, status: 403, json: async () => ({ ok: false, why: 'installation platform-mx is not one we deal with' }) }),
     });
     assert.strictEqual(r.ok, false);
-    assert.ok(/not one we deal with/.test(r.why), r.why);
+    /* RAIL-140 (e) · Q19: quoted in a member of its own, never inside our sentence */
+    assert.strictEqual(r.why, 'the far installation refused the question');
+    assert.strictEqual(r.far_why, 'installation platform-mx is not one we deal with');
+    assert.strictEqual(r.status, 403);
+  });
+
+  await okA('RAIL-140 (e): an unreachable far end is said in fixed words — no url, no error text', async () => {
+    const r = await Q.ask({ domain: 'in.example' }, { want: 'resolve', handle: 'nobody' }, {
+      resolvePeer: async () => ({ installation_key: 'platform-0', endpoint: 'https://in.example/api/ctp/deliver', domain: 'in.example' }),
+      signer, from: FROM,
+      fetch: async () => { throw new Error('getaddrinfo ENOTFOUND in.example <b>'); },
+    });
+    assert.strictEqual(r.why, 'the far installation could not be reached');
+    const none = await Q.ask({ domain: 'stranger.example' }, { want: 'resolve', handle: 'x' }, { resolvePeer: async () => null, signer, from: FROM });
+    assert.ok(!/stranger/.test(none.why), 'the domain asked for is not echoed: ' + none.why);
   });
 
   /* ── SINGLE SOURCE: the door answers with the SAME view an anonymous visitor gets ────────────────────────── */
