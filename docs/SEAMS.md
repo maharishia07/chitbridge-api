@@ -171,7 +171,7 @@ of file each thing is; this says what already does the job.
 | 14 | `offers` | `network-app.js` |  |
 | 14 | `check` | `network-app.js` |  |
 | 14 | `refuse_` | `bookpack.js` | function M_() { return MONEY_ ·· (MONEY_ = req_('CBMoney', 'decimals', './money')); } |
-| 14 | `summary` | `catalogue-read.js` | A count a person can act on: |
+| 15 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `where` | `istest.js` | READING is_test is fine and stays — |
