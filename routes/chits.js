@@ -838,6 +838,20 @@ async function sendBody(st, req, res) {
 /** the draft this send promotes (the id the body names), or null — read by sendFanOut and, earlier, by sendSourceCarry */
 const promoteIdOf = (req) => (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id ? req.body.promote_draft_id : null);
 
+/**
+ * RAIL-146c — the SOURCE a blind sender's lines are carried from: the draft a send promotes (RAIL-149), or the ORDER a goods receipt names (business_json.against.chit_id: a receipt is a new
+ * chit whose lines match the order's by the line_id the till sends in item_data). A receipt is the shop's spend whatever the order's party list says (options.cost), so it is carried even
+ * when it names no order (nothing to take, and a figure of its own is still a 403): its own money (goods · extras · landed_total · costs · their bill's total) rides in options.extra.
+ */
+function sourceOf(state, req) {
+  const draft = promoteIdOf(req);
+  if (draft) return { id: draft, options: {} };
+  if (state.purpose !== 'receipt') return null;
+  const against = state.business_json && state.business_json.against;
+  const order = against && typeof against.chit_id === 'string' && /^[0-9a-f-]{36}$/i.test(against.chit_id) ? against.chit_id : null;
+  return { id: order, options: { cost: true, extra: state.business_json } };
+}
+
 /** before the definers (b50) the write is the legacy fan-out, which cannot re-check the carried money under the lock: a blind promote is refused there, nothing written */
 const legacyRefusal = () => Object.assign(new Error('not sent'), { status: 409, refused: true, code: 'CHIT_CONFLICT', body: { error: 'Not sent', code: 'CHIT_CONFLICT', message: 'This draft cannot be sent with this access until the system update finishes; ask the account owner to send it.' } });
 
@@ -848,12 +862,12 @@ const legacyRefusal = () => Object.assign(new Error('not sent'), { status: 409, 
  */
 async function sendSourceCarry(state, req, res) {
   const { sender_id, line_items } = state;
-  const promote_draft_id = promoteIdOf(req);
-  if (!promote_draft_id || !line_items.length || !(await cost.isCostBlind(req, sender_id))) return false;
+  const source = sourceOf(state, req);
+  if (!source || !line_items.length || !(await cost.isCostBlind(req, sender_id))) return false;
   try {
-    const carried = await withEntity(sender_id, (db) => costWrite.carryFromSource(db, sender_id, promote_draft_id, line_items, req.body.line_items));
+    const carried = await withEntity(sender_id, (db) => costWrite.carryFromSource(db, sender_id, source.id, line_items, req.body.line_items, source.options));
     if (carried && !(await definersReady())) throw legacyRefusal();
-    if (carried) Object.assign(state, { line_items: carried.lines, sourceCarry: carried.stamp });
+    if (carried) Object.assign(state, { line_items: carried.lines, sourceCarry: carried.stamp, sourceId: source.id, sourceOptions: source.options });
   } catch (e) {
     if (!e.refused) throw e;
     return problem(req, res, { status: e.status, ...said(e.body, codeOfStatus(e.status)) });
@@ -2126,7 +2140,7 @@ async function sendWrite(st, req, res) {
     const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
     const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
     await withEntity(sender_id, async (c) => {
-      if (st.sourceCarry) await costWrite.verifySourceCarry(c, sender_id, promote_draft_id, st.sourceCarry); /* RAIL-149: the draft's money is still what was carried, read under the lock */
+      if (st.sourceCarry) await costWrite.verifySourceCarry(c, sender_id, st.sourceId, st.sourceCarry, st.sourceOptions); /* RAIL-149: the draft's money is still what was carried, read under the lock */
       await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
       if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
     });

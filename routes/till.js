@@ -3613,7 +3613,7 @@ router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
 async function matchSeen(db, entity_id, heads, blind, orders) {
   if (!blind || !orders.length) return orders;
   const shown = new Set(orders.map((order) => String(order.chit_id)));
-  return costView.tillRows(db, entity_id, heads.filter((head) => shown.has(String(head.chit_id))), orders, costView.hideMatchCosts);
+  return costView.tillRows(db, entity_id, heads.filter((head) => shown.has(String(head.chit_id))), orders, costView.hideMatchCosts, 'buy'); /* the match is about what we BUY: cost-side whatever the party list says (no side read) */
 }
 
 /** every purchase order beside what was received and what was invoiced, read on one transaction handle */
