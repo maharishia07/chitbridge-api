@@ -16,8 +16,11 @@
  * ⭐ WHAT THE EMPLOYER SEES IS THE VERDICT, NOT THE DOCUMENT — verified, when, by whom. That is
  * [[reference-cb-core-principle]] applied to a person: the fact travels, the source does not.
  
- * FLOW  PUT /documents/:scheme -> normalise -> docHash (keyed for Aadhaar, plain for the rest) -> upsert · identity-auth / keys.js recompute the PHONE and EMAIL hash
- * CARD 18-identity-sign-in-and-access/identity-documents-and-the-vault
+ * FLOW      PUT /documents/:scheme -> normalise -> docHash (keyed for Aadhaar, plain for the rest) -> upsert · identity-auth / keys.js recompute the PHONE and EMAIL hash
+ *           auth (any signed-in login; the person is the token, or a co-assist the owner names) -> schema check (lib/identity-docs-contract.js) -> the handler -> lib/iddoc-verify.js for the code flow
+ *           a refusal -> problem(req, res, ...) with the old { error, code, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
+ *           a thrown error -> problem(req, res, faultOf(e, req)); a refusal the library built -> problem(req, res, libraryRefusal(out))
+ * CARD      18-identity-sign-in-and-access/identity-documents-and-the-vault
  * CALLED BY lib/identity-auth.js, routes/keys.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 const express = require('express');
@@ -31,7 +34,8 @@ const schema = require('../lib/schema');
 const vault = require('../lib/vaultcrypto');
 const { query, withEntity } = require('../db');
 const crypto = require('crypto');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { contract, faultOf, libraryRefusal, declaresStatuses } = require('../lib/identity-docs-contract'); // the contract (each route's operation) and the words of a fault
 
 /**
  * The catalogue. Country pivots to a set of schemes; each says how to mask it and how it is checked.
@@ -126,10 +130,11 @@ async function shopCountry(entity_id) {
 }
 
 /** GET — the person's own record. Never returns a stored value, only the mask and the verdict. */
-router.get('/documents', auth, async (req, res) => {
+router.get('/documents', auth, ...contract.checked('GET /documents'), async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
-      return res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message: 'Identity records are not switched on yet.' });
+      const message = 'Identity records are not switched on yet.';
+      return problem(req, res, { status: 503, code: 'IDOC_NOT_MIGRATED', detail: message, legacy: { error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message } });
     }
     /* ⭐ The owner reads a co-assist's record on the Co-assists screen; anyone else reads only their own. Same
        three rules as the write — resolveSubject is the ONE place that decides whose record may be named, so a
@@ -165,11 +170,8 @@ router.get('/documents', auth, async (req, res) => {
       })
     );
   } catch (e) {
-    /* ⚠️ safeErr RETURNS A STRING — it does not send a response. I first wrote safeErr(res, e, msg) as though
-       it were a responder, which logs `res` as the error, discards the string, and NEVER REPLIES: the request
-       hangs until the client times out. A route that silently never answers is worse than one that 500s.
-       resolveSubject throws with a status, so honour it rather than flattening every refusal to 500. */
-    res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) });
+    /* resolveSubject throws with a status (403, fixed words): faultOf honours it rather than flattening every refusal to 500, and logs any other error with the request id */
+    problem(req, res, faultOf(e, req));
   }
 });
 
@@ -220,17 +222,19 @@ async function resolveSubject(req, wanted) {
 /**
  * PUT — submit one document, for yourself or (as the owner) for one of your co-assists.
  */
-router.put('/documents/:scheme', auth, async (req, res) => {
+router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:scheme'), async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
-      return res
-        .status(503)
-        .json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message: 'Identity records are not switched on yet — the b174 migration has not been run.' });
+      const message = 'Identity records are not switched on yet — the b174 migration has not been run.';
+      return problem(req, res, { status: 503, code: 'IDOC_NOT_MIGRATED', detail: message, legacy: { error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message } });
     }
     const cc = await shopCountry(auth.entityOf(req)); /* CX4: the shop's country, never the client's */
     const want = String(req.params.scheme || '').toUpperCase();
     const spec = schemesFor(cc).find((item) => item.scheme === want);
-    if (!spec) return res.status(400).json({ error: 'Unknown document', message: 'That document is not recognised for ' + cc + '.' });
+    if (!spec) {
+      const message = 'That document is not recognised for ' + cc + '.';
+      return problem(req, res, { status: 400, code: 'IDOC_UNKNOWN_DOCUMENT', detail: message, legacy: { error: 'Unknown document', message } });
+    }
 
     /**
      * ⚠️⚠️ NORMALISATION IS PER SCHEME. One .toUpperCase() for everything stored an email as
@@ -246,9 +250,8 @@ router.put('/documents/:scheme', auth, async (req, res) => {
      */
     const raw = spec.norm(String(req.body.value || '').trim());
     if (!spec.pattern.test(raw)) {
-      return res
-        .status(400)
-        .json({ error: 'Validation failed', field: want, message: 'That does not look like a ' + spec.label + '. Check it and try again.' });
+      const message = 'That does not look like a ' + spec.label + '. Check it and try again.';
+      return problem(req, res, { status: 400, code: 'IDOC_INVALID_VALUE', field: want, detail: message, legacy: { error: 'Validation failed', field: want, message } });
     }
 
     /**
@@ -259,11 +262,8 @@ router.put('/documents/:scheme', auth, async (req, res) => {
     /* SEC-101: the key is needed for EVERY scheme now. A store:true scheme encrypts the value with it; a store:false scheme (Aadhaar)
        keeps only a keyed hash of it - without the key that hash would be a plain sha256 of a 12-digit number, so refuse like the rest. */
     if (!vault.isConfigured()) {
-      return res.status(503).json({
-        error: 'Not configured',
-        code: 'VAULT_ENC_UNCONFIGURED',
-        message: 'Secure storage is not switched on yet, so this cannot be saved. Nothing was stored.'
-      });
+      const message = 'Secure storage is not switched on yet, so this cannot be saved. Nothing was stored.';
+      return problem(req, res, { status: 503, code: 'VAULT_ENC_UNCONFIGURED', detail: message, legacy: { error: 'Not configured', code: 'VAULT_ENC_UNCONFIGURED', message } });
     }
     const enc = spec.store ? JSON.stringify(vault.encryptVault({ v: raw })) : null;
 
@@ -292,25 +292,19 @@ router.put('/documents/:scheme', auth, async (req, res) => {
      * is where a rule can actually be kept, because the request can be made without the screen.
      */
     if (!subject.onBehalf && req.identity.identity_type === 'actor' && !spec.selfServe) {
-      return res.status(403).json({
-        error: 'Not permitted',
-        code: 'IDOC_EMPLOYER_ONLY',
-        message:
-          'Your ' +
-          spec.label +
-          ' is recorded by your employer, who checks it against the document ' +
-          'itself. You can add your mobile and email here — those are confirmed by a code sent to them.'
-      });
+      const message =
+        'Your ' +
+        spec.label +
+        ' is recorded by your employer, who checks it against the document ' +
+        'itself. You can add your mobile and email here — those are confirmed by a code sent to them.';
+      return problem(req, res, { status: 403, code: 'IDOC_EMPLOYER_ONLY', detail: message, legacy: { error: 'Not permitted', code: 'IDOC_EMPLOYER_ONLY', message } });
     }
 
     const consent = req.body.consent === true || req.body.consent === 'true' ? new Date() : null;
     if (want === 'AADHAAR' && subject.onBehalf && !consent) {
-      return res.status(400).json({
-        error: 'Consent required',
-        code: 'IDOC_CONSENT_REQUIRED',
-        message:
-          "Recording someone else's Aadhaar needs their agreement. Confirm they have agreed, or ask " + 'them to enter it themselves from their own profile.'
-      });
+      const message =
+        "Recording someone else's Aadhaar needs their agreement. Confirm they have agreed, or ask " + 'them to enter it themselves from their own profile.';
+      return problem(req, res, { status: 400, code: 'IDOC_CONSENT_REQUIRED', detail: message, legacy: { error: 'Consent required', code: 'IDOC_CONSENT_REQUIRED', message } });
     }
 
     /* ⚠️ withEntity — see the note on the read. WITH RLS means every statement against this table needs the
@@ -331,11 +325,8 @@ router.put('/documents/:scheme', auth, async (req, res) => {
 
     res.json({ message: 'Submitted for verification', document: r.rows[0], verified_by: spec.verify });
   } catch (e) {
-    /* ⚠️ safeErr RETURNS A STRING — it does not send a response. I first wrote safeErr(res, e, msg) as though
-       it were a responder, which logs `res` as the error, discards the string, and NEVER REPLIES: the request
-       hangs until the client times out. A route that silently never answers is worse than one that 500s.
-       resolveSubject throws with a status, so honour it rather than flattening every refusal to 500. */
-    res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) });
+    /* resolveSubject throws with a status (403, fixed words): faultOf honours it rather than flattening every refusal to 500, and logs any other error with the request id */
+    problem(req, res, faultOf(e, req));
   }
 });
 
@@ -379,44 +370,59 @@ const stores = (entity_id, identity_id, scheme) => ({
       )
     ).rows[0].verified_at
 });
-const idocGate = async (res) => {
-  if (await schema.hasTable('identity_documents')) return false;
-  res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message: 'Identity records are not switched on yet.' });
-  return true;
+/** the table is not there yet: the 503 is written here and the handler is not reached (the one refusal this gate adds: 503 IDOC_NOT_MIGRATED) */
+const idocGate = async (req, res, next) => {
+  try {
+    if (await schema.hasTable('identity_documents')) return next();
+    const message = 'Identity records are not switched on yet.';
+    return problem(req, res, { status: 503, code: 'IDOC_NOT_MIGRATED', detail: message, legacy: { error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message } });
+  } catch (e) {
+    return problem(req, res, faultOf(e, req));
+  }
 };
+idocGate.addsStatuses = [503];
+/* what lib/iddoc-verify.js can refuse with under each handler (R2-3 d: a refusal a helper writes is a gate): start() 400 · 409 · 503, confirm() 400 · 429 */
+const startRefuses = declaresStatuses([400, 409, 503]);
+const confirmRefuses = declaresStatuses([400, 429]);
 const sendCode = (channel, to, code) =>
   channel === 'email' ? require('../lib/notify').sendOtpEmail(to, '', code, { ttl: '10 minutes' }) : require('../lib/notify').sendOtpSms(to, code);
 const codeScheme = (req) => String(req.params.scheme || '').toUpperCase();
-router.post('/documents/:scheme/code', auth, async (req, res) => {
+router.post('/documents/:scheme/code', auth, ...contract.checked('POST /documents/:scheme/code'), idocGate, startRefuses, async (req, res) => {
   try {
-    if (await idocGate(res)) return;
     const scheme = codeScheme(req);
     const { subject, entity_id, row, value } = await loadDoc(req, scheme);
-    if (!row) return res.status(404).json({ error: 'Not found', code: 'IDOC_NOT_FOUND', message: 'Add that document first, then ask for a code.' });
+    if (!row) {
+      const message = 'Add that document first, then ask for a code.';
+      return problem(req, res, { status: 404, code: 'IDOC_NOT_FOUND', detail: message, legacy: { error: 'Not found', code: 'IDOC_NOT_FOUND', message } });
+    }
     const out = await require('../lib/iddoc-verify').start({
       doc: { identity_id: subject.id, scheme, value },
       store: stores(entity_id, subject.id, scheme),
       send: sendCode
     });
-    res.status(out.status).json(out.body);
+    if (out.status >= 400) return problem(req, res, libraryRefusal(out)); /* 400 IDOC_NOT_CODE_VERIFIED · 409 IDOC_VALUE_UNAVAILABLE · 503 PHONE/EMAIL_DELIVERY_NOT_CONFIGURED: the library built them */
+    res.json(out.body);
   } catch (e) {
-    res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) });
+    problem(req, res, faultOf(e, req));
   }
 });
-router.post('/documents/:scheme/verify', auth, async (req, res) => {
+router.post('/documents/:scheme/verify', auth, ...contract.checked('POST /documents/:scheme/verify'), idocGate, confirmRefuses, async (req, res) => {
   try {
-    if (await idocGate(res)) return;
     const scheme = codeScheme(req);
     const { subject, entity_id, row } = await loadDoc(req, scheme);
-    if (!row) return res.status(404).json({ error: 'Not found', code: 'IDOC_NOT_FOUND', message: 'Add that document first.' });
+    if (!row) {
+      const message = 'Add that document first.';
+      return problem(req, res, { status: 404, code: 'IDOC_NOT_FOUND', detail: message, legacy: { error: 'Not found', code: 'IDOC_NOT_FOUND', message } });
+    }
     const out = await require('../lib/iddoc-verify').confirm({
       doc: { identity_id: subject.id, scheme, verification_ref: row.verification_ref },
       code: req.body.code,
       store: stores(entity_id, subject.id, scheme)
     });
-    res.status(out.status).json(out.body);
+    if (out.status >= 400) return problem(req, res, libraryRefusal(out)); /* 400 IDOC_NO_CODE / OTP_EXPIRED / OTP_WRONG · 429 OTP_LOCKED: the library built them (a computed status: 400 or 429) */
+    res.json(out.body);
   } catch (e) {
-    res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) });
+    problem(req, res, faultOf(e, req));
   }
 });
 
@@ -450,6 +456,7 @@ const sameDocument = (scheme, normalised, storedHash) => docHashes(scheme, norma
 /** the PHONE normaliser the PUT uses (DIGITS: a leading + survives) — so a number typed by the owner hashes as the person's did */
 router.normPhone = (v) => DIGITS(String(v == null ? '' : v).trim());
 router.docHash = docHash;
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 router.docHashes = docHashes;
 router.sameDocument = sameDocument;
 module.exports = router;

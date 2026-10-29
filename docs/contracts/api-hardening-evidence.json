@@ -393,6 +393,9 @@
   "GET /api/actors/access-events": {
    "output_allowlist": true
   },
+  "GET /api/identity/documents": {
+   "output_allowlist": true
+  },
   "POST /api/identity/documents/:scheme/code": {
    "foreign_id_404": true
   },
