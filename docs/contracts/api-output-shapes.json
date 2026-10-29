@@ -10646,6 +10646,7 @@
           "replayed": {
             "type": "boolean"
           },
+          "ok": {},
           "step": {},
           "accepted": {},
           "use": {}
