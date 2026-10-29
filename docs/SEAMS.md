@@ -9,13 +9,13 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 122 | `list` | `amend.js` |  |
+| 123 | `list` | `amend.js` |  |
 | 107 | `rows` | `crm.js` | still in them: |
 | 101 | `withEntity` | `books-hooks.js` |  |
 | 89 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
-| 76 | `answer` | `availability.js` | from March; then nearest. |
+| 77 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 65 | `list` | `cap-settings.js` |  |
@@ -134,7 +134,7 @@ of file each thing is; this says what already does the job.
 | 17 | `verify` | `bookpack.js` | manifest's own hash. |
 | 17 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 17 | `notMigrated` | `crm-followups.js` |  |
-| 17 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 18 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 17 | `governance` | `home-facts.js` |  |
 | 17 | `match` | `itemmatch.js` | actually state. |
 | 17 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
@@ -170,7 +170,7 @@ of file each thing is; this says what already does the job.
 | 14 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `where` | `istest.js` | READING is_test is fine and stays — |
-| 14 | `report` | `raida.js` | register at the one moment it must not. |
+| 15 | `report` | `raida.js` | register at the one moment it must not. |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |

@@ -74,6 +74,7 @@ const replayLine = (file, seed, index) => 'GORILLA_SEED=' + seed + ' GORILLA_ONL
  *   before(record, i)     → optional: the state a record needs first (a bill to pay, a balance to read); its answer is handed to send
  *   send(record, i, made) → what was seen: { status, body, ...anything the checks read }; a throw is itself a finding, named by its message
  *   checks[]              → { id, title, gap?, check(record, seen) → null when it holds, else a short sentence }
+ *   stopAfter             → optional (default 5): when that many first records ALL throw, stop and report GORILLA-SETUP red
  * Every check becomes ONE kase: it passes when no record broke it, else it names how many broke it and the first three, each with its
  * replay line.
  * @returns { seed, count, failures: { [check id]: [{ index, said }] }, ms }
@@ -83,6 +84,10 @@ async function hammer(pack) {
   const indexes = run.only !== null ? [run.only] : Array.from({ length: run.count }, (unused, index) => index);
   const failures = Object.fromEntries(pack.checks.map((rule) => [rule.id, []]));
   const started = Date.now();
+  /* FAIL FAST: when the first records all throw, the pack's world is broken (a setup that never opens) — stop, rather than spend the CI
+     job's whole time limit proving it 200 times (pack 2's first build waited 5 s per record until S41 was cancelled at 15 min) */
+  const firstFew = Math.min(pack.stopAfter || 5, indexes.length);
+  let thrownEarly = 0, stopped = null;
   for (const index of indexes) {
     const record = recordOf(pack.make, run.seed, index);
     let seen;
@@ -91,6 +96,7 @@ async function hammer(pack) {
       seen = await pack.send(record, index, made);
     } catch (e) {
       seen = { thrown: e && e.message ? e.message : String(e) };
+      if (indexes.indexOf(index) < firstFew) thrownEarly += 1;
     }
     for (const rule of pack.checks) {
       let said;
@@ -100,6 +106,10 @@ async function hammer(pack) {
         said = 'the check itself threw: ' + (e && e.message);
       }
       if (said) failures[rule.id].push({ index, said });
+    }
+    if (indexes.indexOf(index) === firstFew - 1 && thrownEarly === firstFew && indexes.length > firstFew) {
+      stopped = 'the first ' + firstFew + ' records all threw (' + seen.thrown + ') — stopped there';
+      break;
     }
   }
   const ms = Date.now() - started;
@@ -112,6 +122,7 @@ async function hammer(pack) {
       throw new Error(broke.length + ' of ' + indexes.length + ' records broke it · ' + firsts.join(' | '));
     }, rule.gap);
   }
+  if (stopped) await pack.kase('GORILLA-SETUP', pack.label + ' gets past its first records', async () => { throw new Error(stopped); });
   const budget = run.budgetMs || pack.budgetMs;
   if (budget) {
     await pack.kase('GORILLA-TIME', pack.label + ' runs inside its budget (' + budget + ' ms)', async () => {
@@ -119,7 +130,7 @@ async function hammer(pack) {
       return ms + ' ms';
     });
   }
-  const report = { label: pack.label, seed: run.seed, count: indexes.length, failures, ms };
+  const report = { label: pack.label, seed: run.seed, count: indexes.length, failures, ms, stopped };
   const out = (pack.env || process.env).GORILLA_JSON;
   if (out) require('fs').writeFileSync(out, JSON.stringify(report, null, 2));
   return report;

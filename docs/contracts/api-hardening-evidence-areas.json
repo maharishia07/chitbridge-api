@@ -25,6 +25,12 @@
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
+  "GET /api/actors/access-events": {
+   "output_allowlist": true
+  },
+  "GET /api/actors/settings": {
+   "output_allowlist": true
+  },
   "GET /api/books/accounts": {
    "output_allowlist": true
   },
@@ -398,6 +404,15 @@
   },
   "PUT /api/connections/:id/respond": {
    "foreign_id_404": true
+  },
+  "GET /api/assist/catalogue-mine": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/penetration": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/regions": {
+   "output_allowlist": true
   }
  }
 }

@@ -2668,6 +2668,18 @@ function chitFilters(req, where, params) {
   return where;
 }
 
+/**
+ * S34: a chit of the three mailbox lists, as each statement selects it and in its order — the allow-list of the answer, named once per list (the cancel
+ * columns only when cancelCols named them: undefined is left out). summary_json and all_recipients are documents whose keys are the chit's own, so the
+ * answer schema leaves the row open (listed in docs/contracts/api-output-shapes.json) and this mapping is what keeps an unnamed column out.
+ */
+// prettier-ignore
+const sentRow = (x) => ({ chit_id: x.chit_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, priority_flag: x.priority_flag, customer_priority: x.customer_priority, star_flag: x.star_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count });
+// prettier-ignore
+const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, deleted_at: x.deleted_at, archived_at: x.archived_at, direction: x.direction, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, message_count: x.message_count });
+// prettier-ignore
+const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type });
+
 router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -2724,7 +2736,9 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
 
     const next = afterOf(result.rows, limit, req);
     const total = countResult ? parseInt(countResult.rows[0].count) : null;
-    res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
+    /* S34: a chit is sentRow (the statement above, in its order); capped and cap_note only when the pager cut the page */
+    res.json({ chits: result.rows.map(sentRow), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Sent list error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get sent items'));
@@ -2802,7 +2816,9 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
        caller's own query param travelling in a circle. */
     const total = parseInt(countResult.rows[0].count);
-    res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
+    /* S34: a chit is folderRow (the DISTINCT ON statement above, in its order); capped and cap_note only when the pager cut the page */
+    res.json({ chits: result.rows.map(folderRow), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Folder error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get folder'));
@@ -2860,7 +2876,8 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
         .catch(() => ({ rows: [{ n: 0 }] }));
       return { result: outcome, disp: nestedDisp };
     });
-    res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
+    /* S34: a group is the three columns its statement selects */
+    res.json({ group_by: groupBy, direction: dir, groups: result.rows.map((x) => ({ key: x.key, chits: x.chits, total_value: x.total_value })), dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
     problem(req, res, failed(err, req, 'Rollup failed'));
@@ -3047,21 +3064,10 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
 
     const inboxNext = afterOf(result.rows, limit, req);
     const total = countResult ? parseInt(countResult.rows[0].count) : null; /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
-    res.json(
-      Object.assign(
-        {
-          chits: result.rows,
-          // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
-          total,
-          page,
-          limit,
-          next: inboxNext /* PERF1: the ?after= of the next page (newest-first order only; null on the last) */
-          /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
-         way in. Two spellings of one fact is how they start disagreeing. */
-        },
-        PAGE_LIMIT.capOf(pg, result.rows.length, total)
-      )
-    ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` (absent otherwise) */
+    /* S34: a chit is inboxRow (the statement above, in its order). Top-level total/page/limit mirror /sent so the web pager treats both lists the same; next is the ?after= of the next page (newest-first only; null on
+       the last). ⚠️ the `pagination` object said the same three numbers a second time: two spellings of one fact is how they start disagreeing. */
+    res.json({ chits: result.rows.map(inboxRow), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Inbox error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get inbox'));
@@ -3738,7 +3744,9 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
 /** What a register may be attached to. A registry, so a new kind is data. */
 router.get('/register/attachables', auth, async (req, res) => {
   try {
-    res.json(await raida.attachables());
+    const found = await raida.attachables();
+    /* S34: an attachable is the three columns lib/raida selects (register_attachable); degraded names why the list is empty (absent · no-grant · rls-no-policy · empty), else null */
+    res.json({ attachables: found.attachables.map((x) => ({ type_key: x.type_key, label: x.label, points_at: x.points_at })), degraded: found.degraded });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed'));
   }
@@ -3746,12 +3754,13 @@ router.get('/register/attachables', auth, async (req, res) => {
 
 router.get('/register/subjects', auth, ...checked('GET /register/subjects'), async (req, res) => {
   try {
-    res.json(
-      await raida.listSubjects(entityId(req), {
-        type_key: req.query.type_key || undefined,
-        open_only: req.query.open === '1'
-      })
-    );
+    const found = await raida.listSubjects(entityId(req), {
+      type_key: req.query.type_key || undefined,
+      open_only: req.query.open === '1'
+    });
+    /* S34: a register is the columns lib/raida listSubjects selects (register_subject, open_count a COUNT: text) */
+    // prettier-ignore
+    res.json({ subjects: found.subjects.map((x) => ({ subject_id: x.subject_id, type_key: x.type_key, ref_id: x.ref_id, ref_label: x.ref_label, name: x.name, opened_at: x.opened_at, closed_at: x.closed_at, closed_by_name: x.closed_by_name, open_count: x.open_count })), migrated: found.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to list registers'));
   }
@@ -3787,7 +3796,10 @@ router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /regi
 /** The library — the same risk turns up everywhere, worded slightly differently. */
 router.get('/register/templates', auth, async (req, res) => {
   try {
-    res.json(await raida.templates(entityId(req)));
+    const found = await raida.templates(entityId(req));
+    /* S34: a template is the columns lib/raida templates selects (register_template; raised and closed are COUNTs: text; standards an array_agg, NULL when none) */
+    // prettier-ignore
+    res.json({ templates: found.templates.map((x) => ({ template_id: x.template_id, kind: x.kind, title: x.title, body: x.body, likelihood: x.likelihood, severity: x.severity, treatment: x.treatment, verification_method: x.verification_method, applies_to: x.applies_to, raised: x.raised, closed: x.closed, standards: x.standards })), migrated: found.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to read the library'));
   }
@@ -3889,12 +3901,14 @@ router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, r
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
        of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
-    res.json(
-      await raida.report(entityId(req), {
-        subject_id: req.query.subject_id || undefined,
-        standard_key: req.query.standard || undefined
-      })
-    );
+    const report = await raida.report(entityId(req), {
+      subject_id: req.query.subject_id || undefined,
+      standard_key: req.query.standard || undefined
+    });
+    /* S34: every key lib/raida report answers (all but entries and migrated only once the register is migrated); an entry and a kind count are the library's
+       own literals and by_disposition is keyed by the dispositions found, so those stay open and listed */
+    // prettier-ignore
+    res.json({ entries: report.entries, by_kind: report.by_kind, by_disposition: report.by_disposition, migrated: report.migrated, full: report.full, resp: report.resp, open: report.open, closed: report.closed, closed_by_order: report.closed_by_order });
   } catch (err) {
     console.error('Raida report error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to read the register'));
@@ -5905,11 +5919,15 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
     });
     const total = got.rows.length ? Number(got.rows[0]._total) : 0;
     // evidence_snapshot is PII — expose presence only, never its contents; the roster as participants (live status per party) so the raiser can resolve each party
-    const rows = await finishDisputes(
+    const finished = await finishDisputes(
       got.rows.map(({ _total, ...d }) => d),
       entity_id,
       railActions.meOf(req)
     );
+    /* S34: a dispute is chit_disputes' columns (cd.*, in table order: migrations/000_baseline_2026-10-21.sql and after) less evidence_snapshot and roster,
+       the three subselects, then what finishDisputes adds. Named here, so a column added to the table later is not answered until it is named. */
+    // prettier-ignore
+    const rows = finished.map((x) => ({ dispute_id: x.dispute_id, chit_id: x.chit_id, raised_by_entity_id: x.raised_by_entity_id, raised_by_display_name: x.raised_by_display_name, category: x.category, reason: x.reason, status: x.status, resolution_note: x.resolution_note, resolved_by_entity_id: x.resolved_by_entity_id, resolved_at: x.resolved_at, created_at: x.created_at, target_entity_id: x.target_entity_id, target_display_name: x.target_display_name, scope: x.scope, mode: x.mode, answerable: x.answerable, parity_state: x.parity_state, via: x.via, entity_id: x.entity_id, role: x.role, auto_subject: x.auto_subject, purpose: x.purpose, sender_display_name: x.sender_display_name, has_evidence: x.has_evidence, participants: x.participants, others: x.others, mine: x.mine, actions: x.actions }));
     // "other" now means disputes targeting me (untargeted ones no longer leak)
     const myDisputes = rows.filter((item) => item.raised_by_entity_id === entity_id);
     const otherDisputes = rows.filter((item) => item.raised_by_entity_id !== entity_id);
@@ -6779,7 +6797,10 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
         to_name: toName(row)
       });
     }
-    res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
+    const answer = PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX));
+    /* S34: a batch is the literal built above; the pager's keys follow (capped and cap_note only when it cut the list) */
+    // prettier-ignore
+    res.json({ count: batches.length, batches: answer.batches.map((x) => ({ chit_id: x.chit_id, product: x.product, qty: x.qty, unit: x.unit, is_origin: x.is_origin, network: x.network, sender_name: x.sender_name, to_name: x.to_name })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to list batches'));
   }

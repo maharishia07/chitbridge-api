@@ -121,6 +121,242 @@
         "url": "/api/products/22222222-2222-4222-8222-222222222222/media/22222222-2222-4222-8222-222222222222"
       }
     },
+    "GET /api/actors/access-events": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "events",
+          "total",
+          "page",
+          "limit",
+          "applied"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "subject_identity_id",
+                "subject_name",
+                "actor_key",
+                "action",
+                "before_value",
+                "after_value",
+                "reason",
+                "at",
+                "changed_by",
+                "changed_by_name"
+              ],
+              "properties": {
+                "event_id": {
+                  "type": "string"
+                },
+                "subject_identity_id": {
+                  "type": "string"
+                },
+                "subject_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "actor_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "action": {
+                  "type": "string"
+                },
+                "before_value": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "hat": {
+                      "type": "string"
+                    },
+                    "access_level": {
+                      "type": "string"
+                    },
+                    "whole_entity": {},
+                    "can_see_costs": {
+                      "type": "boolean"
+                    },
+                    "break_status": {
+                      "type": "string"
+                    },
+                    "event_id": {},
+                    "subject_identity_id": {},
+                    "subject_name": {},
+                    "actor_key": {},
+                    "action": {},
+                    "before_value": {},
+                    "after_value": {},
+                    "reason": {},
+                    "at": {},
+                    "changed_by": {},
+                    "changed_by_name": {}
+                  },
+                  "additionalProperties": false
+                },
+                "after_value": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "hat": {
+                      "type": "string"
+                    },
+                    "access_level": {
+                      "type": "string"
+                    },
+                    "whole_entity": {
+                      "type": "boolean"
+                    },
+                    "can_see_costs": {
+                      "type": "boolean"
+                    },
+                    "break_status": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "expires_at": {
+                      "type": "string"
+                    },
+                    "event_id": {},
+                    "subject_identity_id": {},
+                    "subject_name": {},
+                    "actor_key": {},
+                    "action": {},
+                    "before_value": {},
+                    "after_value": {},
+                    "reason": {},
+                    "at": {},
+                    "changed_by": {},
+                    "changed_by_name": {}
+                  },
+                  "additionalProperties": false
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "at": {
+                  "type": "string"
+                },
+                "changed_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "changed_by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "applied": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/actors/access-events"
+      }
+    },
+    "GET /api/actors/settings": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "object",
+            "required": [
+              "setting_id",
+              "entity_id",
+              "assignment_model",
+              "default_max_tasks",
+              "all_task_visible",
+              "auto_return_on_short_break",
+              "created_at",
+              "updated_at",
+              "auto_assign_mode",
+              "default_assignee_actor_id"
+            ],
+            "properties": {
+              "setting_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "assignment_model": {
+                "type": "string"
+              },
+              "default_max_tasks": {
+                "type": "number"
+              },
+              "all_task_visible": {
+                "type": "boolean"
+              },
+              "auto_return_on_short_break": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "auto_assign_mode": {
+                "type": "string"
+              },
+              "default_assignee_actor_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/actors/settings"
+      }
+    },
     "GET /api/assist/catalogue-mine": {
       "status": "200",
       "schema": {
@@ -143,385 +379,7 @@
           "catalogues": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "source",
-                "version",
-                "visible",
-                "updated_at",
-                "resolved"
-              ],
-              "properties": {
-                "source": {
-                  "type": "string"
-                },
-                "version": {
-                  "type": "string"
-                },
-                "visible": {
-                  "type": "boolean"
-                },
-                "updated_at": {
-                  "type": "string"
-                },
-                "resolved": {
-                  "type": "object",
-                  "required": [
-                    "source",
-                    "for_entity",
-                    "title",
-                    "collection",
-                    "from_db",
-                    "is_member",
-                    "owner_entity_id",
-                    "experience",
-                    "formatting",
-                    "layers",
-                    "adoption_model",
-                    "schema",
-                    "items",
-                    "commercials_fields",
-                    "counts",
-                    "adopted",
-                    "detached"
-                  ],
-                  "properties": {
-                    "source": {
-                      "type": "string"
-                    },
-                    "for_entity": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "collection": {
-                      "type": "string"
-                    },
-                    "from_db": {
-                      "type": "boolean"
-                    },
-                    "is_member": {},
-                    "owner_entity_id": {},
-                    "experience": {
-                      "type": "object",
-                      "properties": {
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "formatting": {
-                      "type": "object",
-                      "properties": {
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "layers": {
-                      "type": "object",
-                      "required": [
-                        "shared",
-                        "entity"
-                      ],
-                      "properties": {
-                        "shared": {
-                          "type": "string"
-                        },
-                        "entity": {
-                          "type": "string"
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "adoption_model": {
-                      "type": "object",
-                      "required": [
-                        "source_ref",
-                        "version",
-                        "stores",
-                        "overlay"
-                      ],
-                      "properties": {
-                        "source_ref": {
-                          "type": "string"
-                        },
-                        "version": {
-                          "type": "string"
-                        },
-                        "stores": {
-                          "type": "string"
-                        },
-                        "overlay": {
-                          "type": "string"
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "schema": {
-                      "type": "object",
-                      "required": [
-                        "name",
-                        "facets",
-                        "fields"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "facets": {
-                          "type": "object",
-                          "required": [
-                            "design",
-                            "colour",
-                            "application"
-                          ],
-                          "properties": {
-                            "design": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "colour": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "application": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "ok": {},
-                            "count": {},
-                            "catalogues": {}
-                          },
-                          "additionalProperties": false
-                        },
-                        "fields": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "key",
-                              "label",
-                              "type"
-                            ],
-                            "properties": {
-                              "key": {
-                                "type": "string"
-                              },
-                              "label": {
-                                "type": "string"
-                              },
-                              "type": {
-                                "type": "string"
-                              },
-                              "values": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              },
-                              "ok": {},
-                              "count": {},
-                              "catalogues": {}
-                            },
-                            "additionalProperties": false
-                          }
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "name",
-                          "texture_family",
-                          "region",
-                          "effect",
-                          "scale",
-                          "sheen",
-                          "inspiration",
-                          "tools",
-                          "coats",
-                          "combinations",
-                          "commercials"
-                        ],
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "texture_family": {
-                            "type": "string"
-                          },
-                          "region": {
-                            "type": "string"
-                          },
-                          "effect": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "scale": {
-                            "type": "string"
-                          },
-                          "sheen": {
-                            "type": "string"
-                          },
-                          "inspiration": {
-                            "type": "string"
-                          },
-                          "tools": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "coats": {
-                            "type": "string"
-                          },
-                          "combinations": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "required": [
-                                "name",
-                                "colours"
-                              ],
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "colours": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "required": [
-                                      "name",
-                                      "hex"
-                                    ],
-                                    "properties": {
-                                      "name": {
-                                        "type": "string"
-                                      },
-                                      "hex": {
-                                        "type": "string"
-                                      },
-                                      "ok": {},
-                                      "count": {},
-                                      "catalogues": {}
-                                    },
-                                    "additionalProperties": false
-                                  }
-                                },
-                                "ok": {},
-                                "count": {},
-                                "catalogues": {}
-                              },
-                              "additionalProperties": false
-                            }
-                          },
-                          "commercials": {},
-                          "ok": {},
-                          "count": {},
-                          "catalogues": {}
-                        },
-                        "additionalProperties": false
-                      }
-                    },
-                    "commercials_fields": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "key",
-                          "label",
-                          "type"
-                        ],
-                        "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "label": {
-                            "type": "string"
-                          },
-                          "type": {
-                            "type": "string"
-                          },
-                          "values": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "ok": {},
-                          "count": {},
-                          "catalogues": {}
-                        },
-                        "additionalProperties": false
-                      }
-                    },
-                    "counts": {
-                      "type": "object",
-                      "required": [
-                        "finishes",
-                        "fields",
-                        "combinations",
-                        "colours"
-                      ],
-                      "properties": {
-                        "finishes": {
-                          "type": "number"
-                        },
-                        "fields": {
-                          "type": "number"
-                        },
-                        "combinations": {
-                          "type": "number"
-                        },
-                        "colours": {
-                          "type": "number"
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "adopted": {
-                      "type": "number"
-                    },
-                    "detached": {},
-                    "ok": {},
-                    "count": {},
-                    "catalogues": {}
-                  },
-                  "additionalProperties": false
-                },
-                "ok": {},
-                "count": {},
-                "catalogues": {}
-              },
-              "additionalProperties": false
+              "type": "object"
             }
           },
           "total": {
@@ -532,12 +390,23 @@
           },
           "limit": {
             "type": "number"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
-      "observed": 6,
-      "open": [],
+      "observed": 7,
+      "open": [
+        {
+          "path": "catalogues[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
       "example": {
         "url": "/api/assist/catalogue-mine?limit=1"
       }
@@ -737,19 +606,35 @@
           "by_locality": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "source_key",
+                "locality",
+                "orders",
+                "distributors"
+              ],
+              "properties": {
+                "source_key": {
+                  "type": "string"
+                },
+                "locality": {
+                  "type": "string"
+                },
+                "orders": {
+                  "type": "number"
+                },
+                "distributors": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
             }
           }
         },
         "additionalProperties": false
       },
-      "observed": 5,
-      "open": [
-        {
-          "path": "by_locality[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "observed": 6,
+      "open": [],
       "example": {
         "url": "/api/assist/penetration"
       }
@@ -841,19 +726,46 @@
           "regions": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "region_code",
+                "currency",
+                "units",
+                "language",
+                "jurisdiction"
+              ],
+              "properties": {
+                "region_code": {
+                  "type": "string"
+                },
+                "currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "units": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "language": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "jurisdiction": {}
+              },
+              "additionalProperties": false
             }
           }
         },
         "additionalProperties": false
       },
-      "observed": 7,
-      "open": [
-        {
-          "path": "regions[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "observed": 10,
+      "open": [],
       "example": {
         "url": "/api/assist/regions"
       }
@@ -2213,6 +2125,810 @@
       "open": [],
       "example": {
         "url": "/api/books/trial-balance"
+      }
+    },
+    "GET /api/chits/disputes/queue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "disputes",
+          "my_disputes",
+          "other_disputes",
+          "rows",
+          "total",
+          "page",
+          "limit",
+          "counts"
+        ],
+        "properties": {
+          "disputes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "my_disputes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "other_disputes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "open": {
+                "type": "number"
+              },
+              "resolved": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "total_open": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "disputes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "my_disputes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "other_disputes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "rows[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/disputes/queue?status=all"
+      }
+    },
+    "GET /api/chits/folder": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chits",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "chits": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "chits[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/folder?view=trash&sort=amount&dir=asc&date_from=2026-01-01"
+      }
+    },
+    "GET /api/chits/inbox": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chits",
+          "total",
+          "page",
+          "limit",
+          "next"
+        ],
+        "properties": {
+          "chits": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "next": {},
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "chits[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/inbox?status=pending&q=tea&folder_id=22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/chits/raida/report": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "entries",
+          "migrated"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "by_kind": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "by_disposition": {
+            "type": "object"
+          },
+          "full": {
+            "type": "boolean"
+          },
+          "resp": {
+            "type": "boolean"
+          },
+          "open": {
+            "type": "number"
+          },
+          "closed": {
+            "type": "number"
+          },
+          "closed_by_order": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "entries[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "by_kind[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "by_disposition",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/raida/report"
+      }
+    },
+    "GET /api/chits/register/attachables": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "attachables",
+          "degraded"
+        ],
+        "properties": {
+          "attachables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "type_key",
+                "label",
+                "points_at"
+              ],
+              "properties": {
+                "type_key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "points_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "degraded": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/attachables"
+      }
+    },
+    "GET /api/chits/register/subjects": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "subjects",
+          "migrated"
+        ],
+        "properties": {
+          "subjects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "subject_id": {
+                  "type": "string"
+                },
+                "type_key": {
+                  "type": "string"
+                },
+                "ref_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ref_label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "opened_at": {
+                  "type": "string"
+                },
+                "closed_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "closed_by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "open_count": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/subjects"
+      }
+    },
+    "GET /api/chits/register/templates": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "templates",
+          "migrated"
+        ],
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "template_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "body": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "likelihood": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "severity": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "treatment": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "verification_method": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "applies_to": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "raised": {
+                  "type": "string"
+                },
+                "closed": {
+                  "type": "string"
+                },
+                "standards": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/templates"
+      }
+    },
+    "GET /api/chits/rollup": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "group_by",
+          "direction",
+          "groups"
+        ],
+        "properties": {
+          "group_by": {
+            "type": "string"
+          },
+          "direction": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "chits",
+                "total_value"
+              ],
+              "properties": {
+                "key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "chits": {
+                  "type": "number"
+                },
+                "total_value": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "dispute_open": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/rollup"
+      }
+    },
+    "GET /api/chits/sent": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chits",
+          "total",
+          "page",
+          "limit",
+          "next"
+        ],
+        "properties": {
+          "chits": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "next": {},
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "chits[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/sent"
+      }
+    },
+    "GET /api/chits/trace/batches": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "batches",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "batches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "product",
+                "qty",
+                "unit",
+                "is_origin",
+                "network",
+                "sender_name",
+                "to_name"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "product": {
+                  "type": "string"
+                },
+                "qty": {
+                  "type": "number"
+                },
+                "unit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "is_origin": {
+                  "type": "boolean"
+                },
+                "network": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sender_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "to_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/trace/batches"
+      }
+    },
+    "GET /api/chits/trace/by-batch": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dir",
+          "by_batch",
+          "reconstructed",
+          "matched_on",
+          "matched_note",
+          "start",
+          "reachable_count",
+          "depth_max",
+          "flagged",
+          "terminals",
+          "nodes",
+          "edges"
+        ],
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "by_batch": {
+            "type": "string"
+          },
+          "reconstructed": {
+            "type": "boolean"
+          },
+          "matched_on": {
+            "type": "string"
+          },
+          "matched_note": {
+            "type": "string"
+          },
+          "start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reachable_count": {
+            "type": "number"
+          },
+          "depth_max": {
+            "type": "number"
+          },
+          "flagged": {
+            "type": "number"
+          },
+          "terminals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "product"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "product": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "nodes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "edges[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/trace/by-batch?q=B1"
+      }
+    },
+    "GET /api/chits/trace/networks": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "networks"
+        ],
+        "properties": {
+          "networks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "network_id",
+                "is_operator",
+                "edges"
+              ],
+              "properties": {
+                "network_id": {
+                  "type": "string"
+                },
+                "is_operator": {
+                  "type": "boolean"
+                },
+                "edges": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/trace/networks"
+      }
+    },
+    "GET /api/chits/unread": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "unread"
+        ],
+        "properties": {
+          "unread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/unread"
       }
     },
     "GET /api/crm/calls": {
@@ -8188,6 +8904,511 @@
     }
   },
   "listed": {
+    "0": {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/cashflow": "open at opening[] — a value passed through (an expression: its keys are not written in the handler); lowest — a value passed through (an expression: its keys are not written in the handler); uncounted — a value passed through (an expression: its keys are not written in the handler); gst — a value passed through (an expression: its keys are not written in the handler); series[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/events": "open at events[] — a value passed through (an expression: its keys are not written in the handler); picks — a value passed through (an expression: its keys are not written in the handler); pending[] — a value passed through (an expression: its keys are not written in the handler); golden — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/fx-rates": "open at may.add — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/health": "open at country — a value passed through (an expression: its keys are not written in the handler); engines — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/returns": "open at asked — a value passed through (an expression: its keys are not written in the handler); period — a value passed through (an expression: its keys are not written in the handler); staggers — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/status": "open at engines — a value passed through (an expression: its keys are not written in the handler); country — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/books/terms": "open at default — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
+    "1": {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/ai-skills": "open at skills[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/boilerplate/:key": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/governance/commerce-standards": "open at sources[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/country-setup": "open at country — a value passed through (an expression: its keys are not written in the handler); tax — a value passed through (an expression: its keys are not written in the handler); constituted_by — a value passed through (an expression: its keys are not written in the handler); countries[] — a value passed through (an expression: its keys are not written in the handler); source — a value passed through (an expression: its keys are not written in the handler); pack — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/entities/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/governance/instruments": "open at frm_classes — a value passed through (an expression: its keys are not written in the handler); cluster[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/journey": "open at chain[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/lanes": "open at lanes[] — a value passed through (an expression: its keys are not written in the handler); may.gather — a value passed through (an expression: its keys are not written in the handler); may.verify — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/profile": "open at vault — a value passed through (an expression: its keys are not written in the handler); invoice_party — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/profile/path": "open at profile — a value passed through (an expression: its keys are not written in the handler); lanes[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/profile/readiness": "open at profile — a value passed through (an expression: its keys are not written in the handler); clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/readiness": "open at clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler); may.gather — a value passed through (an expression: its keys are not written in the handler); may.verify — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/readiness/:bridge_id": "open at facts — a value passed through (a name: its keys are not written in the handler); clearances[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/governance/source/:key": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/governance/vault-schema": "open at section_types — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/ai-draft": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/boilerplate/:key/adopt": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/compliance": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/governance/entities": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/entities/:id/reattest": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/source": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/supplier-acceptance": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/governance/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "PUT /api/governance/country-setup": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+      "PUT /api/governance/profile/vault": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial"
+    },
+    "2": {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/catalogue/blueprints": "open at enrich[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "open at config — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "open at shop — a value passed through (an expression: its keys are not written in the handler); network — a value passed through (an expression: its keys are not written in the handler); face — a value passed through (an expression: its keys are not written in the handler); policy — a value passed through (an expression: its keys are not written in the handler); lot_fields — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/stock": "open at balances — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "open at shop — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
+    "3": {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/calls": "open at calls[] — a value passed through (an expression: its keys are not written in the handler); outcomes[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/followups": "open at followups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/parties": "open at parties[] — a value passed through (an expression: its keys are not written in the handler); walk_ins[] — a value passed through (an expression: its keys are not written in the handler); alerts — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/parties/:id": "open at may_trade — a value passed through (an expression: its keys are not written in the handler); roles — a value passed through (an expression: its keys are not written in the handler); customer — a value passed through (an expression: its keys are not written in the handler); lead — a value passed through (an expression: its keys are not written in the handler); terms — a value passed through (an expression: its keys are not written in the handler); dues — a value passed through (an expression: its keys are not written in the handler); gstin — a value passed through (an expression: its keys are not written in the handler); contact_prefs — a value passed through (an expression: its keys are not written in the handler); relationship — a value passed through (an expression: its keys are not written in the handler); points — a value passed through (an expression: its keys are not written in the handler); followups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler); supplier — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/parties/:id/contact-prefs": "open at history[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler); law — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/parties/:id/timeline": "open at entries[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/privacy-requests": "open at requests[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/crm/segments": "open at segments[] — a value passed through (an expression: its keys are not written in the handler); groups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
+    "4": {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/testing/cases": "open at cases[] — a value passed through (a name: its keys are not written in the handler)",
+      "GET /api/testing/changes": "open at changes[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/testing/cmdb": "open at records[] — a value passed through (a name: its keys are not written in the handler)",
+      "GET /api/testing/coverage": "open at areas[] — a value passed through (an expression: its keys are not written in the handler); groups — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/testing/engine": "open at engine — a value passed through (an expression: its keys are not written in the handler); contents — a value passed through (an expression: its keys are not written in the handler); notes — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/testing/incidents": "open at incidents[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (a name: its keys are not written in the handler); open_by_severity — a value passed through (an expression: its keys are not written in the handler); means — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/testing/releases": "open at releases[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/testing/reliability": "open at cases[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/testing/report": "open at sections[] — a map keyed by data (62 keys)",
+      "GET /api/testing/requirements": "open at requirements[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (a name: its keys are not written in the handler)"
+    },
+    "5": {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/groupsum": "open at flags — a value passed through (an expression: its keys are not written in the handler); money — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/inventory": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/mis": "open at all — a value passed through (an expression: its keys are not written in the handler); received — a value passed through (an expression: its keys are not written in the handler); sent — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/reconcile": "open at folders[] — a value passed through (an expression: its keys are not written in the handler); overall — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/rules/vocabulary": "open at keys — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/folders/worklist": "open at people[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
+    "6": {
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/entities/entitlements": "open at quotas — a value passed through (a name: its keys are not written in the handler); envelope — a value passed through (a name: its keys are not written in the handler)",
+      "GET /api/entities/header": "open at business — a value passed through (an expression: its keys are not written in the handler); licences[] — a value passed through (an expression: its keys are not written in the handler); trade_ready — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/entities/me": "open at entity — a value passed through (an expression: its keys are not written in the handler); governance — a value passed through (a name: its keys are not written in the handler); included — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/entities/mis": "open at by_kind[] — a value passed through (an expression: its keys are not written in the handler); by_vertical — a value passed through (an expression: its keys are not written in the handler); by_plan — a value passed through (an expression: its keys are not written in the handler); by_visibility — a value passed through (an expression: its keys are not written in the handler); by_entity_visibility — a value passed through (an expression: its keys are not written in the handler); by_supplies — a value passed through (an expression: its keys are not written in the handler); by_position — a value passed through (an expression: its keys are not written in the handler); by_class — a value passed through (an expression: its keys are not written in the handler); joined_by_month[] — a value passed through (an expression: its keys are not written in the handler); rows[] — a value passed through (a name: its keys are not written in the handler)",
+      "GET /api/entities/policy": "open at flags — a value passed through (a name: its keys are not written in the handler); schema — a value passed through (an expression: its keys are not written in the handler); bound — a value passed through (an expression: its keys are not written in the handler); bound_schema — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/entities/populations": "open at populations[] — a value passed through (an expression: its keys are not written in the handler); desk_candidates[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/entities/routing": "open at folders[] — a value passed through (an expression: its keys are not written in the handler); people[] — a value passed through (an expression: its keys are not written in the handler); teams[] — a value passed through (a name: its keys are not written in the handler)",
+      "GET /api/entities/search": "open at results[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/entities/sides": "open at lean[] — a value passed through (an expression: its keys are not written in the handler); use[] — a value passed through (an expression: its keys are not written in the handler); impact — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/entities/usage": "open at daily[] — a value passed through (an expression: its keys are not written in the handler); by_meter[] — a value passed through (an expression: its keys are not written in the handler); recent[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PATCH /api/entities/me/exposure": "open at exposure — a value passed through (an expression: its keys are not written in the handler)",
+      "PATCH /api/entities/me/locale": "open at (answer) — never seen and not written in the handler",
+      "PATCH /api/entities/me/prefs/:kind": "open at (answer) — never seen and not written in the handler",
+      "PATCH /api/entities/policy": "open at flags — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/entities/register": "open at (answer) — never seen and not written in the handler",
+      "POST /api/entities/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
+    "7": {
+      "DELETE /api/products/:id/media/:mid": "open at media[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/container/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/products": "open at items[] — a value passed through (a name: its keys are not written in the handler); status_counts — a value passed through (an expression: its keys are not written in the handler); category_counts — a value passed through (a name: its keys are not written in the handler)",
+      "GET /api/products/:id/versions": "open at current — a value passed through (an expression: its keys are not written in the handler); versions[] — a value passed through (an expression: its keys are not written in the handler); version — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/products/lists": "open at lists[] — a value passed through (an expression: its keys are not written in the handler); mine[] — a value passed through (a name: its keys are not written in the handler)",
+      "GET /api/products/starter-columns": "open at verticals[] — a value passed through (an expression: its keys are not written in the handler); starter — a value passed through (an expression: its keys are not written in the handler)",
+      "GET /api/till/bills": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/catalogue/blueprints": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/counters": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/engine/:name": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/match": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/groups": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/hidden": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/screens": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/snapshot": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/summary": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/tasks": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "GET /api/till/worth-an-offer": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
+      "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
+      "POST /api/assist/resolve": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/alias": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/catalogue": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/close": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/diagnostic": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/enrol": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/flags": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/listen": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/offer-item": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/pair/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/price": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/hide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/screen-config": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/quick-keys/unhide": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reconcile": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/reward/claim": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/rename": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/screens/revoke": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/shop": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/state": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+      "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
+    },
     "DELETE /api/products/:id/media/:mid": "open at media[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
     "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
@@ -8329,6 +9550,14 @@
     "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
     "PUT /api/governance/country-setup": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/governance/profile/vault": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial"
+    "PUT /api/governance/profile/vault": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
+    "GET /api/chits/disputes/queue": "open at disputes[] — a value passed through (an expression: its keys are not written in the handler); my_disputes[] — a value passed through (an expression: its keys are not written in the handler); other_disputes[] — a value passed through (an expression: its keys are not written in the handler); rows[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/folder": "open at chits[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/inbox": "open at chits[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/raida/report": "open at entries[] — a value passed through (an expression: its keys are not written in the handler); by_kind[] — a value passed through (an expression: its keys are not written in the handler); by_disposition — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/sent": "open at chits[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/trace/by-batch": "open at nodes[] — a value passed through (an expression: its keys are not written in the handler); edges[] — a value passed through (a name: its keys are not written in the handler)",
+    "DELETE /api/actors/:id/pin": "left open on purpose: the 200 carries the one-time code (show_code · otp on an opted-in stack); a shape that names it is a call for cb-security, not a sweep",
+    "GET /api/actors": "open at actors[].connector_config — the connector's own config, stored verbatim from the owner's body (routes/connectors.js: isObject only); a closed shape would cut a key it does not list"
   }
 }
