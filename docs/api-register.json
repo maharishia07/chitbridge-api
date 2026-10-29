@@ -104,7 +104,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "20b1ed68d6239fdd"
+    "stale_since": "ef0e583e98b1b4ef"
    },
    "status": "partial"
   },
@@ -3574,9 +3574,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8ee7b2bf34c9d2b5"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -6873,7 +6872,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1f9a50e743295f2d"
+    "stale_since": "b43d5b8b4da152b9"
    },
    "status": "partial"
   },
@@ -7504,7 +7503,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "43f1e03628304b31"
+    "stale_since": "3aa7dc583807a82a"
    },
    "status": "partial"
   },
@@ -13542,7 +13541,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e66994db22b4bbc5"
+    "stale_since": "ac32c7133a65c697"
    },
    "status": "partial"
   },
@@ -13593,7 +13592,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "51badc5b53345004"
+    "stale_since": "65d59798e49ce45d"
    },
    "status": "partial"
   },
@@ -15334,7 +15333,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9c6ea25247681b5c"
+    "stale_since": "818035cce72f823f"
    },
    "status": "partial"
   },
@@ -15386,7 +15385,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cdb7a412dd467453"
+    "stale_since": "96b2b79b2c8bfcfa"
    },
    "status": "partial"
   },
@@ -19365,7 +19364,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3ea8ef89441f8fd5"
+    "stale_since": "48d4a019e018499b"
    },
    "status": "partial"
   },
@@ -19466,7 +19465,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "108df111e08d1b0d"
+    "stale_since": "3c3e1c899f08d98e"
    },
    "status": "partial"
   },
@@ -19773,7 +19772,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c69b9c671399865f"
+    "stale_since": "d593da94e87ba876"
    },
    "status": "partial"
   },
@@ -29225,7 +29224,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "20153dc2329acc8f"
+    "stale_since": "6b97087f638e6255"
    },
    "status": "partial"
   },
@@ -29685,7 +29684,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bb557dd69da1228a"
+    "stale_since": "60556e63ece7748b"
    },
    "status": "partial"
   },
@@ -30237,7 +30236,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e69b9f4a6c5d7628"
+    "stale_since": "32cc84a8d189bddd"
    },
    "status": "partial"
   },
