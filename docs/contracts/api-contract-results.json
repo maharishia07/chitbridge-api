@@ -122,6 +122,22 @@
     400
    ]
   },
+  "DELETE /api/quick-keys/groups/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "DELETE /api/quick-keys/groups/:id/items/:productId": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/actors/:id/tasks": {
    "cases": 3,
    "failed": 0,
@@ -1276,6 +1292,22 @@
   },
   "PATCH /api/products/:id": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/quick-keys/groups/:id/items": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2554,6 +2586,22 @@
     400
    ]
   },
+  "POST /api/quick-keys/groups": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/repeat": {
    "cases": 2,
    "failed": 0,
@@ -3228,6 +3276,14 @@
   },
   "PUT /api/products/:id/status": {
    "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

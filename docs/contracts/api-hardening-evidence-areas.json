@@ -435,6 +435,15 @@
   },
   "GET /api/assist/regions": {
    "output_allowlist": true
+  },
+  "DELETE /api/quick-keys/groups/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "foreign_id_404": true
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "foreign_id_404": true
   }
  }
 }

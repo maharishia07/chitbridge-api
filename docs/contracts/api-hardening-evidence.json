@@ -310,6 +310,7 @@
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id/items/:productId": {

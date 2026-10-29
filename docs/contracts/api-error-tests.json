@@ -87,6 +87,19 @@
   401,
   500
  ],
+ "DELETE /api/quick-keys/groups/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "DELETE /api/quick-keys/groups/:id/items/:productId": [
+  401,
+  403,
+  500
+ ],
  "GET /.well-known/ctp.json": [
   200,
   500
@@ -910,6 +923,16 @@
   401,
   500
  ],
+ "GET /api/quick-keys/groups": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/quick-keys/screen-config/default": [
+  401,
+  403,
+  500
+ ],
  "GET /api/repeat": [
   401,
   500
@@ -1209,6 +1232,20 @@
   403,
   404,
   409,
+  500
+ ],
+ "PATCH /api/quick-keys/groups/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PATCH /api/quick-keys/groups/:id/items": [
+  400,
+  401,
+  403,
   500
  ],
  "PATCH /api/testing/incidents/:id": [
@@ -2279,6 +2316,19 @@
   401,
   500
  ],
+ "POST /api/quick-keys/groups": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/quick-keys/groups/:id/items": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/repeat": [
   400,
   401,
@@ -2834,6 +2884,12 @@
   400,
   401,
   404,
+  500
+ ],
+ "PUT /api/quick-keys/screen-config/default": [
+  400,
+  401,
+  403,
   500
  ],
  "PUT /api/testing/cmdb/:ci": [

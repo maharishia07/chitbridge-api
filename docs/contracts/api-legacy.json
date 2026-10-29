@@ -42702,6 +42702,598 @@
           }
         }
       ]
+    },
+    "DELETE /api/quick-keys/groups/:id": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "bad-id",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "group-drop-stale",
+          "status": 409,
+          "body_keys": {
+            "error": "conflict",
+            "message": "changed since you last read it",
+            "current": {
+              "id": "00000000-0000-4000-8000-0000000000a1",
+              "entity_id": "11111111-1111-4111-8111-111111111111",
+              "name": "Morning",
+              "color": null,
+              "sort_order": 0,
+              "window_from": null,
+              "window_to": null,
+              "suggest_on_start": false,
+              "is_deleted": false,
+              "version": 1,
+              "updated_by": null,
+              "updated_at": "2026-10-23T00:00:00.000Z"
+            }
+          },
+          "fixture": {
+            "error": "conflict",
+            "message": "changed since you last read it",
+            "current": {
+              "id": "00000000-0000-4000-8000-0000000000a1",
+              "entity_id": "11111111-1111-4111-8111-111111111111",
+              "name": "Morning",
+              "color": null,
+              "sort_order": 0,
+              "window_from": null,
+              "window_to": null,
+              "suggest_on_start": false,
+              "is_deleted": false,
+              "version": 1,
+              "updated_by": null,
+              "updated_at": "2026-10-23T00:00:00.000Z"
+            }
+          }
+        },
+        {
+          "scenario": "group-drop-unknown",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "group-drop-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "DELETE /api/quick-keys/groups/:id/items/:productId": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "key-remove-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "GET /api/quick-keys/groups": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "groups-list-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "GET /api/quick-keys/screen-config/default": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "screen-read-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "PATCH /api/quick-keys/groups/:id": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "bad-id",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "group-change-stale",
+          "status": 409,
+          "body_keys": {
+            "error": "conflict",
+            "message": "changed since you last read it",
+            "current": {
+              "id": "00000000-0000-4000-8000-0000000000a1",
+              "entity_id": "11111111-1111-4111-8111-111111111111",
+              "name": "Morning",
+              "color": null,
+              "sort_order": 0,
+              "window_from": null,
+              "window_to": null,
+              "suggest_on_start": false,
+              "is_deleted": false,
+              "version": 1,
+              "updated_by": null,
+              "updated_at": "2026-10-23T00:00:00.000Z"
+            }
+          },
+          "fixture": {
+            "error": "conflict",
+            "message": "changed since you last read it",
+            "current": {
+              "id": "00000000-0000-4000-8000-0000000000a1",
+              "entity_id": "11111111-1111-4111-8111-111111111111",
+              "name": "Morning",
+              "color": null,
+              "sort_order": 0,
+              "window_from": null,
+              "window_to": null,
+              "suggest_on_start": false,
+              "is_deleted": false,
+              "version": 1,
+              "updated_by": null,
+              "updated_at": "2026-10-23T00:00:00.000Z"
+            }
+          }
+        },
+        {
+          "scenario": "group-change-unknown",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "group-change-deleted",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "group-change-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "PATCH /api/quick-keys/groups/:id/items": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "keys-reorder-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "POST /api/quick-keys/groups": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "name required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "name required"
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "name required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "name required"
+          }
+        },
+        {
+          "scenario": "group-make-no-name",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "name required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "name required"
+          }
+        },
+        {
+          "scenario": "group-make-blank-name",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "name required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "name required"
+          }
+        },
+        {
+          "scenario": "group-make-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "POST /api/quick-keys/groups/:id/items": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "product_id required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "product_id required"
+          }
+        },
+        {
+          "scenario": "nothing-found",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "product_id required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "product_id required"
+          }
+        },
+        {
+          "scenario": "bad-id",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "product_id required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "product_id required"
+          }
+        },
+        {
+          "scenario": "key-add-no-product",
+          "status": 400,
+          "body_keys": {
+            "error": "validation",
+            "message": "product_id required"
+          },
+          "fixture": {
+            "error": "validation",
+            "message": "product_id required"
+          }
+        },
+        {
+          "scenario": "key-add-unknown-group",
+          "status": 404,
+          "body_keys": {
+            "error": "Not found"
+          },
+          "fixture": {
+            "error": "Not found"
+          }
+        },
+        {
+          "scenario": "key-add-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
+    },
+    "PUT /api/quick-keys/screen-config/default": {
+      "answers": [
+        {
+          "scenario": "key-asks",
+          "status": 403,
+          "body_keys": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          },
+          "fixture": {
+            "error": "Forbidden",
+            "message": "Quick-key groups are managed by a signed-in person, not by a key."
+          }
+        },
+        {
+          "scenario": "db-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        },
+        {
+          "scenario": "screen-write-fails",
+          "status": 500,
+          "body_keys": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          },
+          "fixture": {
+            "error": "Failed",
+            "message": "Something went wrong — please try again."
+          }
+        }
+      ]
     }
   },
   "global": {

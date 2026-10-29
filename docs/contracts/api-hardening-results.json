@@ -1540,17 +1540,17 @@
   "POST /api/quick-keys/groups": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "PATCH /api/quick-keys/groups/:id": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1561,6 +1561,9 @@
    }
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "strict_input": {
+    "pass": true
+   },
    "output_allowlist": {
     "pass": false,
     "why": "the answer holds leak_canary, a column the answer schema does not list"
@@ -1572,11 +1575,11 @@
   "POST /api/quick-keys/groups/:id/items": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": false,
@@ -1595,7 +1598,7 @@
   "PATCH /api/quick-keys/groups/:id/items": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1614,7 +1617,7 @@
   "PUT /api/quick-keys/screen-config/default": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
