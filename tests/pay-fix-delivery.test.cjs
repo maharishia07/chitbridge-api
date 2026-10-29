@@ -13,6 +13,8 @@ const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  '
 let migrated = true; const seen = new Set(); let inserted = 0; const sqls = [];
 const db = { query: async (sql, p) => {
   sqls.push(sql);
+  /* RAIL-133 (c): every line asked about is on this chit */
+  if (/line_id::text = ANY/.test(sql)) return { rows: p[2].map((line_id) => ({ line_id })) };
   if (/chit_line_event/.test(sql)) {
     const ref = migrated ? p[11] : null, key = ref && p[0] + '|' + p[1] + '|' + ref;
     if (key && seen.has(key)) return { rows: [{ copies: 0 }] };

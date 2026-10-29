@@ -52,6 +52,8 @@ const CALLS = {
   unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], openDisputes: [E, U],
   /* M30 · the payment advice (b285) */
   adviceReady: [E], paymentsAdvice: [E, [U]], setAdvice: [E, U, { advice_chit_id: U, advice_shared_at: null }], adviceStates: [E, [U]], paymentsNeedingAdvice: [E, 50], shopName: [E], bankRailChits: [E, '2026-10-01', '2026-10-31', 500],
+  /* F5 A1 · the books to-do's bills_unrated: the shop's registration facts, and the sale bills in the books with an unrated line */
+  taxRegistration: [E], unratedSaleBills: [E, '2025-04-01', '2026-10-24', 50],
 };
 
 (async () => {

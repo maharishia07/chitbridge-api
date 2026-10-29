@@ -10,6 +10,9 @@
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
+  "GET /api/entities/search": {
+   "output_allowlist": true
+  },
   "GET /api/entities/policy": {
    "output_allowlist": true
   },
@@ -38,6 +41,18 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/chits/sent": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/folder": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/rollup": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/inbox": {
+   "output_allowlist": true
+  },
   "GET /api/chits/pulse": {
    "output_allowlist": true
   },
@@ -53,6 +68,15 @@
   },
   "POST /api/chits/:chit_id/costs": {
    "foreign_id_404": true
+  },
+  "GET /api/chits/register/attachables": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/register/subjects": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/register/templates": {
+   "output_allowlist": true
   },
   "GET /api/chits/register/walk/:from": {
    "output_allowlist": true
@@ -88,7 +112,6 @@
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/payment": {
-   "output_allowlist": true,
    "foreign_id_404": true
   },
   "DELETE /api/chits/:chit_id/payment": {
@@ -110,6 +133,9 @@
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "foreign_id_404": true
+  },
+  "GET /api/chits/disputes/queue": {
+   "output_allowlist": true
   },
   "DELETE /api/chits/:chit_id": {
    "foreign_id_404": true
@@ -149,7 +175,14 @@
   "POST /api/chits/assign-bulk": {
    "output_allowlist": true
   },
+  "GET /api/chits/:id/trace": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/chits/trace/batches": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/trace/by-batch": {
    "output_allowlist": true
   },
   "GET /api/chits/trace/networks": {
@@ -219,8 +252,14 @@
   "GET /api/till/quick-keys/hidden": {
    "output_allowlist": true
   },
+  "GET /api/till/quick-keys/screen-config": {
+   "output_allowlist": true
+  },
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
+  },
+  "POST /api/till/rate": {
+   "strict_input": true
   },
   "POST /api/till/pair": {
    "output_allowlist": true
@@ -271,6 +310,7 @@
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id/items/:productId": {
@@ -303,12 +343,23 @@
   "POST /api/keys": {
    "output_allowlist": true
   },
+  "POST /api/schemas/create-default": {
+   "strict_input": true
+  },
   "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
+  "PATCH /api/schemas/fields/order": {
+   "strict_input": true
+  },
   "PATCH /api/schemas/fields/:field_key": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PATCH /api/schemas/visibility": {
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/actors/suggest-key": {
    "output_allowlist": true
@@ -330,11 +381,17 @@
   "PUT /api/actors/assign/:chit_id": {
    "foreign_id_404": true
   },
+  "GET /api/actors/settings": {
+   "output_allowlist": true
+  },
   "PUT /api/actors/:id/delegate": {
    "foreign_id_404": true
   },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
+  },
+  "GET /api/actors/access-events": {
+   "output_allowlist": true
   },
   "POST /api/identity/documents/:scheme/code": {
    "foreign_id_404": true
@@ -342,7 +399,7 @@
   "POST /api/identity/documents/:scheme/verify": {
    "foreign_id_404": true
   },
-  "GET /api/people": {
+  "GET /api/folders": {
    "output_allowlist": true
   },
   "GET /api/folders/inventory": {
@@ -363,10 +420,19 @@
   "GET /api/folders/rules/vocabulary": {
    "output_allowlist": true
   },
+  "GET /api/folders/rules": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/messages": {
+   "output_allowlist": true
+  },
   "GET /api/folders/worklist": {
    "output_allowlist": true
   },
   "GET /api/folders/groupsum": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/reconcile": {
    "output_allowlist": true
   },
   "GET /api/folders/mis": {
@@ -502,6 +568,9 @@
   "GET /api/governance/country-setup": {
    "output_allowlist": true
   },
+  "GET /api/governance/ai-usage": {
+   "output_allowlist": true
+  },
   "GET /api/governance/ai-skills": {
    "output_allowlist": true
   },
@@ -521,6 +590,9 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
+  "GET /api/network-design/availability": {
+   "output_allowlist": true
+  },
   "GET /api/catalogue-face": {
    "output_allowlist": true
   },
@@ -533,6 +605,12 @@
   "DELETE /api/combo-templates/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/simulator/lead": {
+   "output_allowlist": true
+  },
+  "POST /api/simulator/feedback": {
+   "output_allowlist": true
   },
   "POST /api/notifications/seen": {
    "output_allowlist": true
@@ -567,7 +645,13 @@
   "PUT /api/assist/region-override": {
    "output_allowlist": true
   },
+  "GET /api/assist/regions": {
+   "output_allowlist": true
+  },
   "GET /api/assist/resolve": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/penetration": {
    "output_allowlist": true
   },
   "GET /api/assist/catalogue-source/:key": {
@@ -612,6 +696,12 @@
   "POST /api/testing/cmdb/seed": {
    "output_allowlist": true
   },
+  "GET /api/testing/results": {
+   "output_allowlist": true
+  },
+  "GET /api/testing/runs": {
+   "output_allowlist": true
+  },
   "GET /api/testing/cases/gherkin": {
    "output_allowlist": true
   },
@@ -625,6 +715,9 @@
    "output_allowlist": true
   },
   "GET /api/testing/coverage": {
+   "output_allowlist": true
+  },
+  "GET /api/testing/report": {
    "output_allowlist": true
   },
   "GET /api/testing/reliability": {
@@ -685,10 +778,26 @@
   "GET /api/forms": {
    "output_allowlist": true
   },
+  "GET /api/forms/:key": {
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/resolve": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/issue": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
   "GET /api/forms/instances/:id": {
    "foreign_id_404": true
   },
   "POST /api/forms/instances/:id/sign": {
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/service/:chit_id": {
@@ -736,11 +845,28 @@
   "GET /api/crm/parties": {
    "output_allowlist": true
   },
+  "POST /api/crm/parties/:id/interactions": {
+   "foreign_id_404": true
+  },
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
+  "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/crm/followups/:id": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/crm/calls": {
    "output_allowlist": true
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/crm/parties/:id/contact-prefs": {
+   "foreign_id_404": true
   },
   "GET /api/crm/privacy-requests": {
    "output_allowlist": true
