@@ -25,6 +25,15 @@
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
+  "GET /api/assist/catalogue-mine": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/penetration": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/regions": {
+   "output_allowlist": true
+  },
   "GET /api/books/accounts": {
    "output_allowlist": true
   },
@@ -138,6 +147,39 @@
   "GET /api/crm/segments": {
    "output_allowlist": true
   },
+  "GET /api/entities/entitlements": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/header": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/me": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/me/can-see-costs": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/mis": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/policy": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/populations": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/routing": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/search": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/sides": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/usage": {
+   "output_allowlist": true
+  },
   "GET /api/governance/ai-skills": {
    "output_allowlist": true
   },
@@ -178,39 +220,6 @@
    "output_allowlist": true
   },
   "GET /api/governance/vault-schema": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/entitlements": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/header": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/me": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/me/can-see-costs": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/mis": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/policy": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/populations": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/routing": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/search": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/sides": {
-   "output_allowlist": true
-  },
-  "GET /api/entities/usage": {
    "output_allowlist": true
   },
   "GET /api/products": {

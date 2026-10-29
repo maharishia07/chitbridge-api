@@ -251,9 +251,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/assist.js', sameValue(mine, judged), { onDisk: Object.keys(mine).length, covered: Object.keys(judged).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
-    /* the batch regenerates the evidence file (laptop1, 29 Oct: feature PRs commit no generated file), so a row may be missing here; a row that claims a route that did not hold is a lie */
-    const claimed = Object.keys(allowListEvidenceOnDisk());
-    check('docs/contracts/api-hardening-evidence-areas.json claims output_allowlist only for swept routes whose 200 held closed here', claimed.every((route) => allowed200[route]), { claimed, held: Object.keys(allowed200) });
+    /* the area test writes this file (--write) and the register reads it: it is committed with the sweep, and checked exactly (laptop1, 29 Oct) */
+    const claimed = Object.keys(allowListEvidenceOnDisk()).sort();
+    const held = Object.keys(allowed200).filter((route) => allowed200[route]).sort();
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the swept routes whose 200 held closed here', sameValue(claimed, held), { claimed, held });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
