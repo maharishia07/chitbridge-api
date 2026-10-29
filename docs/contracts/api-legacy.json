@@ -20866,6 +20866,38 @@
       "hint": "Read the message, fix what it names and try again.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "amend-cost-blind-sets-price",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change the item, the quantity and the unit; the account owner can grant \"Sees costs\" in Co-assists to change: price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change the item, the quantity and the unit; the account owner can grant \"Sees costs\" in Co-assists to change: price."
+     }
+    },
+    {
+     "scenario": "amend-cost-blind-two-lines",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to amend",
+      "message": "line_id and line_index name two different lines; send the line's own id (or its number alone)."
+     },
+     "fixture": {
+      "error": "Failed to amend",
+      "message": "line_id and line_index name two different lines; send the line's own id (or its number alone)."
+     }
     }
    ]
   },
@@ -22713,6 +22745,26 @@
       "detail": "Chit not found or you do not have access",
       "hint": "Check the address or the name and try again.",
       "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "reprice-cost-blind",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. A reprice sets prices; the account owner can grant \"Sees costs\" in Co-assists to change: price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "price"
+      ],
+      "message": "Your access does not include cost or price. A reprice sets prices; the account owner can grant \"Sees costs\" in Co-assists to change: price."
      }
     }
    ]
