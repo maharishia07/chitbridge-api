@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 93 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
-| 82 | `answer` | `availability.js` | from March; then nearest. |
+| 83 | `answer` | `availability.js` | from March; then nearest. |
 | 78 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 70 | `catalogue` | `books-manual.js` | GET /events → the grid. |
