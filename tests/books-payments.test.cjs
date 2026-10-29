@@ -283,6 +283,17 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
         stranger instanceof Error ? stranger.message : JSON.stringify(stranger));
       ok('…the same stranger by UPI is refused by the same sentence from recordPayment (one rule, two doors)',
         await door(chitOf('m', { method: 'upi', amount: 500 })).then(() => false, (e) => e.code === 'BOOKS_REFUSED' && /customer or supplier list/.test(e.message)));
+      /* critic on #504: every order of the facts — no amount, no quote AND no known party must still refuse (the amount is asked first; it depends on no party) */
+      TCp.entryFor = async () => ({ sells: true, buyer: {}, me: { entity_id: SHOP } });
+      const nobodyNothing = await door(chitOf('o', { amount: null }, { summary_json: {} })).then((r) => r, (e) => e);
+      ok('no amount · no quote · nobody the shop knows → BOOKS_REFUSED "the amount is 0" (never "choose the customer" + a mark)',
+        nobodyNothing instanceof Error && nobodyNothing.code === 'BOOKS_REFUSED' && /amount is 0/.test(nobodyNothing.message), JSON.stringify(nobodyNothing instanceof Error ? nobodyNothing.message : nobodyNothing));
+      /* the ledger OFF (SUPP has none): ₹0 is still refused — a ₹0 "paid" mark is wrong on any copy; a stranger is allowed there (the stranger rule is the ledger's; the mark is a note, nothing is recorded) */
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: STRANGER }, seller: { entity_id: SUPP }, me: { entity_id: SUPP } });
+      const offZero = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('p', { amount: 0 }), { by: SUPP })).then((r) => r, (e) => e);
+      const offStranger = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('q', { amount: 500 }), { by: SUPP }));
+      ok('ledger off: ₹0 → BOOKS_REFUSED; a stranger for ₹500 → { off: true } (finance\'s call on critic point 3)',
+        offZero instanceof Error && offZero.code === 'BOOKS_REFUSED' && JSON.stringify(offStranger) === JSON.stringify({ off: true }), JSON.stringify([offZero instanceof Error ? offZero.message : offZero, offStranger]));
       const off = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('f'), { by: SUPP }));
       eq('a shop with no ledger → { off: true } (the copy still says paid, as the counter\'s money chit does; nothing to post into)', off, { off: true });
     } finally { TCp.entryFor = wasEntryFor; }
