@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 490,
-  "meets": 1,
+  "partial": 468,
+  "meets": 23,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 611
+    "failing": 589
    },
    "foreign_id_404": {
     "applies": 227,
@@ -114,7 +114,7 @@
    "path": "/api/books/recurring/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2276,
+   "line": 2281,
    "hash": "fa90a54eadb1101c",
    "columns": {
     "schema_in": true,
@@ -2116,7 +2116,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 310,
-   "hash": "03694917680b3b76",
+   "hash": "8eaeaedd397a7084",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2126,7 +2126,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2153,10 +2153,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/assets",
@@ -2164,8 +2164,8 @@
    "path": "/api/books/assets",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2324,
-   "hash": "447afb2206b1195e",
+   "line": 2329,
+   "hash": "8b75d91ef31f4602",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2175,7 +2175,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2204,10 +2204,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/bank/rail",
@@ -2215,8 +2215,8 @@
    "path": "/api/books/bank/rail",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1283,
-   "hash": "d81fdb98f7aa194c",
+   "line": 1286,
+   "hash": "80e95fa15dc3a719",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2226,7 +2226,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2256,10 +2256,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/bs",
@@ -2267,8 +2267,8 @@
    "path": "/api/books/bs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1030,
-   "hash": "c6bea652ac872095",
+   "line": 1033,
+   "hash": "18214f6b305f2798",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2278,7 +2278,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2306,10 +2306,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/cashflow",
@@ -2317,8 +2317,8 @@
    "path": "/api/books/cashflow",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 936,
-   "hash": "75c9d2ff260fc3d9",
+   "line": 937,
+   "hash": "7c2da9eab40a0454",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2328,7 +2328,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2357,10 +2357,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/cheques",
@@ -2368,8 +2368,8 @@
    "path": "/api/books/cheques",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1464,
-   "hash": "9640fccb558a26a1",
+   "line": 1467,
+   "hash": "2c69506810995f71",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2379,7 +2379,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2408,10 +2408,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/compare",
@@ -2419,8 +2419,8 @@
    "path": "/api/books/compare",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1867,
-   "hash": "a7798818dabece3b",
+   "line": 1872,
+   "hash": "f419e5ec00191334",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2430,7 +2430,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2458,10 +2458,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/compare/:id",
@@ -2469,7 +2469,7 @@
    "path": "/api/books/compare/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2036,
+   "line": 2041,
    "hash": "d9ff2645f0a73015",
    "columns": {
     "schema_in": true,
@@ -2520,7 +2520,7 @@
    "path": "/api/books/compare/:id/csv",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2044,
+   "line": 2049,
    "hash": "4c3448af6a2b5ce3",
    "columns": {
     "schema_in": true,
@@ -2572,7 +2572,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 507,
-   "hash": "7a3048e417f1b2b0",
+   "hash": "2daeb6cb953ee12c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2582,7 +2582,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2610,10 +2610,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/dues",
@@ -2621,8 +2621,8 @@
    "path": "/api/books/dues",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 769,
-   "hash": "2a3efd93dcc90fbb",
+   "line": 770,
+   "hash": "ed3ec726fafa8205",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2632,7 +2632,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2661,11 +2661,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a3efd93dcc90fbb"
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/events",
@@ -2673,8 +2672,8 @@
    "path": "/api/books/events",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1615,
-   "hash": "b61621f79709101a",
+   "line": 1618,
+   "hash": "0e14a98c10067c83",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2684,7 +2683,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2712,10 +2711,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/fx-rates",
@@ -2723,8 +2722,8 @@
    "path": "/api/books/fx-rates",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2390,
-   "hash": "bb85b32c4321ed6c",
+   "line": 2399,
+   "hash": "c9bfdc8ac640cf30",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2734,7 +2733,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2763,10 +2762,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/fx-revalue",
@@ -2774,8 +2773,8 @@
    "path": "/api/books/fx-revalue",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2436,
-   "hash": "9f1b939810534154",
+   "line": 2445,
+   "hash": "6e55385dcb5b72b0",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2785,7 +2784,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2815,10 +2814,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/health",
@@ -2827,7 +2826,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 262,
-   "hash": "a06c680a3b8c8a0d",
+   "hash": "a2a71e15be56dd5f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2837,7 +2836,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2864,10 +2863,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/ledger/:account",
@@ -2875,7 +2874,7 @@
    "path": "/api/books/ledger/:account",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 579,
+   "line": 580,
    "hash": "78b3e9fb5fd1aa89",
    "columns": {
     "schema_in": true,
@@ -2925,8 +2924,8 @@
    "path": "/api/books/move-in/imports",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1833,
-   "hash": "369cdab1f197c381",
+   "line": 1837,
+   "hash": "775a71cd90a0f681",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2936,7 +2935,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2964,10 +2963,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/packs",
@@ -2975,8 +2974,8 @@
    "path": "/api/books/packs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2131,
-   "hash": "1099001c48cf34ac",
+   "line": 2136,
+   "hash": "8588a456a55569eb",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -2986,7 +2985,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3014,10 +3013,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/packs/:id",
@@ -3025,7 +3024,7 @@
    "path": "/api/books/packs/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2169,
+   "line": 2174,
    "hash": "45c769474fcd5fa8",
    "columns": {
     "schema_in": true,
@@ -3076,7 +3075,7 @@
    "path": "/api/books/packs/:id/file",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2198,
+   "line": 2203,
    "hash": "eab6f7f4c79c78d9",
    "columns": {
     "schema_in": true,
@@ -3128,7 +3127,7 @@
    "path": "/api/books/party/:id/statement",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 655,
+   "line": 656,
    "hash": "afa48422a5db9136",
    "columns": {
     "schema_in": true,
@@ -3179,7 +3178,7 @@
    "path": "/api/books/payments/:id/advice",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1258,
+   "line": 1261,
    "hash": "282ceafe3ac10580",
    "columns": {
     "schema_in": true,
@@ -3230,8 +3229,8 @@
    "path": "/api/books/periods",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2097,
-   "hash": "4fd8650c86b4c029",
+   "line": 2102,
+   "hash": "bbd37012f11252a0",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3241,7 +3240,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3269,10 +3268,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/pl",
@@ -3280,8 +3279,8 @@
    "path": "/api/books/pl",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 976,
-   "hash": "d240ad68f816d2c0",
+   "line": 979,
+   "hash": "69865c3857e8949b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3291,7 +3290,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3319,10 +3318,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/recurring",
@@ -3330,8 +3329,8 @@
    "path": "/api/books/recurring",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2251,
-   "hash": "43ef65c2146b52ee",
+   "line": 2256,
+   "hash": "3531bce9d5ea96a8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3341,7 +3340,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3369,10 +3368,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/returns",
@@ -3380,8 +3379,8 @@
    "path": "/api/books/returns",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2354,
-   "hash": "45b2278e6dfc20a2",
+   "line": 2360,
+   "hash": "86ac77872e8da2ec",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3391,7 +3390,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3420,10 +3419,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/status",
@@ -3432,7 +3431,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 150,
-   "hash": "83b1c81e90f5456f",
+   "hash": "ad9d9beff840f813",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3442,7 +3441,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3469,10 +3468,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/terms",
@@ -3481,7 +3480,7 @@
    "owner_area": "books",
    "file": "routes/books.js",
    "line": 200,
-   "hash": "ac99b0cca868e1e8",
+   "hash": "478b4e64d05fd2fa",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3491,7 +3490,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3520,10 +3519,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/todo",
@@ -3531,7 +3530,7 @@
    "path": "/api/books/todo",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2302,
+   "line": 2307,
    "hash": "084f040c2a23476b",
    "columns": {
     "schema_in": true,
@@ -3570,8 +3569,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8ee7b2bf34c9d2b5"
    },
    "status": "partial"
   },
@@ -3581,8 +3581,8 @@
    "path": "/api/books/trial-balance",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 950,
-   "hash": "da19a848389c6151",
+   "line": 953,
+   "hash": "14f2fbecc8a741fd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -3592,7 +3592,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -3620,10 +3620,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
     "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/books/year/:fy/status",
@@ -3631,7 +3631,7 @@
    "path": "/api/books/year/:fy/status",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2080,
+   "line": 2085,
    "hash": "038f3eafdf01ef77",
    "columns": {
     "schema_in": true,
@@ -13996,7 +13996,7 @@
    "path": "/api/books/payments/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1331,
+   "line": 1334,
    "hash": "c2056588c3d995f4",
    "columns": {
     "schema_in": true,
@@ -14050,7 +14050,7 @@
    "path": "/api/books/recurring/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2267,
+   "line": 2272,
    "hash": "0ce7c534396ee714",
    "columns": {
     "schema_in": true,
@@ -16227,7 +16227,7 @@
    "path": "/api/books/cheques/:id/status",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1567,
+   "line": 1570,
    "hash": "65ac31190460ccb4",
    "columns": {
     "schema_in": true,
@@ -16330,7 +16330,7 @@
    "path": "/api/books/compare/preflight",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1888,
+   "line": 1893,
    "hash": "54621b1fd79e80be",
    "columns": {
     "schema_in": true,
@@ -16381,7 +16381,7 @@
    "path": "/api/books/compare/snapshots",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1904,
+   "line": 1909,
    "hash": "f5ed9d633f115e0c",
    "columns": {
     "schema_in": true,
@@ -16585,7 +16585,7 @@
    "path": "/api/books/entries",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1644,
+   "line": 1648,
    "hash": "1564297b273ba204",
    "columns": {
     "schema_in": true,
@@ -16636,7 +16636,7 @@
    "path": "/api/books/entries/:id/reverse",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1671,
+   "line": 1675,
    "hash": "35fbf3eb40416780",
    "columns": {
     "schema_in": true,
@@ -16688,7 +16688,7 @@
    "path": "/api/books/events",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1634,
+   "line": 1638,
    "hash": "494300b4ee1d7346",
    "columns": {
     "schema_in": true,
@@ -16739,7 +16739,7 @@
    "path": "/api/books/fx-rates",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2410,
+   "line": 2419,
    "hash": "b05b0f0230066690",
    "columns": {
     "schema_in": true,
@@ -16790,7 +16790,7 @@
    "path": "/api/books/fx-rates/import",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2419,
+   "line": 2428,
    "hash": "9a3d5d69e21dbb3e",
    "columns": {
     "schema_in": true,
@@ -16841,7 +16841,7 @@
    "path": "/api/books/fx-revalue",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2463,
+   "line": 2472,
    "hash": "5a2ed58f14ceef80",
    "columns": {
     "schema_in": true,
@@ -17097,7 +17097,7 @@
    "path": "/api/books/move-in/import",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1815,
+   "line": 1819,
    "hash": "56d6afde4e313771",
    "columns": {
     "schema_in": true,
@@ -17149,7 +17149,7 @@
    "path": "/api/books/move-in/preflight",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1767,
+   "line": 1771,
    "hash": "679662015358c708",
    "columns": {
     "schema_in": true,
@@ -17200,7 +17200,7 @@
    "path": "/api/books/move-in/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1805,
+   "line": 1809,
    "hash": "5512554f5ed56bc5",
    "columns": {
     "schema_in": true,
@@ -17251,7 +17251,7 @@
    "path": "/api/books/opening",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1717,
+   "line": 1721,
    "hash": "ba9df7ea59ede6fb",
    "columns": {
     "schema_in": true,
@@ -17354,7 +17354,7 @@
    "path": "/api/books/packs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2153,
+   "line": 2158,
    "hash": "938b00be4063353f",
    "columns": {
     "schema_in": true,
@@ -17405,7 +17405,7 @@
    "path": "/api/books/packs/:id/ack",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2228,
+   "line": 2233,
    "hash": "35799e987b3f43e5",
    "columns": {
     "schema_in": true,
@@ -17457,7 +17457,7 @@
    "path": "/api/books/parties/:id/dispute",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1589,
+   "line": 1592,
    "hash": "0650e9adf6bc5fd4",
    "columns": {
     "schema_in": true,
@@ -17510,7 +17510,7 @@
    "path": "/api/books/payments",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1156,
+   "line": 1159,
    "hash": "f21314a0d066f27a",
    "columns": {
     "schema_in": true,
@@ -17561,7 +17561,7 @@
    "path": "/api/books/payments/:id/confirm",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1418,
+   "line": 1421,
    "hash": "8b20bd11a34618f4",
    "columns": {
     "schema_in": true,
@@ -17612,7 +17612,7 @@
    "path": "/api/books/payments/:id/propose",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1387,
+   "line": 1390,
    "hash": "222dd4edbbb114d2",
    "columns": {
     "schema_in": true,
@@ -17663,7 +17663,7 @@
    "path": "/api/books/payments/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1106,
+   "line": 1109,
    "hash": "03344b8d3767b3e9",
    "columns": {
     "schema_in": true,
@@ -17714,7 +17714,7 @@
    "path": "/api/books/periods/:fy/:p/:act",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2055,
+   "line": 2060,
    "hash": "846470aee92b23d6",
    "columns": {
     "schema_in": true,
@@ -17765,7 +17765,7 @@
    "path": "/api/books/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1626,
+   "line": 1630,
    "hash": "5642f28d53e53ef9",
    "columns": {
     "schema_in": true,
@@ -17816,7 +17816,7 @@
    "path": "/api/books/recurring",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2259,
+   "line": 2264,
    "hash": "ea64835563d82a93",
    "columns": {
     "schema_in": true,
@@ -17867,7 +17867,7 @@
    "path": "/api/books/recurring/:id/post",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2285,
+   "line": 2290,
    "hash": "e86f80702fc4ce0e",
    "columns": {
     "schema_in": true,
@@ -17918,7 +17918,7 @@
    "path": "/api/books/recurring/:id/skip",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2293,
+   "line": 2298,
    "hash": "592300a405e4e0eb",
    "columns": {
     "schema_in": true,
@@ -18072,7 +18072,7 @@
    "path": "/api/books/write-off",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1684,
+   "line": 1688,
    "hash": "0eba96facf73332e",
    "columns": {
     "schema_in": true,
@@ -18124,7 +18124,7 @@
    "path": "/api/books/year/:fy/close",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2068,
+   "line": 2073,
    "hash": "f6198cb5a768e48f",
    "columns": {
     "schema_in": true,
