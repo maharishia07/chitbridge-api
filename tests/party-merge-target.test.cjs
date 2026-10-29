@@ -11,21 +11,25 @@ process.env.DATABASE_URL = '';
 process.env.NODE_ENV = 'test';
 const u = (n) => '00000000-0000-4000-8000-' + String(n).padStart(12, '0');
 const SHOP = u(1), PRIYA = u(2), BOB = u(3), CAROL = u(4), DAN = u(5), SUPP = u(6), STRANGER = u(99);
+const seen = [];
 const customers = {
   'CL-1': { customer_list_id: 'CL-1', owner_entity_id: SHOP, customer_identity_id: PRIYA, merged_into: null },
   'CL-2': { customer_list_id: 'CL-2', owner_entity_id: SHOP, customer_identity_id: BOB, merged_into: null },
   'CL-3': { customer_list_id: 'CL-3', owner_entity_id: SHOP, customer_identity_id: CAROL, merged_into: BOB },
   'CL-4': { customer_list_id: 'CL-4', owner_entity_id: SHOP, customer_identity_id: DAN, merged_into: null },
+  'CL-6': { customer_list_id: 'CL-6', owner_entity_id: SHOP, customer_identity_id: u(8), merged_into: null, hidden_at: '2026-10-01' },
   'CL-5': { customer_list_id: 'CL-5', owner_entity_id: SHOP, customer_identity_id: u(7), merged_into: DAN }
 };
 const suppliers = { 'SL-1': { supplier_list_id: 'SL-1', owner_entity_id: SHOP, supplier_entity_id: SUPP, merged_into: null } };
 const tx = {
   query: async (sql, args) => {
     const s = String(sql);
+    seen.push(s);
+    if (/pg_advisory_xact_lock/.test(s)) return { rows: [] };
     if (/SELECT \* FROM customer_list WHERE customer_list_id/.test(s)) return { rows: customers[args[0]] && args[1] === SHOP ? [Object.assign({}, customers[args[0]])] : [] };
     if (/SELECT \* FROM supplier_list WHERE supplier_list_id/.test(s)) return { rows: suppliers[args[0]] && args[1] === SHOP ? [Object.assign({}, suppliers[args[0]])] : [] };
     let m = /FROM (customer_list|supplier_list) l WHERE l\.(\w+) = \$1 AND l\.owner_entity_id = \$2/.exec(s);
-    if (m) return { rows: Object.values(m[1] === 'customer_list' ? customers : suppliers).filter((r) => r[m[2]] === args[0] && r.owner_entity_id === args[1]).map((r) => ({ merged_into: r.merged_into })) };
+    if (m) return { rows: Object.values(m[1] === 'customer_list' ? customers : suppliers).filter((r) => r[m[2]] === args[0] && r.owner_entity_id === args[1]).map((r) => ({ merged_into: r.merged_into, hidden_at: r.hidden_at || null })) };
     m = /FROM (customer_list|supplier_list) l WHERE to_jsonb\(l\)->>'merged_into' = \$1/.exec(s);
     if (m) return { rows: Object.values(m[1] === 'customer_list' ? customers : suppliers).filter((r) => r.merged_into === args[0] && r.owner_entity_id === args[1]).map(() => ({ '?column?': 1 })) };
     m = /UPDATE customer_list SET merged_into = \$3 WHERE customer_list_id = \$1/.exec(s);
@@ -77,8 +81,15 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   ok('merging the survivor into its own folded party: 409, no loop', loop.status === 409 && customers['CL-2'].merged_into === null, J(loop));
   const parent = await patch('/customers/CL-4', { merged_into: BOB });
   ok('a party others are merged into cannot be merged away: 409', parent.status === 409 && customers['CL-4'].merged_into === null, J(parent));
+  const hidden = await patch('/customers/CL-1', { merged_into: u(8) });
+  ok('a hidden party as survivor: 409 in words', hidden.status === 409 && /hidden/.test(hidden.body.message) && customers['CL-1'].merged_into === null, J(hidden));
+  const dashes = await patch('/customers/CL-1', { merged_into: '-'.repeat(36) });
+  ok('36 dashes is not a party id: 400, not a 500', dashes.status === 400, J(dashes));
+  seen.length = 0;
   const good = await patch('/customers/CL-1', { merged_into: BOB });
   ok('a real party of this shop: 200 and written', good.status === 200 && customers['CL-1'].merged_into === BOB, J(good));
+  const lockAt = seen.findIndex((q) => /pg_advisory_xact_lock/.test(q)), readAt = seen.findIndex((q) => /^SELECT to_jsonb/.test(q)), writeAt = seen.findIndex((q) => /^UPDATE customer_list/.test(q));
+  ok('the shop merge lock runs before the target check and the UPDATE', lockAt >= 0 && lockAt < readAt && readAt < writeAt, J(seen.map((q) => q.slice(0, 40))));
   const supp = await patch('/suppliers/SL-1', { merged_into: BOB });
   ok('a supplier may merge into a party on the shop list: 200', supp.status === 200, J(supp));
   const clear = await patch('/customers/CL-1', { merged_into: null });
