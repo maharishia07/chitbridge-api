@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 89 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
-| 76 | `answer` | `availability.js` | from March; then nearest. |
+| 77 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 65 | `list` | `cap-settings.js` |  |
@@ -40,7 +40,7 @@ of file each thing is; this says what already does the job.
 | 43 | `read` | `cap-print.js` |  |
 | 41 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 41 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 41 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 42 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 40 | `view` | `books-payables.js` | group: |
 | 41 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
