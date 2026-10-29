@@ -1546,7 +1546,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cd9727f08fb618ef"
+    "stale_since": "be9e89e246a338e7"
    },
    "status": "partial"
   },
@@ -1833,7 +1833,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "86a70dc4f9954d3d"
+    "stale_since": "bcd75b131edc2142"
    },
    "status": "partial"
   },
@@ -1927,7 +1927,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "390f9253644349e3"
+    "stale_since": "1d6b1f0c87d65d06"
    },
    "status": "partial"
   },
