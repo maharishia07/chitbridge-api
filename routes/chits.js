@@ -5902,6 +5902,7 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
   const dir = list.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
+    // SEC-105: my own copies named in the SQL too (entity_id = $1), not left to RLS alone.
     // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me). per-copy: RLS returns only MY OWN dispute copies.
     const got = await withEntity(entity_id, async (db) => {
       const r = await db.query(
@@ -5912,7 +5913,7 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
                   (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
                     WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
              FROM chit_disputes cd
-            WHERE ($2::text = 'all' OR ($2::text = 'open' AND cd.status = 'open') OR ($2::text = 'resolved' AND cd.status <> 'open'))
+            WHERE cd.entity_id = $1 AND ($2::text = 'all' OR ($2::text = 'open' AND cd.status = 'open') OR ($2::text = 'resolved' AND cd.status <> 'open'))
               AND ($3::text IS NULL OR ($3::text = 'mine' AND cd.raised_by_entity_id = $1) OR ($3::text = 'against' AND cd.raised_by_entity_id <> $1))
          ) x
          WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
@@ -5921,8 +5922,7 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
         [entity_id, status, side, like, limit, pageAsked.offset]
       );
       const c = await db.query(
-        `SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`
-      );
+        `SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes WHERE entity_id = $1`, [entity_id]);
       return { rows: r.rows, counts: c.rows[0] || { open: 0, resolved: 0 } };
     });
     const total = got.rows.length ? Number(got.rows[0]._total) : 0;
