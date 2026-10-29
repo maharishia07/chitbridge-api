@@ -489,7 +489,7 @@ it('⭐ a browser holding a key keeps the person session on sign-in (the move fo
   assert.ok(/!onAgent\(\)/.test(kb) && /!personOn\(\)/.test(kb), 'keyedBrowser() is not "a browser, a key, no person"');
   /* 2026-10-08: the window's onIn (usignIn) holds the token as `answer.token`; the shelf moved to v4 when /app/signin-ui.js joined the boot path */
   assert.ok(/if \(\(personOn\(\) \|\| keyedBrowser\(\)\) && answer\.token\)/.test(body(PAGE, 'async function usignIn(').text), 'a keyed browser\'s sign-in drops the session again');
-  assert.ok(/const SHELF = 'cb-till-v6'/.test(fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8')), 'the service-worker shelf was not bumped for the new boot path');   /* v5: HX1 /config.js · v6: FX-F10W2 /app/their-bill.js */
+  assert.ok(/const SHELF = 'cb-till-v7'/.test(fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8')), 'the service-worker shelf was not bumped for the new boot path');   /* v5: HX1 /config.js · v6: FX-F10W2 /app/their-bill.js */
 });
 
 it('⭐ the move is also asked from load(), once the shop is known from the store itself — a reload mid-move finishes it without a line', () => {
