@@ -94,6 +94,20 @@ function memoryTemplates() {
   ok('closing stock is missing for October (the last month over, with activity)', get(t1, 'closing_stock_missing').items[0].date === '2026-10-31', JSON.stringify(get(t1, 'closing_stock_missing')));
   ok('recurring due names the template; the accrual reversal names its reference', get(t1, 'recurring_due').items[0].name === 'Shop rent' && get(t1, 'accrual_reversals_due').items[0].ref === 'ELEC-9', JSON.stringify([get(t1, 'recurring_due'), get(t1, 'accrual_reversals_due')]));
 
+  /* ACC-203 (lifecycle B3 S5-10): the REAL store function through a handle that answers one row — the twin maps for itself, so a mapper that named an undefined
+     helper (ymd) and a header join on direction = 'sent' both passed here twice; this check reads the SQL the store sends and the row it hands back */
+  {
+    const key = require.resolve('../lib/books-store'), twin = require.cache[key]; /* the harness cached the twin under the store's own name: step past it, then put it back */
+    delete require.cache[key];
+    const real = require('../lib/books-store');
+    require.cache[key] = twin;
+    let sent = null;
+    const handle = { query: async (text) => { sent = String(text); return { rows: [{ chit_id: 'bill-99', entry_no: 7, posting_date: new Date(2026, 9, 10), printed_as: 'C1/26-27/0099', bill_no: null, billed_at: null, unrated: '1', lines: '2' }] }; } };
+    const rows = await real.unratedSaleBills(handle, SHOP, '2026-10-01', '2026-10-31', 50);
+    ok('the store reads the shop\'s ONE header row whichever direction (LATERAL, ORDER BY direction), and the detail of that same direction — never direction = \'sent\'',
+      /JOIN LATERAL \(SELECT[^]*FROM chit_header x[^]*ORDER BY x\.direction LIMIT 1\) hd ON true/.test(sent) && /d\.direction = hd\.direction/.test(sent) && !/direction = 'sent'/.test(sent), sent && sent.slice(0, 200));
+    ok('…and hands the row back with its day as YYYY-MM-DD and its counts as numbers', rows.length === 1 && rows[0].posting_date === '2026-10-10' && rows[0].unrated === 1 && rows[0].lines === 2 && rows[0].printed_as === 'C1/26-27/0099', JSON.stringify(rows));
+  }
   /* F5 A1 · bills_unrated: a sale bill in the books whose line nobody rated — listed for a shop that CHARGES its tax, never changed; a composition shop lists none */
   ok('no registration facts yet (identities row unknown) → the shop charges none → no "bills unrated" row, even with unrated bills about', kinds(t1).indexOf('bills_unrated') < 0);
   X.T.identities.push({ identity_id: SHOP, display_name: 'Mayur Bhavan', gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: 'regular' } });
