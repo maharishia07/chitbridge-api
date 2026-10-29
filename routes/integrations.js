@@ -988,7 +988,8 @@ router.get('/profile-map', auth, ...filterFor('/profile-map'), async (req, res) 
     if (tn && tn.other && norm(tn.other.value) !== norm(tn.value)) out.name_mismatch = { profile: tn.value, other: tn.other.value, source: tn.other.source };
     /* every key of PM.assess is named here (the answer is the library's, in its order; name_mismatch only when the trade name differs):
        a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
-    res.json({
+    /* name_mismatch is absent, not undefined, when the names agree (tests/shop-name: 'name_mismatch' in answer is false) */
+    res.json(Object.assign({
       engine: out.engine,
       version: out.version,
       fields: out.fields,
@@ -997,9 +998,8 @@ router.get('/profile-map', auth, ...filterFor('/profile-map'), async (req, res) 
       filled: out.filled,
       total: out.total,
       rungs: out.rungs,
-      state_name: out.state_name,
-      name_mismatch: out.name_mismatch
-    });
+      state_name: out.state_name
+    }, out.name_mismatch ? { name_mismatch: out.name_mismatch } : null));
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
   }
