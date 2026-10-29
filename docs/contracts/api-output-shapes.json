@@ -10804,6 +10804,49 @@
       "example": {
         "url": "/api/keys"
       }
+    },
+    "GET /api/pricing/kinds": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "order",
+          "kinds"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "kinds[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/pricing/kinds"
+      }
     }
   },
   "listed": {
@@ -11489,6 +11532,7 @@
     "POST /api/quick-keys/groups": "open at group — a value passed through (a name: its keys are not written in the handler)",
     "POST /api/quick-keys/groups/:id/items": "open at item — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)"
+    "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)",
+    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
