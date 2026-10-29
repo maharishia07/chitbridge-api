@@ -98,6 +98,20 @@ const call = (port, method, p, body) => new Promise((done) => {
   WHO = GRANTED;
   t('cost-allowed co-assist: a create WITH cost is not refused', (await post('', { item_data: NESTED })).status, 200);
 
+  /* F1 (cb-security): the writer folds a key before storing it, so the gate judges the key as it will be stored */
+  const ODD = ['Cost', '_cost', '1cost', 'Cost (INR)', 'COST_x'];
+  WHO = BLIND;
+  for (const odd of ODD) {
+    const top = await post('', { item_data: { name: 'Dosa', [odd]: 5 } });
+    t('blind POST /: key ' + JSON.stringify(odd) + ' -> 403, named as sent, nothing written', [top.status, top.body.blocked, writes.length], [403, [odd], 0]);
+    const deep = await post('', { item_data: { name: 'Dosa', modifiers: [{ options: [{ name: 'L', [odd]: 5 }] }] } });
+    t('blind POST /: nested ' + JSON.stringify(odd) + ' -> 403, nothing written', [deep.status, writes.length], [403, 0]);
+    const bulk = await post('/bulk', { items: [{ name: 'A' }, { name: 'B', [odd]: 5 }] });
+    t('blind POST /bulk: key ' + JSON.stringify(odd) + ' -> 403, nothing written', [bulk.status, bulk.body.blocked, writes.length], [403, [odd], 0]);
+  }
+  t('a key that only looks like cost is not one', [cost.isCostKey('costume'), cost.isCostKey('Costume'), cost.isCostKey('discount_cost_x')], [false, false, false]);
+  WHO = OWNER;
+  t('owner: an odd cost key is not refused', (await post('', { item_data: { name: 'Dosa', 'Cost (INR)': 5 } })).status, 200);
   console.log('   POST /bulk');
   WHO = BLIND;
   const b1 = await post('/bulk', { items: [{ name: 'A', price: 1 }, NESTED] });
