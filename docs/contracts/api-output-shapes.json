@@ -10147,6 +10147,126 @@
         "url": "/api/till/quick-keys/screen-config"
       }
     },
+    "GET /api/till/quick-keys/state": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "active_group_ids",
+          "shift_id",
+          "updated_at"
+        ],
+        "properties": {
+          "active_group_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "shift_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/till/quick-keys/state?business_date=2026-10-29"
+      }
+    },
+    "GET /api/till/reward": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "holder",
+          "programme",
+          "points",
+          "entries"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "holder": {
+            "type": "object"
+          },
+          "programme": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "name",
+              "earns",
+              "expires_months"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "earns": {
+                "type": "string"
+              },
+              "expires_months": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "points": {
+            "type": "number"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "negative": {
+            "type": "boolean"
+          },
+          "worth": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "expiring": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "holder",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "entries[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/till/reward?scheme=phone&value=9840012345"
+      }
+    },
     "GET /api/till/screens": {
       "status": "200",
       "schema": {
@@ -12384,6 +12504,279 @@
         }
       }
     },
+    "POST /api/till/alias": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "aliases"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "aliases[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/till/alias",
+        "body": {
+          "item_id": "22222222-2222-4222-8222-222222222222",
+          "text": "SUNFL OIL",
+          "factor": 6
+        }
+      }
+    },
+    "POST /api/till/catalogue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "added",
+          "from",
+          "refused",
+          "message"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "added": {
+            "type": "number"
+          },
+          "from": {
+            "type": "string"
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "refused[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/till/catalogue",
+        "body": {
+          "blueprint": "veg",
+          "products": [
+            {
+              "name": "Poori",
+              "price": 40
+            },
+            {
+              "name": "",
+              "price": 5
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/till/close": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "closed_at",
+          "prefix"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "closed_at": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/till/close",
+        "body": {
+          "last_no": "C1-0007",
+          "bills": 7,
+          "next": 8,
+          "period": "2026-10"
+        }
+      }
+    },
+    "POST /api/till/diagnostic": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "code",
+          "at"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/diagnostic",
+        "body": {
+          "code": "AB12",
+          "verdict": "queue stuck",
+          "queued": 3
+        }
+      }
+    },
+    "POST /api/till/enrol": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "key",
+          "counter",
+          "took_over",
+          "shop"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "counter": {
+            "type": "string"
+          },
+          "took_over": {
+            "type": "boolean"
+          },
+          "shop": {
+            "type": "object",
+            "required": [
+              "entity_id",
+              "bridge_id",
+              "name"
+            ],
+            "properties": {
+              "entity_id": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/enrol",
+        "body": {
+          "counter": "C1",
+          "name": "Front"
+        }
+      }
+    },
+    "POST /api/till/flags": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "item_id",
+          "name",
+          "offers_excluded",
+          "screen"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "offers_excluded": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "screen": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/till/flags",
+        "body": {
+          "item_id": "22222222-2222-4222-8222-222222222222",
+          "offer_id": "33333333-3333-4333-8333-333333333333",
+          "excluded": true
+        }
+      }
+    },
     "POST /api/till/listen": {
       "status": "200",
       "schema": {
@@ -12407,6 +12800,54 @@
       "example": {
         "url": "/api/till/listen",
         "body": {}
+      }
+    },
+    "POST /api/till/offer-item": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "offer_id",
+          "item_id",
+          "on",
+          "name"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "offer_id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "on": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "unchanged": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/offer-item",
+        "body": {
+          "offer_id": "22222222-2222-4222-8222-222222222222",
+          "item_id": "33333333-3333-4333-8333-333333333333",
+          "on": true,
+          "by": "Asha"
+        }
       }
     },
     "POST /api/till/pair": {
@@ -12436,6 +12877,253 @@
       "example": {
         "url": "/api/till/pair",
         "body": {}
+      }
+    },
+    "POST /api/till/pair/claim": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "key",
+          "shop"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "object",
+            "required": [
+              "entity_id",
+              "name"
+            ],
+            "properties": {
+              "entity_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/pair/claim",
+        "body": {
+          "code": "ZZZZZZ"
+        }
+      }
+    },
+    "POST /api/till/price": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "item_id",
+          "name",
+          "now",
+          "currency"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "was": {
+            "type": "number"
+          },
+          "now": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/price",
+        "body": {
+          "item_id": "22222222-2222-4222-8222-222222222222",
+          "price": 45,
+          "by": "Asha"
+        }
+      }
+    },
+    "POST /api/till/quick-keys/hide": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "hidden"
+        ],
+        "properties": {
+          "hidden": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "hidden[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/till/quick-keys/hide",
+        "body": {
+          "product_id": "22222222-2222-4222-8222-222222222222",
+          "shift_id": "S1",
+          "by": "33333333-3333-4333-8333-333333333333"
+        }
+      }
+    },
+    "POST /api/till/quick-keys/screen-config": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "entity_id",
+          "counter_id",
+          "config",
+          "updated_by",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "entity_id": {
+            "type": "string"
+          },
+          "counter_id": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object"
+          },
+          "updated_by": {},
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "config",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/till/quick-keys/screen-config",
+        "body": {
+          "config": {
+            "theme": "dark"
+          }
+        }
+      }
+    },
+    "POST /api/till/quick-keys/state": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "entity_id",
+          "counter_id",
+          "business_date",
+          "shift_id",
+          "active_group_ids",
+          "updated_at"
+        ],
+        "properties": {
+          "entity_id": {
+            "type": "string"
+          },
+          "counter_id": {
+            "type": "string"
+          },
+          "business_date": {
+            "type": "string"
+          },
+          "shift_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "active_group_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/quick-keys/state",
+        "body": {
+          "business_date": "2026-10-29",
+          "shift_id": "S1",
+          "active_group_ids": [
+            "22222222-2222-4222-8222-222222222222"
+          ]
+        }
+      }
+    },
+    "POST /api/till/quick-keys/unhide": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "removed"
+        ],
+        "properties": {
+          "removed": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/till/quick-keys/unhide",
+        "body": {
+          "product_id": "22222222-2222-4222-8222-222222222222"
+        }
       }
     },
     "POST /api/till/rate": {
@@ -12505,6 +13193,242 @@
         "body": {}
       }
     },
+    "POST /api/till/reward": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "holder",
+          "added",
+          "spent",
+          "points"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "holder": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "added": {
+            "type": "number"
+          },
+          "spent": {
+            "type": "number"
+          },
+          "points": {
+            "type": "number"
+          },
+          "why": {
+            "type": "string"
+          },
+          "programme": {
+            "type": "string"
+          },
+          "worth": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "overspent": {
+            "type": "number"
+          },
+          "says": {
+            "type": "object",
+            "required": [
+              "added",
+              "encashed",
+              "money",
+              "lines"
+            ],
+            "properties": {
+              "added": {
+                "type": "number"
+              },
+              "encashed": {
+                "type": "number"
+              },
+              "money": {
+                "type": "number"
+              },
+              "lines": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "where",
+                    "points",
+                    "amount",
+                    "label"
+                  ],
+                  "properties": {
+                    "where": {
+                      "type": "string"
+                    },
+                    "points": {
+                      "type": "number"
+                    },
+                    "amount": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "added": {},
+                    "spent": {},
+                    "balance": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "spent": {},
+              "balance": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "holder",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/till/reward",
+        "body": {
+          "ref": "C1-0007"
+        }
+      }
+    },
+    "POST /api/till/reward/claim": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "moved",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "moved": {
+            "type": "number"
+          },
+          "from": {
+            "type": "object"
+          },
+          "to": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "from",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "to",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/till/reward/claim",
+        "body": {
+          "from": {
+            "scheme": "phone",
+            "value": "9840012345"
+          },
+          "to": {
+            "scheme": "identity",
+            "value": "22222222-2222-4222-8222-222222222222"
+          },
+          "ref": "claim-1"
+        }
+      }
+    },
+    "POST /api/till/screens/rename": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "jti",
+          "name"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/screens/rename",
+        "body": {
+          "jti": "s1",
+          "name": "  "
+        }
+      }
+    },
+    "POST /api/till/screens/revoke": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "jti",
+          "message"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/till/screens/revoke",
+        "body": {
+          "jti": "s1"
+        }
+      }
+    },
     "POST /api/till/shop": {
       "status": "200",
       "schema": {
@@ -12569,6 +13493,87 @@
       "example": {
         "url": "/api/till/state",
         "body": {}
+      }
+    },
+    "POST /api/till/stock": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "item_id",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/stock",
+        "body": {
+          "item_id": "22222222-2222-4222-8222-222222222222",
+          "status": "unavailable"
+        }
+      }
+    },
+    "POST /api/till/stock/bulk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "moved",
+          "asked",
+          "status",
+          "message"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "moved": {
+            "type": "number"
+          },
+          "asked": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/till/stock/bulk",
+        "body": {
+          "item_ids": [
+            "22222222-2222-4222-8222-222222222222"
+          ],
+          "status": "unavailable"
+        }
       }
     },
     "PUT /api/assist/catalogue-source": {
