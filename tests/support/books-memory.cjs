@@ -303,11 +303,13 @@ function create() {
         && h.posting_date >= from && h.posting_date <= to && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id));
       const out = new Map(); /* one row per bill, however many entries name it (the SQL groups by chit) */
       for (const h of homed) for (const chit_id of h.source_chit_id ? [h.source_chit_id] : h.source_chit_ids || []) {
-        const c = T.chits.find((x) => x.chit_id === chit_id && x.entity_id === e && x.direction !== 'received'); if (!c) continue;
+        /* ACC-203: the shop's one header row whichever direction ('received' first, as ORDER BY direction reads) */
+        const c = T.chits.filter((x) => x.chit_id === chit_id && x.entity_id === e).sort((p, q) => String(p.direction || '').localeCompare(String(q.direction || '')))[0]; if (!c) continue;
         const lines = c.line_items || [], bj = c.business_json || {}, unrated = lines.filter(noRate).length; if (!unrated) continue;
         const seen = out.get(chit_id);
         if (seen && seen.posting_date >= ymd(h.posting_date)) continue;
-        out.set(chit_id, { chit_id, entry_no: h.entry_no, posting_date: ymd(h.posting_date), printed_as: bj.printed_as || null, bill_no: bj.bill_no || null, billed_at: bj.billed_at || null, unrated, lines: lines.length });
+        out.set(chit_id, { chit_id, entry_no: h.entry_no, posting_date: ymd(h.posting_date), printed_as: bj.printed_as || null, bill_no: bj.bill_no || null, billed_at: bj.billed_at || null, unrated, lines: lines.length,
+          items: lines.filter(noRate).map((l) => l.name || l.particulars).filter(Boolean).slice(0, 5) });
       }
       return [...out.values()].sort((p, q) => (p.posting_date < q.posting_date ? 1 : p.posting_date > q.posting_date ? -1 : q.entry_no - p.entry_no)).slice(0, limit || 50);
     },
