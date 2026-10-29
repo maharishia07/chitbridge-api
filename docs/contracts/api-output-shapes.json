@@ -10158,6 +10158,12 @@
           "limit": {
             "type": "number"
           },
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "capped": {},
           "cap_note": {}
         },
@@ -10578,6 +10584,12 @@
           },
           "limit": {
             "type": "number"
+          },
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false
