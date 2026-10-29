@@ -121,6 +121,242 @@
         "url": "/api/products/22222222-2222-4222-8222-222222222222/media/22222222-2222-4222-8222-222222222222"
       }
     },
+    "GET /api/actors/access-events": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "events",
+          "total",
+          "page",
+          "limit",
+          "applied"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "subject_identity_id",
+                "subject_name",
+                "actor_key",
+                "action",
+                "before_value",
+                "after_value",
+                "reason",
+                "at",
+                "changed_by",
+                "changed_by_name"
+              ],
+              "properties": {
+                "event_id": {
+                  "type": "string"
+                },
+                "subject_identity_id": {
+                  "type": "string"
+                },
+                "subject_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "actor_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "action": {
+                  "type": "string"
+                },
+                "before_value": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "hat": {
+                      "type": "string"
+                    },
+                    "access_level": {
+                      "type": "string"
+                    },
+                    "whole_entity": {},
+                    "can_see_costs": {
+                      "type": "boolean"
+                    },
+                    "break_status": {
+                      "type": "string"
+                    },
+                    "event_id": {},
+                    "subject_identity_id": {},
+                    "subject_name": {},
+                    "actor_key": {},
+                    "action": {},
+                    "before_value": {},
+                    "after_value": {},
+                    "reason": {},
+                    "at": {},
+                    "changed_by": {},
+                    "changed_by_name": {}
+                  },
+                  "additionalProperties": false
+                },
+                "after_value": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "hat": {
+                      "type": "string"
+                    },
+                    "access_level": {
+                      "type": "string"
+                    },
+                    "whole_entity": {
+                      "type": "boolean"
+                    },
+                    "can_see_costs": {
+                      "type": "boolean"
+                    },
+                    "break_status": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "expires_at": {
+                      "type": "string"
+                    },
+                    "event_id": {},
+                    "subject_identity_id": {},
+                    "subject_name": {},
+                    "actor_key": {},
+                    "action": {},
+                    "before_value": {},
+                    "after_value": {},
+                    "reason": {},
+                    "at": {},
+                    "changed_by": {},
+                    "changed_by_name": {}
+                  },
+                  "additionalProperties": false
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "at": {
+                  "type": "string"
+                },
+                "changed_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "changed_by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "applied": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/actors/access-events"
+      }
+    },
+    "GET /api/actors/settings": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "object",
+            "required": [
+              "setting_id",
+              "entity_id",
+              "assignment_model",
+              "default_max_tasks",
+              "all_task_visible",
+              "auto_return_on_short_break",
+              "created_at",
+              "updated_at",
+              "auto_assign_mode",
+              "default_assignee_actor_id"
+            ],
+            "properties": {
+              "setting_id": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "assignment_model": {
+                "type": "string"
+              },
+              "default_max_tasks": {
+                "type": "number"
+              },
+              "all_task_visible": {
+                "type": "boolean"
+              },
+              "auto_return_on_short_break": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "auto_assign_mode": {
+                "type": "string"
+              },
+              "default_assignee_actor_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/actors/settings"
+      }
+    },
     "GET /api/assist/catalogue-mine": {
       "status": "200",
       "schema": {
@@ -2213,6 +2449,810 @@
       "open": [],
       "example": {
         "url": "/api/books/trial-balance"
+      }
+    },
+    "GET /api/chits/disputes/queue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "disputes",
+          "my_disputes",
+          "other_disputes",
+          "rows",
+          "total",
+          "page",
+          "limit",
+          "counts"
+        ],
+        "properties": {
+          "disputes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "my_disputes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "other_disputes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "open": {
+                "type": "number"
+              },
+              "resolved": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "total_open": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "disputes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "my_disputes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "other_disputes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "rows[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/disputes/queue?status=all"
+      }
+    },
+    "GET /api/chits/folder": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chits",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "chits": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "chits[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/folder?view=trash&sort=amount&dir=asc&date_from=2026-01-01"
+      }
+    },
+    "GET /api/chits/inbox": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chits",
+          "total",
+          "page",
+          "limit",
+          "next"
+        ],
+        "properties": {
+          "chits": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "next": {},
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "chits[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/inbox?status=pending&q=tea&folder_id=22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/chits/raida/report": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "entries",
+          "migrated"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "by_kind": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "by_disposition": {
+            "type": "object"
+          },
+          "full": {
+            "type": "boolean"
+          },
+          "resp": {
+            "type": "boolean"
+          },
+          "open": {
+            "type": "number"
+          },
+          "closed": {
+            "type": "number"
+          },
+          "closed_by_order": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "entries[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "by_kind[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "by_disposition",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/raida/report"
+      }
+    },
+    "GET /api/chits/register/attachables": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "attachables",
+          "degraded"
+        ],
+        "properties": {
+          "attachables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "type_key",
+                "label",
+                "points_at"
+              ],
+              "properties": {
+                "type_key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "points_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "degraded": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/attachables"
+      }
+    },
+    "GET /api/chits/register/subjects": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "subjects",
+          "migrated"
+        ],
+        "properties": {
+          "subjects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "subject_id": {
+                  "type": "string"
+                },
+                "type_key": {
+                  "type": "string"
+                },
+                "ref_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ref_label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "opened_at": {
+                  "type": "string"
+                },
+                "closed_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "closed_by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "open_count": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/subjects"
+      }
+    },
+    "GET /api/chits/register/templates": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "templates",
+          "migrated"
+        ],
+        "properties": {
+          "templates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "template_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "body": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "likelihood": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "severity": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "treatment": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "verification_method": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "applies_to": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "raised": {
+                  "type": "string"
+                },
+                "closed": {
+                  "type": "string"
+                },
+                "standards": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/templates"
+      }
+    },
+    "GET /api/chits/rollup": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "group_by",
+          "direction",
+          "groups"
+        ],
+        "properties": {
+          "group_by": {
+            "type": "string"
+          },
+          "direction": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "chits",
+                "total_value"
+              ],
+              "properties": {
+                "key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "chits": {
+                  "type": "number"
+                },
+                "total_value": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "dispute_open": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/rollup"
+      }
+    },
+    "GET /api/chits/sent": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chits",
+          "total",
+          "page",
+          "limit",
+          "next"
+        ],
+        "properties": {
+          "chits": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "next": {},
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "chits[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/sent"
+      }
+    },
+    "GET /api/chits/trace/batches": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "batches",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "batches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "product",
+                "qty",
+                "unit",
+                "is_origin",
+                "network",
+                "sender_name",
+                "to_name"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "product": {
+                  "type": "string"
+                },
+                "qty": {
+                  "type": "number"
+                },
+                "unit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "is_origin": {
+                  "type": "boolean"
+                },
+                "network": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sender_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "to_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/trace/batches"
+      }
+    },
+    "GET /api/chits/trace/by-batch": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dir",
+          "by_batch",
+          "reconstructed",
+          "matched_on",
+          "matched_note",
+          "start",
+          "reachable_count",
+          "depth_max",
+          "flagged",
+          "terminals",
+          "nodes",
+          "edges"
+        ],
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "by_batch": {
+            "type": "string"
+          },
+          "reconstructed": {
+            "type": "boolean"
+          },
+          "matched_on": {
+            "type": "string"
+          },
+          "matched_note": {
+            "type": "string"
+          },
+          "start": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reachable_count": {
+            "type": "number"
+          },
+          "depth_max": {
+            "type": "number"
+          },
+          "flagged": {
+            "type": "number"
+          },
+          "terminals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "product"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "product": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "nodes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "edges[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/trace/by-batch?q=B1"
+      }
+    },
+    "GET /api/chits/trace/networks": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "networks"
+        ],
+        "properties": {
+          "networks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "network_id",
+                "is_operator",
+                "edges"
+              ],
+              "properties": {
+                "network_id": {
+                  "type": "string"
+                },
+                "is_operator": {
+                  "type": "boolean"
+                },
+                "edges": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/trace/networks"
+      }
+    },
+    "GET /api/chits/unread": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "unread"
+        ],
+        "properties": {
+          "unread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/unread"
       }
     },
     "GET /api/crm/calls": {
@@ -8185,810 +9225,6 @@
           }
         }
       }
-    },
-    "GET /api/chits/disputes/queue": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "disputes",
-          "my_disputes",
-          "other_disputes",
-          "rows",
-          "total",
-          "page",
-          "limit",
-          "counts"
-        ],
-        "properties": {
-          "disputes": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "my_disputes": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "other_disputes": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "rows": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          },
-          "counts": {
-            "type": "object",
-            "properties": {
-              "open": {
-                "type": "number"
-              },
-              "resolved": {
-                "type": "number"
-              }
-            },
-            "additionalProperties": false
-          },
-          "total_open": {
-            "type": "number"
-          },
-          "code": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 6,
-      "open": [
-        {
-          "path": "disputes[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        },
-        {
-          "path": "my_disputes[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        },
-        {
-          "path": "other_disputes[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        },
-        {
-          "path": "rows[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
-      "example": {
-        "url": "/api/chits/disputes/queue?status=all"
-      }
-    },
-    "GET /api/chits/folder": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "chits",
-          "total",
-          "page",
-          "limit"
-        ],
-        "properties": {
-          "chits": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          },
-          "capped": {},
-          "cap_note": {}
-        },
-        "additionalProperties": false
-      },
-      "observed": 6,
-      "open": [
-        {
-          "path": "chits[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
-      "example": {
-        "url": "/api/chits/folder?view=trash&sort=amount&dir=asc&date_from=2026-01-01"
-      }
-    },
-    "GET /api/chits/inbox": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "chits",
-          "total",
-          "page",
-          "limit",
-          "next"
-        ],
-        "properties": {
-          "chits": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          },
-          "next": {},
-          "capped": {},
-          "cap_note": {}
-        },
-        "additionalProperties": false
-      },
-      "observed": 6,
-      "open": [
-        {
-          "path": "chits[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
-      "example": {
-        "url": "/api/chits/inbox?status=pending&q=tea&folder_id=22222222-2222-4222-8222-222222222222"
-      }
-    },
-    "GET /api/chits/raida/report": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "entries",
-          "migrated"
-        ],
-        "properties": {
-          "entries": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "migrated": {
-            "type": "boolean"
-          },
-          "by_kind": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "by_disposition": {
-            "type": "object"
-          },
-          "full": {
-            "type": "boolean"
-          },
-          "resp": {
-            "type": "boolean"
-          },
-          "open": {
-            "type": "number"
-          },
-          "closed": {
-            "type": "number"
-          },
-          "closed_by_order": {
-            "type": "number"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 7,
-      "open": [
-        {
-          "path": "entries[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        },
-        {
-          "path": "by_kind[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        },
-        {
-          "path": "by_disposition",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
-      "example": {
-        "url": "/api/chits/raida/report"
-      }
-    },
-    "GET /api/chits/register/attachables": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "attachables",
-          "degraded"
-        ],
-        "properties": {
-          "attachables": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "type_key",
-                "label",
-                "points_at"
-              ],
-              "properties": {
-                "type_key": {
-                  "type": "string"
-                },
-                "label": {
-                  "type": "string"
-                },
-                "points_at": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "degraded": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 7,
-      "open": [],
-      "example": {
-        "url": "/api/chits/register/attachables"
-      }
-    },
-    "GET /api/chits/register/subjects": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "subjects",
-          "migrated"
-        ],
-        "properties": {
-          "subjects": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "subject_id": {
-                  "type": "string"
-                },
-                "type_key": {
-                  "type": "string"
-                },
-                "ref_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "ref_label": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "name": {
-                  "type": "string"
-                },
-                "opened_at": {
-                  "type": "string"
-                },
-                "closed_at": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "closed_by_name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "open_count": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "migrated": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 7,
-      "open": [],
-      "example": {
-        "url": "/api/chits/register/subjects"
-      }
-    },
-    "GET /api/chits/register/templates": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "templates",
-          "migrated"
-        ],
-        "properties": {
-          "templates": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "template_id": {
-                  "type": "string"
-                },
-                "kind": {
-                  "type": "string"
-                },
-                "title": {
-                  "type": "string"
-                },
-                "body": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "likelihood": {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "severity": {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "treatment": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "verification_method": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "applies_to": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "raised": {
-                  "type": "string"
-                },
-                "closed": {
-                  "type": "string"
-                },
-                "standards": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "migrated": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 7,
-      "open": [],
-      "example": {
-        "url": "/api/chits/register/templates"
-      }
-    },
-    "GET /api/chits/rollup": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "group_by",
-          "direction",
-          "groups"
-        ],
-        "properties": {
-          "group_by": {
-            "type": "string"
-          },
-          "direction": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "key",
-                "chits",
-                "total_value"
-              ],
-              "properties": {
-                "key": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "chits": {
-                  "type": "number"
-                },
-                "total_value": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "dispute_open": {
-            "type": "number"
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 5,
-      "open": [],
-      "example": {
-        "url": "/api/chits/rollup"
-      }
-    },
-    "GET /api/chits/sent": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "chits",
-          "total",
-          "page",
-          "limit",
-          "next"
-        ],
-        "properties": {
-          "chits": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          },
-          "next": {},
-          "capped": {},
-          "cap_note": {}
-        },
-        "additionalProperties": false
-      },
-      "observed": 6,
-      "open": [
-        {
-          "path": "chits[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
-      "example": {
-        "url": "/api/chits/sent"
-      }
-    },
-    "GET /api/chits/trace/batches": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "count",
-          "batches",
-          "total",
-          "page",
-          "limit"
-        ],
-        "properties": {
-          "count": {
-            "type": "number"
-          },
-          "batches": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "chit_id",
-                "product",
-                "qty",
-                "unit",
-                "is_origin",
-                "network",
-                "sender_name",
-                "to_name"
-              ],
-              "properties": {
-                "chit_id": {
-                  "type": "string"
-                },
-                "product": {
-                  "type": "string"
-                },
-                "qty": {
-                  "type": "number"
-                },
-                "unit": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "is_origin": {
-                  "type": "boolean"
-                },
-                "network": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "sender_name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "to_name": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          },
-          "capped": {},
-          "cap_note": {}
-        },
-        "additionalProperties": false
-      },
-      "observed": 5,
-      "open": [],
-      "example": {
-        "url": "/api/chits/trace/batches"
-      }
-    },
-    "GET /api/chits/trace/by-batch": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "dir",
-          "by_batch",
-          "reconstructed",
-          "matched_on",
-          "matched_note",
-          "start",
-          "reachable_count",
-          "depth_max",
-          "flagged",
-          "terminals",
-          "nodes",
-          "edges"
-        ],
-        "properties": {
-          "dir": {
-            "type": "string"
-          },
-          "by_batch": {
-            "type": "string"
-          },
-          "reconstructed": {
-            "type": "boolean"
-          },
-          "matched_on": {
-            "type": "string"
-          },
-          "matched_note": {
-            "type": "string"
-          },
-          "start": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "reachable_count": {
-            "type": "number"
-          },
-          "depth_max": {
-            "type": "number"
-          },
-          "flagged": {
-            "type": "number"
-          },
-          "terminals": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "chit_id",
-                "product"
-              ],
-              "properties": {
-                "chit_id": {
-                  "type": "string"
-                },
-                "product": {}
-              },
-              "additionalProperties": false
-            }
-          },
-          "nodes": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "edges": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 2,
-      "open": [
-        {
-          "path": "nodes[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        },
-        {
-          "path": "edges[]",
-          "reason": "a value passed through (a name: its keys are not written in the handler)"
-        }
-      ],
-      "example": {
-        "url": "/api/chits/trace/by-batch?q=B1"
-      }
-    },
-    "GET /api/chits/trace/networks": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "networks"
-        ],
-        "properties": {
-          "networks": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "network_id",
-                "is_operator",
-                "edges"
-              ],
-              "properties": {
-                "network_id": {
-                  "type": "string"
-                },
-                "is_operator": {
-                  "type": "boolean"
-                },
-                "edges": {
-                  "type": "number"
-                }
-              },
-              "additionalProperties": false
-            }
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 5,
-      "open": [],
-      "example": {
-        "url": "/api/chits/trace/networks"
-      }
-    },
-    "GET /api/chits/unread": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "unread"
-        ],
-        "properties": {
-          "unread": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "additionalProperties": false
-      },
-      "observed": 5,
-      "open": [],
-      "example": {
-        "url": "/api/chits/unread"
-      }
     }
   },
   "listed": {
@@ -9644,6 +9880,8 @@
     "GET /api/chits/inbox": "open at chits[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/raida/report": "open at entries[] — a value passed through (an expression: its keys are not written in the handler); by_kind[] — a value passed through (an expression: its keys are not written in the handler); by_disposition — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/sent": "open at chits[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/chits/trace/by-batch": "open at nodes[] — a value passed through (an expression: its keys are not written in the handler); edges[] — a value passed through (a name: its keys are not written in the handler)"
+    "GET /api/chits/trace/by-batch": "open at nodes[] — a value passed through (an expression: its keys are not written in the handler); edges[] — a value passed through (a name: its keys are not written in the handler)",
+    "DELETE /api/actors/:id/pin": "left open on purpose: the 200 carries the one-time code (show_code · otp on an opted-in stack); a shape that names it is a call for cb-security, not a sweep",
+    "GET /api/actors": "open at actors[].connector_config — the connector's own config, stored verbatim from the owner's body (routes/connectors.js: isObject only); a closed shape would cut a key it does not list"
   }
 }
