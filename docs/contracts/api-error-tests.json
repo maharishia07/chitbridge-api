@@ -3424,5 +3424,54 @@
   401,
   500,
   503
+ ],
+ "DELETE /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/combo-templates": [
+  401,
+  500
+ ],
+ "GET /api/marketing/came-back": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/offers/kinds": [
+  500
+ ],
+ "GET /api/offers/openapi.json": [
+  500
+ ],
+ "PATCH /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/combo-templates": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/combo-templates/:id/push": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/offers/evaluate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/offers/explain": [
+  400,
+  401,
+  403,
+  500
  ]
 }

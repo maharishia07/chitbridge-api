@@ -214,6 +214,10 @@ const INFRA_LIBS = [
   'output-allowlist.js',
   'books-contract.js',
   'tax-contract.js',
+  /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'marketing-contract.js',
+  'offers-contract.js',
+  'combo-templates-contract.js',
   /* API-4 sweep: the contract of the governance routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'governance-contract.js',
   /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */

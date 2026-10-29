@@ -54586,6 +54586,608 @@
      }
     }
    ]
+  },
+  "DELETE /api/combo-templates/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not delete this combo",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not delete this combo",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "GET /api/combo-templates": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read your saved combos",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not read your saved combos",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/marketing/came-back": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use Marketing.",
+      "message": "Sign in to use Marketing."
+     },
+     "fixture": {
+      "code": "SIGN_IN",
+      "error": "Sign in to use Marketing.",
+      "message": "Sign in to use Marketing."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/combo-templates/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not update this combo",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not update this combo",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    }
+   ]
+  },
+  "POST /api/combo-templates": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "definition",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails-with-combo",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not save this combo",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not save this combo",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/combo-templates/:id/push": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "code": "COST_BLIND",
+      "blocked": [
+       "name",
+       "modifiers",
+       "price"
+      ],
+      "message": "Your access does not include cost or price. You can change availability; the account owner can grant \"Sees costs\" in Co-assists to change: name, modifiers, price."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not push this combo to your products",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Could not push this combo to your products",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "saved-combo-has-no-groups",
+     "status": 400,
+     "body_keys": {
+      "error": "Invalid combo",
+      "message": "A combo needs at least one group to be worth saving."
+     },
+     "fixture": {
+      "error": "Invalid combo",
+      "message": "A combo needs at least one group to be worth saving."
+     }
+    }
+   ]
+  },
+  "POST /api/offers/evaluate": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "engine-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/offers/explain": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not scoped for offers"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "lines[] required: { key, item_id?, qty, unitPrice }"
+     }
+    },
+    {
+     "scenario": "engine-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

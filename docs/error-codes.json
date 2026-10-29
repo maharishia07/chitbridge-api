@@ -839,6 +839,51 @@
    "since": "2026-10-24"
   },
   {
+   "code": "COMBO_INVALID",
+   "status": "400",
+   "title": "Combo needs groups",
+   "shopkeeper": "A combo needs at least one group, each with a name and options.",
+   "hint": "Add a group with an option and save again.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_NAME_INVALID",
+   "status": "400",
+   "title": "Combo needs a name",
+   "shopkeeper": "A saved combo needs a name of up to 120 characters.",
+   "hint": "Type a name you will look for later.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_PRICE_INVALID",
+   "status": "400",
+   "title": "Combo price not valid",
+   "shopkeeper": "The price must be a number and cannot be negative.",
+   "hint": "Type a price of 0 or more, or leave it empty.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_PRICE_REQUIRED",
+   "status": "400",
+   "title": "Combo price needed",
+   "shopkeeper": "Give this combo a price before pushing it as a new product.",
+   "hint": "Set the price, then push again.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "COMBO_REFUSED",
+   "status": "400",
+   "title": "Combo refused",
+   "shopkeeper": "This combo cannot be saved as it stands.",
+   "hint": "Read the sentence shown and fix it.",
+   "owner_area": "combo-templates",
+   "since": "2026-10-23"
+  },
+  {
    "code": "COMMENT_ONLY",
    "status": "403",
    "title": "Comment only",
@@ -2180,6 +2225,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "LINES_REQUIRED",
+   "status": "400",
+   "title": "Lines needed",
+   "shopkeeper": "Send at least one line with a quantity and a unit price.",
+   "hint": "Add the lines to evaluate and send again.",
+   "owner_area": "offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "LINE_BELOW_DELIVERED",
    "status": "409",
    "title": "Below what was delivered",
@@ -2272,9 +2326,9 @@
   {
    "code": "MKT_NOT_MIGRATED",
    "status": "varies",
-   "title": "Mkt not migrated",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Who came back update pending",
+   "shopkeeper": "Who came back arrives after the next update.",
+   "hint": "Try again after the next update.",
    "owner_area": "channels",
    "since": "2026-10-22"
   },
@@ -2342,6 +2396,33 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NETWORK_NOTHING_TO_CHANGE",
+   "status": "409",
+   "title": "Stores already up to date",
+   "shopkeeper": "Your stores already have every change.",
+   "hint": "Nothing to publish.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NOTHING_WAITING",
+   "status": "409",
+   "title": "Nothing waiting",
+   "shopkeeper": "Nothing is waiting to be published.",
+   "hint": "Publish a change first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_NOT_ADOPTED",
+   "status": "409",
+   "title": "Catalogue not sold here",
+   "shopkeeper": "This store does not sell that catalogue.",
+   "hint": "Join the network catalogue first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NETWORK_ORDERS_OFF",
    "status": "403",
    "title": "Network orders off",
@@ -2360,12 +2441,39 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NETWORK_PRICE_MISSING",
+   "status": "409",
+   "title": "No brand price",
+   "shopkeeper": "The brand has no price for that product.",
+   "hint": "Ask the brand to suggest a price.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "NETWORK_READ_FAILED",
    "status": "503",
    "title": "Network not read",
    "shopkeeper": "We could not read who is in the network just now. Nothing was changed.",
    "hint": "Try again in a minute.",
    "owner_area": "network-membership",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_REFUSED",
+   "status": "409",
+   "title": "Network step refused",
+   "shopkeeper": "The network cannot take that step as it stands.",
+   "hint": "Read the sentence shown and fix it.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "NETWORK_REQUEST_INVALID",
+   "status": "400",
+   "title": "Network request not valid",
+   "shopkeeper": "That request is not valid: the sentence says what to change.",
+   "hint": "Fix what the sentence says and send again.",
+   "owner_area": "network-offers",
    "since": "2026-10-23"
   },
   {
@@ -2783,6 +2891,42 @@
    "since": "2026-10-22"
   },
   {
+   "code": "OFFER_ENDS_BEFORE_START",
+   "status": "400",
+   "title": "Offer ends before it starts",
+   "shopkeeper": "The offer would end before it starts.",
+   "hint": "Pick an end after the start.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_NOT_LIVE",
+   "status": "409",
+   "title": "Offer not live",
+   "shopkeeper": "Make the offer live before releasing it to your stores.",
+   "hint": "Make it live, then release.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_NOT_RELEASED",
+   "status": "409",
+   "title": "Offer never released",
+   "shopkeeper": "That offer was never released to your stores.",
+   "hint": "Release it first.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "OFFER_UNKNOWN",
+   "status": "400",
+   "title": "Offer not known",
+   "shopkeeper": "That is not an offer.",
+   "hint": "Pick an offer from the list.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "OFFLINE",
    "status": "varies",
    "title": "Offline",
@@ -3006,6 +3150,15 @@
    "hint": "It cannot be changed here.",
    "owner_area": "entities",
    "since": "2026-10-22"
+  },
+  {
+   "code": "POLICY_NOT_VALID",
+   "status": "400",
+   "title": "Policy not known",
+   "shopkeeper": "The policy must be opt_in or opt_out.",
+   "hint": "Pick one of the two.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
   },
   {
    "code": "POPULATION_BOUNDARY",
@@ -3512,6 +3665,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SESSION_ONLY",
+   "status": "403",
+   "title": "Sign in as a person",
+   "shopkeeper": "Network offers are managed by a signed-in person.",
+   "hint": "Sign in as a person, not with a key.",
+   "owner_area": "network-offers",
+   "since": "2026-10-23"
+  },
+  {
    "code": "SESSION_UPGRADE",
    "status": "varies",
    "title": "Session upgrade",
@@ -3971,6 +4133,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "VALIDATION_FAILED",
+   "status": "400",
+   "title": "Fields not valid",
+   "shopkeeper": "Some of what was sent is missing or not valid.",
+   "hint": "Fix the fields listed and send again.",
+   "owner_area": "validate",
+   "since": "2026-10-23"
+  },
+  {
    "code": "VAULT_CHANGED",
    "status": "409",
    "title": "Vault changed",
@@ -4032,6 +4203,15 @@
    "hint": "Apply the pending database update, then build again.",
    "owner_area": "entities",
    "since": "2026-10-22"
+  },
+  {
+   "code": "WITHDRAWN",
+   "status": "403",
+   "title": "They withdrew consent",
+   "shopkeeper": "They withdrew their consent to offers on that channel.",
+   "hint": "Do not send offers there.",
+   "owner_area": "crm",
+   "since": "2026-10-23"
   },
   {
    "code": "WORKBOOK_CUT",
