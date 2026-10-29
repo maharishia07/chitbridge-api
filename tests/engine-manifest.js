@@ -237,6 +237,8 @@ const INFRA_LIBS = [
   'supplies-contract.js',
   /* API-4 sweep, the privacy routes: the contract of routes/privacy.js (its OpenAPI operations and the way a fault is worded) — the contract of a door, not a rule of the platform. tests/api-problem-privacy.test.cjs */
   'privacy-contract.js',
+  /* API-4 sweep, identity documents: the contract of routes/identity-docs.js (its OpenAPI operations and the way a fault and a library refusal are worded) — the contract of a door, not a rule of the platform. tests/api-problem-identity-docs.test.cjs */
+  'identity-docs-contract.js',
   /* API-4 sweep, the quick-key groups: the contract of the routes/quick-keys.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-quick-keys.test.cjs */
   'quick-keys-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
