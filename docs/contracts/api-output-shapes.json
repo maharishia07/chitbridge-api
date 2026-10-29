@@ -379,385 +379,7 @@
           "catalogues": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": [
-                "source",
-                "version",
-                "visible",
-                "updated_at",
-                "resolved"
-              ],
-              "properties": {
-                "source": {
-                  "type": "string"
-                },
-                "version": {
-                  "type": "string"
-                },
-                "visible": {
-                  "type": "boolean"
-                },
-                "updated_at": {
-                  "type": "string"
-                },
-                "resolved": {
-                  "type": "object",
-                  "required": [
-                    "source",
-                    "for_entity",
-                    "title",
-                    "collection",
-                    "from_db",
-                    "is_member",
-                    "owner_entity_id",
-                    "experience",
-                    "formatting",
-                    "layers",
-                    "adoption_model",
-                    "schema",
-                    "items",
-                    "commercials_fields",
-                    "counts",
-                    "adopted",
-                    "detached"
-                  ],
-                  "properties": {
-                    "source": {
-                      "type": "string"
-                    },
-                    "for_entity": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "collection": {
-                      "type": "string"
-                    },
-                    "from_db": {
-                      "type": "boolean"
-                    },
-                    "is_member": {},
-                    "owner_entity_id": {},
-                    "experience": {
-                      "type": "object",
-                      "properties": {
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "formatting": {
-                      "type": "object",
-                      "properties": {
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "layers": {
-                      "type": "object",
-                      "required": [
-                        "shared",
-                        "entity"
-                      ],
-                      "properties": {
-                        "shared": {
-                          "type": "string"
-                        },
-                        "entity": {
-                          "type": "string"
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "adoption_model": {
-                      "type": "object",
-                      "required": [
-                        "source_ref",
-                        "version",
-                        "stores",
-                        "overlay"
-                      ],
-                      "properties": {
-                        "source_ref": {
-                          "type": "string"
-                        },
-                        "version": {
-                          "type": "string"
-                        },
-                        "stores": {
-                          "type": "string"
-                        },
-                        "overlay": {
-                          "type": "string"
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "schema": {
-                      "type": "object",
-                      "required": [
-                        "name",
-                        "facets",
-                        "fields"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "facets": {
-                          "type": "object",
-                          "required": [
-                            "design",
-                            "colour",
-                            "application"
-                          ],
-                          "properties": {
-                            "design": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "colour": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "application": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "ok": {},
-                            "count": {},
-                            "catalogues": {}
-                          },
-                          "additionalProperties": false
-                        },
-                        "fields": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "key",
-                              "label",
-                              "type"
-                            ],
-                            "properties": {
-                              "key": {
-                                "type": "string"
-                              },
-                              "label": {
-                                "type": "string"
-                              },
-                              "type": {
-                                "type": "string"
-                              },
-                              "values": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              },
-                              "ok": {},
-                              "count": {},
-                              "catalogues": {}
-                            },
-                            "additionalProperties": false
-                          }
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "name",
-                          "texture_family",
-                          "region",
-                          "effect",
-                          "scale",
-                          "sheen",
-                          "inspiration",
-                          "tools",
-                          "coats",
-                          "combinations",
-                          "commercials"
-                        ],
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "texture_family": {
-                            "type": "string"
-                          },
-                          "region": {
-                            "type": "string"
-                          },
-                          "effect": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "scale": {
-                            "type": "string"
-                          },
-                          "sheen": {
-                            "type": "string"
-                          },
-                          "inspiration": {
-                            "type": "string"
-                          },
-                          "tools": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "coats": {
-                            "type": "string"
-                          },
-                          "combinations": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "required": [
-                                "name",
-                                "colours"
-                              ],
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "colours": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "required": [
-                                      "name",
-                                      "hex"
-                                    ],
-                                    "properties": {
-                                      "name": {
-                                        "type": "string"
-                                      },
-                                      "hex": {
-                                        "type": "string"
-                                      },
-                                      "ok": {},
-                                      "count": {},
-                                      "catalogues": {}
-                                    },
-                                    "additionalProperties": false
-                                  }
-                                },
-                                "ok": {},
-                                "count": {},
-                                "catalogues": {}
-                              },
-                              "additionalProperties": false
-                            }
-                          },
-                          "commercials": {},
-                          "ok": {},
-                          "count": {},
-                          "catalogues": {}
-                        },
-                        "additionalProperties": false
-                      }
-                    },
-                    "commercials_fields": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "key",
-                          "label",
-                          "type"
-                        ],
-                        "properties": {
-                          "key": {
-                            "type": "string"
-                          },
-                          "label": {
-                            "type": "string"
-                          },
-                          "type": {
-                            "type": "string"
-                          },
-                          "values": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "ok": {},
-                          "count": {},
-                          "catalogues": {}
-                        },
-                        "additionalProperties": false
-                      }
-                    },
-                    "counts": {
-                      "type": "object",
-                      "required": [
-                        "finishes",
-                        "fields",
-                        "combinations",
-                        "colours"
-                      ],
-                      "properties": {
-                        "finishes": {
-                          "type": "number"
-                        },
-                        "fields": {
-                          "type": "number"
-                        },
-                        "combinations": {
-                          "type": "number"
-                        },
-                        "colours": {
-                          "type": "number"
-                        },
-                        "ok": {},
-                        "count": {},
-                        "catalogues": {}
-                      },
-                      "additionalProperties": false
-                    },
-                    "adopted": {
-                      "type": "number"
-                    },
-                    "detached": {},
-                    "ok": {},
-                    "count": {},
-                    "catalogues": {}
-                  },
-                  "additionalProperties": false
-                },
-                "ok": {},
-                "count": {},
-                "catalogues": {}
-              },
-              "additionalProperties": false
+              "type": "object"
             }
           },
           "total": {
@@ -768,12 +390,23 @@
           },
           "limit": {
             "type": "number"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
           }
         },
         "additionalProperties": false
       },
-      "observed": 6,
-      "open": [],
+      "observed": 7,
+      "open": [
+        {
+          "path": "catalogues[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
       "example": {
         "url": "/api/assist/catalogue-mine?limit=1"
       }
@@ -973,19 +606,35 @@
           "by_locality": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "source_key",
+                "locality",
+                "orders",
+                "distributors"
+              ],
+              "properties": {
+                "source_key": {
+                  "type": "string"
+                },
+                "locality": {
+                  "type": "string"
+                },
+                "orders": {
+                  "type": "number"
+                },
+                "distributors": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
             }
           }
         },
         "additionalProperties": false
       },
-      "observed": 5,
-      "open": [
-        {
-          "path": "by_locality[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "observed": 6,
+      "open": [],
       "example": {
         "url": "/api/assist/penetration"
       }
@@ -1077,19 +726,46 @@
           "regions": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "required": [
+                "region_code",
+                "currency",
+                "units",
+                "language",
+                "jurisdiction"
+              ],
+              "properties": {
+                "region_code": {
+                  "type": "string"
+                },
+                "currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "units": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "language": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "jurisdiction": {}
+              },
+              "additionalProperties": false
             }
           }
         },
         "additionalProperties": false
       },
-      "observed": 7,
-      "open": [
-        {
-          "path": "regions[]",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "observed": 10,
+      "open": [],
       "example": {
         "url": "/api/assist/regions"
       }
