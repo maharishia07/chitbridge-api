@@ -14216,6 +14216,986 @@
           "reason": "bad debt"
         }
       }
+    },
+    "DELETE /api/books/recurring/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "recurring_id",
+          "name",
+          "event",
+          "frequency",
+          "next_on",
+          "anchor_day",
+          "end_on",
+          "auto",
+          "active",
+          "last_done_on",
+          "created_by",
+          "created_at",
+          "updated_at",
+          "due",
+          "stopped"
+        ],
+        "properties": {
+          "recurring_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "event": {
+            "type": "object"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "next_on": {
+            "type": "string"
+          },
+          "anchor_day": {
+            "type": "number"
+          },
+          "end_on": {},
+          "auto": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "last_done_on": {},
+          "created_by": {},
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "due": {
+            "type": "boolean"
+          },
+          "stopped": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "event",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/recurring/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/books/packs/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "pack",
+          "manifest",
+          "has_file",
+          "file",
+          "download"
+        ],
+        "properties": {
+          "pack": {
+            "type": "object",
+            "required": [
+              "pack_id",
+              "kind",
+              "fiscal_year",
+              "period",
+              "created_at",
+              "sha256",
+              "prev_sha256",
+              "stored",
+              "acknowledged_at",
+              "delete_after"
+            ],
+            "properties": {
+              "pack_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "fiscal_year": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "period": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "prev_sha256": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "stored": {
+                "type": "boolean"
+              },
+              "acknowledged_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "delete_after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "has_file": {
+            "type": "boolean"
+          },
+          "file": {
+            "type": "string"
+          },
+          "download": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "manifest",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/packs/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "PATCH /api/books/recurring/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "recurring_id",
+          "name",
+          "event",
+          "frequency",
+          "next_on",
+          "anchor_day",
+          "end_on",
+          "auto",
+          "active",
+          "last_done_on",
+          "created_by",
+          "created_at",
+          "updated_at",
+          "due"
+        ],
+        "properties": {
+          "recurring_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "event": {
+            "type": "object"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "next_on": {
+            "type": "string"
+          },
+          "anchor_day": {
+            "type": "number"
+          },
+          "end_on": {
+            "type": "string"
+          },
+          "auto": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "last_done_on": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "due": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "event",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/recurring/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "auto": true
+        }
+      }
+    },
+    "POST /api/books/compare/preflight": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "part",
+          "source",
+          "format",
+          "headers",
+          "fields",
+          "guess",
+          "missing",
+          "ready",
+          "rows_total",
+          "sample",
+          "sheet",
+          "sheets",
+          "header_row"
+        ],
+        "properties": {
+          "part": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "guess": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "missing": {},
+          "ready": {
+            "type": "boolean"
+          },
+          "rows_total": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "sheet": {},
+          "sheets": {},
+          "header_row": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "fields[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "guess[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "sample[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/compare/preflight",
+        "body": {
+          "part": "tb",
+          "source": "tally",
+          "csv": "Particulars,Debit,Credit\nCash,100,0\nSales,0,100"
+        }
+      }
+    },
+    "POST /api/books/compare/snapshots": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "label",
+          "source",
+          "period_from",
+          "period_to",
+          "part",
+          "rows",
+          "skipped"
+        ],
+        "properties": {
+          "snapshot_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "period_from": {
+            "type": "string"
+          },
+          "period_to": {
+            "type": "string"
+          },
+          "part": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "number"
+          },
+          "skipped": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/compare/snapshots",
+        "body": {
+          "snapshot_id": "22222222-2222-4222-8222-222222222222",
+          "part": "pl",
+          "source": "tally",
+          "csv": "Particulars,Amount\nSales,100",
+          "decisions": [
+            {
+              "incoming": "Particulars",
+              "field": "account"
+            },
+            {
+              "incoming": "Amount",
+              "field": "amount"
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/books/fx-rates": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "rate"
+        ],
+        "properties": {
+          "rate": {
+            "type": "object",
+            "required": [
+              "rate_id",
+              "rate_date",
+              "currency",
+              "rate",
+              "source",
+              "source_ref",
+              "created_at"
+            ],
+            "properties": {
+              "rate_id": {
+                "type": "string"
+              },
+              "rate_date": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "rate": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "source_ref": {},
+              "created_at": {
+                "type": "string"
+              },
+              "e": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/fx-rates",
+        "body": {
+          "date": "2026-09-30",
+          "currency": "USD",
+          "rate": 83.5
+        }
+      }
+    },
+    "POST /api/books/fx-rates/import": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "added",
+          "refused",
+          "rates"
+        ],
+        "properties": {
+          "added": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "refused[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "rates[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/fx-rates/import",
+        "body": {
+          "csv": "date,currency,rate\n2026-09-30,USD,83.5\n2026-09-30,EUR,"
+        }
+      }
+    },
+    "POST /api/books/fx-revalue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "entry_no",
+          "gain_minor"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "reversal_no": {
+            "type": "string"
+          },
+          "gain_minor": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string"
+          },
+          "reverses_on": {
+            "type": "string"
+          },
+          "duplicate": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/fx-revalue",
+        "body": {
+          "fiscal_year": "2026-27",
+          "period": 6
+        }
+      }
+    },
+    "POST /api/books/move-in/preflight": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "kind",
+          "source",
+          "headers",
+          "fields",
+          "guess",
+          "missing",
+          "ready",
+          "rows_total",
+          "sample",
+          "sheet",
+          "sheets",
+          "header_row"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "guess": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "missing": {},
+          "ready": {
+            "type": "boolean"
+          },
+          "rows_total": {
+            "type": "number"
+          },
+          "sample": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "sheet": {},
+          "sheets": {},
+          "header_row": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "fields[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "guess[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "sample[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/move-in/preflight",
+        "body": {
+          "kind": "contacts",
+          "source": "xero",
+          "csv": "ContactName,PhoneNumber,EmailAddress\nAsha Traders,9999,a@x.in"
+        }
+      }
+    },
+    "POST /api/books/packs": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "pack",
+          "manifest"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "pack": {
+            "type": "object",
+            "required": [
+              "pack_id",
+              "sha256",
+              "stored",
+              "bytes"
+            ],
+            "properties": {
+              "pack_id": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "stored": {
+                "type": "boolean"
+              },
+              "bytes": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "manifest": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "manifest",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/packs",
+        "body": {
+          "kind": "month",
+          "fiscal_year": "2026-27",
+          "period": 6
+        }
+      }
+    },
+    "POST /api/books/packs/:id/ack": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "acknowledged_at"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "acknowledged_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/packs/22222222-2222-4222-8222-222222222222/ack"
+      }
+    },
+    "POST /api/books/periods/:fy/:p/:act": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "period"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "period": {
+            "type": "object",
+            "required": [
+              "fiscal_year",
+              "period",
+              "status"
+            ],
+            "properties": {
+              "fiscal_year": {
+                "type": "string"
+              },
+              "period": {
+                "type": "number"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/periods/2026-27/6/lock",
+        "body": {
+          "reason": "month done"
+        }
+      }
+    },
+    "POST /api/books/recurring": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "recurring_id",
+          "name",
+          "event",
+          "frequency",
+          "next_on",
+          "anchor_day",
+          "end_on",
+          "auto",
+          "active",
+          "last_done_on",
+          "created_by",
+          "created_at",
+          "updated_at",
+          "due"
+        ],
+        "properties": {
+          "recurring_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "event": {
+            "type": "object"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "next_on": {
+            "type": "string"
+          },
+          "anchor_day": {
+            "type": "number"
+          },
+          "end_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "auto": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "last_done_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "due": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "event",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/recurring",
+        "body": {
+          "name": "Rent",
+          "event": {
+            "kind": "expense"
+          },
+          "frequency": "monthly",
+          "next_on": "2026-11-01"
+        }
+      }
+    },
+    "POST /api/books/recurring/:id/post": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "posted",
+          "template",
+          "date"
+        ],
+        "properties": {
+          "posted": {
+            "type": "object"
+          },
+          "template": {
+            "type": "object"
+          },
+          "date": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "posted",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "template",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/recurring/22222222-2222-4222-8222-222222222222/post",
+        "body": {}
+      }
+    },
+    "POST /api/books/recurring/:id/skip": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "skipped",
+          "template"
+        ],
+        "properties": {
+          "skipped": {
+            "type": "string"
+          },
+          "template": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "template",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/recurring/22222222-2222-4222-8222-222222222222/skip",
+        "body": {}
+      }
+    },
+    "POST /api/books/year/:fy/close": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "fiscal_year",
+          "next"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "fiscal_year": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          },
+          "locked": {
+            "type": "number"
+          },
+          "opening": {
+            "type": "object"
+          },
+          "duplicate": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "opening",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/year/2026-27/close",
+        "body": {}
+      }
     }
   },
   "listed": {
@@ -14936,6 +15916,17 @@
     "POST /api/books/payments/:id/propose": "open at proposal[] — a value passed through (an expression: its keys are not written in the handler); skipped[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/books/payments/preview": "open at party — a value passed through (an expression: its keys are not written in the handler); proposal[] — a value passed through (an expression: its keys are not written in the handler); skipped[] — a value passed through (an expression: its keys are not written in the handler); warnings[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/books/preview": "open at voucher — a value passed through (an expression: its keys are not written in the handler); lines[] — a value passed through (an expression: its keys are not written in the handler); totals — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/books/terms": "open at terms — a value passed through (an expression: its keys are not written in the handler)"
+    "POST /api/books/terms": "open at terms — a value passed through (an expression: its keys are not written in the handler)",
+    "DELETE /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/books/packs/:id": "open at manifest — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/compare/preflight": "open at fields[] — a value passed through (an expression: its keys are not written in the handler); guess[] — a value passed through (an expression: its keys are not written in the handler); sample[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/fx-rates/import": "open at refused[] — a value passed through (an expression: its keys are not written in the handler); rates[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/move-in/preflight": "open at fields[] — a value passed through (an expression: its keys are not written in the handler); guess[] — a value passed through (an expression: its keys are not written in the handler); sample[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/packs": "open at manifest — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/recurring": "open at event — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/recurring/:id/post": "open at posted — a value passed through (an expression: its keys are not written in the handler); template — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/recurring/:id/skip": "open at template — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/books/year/:fy/close": "open at opening — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

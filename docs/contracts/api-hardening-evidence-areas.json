@@ -585,6 +585,54 @@
   },
   "PUT /api/connections/:id/respond": {
    "foreign_id_404": true
+  },
+  "DELETE /api/books/recurring/:id": {
+   "output_allowlist": true
+  },
+  "GET /api/books/packs/:id": {
+   "output_allowlist": true
+  },
+  "PATCH /api/books/recurring/:id": {
+   "output_allowlist": true
+  },
+  "POST /api/books/compare/preflight": {
+   "output_allowlist": true
+  },
+  "POST /api/books/compare/snapshots": {
+   "output_allowlist": true
+  },
+  "POST /api/books/fx-rates": {
+   "output_allowlist": true
+  },
+  "POST /api/books/fx-rates/import": {
+   "output_allowlist": true
+  },
+  "POST /api/books/fx-revalue": {
+   "output_allowlist": true
+  },
+  "POST /api/books/move-in/preflight": {
+   "output_allowlist": true
+  },
+  "POST /api/books/packs": {
+   "output_allowlist": true
+  },
+  "POST /api/books/packs/:id/ack": {
+   "output_allowlist": true
+  },
+  "POST /api/books/periods/:fy/:p/:act": {
+   "output_allowlist": true
+  },
+  "POST /api/books/recurring": {
+   "output_allowlist": true
+  },
+  "POST /api/books/recurring/:id/post": {
+   "output_allowlist": true
+  },
+  "POST /api/books/recurring/:id/skip": {
+   "output_allowlist": true
+  },
+  "POST /api/books/year/:fy/close": {
+   "output_allowlist": true
   }
  }
 }
