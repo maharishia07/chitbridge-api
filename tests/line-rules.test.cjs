@@ -47,6 +47,10 @@ let n = 0;
 const got = (line_id, ordered, dq, o) => ev(line_id, ordered, Object.assign({ delivery_id: line_id + '-' + (++n), dq }, o || {}));
 
 (async () => {
+  /* the delivery cases below reach the line check (RAIL-133 c): my copy holds l1 and l2 */
+  answer = (sql, params) => (/FROM chit_line WHERE entity_id = \$1 AND chit_id = \$2 AND line_id::text = ANY/.test(sql)
+    ? { rows: params[2].filter((id) => ['l1', 'l2'].includes(id)).map((line_id) => ({ line_id })) }
+    : { rows: [], rowCount: 1 });
   console.log('\n── R4 R5 · a delivery row\'s own check (lib/deliverline.js checkRow) ──');
   const rec = (rows) => refusedWith(() => deliverline.record(ME, 'c1', rows, {}));
   t('R4 a row with no line_id is refused', (await rec([{ quantity: 1 }])) === 'Each delivery needs a line_id');
@@ -58,6 +62,12 @@ const got = (line_id, ordered, dq, o) => ev(line_id, ordered, Object.assign({ de
   t('R5 an add with an amount and a reason passes the check', (await rec([{ line_id: 'l1', kind: 'add', amount: 450, particulars: 'call-out fee' }])) === '');
   t('R5 any other kind is checked as a delivery', /^quantity must be a non-zero number/.test(await rec([{ line_id: 'l1', kind: 'gift', amount: 5, particulars: 'x' }])));
   t('an empty list is refused', (await rec([])) === 'Nothing to record');
+  calls.length = 0;
+  t('RAIL-133 (c) a delivery for a line not on the chit is refused in words', (await rec([{ line_id: 'l1', quantity: 1 }, { line_id: 'not-here', quantity: 1 }])) === 'A delivery names a line that is not on this chit');
+  t('…and nothing was written for any row of it', !calls.some((c) => /chit_line_event|INSERT INTO chit_line_delivery/.test(c.sql)));
+  t('…on the private (bill) path too', (await refusedWith(() => deliverline.record(ME, 'c1', [{ line_id: 'nope', quantity: 1 }], { private: true }))) === 'A delivery names a line that is not on this chit');
+  t('lines that are all on the chit pass the check', (await rec([{ line_id: 'l1', quantity: 1 }, { line_id: 'l2', quantity: 2 }])) === '');
+  answer = () => ({ rows: [] });
 
   console.log('\n── R9 R10 R11 R13 R14 · progress, from the rows ──');
   const m = await deliverline.progress(ME, 'c1', null, [
