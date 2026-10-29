@@ -13729,6 +13729,297 @@
           "consent": "true"
         }
       }
+    },
+    "GET /api/kyb/position": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "section",
+          "facts",
+          "note"
+        ],
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "facts": {
+            "type": "object",
+            "required": [
+              "reach",
+              "lanes",
+              "ranked_actions"
+            ],
+            "properties": {
+              "reach": {
+                "type": "object",
+                "required": [
+                  "reachable_now",
+                  "one_step",
+                  "structural"
+                ],
+                "properties": {
+                  "reachable_now": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "dest",
+                        "dest_key"
+                      ],
+                      "properties": {
+                        "dest": {
+                          "type": "string"
+                        },
+                        "dest_key": {
+                          "type": "string"
+                        },
+                        "vertical": {},
+                        "origin": {}
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "one_step": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "dest",
+                        "dest_key",
+                        "needs"
+                      ],
+                      "properties": {
+                        "dest": {
+                          "type": "string"
+                        },
+                        "dest_key": {
+                          "type": "string"
+                        },
+                        "needs": {
+                          "type": "string"
+                        },
+                        "vertical": {},
+                        "origin": {}
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "structural": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "dest",
+                        "dest_key",
+                        "blocked_by"
+                      ],
+                      "properties": {
+                        "dest": {
+                          "type": "string"
+                        },
+                        "dest_key": {
+                          "type": "string"
+                        },
+                        "blocked_by": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "vertical": {},
+                        "origin": {}
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "vertical": {},
+                  "origin": {}
+                },
+                "additionalProperties": false
+              },
+              "lanes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "dest_key",
+                    "dest_name",
+                    "readiness_pct",
+                    "met",
+                    "total",
+                    "gaps"
+                  ],
+                  "properties": {
+                    "dest_key": {
+                      "type": "string"
+                    },
+                    "dest_name": {
+                      "type": "string"
+                    },
+                    "readiness_pct": {
+                      "type": "number"
+                    },
+                    "met": {
+                      "type": "number"
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "gaps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "standard",
+                          "title",
+                          "kind"
+                        ],
+                        "properties": {
+                          "standard": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string"
+                          },
+                          "unlocks": {
+                            "type": "number"
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "vertical": {},
+                          "origin": {}
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "vertical": {},
+                    "origin": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "ranked_actions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "standard",
+                    "unlocks",
+                    "score"
+                  ],
+                  "properties": {
+                    "standard": {
+                      "type": "string"
+                    },
+                    "unlocks": {
+                      "type": "number"
+                    },
+                    "score": {
+                      "type": "number"
+                    },
+                    "vertical": {},
+                    "origin": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "vertical": {},
+              "origin": {}
+            },
+            "additionalProperties": false
+          },
+          "note": {
+            "type": "string"
+          },
+          "vertical": {},
+          "origin": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/kyb/position"
+      }
+    },
+    "GET /api/kyb/risk": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/kyb/risk"
+      }
+    },
+    "GET /api/kyb/yourself": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/kyb/yourself"
+      }
+    },
+    "POST /api/kyb/credential": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/kyb/credential",
+        "body": {
+          "standard_key": "iec",
+          "doc_key": "certificate",
+          "evidence_ref": "33333333-3333-4333-8333-333333333333",
+          "valid_until": "2027-01-31"
+        }
+      }
+    },
+    "POST /api/kyb/field": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/kyb/field",
+        "body": {}
+      }
     }
   },
   "listed": {
@@ -14454,6 +14745,10 @@
     "POST /api/privacy/me/requests": "open at request — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/code": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/verify": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/kyb/risk": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/kyb/yourself": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
