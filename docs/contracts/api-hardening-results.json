@@ -875,21 +875,19 @@
   "GET /api/chits/:id/children": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "an unknown id answered 200, not 404"
    }
   },
   "GET /api/chits/:id/trace": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/trace/batches": {
@@ -2455,11 +2453,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/folders/worklist": {
@@ -5331,21 +5329,21 @@
   "GET /api/crm/parties/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/crm/parties/:id/timeline": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/crm/parties/:id/interactions": {
@@ -5358,8 +5356,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/crm/followups": {
@@ -5387,28 +5384,25 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "DELETE /api/crm/followups/:id": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "DELETE /api/crm/parties/:id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/crm/leads": {
@@ -5476,12 +5470,10 @@
   },
   "GET /api/crm/parties/:id/contact-prefs": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "POST /api/crm/parties/:id/contact-prefs": {
@@ -5494,8 +5486,7 @@
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/crm/privacy-requests": {

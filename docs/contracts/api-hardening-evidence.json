@@ -149,6 +149,10 @@
   "POST /api/chits/assign-bulk": {
    "output_allowlist": true
   },
+  "GET /api/chits/:id/trace": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/chits/trace/batches": {
    "output_allowlist": true
   },
@@ -733,11 +737,28 @@
   "GET /api/crm/parties": {
    "output_allowlist": true
   },
+  "POST /api/crm/parties/:id/interactions": {
+   "foreign_id_404": true
+  },
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
+  "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/crm/followups/:id": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
   "GET /api/crm/calls": {
    "output_allowlist": true
+  },
+  "GET /api/crm/parties/:id/contact-prefs": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/crm/parties/:id/contact-prefs": {
+   "foreign_id_404": true
   },
   "GET /api/crm/privacy-requests": {
    "output_allowlist": true
