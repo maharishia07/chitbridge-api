@@ -49,7 +49,7 @@ const OUR_ENTITY = '11111111-1111-1111-1111-111111111111';
 
 const stub = {
   query: async (sql, args) => {
-    if (/FROM installation\s+WHERE active AND hosted_locally = false/i.test(sql)) {
+    if (/hosted_locally FROM installation$/i.test(sql)) {
       return { rows: [{ installation_key: 'platform-ae', ctp_endpoint: 'https://ae.example/ctp', region: 'AE' }] };
     }
     if (/FROM installation\s+WHERE lower\(domain\)/i.test(sql)) {
