@@ -71,6 +71,7 @@ function rowsFor(sql) {
 
 function installStubs() {
   const db = { query: async (sql) => rowsFor(sql) };
+  db.withEntity = async (_id, fn) => fn(db); /* RAIL-138 (c): the recipient's own copy is read as the recipient */
   mock('db', db);
   mock('db/index', db);
   mock('lib/ctpdirectory', { publicKeyFor: async (domain, ik) => (world.noKey ? { ok: false, why: 'no manifest at ' + domain } : { ok: true, public_key: 'PK-' + ik }) });

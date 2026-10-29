@@ -24,6 +24,8 @@ function rows(s, p, ctx) {
   if (/FROM identities WHERE identity_id = \$1/.test(s)) { if (ctx.homeThrows) throw new Error('rls'); return ctx.senderHere ? [{ identity_id: p[0] }] : []; }
   if (/f_installation_of/.test(s)) { if (ctx.homeThrows) throw new Error('fn missing'); return [{ installation_key: p[0] === 'LOCAL-SHOP' ? ctx.labelHome || null : ctx.senderHome || null }]; }
   if (/f_ctp_may_deliver/.test(s)) { if (ctx.crossThrows) throw new Error('fn missing'); return [{ ok: !!ctx.mayCross }]; }
+  /* RAIL-138 (c): the recipient's own copy of this chit, if one is already here */
+  if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return ctx.heldFrom ? [{ sender_entity_id: ctx.heldFrom }] : [];
   return [];
 }
 const h = G.harness({ rows, known: { [TO]: 'TO' } });
@@ -80,6 +82,8 @@ const CASES = [
   ['deliver · a sender held here for the signing installation is accepted', 'deliver', env(), Object.assign({}, ok, { senderHere: true, senderHome: 'mx-1' }), 200, undefined, true],
   ['deliver · our store fails → 500, said', 'deliver', env(), Object.assign({}, ok, { storeThrows: true }), 500, 'this installation failed to store it', true],
   ['deliver · accepted, written as OUR recipient', 'deliver', env(), ok, 200, undefined, true],
+  ['deliver · the same envelope again → accepted, nothing written twice', 'deliver', env(), Object.assign({}, ok, { heldFrom: SENDER }), 200, undefined, false],
+  ['deliver · the same chit id from another sender → refused in words', 'deliver', env(), Object.assign({}, ok, { heldFrom: '33333333-3333-4333-8333-333333333333' }), 409, 'a chit with that id is already here from another sender'],
   ['query · not a CTP/1 query', 'query', { ctp: '1', kind: 'deliver' }, ok, 400, 'not a CTP/1 query'],
   ['query · no installation named', 'query', { ctp: '1', kind: 'query', from: {} }, ok, 400, 'the question does not say which installation is asking'],
   ['query · a stranger installation', 'query', { ctp: '1', kind: 'query', from: { installation_key: 'mx-1' } }, {}, 403, 'installation mx-1 is not one we deal with'],
@@ -99,7 +103,11 @@ const CASES = [
     const whyOk = why === undefined ? true : b.why === why;
     const refusedFlag = door === 'deliver' ? (status === 200 ? b.accepted === true : b.accepted === false) : (b.ok === false);
     const wroteOk = !!wrote === delivered;
-    const extra = status === 200 ? (b.to === 'CBRECV0001' && r.calls.find((c) => c.via === 'mint.deliver').payload.entity === 'TO') : true;
+    /* a write lands on OUR recipient; a repeat says so, having read the copy AS the recipient */
+    const asRecipient = r.calls.some((c) => c.via === 'withEntity:TO' && /FROM chit_header/.test(c.sql || ''));
+    const extra = status !== 200 ? true : b.to === 'CBRECV0001' && (wrote
+      ? r.calls.find((c) => c.via === 'mint.deliver').payload.entity === 'TO' && !b.repeat
+      : b.repeat === true && asRecipient);
     if (r.status === status && whyOk && refusedFlag && wroteOk && extra) { pass++; console.log('   ok   ' + name + '  (' + status + ')'); }
     else { fail++; console.log('   FAIL ' + name + '\n          got ' + r.status + ' ' + JSON.stringify(b) + ' wrote=' + delivered); }
   }
