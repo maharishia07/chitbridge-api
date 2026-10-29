@@ -17804,6 +17804,660 @@
           "category": "tea"
         }
       }
+    },
+    "DELETE /api/connectors/:actorId": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "deleted"
+        ],
+        "properties": {
+          "deleted": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/connectors": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/connectors"
+      }
+    },
+    "GET /api/connectors/:actorId/connections": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "actor_health",
+          "actor_last_seen",
+          "connections",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "actor_health": {
+            "type": "string"
+          },
+          "actor_last_seen": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "connection_id",
+                "actor_id",
+                "entity_id",
+                "direction",
+                "ref",
+                "schema_ref",
+                "counterparty_entity_id",
+                "retention",
+                "bridge_id",
+                "conn_config",
+                "enabled",
+                "last_seen",
+                "created_at",
+                "signal"
+              ],
+              "properties": {
+                "connection_id": {
+                  "type": "number"
+                },
+                "actor_id": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string"
+                },
+                "direction": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "schema_ref": {},
+                "counterparty_entity_id": {},
+                "retention": {
+                  "type": "string"
+                },
+                "bridge_id": {
+                  "type": "string"
+                },
+                "conn_config": {
+                  "type": "object",
+                  "required": [
+                    "topic"
+                  ],
+                  "properties": {
+                    "topic": {
+                      "type": "string"
+                    },
+                    "actor_health": {},
+                    "actor_last_seen": {},
+                    "connections": {},
+                    "PAGE_DEFAULT": {}
+                  },
+                  "additionalProperties": false
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "last_seen": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "signal": {
+                  "type": "string"
+                },
+                "actor_health": {},
+                "actor_last_seen": {},
+                "connections": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/connections"
+      }
+    },
+    "GET /api/connectors/:actorId/provisioning": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "base_url": {
+            "type": "string"
+          },
+          "auth_type": {
+            "type": "string"
+          },
+          "auth_ref": {
+            "type": "string"
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "bridge_id",
+                "ref",
+                "path"
+              ],
+              "properties": {
+                "bridge_id": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "path": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "mode": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "publishes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "bridge_id",
+                "ref",
+                "topic"
+              ],
+              "properties": {
+                "bridge_id": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/provisioning"
+      }
+    },
+    "GET /api/connectors/:actorId/receipts": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "receipts",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "receipts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "receipt_id",
+                "doc_type",
+                "doc_ref",
+                "payload_hash",
+                "outcome",
+                "chit_id",
+                "received_at"
+              ],
+              "properties": {
+                "receipt_id": {
+                  "type": "string"
+                },
+                "doc_type": {
+                  "type": "string"
+                },
+                "doc_ref": {
+                  "type": "string"
+                },
+                "payload_hash": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string"
+                },
+                "chit_id": {
+                  "type": "string"
+                },
+                "received_at": {
+                  "type": "string"
+                },
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/receipts"
+      }
+    },
+    "PATCH /api/connectors/:actorId/connections/:connId": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "connection"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "connection": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "connection",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/connections/7",
+        "body": {
+          "enabled": false
+        }
+      }
+    },
+    "POST /api/connectors": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "connector",
+          "provision_key"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "connector": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "type",
+              "bridge_id",
+              "site",
+              "connector_config",
+              "health"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "site": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "connector_config": {
+                "type": "object"
+              },
+              "health": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "provision_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "connector.connector_config",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/connectors",
+        "body": {
+          "display_name": "Tally Mayur",
+          "type": "erp",
+          "config": {
+            "base_url": "https://erp.example.com"
+          }
+        }
+      }
+    },
+    "POST /api/connectors/:actorId/connections": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "connection"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "connection": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "connection",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/connections",
+        "body": {
+          "ref": "sensor-2",
+          "direction": "out",
+          "schema_ref": "temp",
+          "retention": "persist_then_purge",
+          "counterparty_entity_id": "33333333-3333-4333-8333-333333333333",
+          "config": {
+            "topic": "cold/2"
+          }
+        }
+      }
+    },
+    "POST /api/connectors/:actorId/erp-test": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/erp-test"
+      }
+    },
+    "POST /api/connectors/:actorId/ping": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "last_seen",
+          "health"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "last_seen": {
+            "type": "string"
+          },
+          "health": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/ping",
+        "body": {}
+      }
+    },
+    "POST /api/connectors/:actorId/regenerate-key": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "provision_key"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "provision_key": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/connectors/22222222-2222-4222-8222-222222222222/regenerate-key",
+        "body": {
+          "name": "Tally Mayur",
+          "otp": "482910"
+        }
+      }
+    },
+    "POST /api/connectors/erp-ingest": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/connectors/erp-ingest",
+        "body": {
+          "key": "device-key-good",
+          "payload": {
+            "doc_type": "invoice",
+            "doc_ref": "INV-1",
+            "amount": 100
+          }
+        }
+      }
+    },
+    "POST /api/connectors/ingest": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "health",
+          "last_seen",
+          "chit_id",
+          "proof_id",
+          "filed",
+          "file_err",
+          "proof_err",
+          "note",
+          "assigned",
+          "money_why"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "health": {
+            "type": "string"
+          },
+          "last_seen": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proof_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "file_err": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proof_err": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assigned": {},
+          "money_why": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/connectors/ingest",
+        "body": {
+          "key": "device-key-good",
+          "signal": "temperature",
+          "value": 4.5,
+          "to": "33333333-3333-4333-8333-333333333333",
+          "unit": "C"
+        }
+      }
+    },
+    "POST /api/connectors/reissue-code": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a computed key"
+        }
+      ],
+      "example": {
+        "url": "/api/connectors/reissue-code",
+        "body": {}
+      }
     }
   },
   "listed": {
@@ -18579,6 +19233,13 @@
     "PATCH /api/relationships/customers/:id": "open at party — a value passed through (a name: its keys are not written in the handler)",
     "PATCH /api/relationships/suppliers/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
     "POST /api/relationships/customers": "open at customer — a spread (...x) adds keys the text does not name",
-    "POST /api/relationships/suppliers": "open at supplier — a spread (...x) adds keys the text does not name"
+    "POST /api/relationships/suppliers": "open at supplier — a spread (...x) adds keys the text does not name",
+    "GET /api/connectors": "open at (answer) — a spread (...x) adds keys the text does not name",
+    "PATCH /api/connectors/:actorId/connections/:connId": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/connectors": "open at connector.connector_config — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/connectors/:actorId/connections": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/connectors/:actorId/erp-test": "open at (answer) — a spread (...x) adds keys the text does not name",
+    "POST /api/connectors/erp-ingest": "open at (answer) — a spread (...x) adds keys the text does not name",
+    "POST /api/connectors/reissue-code": "open at (answer) — a computed key"
   }
 }
