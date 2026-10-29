@@ -26,7 +26,7 @@ const MAX_UNPAGED = 0;   /* W1-PLAT (15 Oct, LIM2): every growing list reads the
 
 /** file + path → why it is not a growing list. */
 const ALLOWED = {
-  'work.js /list': 'paged inside lib/work (work.list reads the one pager: page, limit, total); the route only names the output keys (API-8 #522)',
+  'work.js /list': 'paged inside lib/work-rows (page and limit, clamped to PAGE_MAX, with a total); the route only names the output keys (API-8 #522)',
   'adopt.js /:chit_id': 'one chit',
   'chits.js /:chit_id': 'one chit and its lines',
   'chits.js /:chit_id/diagnosis': 'one chit\'s diagnosis',
