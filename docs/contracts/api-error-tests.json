@@ -637,6 +637,16 @@
   401,
   500
  ],
+ "GET /api/events/stats": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/events/stream": [
+  401,
+  500
+ ],
  "GET /api/facts/:card": [
   401,
   403,
@@ -888,6 +898,10 @@
   500
  ],
  "GET /api/network/place": [
+  401,
+  500
+ ],
+ "GET /api/notifications": [
   401,
   500
  ],
@@ -2031,6 +2045,10 @@
   409,
   500
  ],
+ "POST /api/events/ticket": [
+  401,
+  500
+ ],
  "POST /api/folders": [
   400,
   401,
@@ -2285,6 +2303,17 @@
   403,
   404,
   409,
+  500,
+  503
+ ],
+ "POST /api/notifications/dismiss": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/notifications/seen": [
+  401,
   500,
   503
  ],
