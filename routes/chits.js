@@ -2536,7 +2536,7 @@ async function sendBooks(st, req, res) {
 /** the answer, then the counter's place in its series */
 async function sendAnswer(st, req, res) {
   const { sender_id, client_ref, number_check, oneSided, business_json, is_draft, counts, receiverDetails, chit_id, auto_subject, summary_json } = st;
-  res.json(costWrite.hideSendAnswer(st.sourceCarry, { /* RAIL-149: a blind sender who carried the draft's money is not told it */
+  res.json(costWrite.hideSendAnswer(st.sourceCarry, { /* RAIL-149: a blind sender who carried the draft money is not told it */
     message: is_draft ? 'Draft saved' : 'Chit sent successfully',
     chit_id,
     auto_subject,
