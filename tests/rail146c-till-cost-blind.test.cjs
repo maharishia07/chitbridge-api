@@ -6,7 +6,7 @@
  *           no landed, no ₹ in the body, none of the owner's own figures anywhere in the raw text (the scan is calibrated on the OWNER's answer: every money figure it
  *           holds must be absent from the blind body), and cost_hidden:true; that a SALES order stays priced; that an order from a party on no list hides (fail closed);
  *           that a failed side read hides; that amount filters and sort are taken off and named in cost_params_ignored; that the owner, a cost-allowed actor and the paired
- *           till KEY read the same bytes as before; that a blind request pays ONE can_see_costs read and ONE side read, the owner none; the spec trees are frozen, bare, closed.
+ *           till KEY read the same bytes as before; that a blind request pays ONE can_see_costs read (a side read only on the despatch tasks), the owner none; that the match and the receive tasks are FORCED cost-side; the spec trees are frozen, bare, closed.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/till.js, lib/open-orders and lib/cost-view over a stubbed db.
  * FLOW      world (heads · lines · roles · flag) → real route → body → whole-text scan → the sales order, the owner and the key untouched
  * CARD      02-tasks-orders-and-workflow/open-orders-queue
@@ -134,7 +134,7 @@ const idsOf = (rows) => (rows || []).map((row) => row.chit_id).sort();
   t('the owner reads tasks priced: the supplier order line has its rate', [ownerReceive.status, ownerReceive.body.tasks.find((x) => x.chit_id === U(1)).lines[0].rate], [200, FIG.rate1]);
   t('the owner reads the match priced and with the door\'s reason', [ownerMatch.status, ownerMatch.body.orders.find((x) => x.chit_id === U(1)).ordered_total, ownerMatch.body.orders.find((x) => x.chit_id === U(1)).receipts[0].landed], [200, 10 * FIG.rate1 + 5 * FIG.rate2, FIG.landed]);
   t('the owner\'s answers carry no cost_hidden and no cost_params_ignored', /cost_hidden|cost_params_ignored/.test(ownerReceive.raw + ownerDespatch.raw + ownerMatch.raw), false);
-  const costSideOnly = (rows) => rows.filter((x) => x.chit_id === U(1) || x.chit_id === U(2));
+  const costSideOnly = (rows) => rows.filter((x) => x.chit_id === U(1) || x.chit_id === U(2) || x.chit_id === U(5)); /* receive tasks and the match are purchases BY DEFINITION, a mis-listed customer-only party included */
   const OWNER_FIGS = new Set([...figuresOf(costSideOnly(ownerReceive.body.tasks)), ...figuresOf(costSideOnly(ownerMatch.body.orders))]);
   t('the calibration holds the supplier-side figures (rates, totals, gap, landed)', OWNER_FIGS.size > 10, true);
 
@@ -142,12 +142,11 @@ const idsOf = (rows) => (rows || []).map((row) => row.chit_id).sort();
   as(BLIND, false);
   const recv = await get(port, '/api/till/tasks?kind=receive');
   t('tasks receive: answers 200 with the two purchase tasks, still there with their quantities', [recv.status, idsOf(recv.body.tasks), recv.body.tasks.every((x) => x.lines.every((l) => l.line_id && 'ordered' in l && 'remaining' in l))], [200, [U(1), U(2), U(5)], true]);
-  t('tasks receive: every cost-side task says cost_hidden:true and no line carries a rate', recv.body.tasks.filter((x) => x.chit_id !== U(5)).map((x) => [x.cost_hidden, x.lines.some((l) => 'rate' in l)]), [[true, false], [true, false]]);
-  noLeak('tasks receive', recv.body.tasks.filter((x) => x.chit_id !== U(5)));
-  t('tasks receive: none of the owner\'s own figures is in the blind body (but the mis-listed sale\'s)', hasFig(JSON.stringify(recv.body.tasks.filter((x) => x.chit_id !== U(5))), OWNER_FIGS), []);
-  t('tasks: a body-wide scan for the rate key', moneyKeys(recv.body.tasks.filter((x) => x.chit_id !== U(5))), []);
-  t('tasks receive: an order I sent to a CUSTOMER-only party is a sale by the shop\'s lists and stays priced', recv.body.tasks.find((x) => x.chit_id === U(5)).lines[0].rate, FIG.sold);
-  t('tasks receive: that sales task carries no marker', 'cost_hidden' in recv.body.tasks.find((x) => x.chit_id === U(5)), false);
+  t('tasks receive: every cost-side task says cost_hidden:true and no line carries a rate', recv.body.tasks.map((x) => [x.cost_hidden, x.lines.some((l) => 'rate' in l)]), [[true, false], [true, false], [true, false]]);
+  noLeak('tasks receive', recv.body.tasks);
+  t('tasks receive: none of the owner\'s own figures is in the blind body (but the mis-listed sale\'s)', hasFig(JSON.stringify(recv.body.tasks), OWNER_FIGS), []);
+  t('tasks: a body-wide scan for the rate key', moneyKeys(recv.body.tasks), []);
+  t('tasks receive: an order I sent to a CUSTOMER-only party is still a purchase to receive: FORCED cost-side, hidden (fail closed, whatever the list says)', [recv.body.tasks.find((x) => x.chit_id === U(5)).cost_hidden, 'rate' in recv.body.tasks.find((x) => x.chit_id === U(5)).lines[0]], [true, false]);
 
   /* ── tasks, sales and unknown ── */
   const desp = await get(port, '/api/till/tasks?kind=despatch');
@@ -171,14 +170,14 @@ const idsOf = (rows) => (rows || []).map((row) => row.chit_id).sort();
   /* ── match ── */
   world(); as(BLIND, false);
   const match = await get(port, '/api/till/match');
-  const costSide = match.body.orders.filter((x) => x.chit_id === U(1) || x.chit_id === U(2));
+  const costSide = match.body.orders;
   t('match: answers 200 with the purchase orders (the work is not hidden)', [match.status, idsOf(match.body.orders)], [200, [U(1), U(2), U(5)].sort()]);
-  t('match: every cost-side order says cost_hidden:true and has no rate, total, gap, landed, source word or typed reason', costSide.map((x) => [x.cost_hidden, moneyKeys(x)]), [[true, []], [true, []]]);
+  t('match: every cost-side order says cost_hidden:true and has no rate, total, gap, landed, source word or typed reason', costSide.map((x) => [x.cost_hidden, moneyKeys(x)]), [[true, []], [true, []], [true, []]]);
   t('match: the quantities, the verdict and the receipt number stay', [costSide[0].lines[0].ordered, costSide[0].lines[0].received, typeof costSide[0].verdict, costSide[0].receipts[0].no, costSide[0].receipts[0].their_bill_no], [10, 8, 'string', 'GRN1', 'B-7']);
   noLeak('match', costSide);
   t('match: none of the owner\'s own figures is in the blind body', hasFig(JSON.stringify(costSide), OWNER_FIGS), []);
   const misListed = match.body.orders.find((x) => x.chit_id === U(5));
-  t('match: an order to a customer-only party is a sale by the shop\'s lists and stays priced', [misListed.lines[0].rate, misListed.ordered_total, misListed.cost_hidden], [FIG.sold, 3 * FIG.sold, undefined]);
+  t('match: an order to a customer-only party is a purchase here BY DEFINITION: hidden, a mis-listed party leaks nothing', [misListed.cost_hidden, moneyKeys(misListed), 'ordered_total' in misListed], [true, [], false]);
   ROLES = {};
   const lost = (await get(port, '/api/till/match')).body.orders.find((x) => x.chit_id === U(5));
   t('match: the same order from a party on NO list hides (unknown fails closed)', [lost.cost_hidden, moneyKeys(lost)], [true, []]);
@@ -217,8 +216,8 @@ const idsOf = (rows) => (rows || []).map((row) => row.chit_id).sort();
   for (const url of ['/api/till/match', '/api/till/tasks?kind=receive']) {
     as(BLIND, false);
     await get(port, url);
-    t(url + ' | a blind request: ONE can_see_costs read, ONE side read, ONE roles read (not per row)',
-      [STATEMENTS.filter((s) => /can_see_costs/.test(s)).length, STATEMENTS.filter((s) => /DISTINCT ON [(]h[.]chit_id[)]/.test(s)).length, STATEMENTS.filter((s) => /customer_list/.test(s)).length], [1, 1, 1]);
+    t(url + ' | a blind request: ONE can_see_costs read and NO side read (a purchase by definition)',
+      [STATEMENTS.filter((s) => /can_see_costs/.test(s)).length, STATEMENTS.filter((s) => /DISTINCT ON [(]h[.]chit_id[)]/.test(s)).length, STATEMENTS.filter((s) => /customer_list/.test(s)).length], [1, 0, 0]);
   }
 
   /* ── the spec trees: no prototype, frozen, no pass-through; prototype-named keys, bare strings and objects where a word is expected are gone ── */
