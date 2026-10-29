@@ -10,12 +10,12 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 136 | `list` | `amend.js` |  |
-| 108 | `rows` | `crm.js` | still in them: |
+| 109 | `rows` | `crm.js` | still in them: |
 | 102 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 92 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
-| 81 | `answer` | `availability.js` | from March; then nearest. |
+| 82 | `answer` | `availability.js` | from March; then nearest. |
 | 76 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 70 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -31,7 +31,7 @@ of file each thing is; this says what already does the job.
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 52 | `entry` | `books-store.js` |  |
+| 53 | `entry` | `books-store.js` |  |
 | 52 | `register` | `regulation.js` | register(pack) → the pack — |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -45,7 +45,7 @@ of file each thing is; this says what already does the job.
 | 44 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 43 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 43 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
-| 40 | `view` | `books-payables.js` | group: |
+| 42 | `view` | `books-payables.js` | group: |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 40 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 39 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
@@ -61,7 +61,7 @@ of file each thing is; this says what already does the job.
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 34 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 33 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 34 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
@@ -107,7 +107,7 @@ of file each thing is; this says what already does the job.
 | 22 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 23 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
+| 24 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
 | 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 21 | `chart` | `fx-rates.js` |  |
@@ -126,7 +126,7 @@ of file each thing is; this says what already does the job.
 | 19 | `chip` | `screen-id.js` | var S = { app: |
 | 19 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 19 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
-| 19 | `group` | `identity.js` | again in a different costume. |
+| 20 | `group` | `identity.js` | again in a different costume. |
 | 19 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `model` | `chit-sheet.js` |  |
