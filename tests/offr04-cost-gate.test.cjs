@@ -84,6 +84,8 @@ async function productsCases() {
             if (FLAGS_QUERY_THROWS) throw new Error('simulated DB failure reading can_see_costs');
             return { rows: [{ can_see_costs: !!CAN_SEE_COSTS[params[0]] }] };
           }
+          /* CAT-235: the stored rows POST /bulk-update compares with (one read for the lot) — a fresh parse, as pg gives it */
+          if (/SELECT item_id, item_data FROM catalogue_items/.test(sql)) return { rows: [JSON.parse(JSON.stringify(FAKE_ITEM))] };
           if (/SELECT item_data FROM catalogue_items/.test(sql)) return { rows: [{ item_data: JSON.parse(JSON.stringify(FAKE_ITEM.item_data)) }] };
           /* CAT-234: the stored row is what pg would RETURN — a fresh parse, so what the route does to the ANSWER cannot reach the store */
           if (/UPDATE catalogue_items/.test(sql)) {
@@ -198,6 +200,35 @@ async function productsCases() {
   WHO = STAFF_GRANTED; CAN_SEE_COSTS = { a2: true };
   const grantedPrice = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 80 } });
   t('once granted (on their OWN row), staff can change price like the owner can', grantedPrice.status, 200);
+
+  /* ── POST /bulk-update — the SAME gate over the lot (CAT-235): this door replaces each record, so a status-only edit erases the rest ── */
+  WHO = STAFF_BLIND; CAN_SEE_COSTS = {};
+  WRITTEN = null;
+  const blindBulkStatus = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: { status: 'unavailable' } }] });
+  t('cost-blind staff: a status-only BULK edit replaces the record, so it is refused — 403, not a wipe', blindBulkStatus.status, 403);
+  t('…under the one cost code', blindBulkStatus.body.code, 'COST_BLIND');
+  t('…naming every stored key the replace would have erased', (blindBulkStatus.body.blocked || []).slice().sort().join(','), 'cost,cost_x,modifiers,name,price');
+  t('…nothing was written: no UPDATE ran', WRITTEN, null);
+  /* what the workshop's categorise sends for such a caller: the record GET / handed it, which carries no cost — until now that click erased the stored cost */
+  WRITTEN = null;
+  const RECORD_WITHOUT_COST = { name: 'Masala Dosa', price: 70, status: 'available', category_ids: ['c1'] };
+  const blindBulkRecord = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: RECORD_WITHOUT_COST }] });
+  const blindBulkBlocked = blindBulkRecord.body.blocked || [];
+  t('…a whole record sent back without the cost it never saw is refused too', blindBulkRecord.status + ' ' + blindBulkRecord.body.code, '403 COST_BLIND');
+  t('…with the erased cost named beside the keys it sent', blindBulkBlocked.includes('cost') + ' ' + blindBulkBlocked.includes('price') + ' ' + blindBulkBlocked.includes('category_ids'), 'true true true');
+  t('…and nothing was written', WRITTEN, null);
+  t('…the stored row keeps its cost', FAKE_ITEM.item_data.cost, 30);
+
+  WHO = OWNER; CAN_SEE_COSTS = {};
+  WRITTEN = null;
+  const ownerBulk = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: RECORD_WITHOUT_COST }] });
+  t('the owner’s same bulk edit succeeds as today', ownerBulk.status + ' ' + ownerBulk.body.updated, '200 1');
+  t('…and still REPLACES the record (the owner chose what it carries; no cost in what was written)', /"cost"/.test(String(WRITTEN && WRITTEN[1])), false);
+
+  WHO = STAFF_GRANTED; CAN_SEE_COSTS = { a2: true };
+  WRITTEN = null;
+  const grantedBulk = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: RECORD_WITHOUT_COST }] });
+  t('once granted, staff bulk-edit like the owner', grantedBulk.status + ' ' + (WRITTEN !== null), '200 true');
 
   /* T3-FIXES (CAT-FIX1): a parked change is the same write, so the same gate — refused before anything is read */
   WHO = STAFF_BLIND; CAN_SEE_COSTS = {};

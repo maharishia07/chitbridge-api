@@ -78,6 +78,8 @@ function extras(tools) {
     X('bulk-status-status-missing', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY] } }),
     /* POST /bulk-update */
     X('edit-rate-owner-only', 'POST ' + P + '/bulk-update', 403, { body: { items: [{ id: PARTY, item_data: { name: 'Tea', gst_rate: 18 } }] }, setup: costBlind }),
+    /* CAT-235: a cost-blind co-assist's bulk edit replaces each record, so even a status-only one is refused, naming the shelf's keys it would erase (`after`: main answered 200 and wiped the row) */
+    X('edits-cost-blind', 'POST ' + P + '/bulk-update', 403, { after: true, body: { items: [{ id: PARTY, item_data: { status: 'unavailable' } }] }, setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT item_id, item_data FROM catalogue_items/, [{ item_id: PARTY, item_data: ITEM().item_data }]), shelf) }, patch: costHidden }),
     X('too-many-edits', 'POST ' + P + '/bulk-update', 400, { body: { items: manyOf(201, { id: PARTY, item_data: { name: 'Tea' } }) } }),
     X('an-edit-has-the-wrong-shape', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY }] } }),
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
