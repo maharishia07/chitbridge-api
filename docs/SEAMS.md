@@ -11,9 +11,9 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 137 | `list` | `amend.js` |  |
 | 110 | `rows` | `crm.js` | still in them: |
-| 103 | `withEntity` | `books-hooks.js` |  |
+| 104 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 92 | `words` | `variant.browser.js` |  |
+| 93 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
 | 82 | `answer` | `availability.js` | from March; then nearest. |
 | 78 | `money` | `bill-privacy.js` |  |
@@ -48,7 +48,7 @@ of file each thing is; this says what already does the job.
 | 42 | `view` | `books-payables.js` | group: |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 42 | `write` | `junitresults.js` | control characters are not legal XML at all — |
-| 39 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 41 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 38 | `rules` | `docnumber.js` | the rule set for a country — |
 | 37 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -114,7 +114,7 @@ of file each thing is; this says what already does the job.
 | 21 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 21 | `keep` | `signin.js` | see. |
-| 21 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
+| 22 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `entries` | `books-store.js` |  |

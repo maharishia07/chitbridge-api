@@ -10681,10 +10681,7 @@
           "party_id",
           "channel",
           "fulfilment",
-          "address",
           "requested_for",
-          "remark",
-          "total_minor",
           "currency",
           "lines_n",
           "lines_open_n",
@@ -10835,6 +10832,9 @@
             "items": {
               "type": "object"
             }
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
