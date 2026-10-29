@@ -9,7 +9,7 @@
  "raw_error_writes": 4,
  "columns_failing": {
   "strict_input": 330,
-  "output_allowlist": 292,
+  "output_allowlist": 263,
   "foreign_id_404": 103,
   "idempotent_money_write": 12,
   "inbound_validated": 2,
