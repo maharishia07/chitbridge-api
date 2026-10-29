@@ -4,7 +4,7 @@
  * lib/ctpdirectory.manifestFor fetches https://<domain>/.well-known/ctp.json before any envelope from that peer is
  * believed. The deadline was cleared when the headers arrived, and the body was read whole and then cut to 64 K
  * characters. So a peer could send its headers and drip the body forever, or send any amount. This runs a real
- * local server (CB_CTP_ALLOW_PRIVATE=1 lets loopback through the address guard, as local dev does) and asks it.
+ * local server (RAIL-140 d: and JSON that is not an object is no manifest) (CB_CTP_ALLOW_PRIVATE=1 lets loopback through the address guard, as local dev does) and asks it.
  */
 'use strict';
 const http = require('http');
@@ -45,6 +45,14 @@ const timed = (promise, ms) => Promise.race([promise, new Promise((done) => setT
     servers.push(small);
     r = await dir.manifestFor('127.0.0.1:' + small.address().port, { fresh: true });
     t('a multi-byte body under the cap is read', r.ok === true);
+
+    /* RAIL-140 (d): JSON that is not an object (null, a list, a string) is not a manifest — said so, not 'could not reach' */
+    for (const body of ['null', '[]', '"ctp"']) {
+      const odd = await serve((req, res) => { res.setHeader('Content-Type', 'application/json'); res.end(body); });
+      servers.push(odd);
+      r = await dir.manifestFor('127.0.0.1:' + odd.address().port, { fresh: true });
+      t('a body of ' + body + ' is refused as not a manifest', r.ok === false && r.why === 'manifest is missing ctp/installation_key/public_key', JSON.stringify(r));
+    }
 
     /* headers at once, then one byte a second: the deadline (5 s) must cut it, not wait for the far end */
     const drip = await serve((req, res) => {
