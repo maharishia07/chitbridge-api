@@ -21,7 +21,7 @@ const { spawnSync } = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
 const RATCHET_FILE = path.join(ROOT, 'docs', 'api-ratchet.json');
 /* the route files brought to the standard so far: a PR touching one of their routes must keep it at the seven core columns and lose no hardening column (S16 a); the list grows with each slice */
-const HELD_FILES = ['routes/keys.js', 'routes/integrations.js', 'routes/books.js', 'routes/tax.js', 'routes/invoice.js', 'routes/ctp.js', 'routes/facts.js', 'routes/pricing.js', 'routes/repeat-supply.js', 'routes/work.js', 'routes/counters.js', 'src/routes/network.js', 'routes/network-design.js', 'routes/connections.js'];
+const HELD_FILES = ['routes/keys.js', 'routes/integrations.js', 'routes/books.js', 'routes/tax.js', 'routes/invoice.js', 'routes/ctp.js', 'routes/facts.js', 'routes/pricing.js', 'routes/repeat-supply.js', 'routes/work.js', 'routes/counters.js', 'src/routes/network.js', 'routes/network-design.js', 'routes/connections.js', 'routes/marketing.js', 'routes/offers.js', 'routes/combo-templates.js'];
 const DEBT_DAYS = 14;
 const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(name);

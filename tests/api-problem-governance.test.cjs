@@ -132,14 +132,15 @@ const READY_ROWS = ANSWERS(
 );
 /** a stranger reads the passport of another shop: its registry value stays with its owner (evidence_ref null) */
 const STRANGER_ROWS = ANSWERS(
+  [/FROM customer_list/, [{ customer: false, supplier: true }]],
   [/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER })]],
   [/SELECT DISTINCT standard_key FROM standard_source/, [{ standard_key: 'gst-registration' }]],
   [/FROM standard_document/, [GST_DOC]],
   [/FROM entity_compliance/, [{ standard_key: 'gst-registration', doc_key: 'gstn', status: 'gathered', evidence_ref: '27AAAAA0000A1Z5', valid_until: null, verification: null }]]
 );
-const NO_FACTS_ROWS = ANSWERS([/FROM identities/, [{ identity_id: OTHER, display_name: 'Quiet Co', bridge_id: 'BRG-2', user_id: 'quiet', gstn: null, country: null, policy_flags: null }]]);
+const NO_FACTS_ROWS = ANSWERS([/FROM customer_list/, [{ customer: true, supplier: false }]], [/FROM identities/, [{ identity_id: OTHER, display_name: 'Quiet Co', bridge_id: 'BRG-2', user_id: 'quiet', gstn: null, country: null, policy_flags: null }]]);
 /** a legacy entity signed up by e-mail has no handle: identities.user_id is nullable (the unique index is WHERE user_id IS NOT NULL) */
-const NO_HANDLE_ROWS = ANSWERS([/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER, user_id: null })]]);
+const NO_HANDLE_ROWS = ANSWERS([/FROM customer_list/, [{ customer: false, supplier: true }]], [/FROM identities/, [Object.assign({}, SHOP_ROW, { identity_id: OTHER, user_id: null })]]);
 const MIGRATED = { mod: 'lib/schema', fn: 'hasColumn', value: async () => true };
 /** a read made with the shop's rows seated, a vault key set, and the b299 column there */
 const READY = (id, route, extra) => X(id, route, 200, Object.assign({ setup: { sqlRows: READY_ROWS }, env: { VAULT_ENC_KEY: KEY_32 }, patch: [MIGRATED] }, extra));
@@ -201,7 +202,7 @@ const EXTRAS = faultExtras.concat(readyExtras).concat([
   X('source-fault', 'POST /api/governance/source', 500, { setup: { who: PLATFORM }, body: SOURCE_BODY, patch: FAIL('lib/source', 'registerSource') }),
   X('source-refused-by-the-library', 'POST /api/governance/source', 422, { setup: { who: PLATFORM }, body: SOURCE_BODY, patch: FAIL('lib/source', 'registerSource', LIB_REFUSAL(422)) }),
   X('no-such-supplier-readiness', 'GET /api/governance/readiness/:bridge_id', 404, {}),
-  X('supplier-readiness-fault', 'GET /api/governance/readiness/:bridge_id', 500, { setup: { sqlRows: ANSWERS([/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BRG-1' }]]) }, patch: FAIL('lib/readiness', 'resolveReadiness') }),
+  X('supplier-readiness-fault', 'GET /api/governance/readiness/:bridge_id', 500, { setup: { sqlRows: ANSWERS([/FROM customer_list/, [{ customer: false, supplier: true }]], [/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BRG-1' }]]) }, patch: FAIL('lib/readiness', 'resolveReadiness') }),
   X('acceptance-not-switched-on', 'POST /api/governance/supplier-acceptance', 503, { body: {}, patch: [{ mod: 'lib/schema', fn: 'hasTable', value: async () => false }] }),
   X('supplier-unnamed', 'POST /api/governance/supplier-acceptance', 400, { body: {}, patch: [TABLE_THERE] }),
   X('no-such-supplier', 'POST /api/governance/supplier-acceptance', 404, { body: { supplier: 'nobody' }, patch: [TABLE_THERE] }),

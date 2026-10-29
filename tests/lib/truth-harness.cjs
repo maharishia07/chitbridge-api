@@ -58,15 +58,17 @@ function creditNote(no, against, rows) {
       billed_at: new Date().toISOString(), against: { bill_no: against }, reason: 'returned', refund: { parts: [{ how: 'cash', amount: total }], total } },
     line_items: rows.map(([p, qty]) => Object.assign(line(p, qty, p.unit, p.price), { item_id: p.id })) };
 }
-/** a fresh shop made for this run: register → verify with the dev code → country. `tag` keeps User IDs apart (≤ 20 chars). */
-async function freshShop(tag, label) {
+/** a fresh shop made for this run: register → verify with the dev code → country. `tag` keeps User IDs apart (≤ 20 chars).
+ *  `opts.tax`: tax registration is NEVER assumed (DECISIONS 2026-10-29) — left out, the shop's tax stays UNKNOWN; a test that means "not registered"
+ *  says so: freshShop(tag, label, { tax: { registered: false } }). (Today's route stores an absent tax as registered:false — SET-38, settings area.) */
+async function freshShop(tag, label, opts) {
   const email = tag + '@local.test';
   ok(await j('/api/entities/register', { method: 'POST', body: { email, display_name: label + ' ' + tag, user_id: tag } }), 'register');
   const v = ok(await j('/api/entities/verify', { method: 'POST', body: { email, otp: ENTITY_OTP } }), 'verify (is DEV_OTP armed?)').b;
   const entity = (v.entity && (v.entity.identity_id || v.entity.entity_id)) || (v.identity && v.identity.identity_id);
   const shop = { token: v.token, bridge: v.entity.bridge_id, entity, name: label + ' ' + tag, products: {} };
   ok(await j('/api/entities/profile', { method: 'PATCH', token: shop.token, body: { catalogue_visibility: 'public' } }), 'publish');
-  ok(await j('/api/governance/country-setup', { method: 'PUT', token: shop.token, body: { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false } } }), 'country');
+  ok(await j('/api/governance/country-setup', { method: 'PUT', token: shop.token, body: Object.assign({ country: 'IN', currency: 'INR', fy_start_month: 4 }, opts && opts.tax ? { tax: opts.tax } : {}) }), 'country');
   return shop;
 }
 
