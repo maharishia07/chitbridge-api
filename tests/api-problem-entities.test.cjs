@@ -41,6 +41,7 @@ const lab = harness({
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: ROUTE_FILE },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
+  before: () => require(path.join(HERE, 'lib', 'schema'))._reset(), /* every scenario meets the column probes (lib/schema.js caches a yes for good) as the first read of a fresh process does */
   inherited: (scenario, answer) => (answer.status === 401 && scenario.id === 'signed-out') || SIGN_IN.includes(scenario.route),
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || AFTER.has(scenario) || SIGN_IN.includes(one.route),
   cannotRide: (route, scenario) => (HINT_SCENES.includes(scenario) && route.endsWith('/routing') ? ['hint'] : HINT_SCENES.includes(scenario) && route.endsWith('/desk') ? ['hint'] : []) /* the Problem owns `hint`: a null hint cannot ride */
@@ -63,7 +64,8 @@ const sources = () => ({
   platform: require(path.join(HERE, 'lib', 'platformroot')),
   header: require(path.join(HERE, 'lib', 'entity-header')),
   sides: require(path.join(HERE, 'lib', 'sides')),
-  plans: require(path.join(HERE, 'lib', 'plans'))
+  plans: require(path.join(HERE, 'lib', 'plans')),
+  govresolve: require(path.join(HERE, 'lib', 'govresolve'))
 });
 const contractModule = () => require(path.join(HERE, 'lib', 'entities-contract.js'));
 
@@ -156,6 +158,46 @@ async function checkForeignIds(port) {
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
+/**
+ * output_allowlist in the shop's own world (API-8, S34): the generator's stand-in database cannot reach the sign-in, the root-only reads or the lib-backed reads of these routes, so here every route whose
+ * 200 schema is closed (additionalProperties false, derived from the answers and the handler's own keys) has every recorded 200 fit that schema, and the allow-list filter drops nothing from it:
+ * a key the schema does not list would be cut, so a drop here is an answer that moved. → { route: { output_allowlist: true } }
+ */
+function checkAllowList(recording) {
+  console.log('\n-- the closed success schemas hold every recorded 200 --');
+  const proved = {};
+  const operations = contractModule().OPERATIONS;
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  Object.keys(operations).sort().filter((route) => !SIGN_IN.includes(route)).forEach((route) => {
+    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = engine.compile(schema);
+    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the shop's routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => lab.mine(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter(lab.mine).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
   lab.installStubs();
@@ -179,6 +221,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   const foreign = await checkForeignIds(server.address().port);
+  const allowed200 = checkAllowList(recording);
   server.close();
   checkWords();
   checkCodesRegistered(contractModule());
@@ -203,7 +246,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, judged);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+    writeAllowList(allowed200);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the shop routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed200), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed200).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/entities.js (sign-in apart)', sameValue(mine, judged), { onDisk: Object.keys(mine).length, covered: Object.keys(judged).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }

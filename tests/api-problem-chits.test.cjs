@@ -377,6 +377,9 @@ const EXTRAS = [
   X('amend-chit-not-held', 'POST ' + C + '/:chit_id/amend', 404, { body: { edits: [] } }),
   X('reprice-chit-not-held', 'POST ' + C + '/:chit_id/reprice', 404, { body: {} }),
   X('cost-chit-not-held', 'POST ' + C + '/:chit_id/costs', 404, { body: [{ kind: 'fare', amount: 50 }] }),
+  /* RAIL-133: a library's own 400 reaches the person in its words (frozen below); amend names the field and never echoes the value typed (Q19) */
+  X('assign-due-date-not-a-date', 'POST ' + C + '/:chit_id/assign-lines', 400, { body: { edits: [{ line_id: PARTY, assignee_actor_id: null, due_date: 'soon' }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) } }),
+  X('amend-price-not-a-number', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [{ line_index: 0, line: { particulars: 'Tea', quantity: 1, price: '<b>12</b>' } }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) } }),
   X('amend-done', 'POST ' + C + '/:chit_id/amend', 200, { body: [], setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { amend: { record: async () => ({ amendments: [] }) } } }),
   X('networks-listed', 'GET ' + C + '/trace/networks', 200, { setup: { sqlRows: answering(/network_id/, [{ network_id: 'net1', is_operator: true, edges: '2' }]) } })
 ];
