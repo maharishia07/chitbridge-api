@@ -357,6 +357,17 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       const offStranger = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('q', { amount: 500 }), { by: SUPP }));
       ok('ledger off: ₹0 → BOOKS_REFUSED; a stranger for ₹500 → { off: true } (finance\'s call on critic point 3)',
         offZero instanceof Error && offZero.code === 'BOOKS_REFUSED' && JSON.stringify(offStranger) === JSON.stringify({ off: true }), JSON.stringify([offZero instanceof Error ? offZero.message : offZero, offStranger]));
+      /* FIN-53 re-review point 1: the ledger OFF still asks once against the QUOTE — the same excess helper and acknowledgement rule as the ledger's gate */
+      const offOver = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1300 }), { by: SUPP, acknowledge: [], name: 'Mala' })).then((r) => r, (e) => e);
+      ok('ledger off: ₹1,300 on a ₹1,180 quote → 409 ALREADY_PAID excess over ₹120 (over_minor 12000), "More than is owed"; nothing marked',
+        offOver instanceof Error && offOver.code === 'ALREADY_PAID' && offOver.title === 'More than is owed' && offOver.warnings[0].code === 'excess' && offOver.warnings[0].over_minor === 12000
+        && /more than the ₹1,180 open/.test(offOver.warnings[0].words), offOver instanceof Error ? offOver.message : JSON.stringify(offOver));
+      const offOverYes = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1300 }), { by: SUPP, acknowledge: [{ code: 'excess', over_minor: 12000 }], name: 'Mala' }));
+      const offOverStale = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1300 }), { by: SUPP, acknowledge: [{ code: 'excess', over_minor: 100 }], name: 'Mala' })).then((r) => r, (e) => e);
+      ok('…acknowledged with the figure → { off: true } (the mark is a note); a wrong figure is asked again; exactly the quote asks nothing',
+        JSON.stringify(offOverYes) === JSON.stringify({ off: true }) && offOverStale instanceof Error && offOverStale.code === 'ALREADY_PAID'
+        && JSON.stringify(await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1180 }), { by: SUPP }))) === JSON.stringify({ off: true }),
+        JSON.stringify([offOverYes, offOverStale instanceof Error ? offOverStale.message : offOverStale]));
       const off = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('f'), { by: SUPP }));
       eq('a shop with no ledger → { off: true } (the copy still says paid, as the counter\'s money chit does; nothing to post into)', off, { off: true });
     } finally { TCp.entryFor = wasEntryFor; }
