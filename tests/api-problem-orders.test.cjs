@@ -31,6 +31,26 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+/* --capture / --compare replay the same answers byte for byte: the clock, Math.random and uuid are held still, so a difference is the code's and not the run's */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+  let minted = 0;
+  const uuidFile = require.resolve('uuid');
+  const realUuid = require('uuid');
+  require.cache[uuidFile].exports = Object.assign({}, realUuid, { v4: () => '00000000-0000-4000-8000-' + String((minted += 1)).padStart(12, '0') });
+}
 const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
@@ -197,6 +217,19 @@ const BARE_COPY = { current_status: null, created_at: null, summary_json: null, 
 /** a shop that holds more copies than one read takes (lib/work-rows LIMIT): the answer says truncated and gives no counts */
 const MANY = (S) => { S.D.bigRows = Array.from({ length: 5000 }, (nothing, at) => S.copy(1 + (at % 5), { chit_id: S.U(500 + at) })); };
 const onSheet = (n, extra) => X('sheet-' + n[0], 'GET ' + WK + '/:chit_id', 200, Object.assign({ url: WK + '/' + chitOf(n[1]), setup: MIGRATED }, extra));
+/* S34: the SUCCESS side of the 14 repeat routes API-8 closed: every nullable column of the agreement is held as null in one scene and filled in another */
+const THIRD_PARTY = { identity_id: 'e4', identity_type: 'entity', display_name: 'Third shop' };
+const MONEY = { gross: 1000, savings: 0, net: 1000, tax: 180, total: 1180, currency_code: 'INR', provisional: true };
+/** the agreement with every optional column filled: the bill it came from, the anchor day, the end, the cap, the last run, who moved it, the stamp, the update, the money and the subject */
+const FULL_ROW = { state: 'agreed', source_chit_id: BILL_CHIT, unit: 'monthly', anchor_day: 15, next_on: '2099-01-15', end_on: '2099-12-31', runs_max: 5, last_run_on: '2098-12-15', state_by: SHOP, state_at: '2026-10-02T00:00:00Z', state_note: 'Checked', created_by: SHOP, updated_at: '2026-10-03T00:00:00Z', terms: { lines: [{ line_id: 'l1', quantity: 3 }] } };
+const filled = { prep: async () => { await seedAgreement(FULL_ROW); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }], summary_json: { currency_code: 'INR', money: MONEY }, manual_subject: 'Repeat supply · every month' }); } };
+/** the agreement chit names nobody but the sender: the customer has no name on it */
+const unnamed = { prep: async () => { await seedAgreement({ state: 'agreed' }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }], all_recipients: [] }); } };
+const dueTwice = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 3 }); } };
+const refusedRun = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 1 }); repeatMemory.refuseSend = 'Not now'; } };
+const brokenRun = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 1 }); repeatMemory.sendAs = async () => { throw new Error(SECRET_SQL); }; require(path.join(HERE, 'lib', 'repeat-supply')).useSender(repeatMemory.sendAs); } };
+/** a third shop that holds the agreement chit reads the agreement and is told it is read only */
+const thirdParty = { url: RS + '/' + AGREEMENT + AT, setup: { who: THIRD_PARTY }, prep: async () => { await seedAgreement({ state: 'agreed' }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, 'e4', { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }] }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }] }); } };
 const EXTRAS = [
   /* repeat supply: the seller's side */
   X('migrated-empty-list', 'GET ' + RS, 200, {}),
@@ -257,6 +290,26 @@ const EXTRAS = [
   X('sweep-as-viewer', 'POST ' + RS + '/sweep', 403, { setup: { who: VIEWER } }),
   X('create-as-viewer', 'POST ' + RS, 403, { body: {}, setup: { who: VIEWER } }),
   N('body-not-an-object', 'POST ' + RS + '/:id/pause', 400, Object.assign({ body: [] }, agreed)),
+  X('list-filled', 'GET ' + RS, 200, filled),
+  X('list-unnamed-customer', 'GET ' + RS, 200, unnamed),
+  X('one-filled', 'GET ' + RS + '/:id', 200, filled),
+  X('one-unnamed-customer', 'GET ' + RS + '/:id', 200, unnamed),
+  X('one-read-only', 'GET ' + RS + '/:id', 200, thirdParty),
+  X('pause-filled', 'POST ' + RS + '/:id/pause', 200, Object.assign({ body: { reason: 'stock' } }, filled)),
+  X('end-with-a-reason', 'POST ' + RS + '/:id/end', 200, Object.assign({ body: { reason: 'closed' } }, agreed)),
+  X('refuse-with-a-reason', 'POST ' + RS + '/:id/refuse', 200, Object.assign({ body: { reason: 'no' } }, countered)),
+  X('agree-the-lines', 'POST ' + RS + '/:id/agree', 200, { prep: () => seedAgreement({ state: 'countered', counter: { lines: [{ line_id: 'l1', quantity: 3 }], every: 2, unit: 'weekly', start_on: '2099-02-01', note: 'more', by: CUSTOMER, at: '2026-10-02T00:00:00Z' } }) }),
+  X('counter-the-lines', 'POST ' + RS + '/:id/counter', 200, Object.assign({ url: RS + '/' + AGREEMENT + '/counter' + AT, body: { lines: [{ line_id: 'l1', quantity: 3 }] } }, proposed, { setup: asCustomer })),
+  X('accept-unnamed', 'POST ' + RS + '/:id/accept', 200, Object.assign({ url: RS + '/' + AGREEMENT + '/accept' + AT }, unnamed, { prep: async () => { await seedAgreement({ state: 'proposed' }); } }, { setup: asCustomer })),
+  X('skip-twice', 'POST ' + RS + '/:id/skip', 200, Object.assign({ body: { reason: 'holiday' } }, filled)),
+  X('run-catches-up', 'POST ' + RS + '/:id/run', 200, dueTwice),
+  X('run-again-same-day', 'POST ' + RS + '/:id/run', 200, { prep: () => seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 3, runs: { '2000-01-01': 'aaaaaaaa-0000-4000-8000-000000000009' } }) }),
+  X('run-refused-by-the-send', 'POST ' + RS + '/:id/run', 200, refusedRun),
+  X('run-breaks-in-the-send', 'POST ' + RS + '/:id/run', 200, brokenRun),
+  X('sweep-refused-by-the-send', 'POST ' + RS + '/sweep', 200, refusedRun),
+  X('sweep-breaks-in-the-send', 'POST ' + RS + '/sweep', 200, brokenRun),
+  X('sweep-catches-up', 'POST ' + RS + '/sweep', 200, dueTwice),
+  X('create-from-a-bare-bill', 'POST ' + RS, 200, { body: Object.assign({ chit_id: BILL_CHIT, anchor_day: 10, until: { on: '2099-12-31' }, mode: 'send' }, SCHEDULE, { until: { on: '2099-12-31' }, unit: 'monthly' }), prep: () => seedBill({ summary_json: {} }) }),
   N('body-not-an-object', 'POST ' + RS, 400, { body: [] }),
   N('chit-given-twice', 'GET ' + RS + '/:id', 400, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=a&chit=b' }, agreed)),
   /* work */
@@ -569,15 +622,15 @@ function checkContractShape() {
 }
 
 /**
- * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a work read whose derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
+ * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a work read or a repeat-supply route whose derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
  * and whose recorded 200s all fit it (types and nullable columns included) is proved here; the generator's proxy world holds no Tasks & Orders rows, so it answers the sheet 404.
  * → { route: { output_allowlist: true } } for the routes that held
  */
-function checkAllowList(recording) {
+function checkAllowList(recording, routes) {
   const proved = {};
   const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
-  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].forEach((route) => { /* in the order the evidence file is read: sorted */
+  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].concat(Object.keys(routes).filter((route) => mountOf(route) === RS)).sort().forEach((route) => { /* in the order the evidence file is read: sorted */
     const shape = shapeOf(route);
     const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
     const fits = shape && engine.compile(shape.schema);
@@ -590,13 +643,13 @@ function checkAllowList(recording) {
 /** the work reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + WK + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route)) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter((route) => route.includes(' ' + WK + '/')).forEach((route) => {
+  Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route))).forEach((route) => {
     delete routes[route].output_allowlist;
     if (!Object.keys(routes[route]).length) delete routes[route];
   });
@@ -641,7 +694,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
-  const allowed = checkAllowList(recording);
+  const allowed = checkAllowList(recording, routes);
   const leaks = (key) => JSON.stringify(recording[key].body || {}).includes('vault');
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
@@ -657,7 +710,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
     writeAllowList(allowed);
   } else {
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads and repeat-supply routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/repeat-supply.js · routes/work.js · routes/counters.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
   }
