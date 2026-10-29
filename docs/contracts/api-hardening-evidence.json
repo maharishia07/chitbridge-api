@@ -591,6 +591,12 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/simulator/lead": {
+   "output_allowlist": true
+  },
+  "POST /api/simulator/feedback": {
+   "output_allowlist": true
+  },
   "POST /api/notifications/seen": {
    "output_allowlist": true
   },

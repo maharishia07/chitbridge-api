@@ -282,6 +282,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SIGN_IN | 403 | Sign in | CRM opens only for a signed-in person, not for a key. | Sign in with your own login. | crm | 2026-10-22 |
 | SIGN_IN_FIRST | 401/409 | Sign in first | Sign in at the store to order. | Sign in with your phone or email, then order again. | catalogue | 2026-10-22 |
 | SIGN_IN_FOR_LEDGER | 403 | Sign in as a person | Sign in as a person to use the ledger. | A counter or device key cannot use the ledger. | books | 2026-10-23 |
+| SIM_FEEDBACK_MESSAGE_MISSING | 400 | Feedback message missing | The feedback has no message in it. | Write what you thought, then send. | simulator | 2026-10-24 |
+| SIM_LEAD_FIELDS_MISSING | 400 | Name or e-mail missing | A name and a valid e-mail are needed to start the tour. | Type your name and an e-mail address, then try again. | simulator | 2026-10-24 |
 | SOURCE_STORE_MISSING | 503 | Source authoring not ready | Catalogue source authoring is not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
