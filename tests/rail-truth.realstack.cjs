@@ -276,16 +276,21 @@ async function billPrivacyCase(A, B) {
 }
 
 /** the shops the party cases share: B and C trade with A, D holds no copy of anything */
-/** RL-52: an id that is no uuid names no chit — every /:chit_id door answers the unknown chit's 404, never a 500 from the cast */
+/** RL-52: an id that is no uuid names no chit — the door answers the unknown chit's 404, never a 500 from the uuid cast */
 async function idCases(A) {
-  await kase('RL-52', 'a chit id that is not a uuid is a 404 NOT_FOUND at every /:chit_id door (read · Mark paid · archive), never a 500', async () => {
-    const doors = [['GET', '/api/chits/not-a-bill-1'], ['POST', '/api/chits/not-a-bill-1/payment', { method: 'cash', amount: 10 }], ['POST', '/api/chits/not-a-bill-1/archive']];
-    for (const [method, url, body] of doors) {
-      const seen = await j(url, { method, token: A.token, body });
-      expect(seen.status === 404 && seen.b && seen.b.code === 'NOT_FOUND', method + ' ' + url + ' answered HTTP ' + seen.status + ' ' + JSON.stringify(seen.b).slice(0, 120));
-    }
-    return doors.length + ' doors, 404 each';
+  const door = async (method, url, body) => {
+    const seen = await j(url, { method, token: A.token, body });
+    expect(seen.status === 404 && seen.b && seen.b.code === 'NOT_FOUND', method + ' ' + url + ' answered HTTP ' + seen.status + ' ' + JSON.stringify(seen.b).slice(0, 120));
+  };
+  await kase('RL-52', 'Mark paid on a chit id that is not a uuid is a 404 NOT_FOUND, never a 500 (api #499)', async () => {
+    await door('POST', '/api/chits/not-a-bill-1/payment', { method: 'cash', amount: 10 });
+    return '404';
   });
+  await kase('RL-52b', 'the other /:chit_id doors (read · archive) answer a non-uuid id with the 404, never a 500', async () => {
+    await door('GET', '/api/chits/not-a-bill-1');
+    await door('POST', '/api/chits/not-a-bill-1/archive');
+    return '404 each';
+  }, 'RAIL-144 · the id reaches the uuid cast (500) at GET /:chit_id, archive and the raida routes');
 }
 
 async function partyCases(A) {
