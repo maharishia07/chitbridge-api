@@ -13,6 +13,8 @@ const { notifications: contract, words, faultOf } = require('../lib/bell-contrac
 const { query, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const billPrivacy = require('../lib/bill-privacy');
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const FEED_PAGE = 30,
   FEED_MAX = 100; /* the bell shows the newest thirty */
@@ -54,8 +56,7 @@ const FEED_FROM = `FROM state_log sl
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const caller_id = req.identity.identity_id; // the actor (or entity) actually making the call
-    const limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
+    const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
 
     /**
      * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
@@ -86,6 +87,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       return res.json({ count: r.count, total: r.total, seen_at: r.seen_at });
     }
 
+    const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
     // regardless of which actor the individual chit is assigned to.
     const h = await query(`SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]);
@@ -124,7 +126,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
               ch.purpose, ch.summary_json->>'total_value' AS total_value, ch.summary_json->>'currency_code' AS currency_code,
               ch.summary_json->'order_details'->>'channel' AS order_channel, ch.summary_json->'order_details'->>'fulfilment' AS order_fulfilment,
               (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
-              (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me
+              (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me${costView.feedColsSql('ch', blind)}
         ${FEED_FROM}
       ) d
       ORDER BY d.created_at DESC
@@ -164,7 +166,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
      */
     const countable = (r) => r.action !== 'message_sent';
     const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length;
-    res.json({ notifications: result.rows, count: fresh, total: result.rows.length, page: 1, limit, seen_at: seen });
+    res.json({ notifications: await costView.feedRows(result.rows, entity_id, blind), count: fresh, total: result.rows.length, page: 1, limit, seen_at: seen });
   } catch (err) {
     console.error('Notifications error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to get notifications'));

@@ -120,41 +120,41 @@
    "why": "legacy city/building lookup list"
   },
   "cb_catalogue_category": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "legacy catalogue; entity_id"
   },
   "cb_catalogue_item": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "legacy catalogue; entity_id"
   },
   "cb_chit": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "shared",
    "why": "legacy chit, from_entity and to_entity: either side; K-DISPUTE"
   },
   "cb_chit_item": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "shared",
    "why": "legacy chit line; follows cb_chit; K-DISPUTE"
   },
   "cb_chit_log": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "shared",
    "why": "legacy chit log; follows cb_chit; K-DISPUTE"
@@ -168,18 +168,18 @@
    "why": "city lookup list"
   },
   "cb_consumer_traction": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "business_id; read by no code (b779)",
    "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_contact": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "owner_id; read by no code (b779)",
@@ -194,9 +194,9 @@
    "why": "currency lookup list (ISO)"
   },
   "cb_device": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "entity_id; read by no code (b779)",
@@ -219,27 +219,27 @@
    "why": "legacy party list read by src/services/network.js across shops; K-DISPUTE / K-CHITWRITE"
   },
   "cb_entity_employee": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "owner_id; read by no code (b779)",
    "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_entity_supplier": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "entity_id; read by no code (b779)",
    "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_external_reference": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "entity_id; read by no code (b779)",
@@ -254,17 +254,17 @@
    "why": "industry lookup list"
   },
   "cb_task": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "shared",
    "why": "legacy task, from_entity and to_entity: either side; K-DISPUTE"
   },
   "cb_transaction_history": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "shared",
    "why": "legacy history, info_entity and to_entity: either side; K-DISPUTE"

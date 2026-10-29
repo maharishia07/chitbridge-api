@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 137 | `list` | `amend.js` |  |
 | 110 | `rows` | `crm.js` | still in them: |
-| 104 | `withEntity` | `books-hooks.js` |  |
+| 105 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 93 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
@@ -30,7 +30,7 @@ of file each thing is; this says what already does the job.
 | 58 | `next` | `dayopen.js` | the next thing to do — |
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 54 | `items` | `books-store.js` | PERF1: |
+| 55 | `items` | `books-store.js` | PERF1: |
 | 54 | `entry` | `books-store.js` |  |
 | 52 | `register` | `regulation.js` | register(pack) → the pack — |
 | 50 | `toast` | `accounts-shell.js` |  |
@@ -66,7 +66,7 @@ of file each thing is; this says what already does the job.
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
 | 32 | `live` | `receivables.js` | the allocations that still count: |
-| 31 | `facts` | `bill-steps.js` | MY state_log — |
+| 32 | `facts` | `bill-steps.js` | MY state_log — |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
@@ -82,7 +82,7 @@ of file each thing is; this says what already does the job.
 | 28 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 27 | `gate` | `country-setup.js` | gate(h, entity): |
-| 27 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
+| 28 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -124,7 +124,7 @@ of file each thing is; this says what already does the job.
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `chip` | `screen-id.js` | var S = { app: |
 | 19 | `entries` | `books-store.js` |  |
-| 19 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 20 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 19 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `group` | `identity.js` | again in a different costume. |
 | 19 | `match` | `itemmatch.js` | actually state. |
