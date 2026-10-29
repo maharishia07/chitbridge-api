@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 104 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 93 | `words` | `variant.browser.js` |  |
-| 90 | `read` | `books-cashflow.js` | Trips: |
+| 91 | `read` | `books-cashflow.js` | Trips: |
 | 82 | `answer` | `availability.js` | from March; then nearest. |
 | 78 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -24,10 +24,10 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 61 | `here` | `screen-id.js` |  |
-| 62 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 63 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 58 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 58 | `next` | `dayopen.js` | the next thing to do — |
-| 59 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
+| 60 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 54 | `items` | `books-store.js` | PERF1: |
@@ -45,10 +45,10 @@ of file each thing is; this says what already does the job.
 | 44 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 43 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 43 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
-| 42 | `view` | `books-payables.js` | group: |
+| 43 | `view` | `books-payables.js` | group: |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 42 | `write` | `junitresults.js` | control characters are not legal XML at all — |
-| 41 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 42 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 38 | `rules` | `docnumber.js` | the rule set for a country — |
 | 37 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -162,7 +162,7 @@ of file each thing is; this says what already does the job.
 | 15 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
-| 15 | `orders` | `home-facts.js` | the till said 2 — |
+| 16 | `orders` | `home-facts.js` | the till said 2 — |
 | 15 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 15 | `report` | `raida.js` | register at the one moment it must not. |
 | 16 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
