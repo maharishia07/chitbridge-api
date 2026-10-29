@@ -606,6 +606,33 @@
   },
   "POST /api/capture/:id/structure": {
    "foreign_id_404": true
+  },
+  "DELETE /api/connectors/:actorId": {
+   "foreign_id_404": true
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "foreign_id_404": true
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "foreign_id_404": true
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/connectors/:actorId/connections/:connId": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/connections": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/erp-test": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/ping": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/regenerate-key": {
+   "foreign_id_404": true
   }
  }
 }
