@@ -37,7 +37,7 @@ let delivered = [];
 const SCENE = { header: headerFor(SUPPLIER), payload: PAYLOAD, roleOf: { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer' }, granted: false, moved: null };
 function rows(s, p) {
   if (/WITH s AS \(SELECT c\.id, c\.path FROM identities/.test(s)) return [{ brand_id: SUPPLIER, built: false, edge_id: null }];
-  if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
+  if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: SCENE.definers !== false }];
   if (/can_see_costs FROM identities/.test(s)) return [{ can_see_costs: p[0] === GRANTED_ID }];
   if (/SELECT ch\.purpose, ch\.sender_entity_id, ch\.all_recipients/.test(s)) return SCENE.header ? [SCENE.header] : [];
   if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return p[1].map((id) => ({ id, customer: SCENE.roleOf[id] === 'customer', supplier: SCENE.roleOf[id] === 'supplier' }));
@@ -67,7 +67,7 @@ const app = h.app('/api/chits', require(path.join(API, 'routes', 'chits')));
 const resent = (over) => Object.assign({ particulars: 'Basmati rice 1kg', unit: 'kg', quantity: 10, price: null }, over);
 const body = (lines, extra) => Object.assign({ purpose: 'order', manual_subject: 'PO', recipients: [{ entity_id: SUPPLIER, role: 'to' }], line_items: lines, promote_draft_id: DRAFT }, extra || {});
 const send = async (who, payload, scene) => {
-  Object.assign(SCENE, { header: headerFor(SUPPLIER), payload: PAYLOAD, roleOf: { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer' }, locked: 0, moved: null }, scene || {});
+  Object.assign(SCENE, { header: headerFor(SUPPLIER), payload: PAYLOAD, roleOf: { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer' }, locked: 0, moved: null, definers: true }, scene || {});
   delivered = [];
   const r = await h.run(app, { url: '/api/chits/send', body: payload, identity: who, ctx: {} });
   const lines = delivered.length ? JSON.parse(JSON.stringify(delivered[0].copies)) : null;
@@ -85,6 +85,15 @@ const it = async (name, fn) => { try { await fn(); pass++; console.log('  ok  ' 
 const noMoney = (r) => !/ ?4242|9797|42425|3131/.test(JSON.stringify(r.body));
 
 (async () => {
+  /* FIRST: chits.js caches definersReady once it answers true, so the not-ready scene must run before any other send in this process */
+  await it('the legacy write path (definers not ready) cannot re-check under the lock: a blind promote is refused 409, nothing written; the owner is not refused', async () => {
+    const r = await send(BLIND, body([resent({})]), { definers: false });
+    assert.strictEqual(r.status, 409, JSON.stringify(r.body));
+    assert.strictEqual(r.wrote, 0);
+    assert.ok(!r.calls.some((c) => /INSERT INTO chit_header|DELETE FROM chit_header/i.test(c.sql || '')), 'something was written');
+    const own = await send(OWNER, body([resent({})]), { definers: false });
+    assert.notStrictEqual(own.status, 409, JSON.stringify(own.body));
+  });
   console.log('\nRAIL-149 · a blind co-assist re-sends a priced draft — the stored money is carried');
   for (const [label, flags] of [['send', {}], ['re-save (is_draft:true)', { is_draft: true }]]) {
     await it(label + ': the price comes back null (or 0): the STORED price, total and item cost are what goes on the chit', async () => {
@@ -164,6 +173,22 @@ const noMoney = (r) => !/ ?4242|9797|42425|3131/.test(JSON.stringify(r.body));
     const r = await send(BLIND, body([resent({ line_id: L1, line_index: 1 })]));
     assert.strictEqual(r.status, 400, JSON.stringify(r.body));
     assert.strictEqual(r.wrote, 0);
+  });
+
+  await it('a cost BELOW the top level (item_data.modifiers[].cost) cannot be carried: 409 COST_CARRY_NESTED, nothing delivered, the figure not echoed', async () => {
+    const nested = [Object.assign({}, PAYLOAD[0], { item_data: { name: 'Basmati', modifiers: [{ name: 'Bag', options: [{ cost: 777.5 }] }] } }), PAYLOAD[1]];
+    const r = await send(BLIND, body([resent({})]), { payload: nested });
+    assert.strictEqual(r.status, 409, JSON.stringify(r.body));
+    assert.ok(/COST_CARRY_NESTED/.test(JSON.stringify(r.body)) && !/777/.test(JSON.stringify(r.body)), JSON.stringify(r.body));
+    assert.strictEqual(r.wrote, 0);
+    const own = await send(OWNER, body([resent({})]), { payload: nested });
+    assert.strictEqual(own.status, 200, 'the owner is not refused');
+  });
+  await it('a top-level money key of item_data (price, unit_cost) IS carried, byte for byte', async () => {
+    const rich = [Object.assign({}, PAYLOAD[0], { item_data: { name: 'Basmati', price: { amount: 61, currency: 'INR' }, unit_cost: STORED_COST } })];
+    const r = await send(BLIND, body([resent({ item_data: { name: 'Basmati' } })]), { payload: rich });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.deepStrictEqual(sentLines(r)[0].item_data, { name: 'Basmati', price: { amount: 61, currency: 'INR' }, unit_cost: STORED_COST });
   });
 
   console.log('\nRAIL-149 · the side, fail closed; everyone else untouched');

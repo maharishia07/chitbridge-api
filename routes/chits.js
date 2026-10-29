@@ -838,6 +838,9 @@ async function sendBody(st, req, res) {
 /** the draft this send promotes (the id the body names), or null — read by sendFanOut and, earlier, by sendSourceCarry */
 const promoteIdOf = (req) => (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id ? req.body.promote_draft_id : null);
 
+/** before the definers (b50) the write is the legacy fan-out, which cannot re-check the carried money under the lock: a blind promote is refused there, nothing written */
+const legacyRefusal = () => Object.assign(new Error('not sent'), { status: 409, refused: true, code: 'CHIT_CONFLICT', body: { error: 'Not sent', code: 'CHIT_CONFLICT', message: 'This draft cannot be sent with this access until the system update finishes; ask the account owner to send it.' } });
+
 /**
  * RAIL-149 — a cost-blind co-assist re-sending a draft (promote_draft_id): the stored money of the draft's lines is carried onto the lines sent, never null over it. One named step so a
  * later source (RAIL-146c, a receipt sent against an order) widens the same call. The owner, a cost-allowed actor and a paired till pay nothing (isCostBlind is false); a sale-side draft is as it was.
@@ -849,6 +852,7 @@ async function sendSourceCarry(state, req, res) {
   if (!promote_draft_id || !line_items.length || !(await cost.isCostBlind(req, sender_id))) return false;
   try {
     const carried = await withEntity(sender_id, (db) => costWrite.carryFromSource(db, sender_id, promote_draft_id, line_items, req.body.line_items));
+    if (carried && !(await definersReady())) throw legacyRefusal();
     if (carried) Object.assign(state, { line_items: carried.lines, sourceCarry: carried.stamp });
   } catch (e) {
     if (!e.refused) throw e;
