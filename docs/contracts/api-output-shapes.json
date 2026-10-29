@@ -10698,6 +10698,77 @@
         "url": "/api/quick-keys/screen-config/default",
         "body": {}
       }
+    },
+    "GET /api/keys": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "keys",
+          "scopes",
+          "may"
+        ],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "revoke"
+            ],
+            "properties": {
+              "revoke": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "keys[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/keys"
+      }
     }
   },
   "listed": {
@@ -11381,6 +11452,7 @@
     "PATCH /api/quick-keys/groups/:id/items": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/quick-keys/groups": "open at group — a value passed through (a name: its keys are not written in the handler)",
     "POST /api/quick-keys/groups/:id/items": "open at item — a value passed through (a name: its keys are not written in the handler)",
-    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)"
   }
 }
