@@ -132,6 +132,12 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/chits/:chit_id/costs": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/:chit_id/use": {
+   "output_allowlist": true
+  },
   "GET /api/crm/calls": {
    "output_allowlist": true
   },
@@ -355,6 +361,36 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/chits/:chit_id/amend": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/assign-lines": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/costs": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/deliver-lines": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/raida": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/close": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/register/entries/:raida_id/close": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/register/entries/:raida_id/revise": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/register/subjects/:subject_id/close": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/send": {
+   "output_allowlist": true
+  },
   "POST /api/counters/:id/assign": {
    "foreign_id_404": true
   },
@@ -441,6 +477,9 @@
   },
   "PUT /api/actors/assign/:chit_id": {
    "foreign_id_404": true
+  },
+  "PUT /api/chits/:chit_id/use": {
+   "output_allowlist": true
   },
   "PUT /api/connections/:id/respond": {
    "foreign_id_404": true

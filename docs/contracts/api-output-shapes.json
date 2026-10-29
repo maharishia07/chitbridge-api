@@ -10847,6 +10847,1042 @@
       "example": {
         "url": "/api/pricing/kinds"
       }
+    },
+    "GET /api/chits/:chit_id/catalogue-overlay": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "has_catalogue",
+          "items",
+          "match"
+        ],
+        "properties": {
+          "has_catalogue": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "match": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "unmatched": {
+            "type": "string"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "ambiguous": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 9,
+      "open": [
+        {
+          "path": "items[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "match",
+          "reason": "a spread (...x) adds keys the text does not name"
+        },
+        {
+          "path": "candidates[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/nope/catalogue-overlay"
+      }
+    },
+    "GET /api/chits/:chit_id/costs": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "costs",
+          "can_see_totals"
+        ],
+        "properties": {
+          "costs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "can_see_totals": {
+            "type": "boolean"
+          },
+          "by_kind": {
+            "type": "object"
+          },
+          "by_currency": {
+            "type": "object"
+          },
+          "invoiced": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "spent": {
+            "type": "number"
+          },
+          "margin": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "margin_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "mine_only": {
+            "type": "boolean"
+          },
+          "mixed_currency": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "costs[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "by_kind",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "by_currency",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/nope/costs"
+      }
+    },
+    "GET /api/chits/:chit_id/raida": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "entries",
+          "migrated"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "open": {
+            "type": "number"
+          },
+          "closed": {
+            "type": "number"
+          },
+          "full": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 8,
+      "open": [
+        {
+          "path": "entries[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/nope/raida"
+      }
+    },
+    "GET /api/chits/:chit_id/use": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "status",
+          "changeable",
+          "bill",
+          "lines",
+          "uses"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changeable": {
+            "type": "boolean"
+          },
+          "bill": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "uses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "asset_class": {
+            "type": "string"
+          },
+          "put_to_use": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "lines[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/use"
+      }
+    },
+    "GET /api/chits/pulse": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "w"
+        ],
+        "properties": {
+          "w": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/chits/pulse"
+      }
+    },
+    "GET /api/chits/register/walk/:from": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "hops",
+          "migrated"
+        ],
+        "properties": {
+          "hops": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "depth_reached": {
+            "type": "number"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "backwards": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [
+        {
+          "path": "hops[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/register/walk/nope"
+      }
+    },
+    "POST /api/chits/:chit_id/amend": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "amendments"
+        ],
+        "properties": {
+          "amendments": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "synonym_candidates": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "amendments[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "synonym_candidates[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/amend",
+        "body": []
+      }
+    },
+    "POST /api/chits/:chit_id/assign-lines": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "assignments"
+        ],
+        "properties": {
+          "assignments": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "assignments[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/assign-lines",
+        "body": {
+          "edits": [
+            {
+              "line_id": "22222222-2222-4222-8222-222222222222",
+              "assignee_actor_id": "44444444-4444-4444-8444-444444444444",
+              "task": "Pack",
+              "due_date": "2026-10-05"
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/costs": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "costs"
+        ],
+        "properties": {
+          "costs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "costs[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/costs",
+        "body": [
+          {
+            "kind": "fare",
+            "amount": 50,
+            "currency": "inr",
+            "note": "auto"
+          },
+          {
+            "kind": "labour",
+            "minutes": 80,
+            "rate_per_hour": 150
+          }
+        ]
+      }
+    },
+    "POST /api/chits/:chit_id/deliver-lines": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "delivered"
+        ],
+        "properties": {
+          "delivered": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "progress": {
+            "type": "object"
+          },
+          "summary": {
+            "type": "object"
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "step": {},
+          "accepted": {},
+          "use": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "delivered[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "progress",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/deliver-lines",
+        "body": {
+          "rows": [
+            {
+              "line_id": "22222222-2222-4222-8222-222222222222",
+              "quantity": 2
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/raida": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "raida_id",
+          "at",
+          "kind",
+          "subject_id",
+          "standards",
+          "migrated",
+          "full"
+        ],
+        "properties": {
+          "raida_id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "standards": {
+            "type": "number"
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "full": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/raida",
+        "body": {
+          "kind": "risk",
+          "body": "Wet rice"
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/raida/:raida_id/close": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "closed",
+          "closing_row",
+          "disposition",
+          "at",
+          "migrated"
+        ],
+        "properties": {
+          "closed": {
+            "type": "string"
+          },
+          "closing_row": {
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/raida/22222222-2222-4222-8222-222222222222/close",
+        "body": {
+          "disposition": "accepted",
+          "body": "Fine"
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "raida_id",
+          "dispute_id",
+          "migrated"
+        ],
+        "properties": {
+          "raida_id": {
+            "type": "string"
+          },
+          "dispute_id": {
+            "type": "string"
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/raida/22222222-2222-4222-8222-222222222222/dispute",
+        "body": {
+          "dispute_id": "33333333-3333-4333-8333-333333333333"
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/reprice": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "has_catalogue",
+          "will_price",
+          "needs_price",
+          "unchanged",
+          "totals"
+        ],
+        "properties": {
+          "has_catalogue": {
+            "type": "boolean"
+          },
+          "will_price": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "needs_price": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "unchanged": {},
+          "totals": {
+            "type": "object"
+          },
+          "applied": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "will_price[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "needs_price[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "totals",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/reprice",
+        "body": {
+          "only_unpriced": true
+        }
+      }
+    },
+    "POST /api/chits/register/entries/:raida_id/accept": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "acceptance_id",
+          "at",
+          "entry_severity",
+          "migrated"
+        ],
+        "properties": {
+          "acceptance_id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "entry_severity": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/entries/22222222-2222-4222-8222-222222222222/accept",
+        "body": {
+          "rationale": "Within appetite"
+        }
+      }
+    },
+    "POST /api/chits/register/entries/:raida_id/close": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "closed",
+          "closing_row",
+          "disposition",
+          "at",
+          "migrated"
+        ],
+        "properties": {
+          "closed": {
+            "type": "string"
+          },
+          "closing_row": {
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/entries/22222222-2222-4222-8222-222222222222/close",
+        "body": {
+          "disposition": "resolved",
+          "body": "Dried"
+        }
+      }
+    },
+    "POST /api/chits/register/entries/:raida_id/revise": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "revised",
+          "revision",
+          "changed",
+          "migrated"
+        ],
+        "properties": {
+          "revised": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/entries/22222222-2222-4222-8222-222222222222/revise",
+        "body": {
+          "body": "Drier",
+          "treatment": "Dry store"
+        }
+      }
+    },
+    "POST /api/chits/register/subjects": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "subject_id",
+          "closed_at"
+        ],
+        "properties": {
+          "subject_id": {
+            "type": "string"
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/subjects",
+        "body": {
+          "type_key": "audit",
+          "ref_id": "33333333-3333-4333-8333-333333333333",
+          "name": "Q4 audit"
+        }
+      }
+    },
+    "POST /api/chits/register/subjects/:subject_id/close": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "closed",
+          "at",
+          "migrated"
+        ],
+        "properties": {
+          "closed": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/subjects/22222222-2222-4222-8222-222222222222/close"
+      }
+    },
+    "POST /api/chits/register/subjects/:subject_id/entries": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "raida_id",
+          "at",
+          "kind",
+          "subject_id",
+          "standards",
+          "migrated",
+          "full"
+        ],
+        "properties": {
+          "raida_id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "standards": {
+            "type": "number"
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "full": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/subjects/22222222-2222-4222-8222-222222222222/entries",
+        "body": {
+          "kind": "risk",
+          "body": "Wet rice",
+          "standards": [
+            "iso9001"
+          ]
+        }
+      }
+    },
+    "POST /api/chits/register/templates": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "migrated"
+        ],
+        "properties": {
+          "template_id": {
+            "type": "string"
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/register/templates",
+        "body": {
+          "kind": "risk",
+          "title": "Late delivery",
+          "body": "The van is late",
+          "likelihood": 3,
+          "severity": 4
+        }
+      }
+    },
+    "POST /api/chits/send": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "auto_subject": {
+            "type": "string"
+          },
+          "is_draft": {
+            "type": "boolean"
+          },
+          "recipients": {
+            "type": "number"
+          },
+          "fan_out": {
+            "type": "object",
+            "required": [
+              "to",
+              "cc",
+              "for"
+            ],
+            "properties": {
+              "to": {
+                "type": "number"
+              },
+              "cc": {
+                "type": "number"
+              },
+              "for": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "summary": {
+            "type": "object"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "client_ref": {
+            "type": "string"
+          },
+          "raced": {
+            "type": "boolean"
+          },
+          "number_check": {},
+          "one_sided": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/send",
+        "body": {
+          "is_draft": true,
+          "purpose": " order "
+        }
+      }
+    },
+    "PUT /api/chits/:chit_id/use": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "use",
+          "effective"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "use": {
+            "type": "object"
+          },
+          "effective": {
+            "type": "object"
+          },
+          "party": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "use",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "effective",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/use",
+        "body": {
+          "use": "asset",
+          "asset_class": "plant",
+          "put_to_use": "2026-10-01"
+        }
+      }
     }
   },
   "listed": {
@@ -11533,6 +12569,18 @@
     "POST /api/quick-keys/groups/:id/items": "open at item — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)",
-    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)"
+    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id/catalogue-overlay": "open at items[] — a value passed through (an expression: its keys are not written in the handler); match — a spread (...x) adds keys the text does not name; candidates[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id/costs": "open at costs[] — a value passed through (an expression: its keys are not written in the handler); by_kind — a value passed through (an expression: its keys are not written in the handler); by_currency — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id/raida": "open at entries[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id/use": "open at lines[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/register/walk/:from": "open at hops[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/:chit_id/amend": "open at amendments[] — a value passed through (an expression: its keys are not written in the handler); synonym_candidates[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/:chit_id/assign-lines": "open at assignments[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/:chit_id/costs": "open at costs[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/:chit_id/deliver-lines": "open at delivered[] — a value passed through (an expression: its keys are not written in the handler); progress — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/:chit_id/reprice": "open at will_price[] — a value passed through (an expression: its keys are not written in the handler); needs_price[] — a value passed through (an expression: its keys are not written in the handler); totals — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/send": "open at summary — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/chits/:chit_id/use": "open at use — a value passed through (an expression: its keys are not written in the handler); effective — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
