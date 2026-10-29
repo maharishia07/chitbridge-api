@@ -8,7 +8,12 @@
  * SW-02 price on the window = the catalogue's, after a change · SW-03 stock on the window = the Stock statement · SW-04 a connector's stamped figure vs the ledger
  * is ONE figure · SW-05 a private catalogue is refused at the public doors (browse AND order) · SW-08 the look picker refuses with what is missing ·
  * SW-09 look and ordering face are both saved, the product override wins · SW-11 an order from the window reaches the shop and moves no stock.
- * Not here: SW-06 member-store offers (✓ network-storefront.test.cjs) · SW-07 one registry flag (✓ showcase-policy.test.cjs) · SW-01/SW-10 screens.
+ * BOX PASS 2026-10-24 (SW rows How = A): SW-02b a removed product leaves the window · SW-03b/c/d/e the window shows only what can be bought (status, zero stock
+ * when the shop asks, back when it returns; the hidden COUNT to the owner is a gap) · SW-05c a closed shop is a shutter, not a demolition · SW-05d the owner still
+ * previews a private shop · SW-05e a private shop answers like a shop that never existed · SW-05f capture-fields door (gap MKT-16) · SW-05g a sign-in-first shop
+ * shows a stranger its card only · SW-07a/b the look is ONE registry-derived flag, sections are a saved subset · SW-09c the product override (gap W23/W25).
+ * Not here (listed): SW-06 member-store offers (✓ network-storefront.test.cjs, network-offer-scope.test.cjs: a network build is not provable offline) ·
+ * SW-07 pure unit half (✓ showcase-policy.test.cjs) · SW-01/SW-10 screens (W: W21/W22).
  * A `gap:` FAIL is a RECORDED finding (MARKETING-BACKLOG "K-TRUTH-1 2026-10-19"), never fixed here. LOCAL ONLY.
  * Break-tested 2026-10-19: each passing case was run once with its expected figure flipped to a wrong one and went red.
  * Run: node tests/shopwindow-truth.realstack.cjs   (one realstack file at a time on :3100)
@@ -24,6 +29,130 @@ const shown = (v, id) => (v.items || []).find((i) => i.item_id === id);
 const stmtQty = async (shop, id) => { const b = ok(await j('/api/till/stock?detail=1', { token: shop.token }), 'stock').b.balances[id]; return b ? b.qty : null; };
 const moves = async (shop, id) => (await pg.query('SELECT COUNT(*)::int AS n FROM stock_movement WHERE entity_id = $1 AND item_id = $2', [shop.entity, id])).rows[0].n;
 const policy = async (shop, body) => j('/api/entities/policy', { method: 'PATCH', token: shop.token, body });
+
+/* ── the box pass: one named function per group of cases, each on its own fresh shop (writes through routes, the database only read) ── */
+const REGISTERED_LOOKS = require('../data/pages.json').pages.filter((r) => r.name.startsWith('showcase.')).map((r) => r.name + '@' + r.version);
+const GAP_HIDDEN_COUNT = 'catalogue-view.js:335 says the OWNER is told how many items are not showing, but routes/catalogue.js publicResponseFor forwards only unpriced_hidden (MARKETING-BACKLOG MKT-12)';
+const GAP_PRIVATE_DOORS = 'MKT-16: the capture-fields, order and support doors do not check catalogue_visibility; only browse does (SEC-97 covers the foreign-id answers separately)';
+const GAP_ORDER_FACE = 'W23/W25 (MKT-12): no shop-level ordering-face flag and no product override exist yet; the look fixes the face';
+const mkItem = async (shop, name, price) => {
+  const made = ok(await j('/api/products', { method: 'POST', token: shop.token, body: { item_data: { name, unit: 'piece', price } } }), 'product ' + name).b;
+  return { id: made.item.item_id, name, unit: 'piece', price };
+};
+const receive = async (shop, no, p, qty) => { ok(await j('/api/chits/send', { method: 'POST', token: shop.token, body: receipt(no, [[p, qty, 5]]) }), 'receipt ' + no); await pause(1500); };
+const sell = async (shop, no, p, qty) => { ok(await j('/api/chits/send', { method: 'POST', token: shop.token, body: bill(no, [[p, qty]]) }), 'sale ' + no); await pause(1500); };
+const setStatus = async (shop, p, status) => ok(await j('/api/products/' + p.id + '/status', { method: 'PUT', token: shop.token, body: { status } }), 'status ' + status);
+const sameAnswer = (r) => [r.status, r.b.code, r.b.title, r.b.message, r.b.detail, r.b.error].join('|');
+
+/** SW-02b a removed product leaves the window (the window shows what the shop holds) */
+async function removedItemKase() {
+  const G = await freshShop(RUN + 'd', 'Window removed'), keep = await mkItem(G, 'Tea', 120), gone = await mkItem(G, 'Soap', 40);
+  await kase('SW-02b', 'a product the shop removes is gone from the window; the others stay', async () => {
+    const before = await view(G);
+    ok(await j('/api/products/' + gone.id, { method: 'DELETE', token: G.token }), 'remove');
+    const after = await view(G);
+    expect(shown(before, gone.id) && !shown(after, gone.id) && shown(after, keep.id), 'before ' + !!shown(before, gone.id) + ' · after removal ' + !!shown(after, gone.id) + ' · the kept item ' + !!shown(after, keep.id));
+  });
+}
+
+/** SW-03b/d/e a product marked unavailable is not shown, the owner is told how many, and it returns with its status */
+async function unavailableItemKases() {
+  const G = await freshShop(RUN + 'g', 'Window status'), tea = await mkItem(G, 'Tea', 120), jam = await mkItem(G, 'Jam', 90);
+  await setStatus(G, tea, 'unavailable');
+  await kase('SW-03b', 'a product marked unavailable is not shown on the window; the available one is', async () => {
+    const v = await view(G);
+    expect(!shown(v, tea.id) && shown(v, jam.id), 'unavailable item shown ' + !!shown(v, tea.id) + ' · available item shown ' + !!shown(v, jam.id));
+  });
+  await kase('SW-03d', 'the owner previewing the window is told how many items are not showing (unavailable_hidden = 1)', async () => {
+    const r = await j('/api/catalogue/' + G.bridge + '?preview=1', { token: G.token });
+    expect(r.status === 200 && r.b.unavailable_hidden === 1, 'preview ' + r.status + ' · unavailable_hidden ' + r.b.unavailable_hidden);
+  }, GAP_HIDDEN_COUNT);
+  await setStatus(G, tea, 'available');
+  await kase('SW-03e', 'marked available again, the product returns to the window', async () => {
+    const v = await view(G);
+    expect(!!shown(v, tea.id) && !!shown(v, jam.id), 'after available again: tea ' + !!shown(v, tea.id) + ' · jam ' + !!shown(v, jam.id));
+  });
+}
+
+/** SW-03c zero stock is shown (sold out) until the shop asks to hide it, and returns the instant stock arrives */
+async function zeroStockKase() {
+  const Z = await freshShop(RUN + 'z', 'Window zero'), salt = await mkItem(Z, 'Salt', 10);
+  await receive(Z, RUN + '-ZG', salt, 4); await sell(Z, RUN + '-Zb', salt, 4);
+  await kase('SW-03c', 'zero on the ledger: shown by default, hidden when qty_zero_hides is on, back when stock arrives', async () => {
+    const off = shown(await view(Z), salt.id);
+    ok(await policy(Z, { qty_zero_hides: 'on' }), 'hide at zero');
+    const on = shown(await view(Z), salt.id);
+    await receive(Z, RUN + '-ZG2', salt, 5);
+    const back = shown(await view(Z), salt.id);
+    expect(off && near(off.item_data.avail.qty, 0) && !on && back && near(back.item_data.avail.qty, 5), 'default ' + JSON.stringify(off && off.item_data.avail) + ' · hide on ' + !!on + ' · restocked ' + JSON.stringify(back && back.item_data.avail));
+  });
+}
+
+/** SW-05c closed is a shutter over the chosen visibility, never an overwrite of it */
+async function closedShutterKase() {
+  const X = await freshShop(RUN + 'x', 'Window closed'), rug = await mkItem(X, 'Rug', 500), mail = RUN + '-x@local.test';
+  await kase('SW-05c', 'a closed shop shows nothing and takes no order; reopened, the window returns as chosen', async () => {
+    const open = shown(await view(X), rug.id);
+    ok(await j('/api/entities/profile', { method: 'PATCH', token: X.token, body: { business_status: 'closed' } }), 'close');
+    const browse = await j('/api/catalogue/' + X.bridge), order = await j('/api/catalogue/' + X.bridge + '/order/start', { method: 'POST', body: { email: mail, name: 'Closed Shopper' } });
+    ok(await j('/api/entities/profile', { method: 'PATCH', token: X.token, body: { business_status: 'open' } }), 'reopen');
+    const back = shown(await view(X), rug.id);
+    expect(open && browse.status === 404 && !JSON.stringify(browse.b).includes('Rug') && order.status === 403 && back, 'open ' + !!open + ' · closed browse ' + browse.status + ' · order ' + order.status + ' · reopened ' + !!back);
+  });
+}
+
+/** SW-05d/e/f the doors of a private shop: the owner still sees it, a stranger cannot tell it from a shop that never existed */
+async function privateDoorKases() {
+  const R = await freshShop(RUN + 'r', 'Window hidden'); await mkItem(R, 'Lamp', 300);
+  ok(await j('/api/entities/profile', { method: 'PATCH', token: R.token, body: { catalogue_visibility: 'private' } }), 'private');
+  await kase('SW-05d', 'the owner previews their own private shop (200, says it is private); a stranger gets 404', async () => {
+    const mine = await j('/api/catalogue/' + R.bridge + '?preview=1', { token: R.token }), stranger = await j('/api/catalogue/' + R.bridge);
+    expect(mine.status === 200 && mine.b.preview && mine.b.preview.visibility === 'private' && stranger.status === 404, 'owner ' + mine.status + ' ' + JSON.stringify(mine.b.preview) + ' · stranger ' + stranger.status);
+  });
+  await kase('SW-05e', 'the browse door answers a private shop exactly as it answers a handle that never existed', async () => {
+    const priv = await j('/api/catalogue/' + R.bridge), none = await j('/api/catalogue/' + RUN + 'nosuchshop');
+    expect(priv.status === 404 && sameAnswer(priv) === sameAnswer(none), 'private ' + sameAnswer(priv) + ' · unknown ' + sameAnswer(none));
+  });
+  await kase('SW-05f', 'the capture-fields door refuses a private shop like the browse door does', async () => {
+    const r = await j('/api/catalogue/' + R.bridge + '/capture-fields');
+    expect(r.status === 404, 'capture-fields on a private shop answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 100));
+  }, GAP_PRIVATE_DOORS);
+}
+
+/** SW-05g a sign-in-first shop shows a stranger its card only (a code the page branches on), and its owner everything */
+async function signInFirstKase() {
+  const L = await freshShop(RUN + 'l', 'Window login'), bowl = await mkItem(L, 'Bowl', 150);
+  ok(await j('/api/entities/profile', { method: 'PATCH', token: L.token, body: { storefront_access: 'login' } }), 'sign in first');
+  await kase('SW-05g', 'a stranger gets the card and the code sign_in_first, no items; the owner reads the shop', async () => {
+    const stranger = await j('/api/catalogue/' + L.bridge), owner = await j('/api/catalogue/' + L.bridge, { token: L.token });
+    expect(stranger.status === 200 && stranger.b.sign_in && stranger.b.sign_in.code === 'sign_in_first' && !stranger.b.items && !JSON.stringify(stranger.b).includes('Bowl') && !!shown(owner.b, bowl.id), 'stranger ' + stranger.status + ' ' + JSON.stringify(stranger.b.sign_in) + ' items ' + !!stranger.b.items + ' · owner sees the bowl ' + !!shown(owner.b, bowl.id));
+  });
+}
+
+/** SW-07a/b the look is ONE registry-derived flag; sections are a saved subset that a look change does not blank */
+async function lookFlagKases(A) {
+  await kase('SW-07a', 'the policy offers exactly the registered looks, and each one saves and shows on the window', async () => {
+    const offered = ok(await j('/api/entities/policy', { token: A.token }), 'policy').b.schema.showcase_template.options, bad = [];
+    for (const t of REGISTERED_LOOKS.slice().reverse()) { const r = await policy(A, { showcase_template: t }); if (r.status !== 200 || (await view(A)).shop.showcase.template !== t) bad.push(t + ' ' + r.status); }
+    expect(JSON.stringify(offered) === JSON.stringify(REGISTERED_LOOKS) && !bad.length, 'offered ' + JSON.stringify(offered) + ' · registry ' + JSON.stringify(REGISTERED_LOOKS) + ' · not saved ' + bad.join());
+  });
+  await kase('SW-07b', 'sections: a subset is saved and shown, junk is dropped, empty or not-a-list is refused, a look change keeps them', async () => {
+    const good = await policy(A, { showcase_sections: ['strip', 'menu'] }), junk = await policy(A, { showcase_sections: ['strip', 'nope'] });
+    const empty = await policy(A, { showcase_sections: [] }), text = await policy(A, { showcase_sections: 'strip' });
+    ok(await policy(A, { showcase_sections: ['strip', 'menu'] }), 'restore'); ok(await policy(A, { showcase_template: 'showcase.food.menu@1.0' }), 'change look');
+    const sh = (await view(A)).shop.showcase;
+    expect(good.status === 200 && junk.status === 200 && junk.b.flags.showcase_sections.join() === 'strip' && empty.status === 400 && text.status === 400 && sh.template === 'showcase.food.menu@1.0' && sh.sections.join() === 'strip,menu', 'good ' + good.status + ' · junk ' + junk.status + ' · empty ' + empty.status + ' · text ' + text.status + ' · window ' + JSON.stringify(sh));
+  });
+}
+
+/** SW-09c the product override wins over the shop's ordering face (not buildable until the flag exists: W23/W25) */
+async function productOverrideKase(A) {
+  await kase('SW-09c', 'a product that names its own ordering face wins over the shop-level face', async () => {
+    const flags = ok(await j('/api/entities/policy', { token: A.token }), 'policy').b.flags;
+    expect(Object.keys(flags).some((f) => /order.*(face|look|template|design)|(face|look).*order/i.test(f)), 'no shop-level ordering-face flag exists, so there is nothing for a product to override');
+    expect(false, 'the flag now exists: write the product-override half (set it, override one product, read both on the window)');
+  }, GAP_ORDER_FACE);
+}
 
 (async () => {
   console.log('\n── shop window truth on ' + H.API + ' · run ' + RUN + ' ──');
@@ -99,6 +228,9 @@ const policy = async (shop, body) => j('/api/entities/policy', { method: 'PATCH'
       const r = await j(qdoor + '/order/confirm', { method: 'POST', body: { email: qmail, otp: CUSTOMER_OTP, line_items: [{ item_id: qm.item.item_id, quantity: 1 }] } });
       expect(r.status >= 400, 'order/confirm on a private shop answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 80) + ' — the order was placed');
     }, 'the order doors (start, confirm, capture-fields, support/preview) do not check catalogue_visibility; only the browse door does');
+    await lookFlagKases(A); await productOverrideKase(A);
+    await removedItemKase(); await unavailableItemKases(); await zeroStockKase();
+    await closedShutterKase(); await privateDoorKases(); await signInFirstKase();
   } finally { await pg.end(); }
   finish('shopwindow-truth', process.env.SHOPWINDOW_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('shop window truth could not run:', e && e.message); process.exit(2); });

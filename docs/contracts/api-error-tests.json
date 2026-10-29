@@ -1,6 +1,5 @@
 {
  "DELETE /api/actors/:id/pin": [
-  400,
   401,
   403,
   404,
@@ -86,6 +85,26 @@
  ],
  "DELETE /api/products/:id/schedule/:sid": [
   401,
+  500
+ ],
+ "DELETE /api/quick-keys/groups/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "DELETE /api/quick-keys/groups/:id/items/:productId": [
+  401,
+  403,
+  500
+ ],
+ "DELETE /api/schemas/fields/:field_key": [
+  400,
+  401,
+  404,
+  409,
   500
  ],
  "GET /.well-known/ctp.json": [
@@ -678,6 +697,25 @@
   401,
   500
  ],
+ "GET /api/forms": [
+  401,
+  500
+ ],
+ "GET /api/forms/:key": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/forms/instances/:id": [
+  401,
+  404,
+  500
+ ],
+ "GET /api/forms/instances/all": [
+  400,
+  401,
+  500
+ ],
  "GET /api/governance/ai-skills": [
   401,
   500
@@ -892,6 +930,16 @@
   401,
   500
  ],
+ "GET /api/quick-keys/groups": [
+  401,
+  403,
+  500
+ ],
+ "GET /api/quick-keys/screen-config/default": [
+  401,
+  403,
+  500
+ ],
  "GET /api/repeat": [
   401,
   500
@@ -903,8 +951,15 @@
   500,
   503
  ],
- "GET /api/supplies": [
+ "GET /api/schemas/fields": [
   401,
+  500
+ ],
+ "GET /api/schemas/my": [
+  401,
+  500
+ ],
+ "GET /api/simulator/content": [
   500
  ],
  "GET /api/tax/gstr": [
@@ -1194,7 +1249,35 @@
   409,
   500
  ],
- "PATCH /api/supplies/:id": [
+ "PATCH /api/quick-keys/groups/:id": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "PATCH /api/quick-keys/groups/:id/items": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "PATCH /api/schemas/fields/:field_key": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "PATCH /api/schemas/fields/order": [
+  400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/schemas/visibility": [
+  400,
   401,
   404,
   500
@@ -1220,7 +1303,6 @@
   503
  ],
  "POST /api/actors/:id/otp": [
-  400,
   401,
   403,
   404,
@@ -1632,6 +1714,7 @@
   503
  ],
  "POST /api/chits/:chit_id/amend": [
+  400,
   401,
   403,
   404,
@@ -1645,6 +1728,7 @@
   503
  ],
  "POST /api/chits/:chit_id/assign-lines": [
+  400,
   401,
   403,
   404,
@@ -1944,6 +2028,7 @@
  "POST /api/folders/:id/rules": [
   400,
   401,
+  404,
   500,
   503
  ],
@@ -1962,6 +2047,39 @@
  "POST /api/folders/rules/preview": [
   400,
   401,
+  500
+ ],
+ "POST /api/forms/:key/issue": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/forms/:key/resolve": [
+  401,
+  404,
+  422,
+  500
+ ],
+ "POST /api/forms/instances/:id/attach": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/forms/instances/:id/sign": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
   500
  ],
  "POST /api/governance/ai-draft": [
@@ -2167,6 +2285,7 @@
  "POST /api/products": [
   400,
   401,
+  403,
   422,
   500
  ],
@@ -2194,16 +2313,19 @@
  "POST /api/products/bulk": [
   400,
   401,
+  403,
   500
  ],
  "POST /api/products/bulk-update": [
   400,
   401,
+  403,
   500
  ],
  "POST /api/products/import": [
   400,
   401,
+  403,
   409,
   413,
   500
@@ -2226,6 +2348,19 @@
  "POST /api/products/status/bulk": [
   400,
   401,
+  500
+ ],
+ "POST /api/quick-keys/groups": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/quick-keys/groups/:id/items": [
+  400,
+  401,
+  403,
+  404,
   500
  ],
  "POST /api/repeat": [
@@ -2315,22 +2450,17 @@
   403,
   500
  ],
- "POST /api/supplies": [
-  400,
-  401,
-  500,
-  503
- ],
- "POST /api/supplies/:id/issue": [
-  400,
+ "POST /api/schemas/create-default": [
   401,
   500
  ],
- "POST /api/supplies/purchase": [
+ "POST /api/simulator/feedback": [
   400,
-  401,
-  500,
-  503
+  500
+ ],
+ "POST /api/simulator/lead": [
+  400,
+  500
  ],
  "POST /api/tax/compute": [
   400,
@@ -2512,6 +2642,14 @@
   403,
   500
  ],
+ "POST /api/till/rate": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "POST /api/till/reconcile": [
   401,
   403,
@@ -2657,6 +2795,7 @@
  "PUT /api/catalogue-face": [
   400,
   401,
+  403,
   413,
   422,
   500
@@ -2725,6 +2864,7 @@
  "PUT /api/entities/routing": [
   400,
   401,
+  404,
   409,
   500
  ],
@@ -2784,10 +2924,42 @@
   404,
   500
  ],
+ "PUT /api/quick-keys/screen-config/default": [
+  400,
+  401,
+  403,
+  500
+ ],
  "PUT /api/testing/cmdb/:ci": [
   400,
   401,
   403,
   500
+ ],
+ "GET /api/supplies": [
+  401,
+  500
+ ],
+ "PATCH /api/supplies/:id": [
+  401,
+  404,
+  500
+ ],
+ "POST /api/supplies": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/supplies/:id/issue": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/supplies/purchase": [
+  400,
+  401,
+  500,
+  503
  ]
 }

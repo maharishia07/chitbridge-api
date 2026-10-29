@@ -2207,6 +2207,7 @@
   .t.foldrow{justify-content:flex-end;padding:2px 0}
   .foldbtn{background:none;border:0;color:var(--dim);font:inherit;font-size:.85em;cursor:pointer;padding:2px 0}
   .foldbtn:hover{color:var(--ink)}
+  .foldbtn:disabled{opacity:.45;cursor:not-allowed}
   .totdetail[hidden]{display:none}
   .pay{display:flex;gap:8px;padding:8px 12px;flex-wrap:wrap}
   .pay button{flex:1 1 90px;padding:12px 8px;border:1px solid var(--edge);border-radius:var(--radius);background:var(--paper);color:var(--ink);cursor:pointer}
@@ -3118,6 +3119,8 @@
 <!-- ⭐⭐⭐ Working without the line ([TILL-151]) — design-handoff/without-the-line -->
 <!-- ⭐ the caution, at the moment of the act ([TILL-172]) — design-handoff/footer -->
 <dialog id="suredlg" data-testid="till-sure"><div class="dlg" id="surebody"></div></dialog>
+<!-- ⭐ F5 W1a: "Veg Meals: GST?" — the ask-once sheet behind the bill's "No tax rate · Fix" (rateAskOpen); the slabs on today's menu as big buttons, the pack's suggestion first -->
+<dialog id="ratedlg" data-testid="till-rate"><div class="dlg" id="ratebody"></div></dialog>
 <dialog id="linedlg" data-testid="till-line-dlg">
   <!-- ⚠️ a title, not a sentence ([TILL-152]) — the panel is understood from its symbols, not its heading -->
   <div class="lhead"><h3>The line</h3>
@@ -3592,7 +3595,7 @@
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()">Close</button></div>
-  <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person to sign in with their PIN. The name goes on every bill until somebody takes over.</div>
+  <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person for their counter PIN, or the first code from the owner. The name goes on every bill until somebody takes over.</div>
 </div></dialog>
 
 <dialog id="shiftdlg"><div class="dlg">
@@ -3928,6 +3931,7 @@
 <script src="/engine/pricing.js" onerror="engineMissed('pricing')"></script>
 <script src="/engine/offers.js" onerror="engineMissed('offers')"></script>
 <script src="/engine/tax.js" onerror="engineMissed('tax')"></script>
+<script src="/app/tax-slab-ui.js" onerror="engineMissed('tax-slab-ui')"></script>   <!-- F5 W1a: the ask-once rate menu, ONE copy with the catalogue (cbSlabMenu · cbSlabMenuHTML); an older kit without it still bills, and the sheet says where to set the rate -->
 <script src="/engine/search.js" onerror="engineMissed('search')"></script>
 <!-- ⭐ VARIANTS. One product, many combinations: what makes two of them the same, what the choices add, and
      how to say them. Extracted so the storefront and order capture ask the same question the till does. -->
@@ -4174,6 +4178,8 @@ function personLoad(){
   var p = null; try { p = JSON.parse(ls.get('cb_till_person', '') || 'null'); } catch (_) { p = null; }
   return (p && p.token && p.entity_id) ? p : null;
 }
+/** what kind of person this is: the chooser's word, else the identity's, else the token's own claim (F5 W1a: a manager's session says identity_type) */
+function personKind(chosen, identity, claims){ return (chosen && chosen.kind) || (identity && identity.kind) || claims.identity_type || null; }
 /** the session to keep, from the sign-in's own answer — the shop it opens comes from the identity the server named */
 function personOf(token, idn, who){
   var ent = (idn && idn.entity_id) || (who && who.entity) || null;
@@ -4184,7 +4190,7 @@ function personOf(token, idn, who){
            by: (who && who.id) || (idn && (idn.user_id || idn.identity_id)) || null, by_name: (who && who.name) || (idn && idn.display_name) || null,
            /* ⭐ M09: the identity id the SERVER knows this person by — what a bill's till.by must say (tillStamp, lib/holder.js) */
            identity_id: claims.identity_id || (idn && idn.identity_id) || null,
-           kind: (who && who.kind) || (idn && idn.kind) || null, device_id: deviceId(), jti: claims.jti || null,
+           kind: personKind(who, idn, claims), device_id: deviceId(), jti: claims.jti || null,
            /* ⭐ M09: when it was issued — personRenew() trades a session older than a day for a fresh one while the line is up */
            iat: claims.iat ? Number(claims.iat) * 1000 : Date.now(),
            exp: claims.exp ? Number(claims.exp) * 1000 : null, at: Date.now() };
@@ -8211,11 +8217,17 @@ function rowFacts(i){
   (i.facts || []).forEach(function(f){ bits.push('<b>' + esc(f.n) + '</b> ' + esc(f.v)); });
   return bits.length ? '<div class="facts">' + bits.join(' · ') + '</div>' : '';
 }
+/**
+ * ⭐ THE ONE RESOLVE INPUT (F5 W1a; critic 2). Five places built their own narrowed { name, tax_slab, hsn, category }, so a rate typed on the item
+ * (gst_rate) or a category by id never reached the counter and billed 0%. CBTaxSlab.inputOf reads the row as the server and the catalogue do;
+ * without the engine (an old kit offline) a line carries no tax keys, which the absent engine could not have read anyway.
+ */
+function taxInputOf(item){ return (window.CBTax && CBTax.slab && CBTax.slab.inputOf) ? CBTax.slab.inputOf(item) : {}; }
 function rateOf(i){
   if (!S || !window.CBTax || !shopTax().charges) return null;
   if (i._rate !== undefined) return i._rate;
   var r = null;
-  try { var out = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
+  try { var out = CBTax.slab.resolve({ item_data:taxInputOf(i),
           face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
     r = (out && out.rate != null) ? out.rate : null; } catch (_) { r = null; }
   i._rate = r;
@@ -15146,7 +15158,7 @@ function cardPrice(i){
 function cardTaxWords(i){
   if (!shopTax().charges || !window.CBTax || !CBTax.slab) return '';
   try {
-    var r = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
+    var r = CBTax.slab.resolve({ item_data:taxInputOf(i),
       face:S.face || {}, slabs:S.slabs || [], categories:S.categories || [] });
     return (r && r.rate != null) ? (r.rate + '% ' + schemeWord()) : 'no ' + schemeWord() + ' slab set';   /* CX1: the pack's word */
   } catch (_) { return ''; }
@@ -17098,7 +17110,7 @@ async function addWeighed(w){
               mrp: (Number(i.mrp) > 0 ? Number(i.mrp) : null),
               /* ⭐ the same stamp addItem() puts on a line — a reprint must show which item needed checking */
               age: ageOf(i) || null,
-              item_data: { name: i.name, tax_slab: i.tax_slab, hsn: i.hsn, category: i.category } });
+              item_data: Object.assign({ name: i.name }, taxInputOf(i)) });
   toastLine(i.name + ' · ' + n + ' ' + (i.unit || 'kg') + ' — ' + w.why);
   /* ⚠️ INSIDE, AFTER THE AWAIT — not at the call site. addWeighed() can return early (ageAllow() refused),
      and the call site cannot know that without awaiting it; announcing from out there would speak an item
@@ -17146,7 +17158,7 @@ function addItem(i, qty, mods){
                     * [[feedback-the-data-decides-not-the-trade]]
                     */
                    station:i.station || null,
-                   item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
+                   item_data:Object.assign({ name:i.name }, taxInputOf(i)) });
   /* ⭐ NO TAX RATE IS SAID WHERE IT IS SOLD (BF1), not found on the slip afterwards. The bill also carries the warning (billWarnHTML). */
   /* ⚠️ M42 (walk 2026-10-10): this also wrote the footer line, which outlived the bill — after Park it still said
      "Masala Dosa has no tax rate" over an empty bill. The bill's own row (billWarnHTML) says it, and clears with the bill. */
@@ -18305,10 +18317,11 @@ function packCollectsWithoutId(){ var pack = shopPack(); return !!(pack && pack.
  * because "Poori" had no slab. So the counter asks it here, on the cart (before paying) and on a stored bill (a reprint), and says
  * the product's name. null rate = "nobody said"; a real 0 (exempt) is a rate and is not listed. Names only — no figure is worked out.
  */
-function unratedNames(lines){
+function unratedLines(lines){
   if (!shopTax().charges) return [];
-  return (lines || CART).filter(function(l){ return l.gst_rate == null; }).map(function(l){ return l.name; });
+  return (lines || CART).filter(function(l){ return l.gst_rate == null; });
 }
+function unratedNames(lines){ return unratedLines(lines).map(function(l){ return l.name; }); }
 /** the same question for a STORED bill: only a tax invoice can be wrong about it */
 function unratedOnBill(bill){
   if (!bill || bill.kind !== 'tax') return [];
@@ -18351,9 +18364,11 @@ function shopStateClash(){
  * ⚠️ ONE LINE PER PROBLEM, A COUNT AND A Fix › (walk 2026-10-09, M40). It was a 7-line red paragraph on every sale, and the
  * dialog said it again. The full wording sits behind Fix › (billWarnFix), with the door to where it is fixed.
  */
-function billWarnLine(which, words, act){
-  return '<div class="t warnrow" data-testid="till-warn-' + which + '"><span>⚠ ' + esc(words) + '</span><span>'
-    + '<button type="button" class="foldbtn" data-testid="till-warn-' + which + '-fix" onclick="billWarnFix(\'' + which + '\')">' + esc(act || 'Fix') + ' ›</button></span></div>';
+function billWarnLine(which, words, act, allowed){
+  var refused = !!(allowed && !allowed.ok);   /* F5 W1a: shown, greyed, with the reason — never hidden ([[feedback-show-action-enable-by-role]]) */
+  return '<div class="t warnrow" data-testid="till-warn-' + which + '"><span>⚠ ' + esc(words) + (refused ? ' · ' + esc(allowed.why) : '') + '</span><span>'
+    + '<button type="button" class="foldbtn" data-testid="till-warn-' + which + '-fix"' + (refused ? ' disabled title="' + esc(allowed.why) + '"' : '')
+    + ' onclick="billWarnFix(\'' + which + '\')">' + esc(act || 'Fix') + ' ›</button></span></div>';
 }
 /**
  * ⭐ M32 (walk 2026-10-10) — A COUNTER BILLING ON YESTERDAY'S PRICES SAYS SO WHERE IT BILLS. The till let a whole sale go through
@@ -18369,7 +18384,7 @@ function dayWarnWords(){
 function billWarnHTML(m){
   var out = [], un = unratedNames(), cl = shopTax().charges ? shopStateClash() : null;
   var dw = dayWarnWords(); if (dw) out.push(billWarnLine('day', dw, 'Open the day'));
-  if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate'));
+  if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate', 'Fix', rateMay()));
   if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
   var bw = buyerWarnWords(m); if (bw) out.push(billWarnLine('buyer', bw, 'Name them'));
   return out.join('');
@@ -18389,9 +18404,16 @@ function buyerWarnWords(m){
 /** the amount from which the pack wants the buyer named (reg-au tax.taxInvoice.buyer_identity_from_minor), in the shop's money */
 function buyerFromMajor(){ try { var t = shopPack().tax.taxInvoice; return booksMajor(t.buyer_identity_from_minor); } catch (_) { return 0; } }
 /** ⭐ Fix › — the full wording, then the one door: the catalogue for a rate, the shop's profile for the GSTIN / address */
+/** the doors that need no dialog — the day menu, the name box (CX1), and the rate sheet (F5 W1a) — true when one opened */
+function billWarnDoor(which){
+  if (which === 'day') { openMenuAt('day'); return true; }
+  if (which === 'buyer') { var cn = document.getElementById('cname'); if (cn) { try { cn.focus(); } catch (e) { cbQuiet('billWarnFix:1', e); } } return true; }   /* CX1: the name box is the fix */
+  /* F5 W1a: an owner or a manager answers HERE, once per item (DECISIONS 2026-10-18 TAX MISSING; "yes F5" (b)); anyone else sees the door greyed above */
+  if (which === 'norate' && rateMay().ok && unratedLines().length) { rateAskOpen(unratedLines()[0]); return true; }
+  return false;
+}
 async function billWarnFix(which){
-  if (which === 'day') { openMenuAt('day'); return; }
-  if (which === 'buyer') { var cn = document.getElementById('cname'); if (cn) { try { cn.focus(); } catch (e) { cbQuiet('billWarnFix:1', e); } } return; }   /* CX1: the name box is the fix */
+  if (billWarnDoor(which)) return;
   var st = which === 'state', cl = st ? shopStateClash() : null, un = st ? [] : unratedNames();
   var msg = st ? (cl ? cl.words + '\n\n' + cl.fix : 'The shop’s details agree now.')
                : (un.length ? un.join(', ') + '\n\nNo GST is charged on ' + (un.length === 1 ? 'it' : 'them')
@@ -18399,6 +18421,78 @@ async function billWarnFix(which){
   var go = await sure(msg, st ? 'Open the shop’s details' : 'Open the catalogue', st ? 'GSTIN state ≠ address' : 'No tax rate', 'Close');
   /* the state half opens Settings › Your shop (SET1); the rate half still opens the workshop's catalogue until CAT1 builds catalogue.html */
   if (go) { try { window.open(st ? cbRoot() + '/settings.html#/shop' : cbHome() + '#/app/catalogue', '_blank', 'noopener'); } catch (e) { cbQuiet('billWarnFix:2', e); } }
+}
+/**
+ * ── ⭐⭐ F5 W1a · THE COUNTER ASKS THE RATE ONCE, THEN SELLS (DECISIONS 2026-10-18 "TAX MISSING"; critic 1; "yes F5" (b): owner or manager) ──
+ * "Veg Meals: GST?" with the shop's live slabs on TODAY'S menu as big buttons (cbSlabMenu: the pack's dated rate_menu, so a dead 12% is never
+ * offered) and the pack's suggestion for the item's code first ("996331 · restaurant · 5%", its citation behind ⓘ). A tap ASKS FIRST (a rate is a
+ * money promise on every bill from now on), then POST /api/till/rate writes through the engine's one writer on the server (tax-slab.setOn);
+ * the shelf row here takes the same slab, the bill's lines re-read it and re-price through the engine. A refusal (403 a cashier or a key ·
+ * 409 the shop charges no tax · 404) is said in the sheet, in the server's words — never silent. Nothing is queued: an intention, not a bill.
+ */
+/** who may answer: the credential this browser SPEAKS with (the server reads the same one) — the shop itself, or a manager's own session; a key never.
+ *  The rule and its sentence are app/tax-slab-ui.js cbRateMay (the api's setsRate, shared with the catalogue's row); an older kit without that file cannot set a rate here at all, and says so */
+function rateMay(){
+  if (typeof cbRateMay !== 'function') return { ok: false, why: 'This counter cannot set a rate yet. Set it in the catalogue.' };
+  var person = personOn() ? CloudHost.person : null;
+  var member = person ? ((S && S.staff) || []).filter(function(staff){ return String(staff.id) === String(person.identity_id || person.by); })[0] : null;
+  return cbRateMay(person && { owner: person.kind === 'entity', hat: member && member.hat });
+}
+var RATE = { line: null, item: null };
+/** today's slabs as a menu for this line, the pack's suggestion first; null on a kit without the menu. The code only ever SUGGESTS (critic 12): hsn first, else the shop's own code — never stamped */
+function rateMenuFor(item, line){
+  if (typeof cbSlabMenu !== 'function') return null;
+  var code = (item && (item.hsn || item.code)) || line.hsn || '';
+  return cbSlabMenu((S && S.slabs) || [], shopPack(), code);
+}
+/** the sheet's body: "<item>: GST?", the menu (or where to set it instead), the outcome line, Not now */
+function rateAskHTML(line, menu){
+  return '<h3 data-testid="till-rate-title">' + esc(line.name) + ': ' + esc(schemeWord()) + '?</h3>'
+    + (menu ? cbSlabMenuHTML(menu, { pick: function(id){ return "rateAskPick('" + esc(id) + "')"; } })
+            : '<p class="ssay warn">No rate menu on this counter yet. Set the rate in the catalogue.</p>')
+    + '<p class="ssay warn" id="rateout" data-testid="till-rate-out" hidden></p>'
+    + '<div class="sbtns"><button class="pill" data-testid="till-rate-no" onclick="rateAskClose()">Not now</button></div>';
+}
+/** open the ask-once sheet for an unrated line: remember the line and its shelf row, draw the menu, show the sheet */
+function rateAskOpen(line){
+  var sheet = document.getElementById('ratedlg'), box = document.getElementById('ratebody');
+  if (!sheet || !box || !line) return;
+  var item = ((S && S.items) || []).filter(function(row){ return String(row.item_id) === String(line.item_id); })[0] || null;
+  RATE.line = line; RATE.item = item;
+  box.innerHTML = rateAskHTML(line, rateMenuFor(item, line));
+  if (!sheet.open) sheet.showModal();
+}
+function rateAskClose(){ var sheet = document.getElementById('ratedlg'); if (sheet && sheet.open) sheet.close(); }
+/** the outcome, said in the sheet where the tap happened (or on the note line when the sheet is gone) */
+function rateSaid(words){ var outLine = document.getElementById('rateout'); if (!outLine) { toastLine(words); return; } outLine.textContent = words; outLine.hidden = false; }
+/** a slab tapped: confirm, POST /api/till/rate (the server decides who may), then the line re-prices */
+/** the shop's slab row by id; null without the tax engine or when no row carries that id */
+function rateSlabById(id){
+  if (!window.CBTax || !CBTax.slab) return null;
+  return ((S && S.slabs) || []).filter(function(row){ return String(row.definition_id || row.id) === String(id); })[0] || null;
+}
+/** "GST 5%", or the slab's name when it carries no rate */
+function rateWords(picked){ return picked.rate != null ? schemeWord() + ' ' + picked.rate + '%' : (picked.name || 'this slab'); }
+async function rateAskPick(id){
+  var line = RATE.line, slab = line ? rateSlabById(id) : null;
+  var picked = slab ? CBTax.slab.slabOf(slab) : null;
+  if (!picked) return;
+  var agreed = await sure(line.name + ': ' + rateWords(picked) + ' from now on.', 'Set rate', line.name + ': ' + schemeWord() + '?', 'Not now');
+  if (!agreed) return;
+  var answer = await HOST.tillPost('/api/till/rate', { item_id: String(line.item_id), slab_id: String(picked.id) }, { noQueue: true });
+  if (!answer || !answer.ok) { rateSaid((answer && answer.why) || 'Not set. Nothing changed.'); return; }
+  rateApplied(line.item_id, slab, answer);
+}
+/** the server said yes: the shelf row takes the slab (setOn — the same writer the server used), the bill's lines re-read it, the bill re-prices; the next unrated item is asked */
+function rateApplied(item_id, slab, answer){
+  var item = RATE.item;
+  if (item) { CBTax.slab.setOn(item, slab); delete item._rate; }
+  CART.forEach(function(cartLine){ if (item && String(cartLine.item_id) === String(item_id)) cartLine.item_data = Object.assign({ name: item.name }, taxInputOf(item)); });
+  price();
+  toastLine((answer && answer.words) || ((item ? item.name : 'It') + ' now carries the rate.'));
+  rateAskClose();
+  var next = unratedLines().filter(function(unrated){ return String(unrated.item_id) !== String(item_id); })[0];
+  if (next) rateAskOpen(next);
 }
 /**
  * ⭐⭐⭐ WHAT WOULD GO WRONG TODAY (2026-09-08). Athi: *"if the tax is not there, the system should alert — couldn't find the tax
@@ -22574,7 +22668,7 @@ function rcvLineValue(l){ return r2((Number(l.counted) || 0) * (Number(l.rate) |
 function rcvDefaultRate(i){
   if (!i || !window.CBTax || !S || !shopTax().charges) return null;
   try {
-    var r = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
+    var r = CBTax.slab.resolve({ item_data:taxInputOf(i),
       face:S.face || {}, slabs:S.slabs || [], categories:S.categories || [] });
     return (r && r.rate != null) ? r.rate : null;
   } catch (_) { return null; }
@@ -26080,7 +26174,7 @@ function SIGN(){
 var USIGN = usignFresh();
 function usignFresh(){
   return { win: null, person: null, idn: null, pending: null, held: null, opening: '', busy: false,
-           forceEnrol: false, floatAsk: false, closeWhenIn: false, pinOffered: false, localPerson: null };
+           forceEnrol: false, floatAsk: false, closeWhenIn: false, pinOffered: false, localPerson: null, pickName: '', newPin: '' };
 }
 /* the window's own session keeping (cb_sess) goes nowhere on a counter — becomeShop() is the one writer of a session here */
 var USIGN_STORE = { getItem: function(){ return null; }, setItem: function(){}, removeItem: function(){} };
@@ -26132,6 +26226,7 @@ function usignLocal(){
 /** [TILL-192] forceEnrol: true only when pairAgain() called this — see its own comment. A routine sign-in
  * (whoAct()'s 'signin' door) passes nothing, and paired()'s existing key is trusted as it always was. */
 function usignOpen(forceEnrol){
+  USIGN.pickName = ''; USIGN.newPin = '';   /* R132: a picked worker's words belong to her pick only (whoPick sets the name after this) */
   /* ⚠️ W1 (2026-10-12): the window still mounted from the last sign-in is taken DOWN first. usignFresh() dropped the handle and
      usignMount() found nothing to destroy — the old window's document listeners (submit · click · input) lived on, so every
      press from then on drove TWO machines: the picker's PIN signed nobody in, an unlock by the next person lost its PIN offer. */
@@ -26143,6 +26238,45 @@ function usignOpen(forceEnrol){
   if (d && d.showModal) { try { d.showModal(); } catch (e) { cbQuiet('usignOpen:2', e); } }
 }
 function usignClose(){ var d = document.getElementById('usigndlg'); if (d && d.open) { try { d.close(); } catch (e) { cbQuiet('usignClose:1', e); } } }
+
+/**
+ * ⭐ R132 · SAY WHAT THIS PERSON CAN SIGN IN WITH (silence was the bug: "That sign-in didn't work" named nothing to use instead).
+ * A staff mobile is no way in unless the owner proved it, so the server refuses it with its one sentence for every reason (it must,
+ * or it tells a stranger who works here). This counter can say the way in without telling anyone anything: a counter PIN, or the
+ * first code the owner hands out (People › name › Reset code). Never the typed value (Q19); the name is the picked one.
+ */
+function usignRefusalWords(name, step){
+  var reset = 'People › ' + (name || 'your name') + ' › Reset code.';
+  if (step === 'verify') return 'That code did not work. Check it, or ask the owner for a new one: ' + reset;
+  return (name ? name + ' signs in' : 'Staff sign in') + ' with a counter PIN, or the first code from the owner. No code yet? Ask the owner: ' + reset;
+}
+/**
+ * the server's answer to ask / verify / pin, in this counter's words. A first code is SHOWN by the owner (People › Reset code), never
+ * sent; the server's own sentence for it still says "set a PIN in Co-assists" (frozen sign-in text), so the counter says it itself.
+ */
+function usignAnswer(path, reqBody, reply, name){
+  var body = reply && reply.body, door = usignDoor(path);
+  if (!body || typeof body !== 'object') return reply;
+  if (name && usignWasRefused(door, reply)) body.message = usignRefusalWords(name, door);   /* the owner, or a typed ID, keeps the server's sentence */
+  else if (door === 'ask' && usignAskedFirstCode(reply)) body.message = 'Type the first code the owner gave you. Then choose a Counter PIN.';
+  else if (door === 'pin' && usignWasOk(reply) && reqBody && reqBody.pin) USIGN.newPin = String(reqBody.pin);
+  return reply;
+}
+/** which sign-in door a path is ('ask' · 'verify' · 'pin'), '' for anything else */
+function usignDoor(path){
+  var text = String(path || '');
+  return text.indexOf('/api/signin/') >= 0 ? text.split('/').pop() : '';
+}
+function usignWasOk(reply){
+  return reply.status >= 200 && reply.status < 300;
+}
+/** the server's one sentence for every hidden reason (lib/otp.js SIGNIN_REFUSED_SENTENCE) */
+function usignWasRefused(door, reply){
+  return (door === 'ask' || door === 'verify') && reply.status === 400 && /^That sign-in didn.t work/.test(String(reply.body.message || ''));
+}
+function usignAskedFirstCode(reply){
+  return usignWasOk(reply) && reply.body.kind === 'actor' && reply.body.need === 'code';
+}
 
 /** the window, mounted fresh into #usignbody — the ONLY place this page calls CBSignin.mount */
 function usignMount(){
@@ -26165,7 +26299,7 @@ function usignMount(){
         message: (lk && SIGN().pinLocked(lk)) ? SIGN().pinAfter(lk, false).why
           : 'There is no counter PIN for ' + (typedId || 'you') + ' on this counter yet. The first sign-in here needs the internet.' } });
     }
-    return SIGN().transport(c)(path, reqBody, token);
+    return Promise.resolve(SIGN().transport(c)(path, reqBody, token)).then(function(reply){ return usignAnswer(path, reqBody, reply, USIGN.pickName); });
   };
   USIGN.win = SIGN().mount(body, c);
   USIGN.win.machine.onChange(function(st){
@@ -26185,7 +26319,7 @@ function usignButtons(){
   var at = USIGN.win ? USIGN.win.state().at : 'out';
   if (at === 'in' && USIGN.person) {
     /* ⭐ and what it means for this counter, which is the next question anybody has */
-    if (a) a.innerHTML = '<p class="note" data-testid="till-usign-in">' + esc(usignCounterLine()) + '</p>';
+    if (a) a.innerHTML = '<p class="note" data-testid="till-usign-in">' + esc(usignInWords(USIGN.person)) + '</p>';
     b.innerHTML = '<button class="pri" data-testid="till-usign-done" onclick="usignClose()">Done</button>'
       /**
        * ⚠️⚠️ SIGNING OUT DOES NOT CLOSE THE COUNTER. Athi: *"the person sign-out and another person sign-in,
@@ -26220,8 +26354,15 @@ function usignRestore(why){
 function usignCounterLine(){
   try {
     var a = DAY().assign(dayState());
+    /* R132: dayState() carries no shop, so the engine always answered "Sign in to connect this counter to a shop" - said under a box that SAYS the person is in. True only with no shop held. */
+    if (a.action === 'shop' && ((S && (S.entity_id || (S.shop && S.shop.name))) || paired())) return '';
     return a.why || a.say || '';
   } catch (_) { return ''; }
+}
+/** the signed-in note never goes blank (R132 hid the untrue "connect" line, which left an empty, invisible box): the counter line, else who is in */
+function usignInWords(person){
+  var name = person && person.name;
+  return usignCounterLine() || (name ? name + ' is signed in at this counter.' : 'Signed in at this counter.');
 }
 
 /**
@@ -26581,7 +26722,9 @@ async function usignAfterIn(p, idn){
                            '', 'Cash in the drawer (' + curSym() + ')', 'Who is at this counter');
     whoFloat(Math.max(0, Number(float0) || 0));
   }
-  if (idn && !pinUsableFor(p) && window.crypto && crypto.subtle && USIGN.win) {
+  var offerable = idn && !pinUsableFor(p) && window.crypto && crypto.subtle && USIGN.win;
+  if (offerable && USIGN.newPin) return usignKeepChosenPin(p, idn);   /* R132: chosen in this very sign-in: one ask */
+  if (offerable) {
     /* TOUR-FIX1: the PIN is offered INSIDE a sign-in window that is already open — never by opening one over the counter (the tour: a Counter PIN
        window covered the bill on every visit). With no window up, the offer waits on "Who is at the counter?" (pinLaterOffer). */
     var d = document.getElementById('usigndlg');
@@ -26590,6 +26733,12 @@ async function usignAfterIn(p, idn){
     USIGN.win.machine.offerPin();
     return;
   }
+  if (USIGN.closeWhenIn) usignClose();
+}
+/** R132: the PIN was just CHOSEN in this window (the server's first-sign-in step): the same four digits go in this counter's book, and nothing asks again */
+async function usignKeepChosenPin(person, identity){
+  var chosen = USIGN.newPin; USIGN.newPin = ''; USIGN.idn = identity;
+  try { await usignLocal().save(null, chosen); } catch (e) { cbQuiet('usignKeepChosenPin:1', e); pinLaterOffer(person, identity); }
   if (USIGN.closeWhenIn) usignClose();
 }
 /** the drawer's float, for the person just signed in — part of G2, the only writer of who is on */
@@ -26762,15 +26911,36 @@ function whoAdd(){
  * The staff list carries identity ids, not logins, which is exactly what the PIN book is also keyed by.
  */
 function whoPick(id, name, kind){
-  var target = kind === 'entity' ? ((S && S.entity_id) || '') : id;
+  var entity = kind === 'entity', target = entity ? ((S && S.entity_id) || '') : id;
   try { document.getElementById('whodlg').close(); } catch (e) { cbQuiet('whoPick:1', e); }
   usignOpen();
   USIGN.floatAsk = true; USIGN.closeWhenIn = true;
-  var m = USIGN.win && USIGN.win.machine;
-  var loc = target ? SIGN().pinFind(pinBook(), target) : null;
-  if (m && loc && !SIGN().pinLocked(loc)) { m.typed(target); m.go(); }      /* the window finds the same entry and opens the PIN box */
-  else if (m) m.refuse((loc ? SIGN().pinAfter(loc, true).why + ' ' : '')
-      + (lineUp() ? name + ' — type your user ID to sign in.' : 'There is no counter PIN for ' + name + ' on this counter yet. The first sign-in here needs the internet.'));
+  USIGN.pickName = entity ? '' : name;
+  var machine = USIGN.win && USIGN.win.machine;
+  /* R132: the pick carries WHO she is (the user ID the snapshot carried), so she is asked only for what proves it; the shop itself keeps its old door */
+  if (machine) whoAsk(machine, { id: target, name: name, entity: entity, handle: entity ? '' : whoHandle(id) });
+}
+/** her counter PIN if she has one here, else the first code from the owner; never "type your user ID" for a person we know */
+function whoAsk(machine, person){
+  var held = person.id ? SIGN().pinFind(pinBook(), person.id) : null, locked = !!(held && SIGN().pinLocked(held));
+  if (held && !locked) { machine.typed(person.id); machine.go(); return; }      /* the window finds the same entry and opens the PIN box */
+  if (person.handle && lineUp() && !locked) {
+    machine.words.code = 'First code from the owner';                           /* shown by the owner, not sent: the box says so */
+    machine.typed(person.handle); machine.go();                                 /* the window asks the server, which opens the code box */
+    return;
+  }
+  machine.refuse((held ? SIGN().pinAfter(held, true).why + ' ' : '') + whoNoPinWords(person));
+}
+function whoNoPinWords(person){
+  if (!lineUp()) return 'There is no counter PIN for ' + person.name + ' on this counter yet. The first sign-in here needs the internet.';
+  if (person.entity) return person.name + ' — type your user ID to sign in.';
+  return person.name + ' has no counter PIN here yet. Ask the owner for a first code: People › ' + person.name + ' › Reset code.';
+}
+/** the user ID the snapshot carried for a picked person ('' when it did not: an older server) */
+function whoHandle(id){
+  var list = (S && S.staff) || [];
+  for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(id)) return String(list[i].user_id || '');
+  return '';
 }
 /**
  * ── ⭐⭐⭐ FOUR DIFFERENT THINGS A COUNTER CAN "STOP" FOR (Athi, 2026-09-17) ─────────────────────────────────────

@@ -354,7 +354,9 @@ async function startApi() {
     try {
       const reply = await fetch(BASE + '/health');
       if (reply.ok) return;
-    } catch (_) {}
+    } catch (notUpYet) {
+      require('../lib/logger').fellBack('sim-load: the server is not answering yet — asking again', notUpYet, 'debug');
+    }
     await new Promise((ok) => setTimeout(ok, 200));
   }
   die('the api did not answer /health on ' + BASE);
