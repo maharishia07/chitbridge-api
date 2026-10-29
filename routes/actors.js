@@ -844,7 +844,7 @@ router.get('/', auth, async (req, res) => {
     });
 
     res.json(
-      Object.assign(PL.pageOut('actors', result.rows, pg), {
+      Object.assign(PL.pageOut('actors', result.rows.map(contract.listedActor), pg), {
         summary: {
           active: summary.active || 0,
           on_break: (summary.short_break || 0) + (summary.leave || 0),

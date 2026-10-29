@@ -4,6 +4,9 @@
   "DELETE /api/actors/:id/pin": {
    "foreign_id_404": true
   },
+  "DELETE /api/channels/:id": {
+   "foreign_id_404": true
+  },
   "DELETE /api/crm/followups/:id": {
    "foreign_id_404": true,
    "output_allowlist": true
@@ -23,6 +26,9 @@
    "output_allowlist": true
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/relationships/suppliers/:id": {
    "foreign_id_404": true
   },
   "DELETE /api/schemas/fields/:field_key": {
@@ -319,6 +325,12 @@
   "PATCH /api/quick-keys/groups/:id": {
    "foreign_id_404": true
   },
+  "PATCH /api/relationships/customers/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/relationships/suppliers/:id": {
+   "foreign_id_404": true
+  },
   "PATCH /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
@@ -329,6 +341,18 @@
    "foreign_id_404": true
   },
   "POST /api/actors/:id/otp": {
+   "foreign_id_404": true
+  },
+  "POST /api/capture/:id/convert": {
+   "foreign_id_404": true
+  },
+  "POST /api/capture/:id/dismiss": {
+   "foreign_id_404": true
+  },
+  "POST /api/capture/:id/raise": {
+   "foreign_id_404": true
+  },
+  "POST /api/capture/:id/structure": {
    "foreign_id_404": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
@@ -353,6 +377,15 @@
   },
   "POST /api/catalogue/network-store/:networkId/order": {
    "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/auto-raise": {
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/template": {
    "foreign_id_404": true
   },
   "POST /api/counters/:id/assign": {
@@ -382,7 +415,16 @@
   "POST /api/forms/instances/:id/sign": {
    "foreign_id_404": true
   },
+  "POST /api/identity/documents/:scheme/code": {
+   "foreign_id_404": true
+  },
+  "POST /api/identity/documents/:scheme/verify": {
+   "foreign_id_404": true
+  },
   "POST /api/quick-keys/groups/:id/items": {
+   "foreign_id_404": true
+  },
+  "POST /api/relationships/customers/:id/groups": {
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/accept": {
@@ -443,6 +485,48 @@
    "foreign_id_404": true
   },
   "PUT /api/connections/:id/respond": {
+   "foreign_id_404": true
+  },
+  "GET /api/attachments/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/supplies/:id": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/connectors/:actorId": {
+   "foreign_id_404": true
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "foreign_id_404": true
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "foreign_id_404": true
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/connectors/:actorId/connections/:connId": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/connections": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/erp-test": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/ping": {
+   "foreign_id_404": true
+  },
+  "POST /api/connectors/:actorId/regenerate-key": {
+   "foreign_id_404": true
+  },
+  "DELETE /api/definitions/:id": {
+   "foreign_id_404": true
+  },
+  "GET /api/definitions/:id": {
+   "foreign_id_404": true
+  },
+  "PUT /api/definitions/:id": {
    "foreign_id_404": true
   }
  }
