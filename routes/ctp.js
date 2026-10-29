@@ -79,14 +79,17 @@ async function manifest() {
      * could answer for a different installation than INSTALLATION_KEY names — `hosted_locally` records whether
      * an installation's rows live in THIS database, which is a statement each deployment makes about its peers.
      * My own identity comes from my own configuration, and the row only decorates it.
+     * ⚠️ RAIL-140 (a): ONLY MY OWN ROW. The read used to ORDER BY a match and fall back to any other active row, so with
+     * no row for INSTALLATION_KEY the manifest published another installation's key beside THIS deployment's public
+     * key — a peer would file my key under someone else's name. No row now means the configured key alone, said in the log.
      */
     const r = await query(
       `SELECT installation_key, label, region, domain, ctp_endpoint
-         FROM installation WHERE active
-         ORDER BY (installation_key = $1) DESC, hosted_locally DESC, installation_key LIMIT 1`,
+         FROM installation WHERE active AND installation_key = $1 LIMIT 1`,
       [process.env.INSTALLATION_KEY || 'platform-0']
     );
     me = r.rows[0] || null;
+    if (!me) log.fellBack('ctp manifest: no active installation row for INSTALLATION_KEY — answered with the configured key alone');
   } catch (e) {
     log.fellBack('ctp manifest: the read failed — answered with nothing', e);
     me = null;
