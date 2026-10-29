@@ -208,4 +208,5 @@ of file each thing is; this says what already does the job.
 | 11 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 11 | `move` | `rail.js` | Order = the order the server refused in: |
 | 11 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
+| 11 | `start` | `books-nightly.js` | in-process, every 6 hours (first run 10 minutes after start); BOOKS_NIGHTLY=0 turns it off |
 | 10 | `start` | `app.html` |  |
