@@ -846,6 +846,7 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
 });
 
 const groupsum = require('../lib/groupsum');
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
 router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
   try {
     const me = ent(req);
@@ -865,11 +866,12 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
       folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
       archived: req.query.archived === '1',
       chit_ids: ids.length ? ids : undefined,
-      overdue_days: flags.overdue_days
+      overdue_days: flags.overdue_days,
+      blind: await cost.isCostBlind(req, me) /* RAIL-146g: ONE cost read; a blind actor's sum counts the shop's sales only */
     });
     /* S34: every key lib/groupsum requirement answers (selected and selection_requested only for a ticked selection) */
     // prettier-ignore
-    res.json({ scope: sum.scope, folder_id: sum.folder_id, selected: sum.selected, selection_requested: sum.selection_requested, chits: sum.chits, chits_with_lines: sum.chits_with_lines, chits_without_lines: sum.chits_without_lines, has_catalogue: sum.has_catalogue, requirement: sum.requirement, flags: sum.flags, money: sum.money });
+    res.json({ scope: sum.scope, folder_id: sum.folder_id, selected: sum.selected, selection_requested: sum.selection_requested, chits: sum.chits, chits_with_lines: sum.chits_with_lines, chits_without_lines: sum.chits_without_lines, has_catalogue: sum.has_catalogue, requirement: sum.requirement, flags: sum.flags, money: sum.money, cost_hidden: sum.cost_hidden });
   } catch (err) {
     console.error('groupsum:', err.message);
     problem(req, res, failed(err, req, 'Group sum failed'));
