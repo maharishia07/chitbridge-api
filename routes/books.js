@@ -1778,15 +1778,20 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
   try {
     const { kind, source, parsed } = moveInBody(req);
     const g = MI.guess(kind, parsed.headers);
-    res.json(
-      Object.assign({ kind, source, headers: parsed.headers }, g, {
-        rows_total: parsed.rows.length,
-        sample: parsed.rows.slice(0, 5),
-        sheet: parsed.sheet || null,
-        sheets: parsed.sheets || null,
-        header_row: parsed.headerRow || 1
-      })
-    );
+    res.json({
+      kind,
+      source,
+      headers: parsed.headers,
+      fields: g.fields,
+      guess: g.guess,
+      missing: g.missing,
+      ready: g.ready,
+      rows_total: parsed.rows.length,
+      sample: parsed.rows.slice(0, 5),
+      sheet: parsed.sheet || null,
+      sheets: parsed.sheets || null,
+      header_row: parsed.headerRow || 1
+    });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1905,7 +1910,8 @@ router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /c
       throw Object.assign(new Error('Only a Tally export comes as XML — export ' + PR.SOURCE_WORD[source] + "'s report as CSV or Excel."), {
         code: 'BOOKS_BAD_REQUEST'
       });
-    res.json(Object.assign({ part, source }, PR.preflight(b, part, curOf(req))));
+    const guessed = PR.preflight(b, part, curOf(req)); /* a Tally XML carries no sheet, sheets or header_row (undefined, as before) */
+    res.json({ part, source, format: guessed.format, headers: guessed.headers, fields: guessed.fields, guess: guessed.guess, missing: guessed.missing, ready: guessed.ready, rows_total: guessed.rows_total, sample: guessed.sample, sheet: guessed.sheet, sheets: guessed.sheets, header_row: guessed.header_row });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1963,7 +1969,7 @@ router.post('/compare/snapshots', auth, noKey, on, comparer, ...checked('POST /c
       if (!id) throw Object.assign(new Error('This snapshot already has their ' + PR.PART_WORD[part].toLowerCase() + '.'), { status: 409 });
       return Object.assign({}, head, { part, rows: r.rows.length, skipped: r.skipped });
     });
-    res.json(out);
+    res.json({ snapshot_id: out.snapshot_id, label: out.label, source: out.source, period_from: out.period_from, period_to: out.period_to, part: out.part, rows: out.rows, skipped: out.skipped });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2080,7 +2086,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req));
-    if (r.ok) return res.json(r);
+    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
     const message = r.refusals.map((x) => x.why).join(' ');
     problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy: { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals } });
   } catch (err) {
@@ -2269,7 +2275,9 @@ router.get('/recurring', auth, owner, on, ...checked('GET /recurring'), async (r
 /** POST /recurring { name, event: { kind, …fields as POST /events, no date }, frequency: monthly|quarterly|yearly, next_on, end_on?, auto? } */
 router.post('/recurring', auth, owner, on, ...checked('POST /recurring'), async (req, res) => {
   try {
-    res.json(await RC().create(ctx(req), req.books, req.body || {}, byOf(req)));
+    const template = await RC().create(ctx(req), req.books, req.body || {}, byOf(req));
+    /* entity first: the web contract reads it on the row (docs/contracts/web-api.json); absent when the store's COLS do not select it */
+    res.json({ entity: template.entity, recurring_id: template.recurring_id, name: template.name, event: template.event, frequency: template.frequency, next_on: template.next_on, anchor_day: template.anchor_day, end_on: template.end_on, auto: template.auto, active: template.active, last_done_on: template.last_done_on, created_by: template.created_by, created_at: template.created_at, updated_at: template.updated_at, due: template.due });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2278,7 +2286,8 @@ router.post('/recurring', auth, owner, on, ...checked('POST /recurring'), async 
 router.patch('/recurring/:id', auth, owner, on, ...checked('PATCH /recurring/:id'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req)));
+    const template = await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req));
+    res.json({ entity: template.entity, recurring_id: template.recurring_id, name: template.name, event: template.event, frequency: template.frequency, next_on: template.next_on, anchor_day: template.anchor_day, end_on: template.end_on, auto: template.auto, active: template.active, last_done_on: template.last_done_on, created_by: template.created_by, created_at: template.created_at, updated_at: template.updated_at, due: template.due });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2287,7 +2296,8 @@ router.patch('/recurring/:id', auth, owner, on, ...checked('PATCH /recurring/:id
 router.delete('/recurring/:id', auth, owner, on, ...checked('DELETE /recurring/:id'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().stop(ctx(req), String(req.params.id)));
+    const template = await RC().stop(ctx(req), String(req.params.id));
+    res.json({ entity: template.entity, recurring_id: template.recurring_id, name: template.name, event: template.event, frequency: template.frequency, next_on: template.next_on, anchor_day: template.anchor_day, end_on: template.end_on, auto: template.auto, active: template.active, last_done_on: template.last_done_on, created_by: template.created_by, created_at: template.created_at, updated_at: template.updated_at, due: template.due, stopped: template.stopped });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2296,7 +2306,8 @@ router.delete('/recurring/:id', auth, owner, on, ...checked('DELETE /recurring/:
 router.post('/recurring/:id/post', auth, owner, on, ...checked('POST /recurring/:id/post'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req)));
+    const out = await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req));
+    res.json({ posted: out.posted, template: out.template, date: out.date });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2304,7 +2315,8 @@ router.post('/recurring/:id/post', auth, owner, on, ...checked('POST /recurring/
 router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/:id/skip'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await RC().skip(ctx(req), String(req.params.id)));
+    const out = await RC().skip(ctx(req), String(req.params.id));
+    res.json({ skipped: out.skipped, template: out.template });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2435,7 +2447,8 @@ router.post('/fx-rates/import', auth, noKey, on, owner, ...checked('POST /fx-rat
   try {
     const e = ctx(req),
       b = req.body || {};
-    res.json(await withEntity(e, (h) => FXR.importCsv(h, e, req.books, b.csv, b.file_name ? String(b.file_name).slice(0, 120) : null, byOf(req))));
+    const out = await withEntity(e, (h) => FXR.importCsv(h, e, req.books, b.csv, b.file_name ? String(b.file_name).slice(0, 120) : null, byOf(req)));
+    res.json({ added: out.added, refused: out.refused, rates: out.rates });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2479,7 +2492,8 @@ router.post('/fx-revalue', auth, noKey, on, owner, ...checked('POST /fx-revalue'
   try {
     const e = ctx(req),
       { fy, p } = fxPeriod(req.body || {});
-    res.json(await withEntity(e, (h) => FXR.revalue(h, e, req.books, fy, p, byOf(req))));
+    const out = await withEntity(e, (h) => FXR.revalue(h, e, req.books, fy, p, byOf(req)));
+    res.json({ ok: out.ok, duplicate: out.duplicate, entry_no: out.entry_no, reversal_no: out.reversal_no, gain_minor: out.gain_minor, date: out.date, reverses_on: out.reverses_on }); /* a month already revalued answers duplicate, no reversal or dates */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

@@ -237,7 +237,45 @@ const WRITES_READY = [
   X('ledger-page', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/1300?limit=10', patch: LEDGER_PAGE_PATCH }),
   X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: STATEMENT_PATCH })
 ];
-const EXTRAS = WRITES_READY.concat([
+/* ── API-8 (2 of 2): months and the year, audit packs, recurring entries, exchange rates, the parallel run and the move-in preflight ── */
+const STAMP = '2026-09-30T10:00:00.000Z';
+const PACK_FULL = { pack_id: PARTY, kind: 'month', fiscal_year: '2026-27', period: 6, created_at: STAMP, sha256: 'abc', prev_sha256: 'aaa', manifest: { files: [{ file: 'tb.csv', sha256: 'x', bytes: 12, rows: 3 }], controls: { ok: true } }, storage_path: 'packs/x.zip', acknowledged_at: '2026-10-01T10:00:00.000Z', delete_after: '2035-04-01' };
+const PACK_BARE = Object.assign({}, PACK_FULL, { kind: 'exit', fiscal_year: null, period: null, prev_sha256: null, manifest: { files: [] }, storage_path: null, acknowledged_at: null, delete_after: null }); /* books_pack: fiscal_year, period, prev_sha256, storage_path, acknowledged_at, delete_after nullable */
+const PACK_BUILT = (stored) => ({ pack_id: PARTY, sha256: 'abc', stored, manifest: PACK_FULL.manifest, bytes: 1200, zip: stored ? null : Buffer.from('zip') }); /* books-pack build :268 */
+const RECURRING = { recurring_id: PARTY, name: 'Rent', event: { kind: 'expense', amount: 10 }, frequency: 'monthly', next_on: '2026-11-01', anchor_day: 1, end_on: null, auto: false, active: true, last_done_on: null, created_by: null, created_at: STAMP, updated_at: STAMP }; /* recurring_entry COLS: end_on, last_done_on, created_by nullable */
+const RECURRING_FULL = Object.assign({ entity: SHOP }, RECURRING, { end_on: '2027-03-31', auto: true, last_done_on: '2026-10-01', created_by: SHOP }); /* entity first, as the web contract's row carries it (tests/support/books-memory rows); the bare row leaves it out */
+const viewOf = (t) => Object.assign({}, t, { due: !!(t.active && t.next_on) }); /* books-recurring view :223 */
+const FX_ROW = { rate_id: PARTY, rate_date: DAY, currency: 'USD', rate: '83.5', source: 'manual', source_ref: null, created_at: STAMP };
+const CSV_TB = 'Particulars,Debit,Credit\nCash,100,0\nSales,0,100';
+const TB_DECISIONS = [{ incoming: 'Particulars', field: 'account' }, { incoming: 'Debit', field: 'debit' }, { incoming: 'Credit', field: 'credit' }];
+const MONTHS_PACKS_RATES = [
+  X('period-locked', 'POST /api/books/periods/:fy/:p/:act', 200, { url: MOUNT + '/periods/2026-27/6/lock', body: { reason: 'month done' }, patch: { books: { setPeriod: async () => ({ ok: true, fiscal_year: '2026-27', period: 6, status: 'soft_locked' }) } } }),
+  X('period-unlocked', 'POST /api/books/periods/:fy/:p/:act', 200, { url: MOUNT + '/periods/2026-27/6/unlock', body: { reason: 'a late bill' }, patch: { books: { setPeriod: async () => ({ ok: true, fiscal_year: '2026-27', period: 6, status: 'open' }) } } }),
+  X('year-closed', 'POST /api/books/year/:fy/close', 200, { body: {}, patch: { books: { closeYear: async () => ({ ok: true, fiscal_year: '2026-27', next: '2027-28', locked: 12, opening: { rows: 3, retained_minor: 100, profit_minor: 100, balanced: true } }) } } }),
+  X('year-closed-already', 'POST /api/books/year/:fy/close', 200, { body: {}, patch: { books: { closeYear: async () => ({ ok: true, duplicate: true, fiscal_year: '2026-27', next: '2027-28' }) } } }),
+  X('pack-built', 'POST /api/books/packs', 200, { body: { kind: 'month', fiscal_year: '2026-27', period: 6 }, patch: { pack: { build: async () => PACK_BUILT(true) } } }),
+  X('pack-built-unstored', 'POST /api/books/packs', 200, { body: { kind: 'year', fiscal_year: '2026-27' }, patch: { pack: { build: async () => PACK_BUILT(false) } } }),
+  X('pack-read', 'GET /api/books/packs/:id', 200, { patch: { store: { pack: async () => PACK_FULL } } }),
+  X('pack-read-bare', 'GET /api/books/packs/:id', 200, { patch: { store: { pack: async () => PACK_BARE } } }),
+  X('pack-acknowledged', 'POST /api/books/packs/:id/ack', 200, { patch: { store: { pack: async () => PACK_FULL, ackPack: async () => ({ acknowledged_at: STAMP }) } } }),
+  X('recurring-created', 'POST /api/books/recurring', 200, { body: { name: 'Rent', event: { kind: 'expense' }, frequency: 'monthly', next_on: '2026-11-01' }, patch: { recurring: { create: async () => viewOf(RECURRING) } } }),
+  X('recurring-created-full', 'POST /api/books/recurring', 200, { body: { name: 'Rent', event: { kind: 'expense' }, frequency: 'monthly', next_on: '2026-11-01', end_on: '2027-03-31', auto: true }, patch: { recurring: { create: async () => viewOf(RECURRING_FULL) } } }),
+  X('recurring-patched', 'PATCH /api/books/recurring/:id', 200, { body: { auto: true }, patch: { recurring: { patch: async () => viewOf(RECURRING_FULL) } } }),
+  X('recurring-patched-bare', 'PATCH /api/books/recurring/:id', 200, { body: { name: 'Shop rent' }, patch: { recurring: { patch: async () => viewOf(RECURRING) } } }),
+  X('recurring-stopped', 'DELETE /api/books/recurring/:id', 200, { patch: { recurring: { stop: async () => Object.assign(viewOf(Object.assign({}, RECURRING, { active: false })), { stopped: true }) } } }),
+  X('recurring-stopped-full', 'DELETE /api/books/recurring/:id', 200, { patch: { recurring: { stop: async () => Object.assign(viewOf(Object.assign({}, RECURRING_FULL, { active: false })), { stopped: true }) } } }),
+  X('recurring-accepted', 'POST /api/books/recurring/:id/post', 200, { body: {}, patch: { recurring: { accept: async () => ({ posted: JOURNAL, template: viewOf(RECURRING_FULL), date: '2026-11-01' }) } } }),
+  X('recurring-skipped', 'POST /api/books/recurring/:id/skip', 200, { body: {}, patch: { recurring: { skip: async () => ({ skipped: '2026-11-01', template: viewOf(RECURRING) }) } } }),
+  X('fx-rate-added', 'POST /api/books/fx-rates', 201, { body: { date: DAY, currency: 'USD', rate: 83.5 }, patch: { fxr: { add: async () => FX_ROW } } }),
+  X('fx-rates-imported', 'POST /api/books/fx-rates/import', 200, { body: { csv: 'date,currency,rate\n2026-09-30,USD,83.5\n2026-09-30,EUR,' }, patch: { fxr: { importCsv: async () => ({ added: 1, refused: [{ line: 3, why: 'No rate.' }], rates: [FX_ROW] }) } } }),
+  X('fx-revalued', 'POST /api/books/fx-revalue', 200, { body: { fiscal_year: '2026-27', period: 6 }, patch: { fxr: { revalue: async () => ({ ok: true, entry_no: 'MJ/2026-27/3', reversal_no: 'MJ/2026-27/4', gain_minor: 500, date: DAY, reverses_on: '2026-10-01' }) } } }),
+  X('fx-revalue-replayed', 'POST /api/books/fx-revalue', 200, { body: { fiscal_year: '2026-27', period: 6 }, patch: { fxr: { revalue: async () => ({ ok: true, duplicate: true, entry_no: 'MJ/2026-27/3', gain_minor: 500 }) } } }),
+  X('compare-preflight-csv', 'POST /api/books/compare/preflight', 200, { body: { part: 'tb', source: 'tally', csv: CSV_TB } }),
+  X('compare-snapshot-stored', 'POST /api/books/compare/snapshots', 200, { body: { label: 'Tally Q2', source: 'tally', part: 'tb', period_to: '2026-09-30', csv: CSV_TB, decisions: TB_DECISIONS }, patch: { store: { compareReady: async () => true, insertComparePart: async () => PARTY } } }),
+  X('compare-snapshot-second-part', 'POST /api/books/compare/snapshots', 200, { body: { snapshot_id: PARTY, part: 'pl', source: 'tally', csv: 'Particulars,Amount\nSales,100', decisions: [{ incoming: 'Particulars', field: 'account' }, { incoming: 'Amount', field: 'amount' }] }, patch: { store: { compareReady: async () => true, compareParts: async () => [{ part: 'tb', label: 'Tally Q2', source: 'tally', period_from: '2026-07-01', period_to: '2026-09-30' }], insertComparePart: async () => PARTY } } }),
+  X('move-in-preflight-csv', 'POST /api/books/move-in/preflight', 200, { body: { kind: 'contacts', source: 'xero', csv: 'ContactName,PhoneNumber,EmailAddress\nAsha Traders,9999,a@x.in' } })
+];
+const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
   X('returns-needs-period', 'GET /api/books/returns', 200, RETURN_NEEDS),
   X('returns-from-rail-other-pack', 'GET /api/books/returns', 200, { patch: { period: { taxReturn: RAIL_STOP('AU') } } }),
@@ -326,7 +364,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms') };
+  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -372,8 +410,8 @@ function allowedFor() {
   return (route) => (route.includes(' ' + MOUNT + '/') ? books(route) : tax(route));
 }
 
-/** a body's clock stamps are the same answer on every run: masked before a body is hashed (the ids here are fixed) */
-const steady = (text) => text.replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
+/** a body's clock stamps and minted ids (a new snapshot's id) are the same answer on every run: masked before a body is hashed */
+const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
 const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
 /** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
 function compare(captureFile, recording) {
