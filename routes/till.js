@@ -481,8 +481,7 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
     }
 
     /* the counter's customer list — a name and a phone, nothing more; the till looks up a repeat customer, it does not hold history */
-    let customers = [],
-      snapshotBooksOn = false;
+    let customers = [], snapshotBooksOn = false;
     try {
       /**
        * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
@@ -1116,7 +1115,8 @@ router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
      */
     if (snapshotBooksOn) body.books = true;
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
-    res.json(screen ? screenView(body) : body);
+    const answer = screen ? screenView(body) : body;
+    res.json({ at: answer.at, more: answer.more, limit: answer.limit, entity_id: answer.entity_id, till: answer.till, shop: answer.shop, items: answer.items, removed: answer.removed, delta: answer.delta, since: answer.since, offers: answer.offers, staff: answer.staff, category_master: answer.category_master, total: answer.total, network: answer.network, slabs: answer.slabs, categories: answer.categories, face: answer.face, customers: answer.customers, suppliers: answer.suppliers, reward: answer.reward, policy: answer.policy, lot_fields: answer.lot_fields, books: answer.books, version: answer.version }); /* S34: the keys named; a TV's screenView leaves most undefined and JSON leaves those out, so each answer is byte for byte what it was */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -1564,7 +1564,7 @@ router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), ...chec
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
     const cfg = await withEntity(entity_id, (db) => qk.getScreenConfig(db, entity_id, counter_id));
-    res.json(cfg);
+    res.json({ config: cfg.config, updated_at: cfg.updated_at }); /* S34: the row's two columns, named (lib/quick-keys getScreenConfig reads only these) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -1722,12 +1722,12 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), ...checked('GET /
         out.push({ item_id: r.item_id, name: r.name, expiry: r.expiry || null, last_sold: r.last_sold || null, why: list, urgency: Math.round(urgency) });
     }
     out.sort((first, second) => second.urgency - first.urgency);
+    /* ⚠️ said out loud (basis): this is what the shop RECORDED, not a stock count nobody has taken */
     res.json({
       ok: true,
       days,
       quiet,
       items: out.slice(0, 60),
-      /* ⚠️ said out loud: this is what the shop RECORDED, not a stock count nobody has taken */
       basis: 'expiry recorded at goods-in, and the last time each product was on a bill'
     });
   } catch (e) {
@@ -2685,7 +2685,8 @@ router.get('/stock', auth, auth.requireScope('till'), ...checked('GET /stock'), 
     }
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
-    res.json(Object.assign({ balances: out, at: new Date().toISOString() }, detail ? { not_counted: notCounted } : {}));
+    /* S34: not_counted is named; it is asked for with ?detail=1 only (undefined is left out by JSON, so the plain call answers as before) */
+    res.json({ balances: out, at: new Date().toISOString(), not_counted: detail ? notCounted : undefined });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -2896,7 +2897,8 @@ router.get('/summary', auth, ...checked('GET /summary'), async (req, res) => {
     if (req.query.compare === '1') {
       const out = await TS.trend(entity_id, req.identity && req.identity.identity_id, { period: req.query.period, n: req.query.n, now: Date.now() });
       if (out.status !== 200) return problem(req, res, { status: out.status, ...relayed(out.body) }); // the trend's refusals (400 BAD_PERIOD, 422 NO_COUNTRY / NO_MONEY) keep its own codes and words
-      return res.json(out.body);
+      /* S34: the trend's answer, every key lib/till-summary trend() returns (JSON leaves an undefined one out) */
+      return res.status(200).json({ period: out.body.period, n: out.body.n, currency: out.body.currency, fy_start_month: out.body.fy_start_month, slots: out.body.slots });
     }
     const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
     const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX); /* the one clamp */
@@ -2927,8 +2929,7 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
-    const pg = PL.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX),
-      limit = pg.limit; /* always a page: the statement cuts */
+    const pg = PL.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX), limit = pg.limit; /* always a page: the statement cuts */
     const by = typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by) ? req.query.by : null;
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
@@ -3006,7 +3007,8 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
         };
       })
       .filter((x) => x.no && (!by || (x.by && x.by.id === by)));
-    res.json(Object.assign({ days, count: rows.length }, PL.pageOut('bills', rows, pg, rows.length)));
+    const page = PL.pageOut('bills', rows, pg, rows.length);
+    res.json({ days, count: rows.length, bills: page.bills, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note }); /* S34: every key the pager can add is named (capped, cap_note: only on a cut list; JSON leaves an undefined key out) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -3218,13 +3220,9 @@ router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
       return orders;
     });
     /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
-    if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
-      out.forEach((item) =>
-        (item.receipts || []).forEach((entry) => {
-          delete entry.landed;
-        })
-      );
-    res.json(Object.assign({ days, count: out.length }, PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    if (!(await require('../lib/cost').canReadSafe(req, entity_id))) out.forEach((item) => (item.receipts || []).forEach((entry) => delete entry.landed));
+    const page = PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    res.json({ days, count: out.length, orders: page.orders, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note }); /* S34: every key the pager can add is named (capped, cap_note: only on a cut list; JSON leaves an undefined key out) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }

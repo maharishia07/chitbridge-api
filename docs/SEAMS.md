@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 89 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
-| 75 | `answer` | `availability.js` | from March; then nearest. |
+| 76 | `answer` | `availability.js` | from March; then nearest. |
 | 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 65 | `list` | `cap-settings.js` |  |
@@ -32,7 +32,7 @@ of file each thing is; this says what already does the job.
 | 52 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 50 | `entry` | `books-store.js` |  |
 | 49 | `toast` | `accounts-shell.js` |  |
-| 49 | `record` | `access-events.js` |  |
+| 50 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
 | 48 | `pack` | `books-store.js` |  |
 | 47 | `again` | `signin-ui.js` |  |
@@ -89,7 +89,7 @@ of file each thing is; this says what already does the job.
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 26 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
-| 25 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
+| 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 25 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `money` | `cart.js` |  |
