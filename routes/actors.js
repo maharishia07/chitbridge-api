@@ -1487,7 +1487,10 @@ router.get('/settings', auth, async (req, res) => {
       );
     }
 
-    res.json({ settings: result.rows[0] });
+    const x = result.rows[0];
+    /* S34: SELECT * of entity_actor_settings (migrations/000_baseline_2026-10-21.sql), named in the table's column order; no row at all answers {} as before */
+    // prettier-ignore
+    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id } });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to get settings'));
   }
@@ -1800,7 +1803,11 @@ router.get('/access-events', auth, async (req, res) => {
       )
     );
 
-    res.json(Object.assign(PL.pageOut('events', r.rows, pg), { applied: true }));
+    const answer = PL.pageOut('events', r.rows, pg);
+    /* S34: an event is the columns the statement above selects (access_events + the two identities it names: migrations/000_baseline_2026-10-21.sql), in its order; before_value and after_value
+       stay the objects the trail wrote; LIMIT 200 under a 200-row page max, so the pager never cuts this list (no capped, no cap_note) */
+    // prettier-ignore
+    res.json({ events: answer.events.map((x) => ({ event_id: x.event_id, subject_identity_id: x.subject_identity_id, subject_name: x.subject_name, actor_key: x.actor_key, action: x.action, before_value: x.before_value, after_value: x.after_value, reason: x.reason, at: x.at, changed_by: x.changed_by, changed_by_name: x.changed_by_name })), total: answer.total, page: answer.page, limit: answer.limit, applied: true });
   } catch (err) {
     if (/access_events/.test(err.message || '')) return res.json({ events: [], applied: false, total: 0, page: 1, limit: 0 });
     console.error('Access events error:', err.message);
