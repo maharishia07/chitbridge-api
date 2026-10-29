@@ -35529,6 +35529,1164 @@
     }
    ]
   },
+  "DELETE /api/channels/:id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "unbind-no-such-binding",
+     "status": 404,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Not found"
+     }
+    },
+    {
+     "scenario": "unbind-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Channels not migrated yet (b123)."
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Channels not migrated yet (b123)."
+     }
+    },
+    {
+     "scenario": "unbind-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "relay-unbind",
+     "status": 503,
+     "body_keys": {
+      "error": "Unbind failed",
+      "message": "Because: library words."
+     },
+     "fixture": {
+      "error": "Unbind failed",
+      "message": "Because: library words."
+     }
+    }
+   ]
+  },
+  "GET /api/channels": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "relay-list",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/channels/outbound": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "outbound-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "relay-outbound",
+     "status": 500,
+     "body_keys": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/channels": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     }
+    },
+    {
+     "scenario": "bind-unknown-channel",
+     "status": 400,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     }
+    },
+    {
+     "scenario": "bind-no-channel",
+     "status": 400,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     }
+    },
+    {
+     "scenario": "bind-no-address",
+     "status": 400,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Inbound address is required"
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Inbound address is required"
+     }
+    },
+    {
+     "scenario": "bind-address-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "That business number is already in use."
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "That business number is already in use."
+     }
+    },
+    {
+     "scenario": "bind-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bind-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "bind-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Unknown channel"
+     }
+    },
+    {
+     "scenario": "relay-bind",
+     "status": 500,
+     "body_keys": {
+      "error": "Bind failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Bind failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/channels/:id/approve": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "approve-wrong-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "approve-key-of-another-length",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "approve-no-key-given",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "approve-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "approve-no-such-binding",
+     "status": 404,
+     "body_keys": {
+      "error": "Approve failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Approve failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "approve-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Approve failed",
+      "message": "Channels not migrated yet (b123)."
+     },
+     "fixture": {
+      "error": "Approve failed",
+      "message": "Channels not migrated yet (b123)."
+     }
+    },
+    {
+     "scenario": "approve-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Approve failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Approve failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "relay-approve",
+     "status": 503,
+     "body_keys": {
+      "error": "Approve failed",
+      "message": "Because: library words."
+     },
+     "fixture": {
+      "error": "Approve failed",
+      "message": "Because: library words."
+     }
+    }
+   ]
+  },
+  "POST /api/channels/:id/auto-raise": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "auto-no-such-binding",
+     "status": 404,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "auto-column-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Auto-raise is not migrated on this environment (b131)."
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Auto-raise is not migrated on this environment (b131)."
+     }
+    },
+    {
+     "scenario": "auto-table-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Channels not migrated yet (b123)."
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Channels not migrated yet (b123)."
+     }
+    },
+    {
+     "scenario": "auto-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "relay-auto-raise",
+     "status": 503,
+     "body_keys": {
+      "error": "Auto-raise update failed",
+      "message": "Because: library words."
+     },
+     "fixture": {
+      "error": "Auto-raise update failed",
+      "message": "Because: library words."
+     }
+    }
+   ]
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "ref-no-such-binding",
+     "status": 404,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "ref-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Channels not migrated yet (b123)."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Channels not migrated yet (b123)."
+     }
+    },
+    {
+     "scenario": "ref-malformed-id",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "ref-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "relay-provider-ref",
+     "status": 503,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Because: library words."
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Because: library words."
+     }
+    }
+   ]
+  },
+  "POST /api/channels/:id/revoke": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "revoke-wrong-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "revoke-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "revoke-no-such-binding",
+     "status": 404,
+     "body_keys": {
+      "error": "Revoke failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Revoke failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "revoke-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Revoke failed",
+      "message": "Channels not migrated yet (b123)."
+     },
+     "fixture": {
+      "error": "Revoke failed",
+      "message": "Channels not migrated yet (b123)."
+     }
+    },
+    {
+     "scenario": "revoke-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Revoke failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Revoke failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "relay-revoke",
+     "status": 503,
+     "body_keys": {
+      "error": "Revoke failed",
+      "message": "Because: library words."
+     },
+     "fixture": {
+      "error": "Revoke failed",
+      "message": "Because: library words."
+     }
+    }
+   ]
+  },
+  "POST /api/channels/:id/template": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "template-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "template-bad-state",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "State must be approved or pending"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "State must be approved or pending"
+     }
+    },
+    {
+     "scenario": "template-shop-cannot-approve",
+     "status": 403,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Only the platform can mark a template approved."
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Only the platform can mark a template approved."
+     }
+    },
+    {
+     "scenario": "template-no-such-binding",
+     "status": 404,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "template-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "template-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "template-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "relay-template",
+     "status": 500,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/channels/:id/template-approve": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 503,
+     "body_keys": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     },
+     "fixture": {
+      "error": "Admin disabled",
+      "message": "CB_ADMIN_KEY is not set on this server."
+     }
+    },
+    {
+     "scenario": "template-approve-wrong-key",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden"
+     },
+     "fixture": {
+      "error": "Forbidden"
+     }
+    },
+    {
+     "scenario": "template-approve-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "template-approve-no-such-binding",
+     "status": 404,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Binding not found"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Binding not found"
+     }
+    },
+    {
+     "scenario": "template-approve-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "template-approve-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "template-approve-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Unknown template"
+     }
+    },
+    {
+     "scenario": "relay-template-approve",
+     "status": 500,
+     "body_keys": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Template update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
   "DELETE /api/actors/:id/pin": {
    "answers": [
     {

@@ -4,6 +4,9 @@
   "DELETE /api/actors/:id/pin": {
    "foreign_id_404": true
   },
+  "DELETE /api/channels/:id": {
+   "foreign_id_404": true
+  },
   "DELETE /api/crm/followups/:id": {
    "foreign_id_404": true,
    "output_allowlist": true
@@ -353,6 +356,15 @@
   },
   "POST /api/catalogue/network-store/:networkId/order": {
    "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/auto-raise": {
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "foreign_id_404": true
+  },
+  "POST /api/channels/:id/template": {
    "foreign_id_404": true
   },
   "POST /api/counters/:id/assign": {
