@@ -2536,7 +2536,7 @@ async function sendBooks(st, req, res) {
 /** the answer, then the counter's place in its series */
 async function sendAnswer(st, req, res) {
   const { sender_id, client_ref, number_check, oneSided, business_json, is_draft, counts, receiverDetails, chit_id, auto_subject, summary_json } = st;
-  res.json({
+  res.json(costWrite.hideSendAnswer(st.sourceCarry, { /* RAIL-149: a blind sender who carried the draft's money is not told it */
     message: is_draft ? 'Draft saved' : 'Chit sent successfully',
     chit_id,
     auto_subject,
@@ -2549,7 +2549,7 @@ async function sendAnswer(st, req, res) {
     number_check: number_check || undefined,
     /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
     one_sided: oneSided || undefined
-  });
+  }));
 
   /**
    * ⭐⭐ THE COUNTER'S PLACE IN ITS SERIES, KEPT IN THE CLOUD (2026-09-17). Athi: *"the system should be updated
