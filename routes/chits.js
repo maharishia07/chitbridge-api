@@ -84,6 +84,8 @@ const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySampl
 const FOLDER_INV = require('../lib/folder-inventory');
 /* ⭐⭐ A BILL'S STEPS STAY WITH THE SHOP THAT TOOK THEM, at its folder's messaging level (lib/bill-privacy, Athi 2026-10-01) */
 const billPrivacy = require('../lib/bill-privacy');
+/* ⭐ RAIL-146: what a cost-blind co-assist may READ of a chit — the five reads (GET /:chit_id · /inbox · /folder · /sent · /rollup) answer through it, answer-side only */
+const costView = require('../lib/cost-view');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -2688,7 +2690,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
     const pg = listPage(req),
       page = pg.page,
       limit = pg.limit;
-    const q_search = (req.query.q || '').trim();
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read per request; the owner pays none */
 
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
     const params = [entity_id];
@@ -2709,7 +2711,7 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
     if (ks.where) where += ks.where;
     const offset = ks.where ? 0 : (page - 1) * limit;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
       const nestedCountResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
 
       const limIdx = params.length + 1,
@@ -2725,21 +2727,21 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
                 WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
                 WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
-              ${keyCol('ch')}
+              ${keyCol('ch')}, ${costView.sideColsSql('ch')}
          ${joinFrom}
         WHERE ${where}
         ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
-      return { countResult: nestedCountResult, result: outcome };
+      return { countResult: nestedCountResult, result: outcome, roles: await costView.rolesFor(db, entity_id, outcome.rows, blind) };
     });
 
     const next = afterOf(result.rows, limit, req);
     const total = countResult ? parseInt(countResult.rows[0].count) : null;
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
     /* S34: a chit is sentRow (the statement above, in its order); capped and cap_note only when the pager cut the page */
-    res.json({ chits: result.rows.map(sentRow), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note });
+    res.json({ chits: costView.listRows(result.rows, sentRow, { blind, shopId: entity_id, roles }), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Sent list error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get sent items'));
@@ -2755,7 +2757,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     const pg = listPage(req),
       { page, limit, offset } = pg;
     const view = req.query.view || 'drafts';
-    const q_search = (req.query.q || '').trim();
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read per request; the owner pays none */
 
     const params = [entity_id];
     let where = `cs.entity_id = $1`;
@@ -2776,7 +2778,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     // dedupe self-chits (both copies in trash/archive) to one row per chit, preferring the sent copy
     where = chitFilters(req, where, params);
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
       const nestedCountResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
       const orderBy =
@@ -2800,7 +2802,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
                  not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
                  "the other party holds a matching copy" about a chit nobody had ever been sent. */
               ch.role,
-              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction,
+              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction, ${costView.sideColsSql('ch')},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
                 WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
@@ -2812,14 +2814,14 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
         [...params, limit, offset]
       );
-      return { countResult: nestedCountResult, result: outcome };
+      return { countResult: nestedCountResult, result: outcome, roles: await costView.rolesFor(db, entity_id, outcome.rows, blind) };
     });
     /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
        caller's own query param travelling in a circle. */
     const total = parseInt(countResult.rows[0].count);
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
     /* S34: a chit is folderRow (the DISTINCT ON statement above, in its order); capped and cap_note only when the pager cut the page */
-    res.json({ chits: result.rows.map(folderRow), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note });
+    res.json({ chits: costView.listRows(result.rows, folderRow, { blind, shopId: entity_id, roles }), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Folder error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get folder'));
@@ -2832,7 +2834,7 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const groupBy = req.query.group_by === 'state' ? 'state' : 'counterparty';
-    const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name';
+    const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name', blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read; a blind actor's sum leaves the cost-side chits out (lib/cost-view) */
     // direction scopes the rollup to Task (received) or Order (sent); omit for both. Without it, self-chits
     // (sent+received held by one entity) would double-count.
     const dir = req.query.direction === 'sent' || req.query.direction === 'received' ? req.query.direction : null;
@@ -2852,10 +2854,10 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
       where += ` AND cs.assigned_to_actor_id = $${params.length}`;
     }
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { result, disp } = await withEntity(entity_id, async (db) => {
+    const { result, disp, roles } = await withEntity(entity_id, async (db) => {
       const outcome = await db.query(
         `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
-              COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
+              COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
@@ -2875,10 +2877,10 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
           params
         )
         .catch(() => ({ rows: [{ n: 0 }] }));
-      return { result: outcome, disp: nestedDisp };
+      return { result: outcome, disp: nestedDisp, roles: await costView.rollupRoles(db, entity_id, outcome.rows, blind) };
     });
-    /* S34: a group is the three columns its statement selects */
-    res.json({ group_by: groupBy, direction: dir, groups: result.rows.map((x) => ({ key: x.key, chits: x.chits, total_value: x.total_value })), dispute_open: disp.rows[0].n });
+    /* S34: a group is the three columns its statement selects; a blind actor's is lib/cost-view rollupGroup (the same three, cost_hidden when the sum left some out) */
+    res.json({ group_by: groupBy, direction: dir, groups: costView.rollupGroups(result.rows, blind, entity_id, roles), dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
     problem(req, res, failed(err, req, 'Rollup failed'));
@@ -2932,7 +2934,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
       page = pg.page,
       limit = pg.limit;
     const status_filter = req.query.status || null;
-    const q_search = (req.query.q || '').trim();
+    const q_search = (req.query.q || '').trim(), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read per request; the owner pays none */
 
     let whereClause = `cs.entity_id = $1 AND cs.direction = 'received' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     const params = [entity_id];
@@ -3003,7 +3005,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
     const offset = ks.where ? 0 : (page - 1) * limit;
     paramCount = params.length;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const { countResult, result } = await withEntity(entity_id, async (db) => {
+    const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
       const nestedCountResult =
         page === 1 && !ks.where
           ? await db.query(
@@ -3050,7 +3052,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
           LEFT JOIN identities i ON i.identity_id = sl.action_by_identity_id
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_type,
-         ${keyCol('ch')}
+         ${keyCol('ch')}, ${costView.sideColsSql('ch')}
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
@@ -3060,7 +3062,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
-      return { countResult: nestedCountResult, result: outcome };
+      return { countResult: nestedCountResult, result: outcome, roles: await costView.rolesFor(db, entity_id, outcome.rows, blind) };
     });
 
     const inboxNext = afterOf(result.rows, limit, req);
@@ -3068,7 +3070,7 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
     const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` (absent otherwise) */
     /* S34: a chit is inboxRow (the statement above, in its order). Top-level total/page/limit mirror /sent so the web pager treats both lists the same; next is the ?after= of the next page (newest-first only; null on
        the last). ⚠️ the `pagination` object said the same three numbers a second time: two spellings of one fact is how they start disagreeing. */
-    res.json({ chits: result.rows.map(inboxRow), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note });
+    res.json({ chits: costView.listRows(result.rows, inboxRow, { blind, shopId: entity_id, roles }), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Inbox error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get inbox'));
@@ -3184,7 +3186,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
-    const entity_id = entityId(req);
+    const entity_id = entityId(req), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read; a blind actor's answer is reshaped LAST (lib/cost-view), the rows never */
 
     // B1 RLS: everything here is the caller's OWN copy -> withEntity(me).
     const data = await withEntity(entity_id, async (db) => {
@@ -3372,7 +3374,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
         (SELECT coalesce(json_agg(x), '[]'::json) FROM (
            SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
                   d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note,
-                  d.recorded_by_entity_id, d.recorded_by_name, d.recorded_by_actor_name, d.delivered_at,
+                  d.recorded_by_entity_id, d.recorded_by_name, d.recorded_by_actor_name, d.recorded_by_actor_id, d.delivered_at,
                   -- b152, read through to_jsonb so the columns may not exist yet: naming d.kind directly raises
                   -- 42703, which deliverline treats as "not migrated" and turns into a null progress — the whole
                   -- delivery display would vanish between deploying this and running b152.
@@ -3405,7 +3407,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
           my_received: g.my_received || null,
           books_wait: g.books_wait || null,
-          order_billed: g.order_billed /* W36: orderBilledSql */,
+          order_billed: g.order_billed /* W36: orderBilledSql */, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], g.deliveries)) /* RAIL-146: a blind actor's party role and delivery rows; {} for everyone else */,
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -3480,7 +3482,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
               .then((reply) => (reply.rows[0] && reply.rows[0].w) || null),
           null
         );
-        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait };
+        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], null)) };
       });
 
     _mark('bundle_6_reads');
@@ -3533,7 +3535,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
             db.query(
               `SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
                     d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note, d.recorded_by_entity_id, d.recorded_by_name,
-                    d.recorded_by_actor_name, d.delivered_at, to_jsonb(d)->>'kind' AS dkind, (to_jsonb(d)->>'amount')::numeric AS damount,
+                    d.recorded_by_actor_name, d.recorded_by_actor_id, d.delivered_at, to_jsonb(d)->>'kind' AS dkind, (to_jsonb(d)->>'amount')::numeric AS damount,
                     to_jsonb(d)->>'particulars' AS dparticulars
                FROM chit_line l LEFT JOIN chit_line_delivery d ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
               WHERE l.entity_id = $1 AND l.chit_id = $2 AND (d.delivery_id IS NULL OR d.recorded_by_entity_id = $1)
@@ -3600,7 +3602,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
-    res.json({
+    res.json(costView.chitAnswer({ /* ⭐ RAIL-146, LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone (lib/cost-view); the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
@@ -3647,7 +3649,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       /* ⚠️ b144 — SHARED, so this is present on BOTH copies. Each side sees its own claims and the other's,
          attributed; nothing is merged into one number. Totals are summed here, never stored. */
       line_delivery: whenFilled(_prog, Object.fromEntries), delivery_summary: whenFilled(_prog, deliverline.summarise)
-    });
+    }, blind, data.header.rows[0], entity_id, bundle, req.identity.identity_id));
   } catch (err) {
     console.error('Chit detail error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get chit'));

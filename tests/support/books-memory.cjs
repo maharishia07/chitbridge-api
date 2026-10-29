@@ -245,6 +245,8 @@ function create() {
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
     async parties(db, e, ids) { return clone(T.parties.filter((p) => p.owner === e && (!Array.isArray(ids) || ids.map(String).indexOf(String(p.party_id)) >= 0))).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
     async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
+    /* RAIL-146: partyOn for many ids at once, as lib/books-store partiesOn answers it (Map id → { customer, supplier }; an unknown id → both false) */
+    async partiesOn(db, e, ids) { const out = new Map(); for (const id of ids || []) out.set(String(id), await this.partyOn(db, e, id)); return out; },
     async partyNoOf(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return p ? p.party_no || null : null; },
     async setPartyNo(db, e, party, no) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); if (p && !p.party_no) p.party_no = no; },
     async billNos(db, e, ids) { const o = {}; (ids || []).forEach((i) => { const c = T.chits.find((x) => x.chit_id === i); if (c) o[i] = c.bill_no; }); return o; },

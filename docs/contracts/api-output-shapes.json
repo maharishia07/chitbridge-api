@@ -2717,6 +2717,9 @@
           "lines_from"
         ],
         "properties": {
+          "cost_hidden": {
+            "type": "boolean"
+          },
           "header": {
             "type": "object"
           },
@@ -4030,6 +4033,9 @@
                 },
                 "total_value": {
                   "type": "string"
+                },
+                "cost_hidden": {
+                  "type": "boolean"
                 }
               },
               "additionalProperties": false

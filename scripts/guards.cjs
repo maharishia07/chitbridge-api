@@ -376,6 +376,7 @@ const GUARDS = [
   'junit-board.test.js', // a report folds to one row per (run, case, layer); the guards' own JUnit reads back by the board's key; the testing scope; CI posts after red
   'cost-never-to-employees.test.cjs', // [OFFR-04] cost off every export/history/till/supplies read for an actor without can_see_costs
   'cat239-adopt-cost-blind.test.cjs', // CAT-239: the adopt offer drops the supplier cost (any depth) for a cost-blind co-assist; a blind combo push is refused
+  'rail146-chit-cost-blind.test.cjs', // RAIL-146: the chit reads (GET /:chit_id · /inbox · /folder · /sent · /rollup) carry no cost to a cost-blind co-assist; a sales chit stays priced; the owner's answer is untouched
   'cat235-create-cost-gate.test.cjs', // CAT-235 part 2: a cost-blind co-assist creates items but never a cost key (POST / · /bulk · /import), same 403 COST_BLIND
   'offr04-cost-gate.test.cjs', // [OFFR-04] CAT-234/236: GET / and PATCH /:id strip cost at any depth for a cost-blind actor; status-only PATCH allowed, price/cost refused; parked list stripped
   'agent-signin-body.test.cjs', // M01: the shop-PC agent sends mode:'login' via CBSignin.ask()/verify() — a login never creates an identity

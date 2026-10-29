@@ -46,7 +46,7 @@ const CALLS = {
   items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], itemTotals: [E, U], accountNet: [E, U],
   insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], paymentsOfChit: [E, U], lockParty: [E, U, U], paymentsSince: [E, U, 'in', '2026-04-01T00:00:00Z'], cheques: [E, false, 200],
   queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], backfillTodo: [E], outboxDone: [E, 1, false, 'why', { todo: 'accept', candidates: [] }], outboxClose: [E, [U], 'Rejected — not posted'], waitOfChitSql: [], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'],
-  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
+  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], partiesOn: [E, [U]], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
   unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], openDisputes: [E, U],

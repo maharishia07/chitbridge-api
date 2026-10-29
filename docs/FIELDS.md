@@ -6,6 +6,12 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **The shop's flags and the person's prefs (W1-SET · FLD2, 2026-10-15):** every key of `lib/policy.js` FLAGS (`policy_flags.<key>`) and of `routes/entities.js` PREF_SETS (`ui_prefs.<key>` · `locale_prefs.<key>`) must have a row in this file, spelled with its store (`policy_flags.trade_side`, never the bare word). `lib/field-ledger.undocumentedSettings` reads both sources and this file; `tests/field-ledger.test.cjs` fails by name when a 33rd flag arrives without its row.
 
+## The chit reads · `cost_hidden` (RAIL-146, 2026-10-29)
+
+| Route | Key | Meaning |
+|---|---|---|
+| `GET /api/chits/:chit_id` (top level) · `GET /api/chits/inbox` · `/sent` · `/folder` (each `chits[]` row) · `GET /api/chits/rollup` (each `groups[]` row) | `cost_hidden` | boolean · present and `true` ONLY on an answer the server stripped for a co-assist without `can_see_costs` (lib/cost-view); absent otherwise. The client branches on it (prints "hidden", never ₹0 or NaN), never on a sentence. What was taken: every cost-named key at any depth (`cost`, `cost_*`, `unit_cost`, `landed*`, `purchase_cost`, `last_cost` — lib/cost COST_KEYS; `cost_hidden` itself is exempt) on EVERY chit; and on a chit the shop BUYS on (a supplier's bill, a goods receipt, a purchase order, a received despatch or credit note, an expense, a payment made; an order whose counterparty is on neither list) also the line `price` · `total` · `list_price` · `discount` · `offer` · `taxable` · `tax` · `rate` · `value` · `amount`, `summary_json.money` · `total_value` · `offers`, `detail.total_value`, `business_json.invoice` · `costs` · `goods` · `extras` · `input_tax` · `their_bill.total` · the payment amounts, and the deliveries' `charged` / `added[].amount` that are not the actor's own. A sales chit keeps its price. The stored copy, its sealed body and the digest are never changed: the strip is on a copy of the answer. |
+
 ## GET /api/network-offers · `store.networks[].may` · `brand.members[].may` · `brand_bridge_id` · `root_bridge_id` (NET-SRV1, carried over by NET-32, 2026-10-18)
 
 Derived per read, never stored. Written by: nobody (answer only). Read by: the Network app (web public/app/network-app.js). Contract: docs/contracts/web-api.json `GET /api/network-offers` (captured by tests/support/contract-network.cjs over tests/support/network-world.cjs).

@@ -271,6 +271,13 @@ const EXTRAS = [
   X('a-draft-is-listed', 'GET ' + C + '/folder', 200, { url: C + '/folder?view=trash&sort=amount&dir=asc&date_from=2026-01-01', setup: { sqlRows: answering(/SELECT DISTINCT ON/, [CHIT_ROW]) } }),
   X('rollup-by-state', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state&direction=sent&assigned_to=me' }),
   X('unread-for-staff', 'GET ' + C + '/unread', 200, { setup: { who: STAFF, sqlRows: answering(/chit_reads/, [{ chit_id: PARTY }]) } }),
+  /* ── RAIL-146: a cost-blind co-assist (STAFF: an actor the stand-in gives no can_see_costs row) reads the five sites — the cost goes and `cost_hidden` says so;
+        the keys taken are held by tests/rail146-chit-cost-blind.test.cjs, here the answers are recorded and their shapes held (cost_hidden is in api-output-shapes.json) ── */
+  X('chit-read-cost-blind', 'GET ' + C + '/:chit_id', 200, { setup: { who: STAFF, migrated: true, sqlRows: answeringAll([[/SELECT \* FROM chit_header/, [CHIT_HEADER]], [/FROM chit_detail/, [CHIT_DETAIL]], [/AS participants,/, [CHIT_BUNDLE]]]) } }),
+  X('inbox-cost-blind', 'GET ' + C + '/inbox', 200, { setup: { who: STAFF, sqlRows: answering(/SELECT ch.chit_id/, [INBOX_ROW(CANCEL)]) } }),
+  X('sent-cost-blind', 'GET ' + C + '/sent', 200, { setup: { who: STAFF, sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [SENT_ROW(CANCEL)]) } }),
+  X('folder-cost-blind', 'GET ' + C + '/folder', 200, { url: C + '/folder?view=archive', setup: { who: STAFF, sqlRows: answering(/SELECT DISTINCT ON/, [FOLDER_ROW(CANCEL)]) } }),
+  X('rollup-cost-blind', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state', setup: { who: STAFF, sqlRows: answeringAll([[/AS n$|::int AS n\s/m, [{ n: 1 }]], [/AS members/, [{ key: 'pending', chits: 2, total_value: '360.00', members: [{ total_value: '360', purpose: 'order', sender_entity_id: OTHER, all_recipients: CHIT_ROW.all_recipients, business_json: {} }] }]]]) } }),
   X('unread-for-staff-fails', 'GET ' + C + '/unread', 500, { setup: { who: STAFF, db: 'fail' } }),
   X('costs-not-migrated', 'GET ' + C + '/:chit_id/costs', 503, { patch: { cost: { canRead: async () => true, read: async () => null } } }),
   X('not-a-bill', 'GET ' + C + '/:chit_id/use', 409, { patch: { 'tax-copy': { copyOf: async () => ({ current_status: 'pending' }), billReceived: () => false } } }),
