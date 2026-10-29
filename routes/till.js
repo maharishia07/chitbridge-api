@@ -1153,7 +1153,8 @@ async function resolveSources(entity_id, adoptedRows) {
   const sources = [];
   adoptedRows.forEach((item, index) => {
     const found = resolved[index];
-    if (found) sources.push({ source_key: item.source_key, title: found.title, owner_entity_id: found.owner_entity_id || null, items: found.items || [] });
+    /* CTR-171: a SOURCE shop's cost never travels (DECISIONS) — items go through the ONE strip CAT-241 gave the public catalogue (cost.dropCostKeys on a clone), for every role */
+    if (found) sources.push({ source_key: item.source_key, title: found.title, owner_entity_id: found.owner_entity_id || null, items: require('../lib/catalogue-view').publicItemsOf(found.items || []) });
   });
   return sources;
 }
