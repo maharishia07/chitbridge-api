@@ -28,6 +28,22 @@ const FOREIGN = require('./lib/foreign-id-world.cjs');
 
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
 const HERE = path.join(__dirname, '..');
+/* --capture / --compare replay the same answers byte for byte: the clock and Math.random are held still, so a difference is the code's and not the run's */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+}
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
@@ -70,6 +86,16 @@ function fixedRandomness() {
   };
   put('bridgeid', (real) => Object.assign({}, real, { generateBridgeId: () => 'AAAA1111' }));
   put('otp', (real) => Object.assign({}, real, { generateOTP: () => '123456' }));
+  holdIds();
+}
+
+/** --capture / --compare: the id a created person is given (uuid v4, from the system's own randomness) counts up instead, so two replays are the same bytes */
+function holdIds() {
+  if (!(process.argv.includes('--capture') || process.argv.includes('--compare'))) return;
+  const file = require.resolve('uuid', { paths: [HERE] });
+  let issued = 0;
+  const next = () => '00000000-0000-4000-8000-' + String((issued += 1)).padStart(12, '0');
+  require.cache[file] = { id: file, filename: file, loaded: true, exports: Object.assign({}, require(file), { v4: next }) };
 }
 
 let AFTER = new Set();

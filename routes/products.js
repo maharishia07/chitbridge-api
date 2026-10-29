@@ -248,11 +248,17 @@ const rateDoor = require('../lib/rate-door'); /* CAT-210: a rate is owner or man
 const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
 /** CAT-210: does an editor's create or parked change NAME a rate? (an owner or manager never does: false) */
 const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
+/** a co-assist — the entity login and a paired counter are never gated by cost.writeRefusal */
+const isActor = (req) => !!(req.identity && req.identity.identity_type === 'actor');
+/** CAT-235: the writer's `watchKeys` for this caller — cost.costKeysPlanned for a cost-blind co-assist, undefined for everyone else (the owner pays no read) */
+const costWatch = async (req, entity_id) => ((await cost.isCostBlind(req, entity_id)) ? cost.costKeysPlanned : undefined);
+/** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row. PATCH /:id and POST /bulk-update ask it. */
+const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
 /** CAT-234/236: deletes `cost` and every `cost_*` key at ANY depth of a value, in place (modifiers[].options[].cost, a variants block …) */
 function dropCostKeys(value) {
   if (!value || typeof value !== 'object') return value;
   Object.keys(value).forEach((key) => {
-    if (/^cost(_|$)/.test(key)) delete value[key];
+    if (cost.isCostKey(key)) delete value[key];
     else dropCostKeys(value[key]);
   });
   return value;
@@ -428,6 +434,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (editorNamesRate(req, [req.body.item_data])) return problem(req, res, rateRefusal());
+    const watchKeys = await costWatch(req, entity_id); /* CAT-235: a cost-blind co-assist adds the item, never its cost — judged on the writer's own plan */
     const schema_id = await defaultSchemaId(entity_id);
     /**
      * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
@@ -450,8 +457,10 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
       schema_id,
       item_data: req.body.item_data,
       rid: req.id,
-      validate: (data, rows) => validateAgainst(rows, data)
+      validate: (data, rows) => validateAgainst(rows, data),
+      watchKeys
     });
+    if (made.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(made.watched)) });
     if (made.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', made) });
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
@@ -504,7 +513,8 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
      * seven-step sequence copied into two files is seven decisions that will disagree later.
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    const w = await catwrite.writeItems({ entity_id, items });
+    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id) });
+    if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
@@ -614,15 +624,28 @@ async function editorImportRateRows(req, entity_id, applied, ident) {
     return changed ? rows.concat(applied.lines[index]) : rows;
   }, []);
 }
-/** CAT-210: does any whole-record edit change a rate against what is stored? ONE read for the lot (an owner or manager never pays it) */
-async function editorChangesRate(req, entity_id, items) {
-  if (rateDoor.setsRate(req)) return false;
+/** the whole-file refusal of an import by a co-assist, before any write: a rate (CAT-210) first, then a cost column (CAT-235) — null when the file may go ahead.
+ *  The cost half reads the sheet rows as parsed; a new row and an update-by-key row are asked alike (the update merges prior+row, so no stored key is ever dropped) */
+async function importRefusal(req, entity_id, applied, ident) {
+  const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
+  if (rateRows.length) return rateRefusal(rateRows);
+  const blind = isActor(req) && (await cost.costKeyRefusal(req, entity_id, applied.items.map((fileRow) => sheet.fromSheet(fileRow, { source: 'upload' }).item_data)));
+  return blind ? { status: 403, ...words.costBlind(blind) } : null;
+}
+/** CAT-210/235: the stored rows a bulk edit is compared with — ONE read for the lot, shared by the rate check (an editor, CAT-210) and the erase check
+ *  (a co-assist, CAT-235); null for the owner, who is never compared and never pays the read */
+async function storedForEdits(req, entity_id, items) {
+  if (rateDoor.setsRate(req) && !isActor(req)) return null;
   const found = await withEntity(entity_id, (db) =>
     db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, items.map((item) => item.id).filter((id) => UUID.test(id))])
   );
-  const stored = new Map(found.rows.map((row) => [row.item_id, row.item_data]));
-  return items.some((item) => rateDoor.rateChanged(item.item_data, stored.get(item.id)));
+  return new Map(found.rows.map((row) => [row.item_id, row.item_data]));
 }
+/** CAT-210: does any whole-record edit change a rate against what is stored? (an owner or manager never does: false) */
+const editorChangesRate = (req, items, stored) => !rateDoor.setsRate(req) && items.some((item) => rateDoor.rateChanged(item.item_data, stored.get(item.id)));
+/** CAT-235: every key a bulk edit writes — the ones each body names plus the stored ones it leaves out (a replace erases them, CAT-237) — once each, for the lot.
+ *  Only item_data goes to erasedKeys: this door ALWAYS replaces, so an item's own `merge: true` must not read as a merge here */
+const bulkWrittenKeys = (items, stored) => Array.from(new Set(items.flatMap((item) => Object.keys(item.item_data).concat(erasedKeys({ item_data: item.item_data }, stored && stored.get(item.id))))));
 /** one bulk-update entry is { id, item_data } with item_data a plain object */
 const isEditShape = (item) => !!item && typeof item.id === 'string' && !!item.item_data && typeof item.item_data === 'object' && !Array.isArray(item.item_data);
 router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, res) => {
@@ -636,7 +659,15 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
       return problem(req, res, { status: 400, ...words.badShape() });
     }
 
-    if (await editorChangesRate(req, entity_id, items)) return problem(req, res, rateRefusal());
+    const stored = await storedForEdits(req, entity_id, items);
+    if (editorChangesRate(req, items, stored)) return problem(req, res, rateRefusal());
+    /* CAT-235: this door REPLACES each record, so it writes the keys a body names AND the stored keys it leaves out (CAT-237's erase rule) — the
+       SAME gate PATCH /:id goes through — a cost-blind co-assist may touch status only — over the lot, all or nothing like the rate and the rules above.
+       The workshop's categorise sends back the list it was given, which for such a caller came WITHOUT cost (GET / strips it), so until now
+       that click silently erased every stored cost; now it is refused in words, `blocked` naming cost among the keys. The owner and a
+       cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
+    const refused = await cost.writeRefusal(req, entity_id, bulkWrittenKeys(items, stored));
+    if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
 
     const schema_id = await defaultSchemaId(entity_id);
     const currency = await regional.currencyFor(entity_id);
@@ -930,7 +961,7 @@ async function catalogueRows(entity_id, canCost) {
     items.forEach((item) => {
       if (item)
         Object.keys(item).forEach((k) => {
-          if (/^cost(_|$)/.test(k)) delete item[k];
+          if (cost.isCostKey(k)) delete item[k];
         });
     });
     if (schema && schema.properties) delete schema.properties.cost;
@@ -1200,8 +1231,8 @@ router.post(
         return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
       }
 
-      const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
-      if (rateRows.length) return problem(req, res, rateRefusal(rateRows));
+      const refusal = await importRefusal(req, entity_id, applied, ident);
+      if (refusal) return problem(req, res, refusal);
 
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
@@ -1462,9 +1493,7 @@ router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async
 });
 
 /** CAT-237: a co-assist's replace (no merge:true) writes every stored key it leaves out, so the stored row is read to name them; the owner never pays this */
-const actorReplace = (req, payload) => payload.merge !== true && !!(req.identity && req.identity.identity_type === 'actor');
-/** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row */
-const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
+const actorReplace = (req, payload) => payload.merge !== true && isActor(req);
 /** does this edit need the stored row? a merge, a server-owned key, an editor (whose rate is compared with the stored one, CAT-210) or a co-assist's replace (CAT-237) */
 const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data) || actorReplace(req, payload);
 /** the stored row, read only when merge:true, a server-owned key or an editor (to compare the rate, CAT-210) asks for it → { refusal } (404 or the rate 403) or { stored, bodyItem } */

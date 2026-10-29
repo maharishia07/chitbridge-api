@@ -123,11 +123,29 @@ function nodeOf(expression) {
 /** an entry of a literal without the comments written before its key (a comment is not a computed key) */
 const withoutLeadingComments = (entry) => entry.replace(/^(?:\s*(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*))+\s*/, '');
 
+/**
+ * the keys a spread is KNOWN to add, or null (the node then stays open). Two sound cases only:
+ *   · `...(cond && { a: x })`  adds at most the literal's own keys;
+ *   · `...(await empCode.deliver(…))`  adds at most lib/employee-code DELIVERED_KEYS (SEC-118: the one list, kept beside the code that builds the answer, and tested against it).
+ */
+function knownSpread(entry) {
+  const text = entry.slice(3).trim();
+  if (/^\(\s*await\s+empCode\.deliver\(/.test(text)) return require(path.join(ROOT, 'lib', 'employee-code.js')).DELIVERED_KEYS.slice();
+  const conditional = /^\(\s*[^{}]*?&&\s*(\{[\s\S]*\})\s*\)$/.exec(text);
+  if (!conditional || closingOf(conditional[1], 0) !== conditional[1].length - 1) return null;
+  const inner = objectNodeOf(conditional[1]);
+  return inner.spread || inner.computed ? null : [...inner.keys.keys()];
+}
+
 /** a literal `{ a: 1, b, ...c, [d]: 2 }` as an object node */
 function objectNodeOf(text) {
   const node = { kind: 'object', keys: new Map(), spread: false, computed: false };
   splitTop(text.slice(1, -1)).map(withoutLeadingComments).forEach((entry) => {
-    if (entry.startsWith('...')) node.spread = true;
+    if (entry.startsWith('...')) {
+      const names = knownSpread(entry);
+      if (names) names.forEach((name) => node.keys.set(name, { kind: 'opaque', tokens: new Set(), spread: false, shorthand: true }));
+      else node.spread = true;
+    }
     else if (entry.startsWith('[')) node.computed = true;
     else {
       const named = /^(?:'([\w$-]+)'|"([\w$-]+)"|([A-Za-z_$][\w$]*))\s*(:|$)/.exec(entry);

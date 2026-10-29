@@ -63,8 +63,11 @@ function extras(tools) {
     X('server-owned-key', 'POST ' + P, 400, { body: { item_data: { name: 'Tea', media: [{ id: 'm1' }] } }, setup: withRows(shelf) }),
     X('price-below-zero', 'POST ' + P, 422, { body: { item_data: { name: 'Tea', price: 'abc' } }, setup: withRows(shelf) }),
     X('rate-owner-only', 'POST ' + P, 403, { body: { item_data: { name: 'Tea', gst_rate: 18 } }, setup: costBlind }),
+    /* CAT-235 part 2: a cost-blind co-assist creates items, never a cost key at any depth (`after`: main created it with the cost) */
+    X('create-cost-blind', 'POST ' + P, 403, { after: true, body: { item_data: { name: 'Tea', modifiers: [{ options: [{ name: 'L', cost: 4 }] }] } }, setup: costBlind }),
     /* POST /bulk */
     X('bulk-rate-owner-only', 'POST ' + P + '/bulk', 403, { body: { items: [{ name: 'Tea', gst_rate: 18 }] }, setup: costBlind }),
+    X('bulk-cost-blind', 'POST ' + P + '/bulk', 403, { after: true, body: { items: [{ name: 'Tea', cost: 4 }] }, setup: costBlind }),
     X('too-many-products', 'POST ' + P + '/bulk', 400, { body: { items: manyOf(201, { name: 'Tea' }) } }),
     X('an-item-is-not-an-object', 'POST ' + P + '/bulk', 400, { body: { items: ['tea'] } }),
     X('bulk-refused-by-the-rules', 'POST ' + P + '/bulk', 400, { body: { items: [{ unit: 'kg' }] }, setup: withRows(requiredName) }),
@@ -82,6 +85,8 @@ function extras(tools) {
     X('bulk-status-status-missing', 'POST ' + P + '/status/bulk', 400, { body: { ids: [PARTY] } }),
     /* POST /bulk-update */
     X('edit-rate-owner-only', 'POST ' + P + '/bulk-update', 403, { body: { items: [{ id: PARTY, item_data: { name: 'Tea', gst_rate: 18 } }] }, setup: costBlind }),
+    /* CAT-235: a cost-blind co-assist's bulk edit replaces each record, so even a status-only one is refused, naming the shelf's keys it would erase (`after`: main answered 200 and wiped the row) */
+    X('edits-cost-blind', 'POST ' + P + '/bulk-update', 403, { after: true, body: { items: [{ id: PARTY, item_data: { status: 'unavailable' } }] }, setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT item_id, item_data FROM catalogue_items/, [{ item_id: PARTY, item_data: ITEM().item_data }]), shelf) }, patch: costHidden }),
     X('too-many-edits', 'POST ' + P + '/bulk-update', 400, { body: { items: manyOf(201, { id: PARTY, item_data: { name: 'Tea' } }) } }),
     X('an-edit-has-the-wrong-shape', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY }] } }),
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
@@ -115,6 +120,7 @@ function extras(tools) {
     X('import-a-row-has-a-problem', 'POST ' + P + '/import', 409, { body: importBody({ csv: 'sku,name,unit,price\nA1,Tea,kg,not-a-number\n' }), setup: withRows(shelf) }),
     X('import-done', 'POST ' + P + '/import', 200, { body: importBody(), setup: withRows(shelf) }),
     X('import-rate-owner-only', 'POST ' + P + '/import', 403, { body: importBody({ csv: 'sku,name,unit,price,gst_rate' + String.fromCharCode(10) + 'A1,Tea,kg,5,18' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'gst_rate', action: 'map', field: 'gst_rate' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }]), shelf) } }),
+    X('import-cost-blind', 'POST ' + P + '/import', 403, { after: true, body: importBody({ csv: 'sku,name,unit,price,cost' + String.fromCharCode(10) + 'A1,Tea,kg,5,3' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'cost', action: 'create', field: 'cost' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }]), shelf) } }),
     X('import-db-fails', 'POST ' + P + '/import', 500, { body: importBody({ decisions: [] }), setup: failing }),
     X('import-decisions-not-a-list', 'POST ' + P + '/import', 400, { body: importBody({ decisions: 'all' }) }),
     /* starter columns */

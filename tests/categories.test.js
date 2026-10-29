@@ -92,7 +92,7 @@ it('⚠️⚠️ the route resolves names to ids and strips the name', () => {
  */
 it('⚠️⚠️ the counter receives the relation, not just the answer', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
-  assert.ok(/category: categories\.nameOf\(d, catNames\)/.test(src), 'the snapshot no longer resolves the name');
+  assert.ok(/category: categories\.nameOf\(data, catNames\)/.test(src), 'the snapshot no longer resolves the name');
   assert.ok(/category_id:/.test(src), 'a product reaches the counter without its category id');
   assert.ok(/category_master: catList\.map/.test(src), 'the category master does not travel with the snapshot');
   /* ⚠️ THE LEGACY READ MUST NOT COME BACK as the only source */
