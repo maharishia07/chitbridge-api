@@ -147,6 +147,52 @@ function loadAddress(dbStub) {
     });
   }
 
+  /* ── RAIL-142 (b): a switched-off installation, or a stamp naming none, is not "here" ─────────────────────── */
+  {
+    const stub = {
+      query: async (sql, args) => {
+        if (/FROM installation/i.test(sql)) {
+          return { rows: [
+            { installation_key: 'platform-0', ctp_endpoint: null, region: 'IN', active: true, hosted_locally: true },
+            { installation_key: 'platform-ae', ctp_endpoint: 'https://ae.example/ctp', region: 'AE', active: true, hosted_locally: false },
+            { installation_key: 'platform-mx', ctp_endpoint: 'https://mx.example/ctp', region: 'MX', active: false, hosted_locally: false },
+          ] };
+        }
+        if (/ops\.f_installation_of/.test(sql)) {
+          const stamps = { far: 'platform-ae', off: 'platform-mx', typo: 'platfrom-ae', near: 'platform-0', home: 'platform-9' };
+          return { rows: [{ installation_key: stamps[args[0]] }] };
+        }
+        return { rows: [] };
+      },
+    };
+    const A = loadAddress(stub);
+    await okAsync('a party on a switched-off remote installation is unresolved, not "hosted here" (RAIL-142 b)', async () => {
+      const a = await A.resolve('off');
+      assert.strictEqual(a.resolved, false, JSON.stringify(a));
+      assert.ok(/switched off/.test(a.why), a.why);
+    });
+    await okAsync('a stamp naming no installation is unresolved, not "hosted here" (RAIL-142 b)', async () => {
+      const a = await A.resolve('typo');
+      assert.strictEqual(a.resolved, false, JSON.stringify(a));
+    });
+    await okAsync('…while a local stamp and a remote one resolve as before', async () => {
+      assert.strictEqual((await A.resolve('near')).local, true);
+      assert.notStrictEqual((await A.resolve('near')).resolved, false);
+      assert.strictEqual((await A.resolve('far')).local, false);
+    });
+    await okAsync('…and our own key is here even with no row for it', async () => {
+      const saved = process.env.INSTALLATION_KEY;
+      process.env.INSTALLATION_KEY = 'platform-9';
+      try {
+        const a = await A.resolve('home');
+        assert.strictEqual(a.local, true);
+        assert.notStrictEqual(a.resolved, false, JSON.stringify(a));
+      } finally {
+        if (saved === undefined) delete process.env.INSTALLATION_KEY; else process.env.INSTALLATION_KEY = saved;
+      }
+    });
+  }
+
   /* ── ⑤ RAIL-142 (a): once something IS remote, a failure is not "local" ───────────────────────────────────── */
   {
     let topologyFails = false, stampFails = false;
