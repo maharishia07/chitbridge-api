@@ -91,10 +91,19 @@
   "GET /api/books/health": {
    "output_allowlist": true
   },
+  "GET /api/books/ledger/:account": {
+   "output_allowlist": true
+  },
   "GET /api/books/move-in/imports": {
    "output_allowlist": true
   },
   "GET /api/books/packs": {
+   "output_allowlist": true
+  },
+  "GET /api/books/party/:id/statement": {
+   "output_allowlist": true
+  },
+  "GET /api/books/payments/:id/advice": {
    "output_allowlist": true
   },
   "GET /api/books/periods": {
@@ -116,6 +125,9 @@
    "output_allowlist": true
   },
   "GET /api/books/trial-balance": {
+   "output_allowlist": true
+  },
+  "GET /api/books/year/:fy/status": {
    "output_allowlist": true
   },
   "GET /api/catalogue/:bridge_id": {
@@ -334,6 +346,9 @@
   "PATCH /api/actors/:id": {
    "foreign_id_404": true
   },
+  "PATCH /api/books/payments/:id": {
+   "output_allowlist": true
+  },
   "PATCH /api/counters/:id": {
    "foreign_id_404": true
   },
@@ -354,6 +369,57 @@
   },
   "POST /api/actors/:id/otp": {
    "foreign_id_404": true
+  },
+  "POST /api/books/accounts": {
+   "output_allowlist": true
+  },
+  "POST /api/books/cheques/:id/status": {
+   "output_allowlist": true
+  },
+  "POST /api/books/enable": {
+   "output_allowlist": true
+  },
+  "POST /api/books/entries": {
+   "output_allowlist": true
+  },
+  "POST /api/books/entries/:id/reverse": {
+   "output_allowlist": true
+  },
+  "POST /api/books/events": {
+   "output_allowlist": true
+  },
+  "POST /api/books/opening": {
+   "output_allowlist": true
+  },
+  "POST /api/books/outbox/retry": {
+   "output_allowlist": true
+  },
+  "POST /api/books/parties/:id/dispute": {
+   "output_allowlist": true
+  },
+  "POST /api/books/payments": {
+   "output_allowlist": true
+  },
+  "POST /api/books/payments/:id/confirm": {
+   "output_allowlist": true
+  },
+  "POST /api/books/payments/:id/propose": {
+   "output_allowlist": true
+  },
+  "POST /api/books/payments/preview": {
+   "output_allowlist": true
+  },
+  "POST /api/books/preview": {
+   "output_allowlist": true
+  },
+  "POST /api/books/setting": {
+   "output_allowlist": true
+  },
+  "POST /api/books/terms": {
+   "output_allowlist": true
+  },
+  "POST /api/books/write-off": {
+   "output_allowlist": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "output_allowlist": true,
