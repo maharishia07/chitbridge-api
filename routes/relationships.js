@@ -907,6 +907,7 @@ router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/group
 });
 
 // Manual segment override (optional)
+const CUSTOMER_PATCH_KEYS = PARTY_KEYS.concat('segment_override');
 router.patch(
   '/customers/:id',
   [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])],
@@ -916,13 +917,19 @@ router.patch(
   async (req, res) => {
     try {
       const owner = ctx(req);
+      /* R14: a key this route does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) */
+      const unknown = Object.keys(req.body || {}).filter((item) => CUSTOMER_PATCH_KEYS.indexOf(item) < 0);
+      if (unknown.length) {
+        const message = 'Not saved: ' + unknown.join(', ') + ' cannot be changed here. You can change ' + CUSTOMER_PATCH_KEYS.join(', ') + '.';
+        return problem(req, res, { status: 400, code: 'UNKNOWN_FIELD', detail: message, legacy: { error: 'validation', code: 'UNKNOWN_FIELD', fields: unknown, message } });
+      }
       const party = await partyPatch(req, res, 'customer');
       if (party === false) return;
       if (!('segment_override' in (req.body || {}))) {
         if (party) return res.json({ message: 'Customer updated', party });
         return problem(req, res, {
           status: 400,
-          ...words.nothingToUpdate('Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)')
+          ...words.nothingToUpdate('Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)')
         });
       }
       const r = await withEntity(owner, (db) =>

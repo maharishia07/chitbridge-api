@@ -35,6 +35,8 @@ let SQL = [], FLAGS = {}, ROWS = [], LOG = [], DISP = [], PI = [], PEOPLE = {}, 
 function rowsFor(sql, p) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   SQL.push({ s, p });
+  /* RAIL-133 (c): every line asked about is on this chit */
+  if (/line_id::text = ANY/.test(s)) return p[2].map((line_id) => ({ line_id }));
   if (/SELECT policy_flags, self_copy_pref FROM identities/.test(s)) return [{ policy_flags: FLAGS, self_copy_pref: null }];
   if (/UPDATE identities SET policy_flags/.test(s)) { FLAGS = Object.assign({}, FLAGS, JSON.parse(p[0])); return []; }
   if (/FROM chit_status cs JOIN chit_header ch/.test(s) && /AS doc_kind/.test(s)) return ROWS;

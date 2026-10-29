@@ -8,6 +8,10 @@
  * A case whose expected result is the PRINCIPLE (not today's code) carries `gap:` — a FAIL there is a RECORDED finding
  * (RAIL-BACKLOG, "K-TRUTH-1 2026-10-19"), never fixed inside this file. RL-11 (two real installations) stays with ctp-conformance.
  *
+ * BOX-TRUTH 24 Oct (RL-01..RL-14): the rows the file lacked are added as partyCases (RL-01 · RL-01s · RL-02r · RL-03 · RL-04 · RL-04b · RL-05 ·
+ * RL-06 · RL-12). Left off on purpose: RL-02 (a code scan: rail-status.test.cjs), RL-11 (two installations: ctp-conformance), RL-13 (the books' own close
+ * after a posting: stuck-close.test.cjs; a ledger setup is not provable offline), RL-05's viewer half (an actor sign-in: rail-actions.test.cjs).
+ *
  * Shares tests/lib/truth-harness.cjs with stock-truth (one harness). Run: node tests/rail-truth.realstack.cjs   (one at a time on :3100)
  * ⚠️ RL-19 ARMS one precondition in the LOCAL database (a second shop's population set to 'live'); everything else only SELECTs.
  * CARD 01-rail-core-the-chit/README
@@ -141,6 +145,162 @@ async function attachmentCases(A) {
   });
 }
 
+/* ═══ THE PARTY CASES (BOX-TRUTH 24 Oct): two and four shops exchange chits, the database is only READ ═══ */
+const LINE_ONE = { particulars: 'Rail truth item one', quantity: 3, unit: 'piece', price: 12.34, total: 37.02 };
+const LINE_TWO = { particulars: 'Rail truth item two', quantity: 3, unit: 'piece', price: 0.1, total: 0.3 };
+const LINES_SENT = [LINE_ONE, LINE_TWO];
+const LINE_SWAPPED = [{ particulars: 'Rail truth swapped', quantity: 99, unit: 'piece', price: 1, total: 99 }];
+const DISPUTE_REASON = 'two boxes were short on delivery';
+const NOT_A_HOLDER = [403, 404];
+
+const toOf = (shops) => shops.map((s) => ({ display_name: s.name, bridge_id: s.bridge, kind: 'to' }));
+/** a general chit from one shop to others, carrying priced lines; client_ref is the sender's replay key */
+const generalBody = (ref, shops, lines) => ({ recipients: toOf(shops), purpose: 'general', subject: 'Rail truth ' + ref, manual_subject: 'Rail truth ' + ref, client_ref: ref, business_json: {}, line_items: lines });
+const sendLines = async (from, shops, ref, lines) => (await sendAs(from, generalBody(ref, shops, lines || LINES_SENT), 'chit ' + ref)).chit_id;
+/** the lines of MY copy, as the api reads them: [particulars, quantity, price, total] */
+const linesOf = async (shop, chit) => {
+  const d = (await chitRead(shop, chit)).detail || {};
+  return (Array.isArray(d.line_items) ? d.line_items : []).map((l) => [l.particulars, Number(l.quantity), Number(l.price), Number(l.total)]);
+};
+const minorOf = (rows) => rows.reduce((a, r) => a + Math.round(r[3] * 100), 0);
+const statusIn = async (shop, chit) => (await pg.query('SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2', [chit, shop.entity])).rows.map((r) => r.current_status);
+const actionsOf = async (shop, chit) => (await chitRead(shop, chit)).actions || {};
+const putStatus = (shop, chit, status) => j('/api/chits/' + chit + '/status', { method: 'PUT', token: shop.token, body: { status } });
+const countOf = async (sql, args) => (await pg.query(sql, args)).rows[0].n;
+const is4xx = (r) => r.status >= 400 && r.status < 500;
+
+/** RL-01 the frozen chit · RL-01s the seal · RL-06 the replay: what a send leaves behind and what cannot change it */
+async function freezeCases(A, B) {
+  await kase('RL-01', 'a sent chit is frozen: a direct edit is refused (4xx), a delete is refused with its word, a resend does not replace the lines', async () => {
+    const ref = RUN + '-fz', id = await sendLines(A, [B], ref);
+    const put = await j('/api/chits/' + id, { method: 'PUT', token: A.token, body: { line_items: LINE_SWAPPED } });
+    const patch = await j('/api/chits/' + id, { method: 'PATCH', token: A.token, body: { line_items: LINE_SWAPPED } });
+    const del = await j('/api/chits/' + id, { method: 'DELETE', token: A.token });
+    const again = await j('/api/chits/send', { method: 'POST', token: A.token, body: generalBody(ref, [B], LINE_SWAPPED) });
+    expect(is4xx(put) && is4xx(patch), 'edit answered PUT ' + put.status + ' · PATCH ' + patch.status);
+    expect(del.status === 409 && del.b.why === 'co_held_record', 'delete of a sent chit: HTTP ' + del.status + ' ' + JSON.stringify(del.b).slice(0, 160));
+    expect(again.status < 300 && again.b.duplicate === true && again.b.chit_id === id, 'resend: HTTP ' + again.status + ' ' + JSON.stringify(again.b).slice(0, 160));
+    const [mine, theirs] = [await linesOf(A, id), await linesOf(B, id)];
+    expect(mine.length === 2 && JSON.stringify(mine) === JSON.stringify(theirs) && mine[0][1] === 3, 'lines after the attempts: A ' + JSON.stringify(mine) + ' · B ' + JSON.stringify(theirs));
+  });
+  await kase('RL-01s', 'the sent header carries a seal (a hash of what was sent) on the table that holds it', async () => {
+    const cols = (await pg.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'chit_header' AND column_name IN ('chit_hash', 'seal_hash', 'header_hash', 'sealed_at')")).rows;
+    expect(cols.length > 0, 'chit_header has no seal column (only the retired cb_chit had chit_hash)');
+  }, 'RAIL-69 (TB-RAIL-4): the live chit_header has no seal or hash; freeze today is schema_version; the migration is Athi-run SQL');
+  await kase('RL-06', 'the same client_ref sent twice is one chit: the second answer names the first; one sender row, one copy for B', async () => {
+    const ref = RUN + '-rp', first = (await sendAs(A, generalBody(ref, [B], LINES_SENT), 'first send')).chit_id;
+    const second = await j('/api/chits/send', { method: 'POST', token: A.token, body: generalBody(ref, [B], LINES_SENT) });
+    const mine = await countOf("SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2", [A.entity, ref]);
+    const held = await countOf('SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND chit_id = $2', [B.entity, first]);
+    expect(second.status < 300 && second.b.duplicate === true && second.b.chit_id === first, 'second send: HTTP ' + second.status + ' ' + JSON.stringify(second.b).slice(0, 160));
+    expect(mine === 1 && held === 1, 'copies: sender rows ' + mine + ' · B rows of this chit ' + held);
+  });
+}
+
+/** RL-03 equal copies · RL-05 may = door · RL-02r the status door moves one copy */
+async function copyCases(A, B) {
+  await kase('RL-03', 'B reads its copy and it equals A\'s to the paisa: the lines, their sum in minor units, the header total', async () => {
+    const id = await sendLines(A, [B], RUN + '-eq');
+    const [a, b] = [await linesOf(A, id), await linesOf(B, id)];
+    const [ha, hb] = [(await chitRead(A, id)).header || {}, (await chitRead(B, id)).header || {}];
+    expect(a.length === 2 && JSON.stringify(a) === JSON.stringify(b), 'lines differ: A ' + JSON.stringify(a) + ' · B ' + JSON.stringify(b));
+    expect(minorOf(a) === minorOf(b), 'sum in minor units A ' + minorOf(a) + ' · B ' + minorOf(b));
+    expect(String(ha.total_value) === String(hb.total_value), 'header total A ' + ha.total_value + ' · B ' + hb.total_value);
+    return 'sum ' + minorOf(a) + ' minor · header ' + ha.total_value;
+  });
+  await kase('RL-05', 'may and the door agree: the sender may not accept its own chit (not_received, 404 with that word); the receiver may; a step the table lacks is refused wrong_step', async () => {
+    const id = await sendLines(A, [B], RUN + '-mv');
+    const mayA = (await actionsOf(A, id)).accept || {}, mayB = (await actionsOf(B, id)).accept || {};
+    const doorA = await putStatus(A, id, 'accepted'), skip = await putStatus(B, id, 'partial'), doorB = await putStatus(B, id, 'accepted');
+    expect(mayA.ok === false && mayA.why === 'not_received' && doorA.status === 404 && doorA.b.why === mayA.why, 'sender: may ' + JSON.stringify(mayA) + ' · door HTTP ' + doorA.status + ' ' + JSON.stringify(doorA.b).slice(0, 120));
+    expect(mayB.ok === true && doorB.status < 300, 'receiver: may ' + JSON.stringify(mayB) + ' · door HTTP ' + doorB.status);
+    expect(skip.status === 400 && skip.b.why === 'wrong_step' && Array.isArray(skip.b.allowed_transitions) && !skip.b.allowed_transitions.includes('partial'), 'pending to partial: HTTP ' + skip.status + ' ' + JSON.stringify(skip.b).slice(0, 160));
+  });
+  await kase('RL-02r', 'a status change moves ONLY the copy of the shop that asked, through the status door; the other party\'s copy is untouched', async () => {
+    const id = await sendLines(A, [B], RUN + '-st'), before = await statusIn(A, id);
+    ok(await putStatus(B, id, 'accepted'), 'accept');
+    ok(await putStatus(B, id, 'completed'), 'complete');
+    const [mineB, mineA] = [await statusIn(B, id), await statusIn(A, id)];
+    expect(JSON.stringify(mineB) === '["completed"]', 'B copy ' + JSON.stringify(mineB));
+    expect(JSON.stringify(mineA) === JSON.stringify(before), 'A copy moved: before ' + JSON.stringify(before) + ' · after ' + JSON.stringify(mineA));
+  });
+}
+
+/** RL-04 the roster holds the dispute · RL-04b a non-roster participant reads nothing (RLS-only reads: a recorded gap on the local postgres role) */
+async function disputeCases(A, B, C, D) {
+  const mark = 'RLTRUTH' + RUN, reason = mark + ' ' + DISPUTE_REASON;
+  const id = await sendLines(A, [B, C], RUN + '-dp');
+  const raised = await j('/api/chits/' + id + '/disputes', { method: 'POST', token: A.token, body: { category: 'quantity', reason, target_entity_id: B.entity } });
+  const dispute = raised.b.dispute_id;
+  const say = await j('/api/chits/' + id + '/messages', { method: 'POST', token: A.token, body: { message_text: mark + ' dispute thread', thread_type: 'external', is_dispute: true, dispute_id: dispute } });
+  const holders = async (sql) => JSON.stringify((await pg.query(sql, [id, mark + '%'])).rows.map((r) => r.entity_id).sort());
+  const roster = JSON.stringify([A.entity, B.entity].sort());
+  await kase('RL-04', 'a dispute raised at B is held only by A and B: no copy, no message, no timeline row for C, and the outsider is refused at every door', async () => {
+    expect(raised.status < 300 && dispute && say.status < 300, 'raise HTTP ' + raised.status + ' ' + JSON.stringify(raised.b).slice(0, 160) + ' · message HTTP ' + say.status);
+    const copies = await holders('SELECT entity_id FROM chit_disputes WHERE chit_id = $1 AND reason LIKE $2');
+    const msgs = await holders('SELECT entity_id FROM chit_messages WHERE chit_id = $1 AND is_dispute AND message_text LIKE $2');
+    expect(copies === roster && msgs === roster, 'dispute copies held by ' + copies + ' · message copies by ' + msgs + ' · roster ' + roster);
+    const logged = await countOf('SELECT count(*)::int AS n FROM state_log WHERE chit_id = $1 AND entity_id = $2 AND detail LIKE $3', [id, C.entity, '%' + mark + '%']);
+    expect(logged === 0, logged + ' timeline rows about the dispute reached C');
+    const asD = [await j('/api/chits/' + id + '/disputes', { token: D.token }), await j('/api/chits/' + id + '/disputes', { method: 'POST', token: D.token, body: { category: 'other', reason: DISPUTE_REASON } }), await j('/api/chits/' + id + '/messages', { method: 'POST', token: D.token, body: { message_text: 'intruder', thread_type: 'external', is_dispute: true, dispute_id: dispute } })];
+    expect(asD.every((r) => NOT_A_HOLDER.includes(r.status)), 'outsider answered ' + asD.map((r) => r.status).join(' · '));
+    const asC = await j('/api/chits/' + id + '/disputes/' + dispute + '/resolve', { method: 'PUT', token: C.token, body: { resolution_note: 'rail truth: not mine to resolve' } });
+    const mineOpen = (await pg.query('SELECT status FROM chit_disputes WHERE dispute_id = $1 AND entity_id = $2', [dispute, A.entity])).rows[0];
+    expect(is4xx(asC) && mineOpen && mineOpen.status === 'open', 'C resolve HTTP ' + asC.status + ' · A copy ' + JSON.stringify(mineOpen));
+  });
+  await kase('RL-04b', 'C, a participant of the chit but not of the dispute, READS nothing of it: list, queue and thread are empty', async () => {
+    const list = ok(await j('/api/chits/' + id + '/disputes', { token: C.token }), 'C disputes').b;
+    const queue = ok(await j('/api/chits/disputes/queue?status=all', { token: C.token }), 'C queue').b;
+    const thread = ok(await j('/api/chits/' + id + '/messages', { token: C.token }), 'C thread').b;
+    const seen = JSON.stringify([list.disputes, queue, thread.messages]);
+    expect(!seen.includes(mark) && !seen.includes(dispute) && (list.disputes || []).length === 0, 'C read: ' + (list.disputes || []).length + ' disputes · ' + seen.slice(0, 160));
+    const asB = ok(await j('/api/chits/' + id + '/disputes', { token: B.token }), 'B disputes').b;
+    expect((asB.disputes || []).some((x) => x.dispute_id === dispute), 'B (on the roster) does not see its own dispute');
+  }, 'RAIL-80/88: these three reads rely on RLS alone (no entity_id predicate of their own) and the local api connects as postgres, which bypasses it');
+}
+
+/** RL-12 a bill's steps stay with the shop that took them */
+async function billPrivacyCase(A, B) {
+  await kase('RL-12', 'a bill the buyer steps through on its own copy: the seller\'s read carries no buyer step and no log row by the buyer; the buyer sees its own step', async () => {
+    const p = A.products.E;
+    await sendAs(A, receipt(RUN + '-G12', [[p, 5, 20]]), 'receipt');
+    const sale = bill(RUN + '-B12', [[p, 1]]);
+    const sent = await sendAs(A, { ...sale, recipients: [{ self: true, name: 'self' }].concat(toOf([B])), business_json: { ...sale.business_json, customer: { name: B.name, entity_id: B.entity } } }, 'bill to B');
+    ok(await putStatus(B, sent.chit_id, 'accepted'), 'B accepts its bill');
+    const seller = await chitRead(A, sent.chit_id), buyer = await chitRead(B, sent.chit_id);
+    const byB = (seller.state_log || []).filter((l) => l.action_by_identity_id === B.entity);
+    const stored = await countOf('SELECT count(*)::int AS n FROM state_log WHERE chit_id = $1 AND entity_id = $2 AND action_by_identity_id = $3', [sent.chit_id, A.entity, B.entity]);
+    expect(seller.bill_private === true && byB.length === 0 && stored === 0, 'seller read: bill_private ' + seller.bill_private + ' · rows by B in the read ' + byB.length + ' · in the table ' + stored);
+    expect((buyer.state_log || []).some((l) => l.action === 'bill_step'), 'the buyer\'s own copy holds no bill_step: ' + JSON.stringify((buyer.state_log || []).map((l) => l.action)));
+  });
+}
+
+/** the shops the party cases share: B and C trade with A, D holds no copy of anything */
+/** RL-52: an id that is no uuid names no chit — the door answers the unknown chit's 404, never a 500 from the uuid cast */
+async function idCases(A) {
+  const door = async (method, url, body) => {
+    const seen = await j(url, { method, token: A.token, body });
+    expect(seen.status === 404 && seen.b && seen.b.code === 'NOT_FOUND', method + ' ' + url + ' answered HTTP ' + seen.status + ' ' + JSON.stringify(seen.b).slice(0, 120));
+  };
+  await kase('RL-52', 'Mark paid on a chit id that is not a uuid is a 404 NOT_FOUND, never a 500 (api #499)', async () => {
+    await door('POST', '/api/chits/not-a-bill-1/payment', { method: 'cash', amount: 10 });
+    return '404';
+  });
+  await kase('RL-52b', 'the other /:chit_id doors (read · archive) answer a non-uuid id with the 404, never a 500', async () => {
+    await door('GET', '/api/chits/not-a-bill-1');
+    await door('POST', '/api/chits/not-a-bill-1/archive');
+    return '404 each';
+  }, 'RAIL-144 · the id reaches the uuid cast (500) at GET /:chit_id, archive and the raida routes');
+}
+
+async function partyCases(A) {
+  const B = await freshShop(RUN + 'p1', 'Party one'), C = await freshShop(RUN + 'p2', 'Party two'), D = await freshShop(RUN + 'p3', 'Party three');
+  await freezeCases(A, B);
+  await copyCases(A, B);
+  await disputeCases(A, B, C, D);
+  await billPrivacyCase(A, B);
+}
+
 (async () => {
   console.log('\n── rail truth on ' + H.API + ' · run ' + RUN + ' ──');
   ok(await j('/health'), 'health');
@@ -151,6 +311,8 @@ async function attachmentCases(A) {
     await ledgerCases(A);
     await crossWorldCase(A);
     await attachmentCases(A);
+    await partyCases(A);
+    await idCases(A);
   } finally { await pg.end(); }
   finish('rail-truth', process.env.RAIL_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('rail truth could not run:', e && e.message); process.exit(2); });

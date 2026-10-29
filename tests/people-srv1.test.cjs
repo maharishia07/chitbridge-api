@@ -21,6 +21,7 @@ const path = require('path'), http = require('http'), fs = require('fs');
 const express = require('express');
 const API = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-people-srv1';
+process.env.VAULT_ENC_KEY = process.env.VAULT_ENC_KEY || Buffer.alloc(32, 5).toString('base64'); // SEC-106: a first code is kept as a keyed hash, so the stack needs the key production has
 
 const say = console.log.bind(console);
 ['log', 'warn', 'error', 'info'].forEach((k) => { console[k] = () => {}; });
@@ -166,8 +167,11 @@ const keyOf = (jti) => FLAGS.api_keys.find((k) => k.jti === jti);
     t('remove → active → removed, reason remove', EVENTS.length === 1 && EVENTS[0].after.break_status === 'removed' && EVENTS[0].reason === 'remove', JSON.stringify(EVENTS));
     reset(); PEOPLE[BALA].break_status = 'deactivated';
     const backOn = await call('PUT', '/actors/' + BALA + '/status', { action: 'reactivate' });
-    t('back on → deactivated → active, reason reactivate, audit in the answer', backOn.status === 200 && EVENTS.length === 1 && EVENTS[0].before.break_status === 'deactivated'
-      && EVENTS[0].after.break_status === 'active' && EVENTS[0].reason === 'reactivate' && backOn.body.audit.recorded === 1, JSON.stringify(backOn.body));
+    /* SEC-106: reactivating also issues a first code, which puts its own code_issued row on the trail; the break row is the one this line is about */
+    const breakRows = EVENTS.filter((e) => e.after && e.after.break_status);
+    t('back on → deactivated → active, reason reactivate, audit in the answer', backOn.status === 200 && breakRows.length === 1 && breakRows[0].before.break_status === 'deactivated'
+      && breakRows[0].after.break_status === 'active' && breakRows[0].reason === 'reactivate' && backOn.body.audit.recorded === 1, JSON.stringify(backOn.body));
+    t('…and the code it issued is on the trail as code_issued, without the code', EVENTS.length === breakRows.length + 1 && EVENTS.some((e) => e.after && e.after.channel === 'screen' && !('otp' in e.after)), JSON.stringify(EVENTS));
     reset(); AUDIT_FAIL = true;
     const lost = await call('PUT', '/actors/' + BALA + '/status', { action: 'deactivate' });
     t('a lost audit row never fails the act: 200, Bala off and signed out, audit { recorded 0, failed 1 } SAID', lost.status === 200 && PEOPLE[BALA].break_status === 'deactivated'

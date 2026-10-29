@@ -260,6 +260,10 @@ async function captureBooks() {
         const dec = ((pre.body && pre.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
         await q('POST', '/move-in/preview', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, source_country: 'AU' }, '/move-in/preview');
         await q('POST', '/move-in/import', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, confirm: true, source_country: 'AU' }, '/move-in/import');
+        /* an items dry run: MYSTERY's tax code TAX007 is held, so a held row's code (W1) stays in the example — a live answer, not a hand edit */
+        const itp = await q('POST', '/move-in/preflight', { kind: 'items', source: 'xero', csv: fx('xero-items.csv') }, '/move-in/preflight');
+        const itd = ((itp.body && itp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
+        await q('POST', '/move-in/preview', { kind: 'items', source: 'xero', csv: fx('xero-items.csv'), decisions: itd, source_country: 'AU' }, '/move-in/preview');
         const tbp = await q('POST', '/move-in/preflight', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv') }, '/move-in/preflight');
         const tbd = ((tbp.body && tbp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
         await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv'), decisions: tbd, confirm: true, as_at: '2026-10-01', source_country: 'AU' }, '/move-in/import');

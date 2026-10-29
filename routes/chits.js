@@ -88,6 +88,9 @@ const billPrivacy = require('../lib/bill-privacy');
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
 const entityId = (req) => auth.entityOf(req);
+/* "Do I hold a copy of this chit?" — the one probe /amend, /reprice, /costs and /assign-lines ask before writing (RAIL-128) */
+const holdsCopy = async (entity_id, chit_id) =>
+  (await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]))).rows.length > 0;
 /** the schema check of one route (its own operation in lib/chits-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = operationFor(route);
@@ -191,10 +194,11 @@ async function folderColReady() {
 }
 
 async function crossing(entity, definerSql, definerParams, fallback) {
-  if (await definersReady()) {
-    return await withEntity(entity, (db) => db.query(definerSql, definerParams));
-  }
-  return await withEntity(entity, fallback);
+  return await withEntity(entity, (db) => crossingIn(db, definerSql, definerParams, fallback));
+}
+/** crossing on a tx client the caller already holds, so the crossing write and the writes before it commit or roll back together */
+async function crossingIn(db, definerSql, definerParams, fallback) {
+  return (await definersReady()) ? await db.query(definerSql, definerParams) : await fallback(db);
 }
 
 // Connection check removed — existence check only
@@ -410,7 +414,7 @@ router.post(
          as "Send failed" (lib/knownerr, external review §23) */
       const _known = require('../lib/knownerr').known(err);
       if (_known) return problem(req, res, { status: _known.status, ...said(_known.body, codeOfStatus(_known.status)) });
-      console.error('Send chit error:', err.message);
+      cbLog.error('chits/send failed', { id: req.id, err: err.message });
       problem(req, res, failed(err, req, 'Send failed'));
     }
   }
@@ -435,6 +439,7 @@ const SEND_STEPS = [
   sendTrace,
   sendPrefs,
   sendRecipients,
+  sendSuspended,
   sendSeller,
   sendOffers,
   sendMoney,
@@ -1080,6 +1085,39 @@ async function sendRecipients(st, req, res) {
   Object.assign(st, { hasSelf, receiverDetails });
 }
 
+/**
+ * NET-7: a member the network has SUSPENDED sends nothing to it. Any chit to a receiver whose network suspended the sender is refused
+ * here, in words, before anything is written (the edge itself says nothing of purpose, and a suspended member asking to be resumed
+ * does it by phone or the connection screen, not by a chit). The read is lib/network-membership.suspendedWith, which asks the one
+ * standing() reader; a receiver with no edge to the sender, a draft, and a brand writing to its own suspended store are unaffected.
+ */
+async function sendSuspended(state, req, res) {
+  const { sender_id, is_draft, receiverDetails } = state;
+  const ids = receiverDetails.map((receiver) => receiver.entity_id).filter((id) => id !== sender_id); /* the self copy is not a counterparty */
+  if (is_draft || !ids.length) return false;
+  const membership = require('../lib/network-membership');
+  let suspended;
+  try {
+    suspended = await membership.suspendedWith(sender_id, ids);
+  } catch (e) {
+    if (answerStandingReadFailed(res, e, sender_id, ids.length)) return true;
+    throw e;
+  }
+  if (!suspended) return false;
+  return problem(req, res, { status: 403, ...said({
+    code: 'MEMBERSHIP_SUSPENDED',
+    error: 'Membership suspended.',
+    message: 'The network has suspended your membership, so you cannot send to it. Ask the network to resume it, then send again.'
+  }, 'CHIT_CONFLICT') });
+}
+
+/** the standing read failed: logged with its code and ids only, answered 503 NETWORK_READ_FAILED in the row's words, nothing written; false for any other error */
+function answerStandingReadFailed(res, e, entity_id, receivers) {
+  const membership = require('../lib/network-membership');
+  if (e && e.code === membership.READ_FAILED) log.warn('send.standing-read-failed', { code: e.code, entity_id, receivers });
+  return membership.answerReadFailed(res, e);
+}
+
 /** one recipient → its identity row, by id, bridge id, user id, then typed name — never a minted party (sendRecipients) */
 async function sendLookupRecipient(r) {
   let rec;
@@ -1175,7 +1213,7 @@ async function sendSeller(st, req, res) {
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
 async function sendOffers(st, req, res) {
-  const { sender_id, business_json, orderLike, sellerId } = st;
+  const { sender_id, purpose, business_json, orderLike, sellerId } = st;
   let { line_items } = st;
   /**
    * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
@@ -1204,7 +1242,7 @@ async function sendOffers(st, req, res) {
       req.body.recipients.length &&
       req.body.recipients.every((item) => item && (item.self === true || String(item.name || '').toLowerCase() === 'self'));
     /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
-    if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
+    if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike) && require('../lib/offers-live').isSalesDocument(purpose, bj)) {
       const cur = await require('../lib/regional')
         .currencyFor(sellerId)
         .catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
@@ -2297,7 +2335,7 @@ async function sendCustomers(st, req, res) {
           }
         });
       } catch (e) {
-        console.log('customer auto-add skipped:', e.message);
+        cbLog.fellBack('chits send: the customer was not added to the party list — the chit is sent without it', e);
       }
     }
   /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
@@ -2318,7 +2356,7 @@ async function sendCustomers(st, req, res) {
           )
         );
       } catch (e) {
-        console.log('seller customer auto-add skipped:', e.message);
+        cbLog.fellBack('chits send: the seller was not added to the party list — the chit is sent without it', e);
       }
     }
 }
@@ -2335,7 +2373,7 @@ async function sendAssign(st, req, res) {
       try {
         await autoAssignReceived(receiver.entity_id, chit_id);
       } catch (e) {
-        console.log('auto-assign skipped:', e.message);
+        cbLog.fellBack('chits send: the chit was not auto-assigned — it is sent unassigned', e);
       }
     }
 }
@@ -2631,6 +2669,18 @@ function chitFilters(req, where, params) {
   return where;
 }
 
+/**
+ * S34: a chit of the three mailbox lists, as each statement selects it and in its order — the allow-list of the answer, named once per list (the cancel
+ * columns only when cancelCols named them: undefined is left out). summary_json and all_recipients are documents whose keys are the chit's own, so the
+ * answer schema leaves the row open (listed in docs/contracts/api-output-shapes.json) and this mapping is what keeps an unnamed column out.
+ */
+// prettier-ignore
+const sentRow = (x) => ({ chit_id: x.chit_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, priority_flag: x.priority_flag, customer_priority: x.customer_priority, star_flag: x.star_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count });
+// prettier-ignore
+const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, role: x.role, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, deleted_at: x.deleted_at, archived_at: x.archived_at, direction: x.direction, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, message_count: x.message_count });
+// prettier-ignore
+const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type });
+
 router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -2687,7 +2737,9 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
 
     const next = afterOf(result.rows, limit, req);
     const total = countResult ? parseInt(countResult.rows[0].count) : null;
-    res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
+    /* S34: a chit is sentRow (the statement above, in its order); capped and cap_note only when the pager cut the page */
+    res.json({ chits: result.rows.map(sentRow), total, page, limit, next, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Sent list error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get sent items'));
@@ -2765,7 +2817,9 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
     /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
        caller's own query param travelling in a circle. */
     const total = parseInt(countResult.rows[0].count);
-    res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total);
+    /* S34: a chit is folderRow (the DISTINCT ON statement above, in its order); capped and cap_note only when the pager cut the page */
+    res.json({ chits: result.rows.map(folderRow), total, page, limit, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Folder error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get folder'));
@@ -2823,7 +2877,8 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
         .catch(() => ({ rows: [{ n: 0 }] }));
       return { result: outcome, disp: nestedDisp };
     });
-    res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
+    /* S34: a group is the three columns its statement selects */
+    res.json({ group_by: groupBy, direction: dir, groups: result.rows.map((x) => ({ key: x.key, chits: x.chits, total_value: x.total_value })), dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
     problem(req, res, failed(err, req, 'Rollup failed'));
@@ -3010,21 +3065,10 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
 
     const inboxNext = afterOf(result.rows, limit, req);
     const total = countResult ? parseInt(countResult.rows[0].count) : null; /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
-    res.json(
-      Object.assign(
-        {
-          chits: result.rows,
-          // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
-          total,
-          page,
-          limit,
-          next: inboxNext /* PERF1: the ?after= of the next page (newest-first order only; null on the last) */
-          /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
-         way in. Two spellings of one fact is how they start disagreeing. */
-        },
-        PAGE_LIMIT.capOf(pg, result.rows.length, total)
-      )
-    ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
+    const pageCap = PAGE_LIMIT.capOf(pg, result.rows.length, total); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` (absent otherwise) */
+    /* S34: a chit is inboxRow (the statement above, in its order). Top-level total/page/limit mirror /sent so the web pager treats both lists the same; next is the ?after= of the next page (newest-first only; null on
+       the last). ⚠️ the `pagination` object said the same three numbers a second time: two spellings of one fact is how they start disagreeing. */
+    res.json({ chits: result.rows.map(inboxRow), total, page, limit, next: inboxNext, capped: pageCap.capped, cap_note: pageCap.cap_note });
   } catch (err) {
     console.error('Inbox error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get inbox'));
@@ -3178,8 +3222,8 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           console.error('mark-read skipped:', e.message);
           try {
             await db.query('ROLLBACK TO SAVEPOINT mark_read');
-          } catch (problem) {
-            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', problem);
+          } catch (rollbackError) {
+            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', rollbackError);
           }
         }
       }
@@ -3620,11 +3664,11 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const held = await holdsCopy(entity_id, chit_id);
     /* ⭐ W2-RAIL R2 — THE RAIL QUESTION, the same one /amend asks: a reprice WRITES amendments (lib/reprice apply → amend.record),
        so it is the `amend` action — the level ladder (viewer · commenter refused in the engine's word), then "I hold a copy".
        Preview too: the answer GET /chits/:id gives for `amend` is the door's answer, preview or apply. */
-    const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
@@ -3637,7 +3681,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
       })
     );
   } catch (err) {
-    console.error('Reprice error:', err.message);
+    cbLog.error('chits/reprice failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, faultOf(err, req, 'Reprice failed'));
   }
 });
@@ -3656,8 +3700,8 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
-    if (!mine.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
+    const held = await holdsCopy(entity_id, chit_id);
+    if (!held) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
     res.json(
       await cost.record(entity_id, chit_id, req.body.rows || req.body, {
         actor_id: req.identity.identity_id,
@@ -3665,7 +3709,7 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
       })
     );
   } catch (err) {
-    console.error('Cost record error:', err.message);
+    cbLog.error('chits/costs record failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, faultOf(err, req, 'Failed to record cost'));
   }
 });
@@ -3679,7 +3723,7 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
     if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' }, 'CHIT_NOT_MIGRATED') });
     res.json(out);
   } catch (err) {
-    console.error('Cost read error:', err.message);
+    cbLog.error('chits/costs read failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, failed(err, req, 'Failed to read costs'));
   }
 });
@@ -3701,7 +3745,9 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
 /** What a register may be attached to. A registry, so a new kind is data. */
 router.get('/register/attachables', auth, async (req, res) => {
   try {
-    res.json(await raida.attachables());
+    const found = await raida.attachables();
+    /* S34: an attachable is the three columns lib/raida selects (register_attachable); degraded names why the list is empty (absent · no-grant · rls-no-policy · empty), else null */
+    res.json({ attachables: found.attachables.map((x) => ({ type_key: x.type_key, label: x.label, points_at: x.points_at })), degraded: found.degraded });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed'));
   }
@@ -3709,12 +3755,13 @@ router.get('/register/attachables', auth, async (req, res) => {
 
 router.get('/register/subjects', auth, ...checked('GET /register/subjects'), async (req, res) => {
   try {
-    res.json(
-      await raida.listSubjects(entityId(req), {
-        type_key: req.query.type_key || undefined,
-        open_only: req.query.open === '1'
-      })
-    );
+    const found = await raida.listSubjects(entityId(req), {
+      type_key: req.query.type_key || undefined,
+      open_only: req.query.open === '1'
+    });
+    /* S34: a register is the columns lib/raida listSubjects selects (register_subject, open_count a COUNT: text) */
+    // prettier-ignore
+    res.json({ subjects: found.subjects.map((x) => ({ subject_id: x.subject_id, type_key: x.type_key, ref_id: x.ref_id, ref_label: x.ref_label, name: x.name, opened_at: x.opened_at, closed_at: x.closed_at, closed_by_name: x.closed_by_name, open_count: x.open_count })), migrated: found.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to list registers'));
   }
@@ -3750,7 +3797,10 @@ router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /regi
 /** The library — the same risk turns up everywhere, worded slightly differently. */
 router.get('/register/templates', auth, async (req, res) => {
   try {
-    res.json(await raida.templates(entityId(req)));
+    const found = await raida.templates(entityId(req));
+    /* S34: a template is the columns lib/raida templates selects (register_template; raised and closed are COUNTs: text; standards an array_agg, NULL when none) */
+    // prettier-ignore
+    res.json({ templates: found.templates.map((x) => ({ template_id: x.template_id, kind: x.kind, title: x.title, body: x.body, likelihood: x.likelihood, severity: x.severity, treatment: x.treatment, verification_method: x.verification_method, applies_to: x.applies_to, raised: x.raised, closed: x.closed, standards: x.standards })), migrated: found.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to read the library'));
   }
@@ -3852,12 +3902,14 @@ router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, r
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
        of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
-    res.json(
-      await raida.report(entityId(req), {
-        subject_id: req.query.subject_id || undefined,
-        standard_key: req.query.standard || undefined
-      })
-    );
+    const report = await raida.report(entityId(req), {
+      subject_id: req.query.subject_id || undefined,
+      standard_key: req.query.standard || undefined
+    });
+    /* S34: every key lib/raida report answers (all but entries and migrated only once the register is migrated); an entry and a kind count are the library's
+       own literals and by_disposition is keyed by the dispositions found, so those stay open and listed */
+    // prettier-ignore
+    res.json({ entries: report.entries, by_kind: report.by_kind, by_disposition: report.by_disposition, migrated: report.migrated, full: report.full, resp: report.resp, open: report.open, closed: report.closed, closed_by_order: report.closed_by_order });
   } catch (err) {
     console.error('Raida report error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to read the register'));
@@ -4038,8 +4090,8 @@ router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-
     if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
     res.json(out);
   } catch (err) {
-    console.error('Deliver lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to record delivery'));
+    /* RAIL-133: a library's own 400 ('quantity must be a non-zero number') reaches the person; a fault still says the safe sentence, and faultOf logs it */
+    problem(req, res, faultOf(err, req, 'Failed to record delivery', { words: true }));
   }
 });
 
@@ -4068,7 +4120,7 @@ async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
         { id: req.identity.identity_id, name: req.identity.display_name }
       );
     } catch (e) {
-      console.error('bill step (goods-in) not written:', e.message);
+      cbLog.fellBack('chits deliver-lines: the goods-in bill step was not written — the delivery stands without it', e);
     }
   } else
     try {
@@ -4119,7 +4171,7 @@ async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
           );
         });
     } catch (e) {
-      console.error('deliver state_log skipped:', e.message);
+      cbLog.fellBack('chits deliver-lines: the history line was not written — the delivery stands without it', e);
     }
 }
 
@@ -4180,7 +4232,7 @@ async function goodsInAccept(req, entity_id, chit_id, out) {
       }
     }
   } catch (e) {
-    console.error('goods-in accept skipped:', e.message);
+    cbLog.fellBack('chits deliver-lines: the bill was fully received but NOT accepted — accept it by hand', e); /* RAIL-133: this one failed in silence */
   }
 }
 
@@ -4196,9 +4248,9 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
     const entity_id = entityId(req);
     /* Assign only on a chit I hold. Without this an id in the URL would file work against a document I am not
        party to — RLS would keep the row mine and harmless, but it would still be a record of someone else's job. */
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const held = await holdsCopy(entity_id, chit_id);
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
-    const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'assign');
+    const _v = railActions.can({ held }, railActions.meOf(req), 'assign');
     if (!_v.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(_v)));
 
     const out = await assign.assign(entity_id, chit_id, req.body.edits || req.body, {
@@ -4223,13 +4275,12 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
         )
       );
     } catch (e) {
-      console.error('assign state_log skipped:', e.message);
+      cbLog.fellBack('chits assign-lines: the history line was not written — the assignment stands without it', e);
     }
 
     res.json(out);
   } catch (err) {
-    console.error('Assign lines error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to assign'));
+    problem(req, res, faultOf(err, req, 'Failed to assign', { words: true })); /* RAIL-133: the library's own 400 reaches the person */
   }
 });
 
@@ -4253,9 +4304,9 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     /* Amend only what I actually hold. Without this an id in the URL would be enough to file a correction against
        a stranger's chit — the row would be RLS-scoped to me and harmless, but it would still be a record of a
        document I was never party to. */
-    const mine = await withEntity(entity_id, (db) => db.query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const held = await holdsCopy(entity_id, chit_id);
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
-    const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
@@ -4330,7 +4381,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
       return problem(req, res, { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') });
     }
     if (err && err.code === '23514') {
-      console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
+      cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });
       return problem(req, res, { status: 409, ...said({
         error: 'Not an accepted value',
         message: /reason_code/.test(err.constraint || '')
@@ -4338,8 +4389,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
           : 'The database refused one of these values: ' + (err.constraint || 'constraint violation')
       }, 'CHIT_VALUE_NOT_ACCEPTED') });
     }
-    console.error('Amend error:', err.code || '', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to amend'));
+    problem(req, res, faultOf(err, req, 'Failed to amend', { words: true })); /* RAIL-133: the library's own 400 reaches the person */
   }
 });
 
@@ -4447,16 +4497,11 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
     problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
-/** the quote a Mark-paid is held against: the summary's total, else the frozen invoice's grand total, else null */
-function quotedTotalOf(copy) {
-  const summary = copy.summary_json || {},
-    invoice = (copy.business_json || {}).invoice;
-  if (summary.total_value != null) return Number(summary.total_value);
-  return invoice && invoice.grand_total != null ? Number(invoice.grand_total) : null;
-}
 /**
  * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
- * → null (no copy) · { parts } (the bill carries its own tender) · { over } (above the quote, no note) · { books }
+ * → null (no copy) · { parts } (the bill carries its own tender) · { books }
+ * An amount above what the bill owes is NOT judged here (FIN-53, Athi 2026-10-29): the books' one rule (`excess`, 409) asks, the
+ * owner confirms once with `acknowledge`, and the rest records as an advance — no tolerance, no note path, no second calculation.
  */
 async function markChitPaid(db, press) {
   const { entity_id, chit_id, payment, hooks } = press;
@@ -4465,12 +4510,9 @@ async function markChitPaid(db, press) {
   const bj = copy.business_json || {};
   /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
   if (bj.payment && Array.isArray(bj.payment.parts)) return { parts: true };
-  /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
-  const quoted = quotedTotalOf(copy);
-  if (payment.amount != null && !payment.note && quoted != null && payment.amount > quoted * 1.005 + 1) return { over: quoted };
   const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }), {
     by: payment.by,
-    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge.map(String) : [],
+    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge : [] /* a code, or { code, over_minor } — books.acknowledgements reads both */,
     name: (bj.customer && bj.customer.name) || undefined
   });
   const marked = await db.query(
@@ -4513,19 +4555,14 @@ router.post(
        "Mark paid" is a second payment and a retry of the same press is its own replay (docs/FIELDS.md business_json.payment.client_ref) */
       const payment = pressPayment(req, entity_id);
       const hooks = require('../lib/books-hooks');
-      const out = await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks }));
+      /* an id that is no uuid names no bill: the unknown bill's 404, never a 500 from the cast (gorilla pack 2, GP-8: not-a-bill-N) */
+      const out = trace.UUID_RE.test(chit_id) ? await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks })) : null;
       if (!out) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
       if (out.parts)
         return problem(req, res, { status: 422, ...said({
           error: 'The tender is on the bill',
           message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
         }, 'PAYMENT_TENDER_ON_BILL') });
-      if (out.over != null)
-        return problem(req, res, { status: 422, ...said({
-          error: 'Above the quoted amount',
-          message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.',
-          quoted: out.over
-        }, 'PAYMENT_ABOVE_QUOTE') });
       /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
       if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
       /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
@@ -4621,7 +4658,7 @@ router.post('/:chit_id/books-request', auth, ...checked('POST /:chit_id/books-re
  */
 function withdrawFailure(req, res, err) {
   if (!require('../lib/books-hooks').isBooksRefusal(err)) {
-    console.error('Void error:', err.message);
+    cbLog.error('chits/void failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     return problem(req, res, failed(err, req, 'Void failed'));
   }
   return problem(req, res, { status: 409, ...said({
@@ -4827,7 +4864,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         { id: action_by_id, name: action_by_name }
       );
     } catch (e) {
-      console.error('bill step (status) not written:', e.message);
+      cbLog.fellBack('chits status: the bill step was not written — the status change stands without it', e);
     }
   } else
     await crossing(
@@ -4898,7 +4935,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         }
       }
     } catch (e) {
-      console.error('cancel confirm:', e.message);
+      cbLog.fellBack('chits status: the cancel confirm was not stamped — the cancel stands without it', e);
     }
   }
 
@@ -5013,7 +5050,7 @@ router.put(
         ); /* outbound is never allowed to affect the status change */
       }
     } catch (err) {
-      console.error('Update status error:', err.message);
+      cbLog.error('chits/status failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
       problem(req, res, failed(err, req, 'Update failed'));
     }
   }
@@ -5063,6 +5100,47 @@ async function postMessageCopies(msg, db) {
   };
   const r = db ? await run((t, p) => db.query(t, p)) : await withEntity(msg.sender_entity_id, (c) => run((t, p) => c.query(t, p)));
   return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
+}
+
+/** an EXTERNAL message's timeline line, on the tx that posted its copies: every participant's timeline (chit_log_all,
+ *  validated: the caller must be a participant), or a dispute reply's roster only (chit_log_targets). Fallback = the legacy
+ *  per-participant loop when b50 isn't applied. RAIL-136 (d): one tx with the copies, so a failed timeline write leaves no
+ *  message behind and a retry posts it once. */
+async function logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster }) {
+  if (roster) {
+    // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
+    await crossingIn(
+      db,
+      `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
+      [chit_id, roster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
+      async (db) => {
+        for (const pid of roster) {
+          await db.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+            [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
+          );
+        }
+      }
+    );
+  } else {
+    await crossingIn(
+      db,
+      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
+      [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
+      async (db) => {
+        // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
+        const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
+        for (const p of participants.rows) {
+          await db.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
+          );
+        }
+      }
+    );
+  }
 }
 
 router.post(
@@ -5159,54 +5237,27 @@ router.post(
       }
 
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
-      const result = await postMessageCopies({
-        chit_id,
-        sender_entity_id: entity_id,
-        sender_display_name: senderName,
-        thread_type,
-        message_text,
-        msg_type: req.body.msg_type,
-        is_dispute: isDispute,
-        dispute_id: disputeId,
-        line_id: req.body.line_id || null
+      /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
+         posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
+      const result = await withEntity(entity_id, async (db) => {
+        const posted = await postMessageCopies(
+          {
+            chit_id,
+            sender_entity_id: entity_id,
+            sender_display_name: senderName,
+            thread_type,
+            message_text,
+            msg_type: req.body.msg_type,
+            is_dispute: isDispute,
+            dispute_id: disputeId,
+            line_id: req.body.line_id || null
+          },
+          db
+        );
+        if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
+        return posted;
       });
 
-      // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
-      // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
-      if (thread_type === 'external' && disputeRoster) {
-        // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
-        await crossing(
-          entity_id,
-          `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
-          [chit_id, disputeRoster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
-          async (db) => {
-            for (const pid of disputeRoster) {
-              await db.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
-              );
-            }
-          }
-        );
-      } else if (thread_type === 'external') {
-        await crossing(
-          entity_id,
-          `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-          [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
-          async (db) => {
-            // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
-            const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
-            for (const p of participants.rows) {
-              await db.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
-              );
-            }
-          }
-        );
-      }
 
       /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
          Next block, so their open tab refreshes it). Internal notes are the author's own and ring nobody. Best effort, after the
@@ -5241,6 +5292,8 @@ router.post(
 );
 
 // ─── GET /chits/:chit_id/messages ────────────────────────────
+/** true only for "the chit_messages table does not exist yet" (42P01 naming it): the one failure an empty thread is honest for */
+const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
 router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
@@ -5284,7 +5337,12 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     console.error('Get messages error:', err.message);
-    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    /* RAIL-136 (e): an empty thread ONLY while the table does not exist yet (42P01, before its migration). Any other failure that
+       names chit_messages (a permission, a constraint, a missing column) is a fault and answers so: it used to say "no messages". */
+    if (isNoMessagesTable(err)) {
+      cbLog.fellBack('chits GET /:chit_id/messages: no chit_messages table yet — answered an empty thread', err);
+      return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    }
     problem(req, res, failed(err, req, 'Get messages failed'));
   }
 });
@@ -5869,11 +5927,15 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
     });
     const total = got.rows.length ? Number(got.rows[0]._total) : 0;
     // evidence_snapshot is PII — expose presence only, never its contents; the roster as participants (live status per party) so the raiser can resolve each party
-    const rows = await finishDisputes(
+    const finished = await finishDisputes(
       got.rows.map(({ _total, ...d }) => d),
       entity_id,
       railActions.meOf(req)
     );
+    /* S34: a dispute is chit_disputes' columns (cd.*, in table order: migrations/000_baseline_2026-10-21.sql and after) less evidence_snapshot and roster,
+       the three subselects, then what finishDisputes adds. Named here, so a column added to the table later is not answered until it is named. */
+    // prettier-ignore
+    const rows = finished.map((x) => ({ dispute_id: x.dispute_id, chit_id: x.chit_id, raised_by_entity_id: x.raised_by_entity_id, raised_by_display_name: x.raised_by_display_name, category: x.category, reason: x.reason, status: x.status, resolution_note: x.resolution_note, resolved_by_entity_id: x.resolved_by_entity_id, resolved_at: x.resolved_at, created_at: x.created_at, target_entity_id: x.target_entity_id, target_display_name: x.target_display_name, scope: x.scope, mode: x.mode, answerable: x.answerable, parity_state: x.parity_state, via: x.via, entity_id: x.entity_id, role: x.role, auto_subject: x.auto_subject, purpose: x.purpose, sender_display_name: x.sender_display_name, has_evidence: x.has_evidence, participants: x.participants, others: x.others, mine: x.mine, actions: x.actions }));
     // "other" now means disputes targeting me (untargeted ones no longer leak)
     const myDisputes = rows.filter((item) => item.raised_by_entity_id === entity_id);
     const otherDisputes = rows.filter((item) => item.raised_by_entity_id !== entity_id);
@@ -6743,7 +6805,10 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
         to_name: toName(row)
       });
     }
-    res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
+    const answer = PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX));
+    /* S34: a batch is the literal built above; the pager's keys follow (capped and cap_note only when it cut the list) */
+    // prettier-ignore
+    res.json({ count: batches.length, batches: answer.batches.map((x) => ({ chit_id: x.chit_id, product: x.product, qty: x.qty, unit: x.unit, is_origin: x.is_origin, network: x.network, sender_name: x.sender_name, to_name: x.to_name })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to list batches'));
   }
