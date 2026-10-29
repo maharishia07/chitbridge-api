@@ -3166,6 +3166,9 @@ router.get('/unread', auth, async (req, res) => {
 function orderBilledSql(header) {
   return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
 }
+/** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
+const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
+
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
@@ -3598,12 +3601,12 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
     res.json({
-      ...(_wantTiming ? { _timing: _T } : {}),
+      _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
       participants: _red.participants,
       state_log: _red.state_log,
-      ...(_red.private ? { bill_private: true } : {}),
+      bill_private: _red.private ? true : undefined,
       attachments,
       amendments: amd.amendments,
       /* ⚠️ THE UI GATES THE ✎ ON THIS. Without it the pen renders on every line before b138 is applied, and the
@@ -3632,7 +3635,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
          Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */
-      ...(Array.isArray(_lines) ? { live_set: _live } : {}),
+      live_set: Array.isArray(_lines) ? _live : undefined,
       /* ⚠️ WHICH PATH ANSWERED, said out loud. Before b142 the live set is REPLAYED from the frozen payload plus
          the audit trail; after it, the live rows are read directly. Both give the same answer — which is exactly
          why a test can pass without touching the new table and look like it proved it. Naming the source is what
@@ -3640,10 +3643,10 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       lines_from: _rows ? 'chit_line' : 'payload',
       /* ⚠️ b143 — MY side only. This is a per-copy read under FORCE RLS, so a counterparty calling the same
          endpoint on their own copy gets their own (empty) map, never mine. Assignment is the private half. */
-      ...(_assigned && _assigned.size ? { line_assignment: Object.fromEntries(_assigned) } : {}),
+      line_assignment: whenFilled(_assigned, Object.fromEntries),
       /* ⚠️ b144 — SHARED, so this is present on BOTH copies. Each side sees its own claims and the other's,
          attributed; nothing is merged into one number. Totals are summed here, never stored. */
-      ...(_prog && _prog.size ? { line_delivery: Object.fromEntries(_prog), delivery_summary: deliverline.summarise(_prog) } : {})
+      line_delivery: whenFilled(_prog, Object.fromEntries), delivery_summary: whenFilled(_prog, deliverline.summarise)
     });
   } catch (err) {
     console.error('Chit detail error:', err.message);
@@ -5359,7 +5362,9 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     for (const m of result.rows) {
       m.attachments = byMsg[m.message_id] || [];
     }
-    res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
+    const thread = PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX));
+    /* S34: count, then the page envelope (lib/page-limit pageOut); capped and cap_note only when the pager cut the thread */
+    res.json({ count: result.rows.length, messages: thread.messages, total: thread.total, page: thread.page, limit: thread.limit, capped: thread.capped, cap_note: thread.cap_note });
   } catch (err) {
     console.error('Get messages error:', err.message);
     /* RAIL-136 (e): an empty thread ONLY while the table does not exist yet (42P01, before its migration). Any other failure that
