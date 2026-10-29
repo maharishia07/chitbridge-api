@@ -111,7 +111,7 @@ of file each thing is; this says what already does the job.
 | 20 | `form` | `accounts-shell.js` |  |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `entries` | `books-store.js` |  |
-| 20 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
+| 21 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 20 | `note` | `dbwatch.js` |  |
 | 21 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 20 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
