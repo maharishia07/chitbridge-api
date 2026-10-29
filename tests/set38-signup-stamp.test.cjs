@@ -87,6 +87,18 @@ const CS = require(path.join(API, 'lib', 'country-setup'));
   reset({});
   await CS.acceptAtSignup(h, 'E3', { country: 'AU', country_source: 'chosen', timezone: 'Australia/Sydney' }, at);
   ok('the accepted words ride on money and year too (never "what you set")', !!GOV.setup_source.country && GOV.setup_source.currency === GOV.setup_source.country && GOV.setup_source.fy_start_month === GOV.setup_source.country, JSON.stringify(GOV.setup_source));
+  /* ⭐ Athi, 29 Oct: unknown tax registration is never "not registered" — only the owner's explicit choice stores false */
+  reset({});
+  await CS.acceptAtSignup(h, 'E3', { country: 'AU', country_source: 'chosen', timezone: 'Australia/Sydney' }, at);
+  CS.forget('E3'); p = await CS.profile(h, 'E3');
+  ok('sign-up stamp: tax_registration is NULL (not false), the step is done', STAMPS === 1 && GOV.tax_registration === null && p.done === true, JSON.stringify(GOV.tax_registration));
+  ok('reader profile(): a null tax_registration with no number reads as unknown (null), not false', p.tax.registered === null && p.tax.number === null && p.tax.scheme === null, JSON.stringify(p.tax));
+  ok('reader clean(): a body that does not say registered stays null (unknown), never coerced to false', CS.clean({ country: 'AU', currency: 'AUD', fy_start_month: 7, tax: {} }).tax.registered === null && CS.clean({ country: 'AU', currency: 'AUD', fy_start_month: 7 }).tax.registered === null);
+  await CS.save(h, 'E3', { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: false }, source: {} }, 'owner');
+  CS.forget('E3'); p = await CS.profile(h, 'E3');
+  ok('the owner\'s explicit "not registered" stores { registered: false } and reads back false', GOV.tax_registration && GOV.tax_registration.registered === false && p.tax.registered === false, JSON.stringify(GOV.tax_registration));
+  ROW.gstn = '51824753556'; GOV = Object.assign({}, GOV, { tax_registration: null }); CS.forget('E3'); p = await CS.profile(h, 'E3');
+  ok('a stored tax number still reads registered true', p.tax.registered === true && p.tax.number === '51824753556', JSON.stringify(p.tax));
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
