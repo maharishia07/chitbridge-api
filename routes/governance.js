@@ -569,9 +569,16 @@ router.get('/ai-skills', auth, async (req, res) => {
   }
 });
 
+/** may this caller read that entity's readiness passport — its own, or a party on the caller's customer or supplier list (lib/books-store partyOn, the one party test) */
+async function mayReadPassport(req, entity_id) {
+  const callerId = auth.entityOf(req);
+  if (String(callerId) === String(entity_id)) return true;
+  const on = await withEntity(callerId, (db) => require('../lib/books-store').partyOn(db, callerId, entity_id));
+  return Boolean(on.customer || on.supplier);
+}
+
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
-// confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
-// a connection.)
+// confidence" view). Status + validity only — never raw evidence contents. SEC-92: only the owner or a shop that lists it as a party.
 router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'), async (req, res) => {
   try {
     /**
@@ -589,7 +596,8 @@ router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [req.params.bridge_id]
     );
-    if (!r.rows.length) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such entity'));
+    /* SEC-92: a passport is shown to its owner and to a shop that has the owner on its customer or supplier list; every other id answers as an unknown one */
+    if (!r.rows.length || !(await mayReadPassport(req, r.rows[0].identity_id))) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such entity'));
     const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */

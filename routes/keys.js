@@ -32,6 +32,7 @@ const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const policy = require('../lib/policy'); // T2-POLICY: the one writer of policy_flags (patchKey)
+const { shapeOf, outputFilter } = require('../lib/output-allowlist'); // S34: the answer's closed schema and the filter that applies it
 
 /* ⚠️ ASKED, NOT REMEMBERED. This was its own array, so a scope added to the guard was mintable by nobody and a scope removed
    from the guard stayed on offer here. The map that enforces them is the only place they are named.
@@ -118,12 +119,16 @@ const MINT_OPERATION = {
     500: refused('a fault of ours')
   }
 };
+/* S34: the list's 200 schema is the one derived from its recorded answers (docs/contracts/api-output-shapes.json), else the hand-written one; a hand-written operation never reaches the filter by itself */
+const LIST_SHAPE = shapeOf('GET /api/keys');
+const LIST_FILTER = [outputFilter(LIST_SHAPE, 'GET /api/keys')].filter(Boolean);
+const LIST_ANSWER = { type: 'object', required: ['keys', 'scopes', 'may'], properties: { keys: { type: 'array', items: { type: 'object' } }, scopes: { type: 'array', items: { type: 'string' } }, may: { type: 'object', required: ['revoke'], properties: { revoke: { type: 'boolean' } } } } };
 const LIST_OPERATION = {
   summary: 'List keys (session only)',
   tags: ['keys'],
   security: [{ bearer: [] }],
   responses: {
-    200: { description: 'keys', content: json({ type: 'object', required: ['keys', 'scopes', 'may'], properties: { keys: { type: 'array', items: { type: 'object' } }, scopes: { type: 'array', items: { type: 'string' } }, may: { type: 'object', required: ['revoke'], properties: { revoke: { type: 'boolean' } } } } }) },
+    200: { description: 'keys', content: json(LIST_SHAPE && String(LIST_SHAPE.status) === '200' ? LIST_SHAPE.schema : LIST_ANSWER) },
     401: refused('no or bad credentials'),
     403: refused('a key cannot list keys'),
     500: refused('a fault of ours')
@@ -146,11 +151,13 @@ const REVOKE_OPERATION = {
 /* an outward route keeps its old refusal (400 and its frozen body) until its next major (S2, S13): the schema answers it, never a silent 422 */
 const MINT_REFUSAL = { status: 400, code: 'INVALID_KEY_REQUEST', legacy: (failures) => ({ error: 'validation', message: failures[0].detail }) };
 
-router.get('/', auth, sessionOnly, async (req, res) => {
+router.get('/', auth, sessionOnly, ...LIST_FILTER, async (req, res) => {
   /* ⭐ SET-WALK1 · W15: `scopes` = the kinds THIS login may mint — 'testing' (a build posts test results to the board) is the platform role's
      only (lib/platformroot.isPlatform); a shop owner never sees it. The web offers exactly this list (cap-settings.js keyKinds); mint() refuses the rest. */
   try {
-    res.json({ keys: await listOf(auth.entityOf(req)), scopes: scopesFor(req), may: { revoke: owner.may(req, REVOKE_SAYS) } });
+    const keys = await listOf(auth.entityOf(req));
+    const revoke = owner.may(req, REVOKE_SAYS);
+    res.json({ keys, scopes: scopesFor(req), may: { revoke: { ok: revoke.ok, code: revoke.code, why: revoke.why } } }); // S34: every key named
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
   }

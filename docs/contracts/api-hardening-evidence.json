@@ -393,6 +393,9 @@
   "GET /api/actors/access-events": {
    "output_allowlist": true
   },
+  "GET /api/identity/documents": {
+   "output_allowlist": true
+  },
   "POST /api/identity/documents/:scheme/code": {
    "foreign_id_404": true
   },
@@ -438,6 +441,9 @@
   "GET /api/folders/mis": {
    "output_allowlist": true
   },
+  "PATCH /api/relationships/suppliers/:id": {
+   "output_allowlist": true
+  },
   "GET /api/relationships/suppliers/availability": {
    "output_allowlist": true
   },
@@ -450,6 +456,9 @@
   "POST /api/relationships/customers/:id/groups": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PATCH /api/relationships/customers/:id": {
+   "output_allowlist": true
   },
   "GET /api/relationships/scorecard": {
    "output_allowlist": true
@@ -615,6 +624,9 @@
   "POST /api/notifications/seen": {
    "output_allowlist": true
   },
+  "POST /api/notifications/dismiss": {
+   "output_allowlist": true
+  },
   "POST /api/assist/conform": {
    "output_allowlist": true
   },
@@ -763,6 +775,9 @@
   "GET /api/kyb/yourself": {
    "output_allowlist": true
   },
+  "POST /api/kyb/credential": {
+   "output_allowlist": true
+  },
   "GET /api/kyb/position": {
    "output_allowlist": true
   },
@@ -819,6 +834,9 @@
   "DELETE /api/definitions/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/definitions/freeze": {
+   "output_allowlist": true
   },
   "GET /api/tax/invoice/:chit_id": {
    "output_allowlist": true,
@@ -923,8 +941,17 @@
   "GET /api/supplies": {
    "output_allowlist": true
   },
+  "POST /api/supplies": {
+   "output_allowlist": true
+  },
   "PATCH /api/supplies/:id": {
    "foreign_id_404": true
+  },
+  "POST /api/supplies/purchase": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies/:id/issue": {
+   "output_allowlist": true
   },
   "GET /api/adopt/:chit_id": {
    "output_allowlist": true,
