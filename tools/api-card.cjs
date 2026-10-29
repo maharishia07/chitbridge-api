@@ -13,6 +13,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const logger = require('../lib/logger');
 
 /** route file (the register's owner_area) -> the cb-* agent that answers for it; one small table, the only one (no earlier map existed) */
 const AGENT_OF = {
@@ -147,7 +148,7 @@ const moneyOf = (text, curated) => !!curated || sqlStrings(text).some((sql) => M
 /** the codes and statuses a route can answer: declared statuses plus the codes its handler writes that the register knows */
 function errorsOf(declaredStatuses, codes, registeredCodes) {
   const listed = [...new Set(codes)].filter((code) => !registeredCodes || registeredCodes.has(code)).sort();
-  return { count: listed.length, statuses: declaredStatuses.slice().sort((a, b) => a - b), codes: listed };
+  return { count: listed.length, statuses: declaredStatuses.slice().sort((left, right) => left - right), codes: listed };
 }
 
 /** the card facts of one route, given what api-register.cjs already knows (handler source, file text, declared statuses, codes) */
@@ -172,6 +173,7 @@ const readCallersFile = (root) => {
   try {
     return JSON.parse(fs.readFileSync(path.join(root, CALLERS_FILE), 'utf8'));
   } catch (failure) {
+    logger.warn("api-card: " + CALLERS_FILE + " not read, so callers and offline read empty: " + failure.message);
     return {};
   }
 };
@@ -184,13 +186,13 @@ const shapeOf = (route) => route.replace(/\{[^}]+\}|:[A-Za-z_]\w*/g, ':');
 
 /** the client's api('key') registry: key -> { method, path } (the same pattern tools/endpoint-usage.cjs reads) */
 function webRegistry(webRoot) {
-  const reg = {};
+  const registry = {};
   const dir = path.join(webRoot, 'public', 'app');
-  if (!fs.existsSync(dir)) return reg;
+  if (!fs.existsSync(dir)) return registry;
   fs.readdirSync(dir).filter((name) => name.endsWith('.js')).forEach((name) => {
-    for (const match of fs.readFileSync(path.join(dir, name), 'utf8').matchAll(/(\w+):\s*\{\s*m:\s*["'](\w+)["']\s*,\s*p:\s*["']([^"']+)["']/g)) reg[match[1]] = { method: match[2], path: match[3] };
+    for (const match of fs.readFileSync(path.join(dir, name), 'utf8').matchAll(/(\w+):\s*\{\s*m:\s*["'](\w+)["']\s*,\s*p:\s*["']([^"']+)["']/g)) registry[match[1]] = { method: match[2], path: match[3] };
   });
-  return reg;
+  return registry;
 }
 
 /** { 'METHOD /path': ['cap-books.js', ...] } for the screens (class A web files) that call a route, by api('key') and by literal path; the web checkout is a sibling of the api */
@@ -202,10 +204,10 @@ function scanCallers(root, rows, webRoot) {
   const sources = callers.sources(root, webRoot, path.join(root, '..', 'chitbridge-engines-none')).filter((source) => source.repo === 'web' && source.cls === 'A');
   const { hits } = callers.scanAll(sources, routes, Object.keys(registry));
   const out = {};
-  const add = (id, source) => id !== undefined && ((out[routes[id].key] = out[routes[id].key] || new Set()).add(path.basename(source.relPath)));
-  hits.forEach((hit) => {
-    if (hit.route !== undefined) add(hit.route, hit.src);
-    else if (registry[hit.key]) add(byShape.get(registry[hit.key].method + ' ' + shapeOf(registry[hit.key].path)), hit.src);
+  const addCaller = (id, source) => id !== undefined && ((out[routes[id].key] = out[routes[id].key] || new Set()).add(path.basename(source.relPath)));
+  hits.forEach((found) => {
+    if (found.route !== undefined) addCaller(found.route, found.src);
+    else if (registry[found.key]) addCaller(byShape.get(registry[found.key].method + ' ' + shapeOf(registry[found.key].path)), found.src);
   });
   return Object.fromEntries(Object.keys(out).sort().map((key) => [key, [...out[key]].sort()]));
 }
@@ -236,13 +238,13 @@ function offlineOf(key, queueable, idempotentPasses) {
 
 /** round trips: this route's budget (round-trips.budget.json) and, per calling screen, its share of the trips of every budgeted route that screen calls; trips null when no budget line */
 function roundTripsOf(key, budget, callersByRoute) {
-  const own = budget[key];
-  if (!own) return { trips: null, wire: null, screens: [] };
+  const budgetLine = budget[key];
+  if (!budgetLine) return { trips: null, wire: null, screens: [] };
   const screens = (callersByRoute[key] || []).map((screen) => {
     const total = Object.keys(callersByRoute).filter((other) => callersByRoute[other].includes(screen) && budget[other]).reduce((sum, other) => sum + budget[other].trips, 0);
-    return screen + ' ' + own.trips + '/' + total;
+    return screen + " " + budgetLine.trips + '/' + total;
   });
-  return { trips: own.trips, wire: own.wire, screens };
+  return { trips: budgetLine.trips, wire: budgetLine.wire, screens };
 }
 
 /** the measured fields nobody has measured yet: left empty, never invented (cb-speed SPD-29 fills them) */
@@ -269,9 +271,9 @@ function renderCards(rows) {
   const lines = ['', '## Endpoint cards', '', 'One card per route. `does` is written by hand above the route (`@does`); reads, writes, money and callers are derived best effort; `actions` is the SEC-117 seed (empty for now).', ''];
   const areas = [...new Set(rows.map((row) => row.owner_area))].sort();
   areas.forEach((area) => {
-    const own = rows.filter((row) => row.owner_area === area);
-    lines.push('### ' + area + ' (' + agentOf(area) + ', ' + own.filter((row) => row.does).length + ' of ' + own.length + ' with a description)', '');
-    own.forEach((row) => lines.push(...renderCard(row)));
+    const inArea = rows.filter((row) => row.owner_area === area);
+    lines.push('### ' + area + ' (' + agentOf(area) + ', ' + inArea.filter((row) => row.does).length + ' of ' + inArea.length + ' with a description)', '');
+    inArea.forEach((row) => lines.push(...renderCard(row)));
   });
   return lines;
 }
