@@ -404,6 +404,7 @@ const GUARDS = [
   'account-sessions.test.cjs',
   'actors-create-level.test.cjs',
   'actors-max-tasks-cap.test.cjs',
+  'ai-box.test.cjs',
   'ai-one-pipe.test.cjs',
   'assign-merge-patch.test.cjs',
   'auth-first-routes.test.cjs',
