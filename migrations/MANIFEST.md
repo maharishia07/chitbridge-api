@@ -54,6 +54,7 @@ policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodi
 | 10 | `docs/27-…/census/2026-10-21-proposals-db5-db6.md` (docs repo) | DB-5 / DB-6: index and tidy proposals, one yes / no per line; nothing removed | Athi answers per line |
 | 11 | `READ-2026-10-24-1-sec100-folder-fk-census.sql` | SEC-100 (api #397): rows pointing at another shop's folder (parents, rules, routing); row 0 is the count | paste back; any cleanup is Athi's yes |
 | 12 | `b781_staff_code_hash.sql` | SEC-106: `identities.otp_code_hash varchar(64)` (a keyed hash of a staff first code, never the code) and `access_events.action` gains `code_issued`; numbers b778-b780 are held by #338 and #348; the code checks the column first and keeps the old way until it runs | Athi runs |
+| 13 | `READ-2026-10-24-2-sec103-assignee-census.sql` | SEC-103 (api stacked on #397): routing rows whose assignee is not an actor of the row's shop (another shop, or nobody); row 0 is the count | paste back; any cleanup is Athi's yes |
 
 **Monthly routine (DB-8, b221 v2):** on the first maintenance night of each month, `RUN-2026-10-21-5-test-result-summarise.sql` then
 `RUN-2026-10-21-6-test-result-purge.sql` then `READ-2026-10-21-5-test-result-check.sql` (paste back). They add 0 rows / delete 0 rows until
