@@ -11,12 +11,12 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | DELETE | /api/actors/:id/pin | actors | routes/actors.js:722 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/books/recurring/:id | books | routes/books.js:2276 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| DELETE | /api/books/recurring/:id | books | routes/books.js:2277 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1927 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | DELETE | /api/channels/:id | channels | routes/channels.js:127 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| DELETE | /api/chits/:chit_id | chits | routes/chits.js:5964 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4580 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | partial |
-| DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6225 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/chits/:chit_id | chits | routes/chits.js:5950 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4566 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | partial |
+| DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6211 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:247 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:988 | no | no | no | no | no | no | no | yes | no | no | yes | yes | yes | not started |
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:410 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -54,36 +54,36 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/assist/whoami | assist | routes/assist.js:740 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/attachments/:id | attachments | routes/attachments.js:78 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/books/accounts | books | routes/books.js:310 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/assets | books | routes/books.js:2324 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/bank/rail | books | routes/books.js:1283 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/assets | books | routes/books.js:2325 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/bank/rail | books | routes/books.js:1284 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/bs | books | routes/books.js:1030 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/cashflow | books | routes/books.js:936 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/cheques | books | routes/books.js:1464 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/compare | books | routes/books.js:1867 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/compare/:id | books | routes/books.js:2036 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/books/compare/:id/csv | books | routes/books.js:2044 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/books/cheques | books | routes/books.js:1465 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/compare | books | routes/books.js:1868 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/compare/:id | books | routes/books.js:2037 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/books/compare/:id/csv | books | routes/books.js:2045 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/books/daybook | books | routes/books.js:507 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/dues | books | routes/books.js:769 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/events | books | routes/books.js:1615 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/fx-rates | books | routes/books.js:2390 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/fx-revalue | books | routes/books.js:2436 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/events | books | routes/books.js:1616 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/fx-rates | books | routes/books.js:2391 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/fx-revalue | books | routes/books.js:2437 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/health | books | routes/books.js:262 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/ledger/:account | books | routes/books.js:579 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/books/move-in/imports | books | routes/books.js:1833 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/packs | books | routes/books.js:2131 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/packs/:id | books | routes/books.js:2169 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/books/packs/:id/file | books | routes/books.js:2198 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/books/move-in/imports | books | routes/books.js:1834 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/packs | books | routes/books.js:2132 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/packs/:id | books | routes/books.js:2170 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/books/packs/:id/file | books | routes/books.js:2199 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/books/party/:id/statement | books | routes/books.js:655 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/books/payments/:id/advice | books | routes/books.js:1258 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/books/periods | books | routes/books.js:2097 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/payments/:id/advice | books | routes/books.js:1259 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/books/periods | books | routes/books.js:2098 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/pl | books | routes/books.js:976 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/recurring | books | routes/books.js:2251 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/returns | books | routes/books.js:2354 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/recurring | books | routes/books.js:2252 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/returns | books | routes/books.js:2355 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/status | books | routes/books.js:150 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/terms | books | routes/books.js:200 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/todo | books | routes/books.js:2302 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/todo | books | routes/books.js:2303 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/trial-balance | books | routes/books.js:950 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/books/year/:fy/status | books | routes/books.js:2080 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/books/year/:fy/status | books | routes/books.js:2081 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/capture/consolidate | capture | routes/capture.js:274 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/capture/pending | capture | routes/capture.js:56 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/capture/stores | capture | routes/capture.js:298 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -103,14 +103,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/chits/:chit_id | chits | routes/chits.js:3162 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/catalogue-overlay | chits | routes/chits.js:4393 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/costs | chits | routes/chits.js:3711 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/diagnosis | chits | routes/chits.js:5649 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/chits/:chit_id/disputes | chits | routes/chits.js:5603 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/messages | chits | routes/chits.js:5280 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/diagnosis | chits | routes/chits.js:5635 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/chits/:chit_id/disputes | chits | routes/chits.js:5589 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/messages | chits | routes/chits.js:5266 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/raida | chits | routes/chits.js:3904 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/use | chits | routes/chits.js:4011 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/chits/:id/children | chits | routes/chits.js:6524 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/:id/trace | chits | routes/chits.js:6551 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/chits/disputes/queue | chits | routes/chits.js:5869 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/:id/children | chits | routes/chits.js:6510 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/:id/trace | chits | routes/chits.js:6537 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/chits/disputes/queue | chits | routes/chits.js:5855 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/folder | chits | routes/chits.js:2736 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/inbox | chits | routes/chits.js:2908 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/pulse | chits | routes/chits.js:3106 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
@@ -121,9 +121,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/chits/register/walk/:from | chits | routes/chits.js:3847 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/chits/rollup | chits | routes/chits.js:2814 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/sent | chits | routes/chits.js:2671 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/trace/batches | chits | routes/chits.js:6751 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/trace/by-batch | chits | routes/chits.js:6792 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/trace/networks | chits | routes/chits.js:6973 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/trace/batches | chits | routes/chits.js:6737 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/trace/by-batch | chits | routes/chits.js:6778 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/chits/trace/networks | chits | routes/chits.js:6959 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/unread | chits | routes/chits.js:3133 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/combo-templates | combo-templates | routes/combo-templates.js:60 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/connections/list | connections | routes/connections.js:200 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -300,8 +300,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /health | server | server.js:486 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | OPTIONS | * | server | server.js:163 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | PATCH | /api/actors/:id | actors | routes/actors.js:458 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/books/payments/:id | books | routes/books.js:1331 | yes | yes | yes | yes | yes | yes | yes | no | no | no | no | yes | yes | partial |
-| PATCH | /api/books/recurring/:id | books | routes/books.js:2267 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PATCH | /api/books/payments/:id | books | routes/books.js:1332 | yes | yes | yes | yes | yes | yes | yes | no | no | no | no | yes | yes | partial |
+| PATCH | /api/books/recurring/:id | books | routes/books.js:2268 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PATCH | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:103 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
 | PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:961 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | PATCH | /api/counters/:id | counters | routes/counters.js:206 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -346,44 +346,44 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/books/assets | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/books/assets/:id/dispose | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/books/check | books | routes/books.js:293 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/books/cheques/:id/status | books | routes/books.js:1567 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/books/cheques/:id/status | books | routes/books.js:1568 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/books/closing-stock | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/books/compare/preflight | books | routes/books.js:1888 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/compare/snapshots | books | routes/books.js:1904 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/compare/preflight | books | routes/books.js:1889 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/compare/snapshots | books | routes/books.js:1905 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/books/contra | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/books/depreciation/run | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/books/enable | books | routes/books.js:161 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/entries | books | routes/books.js:1644 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/entries/:id/reverse | books | routes/books.js:1671 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/books/events | books | routes/books.js:1634 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/fx-rates | books | routes/books.js:2410 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/fx-rates/import | books | routes/books.js:2419 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/fx-revalue | books | routes/books.js:2463 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/entries | books | routes/books.js:1645 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/entries/:id/reverse | books | routes/books.js:1672 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/books/events | books | routes/books.js:1635 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/fx-rates | books | routes/books.js:2411 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/fx-rates/import | books | routes/books.js:2420 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/fx-revalue | books | routes/books.js:2464 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/books/gst/close | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/books/gst/pay | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | no | partial |
 | POST | /api/books/loans | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/books/loans/:ref/emi | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/books/move-in/import | books | routes/books.js:1815 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/move-in/preflight | books | routes/books.js:1767 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/move-in/preview | books | routes/books.js:1805 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/opening | books | routes/books.js:1717 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/move-in/import | books | routes/books.js:1816 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/move-in/preflight | books | routes/books.js:1768 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/move-in/preview | books | routes/books.js:1806 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/opening | books | routes/books.js:1718 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/books/outbox/retry | books | routes/books.js:300 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/packs | books | routes/books.js:2153 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/packs/:id/ack | books | routes/books.js:2228 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/books/parties/:id/dispute | books | routes/books.js:1589 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/books/payments | books | routes/books.js:1156 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
-| POST | /api/books/payments/:id/confirm | books | routes/books.js:1418 | yes | yes | yes | yes | yes | yes | yes | no | no | no | no | yes | no | partial |
-| POST | /api/books/payments/:id/propose | books | routes/books.js:1387 | yes | yes | yes | yes | yes | yes | yes | no | no | no | no | yes | no | partial |
-| POST | /api/books/payments/preview | books | routes/books.js:1106 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/periods/:fy/:p/:act | books | routes/books.js:2055 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/books/preview | books | routes/books.js:1626 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/recurring | books | routes/books.js:2259 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/recurring/:id/post | books | routes/books.js:2285 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/books/recurring/:id/skip | books | routes/books.js:2293 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/books/packs | books | routes/books.js:2154 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/packs/:id/ack | books | routes/books.js:2229 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/books/parties/:id/dispute | books | routes/books.js:1590 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/books/payments | books | routes/books.js:1157 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
+| POST | /api/books/payments/:id/confirm | books | routes/books.js:1419 | yes | yes | yes | yes | yes | yes | yes | no | no | no | no | yes | no | partial |
+| POST | /api/books/payments/:id/propose | books | routes/books.js:1388 | yes | yes | yes | yes | yes | yes | yes | no | no | no | no | yes | no | partial |
+| POST | /api/books/payments/preview | books | routes/books.js:1107 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/periods/:fy/:p/:act | books | routes/books.js:2056 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/books/preview | books | routes/books.js:1627 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/recurring | books | routes/books.js:2260 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/books/recurring/:id/post | books | routes/books.js:2286 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/books/recurring/:id/skip | books | routes/books.js:2294 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/books/setting | books | routes/books.js:174 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/books/terms | books | routes/books.js:241 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/books/write-off | books | routes/books.js:1684 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/books/year/:fy/close | books | routes/books.js:2068 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/books/write-off | books | routes/books.js:1685 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/books/year/:fy/close | books | routes/books.js:2069 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/capture/:id/convert | capture | routes/capture.js:90 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/capture/:id/dismiss | capture | routes/capture.js:98 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/capture/:id/raise | capture | routes/capture.js:80 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
@@ -408,22 +408,22 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/channels/:id/template | channels | routes/channels.js:61 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | POST | /api/channels/:id/template-approve | channels | routes/channels.js:109 | no | no | no | no | no | no | no | no | no | no | yes | yes | no | not started |
 | POST | /api/chits/:chit_id/amend | chits | routes/chits.js:4284 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6117 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6103 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/assign-lines | chits | routes/chits.js:4230 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/books-request | chits | routes/chits.js:4631 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/books-request | chits | routes/chits.js:4617 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/costs | chits | routes/chits.js:3692 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/chits/:chit_id/deliver-lines | chits | routes/chits.js:4039 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/disputes | chits | routes/chits.js:5365 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/messages | chits | routes/chits.js:5103 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/payment | chits | routes/chits.js:4538 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
+| POST | /api/chits/:chit_id/disputes | chits | routes/chits.js:5351 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/messages | chits | routes/chits.js:5089 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/payment | chits | routes/chits.js:4530 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
 | POST | /api/chits/:chit_id/raida | chits | routes/chits.js:3916 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/raida/:raida_id/close | chits | routes/chits.js:3972 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/raida/:raida_id/dispute | chits | routes/chits.js:3991 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/chits/:chit_id/reprice | chits | routes/chits.js:3656 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/restore | chits | routes/chits.js:6196 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/unarchive | chits | routes/chits.js:6175 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/unread | chits | routes/chits.js:6157 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/assign-bulk | chits | routes/chits.js:6427 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/restore | chits | routes/chits.js:6182 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/unarchive | chits | routes/chits.js:6161 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/unread | chits | routes/chits.js:6143 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/chits/assign-bulk | chits | routes/chits.js:6413 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/register/entries/:raida_id/accept | chits | routes/chits.js:3865 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/chits/register/entries/:raida_id/close | chits | routes/chits.js:3839 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
 | POST | /api/chits/register/entries/:raida_id/revise | chits | routes/chits.js:3856 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
@@ -620,13 +620,13 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/assist/container | assist | routes/assist.js:450 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/assist/region-override | assist | routes/assist.js:518 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | PUT | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:74 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:5728 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:6009 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/priority-flag | chits | routes/chits.js:6065 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/star | chits | routes/chits.js:6140 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4960 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:5714 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:5995 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/priority-flag | chits | routes/chits.js:6051 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/star | chits | routes/chits.js:6126 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4946 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4029 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6270 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6256 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:119 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:363 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1684 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |

@@ -357,7 +357,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LINE_BELOW_DELIVERED | 409 | Below what was delivered | That would take the line below what has been delivered. | Record a negative delivery first. | chits | 2026-10-23 |
 | LINE_DELIVERED | 409 | Line already delivered | That line has been delivered, so it cannot be changed this way. | Record a negative delivery to take it back. | chits | 2026-10-23 |
 | LINE_UNIT_LOCKED | 409 | Unit locked | The unit cannot change once something has been delivered. | Leave the unit as it is. | chits | 2026-10-23 |
-| PAYMENT_ABOVE_QUOTE | 422 | Above the quoted amount | The amount received is above what the bill asked for. | Add a note saying why, or record the quoted amount. | chits | 2026-10-23 |
+| PAYMENT_ABOVE_QUOTE | 422 | DEPRECATED 2026-10-29 (FIN-53): Above the quoted amount | No longer answered: money above what a bill owes is the books' one question (409 ALREADY_PAID, "More than is owed"), confirmed once as an advance. | Nothing to do; an old client reading this code should ask the 409's warnings instead. | chits | 2026-10-23 |
 | PAYMENT_TENDER_ON_BILL | 422 | The tender is on the bill | This bill carries its own payment, so it cannot be marked paid here. | Record money received later at the counter, against the bill. | chits | 2026-10-23 |
 | co_held_record | 409 | A record both parties hold | This chit is a record both parties hold, so it cannot be deleted. | Archive it instead. | chits | 2026-10-23 |
 | code_already_used | 409 | Code already used | That code was already used. | Use the order that was made the first time. | chits | 2026-10-23 |

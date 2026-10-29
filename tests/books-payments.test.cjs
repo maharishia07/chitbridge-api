@@ -142,9 +142,10 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
   await section('2 · POST /payments — a warning not acknowledged is a 409 in words; acknowledged, it records and says what happened', async () => {
     const c0 = counts(X);
     const no = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 500000, allocate: 'oldest_first', client_ref: 'open-2' }));
-    ok('₹5,000 with ₹1,720.12 open, no acknowledge → 409 ALREADY_PAID', no.status === 409 && no.body.code === 'ALREADY_PAID' && no.body.error === 'Already paid?' && codes(no).join() === 'excess', JSON.stringify(no.body));
-    eq('…the message is the whole sentence a shopkeeper reads (no error.message)', no.body.message,
-      'Already paid? ₹5,000 is more than the ₹1,720.12 open — ₹3,279.88 would stay with Kumar Traders as an advance. Pay ₹5,000 again as an advance?');
+    ok('₹5,000 with ₹1,720.12 open, no acknowledge → 409 ALREADY_PAID titled "More than is owed" (FIN-53: W2 alone is not "Already paid?")', no.status === 409 && no.body.code === 'ALREADY_PAID' && no.body.error === 'More than is owed' && codes(no).join() === 'excess', JSON.stringify(no.body));
+    eq('…the message is the whole sentence a shopkeeper reads (no error.message): the amount over, named twice, and the one question', no.body.message,
+      'More than is owed by ₹3,279.88. ₹5,000 is more than the ₹1,720.12 open — ₹3,279.88 would stay with Kumar Traders as an advance. Keep ₹3,279.88 as an advance?');
+    eq('…W2 carries the amount over for the screen\'s confirm (over_minor, over_words) — the web composes no money words', [no.body.warnings[0].over_minor, no.body.warnings[0].over_words], [327988, '₹3,279.88']);
     eq('…and nothing was written: no payment, no entry, no item, no number taken', counts(X), c0);
     const wrong = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 500000, allocate: 'oldest_first', client_ref: 'open-2', acknowledge: ['nothing_owed'] }));
     ok('acknowledging a different code is not acknowledging this one → still 409', wrong.status === 409 && JSON.stringify(counts(X)) === JSON.stringify(c0), wrong.status);
@@ -255,6 +256,30 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
         && counts(X).payments === c3.payments && counts(X).entries === c3.entries, thrown && (thrown.message + ' ' + JSON.stringify(thrown.warnings)));
       const r4 = await door(chitOf('h', { amount: 500 }), { acknowledge: ['same_again', 'just_settled'] });
       ok('…acknowledged (the web\'s "Pay as advance") → recorded', r4.payment && r4.payment.duplicate === false && counts(X).payments - c3.payments === 1, JSON.stringify(r4));
+
+      /* FIN-53 (Athi 2026-10-29, c): a press ABOVE what the bill owes reaches the books (no route tolerance, no note path); the ONE gate is W2 excess,
+         titled "More than is owed" and naming the amount over; confirmed once, the bill is settled and the rest is kept as an advance — one ledger path */
+      /* a third customer, Ravi, so the duplicate rule's W3/W4 (per party) stay silent and the list holds excess ALONE */
+      const RAVI = '55555555-5555-4555-8555-555555555555';
+      X.T.parties.push({ owner: SHOP, party_id: RAVI, party_no: 'P-00003', name: 'Ravi Stores', customer: true });
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: RAVI }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-26', currency: 'INR', party: RAVI, source_chit_id: BILL('z'), source_ref: 'chit:z',
+        by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL('z'), bill_no: 'C1-0051', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0051' } });
+      const c5 = counts(X);
+      let overThrown = null;
+      try { await door(chitOf('z', { amount: 1300 }), { name: 'Ravi' }); } catch (e) { overThrown = e; }
+      ok('FIN-53: ₹1,300 against a ₹1,180 bill → 409 ALREADY_PAID with ONLY excess, titled "More than is owed", over_minor 12000, over_words ₹120; nothing written',
+        overThrown && overThrown.code === 'ALREADY_PAID' && overThrown.title === 'More than is owed' && (overThrown.warnings || []).map((w) => w.code).join() === 'excess'
+        && overThrown.warnings[0].over_minor === 12000 && overThrown.warnings[0].over_words === '₹120' && counts(X).payments === c5.payments,
+        overThrown && (overThrown.title + ' · ' + overThrown.message + ' ' + JSON.stringify(overThrown.warnings)));
+      eq('…the one sentence the popup shows', overThrown && overThrown.message,
+        'More than is owed by ₹120. ₹1,300 is more than the ₹1,180 open — ₹120 would be kept as an advance from Ravi. Keep ₹120 as an advance?');
+      const r5 = await door(chitOf('z', { amount: 1300 }), { name: 'Ravi', acknowledge: ['excess'] });
+      ok('…confirmed once (acknowledge: [excess]) → recorded through recordPayment: the bill settled in full (₹1,180) and ₹120 kept as an advance from Ravi — no second posting rule',
+        r5.payment && r5.payment.duplicate === false && r5.allocation && JSON.stringify(r5.allocation.settled) === JSON.stringify([{ against_ref: BILL('z'), amount_minor: 118000 }])
+        && r5.outcome && r5.outcome.on_account_minor === 12000 && /₹120 kept as an advance from Ravi/.test(r5.outcome.words) && counts(X).payments - c5.payments === 1, JSON.stringify(r5));
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
 
       /* what the door cannot post says so — never a silent mark */
       const c4 = counts(X);
