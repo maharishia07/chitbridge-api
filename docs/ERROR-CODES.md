@@ -51,7 +51,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | This cannot be saved yet: a database update is still to arrive. | Try again after the next update. | books | 2026-10-22 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
-| CAPABILITY_OFF | varies | Capability off | PENDING | - | connectors | 2026-10-22 |
 | CAPTURE_REFUSED | varies | Message not handled | That message could not be handled as asked. | Read the line shown, then try again. | capture | 2026-10-23 |
 | CAPTURE_STORE_MISSING | 503 | Inbox not ready | The inbox is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
 | CAPABILITY_OFF | 403 | Capability off | This shop has switched its connector capability off, so devices and connectors are refused. | Turn the connector capability back on to resume. | connectors | 2026-10-22 |
@@ -204,7 +203,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | KEY_CANNOT_SEE_HOME | 403 | A key cannot see Home | Sign in to see the Home figures. | Open the app with your login, not a key. | facts | 2026-10-23 |
 | KEY_CANNOT_SIGN_IN | 403 | Key cannot sign in | PENDING | - | signin | 2026-10-22 |
 | KEY_NOT_FOUND | 404 | Key not found | There is no key with that id in this shop. | Refresh the list of keys. | keys | 2026-10-22 |
-| KEY_UNKNOWN | 401 | Key unknown | PENDING | - | connectors | 2026-10-22 |
 | KYB_BAD_REQUEST | 400 | Nothing to add | Say what the paper is called, or give its standard, and try again. | Type the name of the paper (for example Village NOC) and add it. | kyb | 2026-10-24 |
 | KYB_REFUSED | varies | Refused | The Know your business page could not do that as asked. | Read the line shown, change what you sent and try again. | kyb | 2026-10-24 |
 | KEY_UNKNOWN | 401 | Key not recognised | This key is not recognised, or its connector is inactive. | Check the key, or issue a new one from the connector. | connectors | 2026-10-22 |
@@ -273,7 +271,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_TEMPLATE | varies | No template | PENDING | - | marketing-results | 2026-10-22 |
 | NO_TOKEN | varies | No token | PENDING | - | marketing-results | 2026-10-22 |
 | OFFER_CLASH | 409 | Offer clash | Another live offer already covers some of the same items. | Pause the other offer, or take those items out of this one. | offer-clash | 2026-10-22 |
-| OFFER_CLASH | 409 | Offer clash | PENDING | - | offer-clash | 2026-10-22 |
 | OFFER_ENDS_BEFORE_START | 400 | Offer ends before it starts | The offer would end before it starts. | Pick an end after the start. | network-offers | 2026-10-23 |
 | OFFER_NOT_LIVE | 409 | Offer not live | Make the offer live before releasing it to your stores. | Make it live, then release. | network-offers | 2026-10-23 |
 | OFFER_NOT_RELEASED | 409 | Offer never released | That offer was never released to your stores. | Release it first. | network-offers | 2026-10-23 |
