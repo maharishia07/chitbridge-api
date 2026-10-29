@@ -96059,6 +96059,461 @@
    ],
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-10-24T14:30:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-attachments.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 sweep, attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one.",
+   "claim": "API-4 sweep, attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · contract · 417 lines. Run: node chitbridge-api/tests/api-problem-attachments.test.cjs",
+   "layer": "engine",
+   "test_type": "contract",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 417,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-bell.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE BELL ROUTES (ROUTES/EVENTS.JS AND ROUTES/NOTIFICATIONS.JS, 6 ROUTES) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER OR SQL STATEMENT MOVED; THE STREAM OPENS WITH A TICKET IN ?T= AND ?TICKET=; NO ANSWER SAYS ITS CAUSE; A FOREIGN LOG_ID IS NO ORACLE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE BELL ROUTES (ROUTES/EVENTS.JS AND ROUTES/NOTIFICATIONS.JS, 6 ROUTES) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER OR SQL STATEMENT MOVED; THE STREAM OPENS WITH A TICKET IN ?T= AND ?TICKET=; NO ANSWER SAYS ITS CAUSE; A FOREIGN LOG_ID IS NO ORACLE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 388 lines. Run: node chitbridge-api/tests/api-problem-bell.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 388,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/bell-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "BELL TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of the bell routes).",
+   "claim": "BELL TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of the bell routes).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 120 lines. Run: node chitbridge-api/tests/bell-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 120,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-supplies.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE SUPPLIES ROUTES (ROUTES/SUPPLIES.JS: WHAT A SHOP BUYS TO USE, THE LIST, ADD, EDIT, PURCHASE AND ISSUE) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; ANOTHER SHOP'S SUPPLY ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE SUPPLIES ROUTES (ROUTES/SUPPLIES.JS: WHAT A SHOP BUYS TO USE, THE LIST, ADD, EDIT, PURCHASE AND ISSUE) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; ANOTHER SHOP'S SUPPLY ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 233 lines. Run: node chitbridge-api/tests/api-problem-supplies.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 233,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/supplies-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SUPPLIES TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/supplies.js).",
+   "claim": "SUPPLIES TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/supplies.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 99 lines. Run: node chitbridge-api/tests/supplies-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 99,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-privacy.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE PRIVACY ROUTES (ROUTES/PRIVACY.JS: THE PUBLIC FACTS AND THE SHOPPER'S OWN PAGE, CONSENT AND REQUESTS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR ANOTHER SHOPPER'S DATA; THE SHOPPER AND THE SHOP COME FROM THE TOKEN ALONE; A WRITE APPENDS ONE ROW.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE PRIVACY ROUTES (ROUTES/PRIVACY.JS: THE PUBLIC FACTS AND THE SHOPPER'S OWN PAGE, CONSENT AND REQUESTS) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR ANOTHER SHOPPER'S DATA; THE SHOPPER AND THE SHOP COME FROM THE TOKEN ALONE; A WRITE APPENDS ONE ROW.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 351 lines. Run: node chitbridge-api/tests/api-problem-privacy.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 351,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/privacy-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "PRIVACY TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/privacy.js).",
+   "claim": "PRIVACY TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/privacy.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 96 lines. Run: node chitbridge-api/tests/privacy-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 96,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-identity-docs.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE IDENTITY-DOCUMENT ROUTES (ROUTES/IDENTITY-DOCS.JS: LIST, FILE, ASK FOR A CODE, VERIFY) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED (MASKING, CODE FLOW, STAMP), NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR A FULL DOCUMENT NUMBER; A STATUS A LIBRARY CARRIES IS PASSED ON; AADHAAR IS NEVER STORED; ANOTHER SHOP'S RECORD, AND A PERSON THE OWNER DOES NOT HOLD, ANSWER AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE IDENTITY-DOCUMENT ROUTES (ROUTES/IDENTITY-DOCS.JS: LIST, FILE, ASK FOR A CODE, VERIFY) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED (MASKING, CODE FLOW, STAMP), NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT OR A FULL DOCUMENT NUMBER; A STATUS A LIBRARY CARRIES IS PASSED ON; AADHAAR IS NEVER STORED; ANOTHER SHOP'S RECORD, AND A PERSON THE OWNER DOES NOT HOLD, ANSWER AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 391 lines. Run: node chitbridge-api/tests/api-problem-identity-docs.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 391,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/identity-docs-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "IDENTITY DOCUMENTS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/identity-docs.js).",
+   "claim": "IDENTITY DOCUMENTS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/identity-docs.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 96 lines. Run: node chitbridge-api/tests/identity-docs-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 96,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-kyb.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE KNOW-YOUR-BUSINESS ROUTES (ROUTES/KYB.JS: YOURSELF, CREDENTIAL, POSITION, RISK, FIELD) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; A STATUS A LIBRARY CARRIES IS PASSED ON; POST /FIELD CHARGES NOTHING WHILE NO SOURCE IS CONNECTED; A CHIT ANOTHER SHOP HOLDS, NAMED AS EVIDENCE, ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE KNOW-YOUR-BUSINESS ROUTES (ROUTES/KYB.JS: YOURSELF, CREDENTIAL, POSITION, RISK, FIELD) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO ANSWER OF ANY STATUS CARRIES A THROWN TEXT; A STATUS A LIBRARY CARRIES IS PASSED ON; POST /FIELD CHARGES NOTHING WHILE NO SOURCE IS CONNECTED; A CHIT ANOTHER SHOP HOLDS, NAMED AS EVIDENCE, ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 304 lines. Run: node chitbridge-api/tests/api-problem-kyb.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 304,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/kyb-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "KNOW YOUR BUSINESS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/kyb.js).",
+   "claim": "KNOW YOUR BUSINESS TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/kyb.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 98 lines. Run: node chitbridge-api/tests/kyb-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 98,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-24T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-channels.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 sweep, channels: every refusal of routes/channels.js (10 routes) is a Problem with its old keys frozen; the relay modes are kept; another shop's binding id answers as an unknown one.",
+   "claim": "API-4 sweep, channels: every refusal of routes/channels.js (10 routes) is a Problem with its old keys frozen; the relay modes are kept; another shop's binding id answers as an unknown one.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 267 lines. Run: node chitbridge-api/tests/api-problem-channels.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 267,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-capture.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE NINE SIGNED-IN CAPTURE ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO ANSWER CARRIES THE TEXT OF A THROWN ERROR; THE THREE WEBHOOKS ANSWER EXACTLY AS BEFORE; ANOTHER SHOP'S CAPTURE ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE NINE SIGNED-IN CAPTURE ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO ANSWER CARRIES THE TEXT OF A THROWN ERROR; THE THREE WEBHOOKS ANSWER EXACTLY AS BEFORE; ANOTHER SHOP'S CAPTURE ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 308 lines. Run: node chitbridge-api/tests/api-problem-capture.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 308,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-relationships.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE 14 RELATIONSHIP ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO ANSWER CARRIES A THROWN ERROR'S TEXT; ANOTHER SHOP'S LIST ROW ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE 14 RELATIONSHIP ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO ANSWER CARRIES A THROWN ERROR'S TEXT; ANOTHER SHOP'S LIST ROW ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 276 lines. Run: node chitbridge-api/tests/api-problem-relationships.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 276,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-connectors.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE 14 CONNECTOR ROUTES (ROUTES/CONNECTORS.JS: THE DEVICE AND ERP DOORS INCLUDED) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S CONNECTOR ID ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE 14 CONNECTOR ROUTES (ROUTES/CONNECTORS.JS: THE DEVICE AND ERP DOORS INCLUDED) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED, NO 5XX SAYS ITS CAUSE; ANOTHER SHOP'S CONNECTOR ID ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 265 lines. Run: node chitbridge-api/tests/api-problem-connectors.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 265,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-marketing.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE CRM, MARKETING, OFFER-SERVICE, NETWORK-OFFERS AND COMBO-TEMPLATES ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE CRM, MARKETING, OFFER-SERVICE, NETWORK-OFFERS AND COMBO-TEMPLATES ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 327 lines. Run: node chitbridge-api/tests/api-problem-marketing.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 327,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/offers-published-contract.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE OFFER SERVICE'S PUBLISHED OPENAPI IS TYPED (BODY, REQUIRED, 429) WHILE THE ENFORCED SCHEMA STAYS LOOSE.",
+   "claim": "THE OFFER SERVICE'S PUBLISHED OPENAPI IS TYPED (BODY, REQUIRED, 429) WHILE THE ENFORCED SCHEMA STAYS LOOSE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 65 lines. Run: node chitbridge-api/tests/offers-published-contract.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 65,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
   }
  ]
 }

@@ -96,9 +96,6 @@
       "matchHeader",
       "preflight"
     ],
-    "lib/ctpaddress.js": [
-      "resolveAddress"
-    ],
     "lib/dayopen.js": [
       "(anonymous)"
     ],

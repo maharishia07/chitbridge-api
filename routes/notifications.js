@@ -1,9 +1,15 @@
 // routes/notifications.js — derived notification feed (no notifications table).
 // Computed from state_log: recent activity by OTHERS on chits I am a party to.
+// OWNS       the Activity feed of the bell and its three routes: the feed with its badge (GET /), the watermark (POST /seen) and the dismissals (POST /dismiss). No notifications table.
+// CALLED BY  server.js (mounted at /api/notifications) · the app's bell (public/app/rail-bell.js, app.html).
+// FLOW  every route: sign-in → its schema check (lib/bell-contract.js `notifications`) → the handler. A refusal or a fault → problem(req, res, ...), the old { error, message } kept beside the Problem fields
+//       (docs/contracts/api-legacy.json); a 500 says only the one generic sentence. The shop is the session's (auth.entityOf), never a body's.
+// CARD  22-channels-capture-and-messaging/notifications-and-the-bell
 const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { notifications: contract, words, faultOf } = require('../lib/bell-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const { query, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const billPrivacy = require('../lib/bill-privacy');
@@ -45,7 +51,7 @@ const FEED_FROM = `FROM state_log sl
           AND sl.created_at > now() - interval '${FEED_DAYS} days'
         ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const caller_id = req.identity.identity_id; // the actor (or entity) actually making the call
@@ -161,7 +167,7 @@ router.get('/', auth, async (req, res) => {
     res.json({ notifications: result.rows, count: fresh, total: result.rows.length, page: 1, limit, seen_at: seen });
   } catch (err) {
     console.error('Notifications error:', err.message);
-    res.status(500).json({ error: 'Failed to get notifications', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed to get notifications'));
   }
 });
 
@@ -172,7 +178,7 @@ router.get('/', auth, async (req, res) => {
  * clear somebody else's badge. A small thing, but a badge you can silently clear for another person is a badge
  * nobody can trust.
  */
-router.post('/seen', auth, async (req, res) => {
+router.post('/seen', auth, ...contract.checked('POST /seen'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, (c) => c.query('SELECT notif_mark_seen() AS at'));
@@ -181,10 +187,10 @@ router.post('/seen', auth, async (req, res) => {
     /* Pre-b157 the function does not exist. Say so plainly rather than 500 — the panel still opens and still
        lists everything; only the badge cannot yet be cleared. */
     if (err && err.code === '42883') {
-      return res.status(503).json({ error: 'Not migrated', message: 'Clearing the badge needs b157 on this environment.' });
+      return problem(req, res, { status: 503, ...words.seenNotMigrated() });
     }
     console.error('notif seen:', err.message);
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed'));
   }
 });
 
@@ -201,13 +207,13 @@ router.post('/seen', auth, async (req, res) => {
  *
  * Body: { log_ids: [uuid, …] }  ·  { all: true } clears everything currently visible.
  */
-router.post('/dismiss', auth, async (req, res) => {
+router.post('/dismiss', auth, ...contract.checked('POST /dismiss'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const all = req.body && req.body.all === true;
     const ids = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
     if (!all && !ids.length) {
-      return res.status(400).json({ error: 'Nothing to clear', message: 'Send log_ids, or all:true.' });
+      return problem(req, res, { status: 400, ...words.nothingToClear() });
     }
     const out = await withEntity(entity_id, async (c) => {
       if (all) {
@@ -234,11 +240,13 @@ router.post('/dismiss', auth, async (req, res) => {
     /* Pre-b164 the table does not exist. Say which migration, rather than 500 — the panel still works, only the
        clearing does not, and the two need different actions from a human. */
     if (err && (err.code === '42P01' || err.code === '42703')) {
-      return res.status(503).json({ error: 'Not migrated', message: 'Clearing Activity needs b164 on this environment.', code: 'NOTIF_DISMISS_NOT_MIGRATED' });
+      return problem(req, res, { status: 503, ...words.dismissNotMigrated() });
     }
     console.error('notif dismiss:', err.message);
-    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Failed'));
   }
 });
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
 
 module.exports = router;
