@@ -256,7 +256,7 @@ const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] 
 function dropCostKeys(value) {
   if (!value || typeof value !== 'object') return value;
   Object.keys(value).forEach((key) => {
-    if (/^cost(_|$)/.test(key)) delete value[key];
+    if (cost.isCostKey(key)) delete value[key];
     else dropCostKeys(value[key]);
   });
   return value;
@@ -432,6 +432,8 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (editorNamesRate(req, [req.body.item_data])) return problem(req, res, rateRefusal());
+    const blind = await cost.costKeyRefusal(req, entity_id, [req.body.item_data]); /* CAT-235: a cost-blind co-assist adds the item, never its cost */
+    if (blind) return problem(req, res, { status: 403, ...words.costBlind(blind) });
     const schema_id = await defaultSchemaId(entity_id);
     /**
      * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
@@ -500,6 +502,8 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
       return problem(req, res, { status: 400, ...words.notObjects() });
     }
     if (editorNamesRate(req, items)) return problem(req, res, rateRefusal());
+    const blind = await cost.costKeyRefusal(req, entity_id, items);
+    if (blind) return problem(req, res, { status: 403, ...words.costBlind(blind) });
 
     /**
      * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
@@ -947,7 +951,7 @@ async function catalogueRows(entity_id, canCost) {
     items.forEach((item) => {
       if (item)
         Object.keys(item).forEach((k) => {
-          if (/^cost(_|$)/.test(k)) delete item[k];
+          if (cost.isCostKey(k)) delete item[k];
         });
     });
     if (schema && schema.properties) delete schema.properties.cost;
@@ -1219,6 +1223,9 @@ router.post(
 
       const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
       if (rateRows.length) return problem(req, res, rateRefusal(rateRows));
+      /* CAT-235: the sheet rows as parsed, before any write — a cost column from a cost-blind co-assist refuses the whole import (create and update-by-key alike; the update merges prior+row, so no stored key is ever dropped) */
+      const blind = isActor(req) && (await cost.costKeyRefusal(req, entity_id, applied.items.map((fileRow) => sheet.fromSheet(fileRow, { source: 'upload' }).item_data)));
+      if (blind) return problem(req, res, { status: 403, ...words.costBlind(blind) });
 
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
