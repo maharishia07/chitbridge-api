@@ -279,8 +279,12 @@
   "GET /api/products/starter-columns": {
    "output_allowlist": true
   },
+  "GET /api/repeat": {
+   "output_allowlist": true
+  },
   "GET /api/repeat/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/testing/cmdb/:ci": {
    "foreign_id_404": true
@@ -497,34 +501,44 @@
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/accept": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/agree": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/counter": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/decline": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/end": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/pause": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/refuse": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/resume": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/run": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/repeat/:id/skip": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/till/alias": {
    "output_allowlist": true
@@ -878,6 +892,12 @@
    "output_allowlist": true
   },
   "PUT /api/governance/profile/vault": {
+   "output_allowlist": true
+  },
+  "POST /api/repeat": {
+   "output_allowlist": true
+  },
+  "POST /api/repeat/sweep": {
    "output_allowlist": true
   }
  }
