@@ -244,6 +244,8 @@ const EXTRAS = [
   X('use-read', 'GET ' + C + '/:chit_id/use', 200, { patch: { 'tax-copy': { copyOf: async () => ({ current_status: 'pending' }), billReceived: () => true }, 'bill-use': { forCopy: async () => ({ lines: [] }) } } }),
   X('overlay-without-a-catalogue', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=milk&comment=fresh' }),
   X('messages-of-a-participant', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?thread_type=external&dispute=1&line_id=' + OTHER, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
+  /* RAIL-136 (e): only a MISSING table (42P01) is an empty thread; a refused read of the same table is a fault, never "no messages" */
+  X('messages-read-refused', 'GET ' + C + '/:chit_id/messages', 500, { setup: { sqlRows: (sql) => { throw Object.assign(new Error('permission denied for table chit_messages'), { code: '42501' }); } } }),
   X('messages-table-missing', 'GET ' + C + '/:chit_id/messages', 200, { setup: { sqlRows: (sql) => { throw Object.assign(new Error('relation "chit_messages" does not exist'), { code: '42P01' }); } } }),
   X('disputes-of-a-participant', 'GET ' + C + '/:chit_id/disputes', 200, { setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/SELECT all_recipients FROM chit_header/, [CHIT_ROW]]]) } }),
   X('disputes-table-missing', 'GET ' + C + '/:chit_id/disputes', 200, { setup: { sqlRows: (sql) => { throw Object.assign(new Error('relation "chit_disputes" does not exist'), { code: '42P01' }); } } }),

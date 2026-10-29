@@ -194,10 +194,11 @@ async function folderColReady() {
 }
 
 async function crossing(entity, definerSql, definerParams, fallback) {
-  if (await definersReady()) {
-    return await withEntity(entity, (db) => db.query(definerSql, definerParams));
-  }
-  return await withEntity(entity, fallback);
+  return await withEntity(entity, (db) => crossingIn(db, definerSql, definerParams, fallback));
+}
+/** crossing on a tx client the caller already holds, so the crossing write and the writes before it commit or roll back together */
+async function crossingIn(db, definerSql, definerParams, fallback) {
+  return (await definersReady()) ? await db.query(definerSql, definerParams) : await fallback(db);
 }
 
 // Connection check removed — existence check only
@@ -5101,6 +5102,47 @@ async function postMessageCopies(msg, db) {
   return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
 }
 
+/** an EXTERNAL message's timeline line, on the tx that posted its copies: every participant's timeline (chit_log_all,
+ *  validated: the caller must be a participant), or a dispute reply's roster only (chit_log_targets). Fallback = the legacy
+ *  per-participant loop when b50 isn't applied. RAIL-136 (d): one tx with the copies, so a failed timeline write leaves no
+ *  message behind and a retry posts it once. */
+async function logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster }) {
+  if (roster) {
+    // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
+    await crossingIn(
+      db,
+      `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
+      [chit_id, roster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
+      async (db) => {
+        for (const pid of roster) {
+          await db.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+            [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
+          );
+        }
+      }
+    );
+  } else {
+    await crossingIn(
+      db,
+      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
+      [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
+      async (db) => {
+        // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
+        const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
+        for (const p of participants.rows) {
+          await db.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
+          );
+        }
+      }
+    );
+  }
+}
+
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5195,54 +5237,27 @@ router.post(
       }
 
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
-      const result = await postMessageCopies({
-        chit_id,
-        sender_entity_id: entity_id,
-        sender_display_name: senderName,
-        thread_type,
-        message_text,
-        msg_type: req.body.msg_type,
-        is_dispute: isDispute,
-        dispute_id: disputeId,
-        line_id: req.body.line_id || null
+      /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
+         posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
+      const result = await withEntity(entity_id, async (db) => {
+        const posted = await postMessageCopies(
+          {
+            chit_id,
+            sender_entity_id: entity_id,
+            sender_display_name: senderName,
+            thread_type,
+            message_text,
+            msg_type: req.body.msg_type,
+            is_dispute: isDispute,
+            dispute_id: disputeId,
+            line_id: req.body.line_id || null
+          },
+          db
+        );
+        if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
+        return posted;
       });
 
-      // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
-      // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
-      if (thread_type === 'external' && disputeRoster) {
-        // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
-        await crossing(
-          entity_id,
-          `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
-          [chit_id, disputeRoster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
-          async (db) => {
-            for (const pid of disputeRoster) {
-              await db.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
-              );
-            }
-          }
-        );
-      } else if (thread_type === 'external') {
-        await crossing(
-          entity_id,
-          `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-          [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
-          async (db) => {
-            // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
-            const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
-            for (const p of participants.rows) {
-              await db.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
-              );
-            }
-          }
-        );
-      }
 
       /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
          Next block, so their open tab refreshes it). Internal notes are the author's own and ring nobody. Best effort, after the
@@ -5277,6 +5292,8 @@ router.post(
 );
 
 // ─── GET /chits/:chit_id/messages ────────────────────────────
+/** true only for "the chit_messages table does not exist yet" (42P01 naming it): the one failure an empty thread is honest for */
+const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
 router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
@@ -5320,7 +5337,12 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     console.error('Get messages error:', err.message);
-    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    /* RAIL-136 (e): an empty thread ONLY while the table does not exist yet (42P01, before its migration). Any other failure that
+       names chit_messages (a permission, a constraint, a missing column) is a fault and answers so: it used to say "no messages". */
+    if (isNoMessagesTable(err)) {
+      cbLog.fellBack('chits GET /:chit_id/messages: no chit_messages table yet — answered an empty thread', err);
+      return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
+    }
     problem(req, res, failed(err, req, 'Get messages failed'));
   }
 });

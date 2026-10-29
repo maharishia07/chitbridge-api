@@ -310,6 +310,7 @@
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id/items/:productId": {
@@ -342,12 +343,23 @@
   "POST /api/keys": {
    "output_allowlist": true
   },
+  "POST /api/schemas/create-default": {
+   "strict_input": true
+  },
   "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
+  "PATCH /api/schemas/fields/order": {
+   "strict_input": true
+  },
   "PATCH /api/schemas/fields/:field_key": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PATCH /api/schemas/visibility": {
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/actors/suggest-key": {
    "output_allowlist": true
@@ -578,6 +590,9 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
+  "GET /api/network-design/availability": {
+   "output_allowlist": true
+  },
   "GET /api/catalogue-face": {
    "output_allowlist": true
   },
@@ -590,6 +605,12 @@
   "DELETE /api/combo-templates/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/simulator/lead": {
+   "output_allowlist": true
+  },
+  "POST /api/simulator/feedback": {
+   "output_allowlist": true
   },
   "POST /api/notifications/seen": {
    "output_allowlist": true
@@ -754,10 +775,26 @@
   "GET /api/forms": {
    "output_allowlist": true
   },
+  "GET /api/forms/:key": {
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/resolve": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/issue": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
   "GET /api/forms/instances/:id": {
    "foreign_id_404": true
   },
   "POST /api/forms/instances/:id/sign": {
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/service/:chit_id": {
