@@ -167,6 +167,11 @@ const EXTRAS = [
   X('offer-item-write-breaks', 'POST /api/till/offer-item', 500, { setup: { db: 'fail' }, body: { offer_id: ITEM, item_id: ITEM, on: true } }),
   X('price-no-item', 'POST /api/till/price', 400, { body: {} }),
   X('price-not-a-number', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: -1 } }),
+  /* CTR-168: no number at all is refused in PATCH /products' words, never read as 0 or 1 */
+  X('price-null', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: null }, said: 'Price is required' }),
+  X('price-blank', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: '' }, said: 'Price is required' }),
+  X('price-empty-list', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: [] }, said: 'Price is required' }),
+  X('price-true', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: true }, said: 'Price must be a number' }),
   X('price-cost-blind', 'POST /api/till/price', 403, {
     body: { item_id: ITEM, price: 5 },
     patch: [['lib/cost.js', 'writeRefusal', async () => ({ error: 'Not permitted', code: 'COST_BLIND', blocked: ['price'], message: 'Your access does not include cost or price.' })]]
@@ -261,6 +266,19 @@ const EXTRAS = [
   X('catalogue-write-breaks', 'POST /api/till/catalogue', 500, { body: { blueprint: 'veg' }, patch: [['lib/catalogue-write.js', 'writeItems', throwsLater]] }),
   X('summary-trend-bad-period', 'GET /api/till/summary', 400, { url: '/api/till/summary?compare=1&period=decade' }),
   X('summary-trend-no-country', 'GET /api/till/summary', 422, { url: '/api/till/summary?compare=1&period=week' }),
+  /* API-8 (till): the READY side of the reads whose stand-in answer is the not-ready or the empty one; the output schema is learned from both branches of each handler */
+  X('summary-trend-ready', 'GET /api/till/summary', 200, { url: '/api/till/summary?compare=1&period=week', patch: [['lib/till-summary.js', 'trend', async () => ({ status: 200, body: { period: 'week', n: 12, currency: 'INR', fy_start_month: 4, slots: [] } })]] }),
+  X('bills-over-the-cap', 'GET /api/till/bills', 200, { url: '/api/till/bills?limit=100000' }),
+  X('match-no-orders', 'GET /api/till/match', 200, {}),
+  X('match-one-head', 'GET /api/till/match', 200, { patch: [['lib/select.js', 'rows', async () => [{ chit_id: ITEM, created_at: '2026-10-01T00:00:00Z', counterparty_id: null }]]] }),
+  X('stock-detail-not-switched-on', 'GET /api/till/stock', 200, { url: '/api/till/stock?detail=1', patch: [['lib/schema.js', 'hasTable', async () => false]] }),
+  X('stock-detail-ready', 'GET /api/till/stock', 200, { url: '/api/till/stock?detail=1', patch: [['lib/schema.js', 'hasTable', async () => true], ['lib/stock-store.js', 'onHand', async () => ({})]] }),
+  X('stock-plain', 'GET /api/till/stock', 200, { patch: [['lib/stock-store.js', 'onHand', async () => ({})]] }),
+  X('hidden-for-a-counter', 'GET /api/till/quick-keys/hidden', 200, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
+  X('screen-config-for-a-counter', 'GET /api/till/quick-keys/screen-config', 200, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
+  X('snapshot-for-a-tv', 'GET /api/till/snapshot', 200, { setup: { key: ['screen'] } }),
+  X('snapshot-delta', 'GET /api/till/snapshot', 200, { url: '/api/till/snapshot?since=2026-10-01T00:00:00Z' }),
+  X('snapshot-counter-key', 'GET /api/till/snapshot', 200, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
   X('engine-file-unreadable', 'GET /api/till/engine/:name', 500, { patch: [['fs', 'readFileSync', null]] })
 ];
 
@@ -339,6 +357,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (answer.json && answer.json.code) check(label + ': its code ' + answer.json.code + ' is registered with a shopkeeper sentence', registered.has(answer.json.code), answer.json.code);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/party_secret|SELECT|vault|relation/.test(answer.text), answer.text);
     else kit.checkLegacy(check, label, answer, kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id));
+    if (scenario.said) check(label + ': ' + scenario.expect + ' "' + scenario.said + '"', answer.status === scenario.expect && answer.json && answer.json.message === scenario.said, answer.json);
   }
   return tested;
 }
@@ -348,18 +367,25 @@ async function checkRoutes(port, scenarios, recording) {
  * recorded 200 fits that schema is proved here, in the counter's own world — the generator's proxy world cannot seat a slab on the shelf, so POST /rate never
  * reaches its 200 there. → { route: { output_allowlist: true } } for the routes that held (today: POST /api/till/rate, scenario rate-set)
  */
-const ALLOW_LIST_SCENES = { 'POST /api/till/rate': 'rate-set' };
+/*
+ * API-8 (till): the same proof for every counter route whose 200 schema is CLOSED (derived in docs/contracts/api-output-shapes.json): EVERY recorded 200 of the route fits that schema
+ * and loses no key to the allow-list (lib/output-allowlist prune). The schema is learned from the not-ready AND the ready side of each handler, so the scenarios above carry both.
+ */
 function checkAllowList(recording) {
   const proved = {};
   const words = require(path.join(HERE, CONTRACT_FILE));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
-  Object.keys(ALLOW_LIST_SCENES).forEach((route) => {
-    const answer = recording[route + '|' + ALLOW_LIST_SCENES[route]];
-    const schema = words.operationFor(route.replace(' ' + MOUNT, ' ')).responses[200].content['application/json'].schema;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const routes = [...new Set(Object.values(recording).filter((one) => one.status === 200 && one.body && MINE(one.route)).map((one) => one.route))].sort();
+  routes.forEach((route) => {
+    const operation = words.operationFor(route.replace(' ' + MOUNT, ' '));
+    const schema = (((operation && operation.responses[200] && operation.responses[200].content) || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
     const fits = engine.compile(schema);
-    const closedAnswer = !!answer && answer.status === 200 && schema.additionalProperties === false && fits(answer.body);
-    check(route + ' · ' + ALLOW_LIST_SCENES[route] + ': the 200 holds only the keys its operation lists (a closed schema the answer fits)', closedAnswer, { status: answer && answer.status, errors: fits.errors, body: answer && answer.body });
-    if (closedAnswer) proved[route] = { output_allowlist: true };
+    const held = answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
   });
   return proved;
 }
@@ -440,6 +466,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
         1
       ) + '\n'
     );
+    const evidence = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+    Object.keys(evidence.routes || {}).filter(MINE).forEach((route) => {
+      delete evidence.routes[route].output_allowlist;
+      if (!Object.keys(evidence.routes[route]).length) delete evidence.routes[route];
+    });
+    fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(evidence, null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
   } else {
     check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the counter routes whose 200 held closed here', kit.sameValue(allowListEvidenceOnDisk(), proved), {

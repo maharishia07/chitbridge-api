@@ -36,7 +36,7 @@ const log = require('../lib/logger');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
-const { query } = require('../db');
+const { query, withEntity } = require('../db');
 const envelope = require('../lib/ctpenvelope');
 const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
@@ -70,26 +70,39 @@ const ctpLimiter = rateLimit({
  * where a pairing has been declared, because a population code is a LOCAL name (§7.1).
  */
 async function manifest() {
+  return (await manifestRead()).body;
+}
+/**
+ * manifestRead() → { body, whole } — the manifest, and whether both reads answered (only a whole one may be cached).
+ * ⚠️ RAIL-140 (b): the door set `public, max-age=900` before reading, so a failed read went out as a 200 with no label and no
+ * populations, and every peer kept that blip for 15 minutes as the truth.
+ */
+async function manifestRead() {
   const k = keys.status();
   let me = null,
-    pops = [];
+    pops = [],
+    whole = true;
   try {
     /**
      * ⚠️ WHO I AM IS CONFIGURATION, NOT A FLAG ABOUT OTHERS. This filtered on `hosted_locally = true` and so
      * could answer for a different installation than INSTALLATION_KEY names — `hosted_locally` records whether
      * an installation's rows live in THIS database, which is a statement each deployment makes about its peers.
      * My own identity comes from my own configuration, and the row only decorates it.
+     * ⚠️ RAIL-140 (a): ONLY MY OWN ROW. The read used to ORDER BY a match and fall back to any other active row, so with
+     * no row for INSTALLATION_KEY the manifest published another installation's key beside THIS deployment's public
+     * key — a peer would file my key under someone else's name. No row now means the configured key alone, said in the log.
      */
     const r = await query(
       `SELECT installation_key, label, region, domain, ctp_endpoint
-         FROM installation WHERE active
-         ORDER BY (installation_key = $1) DESC, hosted_locally DESC, installation_key LIMIT 1`,
+         FROM installation WHERE active AND installation_key = $1 LIMIT 1`,
       [process.env.INSTALLATION_KEY || 'platform-0']
     );
     me = r.rows[0] || null;
+    if (!me) log.fellBack('ctp manifest: no active installation row for INSTALLATION_KEY — answered with the configured key alone');
   } catch (e) {
     log.fellBack('ctp manifest: the read failed — answered with nothing', e);
     me = null;
+    whole = false;
   }
   try {
     /* ⚠️ only `live` by default. Publishing every sandbox code would tell the world what we are testing and
@@ -99,9 +112,10 @@ async function manifest() {
   } catch (e) {
     log.fellBack('ctp manifest: the read failed — answered with none', e);
     pops = [];
+    whole = false;
   }
 
-  return {
+  const body = {
     ctp: '1',
     installation_key: me ? me.installation_key : process.env.INSTALLATION_KEY || 'platform-0',
     label: me ? me.label : null,
@@ -112,20 +126,109 @@ async function manifest() {
     /* ⚠️ said out loud. An installation that cannot sign is one whose envelopes nobody should accept, and a
        peer deserves to learn that from the manifest rather than from a failed delivery. */
     can_sign: k.can_sign,
-    note: k.can_sign ? undefined : k.why
+    /* RAIL-140 (b): a fixed sentence. k.why names the variable and carries the crypto library's error text — for our own log
+       and health check, not for every stranger who reads the manifest. */
+    note: k.can_sign ? undefined : CANNOT_SIGN
   };
+  return { body, whole };
 }
+const CANNOT_SIGN = 'this installation cannot sign envelopes — do not accept any that claim to come from it';
 
 router.get('/.well-known/ctp.json', async (req, res) => {
   try {
-    res.set('Cache-Control', 'public, max-age=900');
-    res.json(await manifest());
+    const read = await manifestRead();
+    res.set('Cache-Control', read.whole ? 'public, max-age=900' : 'no-store'); /* RAIL-140 (b): never cache a blip */
+    res.json(read.body);
   } catch (e) {
     safeErr(e, { id: req.id, path: req.path });
     res.set('Cache-Control', 'no-store'); /* a peer must not keep a failure for 15 minutes */
     return problem(req, res, { status: 500, code: 'CTP_MANIFEST_UNAVAILABLE', detail: MANIFEST_FAILED.error, legacy: MANIFEST_FAILED });
   }
 });
+
+/**
+ * RAIL-138 (b) — WHOSE SENDER IS THIS? The door runs the write as the sender the envelope names (the trust shift below), so the
+ * name must be one the signing installation may use. A sender with a row HERE must be stamped to that installation
+ * (ops.f_installation_of, the same definer ctpaddress.resolve asks); a business of THIS installation, or of a third one, is
+ * refused, or a signed peer could write a chit into our books as one of our own shops. A sender with no row here is a party
+ * of theirs, named without existing here (chit_header.sender_entity_id has no foreign key for exactly that). An unreadable
+ * answer refuses: a boundary rule that cannot be read never resolves to allowed. → { id } when it may, else { refusal }.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function senderOf(opened, copy, installationKey) {
+  const id = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
+  const refusal = (await senderRefusal(id, installationKey)) || (await senderLabelRefusal(copy.sender_entity_bridge_id, installationKey));
+  return refusal ? { refusal } : { id };
+}
+async function senderRefusal(senderId, installationKey) {
+  if (!senderId) return { status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' };
+  if (!UUID_RE.test(String(senderId))) return { status: 400, code: 'CTP_SENDER_NOT_AN_ID', why: 'the copy names its sender by something that is not an id' };
+  return heldForPeer('SELECT identity_id FROM identities WHERE identity_id = $1', senderId, installationKey);
+}
+/** the sender's bridge id is the LABEL the recipient reads ("from <shop>"): a peer's own uuid wearing the bridge id of one of our
+ *  shops would show a local business as the sender. Same rule as the id (cb-security on #458). No bridge id: chit_deliver refuses it. */
+async function senderLabelRefusal(bridgeId, installationKey) {
+  if (!bridgeId) return null;
+  return heldForPeer('SELECT identity_id FROM identities WHERE bridge_id = $1', String(bridgeId), installationKey);
+}
+/** null when the identity the lookup finds is not here, or is stamped to the signing installation; else the refusal */
+async function heldForPeer(lookupSql, value, installationKey) {
+  try {
+    const here = await query(lookupSql, [value]);
+    if (!here.rows.length) return null;
+    const home = await query('SELECT ops.f_installation_of($1) AS installation_key', [here.rows[0].identity_id]);
+    if (home.rows[0] && home.rows[0].installation_key === installationKey) return null;
+  } catch (e) {
+    log.fellBack('ctp POST /deliver: the sender check could not be read — refused', e);
+    return { status: 503, code: 'CTP_SENDER_UNCHECKABLE', why: 'this installation cannot check whose business the sender is — refusing' };
+  }
+  return { status: 403, code: 'CTP_SENDER_NOT_THEIRS', why: 'the sender named is not a business of the installation that signed this envelope' };
+}
+
+/**
+ * sealedBy(peer, installationKey, env) — the sender's key, read from THEIR domain, and the envelope's seal checked against it → { publicKey } or { refusal }.
+ * ⚠️ RAIL-139 (b): THE SEAL BEFORE ANYTHING THAT ANSWERS ABOUT OUR DATA. The recipient lookup (404) and the pairing rule (409) used to
+ * come first, so a caller with no key could learn which bridge ids live here and which worlds pair. envelope.open checks it again, same words.
+ */
+async function sealedBy(peer, installationKey, env) {
+  const pk = await directory.publicKeyFor(peer.domain, installationKey);
+  if (!pk.ok) return { refusal: { status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the sender’s manifest: ' + pk.why } };
+  const seal = sealHolds(env, pk.public_key);
+  return seal.ok ? { publicKey: pk.public_key } : { refusal: { status: 409, code: 'CTP_ENVELOPE_REFUSED', why: seal.why } };
+}
+/** the hash of the canonical contents, then the signature over it: envelope.open's two checks and words. Unhashable is unsealed. */
+function sealHolds(env, publicKey) {
+  let hash;
+  try {
+    hash = envelope.digest(env);
+  } catch (e) {
+    log.fellBack('ctp POST /deliver: the envelope could not be hashed — refused', e);
+    return { ok: false, why: 'the seal does not match the contents' };
+  }
+  if (!env.sealed || env.sealed.hash !== hash) return { ok: false, why: 'the seal does not match the contents' };
+  if (!keys.verifyWith(publicKey, hash, env.sealed.sig)) return { ok: false, why: 'signature did not verify' };
+  return { ok: true };
+}
+
+/**
+ * deliverOnce(opened, copy, installationKey, recipientId) — the sender checked (senderOf), then the write, ONCE → { repeat } or { refusal }.
+ * ⚠️ RAIL-138 (c): a retried envelope is the ordinary case for a sender whose answer was lost, and the write is an INSERT, so the
+ * second one was a unique violation answered 500 — which tells the sender to keep retrying. The recipient's own copy is read first,
+ * AS the recipient: the same chit from the same sender is a repeat (200, nothing written); the same chit id from a different sender
+ * is refused in words (a chit id is minted once, so two senders cannot both own it).
+ */
+async function deliverOnce(opened, copy, installationKey, recipientId) {
+  const sender = await senderOf(opened, copy, installationKey);
+  if (sender.refusal) return sender;
+  const held = await withEntity(recipientId, (db) =>
+    db.query('SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1', [opened.chit_id, recipientId])
+  );
+  const heldFrom = held.rows[0] && String(held.rows[0].sender_entity_id);
+  if (heldFrom && heldFrom === String(sender.id)) return { repeat: true };
+  if (heldFrom) return { refusal: { status: 409, code: 'CTP_CHIT_ID_TAKEN', why: 'a chit with that id is already here from another sender' } };
+  await mint.deliver(sender.id, opened.chit_id, [copy], { is_draft: false, arrived: true });
+  return { repeat: false };
+}
 
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
 router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), async (req, res) => {
@@ -183,8 +286,8 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
     }
 
     /* ── the signature, against the key on THEIR domain. Never one they sent us. */
-    const pk = await directory.publicKeyFor(peer.domain, ik);
-    if (!pk.ok) return refuse({ status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the sender’s manifest: ' + pk.why });
+    const sealed = await sealedBy(peer, ik, env); /* RAIL-139 (b): the key AND the seal, before anything that answers about our data */
+    if (sealed.refusal) return refuse(sealed.refusal);
 
     /* ── is the recipient here, and which world are they in? */
     const toBridge = toBridge0;
@@ -220,7 +323,7 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
          the database, so `pairedWith` simply reports it rather than deciding it a second time. */
       population: to.population,
       pairedWith: () => mayCross,
-      verify: (hash, sig) => keys.verifyWith(pk.public_key, hash, sig)
+      verify: (hash, sig) => keys.verifyWith(sealed.publicKey, hash, sig)
     });
     if (!opened.ok) return refuse({ status: 409, code: 'CTP_ENVELOPE_REFUSED', why: opened.why });
 
@@ -285,12 +388,12 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
      * is never theirs to choose. `chit_header.sender_entity_id` has no foreign key precisely so that a
      * counterparty on another machine can be named without existing here.
      */
-    const senderCtx = copy.sender_entity_id || (opened.header && opened.header.sender_entity_id);
-    if (!senderCtx) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
-    await mint.deliver(senderCtx, opened.chit_id, [copy], { is_draft: false, arrived: true });
+    const once = await deliverOnce(opened, copy, ik, to.identity_id); /* RAIL-138 (b) the sender is theirs · (c) a repeat writes nothing */
+    if (once.refusal) return refuse(once.refusal);
 
     res.json({
       accepted: true,
+      repeat: once.repeat || undefined,
       chit_id: opened.chit_id,
       to: toBridge,
       /* ⭐ the sender's governance as WE resolved it from their installation — visible, and never the reason a

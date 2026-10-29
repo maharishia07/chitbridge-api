@@ -25,6 +25,7 @@ const express = require('express');
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const MOUNT = '/api/chits';
@@ -177,6 +178,57 @@ const HELD_COPY = { copyOf: async () => ({ chit_id: PARTY, entity_id: SHOP, curr
 const C = MOUNT;
 const COPY_ROW = { entity_id: SHOP, '?column?': 1 };
 const CHIT_ROW = { chit_id: PARTY, all_recipients: [{ entity_id: SHOP, display_name: 'Test shop' }, { entity_id: OTHER, display_name: 'Other shop', role: 'Act' }], purpose: 'order', created_at: '2026-10-01T00:00:00.000Z', role: 'Sent' };
+/* ── S34: rows as their statements select them, in the statement's column order (chit_header · chit_status · chit_disputes · register_*: migrations/000_baseline_2026-10-21.sql
+   and the numbered ones after it). Each pair: the first with every column filled, the second with every nullable column null ── */
+const AT = '2026-10-01T10:00:00.000Z';
+const CANCEL = { cancel_requested_at: AT, cancel_requested_by: 'Asha', cancel_reason: 'Wrong size', cancel_confirmed_at: AT, cancel_confirmed_by: 'Ravi' };
+const CANCEL_NONE = { cancel_requested_at: null, cancel_requested_by: null, cancel_reason: null, cancel_confirmed_at: null, cancel_confirmed_by: null };
+const SUMMARY = { total_value: 360, line_count: 3, priority_external: 'high' };
+/** a copy of /sent: the b195/b197 cancel columns sit between star_flag and the counts; _after is the keyset column the route takes off */
+const SENT_ROW = (cancel, extra) =>
+  Object.assign({ chit_id: PARTY, all_recipients: CHIT_ROW.all_recipients, purpose: 'order', auto_subject: 'Order: 3 items', manual_subject: 'Rice for Friday', summary_json: SUMMARY, created_at: AT, role: 'Sent', current_status: 'pending', priority_flag: 'high', customer_priority: true, star_flag: true }, cancel, { open_dispute_count: '1', resolved_dispute_count: '2', _after: AT + '|' + PARTY }, extra);
+const SENT_BARE = (cancel) => SENT_ROW(cancel, { chit_id: OTHER, auto_subject: null, manual_subject: null, summary_json: null, created_at: null, current_status: null, priority_flag: null, customer_priority: false, star_flag: null, open_dispute_count: '0', resolved_dispute_count: '0', _after: null });
+/** a copy of /folder (the DISTINCT ON statement) */
+const FOLDER_ROW = (cancel, extra) =>
+  Object.assign({ chit_id: PARTY, sender_entity_display_name: 'Test shop', sender_entity_bridge_id: 'TESTSHOP', all_recipients: CHIT_ROW.all_recipients, purpose: 'order', auto_subject: 'Order: 3 items', manual_subject: 'Rice for Friday', summary_json: SUMMARY, created_at: AT, role: 'Sent', current_status: 'pending', read_at: AT, star_flag: true, priority_flag: 'normal', deleted_at: AT, archived_at: AT, direction: 'sent' }, cancel, { message_count: '2' }, extra);
+const FOLDER_BARE = (cancel) => FOLDER_ROW(cancel, { chit_id: OTHER, auto_subject: null, manual_subject: null, summary_json: null, created_at: null, role: 'Draft', current_status: null, read_at: null, star_flag: null, priority_flag: null, deleted_at: null, archived_at: null, direction: 'received', message_count: '0' });
+/** a copy of /inbox */
+const INBOX_ROW = (cancel, extra) =>
+  Object.assign({ chit_id: PARTY, sender_entity_display_name: 'Other shop', sender_entity_bridge_id: 'OTHERSHOP', all_recipients: CHIT_ROW.all_recipients, purpose: 'order', auto_subject: 'Order: 3 items', manual_subject: 'Rice for Friday', summary_json: SUMMARY, created_at: AT, current_status: 'pending', read_at: AT, star_flag: true, priority_flag: 'urgent' }, cancel,
+    { assignment_type: 'actor', assigned_to_actor_id: STAFF_ID, assigned_to_actor_display_name: 'Test staff', open_dispute_count: '1', resolved_dispute_count: '0', message_count: '3', last_message_at: AT, placed_by_name: 'Asha', placed_by_type: 'actor', _after: AT + '|' + PARTY }, extra);
+const INBOX_BARE = (cancel) =>
+  INBOX_ROW(cancel, { chit_id: OTHER, auto_subject: null, manual_subject: null, summary_json: null, created_at: null, current_status: null, read_at: null, star_flag: null, priority_flag: null, assignment_type: null, assigned_to_actor_id: null, assigned_to_actor_display_name: null, open_dispute_count: '0', message_count: '0', last_message_at: null, placed_by_name: null, placed_by_type: null, _after: null });
+/** a group of /rollup: by state the key is chit_status.current_status, which may be NULL; SUM(numeric) arrives as text */
+const ROLLUP_ROWS = [{ key: 'pending', chits: 2, total_value: '360.00' }, { key: null, chits: 1, total_value: '0' }];
+/** a dispute as the queue selects it: cd.* (chit_disputes in table order), the three subselects, the window count */
+const DISPUTE_ROW = {
+  dispute_id: PARTY, chit_id: PARTY, raised_by_entity_id: SHOP, raised_by_display_name: 'Test shop', category: 'quality', reason: 'Rice was wet', status: 'open', resolution_note: 'Credit note sent', resolved_by_entity_id: OTHER,
+  resolved_at: AT, created_at: AT, target_entity_id: OTHER, target_display_name: 'Other shop', scope: 'chit', mode: 'raise', answerable: true, parity_state: 'held', via: 'app', evidence_snapshot: { photos: 1 }, entity_id: SHOP, role: 'raiser',
+  roster: [{ entity_id: SHOP, display_name: 'Test shop', role: 'raiser', dispute_status: 'open' }, { entity_id: OTHER, display_name: 'Other shop', role: 'target', dispute_status: 'open' }], auto_subject: 'Order: 3 items', purpose: 'order', sender_display_name: 'Test shop', _total: '2'
+};
+const DISPUTE_BARE = Object.assign({}, DISPUTE_ROW, { dispute_id: OTHER, raised_by_entity_id: OTHER, raised_by_display_name: 'Other shop', status: 'resolved', resolution_note: null, resolved_by_entity_id: null, resolved_at: null, target_entity_id: null, target_display_name: null, parity_state: null, evidence_snapshot: null, roster: [], auto_subject: null, purpose: null, sender_display_name: null });
+const ATTACHABLE_ROWS = [{ type_key: 'order', label: 'An order', points_at: 'chit' }, { type_key: 'site', label: 'A site', points_at: null }];
+const SUBJECT_ROWS = [
+  { subject_id: PARTY, type_key: 'order', ref_id: OTHER, ref_label: 'Order 7', name: 'Order 7', opened_at: AT, closed_at: AT, closed_by_name: 'Asha', open_count: '2' },
+  { subject_id: OTHER, type_key: 'supplier', ref_id: null, ref_label: null, name: 'Mill', opened_at: AT, closed_at: null, closed_by_name: null, open_count: '0' }
+];
+const TEMPLATE_ROWS = [
+  { template_id: PARTY, kind: 'risk', title: 'Damp store', body: 'Rice gets wet', likelihood: 3, severity: 4, treatment: 'Dry store', verification_method: 'Check weekly', applies_to: ['order'], raised: '4', closed: '1', standards: ['iso9001'] },
+  { template_id: OTHER, kind: 'issue', title: 'Late van', body: null, likelihood: null, severity: null, treatment: null, verification_method: null, applies_to: null, raised: '0', closed: '0', standards: null }
+];
+/** a register entry as raida report selects it (FULL_COLS since b185, response since b192), and the entry that closes it */
+const REPORT_ENTRY = {
+  raida_id: PARTY, chit_id: PARTY, line_id: null, kind: 'risk', body: 'Wet rice', closes_id: null, visibility: 'internal', dispute_id: null, subject_id: PARTY, template_id: null, owner_actor_id: null, owner_name: 'Asha', due_date: '2026-10-09',
+  review_date: null, likelihood: 3, severity: 4, treatment: 'Dry store', verification_method: null, residual_likelihood: null, residual_severity: null, rel_type: null, to_type: null, to_id: null, to_label: null, needed_by: null, disposition: null,
+  carried_to_subject_id: null, evidence_ref: null, evidence_hash: null, revises_id: null, response: null, created_by_name: 'Asha', created_at: AT, particulars: 'Rice', manual_subject: null, auto_subject: 'Order', chit_status: 'pending',
+  subject_name: 'Order 7', type_key: 'order', subject_closed_at: null
+};
+const REPORT_ROWS = [REPORT_ENTRY, Object.assign({}, REPORT_ENTRY, { raida_id: OTHER, closes_id: PARTY, kind: 'note', body: 'Dried', disposition: 'accepted', evidence_ref: 'photo-1', evidence_hash: 'abc' })];
+/** a handoff carrying a trace, as /trace/batches and /trace/by-batch select it */
+const BATCH_ROWS = [
+  { chit_id: PARTY, sender_entity_id: SHOP, sender_entity_display_name: 'Test shop', all_recipients: CHIT_ROW.all_recipients, trace: { product: 'Rice', qty: 5, unit: 'kg', base_qty: 5, base_unit: 'kg', is_origin: true, network: { id: 'net1' } }, created_at: AT },
+  { chit_id: OTHER, sender_entity_id: OTHER, sender_entity_display_name: null, all_recipients: [], trace: {}, created_at: AT }
+];
 const EXTRAS = [
   /* ── the lists and the read ── */
   X('a-chit-is-listed', 'GET ' + C + '/sent', 200, { setup: { sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [CHIT_ROW]) } }),
@@ -192,6 +244,8 @@ const EXTRAS = [
   X('use-read', 'GET ' + C + '/:chit_id/use', 200, { patch: { 'tax-copy': { copyOf: async () => ({ current_status: 'pending' }), billReceived: () => true }, 'bill-use': { forCopy: async () => ({ lines: [] }) } } }),
   X('overlay-without-a-catalogue', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=milk&comment=fresh' }),
   X('messages-of-a-participant', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?thread_type=external&dispute=1&line_id=' + OTHER, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
+  /* RAIL-136 (e): only a MISSING table (42P01) is an empty thread; a refused read of the same table is a fault, never "no messages" */
+  X('messages-read-refused', 'GET ' + C + '/:chit_id/messages', 500, { setup: { sqlRows: (sql) => { throw Object.assign(new Error('permission denied for table chit_messages'), { code: '42501' }); } } }),
   X('messages-table-missing', 'GET ' + C + '/:chit_id/messages', 200, { setup: { sqlRows: (sql) => { throw Object.assign(new Error('relation "chit_messages" does not exist'), { code: '42P01' }); } } }),
   X('disputes-of-a-participant', 'GET ' + C + '/:chit_id/disputes', 200, { setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/SELECT all_recipients FROM chit_header/, [CHIT_ROW]]]) } }),
   X('disputes-table-missing', 'GET ' + C + '/:chit_id/disputes', 200, { setup: { sqlRows: (sql) => { throw Object.assign(new Error('relation "chit_disputes" does not exist'), { code: '42P01' }); } } }),
@@ -282,8 +336,10 @@ const EXTRAS = [
   X('payment-chit-not-found', 'POST ' + C + '/:chit_id/payment', 404, { body: { method: 'cash', amount: '12.50', ref: ' R1 ' } }),
   X('payment-fails', 'POST ' + C + '/:chit_id/payment', 500, { body: { method: 'cash' }, setup: { db: 'fail' } }),
   X('payment-field-wrong', 'POST ' + C + '/:chit_id/payment', 400, { body: { method: 'cheque', amount: -1, note: 'x'.repeat(241), acknowledge: 'yes', client_ref: 'x'.repeat(81) } }),
+  /* FIN-52: a payment is MORE than zero — the contract refuses 0 (a number, or text that spells it) before the handler reads it */
+  X('payment-zero-amount', 'POST ' + C + '/:chit_id/payment', 400, { body: { method: 'cash', amount: 0 } }),
+  X('payment-zero-amount-as-text', 'POST ' + C + '/:chit_id/payment', 400, { body: { method: 'cash', amount: '0.00' } }),
   X('payment-tender-is-on-the-bill', 'POST ' + C + '/:chit_id/payment', 422, { body: { method: 'cash' }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: { payment: { parts: [{}] } } }) } } }),
-  X('payment-above-the-quote', 'POST ' + C + '/:chit_id/payment', 422, { body: { method: 'cash', amount: 500 }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {}, summary_json: { total_value: 100 } }) } } }),
   X('payment-books-refuse', 'POST ' + C + '/:chit_id/payment', 409, { body: { method: 'cash' }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {} }) }, 'books-hooks': { chitPaid: async () => { throw Object.assign(new Error('That month is locked.'), { code: 'PERIOD_LOCKED' }); } } } }),
   X('payment-already-paid', 'POST ' + C + '/:chit_id/payment', 409, { body: { method: 'cash' }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {} }) }, 'books-hooks': { chitPaid: async () => { throw Object.assign(new Error('Paid on 1 Oct.'), { code: 'ALREADY_PAID', warnings: [] }); } } } }),
   X('payment-recorded', 'POST ' + C + '/:chit_id/payment', 200, { body: { method: 'upi', ref: 'U1', client_ref: 'c1' }, setup: { sqlRows: answering(/UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('payment'/, [{ chit_id: PARTY }]) }, patch: { 'tax-copy': { copyOn: async () => ({ business_json: {} }) }, 'books-hooks': { chitPaid: async () => ({ payment: {} }) } } }),
@@ -377,8 +433,36 @@ const EXTRAS = [
   X('amend-chit-not-held', 'POST ' + C + '/:chit_id/amend', 404, { body: { edits: [] } }),
   X('reprice-chit-not-held', 'POST ' + C + '/:chit_id/reprice', 404, { body: {} }),
   X('cost-chit-not-held', 'POST ' + C + '/:chit_id/costs', 404, { body: [{ kind: 'fare', amount: 50 }] }),
+  /* RAIL-133: a library's own 400 reaches the person in its words (frozen below); amend names the field and never echoes the value typed (Q19) */
+  X('assign-due-date-not-a-date', 'POST ' + C + '/:chit_id/assign-lines', 400, { body: { edits: [{ line_id: PARTY, assignee_actor_id: null, due_date: 'soon' }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) } }),
+  X('amend-price-not-a-number', 'POST ' + C + '/:chit_id/amend', 400, { body: { edits: [{ line_index: 0, line: { particulars: 'Tea', quantity: 1, price: '<b>12</b>' } }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) } }),
   X('amend-done', 'POST ' + C + '/:chit_id/amend', 200, { body: [], setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { amend: { record: async () => ({ amendments: [] }) } } }),
-  X('networks-listed', 'GET ' + C + '/trace/networks', 200, { setup: { sqlRows: answering(/network_id/, [{ network_id: 'net1', is_operator: true, edges: '2' }]) } })
+  X('networks-listed', 'GET ' + C + '/trace/networks', 200, { setup: { sqlRows: answering(/network_id/, [{ network_id: 'net1', is_operator: true, edges: '2' }]) } }),
+  /* ── S34 (API-8 output_allowlist): the READY branch of each read, so the real handler and the real library run over rows; with the cancel columns (b195/b197
+     run: migrated) and without them; every nullable column filled in one row and null in the other ── */
+  X('sent-ready', 'GET ' + C + '/sent', 200, { url: C + '/sent?limit=2', setup: { migrated: true, sqlRows: answeringAll([[/SELECT COUNT\(\*\) FROM chit_header/, [{ count: '3' }]], [/cs\.customer_priority/, [SENT_ROW(CANCEL), SENT_BARE(CANCEL_NONE)]]]) } }),
+  X('sent-before-b195', 'GET ' + C + '/sent', 200, { setup: { sqlRows: answering(/cs\.customer_priority/, [SENT_ROW({}), SENT_BARE({})]) } }),
+  X('folder-ready', 'GET ' + C + '/folder', 200, { url: C + '/folder?view=archive', setup: { migrated: true, sqlRows: answeringAll([[/COUNT\(DISTINCT ch\.chit_id\)/, [{ count: '2' }]], [/SELECT DISTINCT ON/, [FOLDER_ROW(CANCEL), FOLDER_BARE(CANCEL_NONE)]]]) } }),
+  X('folder-before-b195', 'GET ' + C + '/folder', 200, { setup: { sqlRows: answering(/SELECT DISTINCT ON/, [FOLDER_ROW({}), FOLDER_BARE({})]) } }),
+  X('inbox-ready', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?limit=2', setup: { migrated: true, sqlRows: answeringAll([[/SELECT COUNT\(\*\) FROM chit_status/, [{ count: '3' }]], [/AS placed_by_type/, [INBOX_ROW(CANCEL), INBOX_BARE(CANCEL_NONE)]]]) } }),
+  X('inbox-before-b195', 'GET ' + C + '/inbox', 200, { setup: { sqlRows: answering(/AS placed_by_type/, [INBOX_ROW({}), INBOX_BARE({})]) } }),
+  X('rollup-ready', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state', setup: { sqlRows: answeringAll([[/AS n$|::int AS n\s/m, [{ n: 1 }]], [/AS total_value/, ROLLUP_ROWS]]) } }),
+  X('dispute-queue-ready', 'GET ' + C + '/disputes/queue', 200, { url: C + '/disputes/queue?status=all', setup: { sqlRows: answeringAll([[/chit_dispute_roster/, [{ dispute_id: PARTY, entity_id: OTHER, role: 'target', status: 'resolved' }]], [/AS _total/, [DISPUTE_ROW, DISPUTE_BARE]], [/FILTER \(WHERE status = 'open'\)/, [{ open: 1, resolved: 1 }]]]) } }),
+  X('dispute-queue-roster-fails', 'GET ' + C + '/disputes/queue', 200, { setup: { sqlRows: (sql) => { if (/chit_dispute_roster/.test(sql)) throw new Error(SECRET_SQL); return answeringAll([[/AS _total/, [DISPUTE_ROW]]])(sql); } } }),
+  X('delete-a-draft', 'DELETE ' + C + '/:chit_id', 200, { setup: { sqlRows: answering(/SELECT cs\.current_status, ch\.role/, [{ current_status: 'draft', role: 'Draft' }]) } }),
+  X('purge-a-draft', 'DELETE ' + C + '/:chit_id/purge', 200, { setup: { sqlRows: answering(/SELECT role, created_by_actor_id/, [{ role: 'Draft', created_by_actor_id: SHOP }]) } }),
+  X('attachables-ready', 'GET ' + C + '/register/attachables', 200, { setup: { sqlRows: answering(/FROM register_attachable/, ATTACHABLE_ROWS) } }),
+  X('attachables-rls-no-policy', 'GET ' + C + '/register/attachables', 200, { setup: { sqlRows: answering(/relrowsecurity/, [{ rls: true, policies: '0' }]) } }),
+  X('attachables-absent', 'GET ' + C + '/register/attachables', 200, { setup: { sqlRows: raising(/FROM register_attachable/, '42P01') } }),
+  X('subjects-ready', 'GET ' + C + '/register/subjects', 200, { setup: { migrated: true, sqlRows: answering(/FROM register_subject s/, SUBJECT_ROWS) } }),
+  X('subjects-not-migrated', 'GET ' + C + '/register/subjects', 200, {}),
+  X('templates-ready', 'GET ' + C + '/register/templates', 200, { setup: { migrated: true, sqlRows: answering(/FROM register_template t/, TEMPLATE_ROWS) } }),
+  X('templates-not-migrated', 'GET ' + C + '/register/templates', 200, {}),
+  X('report-ready', 'GET ' + C + '/raida/report', 200, { setup: { migrated: true, sqlRows: answering(/FROM register_entry a/, REPORT_ROWS) } }),
+  X('report-not-migrated', 'GET ' + C + '/raida/report', 200, {}),
+  X('batches-ready', 'GET ' + C + '/trace/batches', 200, { url: C + '/trace/batches?limit=1', setup: { sqlRows: answering(/summary_json->'trace' AS trace, created_at/, BATCH_ROWS) } }),
+  X('batch-chain-ready', 'GET ' + C + '/trace/by-batch', 200, { url: C + '/trace/by-batch?q=L7', setup: { sqlRows: answering(/l\.removed = false/, BATCH_ROWS) } }),
+  X('networks-none', 'GET ' + C + '/trace/networks', 200, {})
 ];
 
 function send(port, method, urlPath, body) {
@@ -482,7 +566,7 @@ async function checkRoutes(port, scenarios, recording, held) {
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, type: answer.type, body: answer.json, text: answer.json ? undefined : answer.text.slice(0, 300) };
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, type: answer.type, body: answer.json, text: answer.json ? undefined : answer.text.slice(0, 300), request: { url: scenario.url, body: scenario.body } }; /* the request is kept so tools/api-allowlist.cjs hands the generated output_allowlist case one known to reach the success answer (R2-13) */
     if (capturing) continue;
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     check(label + ': answers (not a hang)', answer.status !== 0);
@@ -623,7 +707,7 @@ function oldChains() {
   return {
     'POST /send': { fine: { recipients: [{ self: true }] }, chains: [body().custom(recipients), body('purpose').optional().trim().isIn(purposes).withMessage('Invalid purpose'), body('manual_subject').optional().trim().isLength({ max: 500 }), body('self_copy').optional().isIn(['both', 'sent', 'received']).withMessage('self_copy must be both|sent|received'), body('line_items').optional().isArray(), body('business_json').optional().isObject()] },
     'PUT /:chit_id/status': { fine: { status: 'accepted' }, chains: [body('status').trim().isIn(railActions.ASKABLE).withMessage('Invalid status'), body('note').optional().trim().isLength({ max: 500 })] },
-    'POST /:chit_id/payment': { fine: { method: 'cash' }, chains: [body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray(), body('client_ref').optional().trim().isLength({ max: 80 })] },
+    'POST /:chit_id/payment': { fine: { method: 'cash' }, chains: [body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ gt: 0 }) /* FIN-52: the chain said min 0; the rule is now MORE than zero, and the schema (POSITIVE_AMOUNT) carries it */, body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray(), body('client_ref').optional().trim().isLength({ max: 80 })] },
     'POST /:chit_id/messages': { fine: { message_text: 'hi', thread_type: 'external' }, chains: [body('message_text').trim().notEmpty().withMessage('Message text required'), body('thread_type').isIn(['external', 'internal']).withMessage('thread_type must be external or internal'), body('is_dispute').optional().isBoolean(), body('dispute_id').optional({ nullable: true }).isUUID(), body('line_id').optional({ nullable: true }).isUUID()] },
     'POST /:chit_id/disputes': { fine: { category: 'quality', reason: 'The goods were short' }, chains: [body('category').isIn(['quality', 'quantity', 'delivery', 'payment', 'docs', 'other']).withMessage('Invalid category'), body('reason').trim().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'), body('target_entity_id').optional({ nullable: true }).isUUID().withMessage('Bad target'), body('participant_entity_ids').optional().isArray().withMessage('participant_entity_ids must be an array'), body('chit_wide').optional().isBoolean(), body('via').optional().isIn(['chit', 'mailbox'])] },
     'PUT /:chit_id/disputes/:dispute_id/resolve': { fine: { resolution_note: 'Sorted' }, chains: [body('resolution_note').trim().notEmpty().withMessage('Resolution note required'), body('target_entity_id').optional({ nullable: true }).isUUID()] },
