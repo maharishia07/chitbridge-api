@@ -125,7 +125,7 @@ function writes(tools) {
     put('put-value-object', 'PHONE', 400, { value: { number: VALUES.PHONE } }, ok()),
     put('put-body-is-a-list', 'PHONE', 400, [VALUES.PHONE], ok()),
     put('put-vault-unconfigured', 'PHONE', 503, { value: VALUES.PHONE }, ok(OWNER, {}), { env: { VAULT_ENC_KEY: '' } }),
-    put('put-aadhaar-vault-unconfigured', 'AADHAAR', 200, { value: VALUES.AADHAAR }, ok(OWNER, {}), { env: { VAULT_ENC_KEY: '' } }),
+    put('put-aadhaar-vault-unconfigured', 'AADHAAR', 503, { value: VALUES.AADHAAR }, ok(OWNER, {}), { env: { VAULT_ENC_KEY: '' } }),
     put('put-not-migrated', 'PHONE', 503, { value: VALUES.PHONE }, ok(OWNER, { noTable: true })),
     put('put-db-throws', 'PHONE', 500, { value: VALUES.PHONE }, ok(OWNER, { throwOn: /INSERT INTO identity_documents/ })),
     put('put-db-throws-code', 'PHONE', 500, { value: VALUES.PHONE }, ok(OWNER, { throwOn: /INSERT INTO identity_documents/, error: sqlError('23514') })),

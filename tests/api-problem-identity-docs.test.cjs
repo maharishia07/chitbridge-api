@@ -211,7 +211,7 @@ async function checkMasking(port) {
     const params = write ? write.params : [];
     const normalised = scheme === 'EMAIL' ? S.VALUES.EMAIL : scheme === 'AADHAAR' ? S.VALUES.AADHAAR : scheme === 'PAN' ? S.VALUES.PAN : typed;
     check(scheme + ': the answer is 200 and tells the mask ' + mask + ', never the number', answer.status === 200 && answer.json && answer.json.document && answer.json.document.value_masked === mask && !FULL_VALUES.some((value) => answer.text.includes(value)), answer.text);
-    check(scheme + ': the database is handed the mask and a sha256 of SCHEME:value (' + (stored ? 'a sealed value' : 'NO value at all') + ')', params[4] === mask && params[5] === sha(scheme + ':' + normalised) && (stored ? typeof params[6] === 'string' && !params[6].includes(normalised) : params[6] === null), params.map((value, index) => (index === 6 ? typeof value : value)));
+    check(scheme + ': the database is handed the mask and the document hash (a sha256 of SCHEME:value, keyed for Aadhaar by SEC-101) (' + (stored ? 'a sealed value' : 'NO value at all') + ')', params[4] === mask && params[5] === require(path.join(HERE, 'routes', 'identity-docs.js')).docHash(scheme, normalised) && (stored ? typeof params[6] === 'string' && !params[6].includes(normalised) : params[6] === null), params.map((value, index) => (index === 6 ? typeof value : value)));
   }
   const listed = [];
   asWorld(OWNER, { seen: listed, docs: S.GOT });

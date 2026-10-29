@@ -44760,6 +44760,20 @@
       "error": "VAULT_ENC_UNCONFIGURED",
       "message": "A relayed sentence."
      }
+    },
+    {
+     "scenario": "put-aadhaar-vault-unconfigured",
+     "status": 503,
+     "body_keys": {
+      "error": "Not configured",
+      "code": "VAULT_ENC_UNCONFIGURED",
+      "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     },
+     "fixture": {
+      "error": "Not configured",
+      "code": "VAULT_ENC_UNCONFIGURED",
+      "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     }
     }
    ]
   }
