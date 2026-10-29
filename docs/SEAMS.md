@@ -9,14 +9,14 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 137 | `list` | `amend.js` |  |
-| 109 | `rows` | `crm.js` | still in them: |
-| 102 | `withEntity` | `books-hooks.js` |  |
+| 138 | `list` | `amend.js` |  |
+| 110 | `rows` | `crm.js` | still in them: |
+| 103 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 92 | `words` | `variant.browser.js` |  |
+| 93 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
 | 82 | `answer` | `availability.js` | from March; then nearest. |
-| 77 | `money` | `bill-privacy.js` |  |
+| 78 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 70 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 68 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -47,7 +47,7 @@ of file each thing is; this says what already does the job.
 | 43 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 42 | `view` | `books-payables.js` | group: |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 40 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 42 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 39 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 38 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 38 | `rules` | `docnumber.js` | the rule set for a country — |
@@ -66,11 +66,11 @@ of file each thing is; this says what already does the job.
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
 | 32 | `live` | `receivables.js` | the allocations that still count: |
-| 31 | `facts` | `bill-steps.js` | MY state_log — |
+| 32 | `facts` | `bill-steps.js` | MY state_log — |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
-| 31 | `rate` | `convert.js` | A rate, with its evidence. |
+| 32 | `rate` | `convert.js` | A rate, with its evidence. |
 | 30 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 29 | `lines` | `cart.js` |  |
 | 29 | `sentence` | `one-person.js` |  |
@@ -92,7 +92,7 @@ of file each thing is; this says what already does the job.
 | 25 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 26 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 26 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
-| 26 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 27 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `opts` | `cap-stock.js` |  |
 | 25 | `money` | `cart.js` |  |

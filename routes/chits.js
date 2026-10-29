@@ -86,6 +86,8 @@ const FOLDER_INV = require('../lib/folder-inventory');
 const billPrivacy = require('../lib/bill-privacy');
 /* ⭐ RAIL-146: what a cost-blind co-assist may READ of a chit — the five reads (GET /:chit_id · /inbox · /folder · /sent · /rollup) answer through it, answer-side only */
 const costView = require('../lib/cost-view');
+/* ⭐ RAIL-147: what such a co-assist may WRITE — POST /:chit_id/amend and /reprice ask lib/cost-write (403 COST_BLIND on a cost-side chit's money, an omitted price kept from the stored line) */
+const costWrite = require('../lib/cost-write');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -3677,7 +3679,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
-    const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
+    const opts = await costWrite.repriceOpts(req, entity_id, chit_id, { line_ids: ids, only_unpriced: !!req.body.only_unpriced }); /* RAIL-147: a cost-blind co-assist is refused on a cost-side chit (preview too); everyone else's options as before */
     /* S34: lib/reprice preview answers the first five keys; apply() adds `applied` (how many amendments it wrote) */
     if (req.body.preview) {
       const previewed = await reprice.plan(entity_id, chit_id, opts);
@@ -4333,7 +4335,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
-    const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
+    const out = await costWrite.recordAmend(req, entity_id, chit_id, req.body.edits || req.body, { /* RAIL-147: amend.record behind the cost door (lib/cost-write); the owner's call and answer as before */
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
