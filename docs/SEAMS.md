@@ -24,14 +24,14 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 61 | `here` | `screen-id.js` |  |
-| 61 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 62 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 58 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 58 | `next` | `dayopen.js` | the next thing to do — |
 | 58 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 54 | `items` | `books-store.js` | PERF1: |
-| 51 | `entry` | `books-store.js` |  |
+| 52 | `entry` | `books-store.js` |  |
 | 51 | `register` | `regulation.js` | register(pack) → the pack — |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -44,7 +44,7 @@ of file each thing is; this says what already does the job.
 | 43 | `read` | `cap-print.js` |  |
 | 43 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 43 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
-| 42 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
+| 43 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 40 | `view` | `books-payables.js` | group: |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 40 | `write` | `junitresults.js` | control characters are not legal XML at all — |
@@ -148,7 +148,7 @@ of file each thing is; this says what already does the job.
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
 | 16 | `panel` | `sides.js` |  |
-| 16 | `plan` | `crm-leads.js` | `existing`: |
+| 17 | `plan` | `crm-leads.js` | `existing`: |
 | 16 | `update` | `folder-rules.js` |  |
 | 16 | `connectors` | `home-facts.js` | declare (said in words — |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |

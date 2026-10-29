@@ -250,13 +250,15 @@ const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
 const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
 /** a co-assist — the entity login and a paired counter are never gated by cost.writeRefusal */
 const isActor = (req) => !!(req.identity && req.identity.identity_type === 'actor');
+/** CAT-235: the writer's `watchKeys` for this caller — cost.costKeysPlanned for a cost-blind co-assist, undefined for everyone else (the owner pays no read) */
+const costWatch = async (req, entity_id) => ((await cost.isCostBlind(req, entity_id)) ? cost.costKeysPlanned : undefined);
 /** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row. PATCH /:id and POST /bulk-update ask it. */
 const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
 /** CAT-234/236: deletes `cost` and every `cost_*` key at ANY depth of a value, in place (modifiers[].options[].cost, a variants block …) */
 function dropCostKeys(value) {
   if (!value || typeof value !== 'object') return value;
   Object.keys(value).forEach((key) => {
-    if (/^cost(_|$)/.test(key)) delete value[key];
+    if (cost.isCostKey(key)) delete value[key];
     else dropCostKeys(value[key]);
   });
   return value;
@@ -432,6 +434,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (editorNamesRate(req, [req.body.item_data])) return problem(req, res, rateRefusal());
+    const watchKeys = await costWatch(req, entity_id); /* CAT-235: a cost-blind co-assist adds the item, never its cost — judged on the writer's own plan */
     const schema_id = await defaultSchemaId(entity_id);
     /**
      * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
@@ -454,8 +457,10 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
       schema_id,
       item_data: req.body.item_data,
       rid: req.id,
-      validate: (data, rows) => validateAgainst(rows, data)
+      validate: (data, rows) => validateAgainst(rows, data),
+      watchKeys
     });
+    if (made.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(made.watched)) });
     if (made.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', made) });
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
@@ -508,7 +513,8 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
      * seven-step sequence copied into two files is seven decisions that will disagree later.
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    const w = await catwrite.writeItems({ entity_id, items });
+    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id) });
+    if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
@@ -617,6 +623,14 @@ async function editorImportRateRows(req, entity_id, applied, ident) {
     const changed = prior ? rateDoor.rateChanged(Object.assign({}, prior, item), prior) : rateDoor.rateNamed(item);
     return changed ? rows.concat(applied.lines[index]) : rows;
   }, []);
+}
+/** the whole-file refusal of an import by a co-assist, before any write: a rate (CAT-210) first, then a cost column (CAT-235) — null when the file may go ahead.
+ *  The cost half reads the sheet rows as parsed; a new row and an update-by-key row are asked alike (the update merges prior+row, so no stored key is ever dropped) */
+async function importRefusal(req, entity_id, applied, ident) {
+  const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
+  if (rateRows.length) return rateRefusal(rateRows);
+  const blind = isActor(req) && (await cost.costKeyRefusal(req, entity_id, applied.items.map((fileRow) => sheet.fromSheet(fileRow, { source: 'upload' }).item_data)));
+  return blind ? { status: 403, ...words.costBlind(blind) } : null;
 }
 /** CAT-210/235: the stored rows a bulk edit is compared with — ONE read for the lot, shared by the rate check (an editor, CAT-210) and the erase check
  *  (a co-assist, CAT-235); null for the owner, who is never compared and never pays the read */
@@ -947,7 +961,7 @@ async function catalogueRows(entity_id, canCost) {
     items.forEach((item) => {
       if (item)
         Object.keys(item).forEach((k) => {
-          if (/^cost(_|$)/.test(k)) delete item[k];
+          if (cost.isCostKey(k)) delete item[k];
         });
     });
     if (schema && schema.properties) delete schema.properties.cost;
@@ -1217,8 +1231,8 @@ router.post(
         return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
       }
 
-      const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
-      if (rateRows.length) return problem(req, res, rateRefusal(rateRows));
+      const refusal = await importRefusal(req, entity_id, applied, ident);
+      if (refusal) return problem(req, res, refusal);
 
       const currency = await regional.currencyFor(entity_id);
       // O(1): the rules are read once for the whole file, not once per row.
