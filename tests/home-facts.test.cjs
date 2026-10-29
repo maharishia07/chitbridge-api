@@ -101,16 +101,25 @@ function answer(text, params) {
   const party = (id, extra) => Object.assign({ party_id: id, display_name: 'P ' + id, user_id: 'u' + id, status: 'active', on_rail: true, same_world: true }, extra);
   if (/FROM customer_list cl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('c1'), party('c2'), party('c3'), party('c4'), party('c5', { hidden_at: '2026-10-01' }), party('b1')] }; }
   if (/FROM supplier_list sl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('s1'), party('s2'), party('s3', { merged_into: 's1' }), party('b1')] }; }
+  /* REP-52: the rows books-store.entryLines answers — one row per LINE with its account role (the card sums lines by role; the `tenders` jsonb is the Day book column's) */
   if (/FROM journal_line l JOIN journal_entry h/.test(sql)) return { rows: F.booksDay ? [
-    { entry_id: 'd1', covers: 3, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 40000 }], line_no: 1 },   /* a day, closed once (reversed below) */
-    { entry_id: 'r1', covers: null, reverses_entry_id: 'd1', source_chit_id: null, tenders: null, line_no: 1 },
-    { entry_id: 'd2', covers: 5, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 30000 }, { role: 'upi', dr_minor: 21000 }], line_no: 1 },
-    { entry_id: 'd2', covers: 5, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 30000 }, { role: 'upi', dr_minor: 21000 }], line_no: 2 }].concat(F.booksBills ? [
-    /* M144: two bills posted on their own after a reopen (one cash, one on credit) and a return paid out in cash */
+    { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'cash', dr_minor: 40000, cr_minor: 0, line_no: 1 },   /* a day, closed once (reversed below) */
+    { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'sales', dr_minor: 0, cr_minor: 40000, line_no: 2 },
+    { entry_id: 'r1', event_type: 'reversal', covers: null, reverses_entry_id: 'd1', source_chit_id: null, account_role: 'cash', dr_minor: 0, cr_minor: 40000, line_no: 1 },
+    { entry_id: 'd2', event_type: 'walkin_day', covers: 5, source_chit_id: null, account_role: 'cash', dr_minor: 30000, cr_minor: 0, line_no: 1 },
+    { entry_id: 'd2', event_type: 'walkin_day', covers: 5, source_chit_id: null, account_role: 'upi', dr_minor: 21000, cr_minor: 0, line_no: 2 },
+    { entry_id: 'd2', event_type: 'walkin_day', covers: 5, source_chit_id: null, account_role: 'sales', dr_minor: 0, cr_minor: 51000, line_no: 3 }].concat(F.booksBills ? [
+    /* M144: bills posted on their own after a reopen (one cash, one on credit then reversed, one on credit that stands) and a return paid out in cash;
+       REP-52: a late walk-in (books-hooks walkin-late: event walkin_day, its chit, covers NULL) is one bill; a payment against dues is none of the card's kinds */
     { entry_id: 'b1', event_type: 'sale_bill', covers: null, source_chit_id: 's1', account_role: 'cash', dr_minor: 9000, cr_minor: 0, line_no: 1 },
     { entry_id: 'b1', event_type: 'sale_bill', covers: null, source_chit_id: 's1', account_role: 'sales', dr_minor: 0, cr_minor: 9000, line_no: 2 },
     { entry_id: 'b2', event_type: 'sale_bill', covers: null, source_chit_id: 's2', account_role: 'debtors', dr_minor: 4000, cr_minor: 0, line_no: 1 },
+    { entry_id: 'b3', event_type: 'sale_bill', covers: null, source_chit_id: 's4', account_role: 'debtors', dr_minor: 6000, cr_minor: 0, line_no: 1 },
+    { entry_id: 'b3', event_type: 'sale_bill', covers: null, source_chit_id: 's4', account_role: 'sales', dr_minor: 0, cr_minor: 6000, line_no: 2 },
     { entry_id: 'rt', event_type: 'return', covers: null, source_chit_id: 's3', account_role: 'cash', dr_minor: 0, cr_minor: 2000, line_no: 1 },
+    { entry_id: 'lt', event_type: 'walkin_day', covers: null, source_chit_id: 's5', account_role: 'cash', dr_minor: 2000, cr_minor: 0, line_no: 1 },
+    { entry_id: 'lt', event_type: 'walkin_day', covers: null, source_chit_id: 's5', account_role: 'sales', dr_minor: 0, cr_minor: 2000, line_no: 2 },
+    { entry_id: 'py', event_type: 'payment_in', covers: null, source_chit_id: 's6', account_role: 'cash', dr_minor: 4000, cr_minor: 0, line_no: 1 },
     { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [] };
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
@@ -153,27 +162,29 @@ const get = (port, p) => new Promise((ok) => {
   /* till */
   let r = await g('till');
   t('till: 200', r.status, 200);
-  t('till: bills and takings on one line - the money is worded by the page ({money}), never "INR 4320.50"', [r.json.lines[0].text, r.json.lines[0].money], ['12 bills · {money}', { amount: 4320.5, currency: 'INR' }]);
+  t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold {money} · 12 bills', { amount: 4320.5, currency: 'INR' }]);
   t('till: line value is the bill count', r.json.lines[0].value, 12);
   t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'C1 open', value: 1 });
   F.allShut = true; r = await g('till');
   t('till: every counter closed today -> "Counter C1 closed {time}" with the ISO moment (M144)', [r.json.lines[1].text, r.json.lines[1].at], ['Counter C1 closed {time}', SHUT_AT]);
   F.allShut = false; r = await g('till');
-  t('till: figures carry the raw numbers', r.json.figures, { day: todayKey, bills: 12, takings: 4320.5, currency: 'INR', counters_open: 1 });
+  t('till: figures carry the raw numbers; no books day -> takings is omitted (the summary cannot split tenders), never 0', r.json.figures, { day: todayKey, bills: 12, sales: 4320.5, currency: 'INR', counters_open: 1 });
   t('till: at most 2 trips', r.trips <= 2, true);
   t('till: "bills not sent up" is not invented', /not sent|unsent/i.test(r.body), false);
   /* M144: the day was closed AGAIN with 510 - the card reads the books day entry (the reversed one is left out), not the older summary chit; the counter that closed says so */
   F.booksDay = true; F.allShut = false; r = await g('till');
-  t('till (M144): bills and takings are the books live day entry (5 bills, 510.00), the reversed closing left out', [r.json.figures.bills, r.json.figures.takings], [5, 510]);
+  t('till (M144): bills, sold and takings are the books live day entry (5 bills, 510.00), the reversed closing left out', [r.json.figures.bills, r.json.figures.sales, r.json.figures.takings], [5, 510, 510]);
+  t('till (REP-52): the second line names Takings with its own money', r.json.lines[1], { text: 'Takings {money}', money: { amount: 510, currency: 'INR' } });
   F.booksBills = true; r = await g('till');
-  t('till (M144): the bills posted on their own count too (5 + 1 live bill; the reversed one and the return are not bills) - takings 510 + 90 - 20', [r.json.figures.bills, r.json.figures.takings], [6, 580]);
+  t('till (REP-52): bills = 5 + cash bill + credit bill + late walk-in (the reversed one, the return and a payment against dues are not bills); sold 510 + 90 + 60 − 20 + 20; takings 510 + 90 − 20 + 20 — the credit bill is sold, not taken',
+    [r.json.figures.bills, r.json.figures.sales, r.json.figures.takings], [8, 660, 600]);
   F.booksBills = false;
   F.booksDay = false;
   F.allShut = true; F.c2open = true; r = await g('till');
-  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['12 bills · {money}', 'Counter C1 closed {time}', 'C2 open']);
+  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold {money} · 12 bills', 'Counter C1 closed {time}', 'C2 open']);
   F.allShut = false; F.c2open = false;
   F.stale = true; r = await g('till');
-  t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, '12 bills on {date} · {money}');
+  t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, 'Sold {money} · 12 bills on {date}');
   F.stale = false; F.summary = false; r = await g('till');
   t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['C1 open']);
   t('till: ...and no bills/takings figure', Object.keys(r.json.figures), ['counters_open']);
