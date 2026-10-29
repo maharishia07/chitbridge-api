@@ -624,7 +624,13 @@
   "PUT /api/assist/region-override": {
    "output_allowlist": true
   },
+  "GET /api/assist/regions": {
+   "output_allowlist": true
+  },
   "GET /api/assist/resolve": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/penetration": {
    "output_allowlist": true
   },
   "GET /api/assist/catalogue-source/:key": {
