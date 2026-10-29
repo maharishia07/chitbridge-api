@@ -1827,7 +1827,7 @@ router.get('/quick-keys/state', auth, auth.requireScope('till'), ...checked('GET
     const business_date = String(req.query.business_date || '').trim();
     if (!business_date) return refuseBad(req, res, 'business_date required');
     const state = await withEntity(entity_id, (db) => quickKeys.getActiveGroups(db, entity_id, counter_id, business_date));
-    res.json(state);
+    res.json({ active_group_ids: state.active_group_ids, shift_id: state.shift_id, updated_at: state.updated_at }); /* API-8: the three columns getActiveGroups selects (or its empty default) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -1843,7 +1843,7 @@ router.post('/quick-keys/state', auth, auth.requireScope('till'), ...checked('PO
     const state = await withEntity(entity_id, (db) =>
       quickKeys.setActiveGroups(db, entity_id, counter_id, body.business_date, body.shift_id, body.active_group_ids)
     );
-    res.json(state);
+    res.json({ entity_id: state.entity_id, counter_id: state.counter_id, business_date: state.business_date, shift_id: state.shift_id, active_group_ids: state.active_group_ids, updated_at: state.updated_at }); /* API-8: the row setActiveGroups returns (RETURNING *), in table order */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -1889,7 +1889,7 @@ router.post('/quick-keys/unhide', auth, auth.requireScope('till'), ...checked('P
     const body = req.body || {};
     if (!body.product_id) return refuseBad(req, res, 'product_id required');
     const restored = await withEntity(entity_id, (db) => quickKeys.unhideItem(db, entity_id, counter_id, body.product_id, body.also_counters));
-    res.json(restored);
+    res.json({ removed: restored.removed });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -1912,7 +1912,7 @@ router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), ...che
     const counter_id = await counterOfReq(req);
     if (!counter_id) return refuseNoCounter(req, res);
     const config = await withEntity(entity_id, (db) => quickKeys.setScreenConfig(db, entity_id, counter_id, (req.body || {}).config, null));
-    res.json(config);
+    res.json({ id: config.id, entity_id: config.entity_id, counter_id: config.counter_id, config: config.config, updated_by: config.updated_by, updated_at: config.updated_at }); /* API-8: the row setScreenConfig returns (RETURNING *), in table order */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -2097,7 +2097,8 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
     if (done.missing) return problem(req, res, { status: 404, ...notFound() });
     if (done.refused) return refuseBad(req, res, done.refused);
     shopChanged(entity_id, 'offer ' + (input.on ? 'added to' : 'removed from') + ' a product');
-    res.json(Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done));
+    /* API-8: the two answers of the library step, named where they are used: unchanged (nothing to write) or version (a new version written) */
+    res.json(Object.assign({ ok: true, offer_id: input.offer_id, item_id: input.item_id, on: input.on }, done.unchanged ? { unchanged: done.unchanged, name: done.name } : { name: done.name, version: done.version }));
   } catch (e) {
     problem(req, res, failed(e, req));
   }

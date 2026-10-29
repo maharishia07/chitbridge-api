@@ -233,8 +233,9 @@ router.post('/conformance', auth, ...checked('POST /conformance'), async (req, r
   try {
     const data = req.body && typeof req.body.data === 'object' && req.body.data ? req.body.data : req.body || {};
     const scope = req.body && typeof req.body.scope === 'string' ? req.body.scope : 'chit';
-    const verdict = await require('../lib/conformance').checkConformance(data, scope);
-    res.json(verdict);
+    const checkedAgainst = await require('../lib/conformance').checkConformance(data, scope);
+    /* S34: the answer's six keys, all named (lib/conformance.js checkConformance) */
+    res.json({ status: checkedAgainst.status, scope: checkedAgainst.scope, advisory: checkedAgainst.advisory, note: checkedAgainst.note, checked: checkedAgainst.checked, gaps: checkedAgainst.gaps });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Conformance check failed'));
   }
@@ -245,7 +246,9 @@ router.get('/boilerplate/:key', auth, ...checked('GET /boilerplate/:key'), async
   try {
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
     if (!bp) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such boilerplate'));
-    res.json(bp);
+    /* S34: the mould's keys, all named; each declared source to the six columns its statement selects (lib/boilerplate.js resolveBoilerplate) */
+    // prettier-ignore
+    res.json({ key: bp.key, version: bp.version, label: bp.label, region_code: bp.region_code, locale: bp.locale, brand: bp.brand, standards: bp.standards, sources: bp.sources.map((x) => ({ source_key: x.source_key, source_kind: x.source_kind, facet: x.facet, source_entity_id: x.source_entity_id, source_bridge: x.source_bridge, source_name: x.source_name })) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Boilerplate read failed'));
   }
@@ -287,7 +290,8 @@ router.post('/source', auth, platformGate, ...checked('POST /source'), async (re
       kind: b.kind,
       template: b.template
     });
-    res.json({ message: 'Source registered & stamped', source: out });
+    const sourceEntity = out.entity;
+    res.json({ message: 'Source registered & stamped', source: { source_key: out.source_key, kind: out.kind, facet: out.facet, entity: { identity_id: sourceEntity.identity_id, bridge_id: sourceEntity.bridge_id, display_name: sourceEntity.display_name } } });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Register source failed'));
   }
@@ -298,7 +302,9 @@ router.get('/source/:key', auth, ...checked('GET /source/:key'), async (req, res
   try {
     const s = await require('../lib/source').resolveSourceEntity(req.params.key);
     if (!s) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such source'));
-    res.json(s);
+    /* S34: the eight columns the statement selects (lib/source.js resolveSourceEntity) */
+    // prettier-ignore
+    res.json({ standard_key: s.standard_key, version: s.version, facet: s.facet, title: s.title, template: s.template, identity_id: s.identity_id, bridge_id: s.bridge_id, display_name: s.display_name });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Source read failed'));
   }
@@ -409,7 +415,9 @@ router.put('/profile', auth, writeGate, ...checked('PUT /profile'), async (req, 
     } catch (e) {
       log.fellBack('governance PUT /profile: the signal was not sent — carried on without it', e);
     }
-    res.json(saved);
+    /* S34: the same eight keys GET /profile answers (saveProfile answers the profile it just wrote) */
+    // prettier-ignore
+    res.json({ trade_mode: saved.trade_mode, markets: saved.markets, sectors: saved.sectors, adopted: saved.adopted, vault: saved.vault, vault_version: saved.vault_version, invoice_party: saved.invoice_party, vault_encrypted: saved.vault_encrypted });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Save profile failed'));
   }
@@ -460,7 +468,7 @@ router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), 
     } catch (e) {
       log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e);
     }
-    res.json(saved);
+    res.json({ vault: saved.vault, version: saved.version }); /* S34: saveVault answers { vault, version } */
   } catch (err) {
     problem(req, res, vaultFault(err, req));
   }
@@ -527,7 +535,9 @@ router.put('/country-setup', auth, ownerGate, ...checked('PUT /country-setup'), 
     } catch (e) {
       log.fellBack('governance PUT /country-setup: the signal was not sent — carried on without it', e);
     }
-    res.json(out);
+    /* S34: the profile's keys, all named as GET answers them, and `rederived` when the country was corrected (lib/country-setup.js save) */
+    // prettier-ignore
+    res.json({ migrated: out.migrated, done: out.done, set_at: out.set_at, required: out.required, country: out.country, currency: out.currency, fy_start_month: out.fy_start_month, tax: out.tax, timezone: out.timezone, zones: out.zones, constituted: out.constituted, constituted_by: out.constituted_by, countries: out.countries, source: out.source, pack: out.pack, rederived: out.rederived });
   } catch (err) {
     problem(req, res, countrySetupFault(err, req, 'Country setup could not be saved', 422));
   }
@@ -539,7 +549,10 @@ router.post('/ai-draft', auth, ...checked('POST /ai-draft'), async (req, res) =>
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    res.json(await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {}));
+    const drafted = await require('../lib/ai').invokeSkill(entity_id, b.skill_id || b.doc_type, b.context || {});
+    /* S34: the draft's keys, all named (lib/ai.js invokeSkill: `data` only for a form-fill skill, `truncated` only when the reply was cut) */
+    // prettier-ignore
+    res.json({ skill: drafted.skill, kind: drafted.kind, gate: drafted.gate, draft: drafted.draft, data: drafted.data, model: drafted.model, truncated: drafted.truncated, usage: drafted.usage, note: drafted.note });
   } catch (err) {
     // 4xx are intentional, client-safe reasons (gate 402/429 · unknown skill 400) → show them;
     // 5xx keep the generic message (no internal/DB text leaks).
@@ -569,9 +582,16 @@ router.get('/ai-skills', auth, async (req, res) => {
   }
 });
 
+/** may this caller read that entity's readiness passport — its own, or a party on the caller's customer or supplier list (lib/books-store partyOn, the one party test) */
+async function mayReadPassport(req, entity_id) {
+  const callerId = auth.entityOf(req);
+  if (String(callerId) === String(entity_id)) return true;
+  const on = await withEntity(callerId, (db) => require('../lib/books-store').partyOn(db, callerId, entity_id));
+  return Boolean(on.customer || on.supplier);
+}
+
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
-// confidence" view). Status + validity only — never raw evidence contents. (Demo: any authed entity; prod may gate to
-// a connection.)
+// confidence" view). Status + validity only — never raw evidence contents. SEC-92: only the owner or a shop that lists it as a party.
 router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'), async (req, res) => {
   try {
     /**
@@ -589,7 +609,8 @@ router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [req.params.bridge_id]
     );
-    if (!r.rows.length) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such entity'));
+    /* SEC-92: a passport is shown to its owner and to a shop that has the owner on its customer or supplier list; every other id answers as an unknown one */
+    if (!r.rows.length || !(await mayReadPassport(req, r.rows[0].identity_id))) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such entity'));
     const rd = await require('../lib/readiness').resolveReadiness(r.rows[0].identity_id);
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */
@@ -626,7 +647,10 @@ router.post('/compliance', auth, writeGate, ...checked('POST /compliance'), asyn
       valid_until: b.valid_until,
       status: b.status
     });
-    res.json({ message: 'Clearance gathered', ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+    const sum = (await require('../lib/readiness').resolveReadiness(entity_id)).summary;
+    /* S34: the summary's ten keys, all named (lib/readiness.js summarize) */
+    // prettier-ignore
+    res.json({ message: 'Clearance gathered', total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Gather failed'));
   }
@@ -659,7 +683,9 @@ router.post('/verify', auth, writeGate, ...checked('POST /verify'), async (req, 
       }
     });
     const msg = node.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
-    res.json({ message: msg, verdict: node, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+    const sum = (await require('../lib/readiness').resolveReadiness(entity_id)).summary;
+    // prettier-ignore
+    res.json({ message: msg, verdict: node, total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Verify failed'));
   }
@@ -715,7 +741,7 @@ router.post('/supplier-acceptance', auth, writeGate, ...checked('POST /supplier-
       )
     );
 
-    res.json({ message: 'Accepted', acceptance: r.rows[0], summary: rd.summary });
+    res.json({ message: 'Accepted', acceptance: { acceptance_id: r.rows[0].acceptance_id, accepted_at: r.rows[0].accepted_at }, summary: rd.summary }); /* S34: the two columns RETURNING selects */
   } catch (err) {
     problem(req, res, thrownAs(err, req, 'Acceptance failed'));
   }
@@ -749,7 +775,10 @@ router.get('/supplier-acceptance/:handle', auth, ...checked('GET /supplier-accep
       )
     );
 
-    res.json({ acceptance: r.rows[0] || null, applied: true });
+    const latest = r.rows[0];
+    /* S34: the five columns the statement selects */
+    // prettier-ignore
+    res.json({ acceptance: latest ? { acceptance_id: latest.acceptance_id, summary: latest.summary, accepted_at: latest.accepted_at, note: latest.note, accepted_by_name: latest.accepted_by_name } : null, applied: true });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Read failed'));
   }

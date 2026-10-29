@@ -90,7 +90,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   console.log('— after b299: a NEW Indian shop registers (M196 wrote IN from the time zone) and completes the step —');
   setMigrated(true); ID = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Europe/London', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = [];
   r = await g('GET', '/country-setup');
-  ok('GET: required true (the step is still to do), prefilled IN · INR · April · not registered', r.status === 200 && r.body.required === true && r.body.done === false && r.body.country.code === 'IN' && r.body.currency === 'INR' && r.body.fy_start_month === 4 && r.body.tax.registered === false, JSON.stringify(r.body));
+  ok('GET: required true (the step is still to do), prefilled IN · INR · April · tax unknown (not assumed registered or not)', r.status === 200 && r.body.required === true && r.body.done === false && r.body.country.code === 'IN' && r.body.currency === 'INR' && r.body.fy_start_month === 4 && r.body.tax.registered === null, JSON.stringify(r.body));
   /* CS2: the step is told whether the country may still change, the pack's zones, and the countries it may offer — exactly the registered packs */
   ok('CS2 GET: constituted false (no product, no transaction) with what was looked at; the India pack names ONE zone; countries = the registered packs with what each derives',
     r.body.constituted === false && JSON.stringify(r.body.constituted_by) === JSON.stringify({ products: false, chits: false, entries: false }) && JSON.stringify(r.body.zones) === '["Asia/Kolkata"]'

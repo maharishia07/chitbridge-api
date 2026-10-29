@@ -28,6 +28,7 @@ process.env.NODE_ENV = 'test';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const MOUNT = '/api/chits';
 /** the route file this mount serves (named in full so the graph links this test to it) */
 const ROUTE_FILE = 'routes/chits.js';
@@ -229,6 +230,40 @@ const BATCH_ROWS = [
   { chit_id: PARTY, sender_entity_id: SHOP, sender_entity_display_name: 'Test shop', all_recipients: CHIT_ROW.all_recipients, trace: { product: 'Rice', qty: 5, unit: 'kg', base_qty: 5, base_unit: 'kg', is_origin: true, network: { id: 'net1' } }, created_at: AT },
   { chit_id: OTHER, sender_entity_id: OTHER, sender_entity_display_name: null, all_recipients: [], trace: {}, created_at: AT }
 ];
+/* ── S34 (API-8 output_allowlist, writes and the chit-scoped reads): rows as the libraries select them, one with every nullable column filled and one with them null ── */
+const LINE_ROW = { line_id: PARTY, seq: 1, particulars: 'Rice', quantity: '2', unit: 'kg', unit_size: null, price: null, comment: null, asked_as: null, asked_unit: null, raw_phrase: null, removed: false, removed_reason: null, needs_human: false, flags: null };
+const CATALOGUE_ROWS = [{ item_id: PARTY, item_data: { name: 'Rice', unit: 'kg', price: { amount: 60, currency: 'INR' }, sku: 'R1', their_ref: { system: 'erp', id: '7' }, synonyms: ['chawal'] }, updated_at: AT }];
+const CATALOGUE_TWO = CATALOGUE_ROWS.concat([{ item_id: OTHER, item_data: { name: 'Rice basmati', unit: 'kg', price: { amount: 90, currency: 'INR' } }, updated_at: AT }, { item_id: STAFF_ID, item_data: { name: 'Rice brown', unit: 'kg' }, updated_at: AT }]);
+const COST_ROW = { cost_id: PARTY, line_id: PARTY, kind: 'fare', amount: '50.00', currency: 'INR', minutes: 80, rate_per_hour: '150.00', note: 'auto', recorded_by_actor_id: STAFF_ID, recorded_by_actor_name: 'Test staff', created_at: AT };
+const COST_BARE = Object.assign({}, COST_ROW, { cost_id: OTHER, line_id: null, kind: 'other', amount: '-5.00', currency: 'USD', minutes: null, rate_per_hour: null, note: null, recorded_by_actor_id: null, recorded_by_actor_name: null });
+const EDGE_ROWS = [{ raida_id: PARTY, kind: 'dependency', body: 'Wait for the audit', line_id: null, subject_id: OTHER, rel_type: 'finish_to_start', to_type: 'filing', to_id: PARTY, to_label: 'GSTR-1', needed_by: '2026-10-09', owner_name: 'Asha', severity: 3 }];
+/** a register entry as lib/raida list() selects it (FULL_COLS since b185, response since b192); the second row closes the first */
+const RAIDA_FULL = { raida_id: PARTY, line_id: null, kind: 'risk', body: 'Wet rice', closes_id: null, visibility: 'internal', dispute_id: null, subject_id: PARTY, template_id: null, owner_actor_id: STAFF_ID, owner_name: 'Asha', due_date: '2026-10-09', review_date: '2026-11-09', likelihood: 3, severity: 4, treatment: 'Dry store', verification_method: 'test', residual_likelihood: 2, residual_severity: 2, rel_type: 'finish_to_start', to_type: 'filing', to_id: STAFF_ID, to_label: 'GSTR-1', needed_by: '2026-10-09', disposition: null, carried_to_subject_id: null, evidence_ref: null, evidence_hash: null, revises_id: null, response: 'treat', created_by_actor_id: STAFF_ID, created_by_name: 'Asha', created_at: AT };
+const RAIDA_BARE = Object.assign({}, RAIDA_FULL, { raida_id: OTHER, line_id: PARTY, kind: 'note', visibility: 'shared', owner_actor_id: null, owner_name: null, due_date: null, review_date: null, likelihood: null, severity: null, treatment: null, verification_method: null, residual_likelihood: null, residual_severity: null, rel_type: null, to_type: null, to_id: null, to_label: null, needed_by: null, response: null, created_by_actor_id: null, created_by_name: null, created_at: null });
+const RAIDA_ENDING = Object.assign({}, RAIDA_FULL, { raida_id: STAFF_ID, closes_id: PARTY, body: 'Dried', disposition: 'accepted', carried_to_subject_id: OTHER, evidence_ref: 'photo-1', evidence_hash: 'abc' });
+const RAIDA_ROWS = [RAIDA_FULL, RAIDA_BARE, RAIDA_ENDING];
+const GRADED_ROWS = [{ item_id: PARTY, item_data: { name: 'Rice', variant: 'Grade 1', price: { amount: 60, currency: 'INR' } }, updated_at: AT }, { item_id: OTHER, item_data: { name: 'Rice', variant: 'Grade 2', price: { amount: 50, currency: 'INR' } }, updated_at: AT }];
+const SUBJECT_REF = { subject_id: PARTY, closed_at: AT };
+/** a dispute the raiser reads back (SELECT * FROM chit_disputes), and the copies of a trace walk: the seed names its parent, the child is heavier than the seed (red), the bare one carries no quantity */
+/** the header a chit read gets (SELECT * FROM chit_header): a sent order with its summary */
+const CHIT_HEADER = Object.assign({}, CHIT_ROW, { entity_id: SHOP, sender_entity_id: SHOP, sender_entity_display_name: 'Test shop', auto_subject: 'Order: 3 items', manual_subject: null, summary_json: SUMMARY, business_json: null, created_by_actor_id: STAFF_ID, schema_version: 2 });
+/** the detail and the one-shot bundle of a chit with lines: one line assigned, one delivered in part (the statement's columns, in order) */
+const CHIT_DETAIL = { detail_type: 'order', line_item_count: 2, total_value: '360.00', currency_code: 'INR', line_items: [{ line_id: PARTY, particulars: 'Rice', quantity: 2, unit: 'kg', price: 60 }, { line_id: OTHER, particulars: 'Pallet', quantity: 1, unit: null, price: null }], payload_delivered_at: AT, payload_deleted_at: null };
+const CHIT_BUNDLE = {
+  participants: [{ entity_id: SHOP, current_status: 'pending', read_at: null, display_name: 'Test shop', bridge_id: 'TESTSHOP' }], amendments: [],
+  lines: [LINE_ROW, Object.assign({}, LINE_ROW, { line_id: OTHER, seq: 2, particulars: 'Pallet', quantity: '1', unit: null, price: '12' })],
+  assignments: [{ line_id: PARTY, seq: 1, assignee_actor_id: STAFF_ID, assignee_name: 'Test staff', assignee_type: 'actor', task: 'Pack', due_date: '2026-10-05', note: null, created_at: AT, state: 'open' }],
+  deliveries: [{ line_id: PARTY, particulars: 'Rice', ordered_unit: 'kg', ordered: '2', removed: false, delivery_id: PARTY, dq: '1', du: 'kg', reference: 'GRN-1', note: null, recorded_by_entity_id: SHOP, recorded_by_name: 'Test shop', recorded_by_actor_name: 'Test staff', delivered_at: AT, dkind: 'deliver', damount: null, dparticulars: null }],
+  my_received: 'pending', books_wait: null, order_billed: false
+};
+const DISPUTE_OPEN = { dispute_id: PARTY, chit_id: PARTY, raised_by_entity_id: SHOP, category: 'quality', status: 'open' };
+const TRACE_SEED = { chit_id: PARTY, entity_id: SHOP, sender_entity_display_name: 'Test shop', all_recipients: CHIT_ROW.all_recipients, trace: { product: 'Rice', qty: 5, unit: 'kg', base_qty: 5, base_unit: 'kg', is_origin: false, parents: [OTHER], network: { id: 'net1' } } };
+const TRACE_CHILD = { chit_id: OTHER, entity_id: OTHER, sender_entity_display_name: 'Other shop', all_recipients: [], trace: { product: 'Rice', qty: 6, unit: 'kg', base_qty: 6, base_unit: 'kg', parents: [PARTY], network: { id: 'net1' } } };
+const TRACE_BARE = { chit_id: STAFF_ID, entity_id: OTHER, sender_entity_display_name: null, all_recipients: [], trace: { parents: [PARTY] } };
+const ENTRY_ROW = { chit_id: PARTY, line_id: null, subject_id: PARTY, kind: 'risk', closes_id: null, body: 'Wet rice' };
+/** a copy of a bill I received, as lib/tax-copy copyOf gives it: the buyer's choice rides in business_json.use */
+const BILL_COPY = (use) => ({ current_status: 'pending', line_items: [{ line_id: PARTY, particulars: 'Rice' }, { line_id: OTHER, particulars: 'Pallet' }], business_json: { use } });
+
 const EXTRAS = [
   /* ── the lists and the read ── */
   X('a-chit-is-listed', 'GET ' + C + '/sent', 200, { setup: { sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [CHIT_ROW]) } }),
@@ -237,11 +272,8 @@ const EXTRAS = [
   X('rollup-by-state', 'GET ' + C + '/rollup', 200, { url: C + '/rollup?group_by=state&direction=sent&assigned_to=me' }),
   X('unread-for-staff', 'GET ' + C + '/unread', 200, { setup: { who: STAFF, sqlRows: answering(/chit_reads/, [{ chit_id: PARTY }]) } }),
   X('unread-for-staff-fails', 'GET ' + C + '/unread', 500, { setup: { who: STAFF, db: 'fail' } }),
-  X('pulse-answers', 'GET ' + C + '/pulse', 200, { setup: { sqlRows: answering(/MAX(created_at)/, [{ h: '2026-10-01T00:00:00.000Z', s: null, c: null, n: 3 }]) } }),
   X('costs-not-migrated', 'GET ' + C + '/:chit_id/costs', 503, { patch: { cost: { canRead: async () => true, read: async () => null } } }),
-  X('costs-read', 'GET ' + C + '/:chit_id/costs', 200, { patch: { cost: { canRead: async () => true, read: async () => ({ rows: [], total: null }) } } }),
   X('not-a-bill', 'GET ' + C + '/:chit_id/use', 409, { patch: { 'tax-copy': { copyOf: async () => ({ current_status: 'pending' }), billReceived: () => false } } }),
-  X('use-read', 'GET ' + C + '/:chit_id/use', 200, { patch: { 'tax-copy': { copyOf: async () => ({ current_status: 'pending' }), billReceived: () => true }, 'bill-use': { forCopy: async () => ({ lines: [] }) } } }),
   X('overlay-without-a-catalogue', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=milk&comment=fresh' }),
   X('messages-of-a-participant', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?thread_type=external&dispute=1&line_id=' + OTHER, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
   /* RAIL-136 (e): only a MISSING table (42P01) is an empty thread; a refused read of the same table is a fault, never "no messages" */
@@ -262,7 +294,6 @@ const EXTRAS = [
   X('attachables', 'GET ' + C + '/register/attachables', 200, { setup: { migrated: true } }),
   X('subjects-listed', 'GET ' + C + '/register/subjects', 200, { url: C + '/register/subjects?type_key=audit&open=1', setup: { migrated: true } }),
   X('subjects-fail', 'GET ' + C + '/register/subjects', 500, { setup: { migrated: true, sqlRows: breaking(/register_subject/) } }),
-  X('register-opened', 'POST ' + C + '/register/subjects', 200, { body: { type_key: 'audit', name: 'Q4 audit' }, setup: { migrated: true } }),
   X('register-open-fails', 'POST ' + C + '/register/subjects', 500, { body: { type_key: 'audit', name: 'Q4 audit' }, setup: { migrated: true, sqlRows: breaking(/register_subject/) } }),
   X('register-open-refused', 'POST ' + C + '/register/subjects', 400, { body: { type_key: 'audit' }, patch: { raida: { subjectFor: async () => { throw Object.assign(new Error('Name the register.'), { status: 400 }); } } } }),
   X('register-close-unknown', 'POST ' + C + '/register/subjects/:subject_id/close', 400, { setup: { migrated: true } }),
@@ -356,7 +387,7 @@ const EXTRAS = [
   X('message-fails', 'POST ' + C + '/:chit_id/messages', 500, { body: { message_text: 'hi', thread_type: 'external' }, setup: { db: 'fail' } }),
   X('message-on-a-dispute-not-mine', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external', is_dispute: 'true', dispute_id: OTHER }, setup: { sqlRows: answering(/SELECT entity_id FROM chit_status/, [COPY_ROW]) } }),
   X('message-fields-wrong', 'POST ' + C + '/:chit_id/messages', 400, { body: { message_text: '   ', thread_type: 'loud', is_dispute: 'maybe', dispute_id: 'x', line_id: 5 } }),
-  X('message-posted', 'POST ' + C + '/:chit_id/messages', 200, { body: { message_text: '  hello  ', thread_type: 'internal', line_id: null }, setup: { sqlRows: answering(/SELECT entity_id FROM chit_status/, [COPY_ROW]) } }),
+  X('message-posted', 'POST ' + C + '/:chit_id/messages', 200, { body: { message_text: '  hello  ', thread_type: 'internal', line_id: null }, setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/chit_message_deliver/, [{ created_at: AT }]]]) } }),
   X('dispute-by-a-non-participant', 'POST ' + C + '/:chit_id/disputes', 403, { body: { category: 'quality', reason: ' The goods were short by two boxes ' } }),
   X('dispute-fails', 'POST ' + C + '/:chit_id/disputes', 500, { body: { category: 'quality', reason: 'The goods were short by two boxes' }, setup: { db: 'fail' } }),
   X('dispute-fields-wrong', 'POST ' + C + '/:chit_id/disputes', 400, { body: { category: 'x', reason: 'short', target_entity_id: 'x', participant_entity_ids: 'a', chit_wide: 'maybe', via: 'post' } }),
@@ -410,13 +441,10 @@ const EXTRAS = [
   X('restore-done', 'POST ' + C + '/:chit_id/restore', 200, { setup: { sqlRows: answering(/SET deleted_at = NULL/, [{ chit_id: PARTY }]) } }),
   /* ── the rest of the writes ── */
   X('reprice-by-a-viewer', 'POST ' + C + '/:chit_id/reprice', 403, { body: {}, setup: { who: VIEWER } }),
-  X('reprice-previewed', 'POST ' + C + '/:chit_id/reprice', 200, { body: { preview: true, line_ids: [PARTY] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { reprice: { plan: async () => ({ lines: [] }) } } }),
   X('reprice-fails', 'POST ' + C + '/:chit_id/reprice', 500, { body: {}, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { reprice: { apply: async () => { throw new Error(SECRET_SQL); } } } }),
   X('reprice-library-refuses', 'POST ' + C + '/:chit_id/reprice', 409, { body: {}, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { reprice: { apply: async () => { throw Object.assign(new Error('No.'), { status: 409 }); } } } }),
-  X('cost-recorded', 'POST ' + C + '/:chit_id/costs', 200, { body: [{ kind: 'fare', amount: 50 }], setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { cost: { record: async () => ({ recorded: 1 }) } } }),
   X('cost-refused', 'POST ' + C + '/:chit_id/costs', 400, { body: { rows: [] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { cost: { record: async () => { throw Object.assign(new Error('No rows.'), { status: 400 }); } } } }),
   X('use-refused', 'PUT ' + C + '/:chit_id/use', 409, { body: { bill: 'resale' }, patch: { 'bill-use': { set: async () => ({ ok: false, status: 409, message: 'Only a bill you received says what its goods are for' }) } } }),
-  X('use-saved', 'PUT ' + C + '/:chit_id/use', 200, { body: { bill: 'resale' }, patch: { 'bill-use': { set: async () => ({ ok: true, use: { bill: 'resale' } }) } } }),
   X('use-chit-not-found', 'PUT ' + C + '/:chit_id/use', 404, { body: { bill: 'resale' } }),
   X('use-fails', 'PUT ' + C + '/:chit_id/use', 500, { body: { bill: 'resale' }, patch: { 'bill-use': { set: async () => { throw new Error(SECRET_SQL); } } } }),
   X('delivery-by-a-viewer', 'POST ' + C + '/:chit_id/deliver-lines', 403, { body: [], setup: { who: VIEWER } }),
@@ -424,7 +452,6 @@ const EXTRAS = [
   X('delivery-refused-by-the-recorder', 'POST ' + C + '/:chit_id/deliver-lines', 400, { body: { rows: [] }, patch: { deliverline: { record: async () => { throw Object.assign(new Error('Nothing to record'), { status: 400 }); } }, 'tax-copy': HELD_COPY } }),
   X('assign-by-a-viewer', 'POST ' + C + '/:chit_id/assign-lines', 403, { body: { edits: [] }, setup: { who: VIEWER } }),
   X('assign-fails', 'POST ' + C + '/:chit_id/assign-lines', 500, { body: [], setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { assign: { assign: async () => { throw new Error(SECRET_SQL); } } } }),
-  X('assign-done', 'POST ' + C + '/:chit_id/assign-lines', 200, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { assign: { assign: async () => ({ assignments: [] }) } } }),
   X('amend-a-delivered-line', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('That line has been delivered.'), { code: 'LINE_DELIVERED' }); } } } }),
   X('amend-a-value-the-database-refuses', 'POST ' + C + '/:chit_id/amend', 409, { body: { edits: [] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { amend: { record: async () => { throw Object.assign(new Error('check'), { code: '23514', constraint: 'amendment_reason_code_check' }); } } } }),
   X('amend-by-a-viewer', 'POST ' + C + '/:chit_id/amend', 403, { body: { edits: [] }, setup: { who: VIEWER } }),
@@ -462,7 +489,62 @@ const EXTRAS = [
   X('report-not-migrated', 'GET ' + C + '/raida/report', 200, {}),
   X('batches-ready', 'GET ' + C + '/trace/batches', 200, { url: C + '/trace/batches?limit=1', setup: { sqlRows: answering(/summary_json->'trace' AS trace, created_at/, BATCH_ROWS) } }),
   X('batch-chain-ready', 'GET ' + C + '/trace/by-batch', 200, { url: C + '/trace/by-batch?q=L7', setup: { sqlRows: answering(/l\.removed = false/, BATCH_ROWS) } }),
-  X('networks-none', 'GET ' + C + '/trace/networks', 200, {})
+  X('networks-none', 'GET ' + C + '/trace/networks', 200, {}),
+  /* ── S34 (API-8 output_allowlist, part 1): the READY answer of each write and chit-scoped read over the real libraries ── */
+  X('pulse-with-rows', 'GET ' + C + '/pulse', 200, { setup: { sqlRows: answering(/MAX\(created_at\)/, [{ h: AT, s: null, c: AT, n: '3' }]) } }),
+  X('reprice-previewed', 'POST ' + C + '/:chit_id/reprice', 200, { body: { preview: true, line_ids: [PARTY] }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) } }),
+  X('reprice-applied', 'POST ' + C + '/:chit_id/reprice', 200, { body: { only_unpriced: true }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) }, patch: { amend: { record: async () => ({ amendments: [{ amendment_id: PARTY }] }) } } }),
+  X('reprice-no-catalogue', 'POST ' + C + '/:chit_id/reprice', 200, { body: {}, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW, Object.assign({}, LINE_ROW, { line_id: OTHER, particulars: 'Pallet', price: '12', removed: false })]]]) } }),
+  X('cost-recorded', 'POST ' + C + '/:chit_id/costs', 200, { body: [{ kind: 'fare', amount: 50, currency: 'inr', note: 'auto' }, { kind: 'labour', minutes: 80, rate_per_hour: 150 }], setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/INSERT INTO chit_line_cost/, [COST_ROW]]]) } }),
+  X('costs-read-owner', 'GET ' + C + '/:chit_id/costs', 200, { setup: { sqlRows: answeringAll([[/FROM chit_line_cost WHERE/, [COST_ROW]], [/FROM chit_detail WHERE/, [{ total_value: '360.00', currency_code: 'INR' }]]]) } }),
+  X('costs-read-mixed-currency', 'GET ' + C + '/:chit_id/costs', 200, { setup: { sqlRows: answeringAll([[/FROM chit_line_cost WHERE/, [COST_ROW, COST_BARE]], [/FROM chit_detail WHERE/, [{ total_value: null, currency_code: null }]]]) } }),
+  X('costs-read-mine-only', 'GET ' + C + '/:chit_id/costs', 200, { setup: { who: STAFF, sqlRows: answering(/FROM chit_line_cost WHERE/, [COST_ROW]) } }),
+  X('register-opened', 'POST ' + C + '/register/subjects', 200, { body: { type_key: 'audit', name: 'Q4 audit' }, setup: { migrated: true, sqlRows: answering(/INSERT INTO register_subject/, [{ subject_id: PARTY, closed_at: null }]) } }),
+  X('register-found-again', 'POST ' + C + '/register/subjects', 200, { body: { type_key: 'audit', ref_id: OTHER, name: 'Q4 audit' }, setup: { migrated: true, sqlRows: answering(/SELECT subject_id, closed_at FROM register_subject/, [SUBJECT_REF]) } }),
+  X('register-closed', 'POST ' + C + '/register/subjects/:subject_id/close', 200, { setup: { migrated: true, sqlRows: answeringAll([[/SELECT subject_id, name, closed_at FROM register_subject/, [{ subject_id: PARTY, name: 'Q4 audit', closed_at: null }]], [/FROM register_entry e/, []], [/UPDATE register_subject/, [SUBJECT_REF]]]) } }),
+  X('template-saved', 'POST ' + C + '/register/templates', 200, { body: { kind: 'risk', title: 'Late delivery', body: 'The van is late', likelihood: 3, severity: 4 }, setup: { migrated: true, sqlRows: answering(/INSERT INTO register_template \(/, [{ template_id: PARTY }]) } }),
+  X('subject-entry-recorded', 'POST ' + C + '/register/subjects/:subject_id/entries', 200, { body: { kind: 'risk', body: 'Wet rice', standards: ['iso9001'] }, setup: { migrated: true, sqlRows: answering(/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]) } }),
+  X('entry-closed', 'POST ' + C + '/register/entries/:raida_id/close', 200, { body: { disposition: 'resolved', body: 'Dried' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT kind, line_id, closes_id/, [ENTRY_ROW]], [/SELECT 1 FROM register_entry/, []], [/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]]]) } }),
+  X('walk-found', 'GET ' + C + '/register/walk/:from', 200, { url: C + '/register/walk/' + PARTY + '?depth=3&backwards=0', setup: { migrated: true, sqlRows: answering(/to_id IS NOT NULL/, EDGE_ROWS) } }),
+  X('entry-revised', 'POST ' + C + '/register/entries/:raida_id/revise', 200, { body: { body: 'Drier', treatment: 'Dry store' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT chit_id, line_id, subject_id, kind, closes_id, body FROM register_entry/, [ENTRY_ROW]], [/SELECT 1 FROM register_entry/, []], [/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]]]) } }),
+  X('entry-accepted', 'POST ' + C + '/register/entries/:raida_id/accept', 200, { body: { rationale: 'Within appetite' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT severity FROM register_entry/, [{ severity: 4 }]], [/INSERT INTO register_acceptance/, [{ acceptance_id: PARTY, accepted_at: AT }]]]) } }),
+  X('entry-accepted-unrated', 'POST ' + C + '/register/entries/:raida_id/accept', 200, { body: { rationale: 'Unrated' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT severity FROM register_entry/, [{ severity: null }]], [/INSERT INTO register_acceptance/, [{ acceptance_id: OTHER, accepted_at: AT }]]]) } }),
+  X('chit-register-listed', 'GET ' + C + '/:chit_id/raida', 200, { setup: { migrated: true, sqlRows: answering(/FROM register_entry a/, RAIDA_ROWS) } }),
+  X('chit-register-not-migrated', 'GET ' + C + '/:chit_id/raida', 200, {}),
+  X('chit-entry-recorded', 'POST ' + C + '/:chit_id/raida', 200, { body: { kind: 'risk', body: 'Wet rice' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/SELECT manual_subject, auto_subject FROM chit_header/, [{ manual_subject: null, auto_subject: 'Order' }]], [/SELECT subject_id, closed_at FROM register_subject/, [{ subject_id: PARTY, closed_at: null }]], [/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]]]) } }),
+  X('chit-entry-closed', 'POST ' + C + '/:chit_id/raida/:raida_id/close', 200, { body: { disposition: 'accepted', body: 'Fine' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT kind, line_id, closes_id/, [ENTRY_ROW]], [/SELECT 1 FROM register_entry/, []], [/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]]]) } }),
+  X('dispute-linked', 'POST ' + C + '/:chit_id/raida/:raida_id/dispute', 200, { body: { dispute_id: OTHER }, setup: { migrated: true, sqlRows: answering(/SET dispute_id = \$3/, [{ raida_id: PARTY }]) } }),
+  X('use-read', 'GET ' + C + '/:chit_id/use', 200, { patch: { 'tax-copy': { copyOf: async () => BILL_COPY({ bill: 'asset', asset_class: 'plant', put_to_use: '2026-10-01' }), billReceived: () => true } } }),
+  X('use-read-no-status', 'GET ' + C + '/:chit_id/use', 200, { patch: { 'tax-copy': { copyOf: async () => Object.assign(BILL_COPY({ bill: 'use' }), { current_status: null }), billReceived: () => true } } }),
+  X('use-read-by-catalogue', 'GET ' + C + '/:chit_id/use', 200, { setup: { sqlRows: answering(/FROM catalogue_items WHERE/, CATALOGUE_ROWS) }, patch: { 'tax-copy': { copyOf: async () => BILL_COPY({}), billReceived: () => true } } }),
+  X('use-saved', 'PUT ' + C + '/:chit_id/use', 200, { body: { use: 'asset', asset_class: 'plant', put_to_use: '2026-10-01' }, patch: { 'tax-copy': { copyOf: async () => BILL_COPY({}), billReceived: () => true } } }),
+  X('use-saved-for-resale', 'PUT ' + C + '/:chit_id/use', 200, { body: { use: 'resale' }, patch: { 'tax-copy': { copyOf: async () => BILL_COPY({}), billReceived: () => true }, 'bill-use': { catalogueOf: async () => ({ items: [] }) } } }),
+  X('assign-done', 'POST ' + C + '/:chit_id/assign-lines', 200, { body: { edits: [{ line_id: PARTY, assignee_actor_id: STAFF_ID, task: 'Pack', due_date: '2026-10-05' }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { assign: { assign: async () => ({ assignments: [{ line_id: PARTY, assignee_actor_id: STAFF_ID, assignee_name: 'Test staff', task: 'Pack', due_date: '2026-10-05' }] }) } } }),
+  X('amend-synonym-candidate', 'POST ' + C + '/:chit_id/amend', 200, { body: { edits: [{ line_index: 0, line: { particulars: 'Tomato', quantity: 1 }, reason_code: 'misread_by_ai' }] }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/SELECT line_items FROM chit_detail/, [{ line_items: [{ particulars: 'thakkali' }] }]]]) }, patch: { amend: { record: async () => ({ amendments: [{ amendment_id: PARTY, line_index: 0, line: { particulars: 'Tomato', quantity: 1 }, reason_code: 'misread_by_ai' }] }) } } }),
+  X('overlay-with-a-catalogue', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=rice', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, CATALOGUE_TWO) } }),
+  X('overlay-without-a-match', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=zzz', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, CATALOGUE_ROWS) } }),
+  X('overlay-grade-not-named', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=rice', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, GRADED_ROWS) } }),
+  X('delivery-recorded', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2 }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 2 }] }) } } }),
+  X('delivery-replayed', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2, client_ref: 'd1' }] }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 0, replayed: true }] }) } } }),
+  /* ── S34 (API-8 output_allowlist, part 2): the READY answer of the housekeeping, message, dispute and trace routes ── */
+  X('messages-paged', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?page=1&limit=1', setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
+  X('chit-read', 'GET ' + C + '/:chit_id', 200, { setup: { sqlRows: answering(/SELECT \* FROM chit_header/, [CHIT_HEADER]) } }),
+  X('chit-read-timing', 'GET ' + C + '/:chit_id', 200, { url: C + '/' + PARTY + '?timing=1', setup: { sqlRows: answering(/SELECT \* FROM chit_header/, [CHIT_HEADER]) } }),
+  X('chit-read-with-lines', 'GET ' + C + '/:chit_id', 200, { setup: { migrated: true, sqlRows: answeringAll([[/SELECT \* FROM chit_header/, [CHIT_HEADER]], [/FROM chit_detail/, [CHIT_DETAIL]], [/AS participants,/, [CHIT_BUNDLE]]]) } }),
+  X('disputes-listed', 'GET ' + C + '/:chit_id/disputes', 200, { setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/SELECT \* FROM chit_disputes/, [DISPUTE_ROW, DISPUTE_BARE]], [/SELECT all_recipients FROM chit_header/, [CHIT_ROW]]]) } }),
+  X('payment-cleared-books-named', 'DELETE ' + C + '/:chit_id/payment', 200, { setup: { sqlRows: answeringAll([[/- 'payment' WHERE/, [{ chit_id: PARTY }]], [/FROM books_payment WHERE/, [{ payment_id: OTHER, amount_minor: '1000', currency: 'INR', client_ref: 'chitpay:x' }, { payment_id: STAFF_ID, amount_minor: '500', currency: 'INR', client_ref: 'chitpay:x:2' }]], [/FROM journal_entry WHERE entity_id = \$1 AND source_ref/, [{ entry_no: 'JV-7' }]]]) } }),
+  X('payment-cleared-entry-not-found', 'DELETE ' + C + '/:chit_id/payment', 200, { setup: { sqlRows: answeringAll([[/- 'payment' WHERE/, [{ chit_id: PARTY }]], [/FROM books_payment WHERE/, [{ payment_id: OTHER, amount_minor: '1000', currency: 'INR', client_ref: 'chitpay:x' }]]]) } }),
+  X('dispute-raised', 'POST ' + C + '/:chit_id/disputes', 200, { body: { category: 'quality', reason: 'Rice was wet' }, setup: { sqlRows: answering(/SELECT current_status FROM chit_status/, [{ current_status: 'pending' }]) } }),
+  X('dispute-raised-on-a-closed-chit', 'POST ' + C + '/:chit_id/disputes', 200, { body: { category: 'quality', reason: 'Rice was wet', target_entity_id: OTHER }, setup: { sqlRows: answering(/SELECT current_status FROM chit_status/, [{ current_status: 'completed' }]) } }),
+  X('dispute-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: true }]]]) } }),
+  X('dispute-party-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: false }]]]) } }),
+  X('archive-done', 'POST ' + C + '/:chit_id/archive', 200, { setup: { sqlRows: answering(/UPDATE chit_status SET archived_at = NOW/, [{ chit_id: PARTY }]) } }),
+  X('assign-bulk-done', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY, OTHER], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM entity_actor_settings/, [{ assignment_model: 'both', default_max_tasks: 10 }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: 5, current_task_count: 1 }]], [/SELECT assigned_to_actor_id FROM chit_status/, [{ assigned_to_actor_id: null }]]]) } }),
+  X('assign-bulk-none-found', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: null, current_task_count: null }]]]) } }),
+  X('trace-forward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?network=net1', setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD, TRACE_BARE]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
+  X('trace-forward-red', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
+  X('trace-forward-alone', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } }),
+  X('trace-backward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?dir=backward', setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } })
 ];
 
 function send(port, method, urlPath, body) {
@@ -648,6 +730,72 @@ function compare(captureFile, recording, held) {
   console.log('replay: ' + same + ' of ' + keys.length + ' answers identical (refusals: the old keys, the old order, the old values)');
   different.forEach((line) => console.log('  DIFFERENT  ' + line));
   process.exitCode = different.length ? 1 : 0;
+}
+
+/**
+ * API-8 output allow-list (S34), the way tests/api-problem-orders.test.cjs proves it: a chit route whose derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
+ * and whose recorded 200s all fit it (types and nullable columns included) is proved here. The generator's proxy world cannot reach these routes' success answers (no copy, no
+ * register, no catalogue rows), so it answers 404/409/503 ("not reached"); the routes the generated case does reach need no row here.
+ * → { route: { output_allowlist: true } } for the routes that held
+ */
+/** the chit routes this test is the proof for, in the order the evidence file is read: sorted */
+const ALLOWLIST_BY_AREA_TEST = [
+  'DELETE /api/chits/:chit_id',
+  'DELETE /api/chits/:chit_id/purge',
+  'GET /api/chits/:chit_id',
+  'GET /api/chits/:chit_id/costs',
+  'GET /api/chits/:chit_id/disputes',
+  'GET /api/chits/:chit_id/messages',
+  'GET /api/chits/:chit_id/use',
+  'GET /api/chits/:id/children',
+  'POST /api/chits/:chit_id/amend',
+  'POST /api/chits/:chit_id/archive',
+  'POST /api/chits/:chit_id/assign-lines',
+  'POST /api/chits/:chit_id/costs',
+  'POST /api/chits/:chit_id/deliver-lines',
+  'POST /api/chits/:chit_id/disputes',
+  'POST /api/chits/:chit_id/payment',
+  'POST /api/chits/:chit_id/raida',
+  'POST /api/chits/:chit_id/raida/:raida_id/close',
+  'POST /api/chits/register/entries/:raida_id/close',
+  'POST /api/chits/register/entries/:raida_id/revise',
+  'POST /api/chits/register/subjects/:subject_id/close',
+  'POST /api/chits/send',
+  'PUT /api/chits/:chit_id/disputes/:dispute_id/resolve',
+  'PUT /api/chits/:chit_id/priority-flag',
+  'PUT /api/chits/:chit_id/use',
+  'PUT /api/chits/:chit_id/void'
+];
+function checkAllowList(recording) {
+  const proved = {};
+  const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  ALLOWLIST_BY_AREA_TEST.forEach((route) => {
+    const shape = shapeOf(route);
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = shape && engine.compile(shape.schema);
+    const held = !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body));
+    check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', held, { answers: answers.length, errors: fits && fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the chit routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter(MINE).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
 }
 
 /** lib/chits-contract.js as a unit: the words of a refusal and of a fault, as the chit routes always said them */
@@ -865,6 +1013,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once', frozen > 20, frozen);
   check('a caller who is not signed in is refused with 401 on every route that asks for sign-in', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).every((one) => !JSON.stringify(one.body || {}).includes('vault')));
+  check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
+  const allowed = checkAllowList(recording);
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const rows = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -872,7 +1022,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !MINE(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/chits.js', sameValue(rows, coverage), { onDisk: Object.keys(rows).length, covered: Object.keys(coverage).length });
+    writeAllowList(allowed);
+  } else {
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/chits.js', sameValue(rows, coverage), { onDisk: Object.keys(rows).length, covered: Object.keys(coverage).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the chit routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
+  }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();
