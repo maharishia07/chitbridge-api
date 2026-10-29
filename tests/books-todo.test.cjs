@@ -98,22 +98,27 @@ function memoryTemplates() {
   ok('no registration facts yet (identities row unknown) → the shop charges none → no "bills unrated" row, even with unrated bills about', kinds(t1).indexOf('bills_unrated') < 0);
   X.T.identities.push({ identity_id: SHOP, display_name: 'Mayur Bhavan', gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: 'regular' } });
   X.T.chits.push(
-    { chit_id: 'bill-70', entity_id: SHOP, direction: 'sent', business_json: { printed_as: 'C1/26-27/0070', till: { id: 'C1' } }, line_items: [{ name: 'Veg Meals', qty: 1, price: 120 }, { name: 'Water', qty: 1, price: 20, gst_rate: 18 }] },
+    /* ACC-203: a counter bill is a self chit and keeps the copy its self-copy policy names — 'received' by default (bill-70), or BOTH (bill-73): one row each */
+    { chit_id: 'bill-70', entity_id: SHOP, direction: 'received', business_json: { printed_as: 'C1/26-27/0070', till: { id: 'C1' } }, line_items: [{ name: 'Veg Meals', qty: 1, price: 120 }, { name: 'Water', qty: 1, price: 20, gst_rate: 18 }] },
+    { chit_id: 'bill-73', entity_id: SHOP, direction: 'sent', business_json: { printed_as: 'C1/26-27/0073' }, line_items: [{ name: 'Payasam', qty: 1, price: 50 }] },
+    { chit_id: 'bill-73', entity_id: SHOP, direction: 'received', business_json: { printed_as: 'C1/26-27/0073' }, line_items: [{ name: 'Payasam', qty: 1, price: 50 }] },
     { chit_id: 'bill-71', entity_id: SHOP, direction: 'sent', business_json: { printed_as: 'C1/26-27/0071' }, line_items: [{ name: 'Water', qty: 1, price: 20, gst_rate: 18 }] },
     { chit_id: 'bill-72', entity_id: SHOP, direction: 'sent', business_json: { printed_as: 'C1/26-27/0072' }, line_items: [{ name: 'Exempt thing', qty: 1, price: 10, gst_rate: 0 }] });
   /* bill-71 to a known party posts as its own sale_bill (a 0-rated by_rate so the GST figures above do not move); bill-70 and bill-72 are walk-ins: the DAY entry names them (source_chit_ids) — the twin holds that row as the writer would */
   await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-10-08', currency: 'INR', party: CUST, source_ref: 'chit:bill-71', source_chit_id: 'bill-71', by_rate: [{ rate: 0, taxable: 20, cgst: 0, sgst: 0, igst: 0 }], paid: { cash: 20 }, round_off: 0 });
   X.T.entries.push({ entry_id: 'wd-1', entity_id: SHOP, entry_no: 9001, posting_date: '2026-10-09', event_type: 'walkin_day', source_ref: 'bill:day-9', source_chit_ids: ['bill-72', 'bill-70'] });
-  X.T.entries.push({ entry_id: 'wd-2', entity_id: SHOP, entry_no: 9002, posting_date: '2026-10-10', event_type: 'walkin_day', source_ref: 'bill:day-10', source_chit_ids: ['bill-70'] }); /* named twice (a late bill re-covered): still one row */
+  X.T.entries.push({ entry_id: 'wd-2', entity_id: SHOP, entry_no: 9002, posting_date: '2026-10-10', event_type: 'walkin_day', source_ref: 'bill:day-10', source_chit_ids: ['bill-70', 'bill-73'] }); /* bill-70 named twice (a late bill re-covered): still one row; bill-73 keeps both copies: still one row */
   const chitsBefore = JSON.stringify(X.T.chits), entriesBefore = X.T.entries.length;
   const ur = get(await todo(), 'bills_unrated');
-  ok('a registered shop: the ONE bill with an unrated line is listed once (however many entries name it), by its printed number, with how many of its lines; a rated bill and a real 0% are not listed', ur && ur.count === 1 && ur.items.length === 1 && ur.items[0].chit_id === 'bill-70' && ur.items[0].ref === 'C1/26-27/0070' && ur.items[0].unrated_lines === 1 && ur.items[0].lines === 2 && ur.items[0].date === '2026-10-10', JSON.stringify(ur));
-  ok('…in the pack’s words (GST, never typed), saying the bills stay as issued and the CA decides; the row carries its button', ur && /^1 bill has a line with no GST rate\. The bills stay as issued/.test(ur.words) && ur.action.screen === 'gst', JSON.stringify(ur && ur.words));
+  const b70 = ur && ur.items.find((i) => i.chit_id === 'bill-70'), b73 = ur ? ur.items.filter((i) => i.chit_id === 'bill-73') : [];
+  ok('a registered shop: the TWO bills with an unrated line are listed once each (however many entries or copies name them: bill-70 a received self copy in two entries, bill-73 both copies), by printed number, with how many of their lines; a rated bill and a real 0% are not listed',
+    ur && ur.count === 2 && ur.items.length === 2 && b73.length === 1 && b70 && b70.ref === 'C1/26-27/0070' && b70.unrated_lines === 1 && b70.lines === 2 && b70.date === '2026-10-10', JSON.stringify(ur));
+  ok('…in the pack’s words (GST, never typed), saying the bills stay as issued and the CA decides; the row carries its button', ur && /^2 bills have a line with no GST rate\. The bills stay as issued/.test(ur.words) && ur.action.screen === 'gst', JSON.stringify(ur && ur.words));
   ok('the check is a READ: no chit and no entry changed', JSON.stringify(X.T.chits) === chitsBefore && X.T.entries.length === entriesBefore);
   X.T.identities[X.T.identities.length - 1].policy_flags.gst_registration = 'composition';
   ok('a composition shop (same GSTIN) charges none → lists none — the gate is tax-shelf.chargesTax, never "has a GSTIN"', kinds(await todo()).indexOf('bills_unrated') < 0);
   X.T.identities[X.T.identities.length - 1].policy_flags.gst_registration = 'regular';
-  X.T.chits.find((c) => c.chit_id === 'bill-70').line_items[0].gst_rate = 5;
+  X.T.chits.filter((c) => c.chit_id === 'bill-70' || c.chit_id === 'bill-73').forEach((c) => { c.line_items[0].gst_rate = 5; }); /* both copies of bill-73 */
   ok('once the bill’s line carries a rate, the row is gone', kinds(await todo()).indexOf('bills_unrated') < 0);
 
   /* each one goes when the thing is done */
