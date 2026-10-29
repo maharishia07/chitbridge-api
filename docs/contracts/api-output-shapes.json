@@ -1,6 +1,86 @@
 {
   "_about": "The CLOSED success schema of a route, derived from what it answers today (tools/api-allowlist.cjs): the keys of the recorded answers plus the keys its handler names. lib/contract-kit.js uses it as the route's success schema and puts the output allow-list filter (lib/output-allowlist.js) in front of the handler. `listed` = routes or nodes left open, with the reason.",
   "routes": {
+    "DELETE /api/chits/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "DELETE /api/chits/:chit_id/payment": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "books"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "books": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "books",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/payment"
+      }
+    },
+    "DELETE /api/chits/:chit_id/purge": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/purge"
+      }
+    },
     "DELETE /api/crm/followups/:id": {
       "status": "200",
       "schema": {
@@ -2526,6 +2606,262 @@
         "url": "/api/books/trial-balance"
       }
     },
+    "GET /api/chits/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "header",
+          "detail",
+          "participants",
+          "state_log",
+          "attachments",
+          "amendments",
+          "amendments_migrated",
+          "actions",
+          "doc",
+          "books_wait",
+          "lines_from"
+        ],
+        "properties": {
+          "header": {
+            "type": "object"
+          },
+          "detail": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "state_log": {},
+          "attachments": {},
+          "amendments": {},
+          "amendments_migrated": {
+            "type": "boolean"
+          },
+          "actions": {
+            "type": "object",
+            "required": [
+              "accept",
+              "reject",
+              "complete",
+              "dispute",
+              "assign",
+              "amend",
+              "message_external",
+              "message_internal"
+            ],
+            "properties": {
+              "accept": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "reject": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "complete": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "dispute": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "assign": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "amend": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "message_external": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "message_internal": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "held": {},
+                  "received": {},
+                  "sender": {}
+                },
+                "additionalProperties": false
+              },
+              "held": {},
+              "received": {},
+              "sender": {}
+            },
+            "additionalProperties": false
+          },
+          "doc": {},
+          "books_wait": {},
+          "lines_from": {
+            "type": "string"
+          },
+          "_timing": {
+            "type": "object"
+          },
+          "order_billed": {
+            "type": "boolean"
+          },
+          "live_set": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "line_assignment": {
+            "type": "object"
+          },
+          "line_delivery": {
+            "type": "object"
+          },
+          "delivery_summary": {
+            "type": "object"
+          },
+          "bill_private": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "header",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "detail",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "participants[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "_timing",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "live_set[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "line_assignment",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "line_delivery",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "delivery_summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222"
+      }
+    },
     "GET /api/chits/:chit_id/catalogue-overlay": {
       "status": "200",
       "schema": {
@@ -2662,6 +2998,160 @@
         "url": "/api/chits/nope/costs"
       }
     },
+    "GET /api/chits/:chit_id/diagnosis": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "chit_subject",
+          "diagnoses",
+          "count"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "chit_subject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "diagnoses": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "diagnoses[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/diagnosis"
+      }
+    },
+    "GET /api/chits/:chit_id/disputes": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "disputes",
+          "open_count"
+        ],
+        "properties": {
+          "disputes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "open_count": {
+            "type": "number"
+          },
+          "raise_parties": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "actions": {
+            "type": "object",
+            "required": [
+              "raise"
+            ],
+            "properties": {
+              "raise": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "held": {},
+                  "me": {}
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "disputes[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "raise_parties[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/disputes"
+      }
+    },
+    "GET /api/chits/:chit_id/messages": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "messages",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "capped": {},
+          "cap_note": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "messages[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/messages?thread_type=external&dispute=1&line_id=33333333-3333-4333-8333-333333333333"
+      }
+    },
     "GET /api/chits/:chit_id/raida": {
       "status": "200",
       "schema": {
@@ -2764,6 +3254,129 @@
       ],
       "example": {
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/use"
+      }
+    },
+    "GET /api/chits/:id/children": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "parent_chit_id",
+          "count",
+          "children"
+        ],
+        "properties": {
+          "parent_chit_id": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "children[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/children"
+      }
+    },
+    "GET /api/chits/:id/trace": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dir",
+          "start",
+          "nodes",
+          "edges"
+        ],
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string"
+          },
+          "reachable_count": {
+            "type": "number"
+          },
+          "depth_max": {
+            "type": "number"
+          },
+          "flagged": {
+            "type": "number"
+          },
+          "terminals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "product"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "product": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "hops": {
+            "type": "number"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "nodes[]",
+          "reason": "a spread (...x) adds keys the text does not name"
+        },
+        {
+          "path": "edges[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/trace?dir=backward"
       }
     },
     "GET /api/chits/disputes/queue": {
@@ -10509,6 +11122,30 @@
         "body": []
       }
     },
+    "POST /api/chits/:chit_id/archive": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/archive"
+      }
+    },
     "POST /api/chits/:chit_id/assign-lines": {
       "status": "200",
       "schema": {
@@ -10545,6 +11182,45 @@
             }
           ]
         }
+      }
+    },
+    "POST /api/chits/:chit_id/books-request": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "books_request"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "books_request": {
+            "type": "object",
+            "required": [
+              "at",
+              "by"
+            ],
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "ok": {},
+              "books_request": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/books-request"
       }
     },
     "POST /api/chits/:chit_id/costs": {
@@ -10641,6 +11317,174 @@
               "quantity": 2
             }
           ]
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/disputes": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dispute_id",
+          "category",
+          "reason",
+          "status",
+          "warning",
+          "scope",
+          "mode",
+          "answerable",
+          "parity_state",
+          "target_display_name",
+          "raised_by_display_name",
+          "alert",
+          "message"
+        ],
+        "properties": {
+          "dispute_id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "answerable": {
+            "type": "boolean"
+          },
+          "parity_state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "target_display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "raised_by_display_name": {
+            "type": "string"
+          },
+          "alert": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/disputes",
+        "body": {
+          "category": "quality",
+          "reason": "Rice was wet"
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/messages": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message_id",
+          "thread_type",
+          "message_text",
+          "sender_display_name",
+          "created_at"
+        ],
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "thread_type": {
+            "type": "string"
+          },
+          "message_text": {
+            "type": "string"
+          },
+          "sender_display_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/messages",
+        "body": {
+          "message_text": "  hello  ",
+          "thread_type": "internal",
+          "line_id": null
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/payment": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "replayed",
+          "payment",
+          "books"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "payment": {
+            "type": "object"
+          },
+          "books": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "payment",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "books",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/payment",
+        "body": {
+          "method": "upi",
+          "ref": "U1",
+          "client_ref": "c1"
         }
       }
     },
@@ -10819,6 +11663,125 @@
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/reprice",
         "body": {
           "only_unpriced": true
+        }
+      }
+    },
+    "POST /api/chits/:chit_id/restore": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/restore"
+      }
+    },
+    "POST /api/chits/:chit_id/unarchive": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/unarchive"
+      }
+    },
+    "POST /api/chits/:chit_id/unread": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/unread"
+      }
+    },
+    "POST /api/chits/assign-bulk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "assigned_to",
+          "assigned",
+          "skipped"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "assigned": {
+            "type": "number"
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "skipped[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/assign-bulk",
+        "body": {
+          "chit_ids": [
+            "22222222-2222-4222-8222-222222222222",
+            "33333333-3333-4333-8333-333333333333"
+          ],
+          "target_actor_id": "44444444-4444-4444-8444-444444444444"
         }
       }
     },
@@ -11675,6 +12638,151 @@
         }
       }
     },
+    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dispute_id",
+          "status",
+          "resolved_parties",
+          "fully_resolved",
+          "resolution_note",
+          "resolved_by",
+          "message"
+        ],
+        "properties": {
+          "dispute_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "resolved_parties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fully_resolved": {
+            "type": "boolean"
+          },
+          "resolution_note": {
+            "type": "string"
+          },
+          "resolved_by": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/disputes/22222222-2222-4222-8222-222222222222/resolve",
+        "body": {
+          "resolution_note": "Credit note sent"
+        }
+      }
+    },
+    "PUT /api/chits/:chit_id/priority": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id",
+          "priority_flag"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "priority_flag": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/priority",
+        "body": {
+          "priority": "high",
+          "reason": null
+        }
+      }
+    },
+    "PUT /api/chits/:chit_id/priority-flag": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id",
+          "customer_priority",
+          "locked"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "customer_priority": {
+            "type": "boolean"
+          },
+          "locked": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/priority-flag",
+        "body": {
+          "priority": 1
+        }
+      }
+    },
+    "PUT /api/chits/:chit_id/star": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id",
+          "star_flag"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "star_flag": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/star"
+      }
+    },
     "PUT /api/chits/:chit_id/use": {
       "status": "200",
       "schema": {
@@ -11715,6 +12823,46 @@
           "use": "asset",
           "asset_class": "plant",
           "put_to_use": "2026-10-01"
+        }
+      }
+    },
+    "PUT /api/chits/:chit_id/void": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id",
+          "status",
+          "books"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "books": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "books",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/void",
+        "body": {
+          "reason": "Mistake"
         }
       }
     },
@@ -12242,6 +13390,7 @@
       "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
       "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name"
     },
+    "DELETE /api/chits/:chit_id/payment": "open at books — a value passed through (a name: its keys are not written in the handler)",
     "DELETE /api/products/:id/media/:mid": "open at media[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/assist/catalogue-source/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
     "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
@@ -12257,10 +13406,16 @@
     "GET /api/books/returns": "open at asked — a value passed through (an expression: its keys are not written in the handler); period — a value passed through (an expression: its keys are not written in the handler); staggers — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/status": "open at engines — a value passed through (an expression: its keys are not written in the handler); country — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/terms": "open at default — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id": "open at header — a value passed through (an expression: its keys are not written in the handler); detail — a value passed through (an expression: its keys are not written in the handler); participants[] — a value passed through (an expression: its keys are not written in the handler); _timing — a value passed through (an expression: its keys are not written in the handler); live_set[] — a value passed through (an expression: its keys are not written in the handler); line_assignment — a value passed through (an expression: its keys are not written in the handler); line_delivery — a value passed through (an expression: its keys are not written in the handler); delivery_summary — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/:chit_id/catalogue-overlay": "open at items[] — a value passed through (an expression: its keys are not written in the handler); match — a spread (...x) adds keys the text does not name; candidates[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/:chit_id/costs": "open at costs[] — a value passed through (an expression: its keys are not written in the handler); by_kind — a value passed through (an expression: its keys are not written in the handler); by_currency — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id/diagnosis": "open at diagnoses[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id/disputes": "open at disputes[] — a value passed through (an expression: its keys are not written in the handler); raise_parties[] — a value passed through (a name: its keys are not written in the handler)",
+    "GET /api/chits/:chit_id/messages": "open at messages[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/:chit_id/raida": "open at entries[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/:chit_id/use": "open at lines[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:id/children": "open at children[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/chits/:id/trace": "open at nodes[] — a spread (...x) adds keys the text does not name; edges[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/register/walk/:from": "open at hops[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/crm/calls": "open at calls[] — a value passed through (an expression: its keys are not written in the handler); outcomes[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/crm/followups": "open at followups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
@@ -12354,7 +13509,9 @@
     "POST /api/chits/:chit_id/assign-lines": "open at assignments[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/:chit_id/costs": "open at costs[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/:chit_id/deliver-lines": "open at delivered[] — a value passed through (an expression: its keys are not written in the handler); progress — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/:chit_id/payment": "open at payment — a value passed through (a name: its keys are not written in the handler); books — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/:chit_id/reprice": "open at will_price[] — a value passed through (an expression: its keys are not written in the handler); needs_price[] — a value passed through (an expression: its keys are not written in the handler); totals — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/chits/assign-bulk": "open at skipped[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/send": "open at summary — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/entities/register": "open at (answer) — never seen and not written in the handler",
     "POST /api/entities/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
@@ -12393,6 +13550,7 @@
     "POST /api/till/stock/bulk": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
     "PUT /api/chits/:chit_id/use": "open at use — a value passed through (an expression: its keys are not written in the handler); effective — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/chits/:chit_id/void": "open at books — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/governance/country-setup": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/governance/profile/vault": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",

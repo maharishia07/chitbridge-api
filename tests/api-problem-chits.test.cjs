@@ -244,6 +244,22 @@ const RAIDA_ENDING = Object.assign({}, RAIDA_FULL, { raida_id: STAFF_ID, closes_
 const RAIDA_ROWS = [RAIDA_FULL, RAIDA_BARE, RAIDA_ENDING];
 const GRADED_ROWS = [{ item_id: PARTY, item_data: { name: 'Rice', variant: 'Grade 1', price: { amount: 60, currency: 'INR' } }, updated_at: AT }, { item_id: OTHER, item_data: { name: 'Rice', variant: 'Grade 2', price: { amount: 50, currency: 'INR' } }, updated_at: AT }];
 const SUBJECT_REF = { subject_id: PARTY, closed_at: AT };
+/** a dispute the raiser reads back (SELECT * FROM chit_disputes), and the copies of a trace walk: the seed names its parent, the child is heavier than the seed (red), the bare one carries no quantity */
+/** the header a chit read gets (SELECT * FROM chit_header): a sent order with its summary */
+const CHIT_HEADER = Object.assign({}, CHIT_ROW, { entity_id: SHOP, sender_entity_id: SHOP, sender_entity_display_name: 'Test shop', auto_subject: 'Order: 3 items', manual_subject: null, summary_json: SUMMARY, business_json: null, created_by_actor_id: STAFF_ID, schema_version: 2 });
+/** the detail and the one-shot bundle of a chit with lines: one line assigned, one delivered in part (the statement's columns, in order) */
+const CHIT_DETAIL = { detail_type: 'order', line_item_count: 2, total_value: '360.00', currency_code: 'INR', line_items: [{ line_id: PARTY, particulars: 'Rice', quantity: 2, unit: 'kg', price: 60 }, { line_id: OTHER, particulars: 'Pallet', quantity: 1, unit: null, price: null }], payload_delivered_at: AT, payload_deleted_at: null };
+const CHIT_BUNDLE = {
+  participants: [{ entity_id: SHOP, current_status: 'pending', read_at: null, display_name: 'Test shop', bridge_id: 'TESTSHOP' }], amendments: [],
+  lines: [LINE_ROW, Object.assign({}, LINE_ROW, { line_id: OTHER, seq: 2, particulars: 'Pallet', quantity: '1', unit: null, price: '12' })],
+  assignments: [{ line_id: PARTY, seq: 1, assignee_actor_id: STAFF_ID, assignee_name: 'Test staff', assignee_type: 'actor', task: 'Pack', due_date: '2026-10-05', note: null, created_at: AT, state: 'open' }],
+  deliveries: [{ line_id: PARTY, particulars: 'Rice', ordered_unit: 'kg', ordered: '2', removed: false, delivery_id: PARTY, dq: '1', du: 'kg', reference: 'GRN-1', note: null, recorded_by_entity_id: SHOP, recorded_by_name: 'Test shop', recorded_by_actor_name: 'Test staff', delivered_at: AT, dkind: 'deliver', damount: null, dparticulars: null }],
+  my_received: 'pending', books_wait: null, order_billed: false
+};
+const DISPUTE_OPEN = { dispute_id: PARTY, chit_id: PARTY, raised_by_entity_id: SHOP, category: 'quality', status: 'open' };
+const TRACE_SEED = { chit_id: PARTY, entity_id: SHOP, sender_entity_display_name: 'Test shop', all_recipients: CHIT_ROW.all_recipients, trace: { product: 'Rice', qty: 5, unit: 'kg', base_qty: 5, base_unit: 'kg', is_origin: false, parents: [OTHER], network: { id: 'net1' } } };
+const TRACE_CHILD = { chit_id: OTHER, entity_id: OTHER, sender_entity_display_name: 'Other shop', all_recipients: [], trace: { product: 'Rice', qty: 6, unit: 'kg', base_qty: 6, base_unit: 'kg', parents: [PARTY], network: { id: 'net1' } } };
+const TRACE_BARE = { chit_id: STAFF_ID, entity_id: OTHER, sender_entity_display_name: null, all_recipients: [], trace: { parents: [PARTY] } };
 const ENTRY_ROW = { chit_id: PARTY, line_id: null, subject_id: PARTY, kind: 'risk', closes_id: null, body: 'Wet rice' };
 /** a copy of a bill I received, as lib/tax-copy copyOf gives it: the buyer's choice rides in business_json.use */
 const BILL_COPY = (use) => ({ current_status: 'pending', line_items: [{ line_id: PARTY, particulars: 'Rice' }, { line_id: OTHER, particulars: 'Pallet' }], business_json: { use } });
@@ -371,7 +387,7 @@ const EXTRAS = [
   X('message-fails', 'POST ' + C + '/:chit_id/messages', 500, { body: { message_text: 'hi', thread_type: 'external' }, setup: { db: 'fail' } }),
   X('message-on-a-dispute-not-mine', 'POST ' + C + '/:chit_id/messages', 403, { body: { message_text: 'hi', thread_type: 'external', is_dispute: 'true', dispute_id: OTHER }, setup: { sqlRows: answering(/SELECT entity_id FROM chit_status/, [COPY_ROW]) } }),
   X('message-fields-wrong', 'POST ' + C + '/:chit_id/messages', 400, { body: { message_text: '   ', thread_type: 'loud', is_dispute: 'maybe', dispute_id: 'x', line_id: 5 } }),
-  X('message-posted', 'POST ' + C + '/:chit_id/messages', 200, { body: { message_text: '  hello  ', thread_type: 'internal', line_id: null }, setup: { sqlRows: answering(/SELECT entity_id FROM chit_status/, [COPY_ROW]) } }),
+  X('message-posted', 'POST ' + C + '/:chit_id/messages', 200, { body: { message_text: '  hello  ', thread_type: 'internal', line_id: null }, setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/chit_message_deliver/, [{ created_at: AT }]]]) } }),
   X('dispute-by-a-non-participant', 'POST ' + C + '/:chit_id/disputes', 403, { body: { category: 'quality', reason: ' The goods were short by two boxes ' } }),
   X('dispute-fails', 'POST ' + C + '/:chit_id/disputes', 500, { body: { category: 'quality', reason: 'The goods were short by two boxes' }, setup: { db: 'fail' } }),
   X('dispute-fields-wrong', 'POST ' + C + '/:chit_id/disputes', 400, { body: { category: 'x', reason: 'short', target_entity_id: 'x', participant_entity_ids: 'a', chit_wide: 'maybe', via: 'post' } }),
@@ -509,7 +525,26 @@ const EXTRAS = [
   X('overlay-without-a-match', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=zzz', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, CATALOGUE_ROWS) } }),
   X('overlay-grade-not-named', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=rice', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, GRADED_ROWS) } }),
   X('delivery-recorded', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2 }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 2 }] }) } } }),
-  X('delivery-replayed', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2, client_ref: 'd1' }] }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 0, replayed: true }] }) } } })
+  X('delivery-replayed', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2, client_ref: 'd1' }] }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 0, replayed: true }] }) } } }),
+  /* ── S34 (API-8 output_allowlist, part 2): the READY answer of the housekeeping, message, dispute and trace routes ── */
+  X('messages-paged', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?page=1&limit=1', setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
+  X('chit-read', 'GET ' + C + '/:chit_id', 200, { setup: { sqlRows: answering(/SELECT \* FROM chit_header/, [CHIT_HEADER]) } }),
+  X('chit-read-timing', 'GET ' + C + '/:chit_id', 200, { url: C + '/' + PARTY + '?timing=1', setup: { sqlRows: answering(/SELECT \* FROM chit_header/, [CHIT_HEADER]) } }),
+  X('chit-read-with-lines', 'GET ' + C + '/:chit_id', 200, { setup: { migrated: true, sqlRows: answeringAll([[/SELECT \* FROM chit_header/, [CHIT_HEADER]], [/FROM chit_detail/, [CHIT_DETAIL]], [/AS participants,/, [CHIT_BUNDLE]]]) } }),
+  X('disputes-listed', 'GET ' + C + '/:chit_id/disputes', 200, { setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/SELECT \* FROM chit_disputes/, [DISPUTE_ROW, DISPUTE_BARE]], [/SELECT all_recipients FROM chit_header/, [CHIT_ROW]]]) } }),
+  X('payment-cleared-books-named', 'DELETE ' + C + '/:chit_id/payment', 200, { setup: { sqlRows: answeringAll([[/- 'payment' WHERE/, [{ chit_id: PARTY }]], [/FROM books_payment WHERE/, [{ payment_id: OTHER, amount_minor: '1000', currency: 'INR', client_ref: 'chitpay:x' }, { payment_id: STAFF_ID, amount_minor: '500', currency: 'INR', client_ref: 'chitpay:x:2' }]], [/FROM journal_entry WHERE entity_id = \$1 AND source_ref/, [{ entry_no: 'JV-7' }]]]) } }),
+  X('payment-cleared-entry-not-found', 'DELETE ' + C + '/:chit_id/payment', 200, { setup: { sqlRows: answeringAll([[/- 'payment' WHERE/, [{ chit_id: PARTY }]], [/FROM books_payment WHERE/, [{ payment_id: OTHER, amount_minor: '1000', currency: 'INR', client_ref: 'chitpay:x' }]]]) } }),
+  X('dispute-raised', 'POST ' + C + '/:chit_id/disputes', 200, { body: { category: 'quality', reason: 'Rice was wet' }, setup: { sqlRows: answering(/SELECT current_status FROM chit_status/, [{ current_status: 'pending' }]) } }),
+  X('dispute-raised-on-a-closed-chit', 'POST ' + C + '/:chit_id/disputes', 200, { body: { category: 'quality', reason: 'Rice was wet', target_entity_id: OTHER }, setup: { sqlRows: answering(/SELECT current_status FROM chit_status/, [{ current_status: 'completed' }]) } }),
+  X('dispute-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: true }]]]) } }),
+  X('dispute-party-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: false }]]]) } }),
+  X('archive-done', 'POST ' + C + '/:chit_id/archive', 200, { setup: { sqlRows: answering(/UPDATE chit_status SET archived_at = NOW/, [{ chit_id: PARTY }]) } }),
+  X('assign-bulk-done', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY, OTHER], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM entity_actor_settings/, [{ assignment_model: 'both', default_max_tasks: 10 }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: 5, current_task_count: 1 }]], [/SELECT assigned_to_actor_id FROM chit_status/, [{ assigned_to_actor_id: null }]]]) } }),
+  X('assign-bulk-none-found', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: null, current_task_count: null }]]]) } }),
+  X('trace-forward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?network=net1', setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD, TRACE_BARE]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
+  X('trace-forward-red', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
+  X('trace-forward-alone', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } }),
+  X('trace-backward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?dir=backward', setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } })
 ];
 
 function send(port, method, urlPath, body) {
@@ -705,19 +740,31 @@ function compare(captureFile, recording, held) {
  */
 /** the chit routes this test is the proof for, in the order the evidence file is read: sorted */
 const ALLOWLIST_BY_AREA_TEST = [
+  'DELETE /api/chits/:chit_id',
+  'DELETE /api/chits/:chit_id/purge',
+  'GET /api/chits/:chit_id',
   'GET /api/chits/:chit_id/costs',
+  'GET /api/chits/:chit_id/disputes',
+  'GET /api/chits/:chit_id/messages',
   'GET /api/chits/:chit_id/use',
+  'GET /api/chits/:id/children',
   'POST /api/chits/:chit_id/amend',
+  'POST /api/chits/:chit_id/archive',
   'POST /api/chits/:chit_id/assign-lines',
   'POST /api/chits/:chit_id/costs',
   'POST /api/chits/:chit_id/deliver-lines',
+  'POST /api/chits/:chit_id/disputes',
+  'POST /api/chits/:chit_id/payment',
   'POST /api/chits/:chit_id/raida',
   'POST /api/chits/:chit_id/raida/:raida_id/close',
   'POST /api/chits/register/entries/:raida_id/close',
   'POST /api/chits/register/entries/:raida_id/revise',
   'POST /api/chits/register/subjects/:subject_id/close',
   'POST /api/chits/send',
-  'PUT /api/chits/:chit_id/use'
+  'PUT /api/chits/:chit_id/disputes/:dispute_id/resolve',
+  'PUT /api/chits/:chit_id/priority-flag',
+  'PUT /api/chits/:chit_id/use',
+  'PUT /api/chits/:chit_id/void'
 ];
 function checkAllowList(recording) {
   const proved = {};

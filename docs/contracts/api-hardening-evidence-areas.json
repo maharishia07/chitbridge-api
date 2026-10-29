@@ -4,6 +4,12 @@
   "DELETE /api/actors/:id/pin": {
    "foreign_id_404": true
   },
+  "DELETE /api/chits/:chit_id": {
+   "output_allowlist": true
+  },
+  "DELETE /api/chits/:chit_id/purge": {
+   "output_allowlist": true
+  },
   "DELETE /api/crm/followups/:id": {
    "foreign_id_404": true,
    "output_allowlist": true
@@ -132,10 +138,22 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/chits/:chit_id": {
+   "output_allowlist": true
+  },
   "GET /api/chits/:chit_id/costs": {
    "output_allowlist": true
   },
+  "GET /api/chits/:chit_id/disputes": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/:chit_id/messages": {
+   "output_allowlist": true
+  },
   "GET /api/chits/:chit_id/use": {
+   "output_allowlist": true
+  },
+  "GET /api/chits/:id/children": {
    "output_allowlist": true
   },
   "GET /api/crm/calls": {
@@ -364,6 +382,9 @@
   "POST /api/chits/:chit_id/amend": {
    "output_allowlist": true
   },
+  "POST /api/chits/:chit_id/archive": {
+   "output_allowlist": true
+  },
   "POST /api/chits/:chit_id/assign-lines": {
    "output_allowlist": true
   },
@@ -371,6 +392,12 @@
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/deliver-lines": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/disputes": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/payment": {
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/raida": {
@@ -478,7 +505,16 @@
   "PUT /api/actors/assign/:chit_id": {
    "foreign_id_404": true
   },
+  "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+   "output_allowlist": true
+  },
+  "PUT /api/chits/:chit_id/priority-flag": {
+   "output_allowlist": true
+  },
   "PUT /api/chits/:chit_id/use": {
+   "output_allowlist": true
+  },
+  "PUT /api/chits/:chit_id/void": {
    "output_allowlist": true
   },
   "PUT /api/connections/:id/respond": {
