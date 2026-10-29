@@ -48,7 +48,7 @@ const call = (port, method, p, body) => new Promise((done) => {
       query: async (sql, params) => {
         record(sql, params);
         if (/SELECT schema_id FROM entity_schemas/.test(sql)) return { rows: [{ schema_id: ITEM }] };
-        if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'sku', field_name: 'SKU', field_type: 'text' }] };
+        if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'sku', field_name: 'SKU', field_type: 'text' }, { field_key: 'cost_price', field_name: 'Buying price', field_type: 'number' }] };
         return { rows: [] };
       },
       withEntity: async (_id, fn) => fn({
@@ -109,6 +109,18 @@ const call = (port, method, p, body) => new Promise((done) => {
     const bulk = await post('/bulk', { items: [{ name: 'A' }, { name: 'B', [odd]: 5 }] });
     t('blind POST /bulk: key ' + JSON.stringify(odd) + ' -> 403, nothing written', [bulk.status, bulk.body.blocked, writes.length], [403, [odd], 0]);
   }
+  /* the shop's cost column is cost_price, labelled "Buying price": the writer's fold maps the label (and "cost price") onto it */
+  for (const label of ['buying price', 'Buying Price', 'cost price']) {
+    const one = await post('', { item_data: { name: 'Dosa', [label]: 5 } });
+    t('blind POST /: label ' + JSON.stringify(label) + ' (folds to cost_price) -> 403, named as sent, nothing written', [one.status, one.body.blocked, writes.length], [403, [label], 0]);
+    const many = await post('/bulk', { items: [{ name: 'A' }, { name: 'B', [label]: 5 }] });
+    t('blind POST /bulk: label ' + JSON.stringify(label) + ' -> 403, nothing written', [many.status, many.body.blocked, writes.length], [403, [label], 0]);
+  }
+  WHO = OWNER;
+  const ownLabel = await post('', { item_data: { name: 'Dosa', 'buying price': 5 } });
+  t('owner: the label fold is not refused, and stores cost_price as today', [ownLabel.status, writes.length > 0, /cost_price/.test(JSON.stringify(writes))], [200, true, true]);
+  t('owner: the same on /bulk', (await post('/bulk', { items: [{ name: 'B', 'buying price': 5 }] })).status, 200);
+  WHO = BLIND;
   t('a key that only looks like cost is not one', [cost.isCostKey('costume'), cost.isCostKey('Costume'), cost.isCostKey('discount_cost_x')], [false, false, false]);
   WHO = OWNER;
   t('owner: an odd cost key is not refused', (await post('', { item_data: { name: 'Dosa', 'Cost (INR)': 5 } })).status, 200);

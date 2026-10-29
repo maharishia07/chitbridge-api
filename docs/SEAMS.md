@@ -30,7 +30,7 @@ of file each thing is; this says what already does the job.
 | 53 | `next` | `dayopen.js` | the next thing to do — |
 | 55 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 53 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 51 | `entry` | `books-store.js` |  |
+| 52 | `entry` | `books-store.js` |  |
 | 49 | `toast` | `accounts-shell.js` |  |
 | 50 | `record` | `access-events.js` |  |
 | 48 | `rows` | `cap-settings.js` |  |
@@ -144,7 +144,7 @@ of file each thing is; this says what already does the job.
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
 | 16 | `panel` | `sides.js` |  |
-| 16 | `plan` | `crm-leads.js` | `existing`: |
+| 17 | `plan` | `crm-leads.js` | `existing`: |
 | 16 | `update` | `folder-rules.js` |  |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |

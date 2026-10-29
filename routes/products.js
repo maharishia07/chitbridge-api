@@ -250,6 +250,8 @@ const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
 const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
 /** a co-assist — the entity login and a paired counter are never gated by cost.writeRefusal */
 const isActor = (req) => !!(req.identity && req.identity.identity_type === 'actor');
+/** CAT-235: the writer's `watchKeys` for this caller — cost.costKeysPlanned for a cost-blind co-assist, undefined for everyone else (the owner pays no read) */
+const costWatch = async (req, entity_id) => ((await cost.isCostBlind(req, entity_id)) ? cost.costKeysPlanned : undefined);
 /** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row. PATCH /:id and POST /bulk-update ask it. */
 const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
 /** CAT-234/236: deletes `cost` and every `cost_*` key at ANY depth of a value, in place (modifiers[].options[].cost, a variants block …) */
@@ -432,8 +434,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (editorNamesRate(req, [req.body.item_data])) return problem(req, res, rateRefusal());
-    const blind = await cost.costKeyRefusal(req, entity_id, [req.body.item_data]); /* CAT-235: a cost-blind co-assist adds the item, never its cost */
-    if (blind) return problem(req, res, { status: 403, ...words.costBlind(blind) });
+    const watchKeys = await costWatch(req, entity_id); /* CAT-235: a cost-blind co-assist adds the item, never its cost — judged on the writer's own plan */
     const schema_id = await defaultSchemaId(entity_id);
     /**
      * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
@@ -456,8 +457,10 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
       schema_id,
       item_data: req.body.item_data,
       rid: req.id,
-      validate: (data, rows) => validateAgainst(rows, data)
+      validate: (data, rows) => validateAgainst(rows, data),
+      watchKeys
     });
+    if (made.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(made.watched)) });
     if (made.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', made) });
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
@@ -502,8 +505,6 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
       return problem(req, res, { status: 400, ...words.notObjects() });
     }
     if (editorNamesRate(req, items)) return problem(req, res, rateRefusal());
-    const blind = await cost.costKeyRefusal(req, entity_id, items);
-    if (blind) return problem(req, res, { status: 403, ...words.costBlind(blind) });
 
     /**
      * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
@@ -512,7 +513,8 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
      * seven-step sequence copied into two files is seven decisions that will disagree later.
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    const w = await catwrite.writeItems({ entity_id, items });
+    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id) });
+    if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
