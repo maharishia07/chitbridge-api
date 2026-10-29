@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 143,
-  "partial": 468,
-  "meets": 23,
+  "partial": 465,
+  "meets": 26,
   "columns": {
    "strict_input": {
     "applies": 345,
@@ -13,7 +13,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 491
+    "failing": 497
    },
    "foreign_id_404": {
     "applies": 227,
@@ -258,7 +258,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5983,
+   "line": 5965,
    "hash": "b1621a61d6a1f385",
    "columns": {
     "schema_in": true,
@@ -308,7 +308,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4595,
+   "line": 4581,
    "hash": "f1e5c5ac7a0e6422",
    "columns": {
     "schema_in": true,
@@ -358,7 +358,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6244,
+   "line": 6226,
    "hash": "045463184137e6f1",
    "columns": {
     "schema_in": true,
@@ -1733,11 +1733,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "748b83451499c0b2"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/gaps",
@@ -1878,11 +1877,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8808b7d84df68a0c"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/regions",
@@ -4430,7 +4428,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3168,
+   "line": 3162,
    "hash": "cbd798d37d6ccc9d",
    "columns": {
     "schema_in": true,
@@ -4481,7 +4479,7 @@
    "path": "/api/chits/:chit_id/catalogue-overlay",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4407,
+   "line": 4393,
    "hash": "336f23691ee01d37",
    "columns": {
     "schema_in": true,
@@ -4530,7 +4528,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3717,
+   "line": 3711,
    "hash": "79e8ab51e469ca30",
    "columns": {
     "schema_in": true,
@@ -4581,7 +4579,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5664,
+   "line": 5650,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -4632,7 +4630,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5618,
+   "line": 5604,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -4683,7 +4681,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5295,
+   "line": 5281,
    "hash": "670ecd88a1125b2d",
    "columns": {
     "schema_in": true,
@@ -4734,7 +4732,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3918,
+   "line": 3904,
    "hash": "3431da4ab22159e0",
    "columns": {
     "schema_in": true,
@@ -4784,7 +4782,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4025,
+   "line": 4011,
    "hash": "be91d2bc805731af",
    "columns": {
     "schema_in": true,
@@ -4835,7 +4833,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6543,
+   "line": 6525,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -4886,7 +4884,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6570,
+   "line": 6552,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -4937,8 +4935,8 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5884,
-   "hash": "7f93cf1c14e1278e",
+   "line": 5870,
+   "hash": "46daea8f32caa803",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4948,7 +4946,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -4975,9 +4973,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fb3f0bd0d5822e87"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -4987,8 +4984,8 @@
    "path": "/api/chits/folder",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2750,
-   "hash": "2258981500a384ee",
+   "line": 2736,
+   "hash": "f44d902821914d77",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -4998,7 +4995,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5025,9 +5022,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c33dabd3f35cc455"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5037,8 +5033,8 @@
    "path": "/api/chits/inbox",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2925,
-   "hash": "d8f3fe55d81619ee",
+   "line": 2908,
+   "hash": "897736af9a9c708d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5048,7 +5044,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5075,9 +5071,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e88ee98f9d05c943"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5087,7 +5082,7 @@
    "path": "/api/chits/pulse",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3112,
+   "line": 3106,
    "hash": "67e2a779765f3c7d",
    "columns": {
     "schema_in": true,
@@ -5134,8 +5129,8 @@
    "path": "/api/chits/raida/report",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3900,
-   "hash": "aa60ca38a2849a85",
+   "line": 3888,
+   "hash": "565d3b192b7015a8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5145,7 +5140,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5172,9 +5167,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8f0dc06505b3f442"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5184,8 +5178,8 @@
    "path": "/api/chits/register/attachables",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3745,
-   "hash": "6c723ef8908ee772",
+   "line": 3739,
+   "hash": "979cb6a933b53c47",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5195,7 +5189,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5221,9 +5215,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "90d4521a08c8785b"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5233,8 +5226,8 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3755,
-   "hash": "211750c4fabb452d",
+   "line": 3747,
+   "hash": "c301e82efd66c02d",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5244,7 +5237,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5271,9 +5264,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0c9bbf45e0b99528"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5283,8 +5275,8 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3797,
-   "hash": "077c4a340f489f7d",
+   "line": 3788,
+   "hash": "e43efc96f747efa8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5294,7 +5286,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5320,9 +5312,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c177f3a6219b1b4e"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5332,7 +5323,7 @@
    "path": "/api/chits/register/walk/:from",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3859,
+   "line": 3847,
    "hash": "600c2cdb5a83af1a",
    "columns": {
     "schema_in": true,
@@ -5382,8 +5373,8 @@
    "path": "/api/chits/rollup",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2830,
-   "hash": "6263db31de91eae7",
+   "line": 2814,
+   "hash": "2fcdcf06a8c66b94",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5393,7 +5384,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5420,9 +5411,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2ccfe232de70c05e"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5432,8 +5422,8 @@
    "path": "/api/chits/sent",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 2683,
-   "hash": "3d20e2fc5581c5de",
+   "line": 2671,
+   "hash": "5040e600e5cfbf70",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5443,7 +5433,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5470,9 +5460,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "38112e2c386c1b9c"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5482,8 +5471,8 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6770,
-   "hash": "e4d84f8cefe1d1a4",
+   "line": 6752,
+   "hash": "6f3dc35905e3296e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5493,7 +5482,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5520,9 +5509,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ac825a667a21a1fc"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5532,8 +5520,8 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6814,
-   "hash": "f15e538c4e88a8b4",
+   "line": 6793,
+   "hash": "7fd343a2fc790048",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5543,7 +5531,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5571,9 +5559,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f15e538c4e88a8b4"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5583,8 +5570,8 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6995,
-   "hash": "8f9238406a761e84",
+   "line": 6974,
+   "hash": "fb7da6818f541830",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5594,7 +5581,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5620,9 +5607,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8f9238406a761e84"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -5632,8 +5618,8 @@
    "path": "/api/chits/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3139,
-   "hash": "1524b1fea6fa0ce1",
+   "line": 3133,
+   "hash": "83ccb19f48fcdd4c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -5643,7 +5629,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5669,9 +5655,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1524b1fea6fa0ce1"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+    "lifecycle": "stable"
    },
    "status": "partial"
   },
@@ -9175,8 +9160,8 @@
    "path": "/api/integrations/catalogue",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 360,
-   "hash": "ea38f893d73af3f7",
+   "line": 362,
+   "hash": "4f975cefee8013c8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9186,7 +9171,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9211,8 +9196,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4f975cefee8013c8"
    },
    "status": "partial"
   },
@@ -9222,7 +9208,7 @@
    "path": "/api/integrations/docs/:id",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 273,
+   "line": 275,
    "hash": "597a2e449ca230ab",
    "columns": {
     "schema_in": true,
@@ -9270,7 +9256,7 @@
    "path": "/api/integrations/download/:id",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 379,
+   "line": 380,
    "hash": "966e1a6d5ef10766",
    "columns": {
     "schema_in": true,
@@ -9321,7 +9307,7 @@
    "owner_area": "integrations",
    "file": "routes/integrations.js",
    "line": 249,
-   "hash": "90cec884ead1b7b2",
+   "hash": "833e8fa6a4263243",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9331,7 +9317,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9357,8 +9343,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "833e8fa6a4263243"
    },
    "status": "partial"
   },
@@ -9368,7 +9355,7 @@
    "path": "/api/integrations/kit/*",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 256,
+   "line": 258,
    "hash": "9f494cd2f4297967",
    "columns": {
     "schema_in": true,
@@ -9418,7 +9405,7 @@
    "owner_area": "integrations",
    "file": "routes/integrations.js",
    "line": 978,
-   "hash": "1ea9c2e0ff3af8e9",
+   "hash": "621e2f2f391396f3",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9428,7 +9415,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9454,8 +9441,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "621e2f2f391396f3"
    },
    "status": "partial"
   },
@@ -9465,8 +9453,8 @@
    "path": "/api/integrations/reconcile",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 827,
-   "hash": "9389a318048c28b3",
+   "line": 830,
+   "hash": "457ba6a1ba37fd28",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9476,7 +9464,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9503,8 +9491,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "457ba6a1ba37fd28"
    },
    "status": "partial"
   },
@@ -9514,8 +9503,8 @@
    "path": "/api/integrations/status",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 714,
-   "hash": "c7eb7598ddf2d768",
+   "line": 715,
+   "hash": "70de3a5a5b1f6993",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9525,7 +9514,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9552,8 +9541,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "70de3a5a5b1f6993"
    },
    "status": "partial"
   },
@@ -9563,8 +9553,8 @@
    "path": "/api/integrations/stock/:handle",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 953,
-   "hash": "6d484ddc5697721a",
+   "line": 956,
+   "hash": "af4a542c64bc4085",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9574,7 +9564,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9600,8 +9590,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "af4a542c64bc4085"
    },
    "status": "partial"
   },
@@ -9611,8 +9602,8 @@
    "path": "/api/integrations/streams",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 745,
-   "hash": "ea3c318db486649e",
+   "line": 748,
+   "hash": "f97d3783abe3f0d1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -9622,7 +9613,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -9648,8 +9639,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f97d3783abe3f0d1"
    },
    "status": "partial"
   },
@@ -12945,7 +12937,7 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2921,
+   "line": 2928,
    "hash": "1945c21369b18d68",
    "columns": {
     "schema_in": true,
@@ -12995,7 +12987,7 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2819,
+   "line": 2826,
    "hash": "5cf00422dcf7810f",
    "columns": {
     "schema_in": true,
@@ -13095,7 +13087,7 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3347,
+   "line": 3354,
    "hash": "4a422f34f38b13a0",
    "columns": {
     "schema_in": true,
@@ -13145,7 +13137,7 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3057,
+   "line": 3064,
    "hash": "20024d37f920395f",
    "columns": {
     "schema_in": true,
@@ -13395,7 +13387,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1953,
+   "line": 1960,
    "hash": "e51972ce8a02f1cf",
    "columns": {
     "schema_in": true,
@@ -13445,7 +13437,7 @@
    "path": "/api/till/screens",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2261,
+   "line": 2268,
    "hash": "d718fc97d7bce5b7",
    "columns": {
     "schema_in": true,
@@ -13545,7 +13537,7 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2647,
+   "line": 2654,
    "hash": "65d59798e49ce45d",
    "columns": {
     "schema_in": true,
@@ -13596,7 +13588,7 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2885,
+   "line": 2892,
    "hash": "6cd0bd3be7ba6c1f",
    "columns": {
     "schema_in": true,
@@ -13647,7 +13639,7 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3028,
+   "line": 3035,
    "hash": "1c7e8c1b00bc51dd",
    "columns": {
     "schema_in": true,
@@ -13697,7 +13689,7 @@
    "path": "/api/till/verify",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2420,
+   "line": 2427,
    "hash": "240f5759fbcaeb96",
    "columns": {
     "schema_in": true,
@@ -19316,7 +19308,7 @@
    "path": "/api/chits/:chit_id/amend",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4298,
+   "line": 4284,
    "hash": "48d4a019e018499b",
    "columns": {
     "schema_in": true,
@@ -19368,7 +19360,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6136,
+   "line": 6118,
    "hash": "bb57518baa5d6aee",
    "columns": {
     "schema_in": true,
@@ -19418,7 +19410,7 @@
    "path": "/api/chits/:chit_id/assign-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4244,
+   "line": 4230,
    "hash": "3c3e1c899f08d98e",
    "columns": {
     "schema_in": true,
@@ -19469,7 +19461,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4646,
+   "line": 4632,
    "hash": "f1261716ab50b218",
    "columns": {
     "schema_in": true,
@@ -19520,7 +19512,7 @@
    "path": "/api/chits/:chit_id/costs",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3698,
+   "line": 3692,
    "hash": "542ce6681b492b26",
    "columns": {
     "schema_in": true,
@@ -19571,7 +19563,7 @@
    "path": "/api/chits/:chit_id/deliver-lines",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4053,
+   "line": 4039,
    "hash": "6f78c4e8b1574ad3",
    "columns": {
     "schema_in": true,
@@ -19622,7 +19614,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5380,
+   "line": 5366,
    "hash": "b751da3f4c8f8917",
    "columns": {
     "schema_in": true,
@@ -19673,7 +19665,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5118,
+   "line": 5104,
    "hash": "caeca2235a33877a",
    "columns": {
     "schema_in": true,
@@ -19724,8 +19716,8 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4552,
-   "hash": "c69b9c671399865f",
+   "line": 4538,
+   "hash": "d593da94e87ba876",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19776,7 +19768,7 @@
    "path": "/api/chits/:chit_id/raida",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3930,
+   "line": 3916,
    "hash": "659c6ddb81952ef4",
    "columns": {
     "schema_in": true,
@@ -19826,7 +19818,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3986,
+   "line": 3972,
    "hash": "91cf212eca7f8069",
    "columns": {
     "schema_in": true,
@@ -19876,7 +19868,7 @@
    "path": "/api/chits/:chit_id/raida/:raida_id/dispute",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4005,
+   "line": 3991,
    "hash": "1a2adac71f1176a0",
    "columns": {
     "schema_in": true,
@@ -19926,7 +19918,7 @@
    "path": "/api/chits/:chit_id/reprice",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3662,
+   "line": 3656,
    "hash": "ef6cdb6ac7ae11aa",
    "columns": {
     "schema_in": true,
@@ -19977,7 +19969,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6215,
+   "line": 6197,
    "hash": "bff670d16c1973fc",
    "columns": {
     "schema_in": true,
@@ -20027,7 +20019,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6194,
+   "line": 6176,
    "hash": "53214e1f816dbb5d",
    "columns": {
     "schema_in": true,
@@ -20077,7 +20069,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6176,
+   "line": 6158,
    "hash": "cc6a9bccb319682e",
    "columns": {
     "schema_in": true,
@@ -20127,7 +20119,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6446,
+   "line": 6428,
    "hash": "a5ce4d89eefc0a51",
    "columns": {
     "schema_in": true,
@@ -20176,7 +20168,7 @@
    "path": "/api/chits/register/entries/:raida_id/accept",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3877,
+   "line": 3865,
    "hash": "f38f901b020ba047",
    "columns": {
     "schema_in": true,
@@ -20226,7 +20218,7 @@
    "path": "/api/chits/register/entries/:raida_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3851,
+   "line": 3839,
    "hash": "e30bfd0747fe6ca0",
    "columns": {
     "schema_in": true,
@@ -20276,7 +20268,7 @@
    "path": "/api/chits/register/entries/:raida_id/revise",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3868,
+   "line": 3856,
    "hash": "cdd19d12dfb65e3a",
    "columns": {
     "schema_in": true,
@@ -20326,7 +20318,7 @@
    "path": "/api/chits/register/subjects",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3769,
+   "line": 3760,
    "hash": "91ef772a2c9c80d6",
    "columns": {
     "schema_in": true,
@@ -20375,7 +20367,7 @@
    "path": "/api/chits/register/subjects/:subject_id/close",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3788,
+   "line": 3779,
    "hash": "57091b17e2671ef3",
    "columns": {
     "schema_in": true,
@@ -20425,7 +20417,7 @@
    "path": "/api/chits/register/subjects/:subject_id/entries",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3828,
+   "line": 3816,
    "hash": "2f000d4fac8318c9",
    "columns": {
     "schema_in": true,
@@ -20475,7 +20467,7 @@
    "path": "/api/chits/register/templates",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 3808,
+   "line": 3796,
    "hash": "7783fd2adbe4f1d4",
    "columns": {
     "schema_in": true,
@@ -23254,7 +23246,7 @@
    "path": "/api/integrations/:actor_id/approve",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 631,
+   "line": 632,
    "hash": "b0e5048704af15e9",
    "columns": {
     "schema_in": true,
@@ -23306,7 +23298,7 @@
    "path": "/api/integrations/ask/:handle/stock",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 932,
+   "line": 935,
    "hash": "2ef735f570ed04cc",
    "columns": {
     "schema_in": true,
@@ -23354,7 +23346,7 @@
    "path": "/api/integrations/books",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 668,
+   "line": 669,
    "hash": "afb388714ad3d9af",
    "columns": {
     "schema_in": true,
@@ -23405,7 +23397,7 @@
    "path": "/api/integrations/books/skip",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 795,
+   "line": 798,
    "hash": "918358dc8a020ca7",
    "columns": {
     "schema_in": true,
@@ -23456,7 +23448,7 @@
    "path": "/api/integrations/heartbeat",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 457,
+   "line": 458,
    "hash": "077cc43f3cef6bd0",
    "columns": {
     "schema_in": true,
@@ -23506,7 +23498,7 @@
    "path": "/api/integrations/profile",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 994,
+   "line": 1007,
    "hash": "144599f781125548",
    "columns": {
     "schema_in": true,
@@ -27758,7 +27750,7 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3238,
+   "line": 3245,
    "hash": "1b393f3ac10694ac",
    "columns": {
     "schema_in": true,
@@ -27808,7 +27800,7 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2710,
+   "line": 2717,
    "hash": "0b022d0054a67cb1",
    "columns": {
     "schema_in": true,
@@ -27962,7 +27954,7 @@
    "path": "/api/till/enrol",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2162,
+   "line": 2169,
    "hash": "d3d29fb2332f13de",
    "columns": {
     "schema_in": true,
@@ -28063,7 +28055,7 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3281,
+   "line": 3288,
    "hash": "80215b80dce49435",
    "columns": {
     "schema_in": true,
@@ -28162,7 +28154,7 @@
    "path": "/api/till/pair",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2109,
+   "line": 2116,
    "hash": "f248c9eccb2db79f",
    "columns": {
     "schema_in": true,
@@ -28213,7 +28205,7 @@
    "path": "/api/till/pair/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2216,
+   "line": 2223,
    "hash": "62505b6631fc9613",
    "columns": {
     "schema_in": true,
@@ -28262,8 +28254,8 @@
    "path": "/api/till/price",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1798,
-   "hash": "3a149ca9b4b713e5",
+   "line": 1800,
+   "hash": "c87a981b142533cf",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28303,8 +28295,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c87a981b142533cf"
    },
    "status": "partial"
   },
@@ -28514,7 +28507,7 @@
    "path": "/api/till/rate",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1897,
+   "line": 1904,
    "hash": "dc5f3afec5d1eae1",
    "columns": {
     "schema_in": true,
@@ -28552,13 +28545,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/till/reconcile",
@@ -28566,7 +28559,7 @@
    "path": "/api/till/reconcile",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2381,
+   "line": 2388,
    "hash": "373c4c3a3167c3fe",
    "columns": {
     "schema_in": true,
@@ -28617,7 +28610,7 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1988,
+   "line": 1995,
    "hash": "e0244e6670840cab",
    "columns": {
     "schema_in": true,
@@ -28668,7 +28661,7 @@
    "path": "/api/till/reward/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2044,
+   "line": 2051,
    "hash": "aa0eb6ceeead07c5",
    "columns": {
     "schema_in": true,
@@ -28719,7 +28712,7 @@
    "path": "/api/till/screens/rename",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2313,
+   "line": 2320,
    "hash": "035453d24223f376",
    "columns": {
     "schema_in": true,
@@ -28770,7 +28763,7 @@
    "path": "/api/till/screens/revoke",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2280,
+   "line": 2287,
    "hash": "a282304c2a83381b",
    "columns": {
     "schema_in": true,
@@ -28821,7 +28814,7 @@
    "path": "/api/till/shop",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2510,
+   "line": 2517,
    "hash": "7024338af49d4865",
    "columns": {
     "schema_in": true,
@@ -29687,7 +29680,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5743,
+   "line": 5729,
    "hash": "c2325cbe73f259fc",
    "columns": {
     "schema_in": true,
@@ -29738,7 +29731,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6028,
+   "line": 6010,
    "hash": "59600f5511771cf4",
    "columns": {
     "schema_in": true,
@@ -29788,7 +29781,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6084,
+   "line": 6066,
    "hash": "bdcc6791026b87ae",
    "columns": {
     "schema_in": true,
@@ -29839,7 +29832,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6159,
+   "line": 6141,
    "hash": "63dac164e0864b45",
    "columns": {
     "schema_in": true,
@@ -29889,7 +29882,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4975,
+   "line": 4961,
    "hash": "bdc0ab6cc433cce6",
    "columns": {
     "schema_in": true,
@@ -29940,7 +29933,7 @@
    "path": "/api/chits/:chit_id/use",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4043,
+   "line": 4029,
    "hash": "7ee86b115feec09f",
    "columns": {
     "schema_in": true,
@@ -29990,7 +29983,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6289,
+   "line": 6271,
    "hash": "66ea83dae3a68cd1",
    "columns": {
     "schema_in": true,
@@ -30487,7 +30480,7 @@
    "path": "/api/integrations/streams",
    "owner_area": "integrations",
    "file": "routes/integrations.js",
-   "line": 754,
+   "line": 757,
    "hash": "1d8791f0df7ece41",
    "columns": {
     "schema_in": true,

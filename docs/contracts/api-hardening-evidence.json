@@ -112,7 +112,6 @@
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/payment": {
-   "output_allowlist": true,
    "foreign_id_404": true
   },
   "DELETE /api/chits/:chit_id/payment": {
